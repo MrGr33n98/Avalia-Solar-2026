@@ -15,7 +15,7 @@ export function MobileRadiusFilter({ radiusKm, onRadiusChange, loadingLocation }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <MapPin size={16} color={Colors.text.muted} />
+        <MapPin size={16} color="#8E8E93" />
         <Text style={styles.title}>Buscar empresas próximas</Text>
       </View>
       
@@ -60,12 +60,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.text.muted,
+    color: '#8E8E93',
     textTransform: 'uppercase',
   },
   loadingText: {
     fontSize: 14,
-    color: Colors.text.muted,
+    color: '#8E8E93',
     fontStyle: 'italic',
   },
   optionsRow: {
@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   pillActive: {
-    backgroundColor: Colors.primary.default,
-    borderColor: Colors.primary.default,
+    backgroundColor: Colors.light.brandActiveBlue,
+    borderColor: Colors.light.brandActiveBlue,
   },
   pillText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.text.primary,
+    color: Colors.light.text,
   },
   pillTextActive: {
     color: '#ffffff',

@@ -1,0 +1,28 @@
+# STATE — Refatoração Premium Leve do Perfil da Empresa
+
+## Current Phase
+- **Fase 1: Discovery, Auditoria e Proteção do Backend** (Concluída em 2026-05-30)
+- **Fase 2: Layout Base, Shell e Hero Premium** (Discussão de Contexto Concluída em 2026-05-30)
+- **Próxima Fase:** Planejamento e Execução da Fase 2 (`/gsd-plan-phase 2`)
+
+## Session Continuity
+Fase 1 e Fase 2 de Discovery/Assumptions concluídas com sucesso. Todos os contratos de dados e diretrizes de conformidade estão salvos em `.planning/`. Os novos componentes de layout base e hero dinâmico já possuem especificações claras.
+
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 1 added: Implementar dois novos espaços de banners na página pública de empresa do Avalia Solar (1. Banner inline após "Sobre a Empresa", 2. Banner/carrossel próximo de "Empresas Relacionadas")
+- Roadmap estruturado de 1 a 10 fases de refatoração visual incremental.
+- Feature Flag local integrada ao Next.js para isolamento total da nova UI em ambiente de desenvolvimento.
+
+### Key Decisions
+- Mapeado no PROJECT.md, 01-CONTEXT.md e 02-CONTEXT.md.
+
+## Quick Tasks Completed
+
+| Date | Task | Status | Summary |
+|------|------|--------|---------|
+| 2026-06-02 | Wizard de qualificação de leads no MobiVolt AI | Complete | `.planning/quick/20260602-chat-lead-qualification-wizard/SUMMARY.md` |
+
+---
+*Last updated: 2026-06-02*

@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Image } from 'expo-image';
+import { Spacing } from '@/constants/theme';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - Spacing.four * 2;
+
+interface Banner {
+  id: string;
+  imageUrl: string;
+  linkUrl?: string;
+}
+
+interface BannerCarouselProps {
+  banners: Banner[];
+  onPress?: (banner: Banner) => void;
+}
+
+export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  if (!banners || banners.length === 0) return null;
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / CARD_WIDTH);
+    if (index !== activeIndex && index >= 0 && index < banners.length) {
+      setActiveIndex(index);
+    }
+  };
+
+  return (
+    <View style={styles.outerContainer}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        snapToInterval={CARD_WIDTH + Spacing.three}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {banners.map((banner) => (
+          <TouchableOpacity
+            key={banner.id}
+            style={styles.bannerItem}
+            onPress={() => onPress && onPress(banner)}
+            activeOpacity={0.85}
+          >
+            <Image
+              source={{ uri: banner.imageUrl }}
+              style={styles.bannerImage}
+              contentFit="cover"
+              transition={200}
+            />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Indicadores de página (bullets) */}
+      <View style={styles.pagination}>
+        {banners.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              activeIndex === index ? styles.activeDot : styles.inactiveDot,
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  outerContainer: {
+    marginVertical: Spacing.two,
+    alignItems: 'center',
+  },
+  container: {
+    width: width,
+  },
+  contentContainer: {
+    paddingHorizontal: Spacing.four,
+  },
+  bannerItem: {
+    marginRight: Spacing.three,
+  },
+  bannerImage: {
+    width: CARD_WIDTH,
+    height: 150,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+  },
+  pagination: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
+  },
+  activeDot: {
+    width: 16,
+    backgroundColor: '#8B5CF6', // Roxo premium como o da referência
+  },
+  inactiveDot: {
+    width: 6,
+    backgroundColor: '#CBD5E1',
+  },
+});

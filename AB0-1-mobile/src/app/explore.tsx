@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Search, MapPin, Star, ShieldCheck, SlidersHorizontal, CheckCircle, ChevronDown } from 'lucide-react-native';
+import { Search, MapPin, Star, ShieldCheck, SlidersHorizontal, CheckCircle, ChevronDown, Heart } from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +26,9 @@ import { useMobileLocation } from '@/hooks/useMobileLocation';
 import { MobileRadiusFilter } from '@/components/search/MobileRadiusFilter';
 import { MobileSearchMap } from '@/components/search/MobileSearchMap';
 import { useTracking } from '@/hooks/useTracking';
+import { useCompareStore } from '@/store/compare';
+import { BannerSlot } from '@/components/BannerSlot';
+
 const GET_COMPANIES_SEARCH_GRAPHQL = gql`
   query GetCompaniesSearch($q: String, $categoryId: ID, $state: String, $city: String, $verified: Boolean, $latitude: Float, $longitude: Float, $radiusKm: Int) {
     companies(q: $q, categoryId: $categoryId, state: $state, city: $city, verified: $verified, latitude: $latitude, longitude: $longitude, radiusKm: $radiusKm, limit: 30) {
@@ -73,6 +76,17 @@ export default function ExploreScreen() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
   const { coords: userLocation, loading: loadingLocation } = useMobileLocation(true);
+
+  // Compare Store
+  const { selectedCompanies, addCompany, removeCompany, isComparing } = useCompareStore();
+
+  // Favoritos local
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
+    );
+  };
 
   // Inicializa filtros a partir de parâmetros da rota (ex: vindo da Home)
   useEffect(() => {
@@ -175,25 +189,32 @@ export default function ExploreScreen() {
     setShowFilters(false);
   };
 
-  const renderCompanyItem = ({ item }: { item: Company }) => (
-    <TouchableOpacity
-      style={[styles.companyCard, { backgroundColor: colors.backgroundElement }]}
-      onPress={() => {
-        trackCompanyClick(item.id, item.name, 'search_results');
-        router.push(`/company/${item.id}`);
-      }}
-    >
-      <View style={styles.cardHeader}>
+  const renderCompanyItem = ({ item }: { item: Company }) => {
+    const isFav = favorites.includes(item.id.toString());
+    const isComp = isComparing(item.id.toString());
+
+    return (
+      <TouchableOpacity
+        style={[styles.horizontalCard, { backgroundColor: colors.backgroundElement }]}
+        onPress={() => {
+          trackCompanyClick(item.id, item.name, 'search_results');
+          router.push(`/company/${item.id}`);
+        }}
+        activeOpacity={0.9}
+      >
+        {/* Imagem do integrador na esquerda */}
         {item.logo_url ? (
-          <Image source={{ uri: item.logo_url }} style={styles.logo} />
+          <Image source={{ uri: item.logo_url }} style={styles.horizontalLogo} />
         ) : (
-          <View style={[styles.logoPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
+          <View style={[styles.horizontalLogoPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
             <ThemedText style={styles.placeholderChar}>{item.name[0]}</ThemedText>
           </View>
         )}
-        <View style={styles.cardInfo}>
-          <View style={styles.nameRow}>
-            <ThemedText style={styles.companyName} numberOfLines={1}>
+
+        {/* Informações na direita */}
+        <View style={styles.horizontalInfo}>
+          <View style={styles.horizontalTitleRow}>
+            <ThemedText style={styles.horizontalName} numberOfLines={1}>
               {item.name}
             </ThemedText>
             {item.verified && (
@@ -201,43 +222,89 @@ export default function ExploreScreen() {
             )}
           </View>
 
-          <View style={styles.ratingRow}>
-            <Star size={14} color="#F59E0B" fill="#F59E0B" />
-            <ThemedText style={styles.ratingText}>
+          {/* Rating */}
+          <View style={styles.horizontalRatingRow}>
+            <Star size={12} color="#F59E0B" fill="#F59E0B" style={{ marginRight: 2 }} />
+            <ThemedText style={styles.horizontalRatingText}>
               {item.rating ? item.rating.toFixed(1) : '5.0'}
             </ThemedText>
-            <ThemedText style={styles.reviewCountText}>
-              ({item.review_count || 0} avaliações)
+            <ThemedText style={styles.horizontalReviewCount}>
+              ({item.review_count || 0})
             </ThemedText>
           </View>
 
-          <View style={styles.locationRow}>
-            <MapPin size={12} color="#8E8E93" />
-            <ThemedText style={styles.locationText} numberOfLines={1}>
-              {item.city || 'São Paulo'} - {item.state || 'SP'}
+          {/* Localização */}
+          <View style={styles.horizontalLocationRow}>
+            <MapPin size={11} color="#9CA3AF" style={{ marginRight: 4 }} />
+            <ThemedText style={styles.horizontalLocationText} numberOfLines={1}>
+              {item.city} - {item.state}
               {item.distanceKm ? ` (${item.distanceKm.toFixed(1)} km)` : ''}
             </ThemedText>
           </View>
-        </View>
-      </View>
-      
-      {item.description && (
-        <ThemedText style={styles.descriptionText} numberOfLines={2} themeColor="textSecondary">
-          {item.description}
-        </ThemedText>
-      )}
 
-      {item.categories && item.categories.length > 0 && (
-        <View style={styles.categoriesRow}>
-          {item.categories.slice(0, 2).map((cat) => (
-            <View key={cat.id} style={[styles.categoryBadge, { backgroundColor: colors.backgroundSelected }]}>
-              <ThemedText style={styles.categoryBadgeText}>{cat.name}</ThemedText>
-            </View>
-          ))}
+          {/* Tags de benefícios coloridas estilo OLX */}
+          <View style={styles.horizontalTagsRow}>
+            {item.verified && (
+              <View style={[styles.benefitBadge, styles.benefitBadgeGreen]}>
+                <ThemedText style={styles.benefitBadgeTextGreen}>Selo Verificado</ThemedText>
+              </View>
+            )}
+            {item.featured && (
+              <View style={[styles.benefitBadge, styles.benefitBadgePurple]}>
+                <ThemedText style={styles.benefitBadgeTextPurple}>Destaque</ThemedText>
+              </View>
+            )}
+            {!item.verified && !item.featured && (
+              <View style={[styles.benefitBadge, styles.benefitBadgeGray]}>
+                <ThemedText style={styles.benefitBadgeTextGray}>Parceiro Solar</ThemedText>
+              </View>
+            )}
+          </View>
+
+          {/* Ações de Comparar */}
+          <View style={styles.horizontalActionsRow}>
+            <TouchableOpacity
+              style={[styles.horizontalCompareBtn, isComp && styles.horizontalCompareBtnActive]}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (isComp) {
+                  removeCompany(item.id.toString());
+                } else {
+                  addCompany({
+                    id: item.id.toString(),
+                    name: item.name,
+                    logoUrl: item.logo_url,
+                    ratingAvg: item.rating,
+                    reviewsCount: item.review_count,
+                    isVerified: item.verified,
+                  });
+                }
+              }}
+            >
+              <ThemedText style={[styles.horizontalCompareBtnText, isComp && { color: '#FFFFFF' }]}>
+                {isComp ? 'Comparando' : '+ Comparar'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+
+        {/* Curtir (coração) no canto superior direito flutuando */}
+        <TouchableOpacity 
+          style={styles.horizontalFavBtn}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFavorite(item.id.toString());
+          }}
+        >
+          <Heart
+            size={18}
+            color={favorites.includes(item.id.toString()) ? '#EF4444' : '#9CA3AF'}
+            fill={favorites.includes(item.id.toString()) ? '#EF4444' : 'transparent'}
+          />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -262,13 +329,50 @@ export default function ExploreScreen() {
             >
               <MapPin size={18} color={viewMode === 'map' ? colors.brandDarkBlue : '#8E8E93'} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.filterToggle, { backgroundColor: showFilters ? 'rgba(0, 62, 126, 0.1)' : colors.backgroundElement }]}
+          </View>
+        </View>
+
+        {/* Barra de Chips de Filtros Rápidos (OLX Style) */}
+        <View style={styles.quickFiltersWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickFiltersScroll}>
+            
+            <TouchableOpacity 
+              style={[styles.quickFilterChip, showFilters && styles.quickFilterChipActive]}
               onPress={() => setShowFilters(!showFilters)}
             >
-              <SlidersHorizontal size={18} color={showFilters ? colors.brandDarkBlue : '#8E8E93'} />
+              <SlidersHorizontal size={14} color={showFilters ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, showFilters && { color: '#FFFFFF' }]}>
+                Filtros {(onlyVerified || radiusKm || selectedState || selectedCity) ? '(Ativos)' : ''}
+              </ThemedText>
             </TouchableOpacity>
-          </View>
+
+            <TouchableOpacity 
+              style={[styles.quickFilterChip, onlyVerified && styles.quickFilterChipActive]}
+              onPress={() => setOnlyVerified(!onlyVerified)}
+            >
+              <CheckCircle size={14} color={onlyVerified ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, onlyVerified && { color: '#FFFFFF' }]}>
+                Apenas Verificados
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.quickFilterChip, !!radiusKm && styles.quickFilterChipActive]}
+              onPress={() => {
+                if (radiusKm) {
+                  setRadiusKm(null);
+                } else {
+                  setRadiusKm(50); // Valor de raio inicial rápido
+                }
+              }}
+            >
+              <MapPin size={14} color={radiusKm ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, radiusKm && { color: '#FFFFFF' }]}>
+                Até 50km
+              </ThemedText>
+            </TouchableOpacity>
+
+          </ScrollView>
         </View>
 
         {/* Filtros Avançados Expansíveis */}
@@ -416,6 +520,13 @@ export default function ExploreScreen() {
             renderItem={renderCompanyItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <BannerSlot
+                position="search_results"
+                state={selectedState || undefined}
+                city={selectedCity || undefined}
+              />
+            }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <ThemedText type="subtitle">Nenhuma empresa encontrada</ThemedText>
@@ -426,6 +537,35 @@ export default function ExploreScreen() {
             }
           />
         )}
+        
+        {/* Floating Action Button - Comparador e Leilão Reverso */}
+        <View style={styles.fabWrapper}>
+          {selectedCompanies.length > 0 && (
+            <TouchableOpacity
+              style={[styles.fabContainer, { backgroundColor: '#10B981', marginBottom: 10 }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/compare')}
+            >
+              <View style={[styles.fabInner, { backgroundColor: 'transparent' }]}>
+                <ThemedText style={[styles.fabText, { color: '#ffffff' }]}>
+                  Ver Comparação ({selectedCompanies.length})
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.fabContainer}
+            activeOpacity={0.8}
+            onPress={() => router.push('/request-quote')}
+          >
+            <View style={styles.fabInner}>
+              <Search size={20} color="#003E7E" style={{ marginRight: 6 }} />
+              <ThemedText style={styles.fabText}>Receber Propostas</ThemedText>
+            </View>
+          </TouchableOpacity>
+        </View>
+
       </SafeAreaView>
     </ThemedView>
   );
@@ -624,89 +764,172 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     gap: Spacing.three,
   },
-  companyCard: {
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(142, 142, 147, 0.08)',
+  quickFiltersWrapper: {
+    paddingVertical: 8,
+    backgroundColor: colors.backgroundElement,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  cardHeader: {
+  quickFiltersScroll: {
+    paddingHorizontal: Spacing.four,
+    gap: 8,
+  },
+  quickFilterChip: {
     flexDirection: 'row',
-    gap: Spacing.three,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundElement,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    borderRadius: Spacing.two,
-    resizeMode: 'cover',
+  quickFilterChipActive: {
+    backgroundColor: colors.tint,
+    borderColor: colors.tint,
   },
-  logoPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: Spacing.two,
+  quickFilterText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  horizontalCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    position: 'relative',
+    marginBottom: 8,
+  },
+  horizontalLogo: {
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+  },
+  horizontalLogoPlaceholder: {
+    width: 90,
+    height: 90,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderChar: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#003E7E',
+    color: '#8B5CF6',
   },
-  cardInfo: {
+  horizontalInfo: {
     flex: 1,
-    justifyContent: 'center',
-    gap: 2,
+    marginLeft: 14,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
   },
-  nameRow: {
+  horizontalTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 24,
   },
-  companyName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  horizontalName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
     flex: 1,
   },
-  ratingRow: {
+  horizontalRatingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginTop: 2,
   },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  reviewCountText: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  locationText: {
+  horizontalRatingText: {
     fontSize: 11,
-    color: '#8E8E93',
+    fontWeight: '700',
+    color: colors.text,
   },
-  descriptionText: {
-    fontSize: 12,
-    marginTop: Spacing.two,
-    lineHeight: 16,
+  horizontalReviewCount: {
+    fontSize: 11,
+    color: colors.textSecondary,
   },
-  categoriesRow: {
+  horizontalLocationRow: {
     flexDirection: 'row',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
+    alignItems: 'center',
+    marginTop: 2,
   },
-  categoryBadge: {
-    paddingHorizontal: Spacing.two,
+  horizontalLocationText: {
+    fontSize: 10,
+    color: colors.textSecondary,
+  },
+  horizontalTagsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  benefitBadge: {
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
+    borderWidth: 1,
   },
-  categoryBadgeText: {
+  benefitBadgeGreen: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  benefitBadgeTextGreen: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  benefitBadgePurple: {
+    backgroundColor: colors.backgroundElement,
+    borderTopColor: colors.border,
+  },
+  benefitBadgeTextPurple: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  benefitBadgeGray: {
+    backgroundColor: '#F9FAFB',
+    borderColor: colors.border,
+  },
+  benefitBadgeTextGray: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  horizontalActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 6,
+  },
+  horizontalCompareBtn: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  horizontalCompareBtnActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  horizontalCompareBtnText: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#8E8E93',
+    fontWeight: '700',
+    color: '#8B5CF6',
+  },
+  horizontalFavBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
   },
   emptyContainer: {
     paddingVertical: Spacing.six,
@@ -719,4 +942,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: Spacing.four,
   },
+  fabWrapper: {
+    position: 'absolute',
+    bottom: Spacing.four,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  fabContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+    borderRadius: 30,
+  },
+  fabInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FACC15', // brandYellow
+    paddingHorizontal: Spacing.five,
+    paddingVertical: Spacing.three,
+    borderRadius: 30,
+  },
+  fabText: {
+    color: '#003E7E', // brandDarkBlue
+    fontSize: 15,
+    fontWeight: 'bold',
+  }
 });

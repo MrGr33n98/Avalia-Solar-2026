@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { Colors } from '@/constants/theme';
-import { Home, Cpu, Battery, Wrench, User } from 'lucide-react-native';
+import { Home, Compass, Calculator, MessageSquare, User } from 'lucide-react-native';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
@@ -17,20 +17,20 @@ export default function AppTabs() {
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          height: 65,
-          paddingBottom: 10,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: 'transparent',
+          height: Platform.OS === 'ios' ? 85 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
           paddingTop: 8,
-          elevation: 10,
+          elevation: 20,
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.08,
-          shadowRadius: 5,
+          shadowOffset: { width: 0, height: -10 },
+          shadowOpacity: 0.05,
+          shadowRadius: 20,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
+          fontSize: 11,
+          fontWeight: '700',
           marginTop: 2,
         },
         headerShown: false,
@@ -46,29 +46,20 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
-        name="inversores"
+        name="explore"
         options={{
-          title: 'Inversores',
+          title: 'Radar',
           tabBarIcon: ({ color, focused }) => (
-            <Cpu color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />
+            <Compass color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />
           ),
         }}
       />
       <Tabs.Screen
-        name="baterias"
+        name="p2p_chat/index"
         options={{
-          title: 'Baterias',
+          title: 'Mensagens',
           tabBarIcon: ({ color, focused }) => (
-            <Battery color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="instalacao"
-        options={{
-          title: 'Instalação',
-          tabBarIcon: ({ color, focused }) => (
-            <Wrench color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />
+            <MessageSquare color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />
           ),
         }}
       />
@@ -82,19 +73,38 @@ export default function AppTabs() {
         }}
       />
       
-      {/* Esconde as rotas auxiliares da TabBar, mas mantém no Router */}
-      <Tabs.Screen
-        name="explore"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="requests"
-        options={{
-          href: null,
-        }}
-      />
+      {/* Rotas secundárias ocultas da Tab Bar (precisam ter um arquivo .tsx correspondente na raiz do app) */}
+      <Tabs.Screen name="calculadora" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="inversores" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="baterias" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="instalacao" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="requests" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="guides" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="notifications" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="scanner" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="request-quote" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="compare" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="chat/index" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="chat/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="company/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="company/[id]/lead" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="company/[id]/services" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="checkout" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      
+      {/* Novas rotas de fechamento do sitemap */}
+      <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="forgot-password" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="search" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="company/[id]/reviews" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="company/[id]/rate" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="products/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard/leads" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard/reviews" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard/settings" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard/plans" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="select-location" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="select-city" options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }

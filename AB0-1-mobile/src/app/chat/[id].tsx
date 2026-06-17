@@ -1,170 +1,207 @@
-import React, { useState, useRef } from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  useColorScheme,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { StyleSheet, View, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Send, Phone, Info } from 'lucide-react-native';
-
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft, Send, Paperclip, Check, CheckCheck, Clock, X } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { conversationsApi, Message } from '@/lib/api';
+import * as ImagePicker from 'expo-image-picker';
 
-interface Message {
-  id: number;
-  text: string;
-  sender: 'me' | 'them';
-  time: string;
-}
+type OptimisticMessage = Message & { isPending?: boolean };
 
-export default function ChatDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+export default function ChatRoomScreen() {
+  const { id } = useLocalSearchParams();
   const router = useRouter();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const queryClient = useQueryClient();
+  const conversationId = Number(id);
+  
+  const [inputText, setInputText] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Nome mockado da empresa baseado no ID
-  const companyName = id === '1' ? 'EcoVolt Engenharia' : 'Solar SP Distribuidora';
+  // Fetch das mensagens
+  const { data: messages = [], isLoading } = useQuery({
+    queryKey: ['messages', conversationId],
+    queryFn: () => conversationsApi.getMessages(conversationId),
+    refetchInterval: 3000, // Polling para simular tempo real
+  });
 
-  // Mensagens mockadas da conversa
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: 'Olá! Vimos seu interesse em energia solar para seu imóvel.',
-      sender: 'them',
-      time: '14:20',
+  // Mutação com Optimistic Update
+  const sendMessageMutation = useMutation({
+    mutationFn: (newMsg: { text: string; imageBase64?: string }) => {
+      return conversationsApi.sendMessage(conversationId, newMsg.text, newMsg.imageBase64);
     },
-    {
-      id: 2,
-      text: 'Olá! Gostaria de entender o valor da instalação e a potência ideal.',
-      sender: 'me',
-      time: '14:22',
+    onMutate: async (newMsg) => {
+      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
+      const previousMessages = queryClient.getQueryData<Message[]>(['messages', conversationId]);
+
+      const optimisticMsg: OptimisticMessage = {
+        id: Date.now(), // ID temporário
+        body: newMsg.text,
+        sender_type: 'User', // Assumindo que o app mobile é o usuário
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        conversation_id: conversationId,
+        attachment_url: selectedImage || undefined,
+        isPending: true,
+      };
+
+      queryClient.setQueryData<OptimisticMessage[]>(['messages', conversationId], (old = []) => {
+        return [...old, optimisticMsg];
+      });
+
+      return { previousMessages };
     },
-    {
-      id: 3,
-      text: 'Perfeito. Recebemos sua simulação da fatura e o projeto residencial está pronto. Ficou estimado em R$ 12.500,00 com 8 placas. A economia estimada é de R$ 390 por mês.',
-      sender: 'them',
-      time: '14:25',
+    onError: (err, newMsg, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['messages', conversationId], context.previousMessages);
+      }
     },
-  ]);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    },
+  });
 
-  const [inputMessage, setInputMessage] = useState('');
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.5, // Comprimir imagem
+      base64: true,
+    });
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+    if (!result.canceled && result.assets[0].base64) {
+      setSelectedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
 
-    const newMsg: Message = {
-      id: messages.length + 1,
-      text: inputMessage.trim(),
-      sender: 'me',
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages(prev => [...prev, newMsg]);
-    setInputMessage('');
+  const sendMessage = () => {
+    if (!inputText.trim() && !selectedImage) return;
     
-    // Auto Scroll para a última mensagem
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    // Extrair apenas o base64 para a API, se houver
+    const base64Data = selectedImage ? selectedImage.split(',')[1] : undefined;
+
+    sendMessageMutation.mutate({ text: inputText, imageBase64: base64Data });
+    setInputText('');
+    setSelectedImage(null);
+  };
+
+  const renderMessage = ({ item }: { item: OptimisticMessage }) => {
+    const isUser = item.sender_type === 'User';
+    
+    // Formatar hora (ex: 10:30)
+    const time = new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    return (
+      <View style={[styles.messageWrapper, isUser ? styles.messageWrapperRight : styles.messageWrapperLeft]}>
+        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : styles.messageBubbleCompany]}>
+          
+          {item.attachment_url && (
+            <Image 
+              source={{ uri: item.attachment_url }} 
+              style={styles.attachmentImage} 
+              contentFit="cover"
+            />
+          )}
+
+          {item.body ? (
+            <ThemedText style={[styles.messageText, isUser && styles.messageTextUser]}>
+              {item.body}
+            </ThemedText>
+          ) : null}
+
+          <View style={styles.messageFooter}>
+            <ThemedText style={[styles.messageTime, isUser && styles.messageTimeUser]}>
+              {time}
+            </ThemedText>
+            {isUser && (
+              item.isPending ? (
+                <Clock size={12} color="#BFDBFE" style={styles.statusIcon} />
+              ) : item.read ? (
+                <CheckCheck size={12} color="#93C5FD" style={styles.statusIcon} />
+              ) : (
+                <Check size={12} color="#93C5FD" style={styles.statusIcon} />
+              )
+            )}
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-              <ArrowLeft color={colors.text} size={22} />
-            </TouchableOpacity>
-            <View>
-              <ThemedText style={styles.companyName}>{companyName}</ThemedText>
-              <ThemedText style={styles.onlineStatus} themeColor="textSecondary">online</ThemedText>
-            </View>
-          </View>
-          
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.actionIcon} onPress={() => router.push(`/company/${id}`)}>
-              <Info size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }} />
+      
+      {/* Header do Chat */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#111827" />
+        </TouchableOpacity>
+        <Image 
+          source={{ uri: 'https://ui-avatars.com/api/?name=Chat&background=0D8ABC&color=fff' }} 
+          style={styles.headerAvatar} 
+        />
+        <View style={styles.headerInfo}>
+          <ThemedText style={styles.companyName}>Comunicação</ThemedText>
+          <ThemedText style={styles.onlineStatus}>Online</ThemedText>
         </View>
+      </View>
 
-        {/* Chat Area */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardContainer}
-        >
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-          >
-            {messages.map((msg) => {
-              const isMe = msg.sender === 'me';
-              return (
-                <View
-                  key={msg.id}
-                  style={[
-                    styles.messageRow,
-                    isMe ? styles.messageRowRight : styles.messageRowLeft
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      isMe 
-                        ? [styles.bubbleRight, { backgroundColor: '#208AEF' }] 
-                        : [styles.bubbleLeft, { backgroundColor: colors.backgroundElement }]
-                    ]}
-                  >
-                    <ThemedText
-                      style={[styles.messageText, isMe && { color: '#ffffff' }]}
-                    >
-                      {msg.text}
-                    </ThemedText>
-                    <ThemedText
-                      style={[styles.messageTime, isMe ? { color: 'rgba(255,255,255,0.7)' } : { color: '#8E8E93' }]}
-                    >
-                      {msg.time}
-                    </ThemedText>
-                  </View>
-                </View>
-              );
-            })}
-          </ScrollView>
+      <KeyboardAvoidingView 
+        style={styles.keyboardView} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#208AEF" />
+          </View>
+        ) : (
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.chatList}
+          />
+        )}
 
-          {/* Input Row */}
-          <View style={[styles.inputRow, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-            <TextInput
-              placeholder="Digite sua mensagem..."
-              placeholderTextColor="#8E8E93"
-              style={[styles.textInput, { color: colors.text, backgroundColor: colors.backgroundElement }]}
-              value={inputMessage}
-              onChangeText={setInputMessage}
-              multiline
-            />
-            <TouchableOpacity
-              style={[styles.sendBtn, { backgroundColor: '#208AEF' }]}
-              onPress={handleSendMessage}
-            >
-              <Send size={18} color="#ffffff" />
+        {/* Preview da Imagem Selecionada */}
+        {selectedImage && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity style={styles.removeImageBtn} onPress={() => setSelectedImage(null)}>
+              <X size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        )}
 
-      </SafeAreaView>
+        {/* Barra de Input */}
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.attachButton} onPress={handlePickImage}>
+            <Paperclip size={20} color="#64748B" />
+          </TouchableOpacity>
+          
+          <TextInput
+            style={styles.textInput}
+            placeholder="Digite uma mensagem..."
+            placeholderTextColor="#94A3B8"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          
+          <TouchableOpacity 
+            style={[styles.sendButton, (!inputText.trim() && !selectedImage) && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={!inputText.trim() && !selectedImage}
+          >
+            <Send size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -172,102 +209,163 @@ export default function ChatDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(142, 142, 147, 0.08)',
+    borderBottomColor: '#E2E8F0',
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-  },
-  backBtn: {
+  backButton: {
     padding: Spacing.one,
+    marginRight: Spacing.two,
   },
-  companyName: {
-    fontSize: 15,
-    fontWeight: 'bold',
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: Spacing.three,
   },
-  onlineStatus: {
-    fontSize: 11,
-    color: '#10B981',
-    fontWeight: '500',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-  },
-  actionIcon: {
-    padding: Spacing.one,
-  },
-  keyboardContainer: {
+  headerInfo: {
     flex: 1,
   },
-  scrollContent: {
+  companyName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  onlineStatus: {
+    fontSize: 12,
+    color: '#10B981',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatList: {
     padding: Spacing.four,
-    gap: Spacing.three,
+    paddingBottom: Spacing.six,
   },
-  messageRow: {
+  messageWrapper: {
+    marginBottom: Spacing.three,
     flexDirection: 'row',
-    width: '100%',
   },
-  messageRowLeft: {
+  messageWrapperLeft: {
     justifyContent: 'flex-start',
   },
-  messageRowRight: {
+  messageWrapperRight: {
     justifyContent: 'flex-end',
   },
   messageBubble: {
     maxWidth: '80%',
-    borderRadius: 16,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    gap: 2,
+    paddingVertical: 10,
+    borderRadius: 16,
   },
-  bubbleLeft: {
-    borderTopLeftRadius: 4,
+  messageBubbleUser: {
+    backgroundColor: '#208AEF',
+    borderBottomRightRadius: 4,
   },
-  bubbleRight: {
-    borderTopRightRadius: 4,
+  messageBubbleCompany: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  attachmentImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#E2E8F0',
   },
   messageText: {
     fontSize: 14,
-    lineHeight: 18,
+    color: '#111827',
+    lineHeight: 20,
+  },
+  messageTextUser: {
+    color: '#FFFFFF',
+  },
+  messageFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 4,
   },
   messageTime: {
-    fontSize: 9,
-    alignSelf: 'flex-end',
+    fontSize: 10,
+    color: '#94A3B8',
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+  messageTimeUser: {
+    color: '#BFDBFE',
+  },
+  statusIcon: {
+    marginLeft: 4,
+  },
+  imagePreviewContainer: {
+    padding: Spacing.three,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    gap: Spacing.three,
+    borderTopColor: '#E2E8F0',
+    flexDirection: 'row',
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: Spacing.two,
+    left: 80,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  attachButton: {
+    padding: Spacing.two,
+    marginRight: Spacing.one,
   },
   textInput: {
     flex: 1,
+    backgroundColor: '#F1F5F9',
     borderRadius: 20,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingTop: 12,
+    paddingBottom: 12,
     maxHeight: 100,
     fontSize: 14,
+    color: '#111827',
   },
-  sendBtn: {
+  sendButton: {
+    backgroundColor: '#208AEF',
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: Spacing.two,
+    marginBottom: 2,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#94A3B8',
   },
 });

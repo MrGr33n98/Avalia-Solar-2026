@@ -111,12 +111,12 @@ export default function ProfileScreen() {
               
               <TouchableOpacity
                 style={[styles.menuItem, { backgroundColor: colors.backgroundElement }]}
-                onPress={() => router.push('/requests')}
+                onPress={() => router.push('/chat')}
               >
                 <View style={styles.menuItemLeft}>
                   <ClipboardCheck size={20} color="#208AEF" />
                   <ThemedText style={styles.menuItemText}>
-                    {user.role === 'company' ? 'Leads Recebidos' : 'Minhas Solicitações'}
+                    {user.role === 'company' ? 'Inbox de Orçamentos' : 'Minhas Negociações'}
                   </ThemedText>
                 </View>
                 <ArrowRight size={16} color="#8E8E93" />
@@ -125,11 +125,11 @@ export default function ProfileScreen() {
               {user.role === 'company' && (
                 <TouchableOpacity
                   style={[styles.menuItem, { backgroundColor: colors.backgroundElement }]}
-                  onPress={() => router.push('/requests')} // Redireciona para aba leads por enquanto
+                  onPress={() => router.push('/dashboard')}
                 >
                   <View style={styles.menuItemLeft}>
                     <ShieldCheck size={20} color="#10B981" />
-                    <ThemedText style={styles.menuItemText}>Empresa Verificada</ThemedText>
+                    <ThemedText style={styles.menuItemText}>Dashboard da Empresa</ThemedText>
                   </View>
                   <ArrowRight size={16} color="#8E8E93" />
                 </TouchableOpacity>
@@ -221,6 +221,15 @@ export default function ProfileScreen() {
                 onChangeText={setPassword}
               />
             </View>
+
+            {!isRegistering && (
+              <TouchableOpacity
+                style={styles.forgotPasswordContainer}
+                onPress={() => router.push('/forgot-password')}
+              >
+                <ThemedText style={styles.forgotPasswordText}>Esqueceu sua senha?</ThemedText>
+              </TouchableOpacity>
+            )}
 
             {/* Seletor de Tipo de Perfil (Apenas no Registro) */}
             {isRegistering && (
@@ -468,5 +477,14 @@ const styles = StyleSheet.create({
     color: '#E53E3E',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    paddingVertical: Spacing.one,
+  },
+  forgotPasswordText: {
+    color: '#208AEF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

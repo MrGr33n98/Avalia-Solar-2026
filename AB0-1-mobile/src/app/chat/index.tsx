@@ -1,148 +1,115 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  useColorScheme,
-  Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MessageSquare, ArrowLeft, ChevronRight, UserPlus } from 'lucide-react-native';
-
+import { useQuery } from '@tanstack/react-query';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
-import { useAuthStore } from '@/store/auth';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
+import { Image } from 'expo-image';
 
-interface ChatSession {
-  id: number;
-  name: string;
-  avatarUrl: string | null;
-  lastMessage: string;
-  time: string;
-  unreadCount: number;
-  companyId: number;
-}
+import { conversationsApi } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { LoadingList } from '@/components/ui/LoadingList';
 
-export default function ChatListScreen() {
+export default function InboxScreen() {
+  const router = useRouter();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
-  const router = useRouter();
-  const { user } = useAuthStore();
 
-  const chatSessions: ChatSession[] = [
-    {
-      id: 1,
-      name: 'EcoVolt Engenharia',
-      avatarUrl: null,
-      lastMessage: 'Olá! Recebemos sua simulação da fatura e o projeto residencial está pronto.',
-      time: 'Há 5 min',
-      unreadCount: 1,
-      companyId: 2,
-    },
-    {
-      id: 2,
-      name: 'Solar SP Distribuidora',
-      avatarUrl: null,
-      lastMessage: 'A visita técnica pode ser agendada para quarta-feira à tarde?',
-      time: 'Ontem',
-      unreadCount: 0,
-      companyId: 1,
-    },
-  ];
+  const { data: conversations = [], isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: conversationsApi.getAll,
+  });
 
-  // 1. Estado deslogado
-  if (!user) {
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderItem = ({ item }: { item: any }) => {
+    // Tratamento defensivo dos dados da API
+    const id = item.id?.toString() || Math.random().toString();
+    const companyName = item.company?.name || item.company_name || 'Empresa desconhecida';
+    const companyLogo = item.company?.logo_url || item.company_logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=0D8ABC&color=fff`;
+    const lastMessage = item.last_message?.body || item.lastMessage || 'Nenhuma mensagem';
+    const time = formatTime(item.last_message?.created_at || item.updated_at) || item.time || '';
+    const unreadCount = item.unread_count || item.unreadCount || 0;
+
     return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.centerContainer}>
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(32, 138, 239, 0.1)' }]}>
-              <MessageSquare size={48} color="#208AEF" />
-            </View>
-            <ThemedText type="subtitle" style={styles.centerTitle}>
-              Seu Chat do Avalia Solar
+      <TouchableOpacity
+        style={[styles.chatCard, { backgroundColor: colors.backgroundElement }]}
+        onPress={() => router.push(`/chat/${id}`)}
+      >
+        <Image source={{ uri: companyLogo }} style={styles.avatar} />
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeaderRow}>
+            <ThemedText style={[styles.companyName, { color: colors.text }]} numberOfLines={1}>
+              {companyName}
             </ThemedText>
-            <ThemedText style={styles.centerSubtitle} themeColor="textSecondary">
-              Faça login para conversar diretamente com as empresas instaladoras credenciadas.
-            </ThemedText>
-            
-            <TouchableOpacity
-              style={[styles.loginBtn, { backgroundColor: '#208AEF' }]}
-              onPress={() => router.push('/profile')}
-            >
-              <ThemedText style={styles.loginBtnText}>Entrar na Conta</ThemedText>
-            </TouchableOpacity>
+            <ThemedText style={[styles.timeText, { color: colors.textSecondary }]}>{time}</ThemedText>
           </View>
-        </SafeAreaView>
-      </ThemedView>
+          <View style={styles.chatFooterRow}>
+            <ThemedText style={[styles.lastMessage, { color: colors.textSecondary }]} numberOfLines={1}>
+              {lastMessage}
+            </ThemedText>
+            {unreadCount > 0 && (
+              <View style={[styles.unreadBadge, { backgroundColor: colors.tint }]}>
+                <ThemedText style={styles.unreadText}>{unreadCount}</ThemedText>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
     );
-  }
+  };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft color={colors.text} size={22} />
-          </TouchableOpacity>
-          <ThemedText type="subtitle">Mensagens</ThemedText>
-        </View>
+    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.backgroundElement }} />
+      <View style={[styles.header, { backgroundColor: colors.backgroundElement, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.surfaceSubtle }]}>
+          <ArrowLeft size={24} color={colors.text} />
+        </TouchableOpacity>
+        <ThemedText style={[styles.headerTitle, { color: colors.text }]}>Minhas Conversas</ThemedText>
+        <View style={{ width: 40 }} />
+      </View>
 
-        {/* List of Chats */}
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {chatSessions.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MessageSquare size={40} color="#8E8E93" />
-              <ThemedText style={styles.emptyText}>Nenhuma conversa aberta ainda.</ThemedText>
-            </View>
-          ) : (
-            <View style={styles.list}>
-              {chatSessions.map((session) => (
-                <TouchableOpacity
-                  key={session.id}
-                  style={[styles.chatCard, { backgroundColor: colors.backgroundElement }]}
-                  onPress={() => router.push(`/chat/${session.id}`)}
-                >
-                  {session.avatarUrl ? (
-                    <Image source={{ uri: session.avatarUrl }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
-                      <ThemedText style={styles.avatarLetter}>{session.name[0]}</ThemedText>
-                    </View>
-                  )}
-
-                  <View style={styles.cardInfo}>
-                    <View style={styles.cardTopRow}>
-                      <ThemedText style={styles.nameText}>{session.name}</ThemedText>
-                      <ThemedText style={styles.timeText} themeColor="textSecondary">
-                        {session.time}
-                      </ThemedText>
-                    </View>
-                    
-                    <View style={styles.cardBottomRow}>
-                      <ThemedText style={[styles.lastMsgText, session.unreadCount > 0 && { fontWeight: '600', color: colors.text }]} themeColor="textSecondary" numberOfLines={1}>
-                        {session.lastMessage}
-                      </ThemedText>
-                      
-                      {session.unreadCount > 0 && (
-                        <View style={[styles.unreadBadge, { backgroundColor: '#208AEF' }]}>
-                          <ThemedText style={styles.unreadBadgeText}>{session.unreadCount}</ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-
-      </SafeAreaView>
+      {isLoading ? (
+        <LoadingList count={6} />
+      ) : isError ? (
+        <ErrorState 
+          title="Erro ao carregar conversas" 
+          message="Não foi possível buscar as conversas. Verifique sua conexão e tente novamente."
+          onRetry={refetch}
+        />
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={[styles.listContainer, conversations.length === 0 && { flex: 1 }]}
+          ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching && !isLoading}
+              onRefresh={refetch}
+              colors={[colors.tint]}
+              tintColor={colors.tint}
+            />
+          }
+          ListEmptyComponent={
+            <EmptyState 
+              title="Nenhuma conversa ainda" 
+              subtitle="Solicite orçamentos para iniciar negociações com empresas de energia solar."
+            />
+          }
+        />
+      )}
     </ThemedView>
   );
 }
@@ -151,136 +118,81 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.five,
-    textAlign: 'center',
-  },
-  iconContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.four,
-  },
-  centerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: Spacing.two,
-  },
-  centerSubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: Spacing.four,
-  },
-  loginBtn: {
-    height: 46,
-    paddingHorizontal: Spacing.five,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
-    gap: Spacing.three,
+    borderBottomWidth: 1,
   },
-  backBtn: {
-    padding: Spacing.one,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.six,
-  },
-  emptyContainer: {
-    alignItems: 'center',
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
-    paddingVertical: Spacing.six,
-    gap: Spacing.two,
+    alignItems: 'center',
   },
-  emptyText: {
-    color: '#8E8E93',
-    fontSize: 14,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
-  list: {
-    gap: Spacing.three,
+  listContainer: {
+    paddingVertical: Spacing.two,
   },
   chatCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.three,
-    borderWidth: 1,
-    borderColor: 'rgba(142, 142, 147, 0.06)',
+    padding: Spacing.four,
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: Spacing.three,
   },
-  avatarPlaceholder: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarLetter: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#003E7E',
-  },
-  cardInfo: {
+  chatInfo: {
     flex: 1,
-    gap: 4,
   },
-  cardTopRow: {
+  chatHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  nameText: {
-    fontSize: 15,
-    fontWeight: 'bold',
+  companyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
   },
   timeText: {
-    fontSize: 11,
+    fontSize: 12,
   },
-  cardBottomRow: {
+  chatFooterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
   },
-  lastMsgText: {
-    fontSize: 12,
+  lastMessage: {
+    fontSize: 14,
     flex: 1,
+    marginRight: 16,
   },
   unreadBadge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 24,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  unreadBadgeText: {
-    color: '#ffffff',
-    fontSize: 9,
+  unreadText: {
+    color: '#FFFFFF',
+    fontSize: 10,
     fontWeight: 'bold',
+  },
+  separator: {
+    height: 1,
+    marginLeft: 80,
   },
 });

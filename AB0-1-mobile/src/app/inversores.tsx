@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, ActivityIndicator, Image, useColorScheme, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, ActivityIndicator, Image, useColorScheme, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Cpu, Star, ShieldCheck, MapPin } from 'lucide-react-native';
+import { Cpu, Star, ShieldCheck, MapPin, ArrowLeft } from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -57,11 +57,48 @@ export default function InversoresScreen() {
     </TouchableOpacity>
   );
 
+  const featuredProducts = [
+    { id: '1', name: 'Fronius Primo 6.0-1', price: 'R$ 8.990,00', rating: 4.8 },
+    { id: '2', name: 'Huawei Sun2000 5KTL', price: 'R$ 6.450,00', rating: 4.6 },
+  ];
+
+  const renderProductsHeader = () => (
+    <View style={styles.productsHeaderContainer}>
+      <ThemedText style={styles.productsHeaderTitle}>Modelos Recomendados (Ficha Técnica)</ThemedText>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScroll}>
+        {featuredProducts.map((prod) => (
+          <TouchableOpacity
+            key={prod.id}
+            style={[styles.productCard, { backgroundColor: colors.backgroundElement }]}
+            onPress={() => router.push(`/products/${prod.id}`)}
+          >
+            <View style={styles.productIconWrapper}>
+              <Cpu size={24} color="#208AEF" />
+            </View>
+            <ThemedText style={styles.productName} numberOfLines={1}>{prod.name}</ThemedText>
+            <ThemedText style={styles.productPrice}>{prod.price}</ThemedText>
+            <View style={styles.productRating}>
+              <Star size={10} color="#F59E0B" fill="#F59E0B" />
+              <ThemedText style={styles.productRatingText}>{prod.rating}</ThemedText>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      <ThemedText style={styles.productsHeaderTitle}>Instaladores Credenciados</ThemedText>
+    </View>
+  );
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.header, { backgroundColor: colors.brandDarkBlue }]}>
-          <ThemedText type="subtitle" style={styles.headerTitle}>Inversores Solares</ThemedText>
+          <View style={styles.headerTitleRow}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+              <ArrowLeft color="#ffffff" size={22} />
+            </TouchableOpacity>
+            <ThemedText type="subtitle" style={styles.headerTitle}>Inversores Solares</ThemedText>
+            <View style={{ width: 32 }} />
+          </View>
           <ThemedText style={styles.headerSubtitle}>Encontre equipamentos e instaladores autorizados</ThemedText>
         </View>
 
@@ -74,6 +111,7 @@ export default function InversoresScreen() {
             data={companies.length > 0 ? companies : mockInversoresCompanies}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
+            ListHeaderComponent={renderProductsHeader}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
@@ -204,5 +242,74 @@ const styles = StyleSheet.create({
   empty: {
     paddingVertical: Spacing.six,
     alignItems: 'center',
-  }
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  backBtn: {
+    padding: 4,
+  },
+  productsHeaderContainer: {
+    marginBottom: Spacing.four,
+  },
+  productsHeaderTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#8E8E93',
+    textTransform: 'uppercase',
+    marginBottom: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  productsScroll: {
+    gap: 12,
+    paddingBottom: Spacing.three,
+  },
+  productCard: {
+    width: 150,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginRight: 12,
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 5,
+  },
+  productIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  productName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1E293B',
+  },
+  productPrice: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  productRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  productRatingText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#475569',
+  },
 });

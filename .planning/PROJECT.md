@@ -1,23 +1,51 @@
-# Projeto GSD — Refatoração Premium Leve da Página de Perfil da Empresa | Avalia Solar
+# Projeto: Avalia Solar Mobile App
 
-## What This Is
+O Avalia Solar Mobile App é o aplicativo oficial do ecossistema Avalia Solar, desenvolvido em Expo/React Native. Ele serve como um marketplace de energia solar e mobilidade elétrica, conectando consumidores a empresas instaladoras e produtos.
 
-Este projeto consiste na refatoração completa e de alto nível da página pública de perfil comercial das empresas no portal **Avalia Solar**. Nosso objetivo é elevar a experiência do usuário (UX/UI) para um padrão **Premium Leve**, limpo, dinâmico e comercialmente persuasivo, ampliando a conversão e gerando novos pontos de monetização nativos sem comprometer as regras de faturamento, Stripe, tabelas de bancos de dados ou a estabilidade atual da API.
+## Visão e Objetivos
 
-## Core Value
+Transformar o app mobile em um marketplace confiável e de alto desempenho, removendo dependências de dados simulados (mocks) e integrando-se diretamente ao ecossistema real do Avalia Solar.
 
-- **Credibilidade SaaS**: Uma página de perfil que inspira confiança imediata e facilita a comparação inteligente entre instaladores, fornecedores e integradores do setor.
-- **Monetização Avançada**: Slots estratégicos e não intrusivos para anúncios e patrocinados, geridos diretamente no painel do Active Admin.
-- **Diferenciação por Planos**: Exposição clara de recursos baseada nos *entitlements* da empresa (planos Free, Essential, Pro e Enterprise).
+### Objetivos Principais
+- **Fideldade de Dados:** Substituir todos os mocks de empresas, produtos e banners por dados reais via GraphQL.
+- **Experiência Premium:** Interface polida, mobile-first e em PT-BR.
+- **Engajamento:** Fluxos reais de Chat P2P, Review via QR Code e Calculadora Solar com OCR.
+- **Conversão:** Geração de leads qualificados diretamente para o backend Rails.
 
-## Context
+## Stack Técnica
 
-Atualmente, o portal conta com uma visualização de perfil funcional, porém estática e com pouca inteligência comercial. O ecossistema do backend Rails é maduro e já possui as regras e modelagem de `Plan`, `PlanFeatureCatalog`, `CompanyFeatureAccessResolver` e `Banner`, os quais servirão como motor para a exibição de recursos controlados.
+- **Frontend:** React Native (Expo SDK), Expo Router (File-based routing).
+- **Linguagem:** TypeScript.
+- **Data Fetching:** Apollo Client (GraphQL) - *Decisão de escala*.
+- **Backend:** Ruby on Rails (API Principal).
+- **Real-time:** ActionCable (para Chat P2P).
+- **Analytics:** PostHog.
+- **Storage:** Active Storage (via API).
+
+## Requisitos Principais (Resumo do PRD)
+
+### Validated
+(Aguardando primeira fase de integração real)
+
+### Active
+- [ ] **HOME-01**: Integrar Home real via GraphQL (Categorias, Banners, Empresas em Destaque).
+- [ ] **AUTH-01**: Implementar Autenticação real com persistência em SecureStore.
+- [ ] **QR-01**: Fluxo de Review via QR Code (Deep Linking + Integração API).
+- [ ] **CHAT-01**: Unificar Chat P2P real usando ActionCable e `conversationsApi`.
+- [ ] **LEAD-01**: Formulário de orçamento real conectado à API de leads.
+- [ ] **MOCK-01**: Auditoria e remoção completa de mocks em telas de produção.
+
+### Out of Scope
+- **Admin Mobile:** O gerenciamento administrativo continua exclusivo no Web/Active Admin (P3).
+- **Pagamentos In-App:** O fechamento comercial ocorre via lead/chat (fora do gateway de pagamento nativo por enquanto).
 
 ## Key Decisions
 
-| Decisão | Rationale | Outcome |
+| Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Abstração em abas | Substituir a barra lateral estática por um Shell unificado compartilhando Header, Hero e Sidebar, com abas isoladas para o conteúdo. | Aprovado |
-| Fallback Seguro | Componentes devem renderizar skeletons elegantes ou estados vazios inteligentes se dados ou permissões estiverem ausentes. | Aprovado |
-| Event Tracking no Cliente | Ingestão robusta de 22 eventos no PostHog/GTM para mapear funil de vendas. | Aprovado |
+| Apollo GraphQL | Preferido em vez de REST para melhor escala e eficiência de dados. | Active |
+| Expo Managed Workflow | Facilita a manutenção, builds (EAS) e atualizações OTA. | Active |
+| Mobile-First Design | Interface deve ser projetada para toque (alvos de 44px+) e performance mobile. | Active |
+
+---
+*Last updated: 16 de junho de 2026 após inicialização*

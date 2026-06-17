@@ -41,8 +41,6 @@ interface ProductDetailClientProps {
 type ProductTab = 'description' | 'specifications' | 'reviews' | 'projects';
 
 const AMBER = '#f5a623';
-const PLACEHOLDER_IMAGE = '/images/product-placeholder.svg';
-
 const surfaceClass =
   'rounded-[var(--border-radius-lg)] border-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)]';
 
@@ -382,12 +380,13 @@ export default function ProductDetailClient({
   const [activeTab, setActiveTab] = useState<ProductTab>('description');
   const galleryImages = useMemo(() => {
     const allImages = [...(product.image_urls || []), product.image_url].filter(Boolean) as string[];
-    return allImages.length ? Array.from(new Set(allImages)) : [PLACEHOLDER_IMAGE];
+    return Array.from(new Set(allImages));
   }, [product.image_url, product.image_urls]);
-  const [selectedImage, setSelectedImage] = useState(galleryImages[0] || PLACEHOLDER_IMAGE);
+  const [selectedImage, setSelectedImage] = useState<string | null>(galleryImages[0] || null);
   const reviewsSectionRef = useRef<HTMLDivElement | null>(null);
 
   const priceValue = normalizePrice(product.price);
+  const priceAvailable = priceValue > 0;
   const companyPath = buildCompanyPath(
     company?.slug || product.company?.slug,
     company?.name || product.company?.name,
@@ -451,7 +450,7 @@ export default function ProductDetailClient({
   });
 
   useEffect(() => {
-    setSelectedImage(galleryImages[0] || PLACEHOLDER_IMAGE);
+    setSelectedImage(galleryImages[0] || null);
   }, [galleryImages]);
 
   useEffect(() => {
@@ -527,15 +526,21 @@ export default function ProductDetailClient({
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-[var(--border-radius-lg)] bg-[var(--color-background-secondary)]">
                     <div className="relative aspect-[4/3] w-full">
-                      <Image
-                        src={selectedImage}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-6"
-                        sizes="(max-width: 1024px) 100vw, 60vw"
-                        onError={() => setSelectedImage(PLACEHOLDER_IMAGE)}
-                        priority
-                      />
+                      {selectedImage ? (
+                        <Image
+                          src={selectedImage}
+                          alt={product.name}
+                          fill
+                          className="object-contain p-6"
+                          sizes="(max-width: 1024px) 100vw, 60vw"
+                          onError={() => setSelectedImage(null)}
+                          priority
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-medium text-[var(--color-text-tertiary)]">
+                          Imagem indisponível
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -586,7 +591,7 @@ export default function ProductDetailClient({
                     <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
                       <p className={hintClass}>Preço base</p>
                       <p className="mt-2 text-[20px] font-medium leading-none text-[#f5a623]">
-                        {formatCurrency(priceValue)}
+                        {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
                       </p>
                     </div>
                     <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
@@ -823,6 +828,8 @@ export default function ProductDetailClient({
                   {relatedProducts.map((item, index) => {
                     const itemPath = buildProductPath(item.id, item.name);
                     const itemPrice = normalizePrice(item.price);
+                    const itemPriceAvailable = itemPrice > 0;
+                    const itemImage = item.image_url || item.image_urls?.[0] || null;
 
                     return (
                       <Link
@@ -832,13 +839,19 @@ export default function ProductDetailClient({
                         className={cn(surfaceClass, 'overflow-hidden transition-colors hover:border-[var(--color-border-secondary)]')}
                       >
                         <div className="relative aspect-[4/3] bg-[var(--color-background-secondary)]">
-                          <Image
-                            src={item.image_url || item.image_urls?.[0] || PLACEHOLDER_IMAGE}
-                            alt={item.name}
-                            fill
-                            className="object-contain p-5"
-                            sizes="(max-width: 768px) 100vw, 33vw"
-                          />
+                          {itemImage ? (
+                            <Image
+                              src={itemImage}
+                              alt={item.name}
+                              fill
+                              className="object-contain p-5"
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs font-medium text-[var(--color-text-tertiary)]">
+                              Imagem indisponível
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-3 p-4">
                           <div className="space-y-2">
@@ -849,7 +862,9 @@ export default function ProductDetailClient({
                               {item.categories?.[0]?.name || item.category?.name || categoryName}
                             </p>
                           </div>
-                          <p className="text-[15px] font-medium text-[#f5a623]">{formatCurrency(itemPrice)}</p>
+                          <p className="text-[15px] font-medium text-[#f5a623]">
+                            {itemPriceAvailable ? formatCurrency(itemPrice) : 'Consultar preço'}
+                          </p>
                         </div>
                       </Link>
                     );
@@ -864,7 +879,7 @@ export default function ProductDetailClient({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-[28px] font-medium leading-none text-[#f5a623]">
-                    {formatCurrency(priceValue)}
+                    {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
                   </p>
                   <p className={labelClass}>
                     {isActive ? 'Produto ativo para orçamento e comparação.' : 'Produto indisponível no momento.'}
@@ -983,7 +998,9 @@ export default function ProductDetailClient({
         <div className="mx-auto flex max-w-[1280px] items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] text-[var(--color-text-secondary)]">{product.name}</p>
-            <p className="text-[15px] font-medium text-[#f5a623]">{formatCurrency(priceValue)}</p>
+            <p className="text-[15px] font-medium text-[#f5a623]">
+              {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
+            </p>
           </div>
           <button
             type="button"
@@ -1014,7 +1031,7 @@ export default function ProductDetailClient({
             offers: {
               '@type': 'Offer',
               priceCurrency: 'BRL',
-              price: priceValue,
+              ...(priceAvailable ? { price: priceValue } : {}),
               availability: isActive
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',

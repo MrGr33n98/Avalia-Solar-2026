@@ -56,15 +56,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const token = await getStoredToken();
       if (token) {
-        // Tenta obter o usuário logado para validar o token
-        const user = await authApi.getCurrentUser();
+        // Tenta obter o usuário logado com timeout de 5 segundos
+        const userPromise = authApi.getCurrentUser();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout fetching user')), 5000)
+        );
+        
+        const user = await Promise.race([userPromise, timeoutPromise]) as User;
         set({ user, token, isLoading: false });
       } else {
         set({ user: null, token: null, isLoading: false });
       }
     } catch (error) {
       console.warn('[AuthStore] Falha ao inicializar a sessão:', error);
-      // Se der erro de token expirado/inválido, removemos o token salvo
+      // Se der erro de rede ou token inválido, removemos o token salvo e liberamos a UI
       await removeStoredToken();
       set({ user: null, token: null, isLoading: false });
     }

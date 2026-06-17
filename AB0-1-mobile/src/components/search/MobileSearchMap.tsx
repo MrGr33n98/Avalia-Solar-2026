@@ -51,10 +51,14 @@ export function MobileSearchMap({ companies, userLocation, radiusKm, onSelectCom
               latitude: parseFloat(company.latitude as string),
               longitude: parseFloat(company.longitude as string),
             }}
-            title={company.name}
-            description={company.description?.substring(0, 50)}
             onCalloutPress={() => onSelectCompany(company)}
-          />
+          >
+            <View style={[styles.customMarker, company.verified && styles.verifiedMarker]}>
+              <Text style={styles.markerText}>
+                {company.rating ? `⭐ ${company.rating.toFixed(1)}` : '⭐ Novo'}
+              </Text>
+            </View>
+          </Marker>
         ))}
       </MapView>
     </View>
@@ -62,6 +66,28 @@ export function MobileSearchMap({ companies, userLocation, radiusKm, onSelectCom
 }
 
 const styles = StyleSheet.create({
+  customMarker: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  verifiedMarker: {
+    borderColor: '#10B981',
+    borderWidth: 1.5,
+  },
+  markerText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
   container: {
     flex: 1,
     borderRadius: 16,
@@ -83,7 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   emptyText: {
-    color: Colors.text.muted,
+    color: '#8E8E93',
     fontSize: 14,
     textAlign: 'center',
   }

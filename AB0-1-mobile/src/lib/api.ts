@@ -1,5 +1,4 @@
 import * as SecureStore from 'expo-secure-store';
-import apolloClient from './apolloClient';
 import { gql } from '@apollo/client';
 
 const API_VERSION_PATH = '/api/v1';
@@ -62,6 +61,34 @@ export interface Review {
   comment?: string | null;
   reviewer_name: string;
   created_at: string;
+  image_urls?: string[];
+}
+
+export interface Message {
+  id: number;
+  body: string;
+  created_at: string;
+  sender_id?: number;
+  sender_type?: string;
+  read?: boolean;
+  attachment_url?: string;
+}
+
+export interface Conversation {
+  id: number;
+  company: {
+    id: number;
+    name: string;
+    logo_url?: string | null;
+    verified?: boolean;
+  };
+  consumer?: {
+    id: number;
+    name: string;
+  };
+  last_message?: Message;
+  unread_count?: number;
+  updated_at?: string;
 }
 
 export interface User {
@@ -213,7 +240,8 @@ export const authApi = {
   },
   getCurrentUser: async (): Promise<User> => {
     try {
-      const { data } = await apolloClient.query({
+      const client = require('./apolloClient').default || require('./apolloClient').apolloClient;
+      const { data } = await client.query({
         query: gql`
           query GetMe {
             me {
@@ -310,7 +338,8 @@ export const leadsApi = {
   
   getByUser: async (): Promise<any[]> => {
     try {
-      const { data } = await apolloClient.query({
+      const client = require('./apolloClient').default || require('./apolloClient').apolloClient;
+      const { data } = await client.query({
         query: gql`
           query GetMyLeads {
             myLeads(page: 1, perPage: 100) {
@@ -354,6 +383,7 @@ export const reviewsApi = {
     title?: string;
     comment?: string;
     reviewer_name: string;
+    images?: string[]; // Array of base64 images
   }): Promise<Review> => {
     return fetchApi('reviews', {
       method: 'POST',
@@ -377,14 +407,14 @@ export const localSolarPagesApi = {
 };
 
 export const conversationsApi = {
-  getAll: () => fetchApi<any[]>('conversations'),
-  create: (companyId: number) => fetchApi<any>('conversations', {
+  getAll: () => fetchApi<Conversation[]>('conversations'),
+  create: (companyId: number) => fetchApi<Conversation>('conversations', {
     method: 'POST',
     body: JSON.stringify({ company_id: companyId })
   }),
-  getMessages: (conversationId: number) => fetchApi<any[]>(`conversations/${conversationId}/direct_messages`),
-  sendMessage: (conversationId: number, body: string) => fetchApi<any>(`conversations/${conversationId}/direct_messages`, {
+  getMessages: (conversationId: number) => fetchApi<Message[]>(`conversations/${conversationId}/direct_messages`),
+  sendMessage: (conversationId: number, body: string, attachmentBase64?: string) => fetchApi<Message>(`conversations/${conversationId}/direct_messages`, {
     method: 'POST',
-    body: JSON.stringify({ body })
+    body: JSON.stringify({ body, attachment: attachmentBase64 })
   })
 };

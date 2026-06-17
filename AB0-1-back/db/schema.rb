@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_16_235200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pgcrypto"
@@ -1719,6 +1719,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
     t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
   end
 
+  create_table "milestones", force: :cascade do |t|
+    t.bigint "transaction_id", null: false
+    t.string "title", null: false
+    t.integer "percentage", null: false
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.string "status", default: "locked", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["transaction_id"], name: "index_milestones_on_transaction_id"
+  end
+
   create_table "news_articles", force: :cascade do |t|
     t.string "title"
     t.string "url", null: false
@@ -2363,6 +2374,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
     t.index ["status", "created_at"], name: "index_subscription_plans_on_status_and_created_at"
   end
 
+  create_table "transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "company_id", null: false
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.string "status", default: "pending", null: false
+    t.string "stripe_payment_intent_id"
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_transactions_on_company_id"
+    t.index ["user_id"], name: "index_transactions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -2521,6 +2545,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
   add_foreign_key "leads", "chat_leads"
   add_foreign_key "leads", "chat_sessions"
   add_foreign_key "leads", "companies"
+  add_foreign_key "milestones", "transactions"
   add_foreign_key "notifications", "users"
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
   add_foreign_key "pending_changes", "companies"
@@ -2553,5 +2578,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_16_023840) do
   add_foreign_key "subscription_plans", "categories"
   add_foreign_key "subscription_plans", "plans"
   add_foreign_key "subscription_plans", "products"
+  add_foreign_key "transactions", "companies"
+  add_foreign_key "transactions", "users"
   add_foreign_key "users", "companies"
 end

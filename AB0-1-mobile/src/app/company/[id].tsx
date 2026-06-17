@@ -205,6 +205,23 @@ export default function CompanyDetailScreen() {
           </ThemedText>
         </View>
 
+        {/* Seção de Serviços Rápidos */}
+        <View style={styles.section}>
+          <View style={styles.servicesHeaderRow}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>Serviços</ThemedText>
+            <TouchableOpacity onPress={() => router.push(`/company/${company.id}/services`)}>
+              <ThemedText style={styles.viewServicesLink}>Ver Detalhes</ThemedText>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.servicesGrid}>
+            {['On-Grid', 'Off-Grid', 'Manutenção', 'Limpeza'].map((service, idx) => (
+              <View key={idx} style={[styles.serviceChip, { backgroundColor: colors.backgroundElement }]}>
+                <ThemedText style={styles.serviceChipText}>{service}</ThemedText>
+              </View>
+            ))}
+          </View>
+        </View>
+
         {/* Canais de Contato */}
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Canais de Contato</ThemedText>
@@ -326,7 +343,7 @@ export default function CompanyDetailScreen() {
             </ThemedText>
           ) : (
             <View style={styles.reviewsList}>
-              {reviews.map((review: Review) => (
+              {reviews.slice(0, 3).map((review: Review) => (
                 <View key={review.id} style={[styles.reviewCard, { borderBottomColor: colors.backgroundElement }]}>
                   <View style={styles.reviewHeader}>
                     <ThemedText style={styles.reviewerName}>{review.reviewer_name}</ThemedText>
@@ -354,6 +371,15 @@ export default function CompanyDetailScreen() {
                   </ThemedText>
                 </View>
               ))}
+              
+              {reviews.length > 3 && (
+                <TouchableOpacity
+                  style={[styles.viewAllReviewsBtn, { backgroundColor: colors.backgroundElement }]}
+                  onPress={() => router.push(`/company/${company.id}/reviews`)}
+                >
+                  <ThemedText style={styles.viewAllReviewsText}>Ver todas as {reviews.length} avaliações</ThemedText>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -614,5 +640,42 @@ const styles = StyleSheet.create({
   reviewDate: {
     fontSize: 10,
     marginTop: Spacing.two,
+  },
+  servicesHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.two,
+  },
+  viewServicesLink: {
+    color: '#208AEF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  serviceChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+  },
+  serviceChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  viewAllReviewsBtn: {
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.two,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.two,
+  },
+  viewAllReviewsText: {
+    color: '#208AEF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

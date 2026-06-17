@@ -157,8 +157,8 @@ export default function CompanyHero({
         </Button>
       </div>
 
-      <div className="rounded-[28px] border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
-        <div className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-slate-200">
+      <div className="rounded-none border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
+        <div className="relative overflow-hidden rounded-none border border-slate-200/70 bg-slate-200">
           <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
               src={(!bannerUrl || bannerError) ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -191,7 +191,7 @@ export default function CompanyHero({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <section
               aria-label="Card de perfil da empresa"
-              className="relative max-w-[760px] rounded-[26px] border border-slate-200 bg-white px-5 py-5 pl-[92px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:px-6 sm:py-5 sm:pl-[116px]"
+              className="relative w-fit inline-block rounded-[20px] border border-slate-200 bg-white pr-4 py-3 pl-[92px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-5 sm:py-3 sm:pl-[116px]"
             >
               <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-5">
                 <div className="relative shrink-0">

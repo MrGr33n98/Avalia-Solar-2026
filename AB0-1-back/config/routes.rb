@@ -139,6 +139,8 @@ Rails.application.routes.draw do
       resources :banner_events, only: [:create]
       post 'payments_webhooks', to: 'payments_webhooks#create', defaults: { provider: 'stripe' }
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
+      post 'payments/create_intent', to: 'payments#create_intent'
+      post 'payments/release_milestone', to: 'payments#release_milestone'
 
       resources :categories do
         member do

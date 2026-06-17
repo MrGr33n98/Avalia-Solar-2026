@@ -1,15 +1,23 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { ApolloProvider } from '@apollo/client/react';
+import NetInfo from '@react-native-community/netinfo';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 import { useAuthStore } from '@/store/auth';
 import { apolloClient } from '@/lib/apolloClient';
 
 import { PostHogProvider } from 'posthog-react-native';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
+
+// Configure onlineManager to use NetInfo
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
 
 // Inicializa o cliente do React Query
 const queryClient = new QueryClient({
@@ -17,9 +25,13 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      staleTime: 1000 * 60 * 5, // 5 minutos
     },
   },
 });
+
+let LazyAppTabs: any = null;
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -30,6 +42,10 @@ export default function TabLayout() {
     initializeAuth();
   }, [initializeAuth]);
 
+  if (!LazyAppTabs) {
+    LazyAppTabs = require('@/components/app-tabs').default;
+  }
+
   return (
     <PostHogProvider 
       apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY} 
@@ -39,9 +55,10 @@ export default function TabLayout() {
     >
       <ApolloProvider client={apolloClient}>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={DefaultTheme}>
+            <OfflineBanner />
             <AnimatedSplashOverlay />
-            <AppTabs />
+            <LazyAppTabs />
           </ThemeProvider>
         </QueryClientProvider>
       </ApolloProvider>
