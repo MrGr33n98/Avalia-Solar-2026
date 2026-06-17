@@ -1,0 +1,37 @@
+name: Mobile CI Checks
+
+on:
+  pull_request:
+    paths:
+      - 'AB0-1-mobile/**'
+
+defaults:
+  run:
+    working-directory: AB0-1-mobile
+
+jobs:
+  quality-gates:
+    name: Lint, Types & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'AB0-1-mobile/package-lock.json'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧹 Run Linter (ESLint)
+        run: npm run lint
+
+      - name: 🏷️ Run Typecheck (TypeScript)
+        run: npm run typecheck
+
+      - name: 🧪 Run Unit Tests (Jest)
+        run: npm run test
