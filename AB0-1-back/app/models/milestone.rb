@@ -1,5 +1,5 @@
 class Milestone < ApplicationRecord
-  belongs_to :transaction
+  belongs_to :payment_transaction, class_name: 'Transaction', foreign_key: 'transaction_id'
 
   validates :title, presence: true
   validates :percentage, presence: true, numericality: { greater_than: 0, less_than_or_equal_to: 100 }

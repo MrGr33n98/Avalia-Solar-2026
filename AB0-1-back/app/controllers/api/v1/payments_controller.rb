@@ -57,10 +57,10 @@ module Api
         # Aqui o backend chama a API do Stripe Connect para fazer o payout/transfer
         milestone.update!(status: 'released')
         
-        transaction = milestone.transaction
+        payment_transaction = milestone.payment_transaction
         
-        if transaction.milestones.where.not(status: 'released').empty?
-          transaction.update!(status: 'released')
+        if payment_transaction.milestones.where.not(status: 'released').empty?
+          payment_transaction.update!(status: 'released')
         end
 
         render json: { success: true, milestone: milestone }
