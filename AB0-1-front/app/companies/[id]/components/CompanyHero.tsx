@@ -191,7 +191,7 @@ export default function CompanyHero({
           <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-end lg:justify-between">
             <section
               aria-label="Card de perfil da empresa"
-              className="relative w-max max-w-full rounded-[20px] border border-slate-200 bg-white pr-3 py-2 pl-[84px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-4 sm:py-2.5 sm:pl-[104px]"
+              className="relative inline-flex items-center self-start rounded-md border border-slate-200 bg-white pr-4 py-2 pl-[84px] shadow-[0_24px_60px_-34px_rgba(15,23,42,0.28)] sm:pr-5 sm:py-2.5 sm:pl-[104px]"
             >
               <div className="absolute left-3 top-1/2 -translate-y-1/2 sm:left-4">
                 <div className="relative shrink-0">
@@ -235,10 +235,10 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              <div className="min-w-0">
+              <div className="flex flex-col justify-center">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1
-                    className="max-w-full text-[1.75rem] font-semibold leading-none tracking-[-0.05em] text-slate-950 sm:text-[2rem]"
+                    className="whitespace-nowrap text-[1.5rem] font-semibold leading-none tracking-[-0.05em] text-slate-950 sm:text-[1.75rem]"
                   >
                     {company.name}
                   </h1>
