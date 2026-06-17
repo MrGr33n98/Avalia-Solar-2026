@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -31,20 +32,20 @@ export default function OnboardingScreen() {
     {
       title: 'Encontre integradores de confiança',
       description: 'Pesquise, filtre por raio de proximidade e visualize empresas qualificadas no mapa interativo.',
-      icon: <Compass size={80} color="#208AEF" />,
+      icon: <Compass size={80} color={colors.tint} />,
       backgroundColor: '#E6F4FE',
     },
     {
       title: 'Simule o ROI do seu projeto',
       description: 'Use nossa calculadora solar integrada para simular o tempo de retorno financeiro e economia estimada.',
-      icon: <Calculator size={80} color="#10B981" />,
+      icon: <Calculator size={80} color={colors.success} />,
       backgroundColor: '#E6FDF5',
     },
     {
       title: 'Avalie e compare propostas',
       description: 'Leia avaliações de outros clientes obtidas por QR Code e compare empresas lado a lado.',
-      icon: <Star size={80} color="#F59E0B" fill="#F59E0B" />,
-      backgroundColor: '#FFFBEB',
+      icon: <Star size={80} color={colors.starYellow} fill={colors.starYellow} />,
+      backgroundColor: colors.starYellow + "10",
     },
   ];
 
@@ -127,7 +128,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: index === activeIndex ? '#208AEF' : '#CBD5E1',
+                    backgroundColor: index === activeIndex ? colors.tint : colors.border,
                     width: index === activeIndex ? 20 : 8,
                   },
                 ]}
@@ -137,13 +138,13 @@ export default function OnboardingScreen() {
 
           {/* Botão de Próximo / Começar */}
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: '#003E7E' }]}
+            style={[styles.nextBtn, { backgroundColor: colors.brandDarkBlue }]}
             onPress={handleNext}
           >
             <ThemedText style={styles.nextBtnText}>
               {activeIndex === slides.length - 1 ? 'Começar' : 'Próximo'}
             </ThemedText>
-            <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            <ArrowRight size={18} color={colors.backgroundElement} style={{ marginLeft: 6 }} />
           </TouchableOpacity>
         </View>
 
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 16,
-    color: '#0F172A',
+    color: colors.brandDarkBlue,
   },
   slideDesc: {
     fontSize: 14,
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   nextBtnText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: '700',
   },

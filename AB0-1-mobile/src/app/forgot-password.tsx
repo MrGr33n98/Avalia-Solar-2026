@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -50,7 +51,7 @@ export default function ForgotPasswordScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft color="#1E293B" size={24} />
+            <ArrowLeft color={colors.backgroundElement} size={24} />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>Recuperar Senha</ThemedText>
           <View style={{ width: 40 }} />
@@ -60,7 +61,7 @@ export default function ForgotPasswordScreen() {
           {!isSent ? (
             <>
               <View style={[styles.iconContainer, { backgroundColor: 'rgba(32, 138, 239, 0.1)' }]}>
-                <KeyRound size={40} color="#208AEF" />
+                <KeyRound size={40} color={colors.tint} />
               </View>
 
               <ThemedText style={styles.description} themeColor="textSecondary">
@@ -68,10 +69,10 @@ export default function ForgotPasswordScreen() {
               </ThemedText>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.backgroundElement }]}>
-                <Mail size={18} color="#8E8E93" />
+                <Mail size={18} color={colors.textSecondary} />
                 <TextInput
                   placeholder="E-mail ou WhatsApp"
-                  placeholderTextColor="#8E8E93"
+                  placeholderTextColor={colors.textSecondary}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   style={[styles.inputField, { color: colors.text }]}
@@ -81,12 +82,12 @@ export default function ForgotPasswordScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: '#003E7E' }]}
+                style={[styles.submitButton, { backgroundColor: colors.brandDarkBlue }]}
                 onPress={handleResetPassword}
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color={colors.backgroundElement} />
                 ) : (
                   <ThemedText style={styles.submitButtonText}>Enviar Código</ThemedText>
                 )}
@@ -95,7 +96,7 @@ export default function ForgotPasswordScreen() {
           ) : (
             <View style={styles.successContainer}>
               <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                <KeyRound size={40} color="#10B981" />
+                <KeyRound size={40} color={colors.success} />
               </View>
 
               <ThemedText type="subtitle" style={styles.successTitle}>
@@ -107,7 +108,7 @@ export default function ForgotPasswordScreen() {
               </ThemedText>
 
               <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: '#208AEF' }]}
+                style={[styles.submitButton, { backgroundColor: colors.tint }]}
                 onPress={() => router.replace('/profile')}
               >
                 <ThemedText style={styles.submitButtonText}>Voltar para o Login</ThemedText>
@@ -139,14 +140,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   content: {
     flex: 1,
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: 'bold',
   },

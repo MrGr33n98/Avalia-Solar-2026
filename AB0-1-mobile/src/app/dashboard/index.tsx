@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions } , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -10,17 +11,20 @@ import { ArrowLeft, MessageSquare, QrCode, TrendingUp, Users, Star, SlidersHoriz
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   const router = useRouter();
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: '#208AEF' }} />
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.tint }} />
       
       {/* Header Premium do Dashboard */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#FFFFFF" />
+            <ArrowLeft size={24} color={colors.backgroundElement} />
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <View style={styles.statusBadge}>
@@ -100,7 +104,7 @@ export default function DashboardScreen() {
           style={styles.actionCard} 
           onPress={() => router.push('/dashboard/settings')}
         >
-          <View style={[styles.actionIcon, { backgroundColor: '#F1F5F9' }]}>
+          <View style={[styles.actionIcon, { backgroundColor: colors.surfaceSubtle }]}>
             <SlidersHorizontal size={24} color="#475569" />
           </View>
           <View style={styles.actionContent}>
@@ -113,8 +117,8 @@ export default function DashboardScreen() {
           style={styles.actionCard} 
           onPress={() => router.push('/dashboard/plans')}
         >
-          <View style={[styles.actionIcon, { backgroundColor: '#FFFBEB' }]}>
-            <Sparkles size={24} color="#F59E0B" />
+          <View style={[styles.actionIcon, { backgroundColor: colors.starYellow + "10" }]}>
+            <Sparkles size={24} color={colors.starYellow} />
           </View>
           <View style={styles.actionContent}>
             <ThemedText style={styles.actionTitle}>Planos & Assinaturas</ThemedText>
@@ -130,10 +134,10 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.five,
     paddingTop: Spacing.two,
@@ -158,12 +162,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 10,
     fontWeight: 'bold',
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: Spacing.three,
     elevation: 4,
@@ -203,17 +207,17 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#111827',
+    color: colors.text,
   },
   metricLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     paddingHorizontal: Spacing.four,
     marginTop: Spacing.five,
     marginBottom: Spacing.three,
@@ -221,7 +225,7 @@ const styles = StyleSheet.create({
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     marginHorizontal: Spacing.four,
     marginBottom: Spacing.three,
     padding: Spacing.three,
@@ -246,23 +250,23 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   actionDescription: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     lineHeight: 16,
   },
   badge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger,
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginLeft: 8,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 10,
     fontWeight: 'bold',
   },

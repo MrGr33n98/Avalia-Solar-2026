@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Image, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, Image, TouchableOpacity, Linking, ActivityIndicator } , useColorScheme } from 'react-native';
 import { fetchApi } from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
 import { Spacing } from '../constants/theme';
@@ -22,6 +23,9 @@ interface BannerSlotProps {
 }
 
 export function BannerSlot({ position, state, city }: BannerSlotProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const { trackBannerViewed, trackBannerClicked } = useTracking();
@@ -51,7 +55,7 @@ export function BannerSlot({ position, state, city }: BannerSlotProps) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color="#003E7E" />
+        <ActivityIndicator size="small" color={colors.brandDarkBlue} />
       </View>
     );
   }
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.three,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   sponsoredText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 9,
     fontWeight: 'bold',
   },

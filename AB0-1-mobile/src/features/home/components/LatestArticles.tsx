@@ -1,4 +1,5 @@
 import React from 'react';
+import { Colors } from '@/constants/theme';
 import { StyleSheet, View, TouchableOpacity, useColorScheme, Image } from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 import { ThemedText } from '@/components/themed-text';
@@ -24,7 +25,7 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
   if (!articles || articles.length === 0) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
       {articles.map((article, index) => {
         const hasCover = !!article.coverUrl;
         const isLast = index === articles.length - 1;
@@ -44,22 +45,22 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
             {hasCover ? (
               <Image
                 source={{ uri: article.coverUrl }}
-                style={styles.articleImage}
+                style={[styles.articleImage, { backgroundColor: colors.surfaceSubtle }]}
                 resizeMode="cover"
               />
             ) : (
-              <View style={[styles.imagePlaceholder, { backgroundColor: '#F3F4F6' }]}>
-                <BookOpen color="#8B5CF6" size={24} />
+              <View style={[styles.imagePlaceholder, { backgroundColor: colors.surfaceSubtle }]}>
+                <BookOpen color={colors.tint} size={24} />
               </View>
             )}
 
             {/* Conteúdo na direita */}
             <View style={styles.textContainer}>
-              <ThemedText style={styles.articleTitle} numberOfLines={2}>
+              <ThemedText style={[styles.articleTitle, { color: colors.text }]} numberOfLines={2}>
                 {article.title}
               </ThemedText>
               {article.excerpt && (
-                <ThemedText style={styles.articleExcerpt} themeColor="textSecondary" numberOfLines={2}>
+                <ThemedText style={[styles.articleExcerpt, { color: colors.textSecondary }]} numberOfLines={2}>
                   {article.excerpt}
                 </ThemedText>
               )}
@@ -74,10 +75,10 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.four,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: colors.border,
     marginHorizontal: Spacing.four,
     marginBottom: Spacing.four,
   },
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.border,
   },
   imagePlaceholder: {
     width: 80,
@@ -111,12 +112,12 @@ const styles = StyleSheet.create({
   articleTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     lineHeight: 18,
   },
   articleExcerpt: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 15,
   },
 });

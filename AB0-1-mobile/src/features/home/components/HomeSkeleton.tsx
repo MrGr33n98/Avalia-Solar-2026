@@ -77,7 +77,7 @@ export const HomeSkeleton = () => {
       {/* Grid Skeleton */}
       <View style={styles.gridContainer}>
         {[1, 2, 3, 4].map((i) => (
-          <View key={i} style={styles.gridCard}>
+          <View key={i} style={[styles.gridCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
             <View style={styles.cardTopRow}>
               <SkeletonItem style={styles.logo} />
               <SkeletonItem style={styles.fav} />
@@ -159,9 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: Spacing.three,
     height: 160,
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -185,6 +183,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardLineSmall: {
+    width: '60%',
+    height: 10,
+    borderRadius: 4,
+    marginBottom: 12,
+  },
+  cardLineMedium: {
+    width: '40%',
+    height: 12,
+    borderRadius: 4,
+  },
+});
+{
     width: '60%',
     height: 10,
     borderRadius: 4,

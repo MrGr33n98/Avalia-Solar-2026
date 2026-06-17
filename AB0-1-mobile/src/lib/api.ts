@@ -50,6 +50,9 @@ export interface Company {
   state?: string | null;
   verified?: boolean;
   featured?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  distanceKm?: number | null;
   categories?: Category[];
 }
 
@@ -368,6 +371,15 @@ export const leadsApi = {
     }
     return fetchApi<any[]>('leads');
   },
+};
+
+export const productsApi = {
+  getById: async (id: string): Promise<any> => {
+    return fetchApi(`products/${id}`);
+  },
+  getAll: async (params?: Record<string, any>): Promise<any[]> => {
+    return fetchApi('products', { params });
+  }
 };
 
 export const reviewsApi = {

@@ -16,40 +16,37 @@ import { ArrowLeft, Star, Send, MessageCircle } from 'lucide-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import { useQuery } from '@tanstack/react-query';
+import { reviewsApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 
 export default function DashboardReviewsScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
 
-  // Mock de avaliações recebidas
-  const [reviews, setReviews] = useState([
-    {
-      id: '1',
-      reviewer_name: 'Mariana Silva',
-      rating: 5,
-      title: 'Excelente serviço!',
-      comment: 'Equipe muito qualificada e instalação rápida. Super recomendo o trabalho deles!',
-      created_at: '2 dias atrás',
-      reply: '',
-      isReplying: false,
-    },
-    {
-      id: '2',
-      reviewer_name: 'José Santos',
-      rating: 4,
-      title: 'Bom atendimento',
-      comment: 'O atendimento foi muito prestativo e o preço justo. Apenas atrasou um dia a entrega dos painéis.',
-      created_at: '5 dias atrás',
-      reply: 'Agradecemos o feedback, José! Trabalhamos para refinar nossa logística cada vez mais.',
-      isReplying: false,
-    }
-  ]);
+  const { user } = useAuthStore();
 
+  const { data: reviewsData, isLoading } = useQuery({
+    queryKey: ['company-reviews', user?.company_id],
+    queryFn: () => reviewsApi.getByCompany(user?.company_id as number),
+    enabled: !!user?.company_id,
+  });
+
+  const [localReviews, setLocalReviews] = useState<any[]>([]);
+
+  // Update local state when API data changes
+  React.useEffect(() => {
+    if (reviewsData) {
+      setLocalReviews(reviewsData.map(r => ({ ...r, isReplying: false })));
+    }
+  }, [reviewsData]);
+
+  const activeReviews = localReviews.length > 0 ? localReviews : [];
   const [activeReplyText, setActiveReplyText] = useState('');
 
   const toggleReplyInput = (id: string) => {
-    setReviews((prev) =>
+    setLocalReviews((prev) =>
       prev.map((r) => (r.id === id ? { ...r, isReplying: !r.isReplying } : r))
     );
     setActiveReplyText('');
@@ -61,7 +58,7 @@ export default function DashboardReviewsScreen() {
       return;
     }
 
-    setReviews((prev) =>
+    setLocalReviews((prev) =>
       prev.map((r) =>
         r.id === id ? { ...r, reply: activeReplyText, isReplying: false } : r
       )
@@ -74,7 +71,7 @@ export default function DashboardReviewsScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Minhas Avaliações</ThemedText>
         <View style={{ width: 40 }} />
@@ -90,7 +87,7 @@ export default function DashboardReviewsScreen() {
             <View style={styles.starsBox}>
               <View style={styles.starsRow}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} size={14} color="#F59E0B" fill="#F59E0B" />
+                  <Star key={star} size={14} color={colors.starYellow} fill={colors.starYellow} />
                 ))}
               </View>
               <ThemedText style={styles.reviewsCountText} themeColor="textSecondary">
@@ -102,7 +99,13 @@ export default function DashboardReviewsScreen() {
 
         {/* Lista de Avaliações */}
         <View style={styles.reviewsList}>
-          {reviews.map((rev) => (
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.tint} style={{ marginTop: 20 }} />
+          ) : activeReviews.length === 0 ? (
+            <ThemedText style={{ textAlign: 'center', marginTop: 20 }} themeColor="textSecondary">
+              Nenhuma avaliação encontrada.
+            </ThemedText>
+          ) : activeReviews.map((rev) => (
             <View key={rev.id} style={styles.reviewCard}>
               <View style={styles.cardHeader}>
                 <View>
@@ -112,8 +115,8 @@ export default function DashboardReviewsScreen() {
                       <Star
                         key={s}
                         size={12}
-                        color="#F59E0B"
-                        fill={s <= rev.rating ? '#F59E0B' : 'transparent'}
+                        color={colors.starYellow}
+                        fill={s <= rev.rating ? colors.starYellow : 'transparent'}
                       />
                     ))}
                   </View>
@@ -130,9 +133,9 @@ export default function DashboardReviewsScreen() {
 
               {/* Exibe resposta se houver */}
               {rev.reply ? (
-                <View style={[styles.replyBox, { backgroundColor: '#F1F5F9' }]}>
+                <View style={[styles.replyBox, { backgroundColor: colors.surfaceSubtle }]}>
                   <View style={styles.replyHeader}>
-                    <MessageCircle size={14} color="#003E7E" style={{ marginRight: 6 }} />
+                    <MessageCircle size={14} color={colors.brandDarkBlue} style={{ marginRight: 6 }} />
                     <ThemedText style={styles.replyTitleText}>Sua Resposta:</ThemedText>
                   </View>
                   <ThemedText style={styles.replyText} themeColor="textSecondary">
@@ -147,7 +150,7 @@ export default function DashboardReviewsScreen() {
                   style={styles.replyTrigger}
                   onPress={() => toggleReplyInput(rev.id)}
                 >
-                  <MessageCircle size={14} color="#208AEF" style={{ marginRight: 6 }} />
+                  <MessageCircle size={14} color={colors.tint} style={{ marginRight: 6 }} />
                   <ThemedText style={styles.replyTriggerText}>Responder cliente</ThemedText>
                 </TouchableOpacity>
               )}
@@ -157,7 +160,7 @@ export default function DashboardReviewsScreen() {
                 <View style={styles.replyInputContainer}>
                   <TextInput
                     placeholder="Digite sua resposta pública para o cliente..."
-                    placeholderTextColor="#8E8E93"
+                    placeholderTextColor={colors.textSecondary}
                     style={[styles.replyInput, { color: colors.text, borderColor: colors.border }]}
                     value={activeReplyText}
                     onChangeText={setActiveReplyText}
@@ -172,10 +175,10 @@ export default function DashboardReviewsScreen() {
                     </TouchableOpacity>
                     
                     <TouchableOpacity
-                      style={[styles.sendBtn, { backgroundColor: '#208AEF' }]}
+                      style={[styles.sendBtn, { backgroundColor: colors.tint }]}
                       onPress={() => handleSendReply(rev.id)}
                     >
-                      <Send size={12} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Send size={12} color={colors.backgroundElement} style={{ marginRight: 6 }} />
                       <ThemedText style={styles.sendBtnText}>Enviar</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -193,7 +196,7 @@ export default function DashboardReviewsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -201,21 +204,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   container: {
     flex: 1,
@@ -225,17 +228,17 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   summaryBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     marginBottom: 20,
   },
   summaryTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   scoreRow: {
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   scoreNumber: {
     fontSize: 36,
     fontWeight: '900',
-    color: '#0F172A',
+    color: colors.brandDarkBlue,
   },
   starsBox: {
     justifyContent: 'center',
@@ -264,11 +267,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   reviewCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -279,7 +282,7 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   dateText: {
     fontSize: 11,
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
   reviewTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: colors.backgroundElement,
     marginVertical: 4,
   },
   reviewComment: {
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
   replyTitleText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#003E7E',
+    color: colors.brandDarkBlue,
   },
   replyText: {
     fontSize: 12,
@@ -324,7 +327,7 @@ const styles = StyleSheet.create({
   replyTriggerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#208AEF',
+    color: colors.tint,
   },
   replyInputContainer: {
     marginTop: 12,
@@ -337,7 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     height: 60,
     textAlignVertical: 'top',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   replyFormActions: {
     flexDirection: 'row',
@@ -351,7 +354,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   sendBtn: {
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   sendBtnText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 12,
     fontWeight: '700',
   },

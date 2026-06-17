@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -113,29 +114,29 @@ export default function CalculadoraScreen() {
             
             {/* Seletor de Estado */}
             <View style={styles.stateSelectorRow}>
-              <ThemedText style={styles.label}>Seu Estado:</ThemedText>
+              <ThemedText style={[styles.label, { color: colors.textSecondary }]}>Seu Estado:</ThemedText>
               <TouchableOpacity
-                style={[styles.stateBtn, { backgroundColor: colors.background }]}
+                style={[styles.stateBtn, { backgroundColor: colors.backgroundSelected }]}
                 onPress={() => setShowStatesDropdown(!showStatesDropdown)}
               >
                 <ThemedText style={styles.stateBtnText}>{selectedState}</ThemedText>
-                <ChevronRight size={16} color="#8E8E93" style={{ transform: [{ rotate: showStatesDropdown ? '90deg' : '0deg' }] }} />
+                <ChevronRight size={16} color={colors.textSecondary} style={{ transform: [{ rotate: showStatesDropdown ? '90deg' : '0deg' }] }} />
               </TouchableOpacity>
             </View>
 
             {showStatesDropdown && (
-              <View style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <View style={[styles.dropdown, { backgroundColor: colors.backgroundSelected, borderColor: colors.border }]}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dropdownContent}>
                   {Object.keys(KWH_PRICES).map((st) => (
                     <TouchableOpacity
                       key={st}
-                      style={[styles.dropdownItem, selectedState === st && { backgroundColor: 'rgba(32, 138, 239, 0.15)' }]}
+                      style={[styles.dropdownItem, selectedState === st && { backgroundColor: colors.brandActiveBlue + '20' }]}
                       onPress={() => {
                         setSelectedState(st);
                         setShowStatesDropdown(false);
                       }}
                     >
-                      <ThemedText style={[styles.dropdownItemText, selectedState === st && { color: '#208AEF', fontWeight: 'bold' }]}>
+                      <ThemedText style={[styles.dropdownItemText, selectedState === st && { color: colors.brandActiveBlue, fontWeight: 'bold' }]}>
                         {st}
                       </ThemedText>
                     </TouchableOpacity>
@@ -145,24 +146,24 @@ export default function CalculadoraScreen() {
             )}
 
             {/* Seletor de Valor da Conta */}
-            <ThemedText style={styles.label}>Valor médio da conta de luz:</ThemedText>
-            <ThemedText style={styles.billValueDisplay}>
+            <ThemedText style={[styles.label, { color: colors.textSecondary }]}>Valor médio da conta de luz:</ThemedText>
+            <ThemedText style={[styles.billValueDisplay, { color: colors.brandActiveBlue }]}>
               R$ {billValue.toFixed(2)}
             </ThemedText>
 
             {/* Controles do Valor da Conta */}
             <View style={styles.billControls}>
-              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.background }]} onPress={() => adjustBill(-100)}>
-                <ThemedText style={styles.controlBtnText}>-100</ThemedText>
+              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.backgroundSelected }]} onPress={() => adjustBill(-100)}>
+                <ThemedText style={[styles.controlBtnText, { color: colors.text }]}>-100</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.background }]} onPress={() => adjustBill(-50)}>
-                <ThemedText style={styles.controlBtnText}>-50</ThemedText>
+              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.backgroundSelected }]} onPress={() => adjustBill(-50)}>
+                <ThemedText style={[styles.controlBtnText, { color: colors.text }]}>-50</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.background }]} onPress={() => adjustBill(50)}>
-                <ThemedText style={styles.controlBtnText}>+50</ThemedText>
+              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.backgroundSelected }]} onPress={() => adjustBill(50)}>
+                <ThemedText style={[styles.controlBtnText, { color: colors.text }]}>+50</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.background }]} onPress={() => adjustBill(100)}>
-                <ThemedText style={styles.controlBtnText}>+100</ThemedText>
+              <TouchableOpacity style={[styles.controlBtn, { backgroundColor: colors.backgroundSelected }]} onPress={() => adjustBill(100)}>
+                <ThemedText style={[styles.controlBtnText, { color: colors.text }]}>+100</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -170,38 +171,38 @@ export default function CalculadoraScreen() {
           {/* Resultados da Simulação */}
           <ThemedText type="subtitle" style={styles.resultsHeader}>Seu Sistema Estimado</ThemedText>
           
-          <View style={styles.resultsGrid}>
+          <View style={[styles.resultsGrid]}>
             {/* Card Placas */}
             <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement }]}>
-              <Layers size={22} color="#208AEF" />
-              <ThemedText style={styles.resultValue}>{panelCount} placas</ThemedText>
-              <ThemedText style={styles.resultLabel}>Qtd. de painéis (550W)</ThemedText>
+              <Layers size={22} color={colors.brandActiveBlue} />
+              <ThemedText style={[styles.resultValue, { color: colors.text }]}>{panelCount} placas</ThemedText>
+              <ThemedText style={[styles.resultLabel, { color: colors.textSecondary }]}>Qtd. de painéis (550W)</ThemedText>
             </View>
 
             {/* Card Área */}
             <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement }]}>
-              <Sun size={22} color="#10B981" />
-              <ThemedText style={styles.resultValue}>{areaNeeded.toFixed(1)} m²</ThemedText>
-              <ThemedText style={styles.resultLabel}>Área de telhado mínima</ThemedText>
+              <Sun size={22} color={colors.success} />
+              <ThemedText style={[styles.resultValue, { color: colors.text }]}>{areaNeeded.toFixed(1)} m²</ThemedText>
+              <ThemedText style={[styles.resultLabel, { color: colors.textSecondary }]}>Área de telhado mínima</ThemedText>
             </View>
 
             {/* Card Potência */}
             <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement }]}>
-              <Zap size={22} color="#F59E0B" />
-              <ThemedText style={styles.resultValue}>{systemSizeKwp.toFixed(2)} kWp</ThemedText>
-              <ThemedText style={styles.resultLabel}>Potência do sistema</ThemedText>
+              <Zap size={22} color={colors.starYellow} />
+              <ThemedText style={[styles.resultValue, { color: colors.text }]}>{systemSizeKwp.toFixed(2)} kWp</ThemedText>
+              <ThemedText style={[styles.resultLabel, { color: colors.textSecondary }]}>Potência do sistema</ThemedText>
             </View>
 
             {/* Card Custo Estimado */}
             <View style={[styles.resultCard, { backgroundColor: colors.backgroundElement }]}>
-              <Landmark size={22} color="#8B5CF6" />
-              <ThemedText style={styles.resultValue}>R$ {estimatedCost.toLocaleString('pt-BR')}</ThemedText>
-              <ThemedText style={styles.resultLabel}>Investimento médio</ThemedText>
+              <Landmark size={22} color={colors.tint} />
+              <ThemedText style={[styles.resultValue, { color: colors.text }]}>R$ {estimatedCost.toLocaleString('pt-BR')}</ThemedText>
+              <ThemedText style={[styles.resultLabel, { color: colors.textSecondary }]}>Investimento médio</ThemedText>
             </View>
           </View>
 
           {/* Projeção de Retorno Financeiro */}
-          <View style={[styles.economicsCard, { backgroundColor: colors.brandDarkBlue }]}>
+          <View style={[styles.economicsCard, { backgroundColor: colors.brandActiveBlue }]}>
             <ThemedText style={styles.economicsTitle}>Projeção de Economia Anual</ThemedText>
             <ThemedText style={styles.economicsValue}>
               R$ {annualSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -210,10 +211,10 @@ export default function CalculadoraScreen() {
             <View style={styles.divider} />
             
             <View style={styles.paybackRow}>
-              <RefreshCw size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <ThemedText style={styles.paybackText}>
+              <RefreshCw size={18} color={colors.backgroundElement} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.paybackText, { color: colors.backgroundElement }]}>
                 Retorno do investimento (Payback):{' '}
-                <ThemedText style={{ fontWeight: 'bold' }}>
+                <ThemedText style={{ fontWeight: 'bold', color: colors.backgroundElement }}>
                   {Math.floor(paybackYears)} {Math.floor(paybackYears) === 1 ? 'ano' : 'anos'}{' '}
                   {paybackMonths > 0 ? `e ${paybackMonths} ${paybackMonths === 1 ? 'mês' : 'meses'}` : ''}
                 </ThemedText>
@@ -223,10 +224,10 @@ export default function CalculadoraScreen() {
 
           {/* CTA para Pedir Propostas */}
           <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: '#208AEF' }]}
+            style={[styles.submitBtn, { backgroundColor: colors.brandActiveBlue }]}
             onPress={handleRequestQuotes}
           >
-            <ShieldCheck size={18} color="#ffffff" style={{ marginRight: 8 }} />
+            <ShieldCheck size={18} color={colors.backgroundElement} style={{ marginRight: 8 }} />
             <ThemedText style={styles.submitBtnText}>Comparar Propostas Gratuitas</ThemedText>
           </TouchableOpacity>
           
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   stateBtn: {
     flexDirection: 'row',
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
   billValueDisplay: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#208AEF',
+    color: colors.tint,
     textAlign: 'center',
     marginVertical: Spacing.two,
   },
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: 10,
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   economicsCard: {
     borderRadius: Spacing.three,
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   economicsValue: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 28,
     fontWeight: 'bold',
     marginTop: 4,
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   paybackText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 12,
   },
   submitBtn: {
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Share, Image, ActivityIndicator } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, TouchableOpacity, Share, Image, ActivityIndicator } , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Share2, Info } from 'lucide-react-native';
 
@@ -11,6 +12,9 @@ import { fetchApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
 export default function QrGeneratorScreen() {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   const router = useRouter();
   const { user } = useAuthStore();
   const [userCompany, setUserCompany] = useState<any>(null);
@@ -60,7 +64,7 @@ export default function QrGeneratorScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#003E7E" />
+        <ActivityIndicator size="large" color={colors.brandDarkBlue} />
         <ThemedText style={{ marginTop: 12 }}>Carregando dados do QR Code...</ThemedText>
       </SafeAreaView>
     );
@@ -68,15 +72,15 @@ export default function QrGeneratorScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }} />
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.backgroundElement }} />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Gerador de QR Code</ThemedText>
         <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-          <Share2 size={24} color="#208AEF" />
+          <Share2 size={24} color={colors.tint} />
         </TouchableOpacity>
       </View>
 
@@ -112,7 +116,7 @@ export default function QrGeneratorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   safeArea: {
     flex: 1,
@@ -123,9 +127,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: Spacing.one,
@@ -133,7 +137,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
   },
   shareButton: {
     padding: Spacing.one,
@@ -145,7 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   qrCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 24,
     padding: Spacing.five,
     alignItems: 'center',
@@ -160,22 +164,22 @@ const styles = StyleSheet.create({
   qrTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
     textAlign: 'center',
   },
   qrSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginBottom: Spacing.five,
     textAlign: 'center',
   },
   qrCodeWrapper: {
     padding: Spacing.two,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -198,19 +202,19 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   primaryButton: {
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     width: '100%',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#208AEF',
+    shadowColor: colors.tint,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: '700',
   },

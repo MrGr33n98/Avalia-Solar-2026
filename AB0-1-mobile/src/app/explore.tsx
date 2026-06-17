@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -218,13 +219,13 @@ export default function ExploreScreen() {
               {item.name}
             </ThemedText>
             {item.verified && (
-              <ShieldCheck size={16} color="#10B981" style={{ marginLeft: 4 }} />
+              <ShieldCheck size={16} color={colors.success} style={{ marginLeft: 4 }} />
             )}
           </View>
 
           {/* Rating */}
           <View style={styles.horizontalRatingRow}>
-            <Star size={12} color="#F59E0B" fill="#F59E0B" style={{ marginRight: 2 }} />
+            <Star size={12} color={colors.starYellow} fill={colors.starYellow} style={{ marginRight: 2 }} />
             <ThemedText style={styles.horizontalRatingText}>
               {item.rating ? item.rating.toFixed(1) : '5.0'}
             </ThemedText>
@@ -235,7 +236,7 @@ export default function ExploreScreen() {
 
           {/* Localização */}
           <View style={styles.horizontalLocationRow}>
-            <MapPin size={11} color="#9CA3AF" style={{ marginRight: 4 }} />
+            <MapPin size={11} color={colors.textSecondary} style={{ marginRight: 4 }} />
             <ThemedText style={styles.horizontalLocationText} numberOfLines={1}>
               {item.city} - {item.state}
               {item.distanceKm ? ` (${item.distanceKm.toFixed(1)} km)` : ''}
@@ -281,7 +282,7 @@ export default function ExploreScreen() {
                 }
               }}
             >
-              <ThemedText style={[styles.horizontalCompareBtnText, isComp && { color: '#FFFFFF' }]}>
+              <ThemedText style={[styles.horizontalCompareBtnText, isComp && { color: colors.backgroundElement }]}>
                 {isComp ? 'Comparando' : '+ Comparar'}
               </ThemedText>
             </TouchableOpacity>
@@ -298,8 +299,8 @@ export default function ExploreScreen() {
         >
           <Heart
             size={18}
-            color={favorites.includes(item.id.toString()) ? '#EF4444' : '#9CA3AF'}
-            fill={favorites.includes(item.id.toString()) ? '#EF4444' : 'transparent'}
+            color={favorites.includes(item.id.toString()) ? colors.danger : colors.textSecondary}
+            fill={favorites.includes(item.id.toString()) ? colors.danger : 'transparent'}
           />
         </TouchableOpacity>
       </TouchableOpacity>
@@ -312,11 +313,11 @@ export default function ExploreScreen() {
         
         {/* Barra de Busca e Filtros */}
         <View style={styles.searchHeader}>
-          <View style={[styles.searchBox, { backgroundColor: colors.backgroundElement }]}>
-            <Search size={18} color="#8E8E93" />
+          <View style={[styles.searchBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 }]}>
+            <Search size={18} color={colors.textSecondary} />
             <TextInput
               placeholder="Buscar por nome ou cidade..."
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               style={[styles.searchInput, { color: colors.text }]}
               value={search}
               onChangeText={setSearch}
@@ -324,10 +325,10 @@ export default function ExploreScreen() {
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={[styles.filterToggle, { backgroundColor: viewMode === 'map' ? 'rgba(0, 62, 126, 0.1)' : colors.backgroundElement, marginRight: 8 }]}
+              style={[styles.filterToggle, { backgroundColor: viewMode === 'map' ? colors.brandActiveBlue + '20' : colors.backgroundElement, marginRight: 8 }]}
               onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
             >
-              <MapPin size={18} color={viewMode === 'map' ? colors.brandDarkBlue : '#8E8E93'} />
+              <MapPin size={18} color={viewMode === 'map' ? colors.brandActiveBlue : colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -337,27 +338,27 @@ export default function ExploreScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickFiltersScroll}>
             
             <TouchableOpacity 
-              style={[styles.quickFilterChip, showFilters && styles.quickFilterChipActive]}
+              style={[styles.quickFilterChip, showFilters && [styles.quickFilterChipActive, { backgroundColor: colors.brandActiveBlue }]]}
               onPress={() => setShowFilters(!showFilters)}
             >
-              <SlidersHorizontal size={14} color={showFilters ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
-              <ThemedText style={[styles.quickFilterText, showFilters && { color: '#FFFFFF' }]}>
+              <SlidersHorizontal size={14} color={showFilters ? colors.backgroundElement : colors.textSecondary} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, showFilters && { color: colors.backgroundElement }]}>
                 Filtros {(onlyVerified || radiusKm || selectedState || selectedCity) ? '(Ativos)' : ''}
               </ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.quickFilterChip, onlyVerified && styles.quickFilterChipActive]}
+              style={[styles.quickFilterChip, onlyVerified && [styles.quickFilterChipActive, { backgroundColor: colors.success }]]}
               onPress={() => setOnlyVerified(!onlyVerified)}
             >
-              <CheckCircle size={14} color={onlyVerified ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
-              <ThemedText style={[styles.quickFilterText, onlyVerified && { color: '#FFFFFF' }]}>
-                Apenas Verificados
+              <CheckCircle size={14} color={onlyVerified ? colors.backgroundElement : colors.textSecondary} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, onlyVerified && { color: colors.backgroundElement }]}>
+                Verificados
               </ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.quickFilterChip, !!radiusKm && styles.quickFilterChipActive]}
+              style={[styles.quickFilterChip, !!radiusKm && [styles.quickFilterChipActive, { backgroundColor: colors.brandActiveBlue }]]}
               onPress={() => {
                 if (radiusKm) {
                   setRadiusKm(null);
@@ -366,8 +367,8 @@ export default function ExploreScreen() {
                 }
               }}
             >
-              <MapPin size={14} color={radiusKm ? '#FFFFFF' : '#4B5563'} style={{ marginRight: 6 }} />
-              <ThemedText style={[styles.quickFilterText, radiusKm && { color: '#FFFFFF' }]}>
+              <MapPin size={14} color={radiusKm ? colors.backgroundElement : colors.textSecondary} style={{ marginRight: 6 }} />
+              <ThemedText style={[styles.quickFilterText, radiusKm && { color: colors.backgroundElement }]}>
                 Até 50km
               </ThemedText>
             </TouchableOpacity>
@@ -377,14 +378,14 @@ export default function ExploreScreen() {
 
         {/* Filtros Avançados Expansíveis */}
         {showFilters && (
-          <View style={[styles.advancedFiltersContainer, { borderBottomColor: colors.backgroundElement }]}>
+          <View style={[styles.advancedFiltersContainer, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
             {/* Estado e Cidade */}
             <View style={styles.filterRow}>
               <View style={styles.pickerWrapper}>
-                <ThemedText style={styles.filterLabel}>Estado</ThemedText>
+                <ThemedText style={[styles.filterLabel, { color: colors.textSecondary }]}>Estado</ThemedText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeScroll}>
                   <TouchableOpacity
-                    style={[styles.filterBadge, !selectedState && styles.activeBadge]}
+                    style={[styles.filterBadge, !selectedState && [styles.activeBadge, { backgroundColor: colors.brandActiveBlue }]]}
                     onPress={() => { setSelectedState(''); setSelectedCity(''); }}
                   >
                     <ThemedText style={[styles.badgeText, !selectedState && styles.activeBadgeText]}>Todos</ThemedText>
@@ -392,10 +393,10 @@ export default function ExploreScreen() {
                   {(states.length > 0 ? states : ['SP', 'RJ', 'MG', 'PR']).map((st) => (
                     <TouchableOpacity
                       key={st}
-                      style={[styles.filterBadge, selectedState === st && styles.activeBadge]}
+                      style={[styles.filterBadge, selectedState === st && [styles.activeBadge, { backgroundColor: colors.brandActiveBlue }]]}
                       onPress={() => { setSelectedState(st); setSelectedCity(''); }}
                     >
-                      <ThemedText style={[styles.badgeText, selectedState === st && styles.activeBadgeText]}>{st}</ThemedText>
+                      <ThemedText style={[styles.badgeText, selectedState === st && styles.activeBadgeText, { color: selectedState === st ? colors.backgroundElement : colors.text }]}>{st}</ThemedText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -405,10 +406,10 @@ export default function ExploreScreen() {
             {selectedState ? (
               <View style={styles.filterRow}>
                 <View style={styles.pickerWrapper}>
-                  <ThemedText style={styles.filterLabel}>Cidade</ThemedText>
+                  <ThemedText style={[styles.filterLabel, { color: colors.textSecondary }]}>Cidade</ThemedText>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeScroll}>
                     <TouchableOpacity
-                      style={[styles.filterBadge, !selectedCity && styles.activeBadge]}
+                      style={[styles.filterBadge, !selectedCity && [styles.activeBadge, { backgroundColor: colors.brandActiveBlue }]]}
                       onPress={() => setSelectedCity('')}
                     >
                       <ThemedText style={[styles.badgeText, !selectedCity && styles.activeBadgeText]}>Todas</ThemedText>
@@ -416,10 +417,10 @@ export default function ExploreScreen() {
                     {(cities.length > 0 ? cities : ['São Paulo', 'Campinas', 'Santos']).map((ct) => (
                       <TouchableOpacity
                         key={ct}
-                        style={[styles.filterBadge, selectedCity === ct && styles.activeBadge]}
+                        style={[styles.filterBadge, selectedCity === ct && [styles.activeBadge, { backgroundColor: colors.brandActiveBlue }]]}
                         onPress={() => setSelectedCity(ct)}
                       >
-                        <ThemedText style={[styles.badgeText, selectedCity === ct && styles.activeBadgeText]}>{ct}</ThemedText>
+                        <ThemedText style={[styles.badgeText, selectedCity === ct && styles.activeBadgeText, { color: selectedCity === ct ? colors.backgroundElement : colors.text }]}>{ct}</ThemedText>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -433,8 +434,8 @@ export default function ExploreScreen() {
                 style={styles.checkboxRow}
                 onPress={() => setOnlyVerified(!onlyVerified)}
               >
-                <CheckCircle size={18} color={onlyVerified ? '#10B981' : '#8E8E93'} fill={onlyVerified ? '#10B981' : 'transparent'} />
-                <ThemedText style={styles.checkboxLabel}>Apenas empresas certificadas (Verificadas)</ThemedText>
+                <CheckCircle size={18} color={onlyVerified ? colors.success : colors.textSecondary} fill={onlyVerified ? colors.success : 'transparent'} />
+                <ThemedText style={[styles.checkboxLabel, { color: colors.text }]}>Apenas empresas certificadas (Verificadas)</ThemedText>
               </TouchableOpacity>
               
               <View style={{ marginTop: 12 }}>
@@ -446,7 +447,7 @@ export default function ExploreScreen() {
               </View>
 
               <TouchableOpacity onPress={clearFilters} style={{ marginTop: 12 }}>
-                <ThemedText style={styles.clearText}>Limpar Filtros</ThemedText>
+                <ThemedText style={[styles.clearText, { color: colors.danger }]}>Limpar Filtros</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -459,17 +460,12 @@ export default function ExploreScreen() {
               style={[styles.categoryBadgeSelect, selectedCategory === null && { backgroundColor: colors.brandDarkBlue }]}
               onPress={() => setSelectedCategory(null)}
             >
-              <ThemedText style={[styles.categoryBadgeTextSelect, selectedCategory === null && { color: '#ffffff' }]}>
+              <ThemedText style={[styles.categoryBadgeTextSelect, selectedCategory === null && { color: colors.backgroundElement }]}>
                 Todas
               </ThemedText>
             </TouchableOpacity>
 
-            {(categories.length > 0 ? categories : [
-              { id: 1, name: 'Energia Solar', slug: 'energia-solar' },
-              { id: 2, name: 'Mobilidade', slug: 'mobilidade-eletrica' },
-              { id: 3, name: 'Off-Grid', slug: 'off-grid' },
-              { id: 4, name: 'Usinas', slug: 'usina-solo' },
-            ]).map((cat) => (
+            {categories.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 style={[
@@ -482,7 +478,7 @@ export default function ExploreScreen() {
                 <ThemedText
                   style={[
                     styles.categoryBadgeTextSelect,
-                    selectedCategory === cat.id && { color: '#ffffff' },
+                    selectedCategory === cat.id && { color: colors.backgroundElement },
                     selectedCategory !== cat.id && { color: colors.text }
                   ]}
                 >
@@ -495,14 +491,11 @@ export default function ExploreScreen() {
 
         {/* View Mode: Map or List */}
         {isLoading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={colors.brandDarkBlue} />
-            <ThemedText style={{ marginTop: Spacing.two }}>Buscando instaladores...</ThemedText>
-          </View>
+          <LoadingList count={6} />
         ) : viewMode === 'map' ? (
 <View style={{ flex: 1, marginTop: 12 }}>
             <MobileSearchMap 
-              companies={companies.length > 0 ? companies : mockExploreCompanies} 
+              companies={companies} 
               userLocation={userLocation}
               radiusKm={radiusKm}
               onSelectCompany={(company) => {
@@ -515,7 +508,7 @@ export default function ExploreScreen() {
           </View>
         ) : (
           <FlatList
-            data={companies.length > 0 ? companies : mockExploreCompanies}
+            data={companies}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderCompanyItem}
             contentContainerStyle={styles.listContent}
@@ -542,12 +535,12 @@ export default function ExploreScreen() {
         <View style={styles.fabWrapper}>
           {selectedCompanies.length > 0 && (
             <TouchableOpacity
-              style={[styles.fabContainer, { backgroundColor: '#10B981', marginBottom: 10 }]}
+              style={[styles.fabContainer, { backgroundColor: colors.success, marginBottom: 10 }]}
               activeOpacity={0.8}
               onPress={() => router.push('/compare')}
             >
               <View style={[styles.fabInner, { backgroundColor: 'transparent' }]}>
-                <ThemedText style={[styles.fabText, { color: '#ffffff' }]}>
+                <ThemedText style={[styles.fabText, { color: colors.backgroundElement }]}>
                   Ver Comparação ({selectedCompanies.length})
                 </ThemedText>
               </View>
@@ -560,7 +553,7 @@ export default function ExploreScreen() {
             onPress={() => router.push('/request-quote')}
           >
             <View style={styles.fabInner}>
-              <Search size={20} color="#003E7E" style={{ marginRight: 6 }} />
+              <Search size={20} color={colors.brandDarkBlue} style={{ marginRight: 6 }} />
               <ThemedText style={styles.fabText}>Receber Propostas</ThemedText>
             </View>
           </TouchableOpacity>
@@ -571,61 +564,6 @@ export default function ExploreScreen() {
   );
 }
 
-// Mocks de fallback caso a API local não esteja operacional
-const mockExploreCompanies: Company[] = [
-  {
-    id: 1,
-    name: 'Solar SP Distribuidora',
-    slug: 'solar-sp-distribuidora',
-    logo_url: null,
-    rating: 4.9,
-    review_count: 32,
-    city: 'São Paulo',
-    state: 'SP',
-    verified: true,
-    description: 'Empresa especializada em soluções de energia solar residencial e comercial de grande porte com financiamento facilitado.',
-    categories: [{ id: 1, name: 'Energia Solar', slug: 'energia-solar' }]
-  },
-  {
-    id: 2,
-    name: 'EcoVolt Engenharia',
-    slug: 'ecovolt-engenharia',
-    logo_url: null,
-    rating: 4.8,
-    review_count: 18,
-    city: 'Campinas',
-    state: 'SP',
-    verified: true,
-    description: 'Instalação de carregadores veiculares rápidos para condomínios residenciais e frotas de empresas.',
-    categories: [{ id: 2, name: 'Mobilidade', slug: 'mobilidade-eletrica' }]
-  },
-  {
-    id: 3,
-    name: 'SunPower Soluções',
-    slug: 'sunpower-solucoes',
-    logo_url: null,
-    rating: 4.7,
-    review_count: 24,
-    city: 'Ribeirão Preto',
-    state: 'SP',
-    verified: false,
-    description: 'Projetos off-grid sob medida para sítios, fazendas e locais isolados da rede elétrica tradicional.',
-    categories: [{ id: 3, name: 'Off-Grid', slug: 'off-grid' }]
-  },
-  {
-    id: 4,
-    name: 'Usinas Verdes SA',
-    slug: 'usinas-verdes-sa',
-    logo_url: null,
-    rating: 4.5,
-    review_count: 8,
-    city: 'São José dos Campos',
-    state: 'SP',
-    verified: true,
-    description: 'Construção de usinas solares de solo para compensação e geração compartilhada.',
-    categories: [{ id: 4, name: 'Usinas', slug: 'usina-solo' }]
-  }
-];
 
 const styles = StyleSheet.create({
   container: {
@@ -655,7 +593,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#003E7E',
+    color: colors.brandDarkBlue,
   },
   headerActions: {
     flexDirection: 'row',
@@ -696,7 +634,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   badgeScroll: {
@@ -714,10 +652,10 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   activeBadgeText: {
-    color: '#003E7E',
+    color: colors.brandDarkBlue,
     fontWeight: '600',
   },
   checkboxContainer: {
@@ -736,7 +674,7 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontSize: 12,
-    color: '#E53E3E',
+    color: colors.danger,
     fontWeight: '600',
   },
   categoriesContainer: {
@@ -798,7 +736,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: colors.border,
     elevation: 2,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -823,7 +761,7 @@ const styles = StyleSheet.create({
   placeholderChar: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: colors.tint,
   },
   horizontalInfo: {
     flex: 1,
@@ -911,19 +849,19 @@ const styles = StyleSheet.create({
   },
   horizontalCompareBtn: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.border,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   horizontalCompareBtnActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   horizontalCompareBtnText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: colors.tint,
   },
   horizontalFavBtn: {
     position: 'absolute',
@@ -959,13 +897,13 @@ const styles = StyleSheet.create({
   fabInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FACC15', // brandYellow
+    backgroundColor: colors.starYellow, // brandYellow
     paddingHorizontal: Spacing.five,
     paddingVertical: Spacing.three,
     borderRadius: 30,
   },
   fabText: {
-    color: '#003E7E', // brandDarkBlue
+    color: colors.brandDarkBlue, // brandDarkBlue
     fontSize: 15,
     fontWeight: 'bold',
   }

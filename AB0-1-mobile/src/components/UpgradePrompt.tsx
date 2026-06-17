@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, useColorScheme } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, TouchableOpacity, useColorScheme } , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Sparkles, Lock } from 'lucide-react-native';
 
@@ -25,14 +26,14 @@ export function UpgradePrompt({
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
       <View style={[styles.iconContainer, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
-        <Lock size={22} color="#F59E0B" />
+        <Lock size={22} color={colors.starYellow} />
       </View>
 
       <ThemedText style={styles.title}>{title}</ThemedText>
       
       {feature && (
         <View style={styles.featureBadge}>
-          <Sparkles size={12} color="#8B5CF6" style={{ marginRight: 4 }} />
+          <Sparkles size={12} color={colors.tint} style={{ marginRight: 4 }} />
           <ThemedText style={styles.featureText}>{feature}</ThemedText>
         </View>
       )}
@@ -42,10 +43,10 @@ export function UpgradePrompt({
       </ThemedText>
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#8B5CF6' }]}
+        style={[styles.button, { backgroundColor: colors.tint }]}
         onPress={() => router.push('/dashboard/plans')}
       >
-        <Sparkles size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+        <Sparkles size={16} color={colors.backgroundElement} style={{ marginRight: 8 }} />
         <ThemedText style={styles.buttonText}>Ver Planos de Assinatura</ThemedText>
       </TouchableOpacity>
     </ThemedView>
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   featureBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F3FF',
+    backgroundColor: colors.tint + "10",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: colors.tint,
     textTransform: 'uppercase',
   },
   description: {
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 13,
     fontWeight: '700',
   },

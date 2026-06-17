@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import { StyleSheet, ActivityIndicator } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, ActivityIndicator } , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/auth';
 import { ThemedText } from './themed-text';
@@ -12,6 +13,9 @@ interface LoginGateProps {
 }
 
 export function LoginGate({ children, requireCompany = false, fallback }: LoginGateProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   const { user, isLoading } = useAuthStore();
   const router = useRouter();
 
@@ -33,7 +37,7 @@ export function LoginGate({ children, requireCompany = false, fallback }: LoginG
   if (!hasMounted || isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
       </ThemedView>
     );
   }
@@ -52,7 +56,7 @@ export function LoginGate({ children, requireCompany = false, fallback }: LoginG
   if (requireCompany && user.role !== 'company') {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ThemedText style={{ color: '#E53E3E', fontWeight: 'bold' }}>
+        <ThemedText style={{ color: colors.danger, fontWeight: 'bold' }}>
           Acesso Restrito: Apenas parceiros podem visualizar este conteúdo.
         </ThemedText>
       </ThemedView>

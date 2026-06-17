@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -42,7 +43,7 @@ export default function CompanyReviewsScreen() {
   if (isLoadingCompany || isLoadingReviews) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
         <ThemedText style={{ marginTop: Spacing.three }}>Carregando avaliações...</ThemedText>
       </ThemedView>
     );
@@ -67,7 +68,7 @@ export default function CompanyReviewsScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <ThemedText style={styles.headerTitle}>Avaliações</ThemedText>
@@ -89,8 +90,8 @@ export default function CompanyReviewsScreen() {
                 <Star
                   key={star}
                   size={16}
-                  color="#F59E0B"
-                  fill={star <= Math.round(averageRating) ? '#F59E0B' : 'transparent'}
+                  color={colors.starYellow}
+                  fill={star <= Math.round(averageRating) ? colors.starYellow : 'transparent'}
                 />
               ))}
             </View>
@@ -108,7 +109,7 @@ export default function CompanyReviewsScreen() {
                 <View key={stars} style={styles.distRow}>
                   <ThemedText style={styles.distStarText}>{stars}★</ThemedText>
                   <View style={[styles.distBarBg, { backgroundColor: colors.backgroundSelected }]}>
-                    <View style={[styles.distBarFill, { width: `${pct}%`, backgroundColor: '#F59E0B' }]} />
+                    <View style={[styles.distBarFill, { width: `${pct}%`, backgroundColor: colors.starYellow }]} />
                   </View>
                   <ThemedText style={styles.distCountText} themeColor="textSecondary">
                     {count}
@@ -127,11 +128,11 @@ export default function CompanyReviewsScreen() {
               style={[
                 styles.filterChip,
                 { backgroundColor: colors.backgroundElement },
-                ratingFilter === null && { backgroundColor: '#208AEF' }
+                ratingFilter === null && { backgroundColor: colors.tint }
               ]}
               onPress={() => setRatingFilter(null)}
             >
-              <ThemedText style={[styles.filterChipText, ratingFilter === null && { color: '#ffffff', fontWeight: 'bold' }]}>
+              <ThemedText style={[styles.filterChipText, ratingFilter === null && { color: colors.backgroundElement, fontWeight: 'bold' }]}>
                 Todas
               </ThemedText>
             </TouchableOpacity>
@@ -142,11 +143,11 @@ export default function CompanyReviewsScreen() {
                 style={[
                   styles.filterChip,
                   { backgroundColor: colors.backgroundElement },
-                  ratingFilter === star && { backgroundColor: '#208AEF' }
+                  ratingFilter === star && { backgroundColor: colors.tint }
                 ]}
                 onPress={() => setRatingFilter(star)}
               >
-                <ThemedText style={[styles.filterChipText, ratingFilter === star && { color: '#ffffff', fontWeight: 'bold' }]}>
+                <ThemedText style={[styles.filterChipText, ratingFilter === star && { color: colors.backgroundElement, fontWeight: 'bold' }]}>
                   {star} Estrelas ({ratingCounts[star]})
                 </ThemedText>
               </TouchableOpacity>
@@ -158,7 +159,7 @@ export default function CompanyReviewsScreen() {
         <View style={styles.reviewsListSection}>
           {filteredReviews.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <MessageSquare size={32} color="#8E8E93" style={{ marginBottom: 12 }} />
+              <MessageSquare size={32} color={colors.textSecondary} style={{ marginBottom: 12 }} />
               <ThemedText style={styles.emptyText} themeColor="textSecondary">
                 Nenhuma avaliação encontrada para este filtro.
               </ThemedText>
@@ -174,8 +175,8 @@ export default function CompanyReviewsScreen() {
                         <Star
                           key={s}
                           size={12}
-                          color="#F59E0B"
-                          fill={s <= review.rating ? '#F59E0B' : 'transparent'}
+                          color={colors.starYellow}
+                          fill={s <= review.rating ? colors.starYellow : 'transparent'}
                         />
                       ))}
                     </View>
@@ -207,7 +208,7 @@ export default function CompanyReviewsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flex: 1,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
     elevation: 2,
     shadowColor: '#000000',
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -243,11 +244,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginTop: 1,
   },
   container: {
@@ -269,13 +270,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 0.45,
     borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
+    borderRightColor: colors.border,
     paddingRight: 16,
   },
   averageScoreText: {
     fontSize: 44,
     fontWeight: '900',
-    color: '#0F172A',
+    color: colors.brandDarkBlue,
   },
   starsRow: {
     flexDirection: 'row',
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   reviewCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderBottomWidth: 1,
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   reviewComment: {
     fontSize: 13,

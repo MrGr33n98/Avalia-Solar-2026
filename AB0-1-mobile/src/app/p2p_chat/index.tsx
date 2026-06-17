@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -137,7 +138,7 @@ export default function P2PChatScreen() {
   };
 
   if (!user) {
-    return <ThemedView style={styles.container}><ActivityIndicator color="#208AEF" style={{marginTop: 50}} /></ThemedView>;
+    return <ThemedView style={styles.container}><ActivityIndicator color={colors.tint} style={{marginTop: 50}} /></ThemedView>;
   }
 
   // Se não tem conversa ativa e não tem company_id, mostra lista de conversas
@@ -153,10 +154,10 @@ export default function P2PChatScreen() {
           </View>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {loading ? (
-              <ActivityIndicator color="#208AEF" />
+              <ActivityIndicator color={colors.tint} />
             ) : conversations.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <MessageCircle size={40} color="#8E8E93" />
+                <MessageCircle size={40} color={colors.textSecondary} />
                 <ThemedText style={{marginTop: 10}}>Você não tem nenhuma conversa.</ThemedText>
               </View>
             ) : (
@@ -207,7 +208,7 @@ export default function P2PChatScreen() {
           </View>
 
           {loading && !activeConversation ? (
-            <ActivityIndicator color="#208AEF" style={{marginTop: 50}} />
+            <ActivityIndicator color={colors.tint} style={{marginTop: 50}} />
           ) : (
             <>
               <ScrollView 
@@ -232,7 +233,7 @@ export default function P2PChatScreen() {
                 <TextInput
                   style={[styles.input, { color: colors.text, borderColor: colors.backgroundSelected }]}
                   placeholder="Mensagem..."
-                  placeholderTextColor="#8E8E93"
+                  placeholderTextColor={colors.textSecondary}
                   value={inputMessage}
                   onChangeText={setInputMessage}
                   multiline
@@ -242,7 +243,7 @@ export default function P2PChatScreen() {
                   onPress={sendMessage}
                   disabled={!inputMessage.trim()}
                 >
-                  <Send size={20} color="#ffffff" />
+                  <Send size={20} color={colors.backgroundElement} />
                 </TouchableOpacity>
               </View>
             </>
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
   },
   chatLastMessage: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   messagesContainer: {
     padding: Spacing.four,
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   },
   myMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     borderBottomRightRadius: 4,
   },
   theirMessage: {
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   myMessageText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
   },
   theirMessageText: {
     color: '#000000',
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -99,7 +100,7 @@ export default function SelectLocationScreen() {
       {/* Cabeçalho Clean estilo OLX */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1F2937" size={24} />
+          <ArrowLeft color={colors.text} size={24} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Definir Localização</ThemedText>
         <View style={{ width: 40 }} />
@@ -128,13 +129,13 @@ export default function SelectLocationScreen() {
             </ThemedText>
           </View>
           {loading ? (
-            <ActivityIndicator size="small" color="#8B5CF6" />
+            <ActivityIndicator size="small" color={colors.tint} />
           ) : (
             <Switch
               value={isGPSEnabled}
               onValueChange={requestGPSLocation}
-              trackColor={{ false: '#D1D5DB', true: '#8B5CF6' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: colors.border, true: colors.tint }}
+              thumbColor={colors.backgroundElement}
             />
           )}
         </View>
@@ -147,11 +148,11 @@ export default function SelectLocationScreen() {
             onPress={() => router.push('/select-city')}
             activeOpacity={0.9}
           >
-            <MapPin size={20} color="#9CA3AF" style={{ marginRight: 10 }} />
+            <MapPin size={20} color={colors.textSecondary} style={{ marginRight: 10 }} />
             <ThemedText style={styles.searchPlaceholder}>
               Buscar localização...
             </ThemedText>
-            <Search size={18} color="#8B5CF6" />
+            <Search size={18} color={colors.tint} />
           </TouchableOpacity>
         </View>
 
@@ -163,7 +164,7 @@ export default function SelectLocationScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
   },
   header: {
     flexDirection: 'row',
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 4,
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
     marginBottom: 10,
   },
   chipsRow: {
@@ -201,9 +202,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   activeChip: {
-    backgroundColor: '#ECE9FC', // Roxo super leve de fundo
+    backgroundColor: colors.tint + "20", // Roxo super leve de fundo
     borderWidth: 1,
-    borderColor: '#C3B5F9',
+    borderColor: colors.tint + "40",
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 16,
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   activeChipText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: colors.tint,
   },
   gpsCard: {
     flexDirection: 'row',
@@ -219,19 +220,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 28,
   },
   gpsCardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   gpsCardSubtitle: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 16,
   },
   searchBox: {
@@ -240,13 +241,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.border,
     paddingHorizontal: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
   },
   searchPlaceholder: {
     flex: 1,
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.textSecondary,
   },
 });

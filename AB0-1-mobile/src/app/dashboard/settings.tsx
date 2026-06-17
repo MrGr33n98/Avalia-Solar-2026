@@ -41,11 +41,11 @@ export default function DashboardSettingsScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Configurações da Empresa</ThemedText>
         <TouchableOpacity style={styles.saveHeaderBtn} onPress={handleSaveSettings}>
-          <Check color="#208AEF" size={22} />
+          <Check color={colors.tint} size={22} />
         </TouchableOpacity>
       </View>
 
@@ -58,7 +58,7 @@ export default function DashboardSettingsScreen() {
           <View style={styles.formGroup}>
             <ThemedText style={styles.label}>Telefone Comercial</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <Phone size={16} color="#8E8E93" style={{ marginRight: 8 }} />
+              <Phone size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 value={phone}
@@ -70,7 +70,7 @@ export default function DashboardSettingsScreen() {
           <View style={styles.formGroup}>
             <ThemedText style={styles.label}>Website Institucional</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <Globe size={16} color="#8E8E93" style={{ marginRight: 8 }} />
+              <Globe size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 value={website}
@@ -82,7 +82,7 @@ export default function DashboardSettingsScreen() {
           <View style={styles.formGroup}>
             <ThemedText style={styles.label}>Horário de Funcionamento</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <Clock size={16} color="#8E8E93" style={{ marginRight: 8 }} />
+              <Clock size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 value={hours}
@@ -106,8 +106,8 @@ export default function DashboardSettingsScreen() {
             <Switch
               value={p2pEnabled}
               onValueChange={setP2pEnabled}
-              trackColor={{ false: '#CBD5E1', true: '#93C5FD' }}
-              thumbColor={p2pEnabled ? '#208AEF' : '#F4F4F5'}
+              trackColor={{ false: colors.border, true: '#93C5FD' }}
+              thumbColor={p2pEnabled ? colors.tint : '#F4F4F5'}
             />
           </View>
 
@@ -121,15 +121,15 @@ export default function DashboardSettingsScreen() {
             <Switch
               value={notifyLeads}
               onValueChange={setNotifyLeads}
-              trackColor={{ false: '#CBD5E1', true: '#93C5FD' }}
-              thumbColor={notifyLeads ? '#208AEF' : '#F4F4F5'}
+              trackColor={{ false: colors.border, true: '#93C5FD' }}
+              thumbColor={notifyLeads ? colors.tint : '#F4F4F5'}
             />
           </View>
         </View>
 
         {/* Botão de salvar no final */}
         <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: '#003E7E' }]}
+          style={[styles.saveButton, { backgroundColor: colors.brandDarkBlue }]}
           onPress={handleSaveSettings}
         >
           <ThemedText style={styles.saveButtonText}>Salvar Configurações</ThemedText>
@@ -143,7 +143,7 @@ export default function DashboardSettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -151,21 +151,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   saveHeaderBtn: {
     width: 40,
@@ -182,17 +182,17 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     gap: 16,
   },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   switchDesc: {
     fontSize: 11,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   saveButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: 'bold',
   },

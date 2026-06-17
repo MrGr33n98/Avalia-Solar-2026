@@ -47,21 +47,28 @@ export default function TabLayout() {
   }
 
   return (
-    <PostHogProvider 
-      apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY} 
-      options={{
-        host: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+    <ErrorBoundary 
+      FallbackComponent={GlobalErrorFallback}
+      onReset={() => {
+        // Redefine o estado aqui se necessário antes da retentativa
       }}
     >
-      <ApolloProvider client={apolloClient}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider value={DefaultTheme}>
-            <OfflineBanner />
-            <AnimatedSplashOverlay />
-            <LazyAppTabs />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </ApolloProvider>
-    </PostHogProvider>
+      <PostHogProvider 
+        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY} 
+        options={{
+          host: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+        }}
+      >
+        <ApolloProvider client={apolloClient}>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider value={DefaultTheme}>
+              <OfflineBanner />
+              <AnimatedSplashOverlay />
+              <LazyAppTabs />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </ApolloProvider>
+      </PostHogProvider>
+    </ErrorBoundary>
   );
 }

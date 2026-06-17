@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } , useColorScheme } from 'react-native';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
 
@@ -12,10 +12,13 @@ interface MobileRadiusFilterProps {
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 
 export function MobileRadiusFilter({ radiusKm, onRadiusChange, loadingLocation }: MobileRadiusFilterProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <MapPin size={16} color="#8E8E93" />
+        <MapPin size={16} color={colors.textSecondary} />
         <Text style={styles.title}>Buscar empresas próximas</Text>
       </View>
       
@@ -60,12 +63,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   loadingText: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   optionsRow: {
@@ -77,9 +80,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   pillActive: {
     backgroundColor: Colors.light.brandActiveBlue,
@@ -91,6 +94,6 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
   },
   pillTextActive: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
   },
 });

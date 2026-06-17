@@ -120,7 +120,7 @@ export default function DashboardLeadsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#003E7E" />
+        <ActivityIndicator size="large" color={colors.brandDarkBlue} />
         <ThemedText style={{ marginTop: 12 }}>Carregando seus leads corporativos...</ThemedText>
       </SafeAreaView>
     );
@@ -131,7 +131,7 @@ export default function DashboardLeadsScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Painel de Leads</ThemedText>
         <View style={{ width: 40 }} />
@@ -175,17 +175,17 @@ export default function DashboardLeadsScreen() {
                 {/* Informações detalhadas do Lead */}
                 <View style={styles.detailsBlock}>
                   <View style={styles.infoRow}>
-                    <Tag size={14} color="#8E8E93" style={{ marginRight: 8 }} />
+                    <Tag size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
                     <ThemedText style={styles.detailText}>{lead.project_type || 'Residencial'}</ThemedText>
                   </View>
 
                   <View style={styles.infoRow}>
-                    <MapPin size={14} color="#8E8E93" style={{ marginRight: 8 }} />
+                    <MapPin size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
                     <ThemedText style={styles.detailText}>{lead.location || 'Não especificada'}</ThemedText>
                   </View>
 
                   <View style={styles.infoRow}>
-                    <Calendar size={14} color="#8E8E93" style={{ marginRight: 8 }} />
+                    <Calendar size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
                     <ThemedText style={styles.detailText}>{formatDate(lead.created_at)}</ThemedText>
                   </View>
                 </View>
@@ -207,7 +207,7 @@ export default function DashboardLeadsScreen() {
 
                 {/* Mensagem do Cliente */}
                 {lead.message ? (
-                  <View style={[styles.messageBox, { backgroundColor: '#F8FAFC' }]}>
+                  <View style={[styles.messageBox, { backgroundColor: colors.background }]}>
                     <ThemedText style={styles.messageText} themeColor="textSecondary">
                       "{isPremiumLocked ? 'Mensagem oculta no plano Gratuito' : lead.message}"
                     </ThemedText>
@@ -217,7 +217,7 @@ export default function DashboardLeadsScreen() {
                 {/* Ações */}
                 <View style={styles.cardActions}>
                   <TouchableOpacity 
-                    style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}
+                    style={[styles.actionBtn, { borderColor: colors.border, borderWidth: 1 }]}
                     onPress={() => handleCall(lead.phone)}
                   >
                     <Phone size={14} color="#475569" style={{ marginRight: 6 }} />
@@ -225,11 +225,11 @@ export default function DashboardLeadsScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={[styles.actionBtn, { backgroundColor: '#25D366' }]}
+                    style={[styles.actionBtn, { backgroundColor: colors.success }]}
                     onPress={() => handleContactWhatsApp(lead.phone, lead.name)}
                   >
-                    <MessageSquare size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                    <ThemedText style={[styles.actionBtnText, { color: '#FFFFFF' }]}>WhatsApp</ThemedText>
+                    <MessageSquare size={14} color={colors.backgroundElement} style={{ marginRight: 6 }} />
+                    <ThemedText style={[styles.actionBtnText, { color: colors.backgroundElement }]}>WhatsApp</ThemedText>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -251,7 +251,7 @@ export default function DashboardLeadsScreen() {
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Desbloquear Leads</ThemedText>
               <TouchableOpacity onPress={() => setShowUpgradeModal(false)} style={styles.closeBtn}>
-                <X size={20} color="#1E293B" />
+                <X size={20} color={colors.backgroundElement} />
               </TouchableOpacity>
             </View>
             <UpgradePrompt 
@@ -270,7 +270,7 @@ export default function DashboardLeadsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -278,21 +278,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   container: {
     flex: 1,
@@ -302,20 +302,20 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   statsSummary: {
-    backgroundColor: '#003E7E',
+    backgroundColor: colors.brandDarkBlue,
     padding: 20,
     borderRadius: 16,
     alignItems: 'center',
     marginBottom: 16,
   },
   statsTitle: {
-    color: '#E2E8F0',
+    color: colors.border,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   statsCount: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 36,
     fontWeight: '900',
     marginTop: 4,
@@ -350,11 +350,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   leadCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     elevation: 2,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   leadName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
   },
   lockedDetails: {
     flexDirection: 'row',
@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
   lockedLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.textSecondary,
     width: 60,
   },
   lockedValue: {
     fontSize: 12,
-    color: '#1E293B',
+    color: colors.backgroundElement,
     fontWeight: '600',
     flex: 1,
   },
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   closeBtn: {
     padding: 4,

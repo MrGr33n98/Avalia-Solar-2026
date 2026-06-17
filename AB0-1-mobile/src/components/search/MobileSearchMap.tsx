@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text } , useColorScheme } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Company } from '@/lib/api';
 import { Colors } from '@/constants/theme';
@@ -12,6 +12,9 @@ interface MobileSearchMapProps {
 }
 
 export function MobileSearchMap({ companies, userLocation, radiusKm, onSelectCompany }: MobileSearchMapProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   // Only companies with coords
   const mapCompanies = companies.filter(c => c.latitude && c.longitude);
   
@@ -67,12 +70,12 @@ export function MobileSearchMap({ companies, userLocation, radiusKm, onSelectCom
 
 const styles = StyleSheet.create({
   customMarker: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.backgroundElement,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -80,21 +83,21 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   verifiedMarker: {
-    borderColor: '#10B981',
+    borderColor: colors.success,
     borderWidth: 1.5,
   },
   markerText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: colors.brandDarkBlue,
   },
   container: {
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   map: {
     width: '100%',
@@ -105,11 +108,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
     borderRadius: 16,
   },
   emptyText: {
-    color: '#8E8E93',
+    color: colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
   }

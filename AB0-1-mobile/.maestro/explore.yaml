@@ -1,0 +1,24 @@
+appId: com.anonymous.AvaliaSolarApp
+---
+- launchApp
+- assertVisible: "Buscar instaladores"
+- tapOn: "Buscar instaladores"
+
+# Fluxo de Busca Básica
+- tapOn: "Buscar por nome ou cidade..."
+- inputText: "Solar"
+- pressKey: Enter
+
+# Interação com Filtros
+- tapOn: "Filtros"
+- tapOn: "SP"
+- tapOn: "Campinas"
+- tapOn: "Apenas empresas certificadas"
+- swipe:
+    direction: UP
+- tapOn: "Ver no Mapa"
+- assertVisible: "Limpar Filtros"
+
+# Limpa e volta
+- tapOn: "Limpar Filtros"
+- assertVisible: "Todos" # Estado limpo

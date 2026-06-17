@@ -1,0 +1,10 @@
+appId: com.anonymous.AvaliaSolarApp
+---
+- launchApp
+- assertVisible: "Olá novamente!"
+- tapOn: "E-mail"
+- inputText: "test@example.com"
+- tapOn: "Senha"
+- inputText: "password123"
+- tapOn: "Entrar"
+- assertVisible: "Explorar" # Assumindo que vai para a home

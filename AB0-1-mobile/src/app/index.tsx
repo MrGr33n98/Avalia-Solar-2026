@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   ScrollView,
@@ -188,7 +189,7 @@ export default function HomeScreen() {
   if (loading && !data) {
     return (
       <ThemedView style={styles.container}>
-        <ActivityIndicator size="large" style={{ marginTop: 50 }} color="#8B5CF6" />
+        <ActivityIndicator size="large" style={{ marginTop: 50 }} color={colors.tint} />
       </ThemedView>
     );
   }
@@ -236,7 +237,7 @@ export default function HomeScreen() {
       label: 'Inversores no precinho', 
       image: ImgInversor, 
       isPNG: false,
-      action: () => router.push('/inversores') 
+      action: () => router.push({ pathname: '/explore', params: { q: 'inversor' }}) 
     },
     { 
       id: 'paineis', 
@@ -257,14 +258,14 @@ export default function HomeScreen() {
       label: 'Baterias e Off-Grid', 
       image: ImgBaterias, 
       isPNG: true,
-      action: () => router.push('/baterias') 
+      action: () => router.push({ pathname: '/explore', params: { q: 'bateria' }}) 
     },
     { 
       id: 'suportes', 
       label: 'Estruturas com 40% OFF', 
       image: ImgSuportes, 
       isPNG: true,
-      action: () => router.push('/instalacao') 
+      action: () => router.push({ pathname: '/explore', params: { q: 'estrutura' }}) 
     },
     { 
       id: 'kits', 
@@ -286,25 +287,25 @@ export default function HomeScreen() {
             onPress={() => router.push('/select-location')}
             activeOpacity={0.7}
           >
-            <MapPin size={18} color="#8B5CF6" style={{ marginRight: 6 }} />
+            <MapPin size={18} color={colors.tint} style={{ marginRight: 6 }} />
             {isLocationLoading ? (
-              <ActivityIndicator size="small" color="#8B5CF6" style={{ marginRight: 6 }} />
+              <ActivityIndicator size="small" color={colors.tint} style={{ marginRight: 6 }} />
             ) : (
               <ThemedText style={styles.premiumLocationText}>{selectedCity} - {selectedState}</ThemedText>
             )}
-            <ChevronRight size={14} color="#8E8E93" style={{ marginLeft: 4 }} />
+            <ChevronRight size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
           </TouchableOpacity>
 
           <View style={styles.premiumHeaderIcons}>
             <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notificationBtn}>
-              <Bell color="#374151" size={22} />
+              <Bell color={colors.text} size={22} />
               {/* Badge vermelho flutuante estilo Shopee */}
               <View style={styles.notificationBadge}>
                 <ThemedText style={styles.notificationBadgeText}>4</ThemedText>
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/chat')} style={{ marginLeft: 16 }}>
-              <MessageSquare color="#374151" size={22} />
+              <MessageSquare color={colors.text} size={22} />
             </TouchableOpacity>
           </View>
         </View>
@@ -314,7 +315,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor="#8B5CF6" />
+          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={colors.tint} />
         }
       >
         
@@ -346,12 +347,12 @@ export default function HomeScreen() {
             onPress={() => router.push('/search')}
             activeOpacity={0.9}
           >
-            <Search size={18} color="#8E8E93" style={{ marginRight: 8 }} />
+            <Search size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
             <ThemedText style={styles.premiumSearchPlaceholder}>
               Buscar no Avalia Solar...
             </ThemedText>
             <TouchableOpacity style={styles.premiumFilterButton} onPress={() => setIsFilterModalVisible(true)}>
-              <SlidersHorizontal size={18} color="#8B5CF6" />
+              <SlidersHorizontal size={18} color={colors.tint} />
             </TouchableOpacity>
           </TouchableOpacity>
         </View>
@@ -455,7 +456,7 @@ export default function HomeScreen() {
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Filtros de Busca</ThemedText>
               <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
-                <ThemedText style={{ color: '#8E8E93', fontSize: 24 }}>×</ThemedText>
+                <ThemedText style={{ color: colors.textSecondary, fontSize: 24 }}>×</ThemedText>
               </TouchableOpacity>
             </View>
 
@@ -467,8 +468,8 @@ export default function HomeScreen() {
               <Switch 
                 value={filterVerifiedOnly}
                 onValueChange={setFilterVerifiedOnly}
-                trackColor={{ false: '#d1d5db', true: '#8B5CF6' }}
-                thumbColor="#ffffff"
+                trackColor={{ false: colors.border, true: colors.tint }}
+                thumbColor={colors.backgroundElement}
               />
             </View>
 
@@ -480,13 +481,13 @@ export default function HomeScreen() {
                     key={rating}
                     style={[
                       styles.ratingChip, 
-                      filterMinRating === rating && { backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }
+                      filterMinRating === rating && { backgroundColor: colors.tint, borderColor: colors.tint }
                     ]}
                     onPress={() => setFilterMinRating(rating)}
                   >
                     <ThemedText style={[
                       styles.ratingChipText,
-                      filterMinRating === rating && { color: '#ffffff' }
+                      filterMinRating === rating && { color: colors.backgroundElement }
                     ]}>
                       {rating === 0 ? 'Qualquer' : `${rating}+ Estrelas`}
                     </ThemedText>
@@ -496,7 +497,7 @@ export default function HomeScreen() {
             </View>
 
             <TouchableOpacity 
-              style={[styles.applyButton, { backgroundColor: '#8B5CF6' }]}
+              style={[styles.applyButton, { backgroundColor: colors.tint }]}
               onPress={handleSearch}
             >
               <ThemedText style={styles.applyButtonText}>Aplicar Filtros</ThemedText>
@@ -561,7 +562,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   notificationBadgeText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 9,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -762,7 +763,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.five,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: colors.surfaceSubtle,
     paddingBottom: Spacing.four,
   },
   filterLabel: {
@@ -771,7 +772,7 @@ const styles = StyleSheet.create({
   },
   filterHint: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   filterSection: {
@@ -785,15 +786,15 @@ const styles = StyleSheet.create({
   },
   ratingChip: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.backgroundElement,
   },
   ratingChipText: {
     fontSize: 13,
-    color: '#64748b',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   applyButton: {
@@ -803,7 +804,7 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   applyButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: 'bold',
   },

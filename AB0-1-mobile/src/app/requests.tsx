@@ -1,4 +1,5 @@
 import React from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -53,7 +54,7 @@ export default function RequestsScreen() {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.centerContainer}>
             <View style={[styles.iconContainer, { backgroundColor: 'rgba(32, 138, 239, 0.1)' }]}>
-              <ClipboardList size={48} color="#208AEF" />
+              <ClipboardList size={48} color={colors.tint} />
             </View>
             <ThemedText type="subtitle" style={styles.centerTitle}>
               Acesse suas solicitações
@@ -63,7 +64,7 @@ export default function RequestsScreen() {
             </ThemedText>
             
             <TouchableOpacity
-              style={[styles.loginBtn, { backgroundColor: '#208AEF' }]}
+              style={[styles.loginBtn, { backgroundColor: colors.tint }]}
               onPress={() => router.push('/profile')}
             >
               <ThemedText style={styles.loginBtnText}>Ir para Login</ThemedText>
@@ -78,13 +79,13 @@ export default function RequestsScreen() {
   if (isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
         <ThemedText style={{ marginTop: Spacing.three }}>Buscando orçamentos...</ThemedText>
       </ThemedView>
     );
   }
 
-  const leadsList = leads.length > 0 ? leads : (user.role === 'company' ? mockCompanyLeads : mockConsumerRequests);
+  const leadsList = leads;
 
   return (
     <ThemedView style={styles.container}>
@@ -106,7 +107,7 @@ export default function RequestsScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {leadsList.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <ClipboardList size={40} color="#8E8E93" />
+              <ClipboardList size={40} color={colors.textSecondary} />
               <ThemedText style={styles.emptyText}>Nenhuma solicitação encontrada</ThemedText>
             </View>
           ) : (
@@ -135,16 +136,16 @@ export default function RequestsScreen() {
                 {user.role === 'company' ? (
                   <View style={styles.companyLeadDetails}>
                     <View style={styles.infoRow}>
-                      <Mail size={14} color="#8E8E93" />
+                      <Mail size={14} color={colors.textSecondary} />
                       <ThemedText style={styles.infoText}>{lead.email}</ThemedText>
                     </View>
                     <View style={styles.infoRow}>
-                      <Phone size={14} color="#8E8E93" />
+                      <Phone size={14} color={colors.textSecondary} />
                       <ThemedText style={styles.infoText}>{lead.phone}</ThemedText>
                     </View>
                     {lead.message && (
                       <View style={styles.messageRow}>
-                        <MessageSquare size={14} color="#8E8E93" style={{ marginTop: 2 }} />
+                        <MessageSquare size={14} color={colors.textSecondary} style={{ marginTop: 2 }} />
                         <ThemedText style={styles.messageText} themeColor="textSecondary">
                           "{lead.message}"
                         </ThemedText>
@@ -154,18 +155,18 @@ export default function RequestsScreen() {
                     {/* Botões de Ação para Empresas */}
                     <View style={styles.actionsRow}>
                       <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: '#25D366' }]}
+                        style={[styles.actionBtn, { backgroundColor: colors.success }]}
                         onPress={() => handleContactWhatsApp(lead.phone, lead.name)}
                       >
-                        <MessageSquare size={16} color="#ffffff" />
+                        <MessageSquare size={16} color={colors.backgroundElement} />
                         <ThemedText style={styles.actionBtnText}>WhatsApp</ThemedText>
                       </TouchableOpacity>
                       
                       <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: '#208AEF' }]}
+                        style={[styles.actionBtn, { backgroundColor: colors.tint }]}
                         onPress={() => Linking.openURL(`mailto:${lead.email}`)}
                       >
-                        <Mail size={16} color="#ffffff" />
+                        <Mail size={16} color={colors.backgroundElement} />
                         <ThemedText style={styles.actionBtnText}>E-mail</ThemedText>
                       </TouchableOpacity>
                     </View>
@@ -174,14 +175,14 @@ export default function RequestsScreen() {
                   // Detalhes específicos de solicitações enviadas por Consumidores
                   <View style={styles.consumerRequestDetails}>
                     <View style={styles.infoRow}>
-                      <Info size={14} color="#8E8E93" />
+                      <Info size={14} color={colors.textSecondary} />
                       <ThemedText style={styles.infoText}>
                         Vertical: {lead.vertical_label || 'Energia Solar Residencial'}
                       </ThemedText>
                     </View>
                     {lead.message && (
                       <View style={styles.messageRow}>
-                        <MessageSquare size={14} color="#8E8E93" style={{ marginTop: 2 }} />
+                        <MessageSquare size={14} color={colors.textSecondary} style={{ marginTop: 2 }} />
                         <ThemedText style={styles.messageText} themeColor="textSecondary">
                           Sua mensagem: "{lead.message}"
                         </ThemedText>
@@ -204,63 +205,19 @@ const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
     case 'novo':
     case 'new':
-      return { bg: 'rgba(32, 138, 239, 0.1)', text: '#208AEF' };
+      return { bg: 'rgba(32, 138, 239, 0.1)', text: colors.tint };
     case 'respondido':
     case 'answered':
     case 'completed':
-      return { bg: 'rgba(16, 185, 129, 0.1)', text: '#10B981' };
+      return { bg: 'rgba(16, 185, 129, 0.1)', text: colors.success };
     case 'cancelado':
     case 'cancelled':
-      return { bg: 'rgba(229, 62, 62, 0.1)', text: '#E53E3E' };
+      return { bg: 'rgba(229, 62, 62, 0.1)', text: colors.danger };
     default:
-      return { bg: 'rgba(142, 142, 147, 0.1)', text: '#8E8E93' };
+      return { bg: 'rgba(142, 142, 147, 0.1)', text: colors.textSecondary };
   }
 };
 
-// Mocks locais de fallback para fins de visualização
-const mockCompanyLeads = [
-  {
-    id: 1,
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@email.com',
-    phone: '11999998888',
-    message: 'Gostaria de um orçamento para instalação de 10 placas solares na minha casa em Campinas.',
-    created_at: '14/06/2026',
-    status: 'novo',
-    status_label: 'Novo',
-  },
-  {
-    id: 2,
-    name: 'Fernanda Costa',
-    email: 'fernanda.costa@email.com',
-    phone: '11988887777',
-    message: 'Procuro orçamento de carregador veicular elétrico Wallbox para minha garagem em prédio residencial.',
-    created_at: '12/06/2026',
-    status: 'respondido',
-    status_label: 'Respondido',
-  },
-];
-
-const mockConsumerRequests = [
-  {
-    id: 1,
-    company_name: 'Solar SP Distribuidora',
-    vertical_label: 'Energia Solar Residencial',
-    message: 'Solicitação de cotação para projeto residencial.',
-    created_at: '14/06/2026',
-    status: 'novo',
-    status_label: 'Enviado',
-  },
-  {
-    id: 2,
-    company_name: 'EcoVolt Engenharia',
-    vertical_label: 'Mobilidade Elétrica',
-    message: 'Wallbox instalado em garagem subterrânea.',
-    created_at: '10/06/2026',
-    status: 'respondido',
-    status_label: 'Respondido',
-  },
-];
 
 const styles = StyleSheet.create({
   container: {
@@ -303,7 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loginBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -327,7 +284,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   emptyText: {
-    color: '#8E8E93',
+    color: colors.textSecondary,
     fontSize: 14,
   },
   card: {
@@ -398,7 +355,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 12,
     fontWeight: 'bold',
   },

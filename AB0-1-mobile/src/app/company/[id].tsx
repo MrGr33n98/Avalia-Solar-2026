@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -108,7 +109,7 @@ export default function CompanyDetailScreen() {
   if (isLoadingCompany) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
         <ThemedText style={{ marginTop: Spacing.three }}>Carregando dados da empresa...</ThemedText>
       </ThemedView>
     );
@@ -134,13 +135,13 @@ export default function CompanyDetailScreen() {
           {company.cover_url ? (
             <Image source={{ uri: company.cover_url }} style={styles.coverImage} />
           ) : (
-            <View style={[styles.coverPlaceholder, { backgroundColor: '#208AEF' }]}>
-              <Sun color="#ffffff" size={48} />
+            <View style={[styles.coverPlaceholder, { backgroundColor: colors.tint }]}>
+              <Sun color={colors.backgroundElement} size={48} />
             </View>
           )}
           
           <TouchableOpacity style={styles.iconBack} onPress={() => router.back()}>
-            <ArrowLeft color="#ffffff" size={24} />
+            <ArrowLeft color={colors.backgroundElement} size={24} />
           </TouchableOpacity>
         </View>
 
@@ -161,12 +162,12 @@ export default function CompanyDetailScreen() {
                   {company.name}
                 </ThemedText>
                 {company.verified && (
-                  <ShieldCheck size={18} color="#10B981" style={{ marginLeft: 6 }} />
+                  <ShieldCheck size={18} color={colors.success} style={{ marginLeft: 6 }} />
                 )}
               </View>
               
               <View style={styles.ratingRow}>
-                <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                <Star size={14} color={colors.starYellow} fill={colors.starYellow} />
                 <ThemedText style={styles.ratingText}>
                   {company.rating ? company.rating.toFixed(1) : '5.0'}
                 </ThemedText>
@@ -179,7 +180,7 @@ export default function CompanyDetailScreen() {
 
           {/* Localização */}
           <View style={styles.locationContainer}>
-            <MapPin size={14} color="#8E8E93" />
+            <MapPin size={14} color={colors.textSecondary} />
             <ThemedText style={styles.locationText} themeColor="textSecondary">
               {company.address ? `${company.address}, ` : ''}{company.city} - {company.state}
             </ThemedText>
@@ -189,10 +190,10 @@ export default function CompanyDetailScreen() {
         {/* CTA Solicitar Orçamento */}
         <View style={styles.ctaContainer}>
           <TouchableOpacity
-            style={[styles.ctaButton, { backgroundColor: '#208AEF' }]}
+            style={[styles.ctaButton, { backgroundColor: colors.tint }]}
             onPress={() => router.push(`/company/${company.id}/lead`)}
           >
-            <ClipboardList size={18} color="#ffffff" />
+            <ClipboardList size={18} color={colors.backgroundElement} />
             <ThemedText style={styles.ctaButtonText}>Solicitar Orçamento Grátis</ThemedText>
           </TouchableOpacity>
         </View>
@@ -232,8 +233,8 @@ export default function CompanyDetailScreen() {
                 style={[styles.contactItem, { backgroundColor: '#F97316' }]}
                 onPress={() => router.push(`/p2p_chat?company_id=${company.id}`)}
               >
-                <MessageSquare size={16} color="#ffffff" />
-                <ThemedText style={[styles.contactItemText, { color: '#ffffff', fontWeight: 'bold' }]}>
+                <MessageSquare size={16} color={colors.backgroundElement} />
+                <ThemedText style={[styles.contactItemText, { color: colors.backgroundElement, fontWeight: 'bold' }]}>
                   Chat Direto (OLX Style)
                 </ThemedText>
               </TouchableOpacity>
@@ -247,7 +248,7 @@ export default function CompanyDetailScreen() {
                   openLink(`tel:${company.phone}`);
                 }}
               >
-                <Phone size={16} color="#208AEF" />
+                <Phone size={16} color={colors.tint} />
                 <ThemedText style={styles.contactItemText}>{company.phone}</ThemedText>
               </TouchableOpacity>
             )}
@@ -257,7 +258,7 @@ export default function CompanyDetailScreen() {
                 style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
                 onPress={() => openLink(`mailto:${company.email}`)}
               >
-                <Mail size={16} color="#208AEF" />
+                <Mail size={16} color={colors.tint} />
                 <ThemedText style={styles.contactItemText}>{company.email}</ThemedText>
               </TouchableOpacity>
             )}
@@ -267,7 +268,7 @@ export default function CompanyDetailScreen() {
                 style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
                 onPress={() => openLink(company.website!.startsWith('http') ? company.website! : `https://${company.website}`)}
               >
-                <Globe size={16} color="#208AEF" />
+                <Globe size={16} color={colors.tint} />
                 <ThemedText style={styles.contactItemText}>{company.website}</ThemedText>
               </TouchableOpacity>
             )}
@@ -292,8 +293,8 @@ export default function CompanyDetailScreen() {
                   <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
                     <Star
                       size={28}
-                      color="#F59E0B"
-                      fill={star <= newRating ? '#F59E0B' : 'transparent'}
+                      color={colors.starYellow}
+                      fill={star <= newRating ? colors.starYellow : 'transparent'}
                     />
                   </TouchableOpacity>
                 ))}
@@ -301,7 +302,7 @@ export default function CompanyDetailScreen() {
 
               <TextInput
                 placeholder="Título da avaliação (ex: Excelente serviço!)"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 style={[styles.formInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
                 value={newTitle}
                 onChangeText={setNewTitle}
@@ -309,7 +310,7 @@ export default function CompanyDetailScreen() {
 
               <TextInput
                 placeholder="Escreva seu comentário detalhado sobre a empresa..."
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 style={[styles.formTextarea, { color: colors.text, borderColor: colors.backgroundSelected }]}
                 multiline
                 numberOfLines={4}
@@ -318,15 +319,15 @@ export default function CompanyDetailScreen() {
               />
 
               <TouchableOpacity
-                style={[styles.submitReviewBtn, { backgroundColor: '#208AEF' }]}
+                style={[styles.submitReviewBtn, { backgroundColor: colors.tint }]}
                 onPress={handleCreateReview}
                 disabled={createReviewMutation.isPending}
               >
                 {createReviewMutation.isPending ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color={colors.backgroundElement} />
                 ) : (
                   <>
-                    <Send size={14} color="#ffffff" />
+                    <Send size={14} color={colors.backgroundElement} />
                     <ThemedText style={styles.submitReviewBtnText}>Enviar Avaliação</ThemedText>
                   </>
                 )}
@@ -336,7 +337,7 @@ export default function CompanyDetailScreen() {
 
           {/* Listagem de Reviews */}
           {isLoadingReviews ? (
-            <ActivityIndicator color="#208AEF" />
+            <ActivityIndicator color={colors.tint} />
           ) : reviews.length === 0 ? (
             <ThemedText style={styles.emptyReviewsText} themeColor="textSecondary">
               Nenhuma avaliação para esta empresa ainda. Seja o primeiro a avaliar!
@@ -352,8 +353,8 @@ export default function CompanyDetailScreen() {
                         <Star
                           key={s}
                           size={12}
-                          color="#F59E0B"
-                          fill={s <= review.rating ? '#F59E0B' : 'transparent'}
+                          color={colors.starYellow}
+                          fill={s <= review.rating ? colors.starYellow : 'transparent'}
                         />
                       ))}
                     </View>
@@ -403,10 +404,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.two,
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
   },
   backBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontWeight: 'bold',
   },
   coverContainer: {
@@ -451,22 +452,22 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: Spacing.two,
     borderWidth: 3,
-    borderColor: '#ffffff',
-    backgroundColor: '#ffffff',
+    borderColor: colors.backgroundElement,
+    backgroundColor: colors.backgroundElement,
   },
   logoPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: Spacing.two,
     borderWidth: 3,
-    borderColor: '#ffffff',
+    borderColor: colors.backgroundElement,
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderLetter: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#208AEF',
+    color: colors.tint,
   },
   titleInfo: {
     flex: 1,
@@ -493,7 +494,7 @@ const styles = StyleSheet.create({
   },
   reviewCountText: {
     fontSize: 13,
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   ctaButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   addReviewLink: {
-    color: '#208AEF',
+    color: colors.tint,
     fontSize: 13,
     fontWeight: 'bold',
   },
@@ -598,7 +599,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
   },
   submitReviewBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 13,
     fontWeight: 'bold',
   },
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   viewServicesLink: {
-    color: '#208AEF',
+    color: colors.tint,
     fontSize: 13,
     fontWeight: 'bold',
   },
@@ -674,7 +675,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   viewAllReviewsText: {
-    color: '#208AEF',
+    color: colors.tint,
     fontSize: 13,
     fontWeight: 'bold',
   },

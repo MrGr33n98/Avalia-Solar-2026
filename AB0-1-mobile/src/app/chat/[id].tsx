@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } , useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -15,6 +16,8 @@ type OptimisticMessage = Message & { isPending?: boolean };
 
 export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams();
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
   const queryClient = useQueryClient();
   const conversationId = Number(id);
@@ -26,7 +29,20 @@ export default function ChatRoomScreen() {
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: () => conversationsApi.getMessages(conversationId),
-    refetchInterval: 3000, // Polling para simular tempo real
+  });
+
+  // Conectar ao ActionCable para tempo real
+  useActionCable({
+    channel: 'ConversationChannel',
+    params: { conversation_id: conversationId },
+    onReceived: (data) => {
+      // Atualiza o cache do React Query com a nova mensagem
+      queryClient.setQueryData<Message[]>(['messages', conversationId], (old = []) => {
+        // Evita duplicatas se a mensagem for a mesma que enviamos via optimistic update
+        if (old.some(m => m.id === data.id)) return old;
+        return [...old, data];
+      });
+    },
   });
 
   // Mutação com Optimistic Update
@@ -97,7 +113,10 @@ export default function ChatRoomScreen() {
     
     return (
       <View style={[styles.messageWrapper, isUser ? styles.messageWrapperRight : styles.messageWrapperLeft]}>
-        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : styles.messageBubbleCompany]}>
+        <View style={[
+          styles.messageBubble, 
+          isUser ? [styles.messageBubbleUser, { backgroundColor: colors.brandBlue }] : [styles.messageBubbleCompany, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]
+        ]}>
           
           {item.attachment_url && (
             <Image 
@@ -108,22 +127,22 @@ export default function ChatRoomScreen() {
           )}
 
           {item.body ? (
-            <ThemedText style={[styles.messageText, isUser && styles.messageTextUser]}>
+            <ThemedText style={[styles.messageText, isUser ? styles.messageTextUser : { color: colors.text }]}>
               {item.body}
             </ThemedText>
           ) : null}
 
           <View style={styles.messageFooter}>
-            <ThemedText style={[styles.messageTime, isUser && styles.messageTimeUser]}>
+            <ThemedText style={[styles.messageTime, isUser ? styles.messageTimeUser : { color: colors.textSecondary }]}>
               {time}
             </ThemedText>
             {isUser && (
               item.isPending ? (
-                <Clock size={12} color="#BFDBFE" style={styles.statusIcon} />
+                <Clock size={12} color={colors.background} style={styles.statusIcon} />
               ) : item.read ? (
-                <CheckCheck size={12} color="#93C5FD" style={styles.statusIcon} />
+                <CheckCheck size={12} color={colors.background} style={styles.statusIcon} />
               ) : (
-                <Check size={12} color="#93C5FD" style={styles.statusIcon} />
+                <Check size={12} color={colors.background} style={styles.statusIcon} />
               )
             )}
           </View>
@@ -134,20 +153,20 @@ export default function ChatRoomScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: '#FFFFFF' }} />
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }} />
       
       {/* Header do Chat */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <Image 
           source={{ uri: 'https://ui-avatars.com/api/?name=Chat&background=0D8ABC&color=fff' }} 
           style={styles.headerAvatar} 
         />
         <View style={styles.headerInfo}>
-          <ThemedText style={styles.companyName}>Comunicação</ThemedText>
-          <ThemedText style={styles.onlineStatus}>Online</ThemedText>
+          <ThemedText style={[styles.companyName, { color: colors.text }]}>Comunicação</ThemedText>
+          <ThemedText style={[styles.onlineStatus, { color: colors.success }]}>Online</ThemedText>
         </View>
       </View>
 
@@ -156,9 +175,7 @@ export default function ChatRoomScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#208AEF" />
-          </View>
+          <MessageSkeleton />
         ) : (
           <FlatList
             data={messages}
@@ -170,35 +187,39 @@ export default function ChatRoomScreen() {
 
         {/* Preview da Imagem Selecionada */}
         {selectedImage && (
-          <View style={styles.imagePreviewContainer}>
+          <View style={[styles.imagePreviewContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
             <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
             <TouchableOpacity style={styles.removeImageBtn} onPress={() => setSelectedImage(null)}>
-              <X size={16} color="#FFFFFF" />
+              <X size={16} color={colors.backgroundElement} />
             </TouchableOpacity>
           </View>
         )}
 
         {/* Barra de Input */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <TouchableOpacity style={styles.attachButton} onPress={handlePickImage}>
-            <Paperclip size={20} color="#64748B" />
+            <Paperclip size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, { backgroundColor: colors.backgroundSelected, color: colors.text }]}
             placeholder="Digite uma mensagem..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.textSecondary}
             value={inputText}
             onChangeText={setInputText}
             multiline
           />
           
           <TouchableOpacity 
-            style={[styles.sendButton, (!inputText.trim() && !selectedImage) && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton, 
+              { backgroundColor: colors.brandBlue },
+              (!inputText.trim() && !selectedImage) && { backgroundColor: colors.textSecondary }
+            ]}
             onPress={sendMessage}
             disabled={!inputText.trim() && !selectedImage}
           >
-            <Send size={18} color="#FFFFFF" />
+            <Send size={18} color={colors.backgroundElement} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -209,16 +230,13 @@ export default function ChatRoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   backButton: {
     padding: Spacing.one,
@@ -236,11 +254,11 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
   },
   onlineStatus: {
     fontSize: 12,
-    color: '#10B981',
+    color: colors.success,
   },
   keyboardView: {
     flex: 1,
@@ -271,29 +289,29 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   messageBubbleUser: {
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     borderBottomRightRadius: 4,
   },
   messageBubbleCompany: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
   attachmentImage: {
     width: 200,
     height: 150,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.border,
   },
   messageText: {
     fontSize: 14,
-    color: '#111827',
+    color: colors.text,
     lineHeight: 20,
   },
   messageTextUser: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
   },
   messageFooter: {
     flexDirection: 'row',
@@ -303,7 +321,7 @@ const styles = StyleSheet.create({
   },
   messageTime: {
     fontSize: 10,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   messageTimeUser: {
     color: '#BFDBFE',
@@ -313,9 +331,9 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     padding: Spacing.three,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: colors.border,
     flexDirection: 'row',
   },
   imagePreview: {
@@ -336,9 +354,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: colors.border,
   },
   attachButton: {
     padding: Spacing.two,
@@ -346,17 +364,17 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     borderRadius: 20,
     paddingHorizontal: Spacing.three,
     paddingTop: 12,
     paddingBottom: 12,
     maxHeight: 100,
     fontSize: 14,
-    color: '#111827',
+    color: colors.text,
   },
   sendButton: {
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -366,6 +384,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   sendButtonDisabled: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: colors.textSecondary,
   },
 });

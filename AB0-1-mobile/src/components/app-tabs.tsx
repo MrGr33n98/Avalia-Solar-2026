@@ -8,8 +8,8 @@ export default function AppTabs() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   
   // Cores personalizadas baseadas no app de referência
-  const activeColor = colors.brandDarkBlue || '#003E7E'; // Azul Escuro da referência
-  const inactiveColor = scheme === 'dark' ? '#64748B' : '#94A3B8';
+  const activeColor = colors.brandDarkBlue || colors.brandDarkBlue; // Azul Escuro da referência
+  const inactiveColor = scheme === 'dark' ? colors.textSecondary : colors.textSecondary;
 
   return (
     <Tabs
@@ -17,7 +17,7 @@ export default function AppTabs() {
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.backgroundElement,
           borderTopColor: 'transparent',
           height: Platform.OS === 'ios' ? 85 : 65,
           paddingBottom: Platform.OS === 'ios' ? 25 : 10,

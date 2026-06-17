@@ -14,7 +14,9 @@ import { ArrowLeft, Star, Heart, Sun, Battery, Sparkles } from 'lucide-react-nat
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import { useQuery } from '@tanstack/react-query';
 import { useCompareStore } from '@/store/compare';
+import { productsApi } from '@/lib/api';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,83 +24,27 @@ export default function ProductDetailScreen() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
 
-  // Mock dinâmico de produtos com base no ID
-  const productDatabase: Record<string, {
-    name: string;
-    brand: string;
-    category: string;
-    rating: number;
-    price: string;
-    efficiency: string;
-    power: string;
-    warranty: string;
-    description: string;
-    specs: Record<string, string>;
-  }> = {
-    '1': {
-      name: 'Inversor Fronius Primo 6.0-1',
-      brand: 'Fronius',
-      category: 'Inversores',
-      rating: 4.8,
-      price: 'R$ 8.990,00',
-      efficiency: '97.8%',
-      power: '6.0 kW',
-      warranty: '10 anos',
-      description: 'Inversor monofásico ideal para residências de alto consumo. Possui design SnapINverter inteligente, monitoramento integrado via web e excelente flexibilidade de montagem estrutural.',
-      specs: {
-        'Tensão MPPT': '80 V - 800 V',
-        'Tensão de Entrada Máx': '1000 V',
-        'Eficiência Euro': '97.8%',
-        'Corrente de Saída Máx': '26.1 A',
-        'Peso': '21.5 kg',
-      }
-    },
-    '2': {
-      name: 'Inversor Huawei Sun2000 5KTL',
-      brand: 'Huawei',
-      category: 'Inversores',
-      rating: 4.6,
-      price: 'R$ 6.450,00',
-      efficiency: '98.4%',
-      power: '5.0 kW',
-      warranty: '10 anos',
-      description: 'O inversor inteligente da Huawei SUN2000 conta com proteção ativa contra arcos elétricos (AFCI) baseada em inteligência artificial e compatibilidade direta com baterias Luna2000.',
-      specs: {
-        'Tensão MPPT': '140 V - 980 V',
-        'Tensão de Entrada Máx': '1100 V',
-        'Eficiência Máx': '98.4%',
-        'Peso': '17.0 kg',
-        'Proteção': 'IP66',
-      }
-    },
-    '3': {
-      name: 'Bateria BYD Battery-Box HVS 7.7',
-      brand: 'BYD',
-      category: 'Baterias',
-      rating: 4.9,
-      price: 'R$ 23.400,00',
-      efficiency: '96.2%',
-      power: '7.68 kWh',
-      warranty: '10 anos',
-      description: 'Bateria de alta tensão e modular com tecnologia LFP (Fosfato de Ferro Lítio) para máxima segurança e longa vida útil. Ideal para sistemas solares com backup ou híbridos Off-Grid.',
-      specs: {
-        'Capacidade Nominal': '7.68 kWh',
-        'Tensão Nominal': '307 V',
-        'Faixa de Operação': '-10 °C a +50 °C',
-        'Peso': '129 kg',
-        'Tecnologia': 'LFP (Cobalt-Free)',
-      }
-    }
-  };
+  // Buscar produto da API real
+  const { data: product, isLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => productsApi.getById(id as string),
+    enabled: !!id,
+  });
 
-  const product = productDatabase[id!] || productDatabase['1'];
+  if (isLoading || !product) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ThemedText>Carregando produto...</ThemedText>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.backgroundElement }]}>
         <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.surfaceSubtle }]} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={[styles.headerTitle, { color: colors.text }]}>Detalhes do Produto</ThemedText>
         <TouchableOpacity style={[styles.favoriteButton, { backgroundColor: colors.surfaceSubtle }]}>
@@ -112,9 +58,9 @@ export default function ProductDetailScreen() {
         <View style={styles.imageContainer}>
           <View style={[styles.imagePlaceholder, { backgroundColor: colors.backgroundSelected }]}>
             {product.category === 'Inversores' ? (
-              <Sun color="#208AEF" size={96} />
+              <Sun color={colors.tint} size={96} />
             ) : (
-              <Battery color="#10B981" size={96} />
+              <Battery color={colors.success} size={96} />
             )}
           </View>
         </View>
@@ -125,7 +71,7 @@ export default function ProductDetailScreen() {
           <ThemedText type="subtitle" style={[styles.nameText, { color: colors.text }]}>{product.name}</ThemedText>
           
           <View style={styles.ratingRow}>
-            <Star size={16} color="#F59E0B" fill="#F59E0B" />
+            <Star size={16} color={colors.starYellow} fill={colors.starYellow} />
             <ThemedText style={styles.ratingText}>{product.rating.toFixed(1)}</ThemedText>
             <ThemedText style={styles.categoryBadge} themeColor="textSecondary">
               {product.category}
@@ -167,10 +113,10 @@ export default function ProductDetailScreen() {
           </View>
 
           <View style={styles.specsTable}>
-            {Object.entries(product.specs).map(([key, val], idx) => (
+            {product.specs && Object.entries(product.specs).map(([key, val], idx) => (
               <View key={idx} style={[styles.specsRow, { borderBottomColor: colors.backgroundSelected }]}>
                 <ThemedText style={styles.specKey} themeColor="textSecondary">{key}</ThemedText>
-                <ThemedText style={styles.specVal}>{val}</ThemedText>
+                <ThemedText style={styles.specVal}>{String(val)}</ThemedText>
               </View>
             ))}
           </View>
@@ -188,7 +134,7 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.quoteButton, { backgroundColor: colors.brandDarkBlue || '#003E7E' }]}
+          style={[styles.quoteButton, { backgroundColor: colors.brandDarkBlue || colors.brandDarkBlue }]}
           onPress={() => router.push('/request-quote')}
         >
           <ThemedText style={styles.quoteButtonText}>Solicitar Orçamento</ThemedText>
@@ -213,7 +159,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -225,7 +171,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -368,7 +314,7 @@ const styles = StyleSheet.create({
     height: 48,
   },
   quoteButtonText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 14,
     fontWeight: 'bold',
   },

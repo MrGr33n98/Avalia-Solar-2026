@@ -59,8 +59,8 @@ export const FeaturedCompanies = ({ companies, favorites, onToggleFavorite, onPr
               <TouchableOpacity onPress={() => onToggleFavorite(company.id)} style={styles.favoriteButton}>
                 <Heart
                   size={18}
-                  color={isFav ? '#E53E3E' : '#8E8E93'}
-                  fill={isFav ? '#E53E3E' : 'transparent'}
+                  color={isFav ? colors.danger : colors.textSecondary}
+                  fill={isFav ? colors.danger : 'transparent'}
                 />
               </TouchableOpacity>
             </View>
@@ -71,20 +71,20 @@ export const FeaturedCompanies = ({ companies, favorites, onToggleFavorite, onPr
                   {company.name}
                 </ThemedText>
                 {company.isVerified && (
-                  <ShieldCheck size={14} color="#10B981" style={{ marginLeft: 2 }} />
+                  <ShieldCheck size={14} color={colors.success} style={{ marginLeft: 2 }} />
                 )}
               </View>
               
-              <ThemedText style={styles.companySubname} numberOfLines={1}>
+              <ThemedText style={[styles.companySubname, { color: colors.textSecondary }]} numberOfLines={1}>
                 {company.city} - {company.state}
               </ThemedText>
 
               <View style={styles.ratingRow}>
-                <Star size={12} color="#F59E0B" fill="#F59E0B" style={{ marginRight: 2 }} />
+                <Star size={12} color={colors.starYellow} fill={colors.starYellow} style={{ marginRight: 2 }} />
                 <ThemedText style={styles.ratingText}>
                   {company.ratingAvg ? company.ratingAvg.toFixed(1) : '0.0'}
                 </ThemedText>
-                <ThemedText style={styles.reviewCountText}>
+                <ThemedText style={[styles.reviewCountText, { color: colors.textSecondary }]}>
                   ({company.reviewsCount || 0})
                 </ThemedText>
               </View>
@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
   },
   companySubname: {
     fontSize: 10,
-    color: '#8E8E93',
   },
   ratingRow: {
     flexDirection: 'row',
@@ -163,6 +162,5 @@ const styles = StyleSheet.create({
   },
   reviewCountText: {
     fontSize: 10,
-    color: '#8E8E93',
   },
 });

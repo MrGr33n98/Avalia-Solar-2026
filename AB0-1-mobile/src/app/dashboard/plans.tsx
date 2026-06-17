@@ -120,13 +120,13 @@ export default function DashboardPlansScreen() {
   const getPlanIcon = (tier?: string) => {
     switch (tier) {
       case 'essential':
-        return <ShieldCheck size={24} color="#10B981" />;
+        return <ShieldCheck size={24} color={colors.success} />;
       case 'pro':
-        return <Sparkles size={24} color="#F59E0B" />;
+        return <Sparkles size={24} color={colors.starYellow} />;
       case 'enterprise':
-        return <Zap size={24} color="#8B5CF6" />;
+        return <Zap size={24} color={colors.tint} />;
       default:
-        return <Award size={24} color="#94A3B8" />;
+        return <Award size={24} color={colors.textSecondary} />;
     }
   };
 
@@ -178,7 +178,7 @@ export default function DashboardPlansScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#003E7E" />
+        <ActivityIndicator size="large" color={colors.brandDarkBlue} />
         <ThemedText style={{ marginTop: 12 }}>Carregando opções de planos...</ThemedText>
       </SafeAreaView>
     );
@@ -195,7 +195,7 @@ export default function DashboardPlansScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Planos & Assinaturas</ThemedText>
         <View style={{ width: 40 }} />
@@ -205,7 +205,7 @@ export default function DashboardPlansScreen() {
         
         {/* Banner Informativo */}
         <View style={styles.banner}>
-          <ShieldCheck color="#FFFFFF" size={24} />
+          <ShieldCheck color={colors.backgroundElement} size={24} />
           <View style={styles.bannerText}>
             <ThemedText style={styles.bannerTitle}>Potencialize suas vendas</ThemedText>
             <ThemedText style={styles.bannerSubtitle}>Escolha o plano ideal e apareça para mais clientes qualificados.</ThemedText>
@@ -224,8 +224,8 @@ export default function DashboardPlansScreen() {
               <View key={plan.id} style={[styles.planCard, isCurrent && styles.currentPlanCard]}>
                 
                 {badge && (
-                  <View style={[styles.planBadge, { backgroundColor: isCurrent ? '#FFFBEB' : '#F5F3FF' }]}>
-                    <ThemedText style={[styles.badgeText, { color: isCurrent ? '#F59E0B' : '#8B5CF6' }]}>
+                  <View style={[styles.planBadge, { backgroundColor: isCurrent ? colors.starYellow + "10" : colors.tint + "10" }]}>
+                    <ThemedText style={[styles.badgeText, { color: isCurrent ? colors.starYellow : colors.tint }]}>
                       {badge}
                     </ThemedText>
                   </View>
@@ -254,7 +254,7 @@ export default function DashboardPlansScreen() {
                 <View style={styles.featuresList}>
                   {featuresList.map((feat, fidx) => (
                     <View key={fidx} style={styles.featureRow}>
-                      <ShieldCheck size={14} color="#10B981" style={{ marginRight: 8 }} />
+                      <ShieldCheck size={14} color={colors.success} style={{ marginRight: 8 }} />
                       <ThemedText style={styles.featureText}>{feat}</ThemedText>
                     </View>
                   ))}
@@ -265,19 +265,19 @@ export default function DashboardPlansScreen() {
                     styles.actionBtn, 
                     { 
                       backgroundColor: isCurrent 
-                        ? '#E2E8F0' 
+                        ? colors.border 
                         : plan.plan_tier_template === 'enterprise' 
-                          ? '#8B5CF6' 
-                          : '#003E7E' 
+                          ? colors.tint 
+                          : colors.brandDarkBlue 
                     }
                   ]}
                   onPress={() => handleUpgrade(plan)}
                   disabled={isCurrent || isCheckoutLoading}
                 >
                   {isCheckoutLoading ? (
-                    <ActivityIndicator color={isCurrent ? '#64748B' : '#FFFFFF'} />
+                    <ActivityIndicator color={isCurrent ? colors.textSecondary : colors.backgroundElement} />
                   ) : (
-                    <ThemedText style={[styles.actionBtnText, { color: isCurrent ? '#64748B' : '#FFFFFF' }]}>
+                    <ThemedText style={[styles.actionBtnText, { color: isCurrent ? colors.textSecondary : colors.backgroundElement }]}>
                       {isCurrent ? 'Plano Atual' : 'Contratar Plano'}
                     </ThemedText>
                   )}
@@ -295,7 +295,7 @@ export default function DashboardPlansScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -303,21 +303,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   container: {
     flex: 1,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   banner: {
     flexDirection: 'row',
-    backgroundColor: '#003E7E',
+    backgroundColor: colors.brandDarkBlue,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
@@ -339,12 +339,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: '700',
   },
   bannerSubtitle: {
-    color: '#E2E8F0',
+    color: colors.border,
     fontSize: 11,
     lineHeight: 16,
     marginTop: 2,
@@ -353,11 +353,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   planCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     position: 'relative',
     elevation: 2,
     shadowColor: '#000000',
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   currentPlanCard: {
-    borderColor: '#F59E0B',
+    borderColor: colors.starYellow,
     borderWidth: 2,
   },
   planBadge: {
@@ -393,14 +393,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   planName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   planPrice: {
     fontSize: 13,
@@ -410,13 +410,13 @@ const styles = StyleSheet.create({
   },
   planDescription: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginTop: 10,
     lineHeight: 16,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     marginVertical: 16,
   },
   featuresList: {

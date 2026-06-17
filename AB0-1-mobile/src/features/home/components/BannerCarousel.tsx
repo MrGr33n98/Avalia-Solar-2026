@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View, NativeSyntheticEvent, NativeScrollEvent } , useColorScheme } from 'react-native';
 import { Image } from 'expo-image';
 import { Spacing } from '@/constants/theme';
 
@@ -94,7 +95,6 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: 150,
     borderRadius: 14,
-    backgroundColor: '#F1F5F9',
   },
   pagination: {
     flexDirection: 'row',
@@ -109,10 +109,30 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 16,
-    backgroundColor: '#8B5CF6', // Roxo premium como o da referência
   },
   inactiveDot: {
     width: 6,
-    backgroundColor: '#CBD5E1',
+  },
+});
+colors.surfaceSubtle',
+  },
+  pagination: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
+  },
+  activeDot: {
+    width: 16,
+    backgroundColor: colors.tint, // Roxo premium como o da referência
+  },
+  inactiveDot: {
+    width: 6,
+    backgroundColor: colors.border,
   },
 });

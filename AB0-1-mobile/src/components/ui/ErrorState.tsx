@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, TouchableOpacity } , useColorScheme } from 'react-native';
 import { AlertCircle, RefreshCw } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { Colors, Spacing } from '@/constants/theme';
@@ -15,6 +16,9 @@ export function ErrorState({
   message = 'Não foi possível carregar os dados. Tente novamente mais tarde.', 
   onRetry 
 }: ErrorStateProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
@@ -27,7 +31,7 @@ export function ErrorState({
 
       {onRetry && (
         <TouchableOpacity style={styles.button} onPress={onRetry}>
-          <RefreshCw size={18} color="#FFFFFF" style={styles.buttonIcon} />
+          <RefreshCw size={18} color={colors.backgroundElement} style={styles.buttonIcon} />
           <ThemedText style={styles.buttonText}>Tentar Novamente</ThemedText>
         </TouchableOpacity>
       )}
@@ -68,7 +72,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontWeight: '600',
     fontSize: 14,
   },

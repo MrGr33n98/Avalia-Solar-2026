@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 16,
     marginLeft: 4,
-    color: '#8E8E93', // Pode usar themeColor depois se quiser, mas deixamos similar ao original
+    color: colors.textSecondary, // Pode usar themeColor depois se quiser, mas deixamos similar ao original
   },
   itemRow: {
     flexDirection: 'row',

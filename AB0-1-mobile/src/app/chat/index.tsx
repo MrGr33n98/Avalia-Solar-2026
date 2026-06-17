@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl, useColorScheme } , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ThemedText } from '@/components/themed-text';
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   unreadText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 10,
     fontWeight: 'bold',
   },

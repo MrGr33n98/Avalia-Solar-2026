@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, View } , useColorScheme } from 'react-native';
 import { Inbox } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { Spacing } from '@/constants/theme';
@@ -11,10 +12,13 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ title, subtitle, icon }: EmptyStateProps) {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        {icon || <Inbox size={48} color="#94A3B8" />}
+        {icon || <Inbox size={48} color={colors.textSecondary} />}
       </View>
       <ThemedText style={styles.title}>{title}</ThemedText>
       {subtitle && (

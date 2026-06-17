@@ -1,4 +1,5 @@
 import React from 'react';
+import { Colors } from '@/constants/theme';
 import { StyleSheet, ScrollView, View, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Trash2, CheckCircle2, ShieldCheck, Zap, Clock } from 'lucide-react-native';
@@ -61,7 +62,7 @@ export default function CompareScreen() {
         ) : (
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.disclaimerBox}>
-              <ShieldCheck size={20} color="#10B981" />
+              <ShieldCheck size={20} color={colors.success} />
               <ThemedText style={styles.disclaimerText}>
                 As propostas abaixo são estimativas baseadas na média de mercado da empresa. Solicite um orçamento final no Chat.
               </ThemedText>
@@ -94,7 +95,7 @@ export default function CompareScreen() {
                   
                   {company.isVerified && (
                     <View style={styles.verifiedBadge}>
-                      <CheckCircle2 size={12} color="#10B981" />
+                      <CheckCircle2 size={12} color={colors.success} />
                       <ThemedText style={styles.verifiedText}>Verificada</ThemedText>
                     </View>
                   )}
@@ -117,7 +118,7 @@ export default function CompareScreen() {
 
                   <View style={styles.featureRow}>
                     <View style={styles.featureLabelIcon}>
-                      <Zap size={14} color="#8B5CF6" style={{ marginRight: 4 }} />
+                      <Zap size={14} color={colors.tint} style={{ marginRight: 4 }} />
                       <ThemedText style={styles.featureLabel}>Potência</ThemedText>
                     </View>
                     <ThemedText style={styles.featureValue}>{company.powerKwp ? `${company.powerKwp} kWp` : '--'}</ThemedText>
@@ -125,7 +126,7 @@ export default function CompareScreen() {
 
                   <View style={styles.featureRow}>
                     <View style={styles.featureLabelIcon}>
-                      <ShieldCheck size={14} color="#10B981" style={{ marginRight: 4 }} />
+                      <ShieldCheck size={14} color={colors.success} style={{ marginRight: 4 }} />
                       <ThemedText style={styles.featureLabel}>Garantia</ThemedText>
                     </View>
                     <ThemedText style={styles.featureValue}>{company.warrantyYears ? `${company.warrantyYears} anos` : 'A consultar'}</ThemedText>
@@ -133,7 +134,7 @@ export default function CompareScreen() {
 
                   <View style={styles.featureRow}>
                     <View style={styles.featureLabelIcon}>
-                      <Clock size={14} color="#F59E0B" style={{ marginRight: 4 }} />
+                      <Clock size={14} color={colors.starYellow} style={{ marginRight: 4 }} />
                       <ThemedText style={styles.featureLabel}>Instalação</ThemedText>
                     </View>
                     <ThemedText style={styles.featureValue}>{company.installTimeDays ? `~${company.installTimeDays} dias` : 'Variável'}</ThemedText>
@@ -149,10 +150,10 @@ export default function CompareScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={[styles.actionButton, { backgroundColor: '#22C55E', marginTop: 0, flexDirection: 'row', justifyContent: 'center', gap: 8 }]}
+                      style={[styles.actionButton, { backgroundColor: colors.success, marginTop: 0, flexDirection: 'row', justifyContent: 'center', gap: 8 }]}
                       onPress={() => router.push({ pathname: '/checkout', params: { companyName: company.name, priceEstimate: company.priceEstimate || 'R$ 15.000,00' }})}
                     >
-                      <ShieldCheck color="#FFFFFF" size={16} />
+                      <ShieldCheck color={colors.backgroundElement} size={16} />
                       <ThemedText style={styles.actionButtonText}>Contratar (Pay)</ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   compareCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 20,
     padding: Spacing.four,
     borderWidth: 1,
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
   companyLogoText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#64748B',
+    color: colors.textSecondary,
   },
   removeBtn: {
     padding: Spacing.one,
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   verifiedText: {
-    color: '#10B981',
+    color: colors.success,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
   },
   ratingCount: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
   },
   divider: {
     height: 1,
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
   },
   featureLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   featureLabelIcon: {
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
   featureValueHighlight: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#208AEF',
+    color: colors.tint,
   },
   actionButton: {
     marginTop: Spacing.four,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontWeight: 'bold',
     fontSize: 14,
   },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -89,14 +90,14 @@ export default function SearchScreen() {
       {/* Search Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
 
         <View style={[styles.searchBar, { backgroundColor: colors.backgroundElement }]}>
-          <SearchIcon color="#8E8E93" size={18} />
+          <SearchIcon color={colors.textSecondary} size={18} />
           <TextInput
             placeholder="Buscar empresas, produtos..."
-            placeholderTextColor="#8E8E93"
+            placeholderTextColor={colors.textSecondary}
             style={[styles.input, { color: colors.text }]}
             value={query}
             onChangeText={setQuery}
@@ -106,7 +107,7 @@ export default function SearchScreen() {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')}>
-              <X color="#8E8E93" size={18} />
+              <X color={colors.textSecondary} size={18} />
             </TouchableOpacity>
           )}
         </View>
@@ -117,7 +118,7 @@ export default function SearchScreen() {
         {/* Sugestões de Termos */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Sparkles size={16} color="#208AEF" />
+            <Sparkles size={16} color={colors.tint} />
             <ThemedText style={styles.sectionTitle}>Sugestões</ThemedText>
           </View>
           <View style={styles.chipRow}>
@@ -141,7 +142,7 @@ export default function SearchScreen() {
           <View style={[styles.section, { flex: 1 }]}>
             <View style={styles.recentHeaderRow}>
               <View style={styles.sectionHeader}>
-                <Clock size={16} color="#8E8E93" />
+                <Clock size={16} color={colors.textSecondary} />
                 <ThemedText style={styles.sectionTitle}>Buscas recentes</ThemedText>
               </View>
               <TouchableOpacity onPress={clearRecentSearches}>
@@ -161,11 +162,11 @@ export default function SearchScreen() {
                       handleSearchSubmit(item);
                     }}
                   >
-                    <Clock size={14} color="#8E8E93" style={{ marginRight: 12 }} />
+                    <Clock size={14} color={colors.textSecondary} style={{ marginRight: 12 }} />
                     <ThemedText style={styles.recentText}>{item}</ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => removeSearchItem(item)}>
-                    <X size={16} color="#8E8E93" />
+                    <X size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -181,14 +182,14 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
     gap: 12,
   },
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
   },
   clearLink: {
     fontSize: 12,
-    color: '#EF4444',
+    color: colors.danger,
     fontWeight: '600',
   },
   recentItem: {

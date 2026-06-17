@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -88,13 +89,13 @@ export default function NotificationsScreen() {
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'message':
-        return <MessageSquare size={16} color="#208AEF" />;
+        return <MessageSquare size={16} color={colors.tint} />;
       case 'lead':
-        return <ClipboardCheck size={16} color="#10B981" />;
+        return <ClipboardCheck size={16} color={colors.success} />;
       case 'review':
-        return <Star size={16} color="#F59E0B" />;
+        return <Star size={16} color={colors.starYellow} />;
       default:
-        return <Bell size={16} color="#8B5CF6" />;
+        return <Bell size={16} color={colors.tint} />;
     }
   };
 
@@ -117,7 +118,7 @@ export default function NotificationsScreen() {
                 <ThemedText style={styles.actionText}>Lidas</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity onPress={clearAll}>
-                <Trash2 size={16} color="#E53E3E" />
+                <Trash2 size={16} color={colors.danger} />
               </TouchableOpacity>
             </View>
           )}
@@ -126,7 +127,7 @@ export default function NotificationsScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {notifications.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <BellOff size={48} color="#8E8E93" />
+              <BellOff size={48} color={colors.textSecondary} />
               <ThemedText type="subtitle" style={styles.emptyTitle}>
                 Nenhuma notificação por aqui
               </ThemedText>
@@ -142,7 +143,7 @@ export default function NotificationsScreen() {
                   style={[
                     styles.notificationCard,
                     { backgroundColor: colors.backgroundElement },
-                    n.unread && { backgroundColor: 'rgba(32, 138, 239, 0.05)', borderLeftColor: '#208AEF', borderLeftWidth: 4 }
+                    n.unread && { backgroundColor: 'rgba(32, 138, 239, 0.05)', borderLeftColor: colors.tint, borderLeftWidth: 4 }
                   ]}
                   onPress={() => handlePress(n)}
                 >
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#208AEF',
+    color: colors.tint,
   },
   scrollContent: {
     paddingHorizontal: Spacing.four,

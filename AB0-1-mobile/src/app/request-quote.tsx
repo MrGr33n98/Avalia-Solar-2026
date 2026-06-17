@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -136,7 +137,7 @@ export default function RequestQuoteScreen() {
             styles.indicatorDot,
             { backgroundColor: s <= step ? colors.brandDarkBlue : colors.backgroundElement }
           ]}>
-            <ThemedText style={{ color: s <= step ? '#fff' : '#8E8E93', fontSize: 10, fontWeight: 'bold' }}>
+            <ThemedText style={{ color: s <= step ? '#fff' : colors.textSecondary, fontSize: 10, fontWeight: 'bold' }}>
               {s}
             </ThemedText>
           </View>
@@ -177,7 +178,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.backgroundElement, color: colors.text }]}
               placeholder="Ex: R$ 450,00"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={billValue}
               onChangeText={setBillValue}
@@ -190,11 +191,11 @@ export default function RequestQuoteScreen() {
                   key={profile}
                   style={[
                     styles.chipBtn,
-                    projectProfile === profile && { backgroundColor: '#003E7E', borderColor: '#003E7E' },
+                    projectProfile === profile && { backgroundColor: colors.brandDarkBlue, borderColor: colors.brandDarkBlue },
                   ]}
                   onPress={() => setProjectProfile(profile)}
                 >
-                  <ThemedText style={[styles.chipText, projectProfile === profile && { color: '#FFFFFF', fontWeight: 'bold' }]}>
+                  <ThemedText style={[styles.chipText, projectProfile === profile && { color: colors.backgroundElement, fontWeight: 'bold' }]}>
                     {profile}
                   </ThemedText>
                 </TouchableOpacity>
@@ -206,7 +207,7 @@ export default function RequestQuoteScreen() {
         {/* Passo 2: Localização e Consumo estimado */}
         {step === 2 && (
           <View style={styles.stepContent}>
-            <MapPin size={48} color="#10B981" style={styles.icon} />
+            <MapPin size={48} color={colors.success} style={styles.icon} />
             <ThemedText type="title" style={styles.title}>Onde será a instalação?</ThemedText>
             
             <ThemedText style={styles.fieldLabel}>Cidade / Estado:</ThemedText>
@@ -214,14 +215,14 @@ export default function RequestQuoteScreen() {
               <TextInput
                 style={[styles.input, { flex: 2, backgroundColor: colors.backgroundElement, color: colors.text, marginRight: 8 }]}
                 placeholder="Cidade"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 value={city}
                 onChangeText={setCity}
               />
               <TextInput
                 style={[styles.input, { flex: 1, backgroundColor: colors.backgroundElement, color: colors.text }]}
                 placeholder="UF (ex: SP)"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 maxLength={2}
                 autoCapitalize="characters"
                 value={state}
@@ -233,7 +234,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.backgroundElement, color: colors.text }]}
               placeholder="Ex: 350"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={monthlyKwh}
               onChangeText={setMonthlyKwh}
@@ -250,7 +251,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.backgroundElement, color: colors.text, marginBottom: 12 }]}
               placeholder="Nome Completo"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               value={name}
               onChangeText={setName}
             />
@@ -258,7 +259,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.backgroundElement, color: colors.text, marginBottom: 12 }]}
               placeholder="WhatsApp com DDD"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -267,7 +268,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.backgroundElement, color: colors.text, marginBottom: 16 }]}
               placeholder="E-mail"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -281,11 +282,11 @@ export default function RequestQuoteScreen() {
                   key={timeline}
                   style={[
                     styles.chipBtn,
-                    decisionTimeline === timeline && { backgroundColor: '#003E7E', borderColor: '#003E7E' },
+                    decisionTimeline === timeline && { backgroundColor: colors.brandDarkBlue, borderColor: colors.brandDarkBlue },
                   ]}
                   onPress={() => setDecisionTimeline(timeline)}
                 >
-                  <ThemedText style={[styles.chipText, decisionTimeline === timeline && { color: '#FFFFFF', fontWeight: 'bold' }]}>
+                  <ThemedText style={[styles.chipText, decisionTimeline === timeline && { color: colors.backgroundElement, fontWeight: 'bold' }]}>
                     {timeline}
                   </ThemedText>
                 </TouchableOpacity>
@@ -294,8 +295,8 @@ export default function RequestQuoteScreen() {
 
             {/* Checkbox de Consentimento LGPD */}
             <TouchableOpacity style={styles.consentRow} onPress={() => setConsent(!consent)}>
-              <View style={[styles.checkbox, consent && { backgroundColor: '#10B981', borderColor: '#10B981' }]}>
-                {consent && <Check size={12} color="#FFFFFF" />}
+              <View style={[styles.checkbox, consent && { backgroundColor: colors.success, borderColor: colors.success }]}>
+                {consent && <Check size={12} color={colors.backgroundElement} />}
               </View>
               <ThemedText style={styles.consentText} themeColor="textSecondary">
                 Declaro consentimento para compartilhar estes dados com integradores qualificados da minha região conforme a LGPD.
@@ -307,7 +308,7 @@ export default function RequestQuoteScreen() {
         {/* Passo 4: Verificação do Código OTP */}
         {step === 4 && (
           <View style={styles.stepContent}>
-            <Mail size={48} color="#8B5CF6" style={styles.icon} />
+            <Mail size={48} color={colors.tint} style={styles.icon} />
             <ThemedText type="title" style={styles.title}>Valide seu Orçamento</ThemedText>
             <ThemedText style={styles.subtitle} themeColor="textSecondary">
               Para validar o seu leilão e evitar spam, enviamos um código OTP de verificação para o seu e-mail:
@@ -317,7 +318,7 @@ export default function RequestQuoteScreen() {
             <TextInput
               style={[styles.input, styles.otpInput, { backgroundColor: colors.backgroundElement, color: colors.text }]}
               placeholder="Digite o código de 4 dígitos"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="number-pad"
               maxLength={6}
               value={otpCode}
@@ -330,7 +331,7 @@ export default function RequestQuoteScreen() {
         {step === 5 && (
           <View style={styles.successContent}>
             <View style={styles.successCircle}>
-              <CheckCircle size={80} color="#10B981" />
+              <CheckCircle size={80} color={colors.success} />
             </View>
             <ThemedText type="title" style={[styles.title, { textAlign: 'center' }]}>
               Pedido Enviado com Sucesso! 🚀
@@ -348,7 +349,7 @@ export default function RequestQuoteScreen() {
               ) : (
                 distributedCompanies.map((company) => (
                   <View key={company.id} style={styles.partnerRow}>
-                    <ShieldCheck size={16} color="#10B981" style={{ marginRight: 8 }} />
+                    <ShieldCheck size={16} color={colors.success} style={{ marginRight: 8 }} />
                     <ThemedText style={styles.partnerName}>{company.name}</ThemedText>
                     <ThemedText style={styles.partnerLocation} themeColor="textSecondary">
                       ({company.city})
@@ -376,9 +377,9 @@ export default function RequestQuoteScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#003E7E" />
+              <ActivityIndicator color={colors.brandDarkBlue} />
             ) : (
-              <ThemedText style={[styles.primaryButtonText, { color: '#003E7E' }]}>
+              <ThemedText style={[styles.primaryButtonText, { color: colors.brandDarkBlue }]}>
                 {step === 3 ? 'Disparar Pedido' : step === 4 ? 'Confirmar Verificação' : 'Continuar'}
               </ThemedText>
             )}
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginBottom: Spacing.two,
   },
   chipsRow: {
@@ -451,7 +452,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
   chipText: {
     fontSize: 12,
@@ -549,7 +550,7 @@ const styles = StyleSheet.create({
   },
   partnersList: {
     width: '100%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 12,
     gap: 8,
@@ -561,7 +562,7 @@ const styles = StyleSheet.create({
   partnerName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   partnerLocation: {
     fontSize: 11,

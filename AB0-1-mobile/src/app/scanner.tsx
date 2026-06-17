@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -80,7 +81,7 @@ export default function ScannerScreen() {
             {/* Box de Upload Grande */}
             <TouchableOpacity style={[styles.uploadBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]} onPress={startScanning}>
               <View style={[styles.cameraCircle, { backgroundColor: 'rgba(32, 138, 239, 0.1)' }]}>
-                <Camera size={36} color="#208AEF" />
+                <Camera size={36} color={colors.tint} />
               </View>
               <ThemedText type="subtitle" style={styles.uploadTitle}>Usar Câmera do Celular</ThemedText>
               <ThemedText style={styles.uploadSubtitle} themeColor="textSecondary">
@@ -96,7 +97,7 @@ export default function ScannerScreen() {
             {/* Dicas de Captura */}
             <View style={[styles.tipsCard, { backgroundColor: colors.backgroundElement }]}>
               <View style={styles.tipsHeaderRow}>
-                <AlertCircle size={16} color="#208AEF" />
+                <AlertCircle size={16} color={colors.tint} />
                 <ThemedText style={styles.tipsTitle}>Dicas para uma boa leitura:</ThemedText>
               </View>
               <ThemedText style={styles.tipText} themeColor="textSecondary">• Evite sombras sobre o papel.</ThemedText>
@@ -109,12 +110,12 @@ export default function ScannerScreen() {
         {/* Passo 2: Animação de Scanner OCR */}
         {step === 'reading' && (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#208AEF" />
+            <ActivityIndicator size="large" color={colors.tint} />
             <ThemedText type="subtitle" style={styles.readingTitle}>
               Extraindo dados da fatura...
             </ThemedText>
             <View style={[styles.progressBarContainer, { backgroundColor: colors.backgroundSelected }]}>
-              <View style={[styles.progressBar, { width: `${readProgress}%`, backgroundColor: '#208AEF' }]} />
+              <View style={[styles.progressBar, { width: `${readProgress}%`, backgroundColor: colors.tint }]} />
             </View>
             <ThemedText style={styles.progressText}>{readProgress}% concluído</ThemedText>
             
@@ -126,7 +127,7 @@ export default function ScannerScreen() {
         {step === 'result' && (
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.successIntro}>
-              <CheckCircle2 size={48} color="#10B981" />
+              <CheckCircle2 size={48} color={colors.success} />
               <ThemedText type="subtitle" style={styles.successTitle}>Leitura concluída!</ThemedText>
               <ThemedText style={styles.successSubtitle} themeColor="textSecondary">
                 Verifique se as informações abaixo coincidem com as da sua conta de luz antes de prosseguir.
@@ -139,7 +140,7 @@ export default function ScannerScreen() {
               <View style={styles.formField}>
                 <ThemedText style={styles.fieldLabel}>Distribuidora Detectada</ThemedText>
                 <View style={[styles.fieldInputWrapper, { backgroundColor: colors.background }]}>
-                  <FileText size={16} color="#8E8E93" />
+                  <FileText size={16} color={colors.textSecondary} />
                   <TextInput
                     style={[styles.fieldInput, { color: colors.text }]}
                     value={company}
@@ -151,7 +152,7 @@ export default function ScannerScreen() {
               <View style={styles.formField}>
                 <ThemedText style={styles.fieldLabel}>Consumo Mensal (kWh)</ThemedText>
                 <View style={[styles.fieldInputWrapper, { backgroundColor: colors.background }]}>
-                  <Sparkles size={16} color="#208AEF" />
+                  <Sparkles size={16} color={colors.tint} />
                   <TextInput
                     style={[styles.fieldInput, { color: colors.text }]}
                     value={consumption}
@@ -164,7 +165,7 @@ export default function ScannerScreen() {
               <View style={styles.formField}>
                 <ThemedText style={styles.fieldLabel}>Valor da Fatura (R$)</ThemedText>
                 <View style={[styles.fieldInputWrapper, { backgroundColor: colors.background }]}>
-                  <ThemedText style={{ color: '#8E8E93', fontWeight: 'bold', fontSize: 13 }}>R$</ThemedText>
+                  <ThemedText style={{ color: colors.textSecondary, fontWeight: 'bold', fontSize: 13 }}>R$</ThemedText>
                   <TextInput
                     style={[styles.fieldInput, { color: colors.text }]}
                     value={billValue}
@@ -178,11 +179,11 @@ export default function ScannerScreen() {
 
             {/* CTA Final */}
             <TouchableOpacity
-              style={[styles.confirmBtn, { backgroundColor: '#208AEF' }]}
+              style={[styles.confirmBtn, { backgroundColor: colors.tint }]}
               onPress={handleConfirm}
             >
               <ThemedText style={styles.confirmBtnText}>Confirmar e Simular Economia</ThemedText>
-              <ChevronRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
+              <ChevronRight size={18} color={colors.backgroundElement} style={{ marginLeft: 6 }} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.retryBtn} onPress={() => setStep('upload')}>
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: 8,
   },
   scanLineEffect: {
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#8E8E93',
+    color: colors.textSecondary,
   },
   fieldInputWrapper: {
     flexDirection: 'row',
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: 'bold',
   },
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     fontSize: 13,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
 });

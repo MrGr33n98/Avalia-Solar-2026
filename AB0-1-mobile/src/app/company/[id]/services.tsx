@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme } , useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,47 +30,47 @@ export default function CompanyServicesScreen() {
       title: 'Sistema On-Grid',
       subtitle: 'Conectado à rede elétrica da concessionária',
       description: 'Desenvolvimento de projetos de energia solar integrados à rede pública. Inclui engenharia, homologação completa junto à concessionária de energia e instalação rápida com equipamentos de alta eficiência.',
-      icon: <Sun color="#208AEF" size={24} />,
+      icon: <Sun color={colors.tint} size={24} />,
       badge: 'Mais Vendido',
       badgeColor: '#E6F4FE',
-      badgeTextColor: '#208AEF'
+      badgeTextColor: colors.tint
     },
     {
       id: 'off-grid',
       title: 'Sistema Off-Grid',
       subtitle: 'Sistemas autônomos com armazenamento',
       description: 'Solução ideal para propriedades rurais, locais isolados sem acesso à rede elétrica ou para quem deseja independência total. Utiliza bancos de baterias inteligentes para garantir energia constante 24 horas por dia.',
-      icon: <Battery color="#10B981" size={24} />,
+      icon: <Battery color={colors.success} size={24} />,
       badge: 'Armazenamento',
       badgeColor: '#E6FDF5',
-      badgeTextColor: '#10B981'
+      badgeTextColor: colors.success
     },
     {
       id: 'manutencao',
       title: 'Manutenção Preventiva',
       subtitle: 'Garantia de segurança e vida útil das placas',
       description: 'Visitas técnicas programadas para inspeção térmica com câmera infravermelha, reaperto de conexões elétricas da caixa de junção e inversores, e verificação estrutural contra oxidação ou fadiga.',
-      icon: <Wrench color="#F59E0B" size={24} />,
+      icon: <Wrench color={colors.starYellow} size={24} />,
       badge: 'Manutenção',
-      badgeColor: '#FFFBEB',
-      badgeTextColor: '#F59E0B'
+      badgeColor: colors.starYellow + "10",
+      badgeTextColor: colors.starYellow
     },
     {
       id: 'limpeza',
       title: 'Limpeza de Placas',
       subtitle: 'Até 30% mais eficiência energética',
       description: 'Remoção especializada de poeira, dejetos de pássaros, fuligem e poluição das placas solares utilizando produtos biodegradáveis específicos que não danificam o vidro antirreflexo das células fotovoltaicas.',
-      icon: <Sparkles color="#8B5CF6" size={24} />,
+      icon: <Sparkles color={colors.tint} size={24} />,
       badge: 'Limpeza',
-      badgeColor: '#F5F3FF',
-      badgeTextColor: '#8B5CF6'
+      badgeColor: colors.tint + "10",
+      badgeTextColor: colors.tint
     }
   ];
 
   if (isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
         <ThemedText style={{ marginTop: Spacing.three }}>Carregando serviços...</ThemedText>
       </ThemedView>
     );
@@ -80,7 +81,7 @@ export default function CompanyServicesScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <ThemedText style={styles.headerTitle}>Serviços</ThemedText>
@@ -94,7 +95,7 @@ export default function CompanyServicesScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Banner Informativo */}
         <View style={styles.infoBanner}>
-          <ShieldCheck color="#FFFFFF" size={24} />
+          <ShieldCheck color={colors.backgroundElement} size={24} />
           <View style={styles.infoTextContent}>
             <ThemedText style={styles.infoTitle}>Garantia Avalia Solar</ThemedText>
             <ThemedText style={styles.infoSubtitle}>Todos os serviços contam com integradores verificados e seguro de instalação.</ThemedText>
@@ -137,7 +138,7 @@ export default function CompanyServicesScreen() {
                 onPress={() => router.push(`/company/${id}/lead`)}
               >
                 <ThemedText style={styles.quoteRedirectBtnText}>Orçar este serviço</ThemedText>
-                <ChevronRight color="#208AEF" size={16} />
+                <ChevronRight color={colors.tint} size={16} />
               </TouchableOpacity>
             </View>
           ))}
@@ -160,7 +161,7 @@ export default function CompanyServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flex: 1,
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderBottomWidth: 1,
     elevation: 2,
     shadowColor: '#000000',
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -196,11 +197,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginTop: 1,
   },
   container: {
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   },
   infoBanner: {
     flexDirection: 'row',
-    backgroundColor: '#003E7E',
+    backgroundColor: colors.brandDarkBlue,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
@@ -223,20 +224,20 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   infoTitle: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 2,
   },
   infoSubtitle: {
-    color: '#E2E8F0',
+    color: colors.border,
     fontSize: 12,
     lineHeight: 16,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
     marginBottom: 16,
     marginLeft: 4,
   },
@@ -244,11 +245,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   serviceCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.02,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -282,11 +283,11 @@ const styles = StyleSheet.create({
   serviceTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.backgroundElement,
   },
   serviceSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   badge: {
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     marginVertical: 12,
   },
   quoteRedirectBtn: {
@@ -317,14 +318,14 @@ const styles = StyleSheet.create({
   quoteRedirectBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#208AEF',
+    color: colors.tint,
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.backgroundElement,
     padding: 16,
     borderTopWidth: 1,
     elevation: 10,
@@ -334,13 +335,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   quoteButton: {
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.tint,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   quoteButtonText: {
-    color: '#FFFFFF',
+    color: colors.backgroundElement,
     fontSize: 15,
     fontWeight: '700',
   },

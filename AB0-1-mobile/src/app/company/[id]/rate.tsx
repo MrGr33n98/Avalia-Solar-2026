@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -137,7 +138,7 @@ export default function CompanyRateScreen() {
   if (isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color={colors.tint} />
       </ThemedView>
     );
   }
@@ -148,7 +149,7 @@ export default function CompanyRateScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.backgroundElement }]}>
         <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.surfaceSubtle }]} onPress={() => router.back()}>
-          <ArrowLeft color="#1E293B" size={24} />
+          <ArrowLeft color={colors.backgroundElement} size={24} />
         </TouchableOpacity>
         <ThemedText style={[styles.headerTitle, { color: colors.text }]}>
           {isOwnCompany ? 'Seu QR Code' : 'Avaliar Integrador'}
@@ -160,7 +161,7 @@ export default function CompanyRateScreen() {
         {isOwnCompany ? (
           <View style={styles.qrContainer}>
             <View style={[styles.iconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <QrCode size={40} color="#10B981" />
+              <QrCode size={40} color={colors.success} />
             </View>
             
             <ThemedText type="subtitle" style={styles.companyName}>
@@ -173,7 +174,7 @@ export default function CompanyRateScreen() {
 
             <View style={[styles.qrCodeBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               <View style={styles.qrPlaceholder}>
-                <QrCode size={180} color="#1E293B" />
+                <QrCode size={180} color={colors.backgroundElement} />
               </View>
             </View>
 
@@ -188,7 +189,7 @@ export default function CompanyRateScreen() {
                 {company?.name}
               </ThemedText>
               {company?.verified && (
-                <ShieldCheck size={18} color="#10B981" style={{ marginLeft: 6 }} />
+                <ShieldCheck size={18} color={colors.success} style={{ marginLeft: 6 }} />
               )}
             </View>
             
@@ -201,8 +202,8 @@ export default function CompanyRateScreen() {
                 <TouchableOpacity key={star} onPress={() => setRating(star)}>
                   <Star
                     size={36}
-                    color="#F59E0B"
-                    fill={star <= rating ? '#F59E0B' : 'transparent'}
+                    color={colors.starYellow}
+                    fill={star <= rating ? colors.starYellow : 'transparent'}
                   />
                 </TouchableOpacity>
               ))}
@@ -210,7 +211,7 @@ export default function CompanyRateScreen() {
 
             <TextInput
               placeholder="Título da avaliação (ex: Super recomendo!)"
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               style={[styles.inputField, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundElement }]}
               value={title}
               onChangeText={setTitle}
@@ -218,7 +219,7 @@ export default function CompanyRateScreen() {
 
             <TextInput
               placeholder="Escreva detalhes de sua experiência com o atendimento, prazos e qualidade da instalação..."
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={colors.textSecondary}
               style={[styles.textarea, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundElement }]}
               multiline
               numberOfLines={6}
@@ -257,10 +258,10 @@ export default function CompanyRateScreen() {
               disabled={createReviewMutation.isPending}
             >
               {createReviewMutation.isPending ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color={colors.backgroundElement} />
               ) : (
                 <>
-                  <Send size={16} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Send size={16} color={colors.backgroundElement} style={{ marginRight: 8 }} />
                   <ThemedText style={styles.submitButtonText}>Enviar Avaliação</ThemedText>
                 </>
               )}
@@ -300,9 +301,9 @@ const styles = StyleSheet.create({
   sectionDesc: { fontSize: 12, marginBottom: 12 },
   photosRow: { flexDirection: 'row', gap: 12 },
   photoPreviewWrapper: { position: 'relative' },
-  photoPreview: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#E2E8F0' },
-  removePhotoBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: '#EF4444', borderRadius: 10, padding: 4 },
+  photoPreview: { width: 80, height: 80, borderRadius: 8, backgroundColor: colors.border },
+  removePhotoBtn: { position: 'absolute', top: -6, right: -6, backgroundColor: colors.danger, borderRadius: 10, padding: 4 },
   addPhotoBtn: { width: 80, height: 80, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
   submitButton: { height: 50, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  submitButtonText: { color: '#ffffff', fontSize: 15, fontWeight: 'bold' },
+  submitButtonText: { color: colors.backgroundElement, fontSize: 15, fontWeight: 'bold' },
 });

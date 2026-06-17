@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -34,7 +35,7 @@ export default function GuidesScreen() {
       id: 1,
       category: 'Inversores',
       title: 'Como escolher o inversor solar ideal?',
-      icon: <Cpu size={18} color="#208AEF" />,
+      icon: <Cpu size={18} color={colors.tint} />,
       summary: 'Entenda a diferença entre inversor de string, microinversor e inversor híbrido para seu projeto.',
       content: 'O inversor é o cérebro do sistema fotovoltaico, convertendo a corrente contínua (CC) gerada pelas placas em corrente alternada (CA) usada na sua casa.\n\n• Inversor String: Ideal para telhados planos, sem sombras. É o modelo clássico e com menor custo.\n• Microinversores: Instalados individualmente atrás de cada placa. Excelente para telhados com muitas orientações ou sombras localizadas, garantindo máxima eficiência placa por placa.\n• Inversores Híbridos: Permitem conectar baterias para armazenar o excedente de energia para a noite ou quedas de luz.',
     },
@@ -42,7 +43,7 @@ export default function GuidesScreen() {
       id: 2,
       category: 'Baterias',
       title: 'Baterias de Lítio vs Chumbo-Ácido no Off-Grid',
-      icon: <Battery size={18} color="#10B981" />,
+      icon: <Battery size={18} color={colors.success} />,
       summary: 'Qual bateria escolher para ter armazenamento solar durável e seguro na sua fazenda ou sítio?',
       content: 'Se você está projetando um sistema Off-Grid ou Híbrido, a escolha da bateria é crucial para a vida útil do sistema.\n\n• Lítio (LiFePO4): É a tecnologia mais moderna. Possui vida útil de até 10 anos (6.000 ciclos), pode ser descarregada quase 100% e é compacta. O custo inicial é maior, mas o custo por ciclo é muito mais barato a longo prazo.\n• Chumbo-Ácido estacionária: Mais barata inicialmente, porém dura cerca de 2 a 3 anos (500 a 800 ciclos) e só pode descarregar 50% de sua capacidade para não estragar.',
     },
@@ -50,7 +51,7 @@ export default function GuidesScreen() {
       id: 3,
       category: 'Garantias',
       title: 'Como funciona a garantia das placas solares?',
-      icon: <Award size={18} color="#F59E0B" />,
+      icon: <Award size={18} color={colors.starYellow} />,
       summary: 'Os painéis solares realmente duram 25 anos? Entenda as regras de garantia de desempenho.',
       content: 'Os painéis solares têm duas garantias diferentes que todo comprador deve conhecer:\n\n1. Garantia de Fabricação: Cobre defeitos físicos nos cabos, molduras ou células. Costuma variar entre 10 e 15 anos.\n2. Garantia de Geração/Desempenho: Garante que os painéis continuarão gerando energia com eficiência após décadas. A regra geral da indústria é que, após 25 anos de uso, as placas devem gerar pelo menos 80% a 85% da potência original.',
     },
@@ -58,7 +59,7 @@ export default function GuidesScreen() {
       id: 4,
       category: 'Instalação',
       title: 'O que observar antes de instalar os painéis?',
-      icon: <Wrench size={18} color="#8B5CF6" />,
+      icon: <Wrench size={18} color={colors.tint} />,
       summary: 'Confira as condições estruturais do seu telhado, fiação elétrica interna e sombreamentos.',
       content: 'Antes de assinar um contrato, certifique-se de que a empresa fará uma visita técnica estruturada:\n\n• Orientação: No Brasil, o ideal é que as placas fiquem apontadas para o Norte geográfico para receber o sol da tarde.\n• Inclinação: Deve ser equivalente à latitude da sua cidade para maximizar a captação média anual.\n• Estrutura do Telhado: Os painéis e trilhos pesam cerca de 15kg/m². Telhados de madeira antigos podem precisar de reforço estrutural antes da instalação.',
     },
@@ -83,7 +84,7 @@ export default function GuidesScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <View style={styles.heroCard}>
-            <BookOpen size={24} color="#208AEF" />
+            <BookOpen size={24} color={colors.tint} />
             <ThemedText style={styles.heroText}>
               Aprenda a fazer as melhores escolhas para a sua transição energética sustentável.
             </ThemedText>
@@ -113,7 +114,7 @@ export default function GuidesScreen() {
                     </View>
                     <ChevronDown
                       size={18}
-                      color="#8E8E93"
+                      color={colors.textSecondary}
                       style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }}
                     />
                   </TouchableOpacity>
@@ -126,7 +127,7 @@ export default function GuidesScreen() {
                       </ThemedText>
                       
                       <View style={[styles.tipBanner, { backgroundColor: 'rgba(32, 138, 239, 0.08)' }]}>
-                        <Lightbulb size={16} color="#208AEF" style={{ marginRight: 6 }} />
+                        <Lightbulb size={16} color={colors.tint} style={{ marginRight: 6 }} />
                         <ThemedText style={styles.tipBannerText}>
                           Dica: Faça a simulação na calculadora do app antes de pedir propostas.
                         </ThemedText>
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   articleTitle: {
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   tipBannerText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#208AEF',
+    color: colors.tint,
     flex: 1,
   },
 });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -126,14 +127,14 @@ export default function LeadFormScreen() {
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.successContainer}>
-            <CheckCircle2 size={80} color="#10B981" />
+            <CheckCircle2 size={80} color={colors.success} />
             <ThemedText type="title" style={styles.successTitle}>Solicitação Enviada!</ThemedText>
             <ThemedText style={styles.successSubtitle} themeColor="textSecondary">
               Seu pedido de orçamento foi encaminhado com sucesso para a {company?.name}. A empresa entrará em contato em breve via WhatsApp ou E-mail.
             </ThemedText>
             
             <TouchableOpacity
-              style={[styles.successBtn, { backgroundColor: '#208AEF' }]}
+              style={[styles.successBtn, { backgroundColor: colors.tint }]}
               onPress={() => router.replace('/requests')}
             >
               <ThemedText style={styles.successBtnText}>Acompanhar Solicitações</ThemedText>
@@ -156,7 +157,7 @@ export default function LeadFormScreen() {
           <View>
             <ThemedText type="subtitle">Pedir Orçamento</ThemedText>
             {isLoadingCompany ? (
-              <ActivityIndicator size="small" color="#208AEF" />
+              <ActivityIndicator size="small" color={colors.tint} />
             ) : (
               <ThemedText style={styles.headerSubtitle} themeColor="textSecondary">
                 Destinatário: {company?.name}
@@ -177,10 +178,10 @@ export default function LeadFormScreen() {
             {/* Campo Nome */}
             <ThemedText style={styles.fieldLabel}>Seu Nome Completo *</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <User size={18} color="#8E8E93" />
+              <User size={18} color={colors.textSecondary} />
               <TextInput
                 placeholder="Insira seu nome..."
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 style={[styles.inputField, { color: colors.text }]}
                 value={name}
                 onChangeText={setName}
@@ -190,10 +191,10 @@ export default function LeadFormScreen() {
             {/* Campo E-mail */}
             <ThemedText style={styles.fieldLabel}>Seu E-mail *</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <Mail size={18} color="#8E8E93" />
+              <Mail size={18} color={colors.textSecondary} />
               <TextInput
                 placeholder="nome@exemplo.com"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 style={[styles.inputField, { color: colors.text }]}
@@ -205,10 +206,10 @@ export default function LeadFormScreen() {
             {/* Campo Telefone / WhatsApp */}
             <ThemedText style={styles.fieldLabel}>Telefone Celular (WhatsApp) *</ThemedText>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <Phone size={18} color="#8E8E93" />
+              <Phone size={18} color={colors.textSecondary} />
               <TextInput
                 placeholder="(DDD) 99999-9999"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
                 style={[styles.inputField, { color: colors.text }]}
                 value={phone}
@@ -227,11 +228,11 @@ export default function LeadFormScreen() {
                       style={[
                         styles.categoryBadge,
                         { backgroundColor: colors.backgroundElement },
-                        selectedCategoryId === cat.id && { backgroundColor: 'rgba(32, 138, 239, 0.15)', borderColor: '#208AEF' }
+                        selectedCategoryId === cat.id && { backgroundColor: 'rgba(32, 138, 239, 0.15)', borderColor: colors.tint }
                       ]}
                       onPress={() => setSelectedCategoryId(cat.id)}
                     >
-                      <ThemedText style={[styles.categoryBadgeText, selectedCategoryId === cat.id && { color: '#208AEF', fontWeight: 'bold' }]}>
+                      <ThemedText style={[styles.categoryBadgeText, selectedCategoryId === cat.id && { color: colors.tint, fontWeight: 'bold' }]}>
                         {cat.name}
                       </ThemedText>
                     </TouchableOpacity>
@@ -243,10 +244,10 @@ export default function LeadFormScreen() {
             {/* Mensagem / Descrição */}
             <ThemedText style={styles.fieldLabel}>Descrição do Projeto / Mensagem</ThemedText>
             <View style={[styles.textareaWrapper, { backgroundColor: colors.backgroundElement }]}>
-              <MessageSquare size={18} color="#8E8E93" style={{ marginTop: Spacing.two }} />
+              <MessageSquare size={18} color={colors.textSecondary} style={{ marginTop: Spacing.two }} />
               <TextInput
                 placeholder="Descreva detalhes como tamanho do imóvel, valor médio da conta de luz ou suas necessidades..."
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={colors.textSecondary}
                 multiline
                 numberOfLines={5}
                 style={[styles.textareaField, { color: colors.text }]}
@@ -257,15 +258,15 @@ export default function LeadFormScreen() {
 
             {/* Botão de Enviar */}
             <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: '#208AEF' }]}
+              style={[styles.submitButton, { backgroundColor: colors.tint }]}
               onPress={handleSubmit}
               disabled={createLeadMutation.isPending}
             >
               {createLeadMutation.isPending ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color={colors.backgroundElement} />
               ) : (
                 <>
-                  <Send size={18} color="#ffffff" />
+                  <Send size={18} color={colors.backgroundElement} />
                   <ThemedText style={styles.submitButtonText}>Enviar Solicitação</ThemedText>
                 </>
               )}
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   errorText: {
-    color: '#E53E3E',
+    color: colors.danger,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: Spacing.two,
   },
   inputWrapper: {
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.four,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   successBtnText: {
-    color: '#ffffff',
+    color: colors.backgroundElement,
     fontSize: 14,
     fontWeight: 'bold',
   },
