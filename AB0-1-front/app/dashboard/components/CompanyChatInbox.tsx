@@ -1,17 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { createConsumer } from '@rails/actioncable';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Inbox, MessageCircle, RefreshCw, Send, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
+import { getApiBaseUrl } from '@/lib/api-config';
 import { cn } from '@/lib/utils';
 
 interface CompanyChatInboxProps {
   enabled: boolean;
 }
+
+type CableSubscription = {
+  unsubscribe: () => void;
+};
 
 function formatMessageTime(value?: string | null) {
   if (!value) return '';
@@ -35,11 +41,30 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
+  const channelRef = useRef<CableSubscription | null>(null);
 
   const selectedConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === selectedConversationId) || null,
     [conversations, selectedConversationId]
   );
+
+  const appendMessage = useCallback((message: DirectMessage, conversationId?: number | null) => {
+    setMessages((current) => {
+      if (current.some((item) => item.id === message.id)) return current;
+      return [...current, message];
+    });
+
+    if (conversationId) {
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? { ...conversation, last_message: message.body }
+            : conversation
+        )
+      );
+    }
+  }, []);
 
   const loadConversations = async () => {
     if (!enabled) return;
@@ -65,6 +90,8 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
   useEffect(() => {
     if (!selectedConversationId || !enabled) {
       setMessages([]);
+      channelRef.current?.unsubscribe();
+      channelRef.current = null;
       return;
     }
 
@@ -84,6 +111,43 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
     loadMessages();
   }, [enabled, selectedConversationId]);
 
+  useEffect(() => {
+    if (!selectedConversationId || !enabled) return;
+
+    channelRef.current?.unsubscribe();
+
+    if (!cableRef.current) {
+      const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
+      cableRef.current = createConsumer(wsUrl);
+    }
+
+    channelRef.current = cableRef.current.subscriptions.create(
+      { channel: 'ConversationChannel', conversation_id: selectedConversationId },
+      {
+        rejected: () => {
+          console.warn('[P2PChat:CompanyInbox] ActionCable rejected', {
+            conversationId: selectedConversationId,
+          });
+        },
+        received: (message: DirectMessage) => {
+          appendMessage(message, selectedConversationId);
+        },
+      }
+    );
+
+    return () => {
+      channelRef.current?.unsubscribe();
+      channelRef.current = null;
+    };
+  }, [appendMessage, enabled, selectedConversationId]);
+
+  useEffect(() => {
+    return () => {
+      channelRef.current?.unsubscribe();
+      cableRef.current?.disconnect();
+    };
+  }, []);
+
   const sendReply = async () => {
     const body = reply.trim();
     if (!selectedConversationId || !body || sending) return;
@@ -92,15 +156,8 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
     setError(null);
     try {
       const newMessage = await conversationsApi.sendMessage(selectedConversationId, body);
-      setMessages((current) => [...current, newMessage]);
+      appendMessage(newMessage, selectedConversationId);
       setReply('');
-      setConversations((current) =>
-        current.map((conversation) =>
-          conversation.id === selectedConversationId
-            ? { ...conversation, last_message: body }
-            : conversation
-        )
-      );
     } catch {
       setError('Não foi possível enviar a resposta.');
     } finally {

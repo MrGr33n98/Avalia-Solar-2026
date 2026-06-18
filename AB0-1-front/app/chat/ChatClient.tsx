@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageCircle, Send, ArrowLeft } from 'lucide-react';
 import { createConsumer } from '@rails/actioncable';
@@ -96,6 +96,13 @@ export default function ChatClient() {
   const channelRef = useRef<CableSubscription | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const appendMessage = useCallback((message: Message) => {
+    setMessages((prev) => {
+      if (prev.some((item) => item.id === message.id)) return prev;
+      return [...prev, message];
+    });
+  }, []);
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -170,7 +177,7 @@ export default function ChatClient() {
           console.warn('[P2PChat] ActionCable rejected', { conversationId });
         },
         received: (data: Message) => {
-          setMessages((prev) => [...prev, data]);
+          appendMessage(data);
           scrollToBottom();
         },
       }
@@ -193,7 +200,8 @@ export default function ChatClient() {
       setErrorMessage(null);
       const msgText = inputMessage;
       setInputMessage('');
-      await conversationsApi.sendMessage(activeConversation.id, msgText);
+      const newMessage = await conversationsApi.sendMessage(activeConversation.id, msgText);
+      appendMessage(newMessage);
     } catch (error) {
       console.error('Error sending message', error);
       setErrorMessage(getChatErrorMessage(error));

@@ -10,7 +10,9 @@ import { getFlatNavigationByContext } from '@/config/navigation';
 
 interface MobileDashboardQuickAccessProps {
   activeTab: string;
-  company: any;
+  company: {
+    verified?: boolean;
+  } | null;
   stats: {
     profileViews: number;
     leadsReceived: number;
@@ -49,6 +51,11 @@ const QUICK_ACTION_COPY: Record<
     getMetric: ({ stats }) => `${formatMetric(stats?.leadsReceived ?? 0)} leads`,
     getDescription: () => 'Priorize novas oportunidades e avance negociações.',
   },
+  chat: {
+    eyebrow: 'Atendimento',
+    getMetric: () => 'Chat direto',
+    getDescription: () => 'Responda compradores e acompanhe conversas em tempo real.',
+  },
   'ranking-performance': {
     eyebrow: 'Ranking',
     getMetric: ({ stats }) => `${Number(stats?.conversionRate ?? 0).toFixed(1)}% conversão`,
@@ -57,7 +64,9 @@ const QUICK_ACTION_COPY: Record<
   'trust-widget': {
     eyebrow: 'Distribuição',
     getMetric: ({ stats, company }) =>
-      company?.verified ? 'Empresa verificada' : `${formatMetric(stats?.reviewsCount ?? 0)} provas sociais`,
+      company?.verified
+        ? 'Empresa verificada'
+        : `${formatMetric(stats?.reviewsCount ?? 0)} provas sociais`,
     getDescription: () => 'Copie e compartilhe o selo de confiança sem sair do mobile.',
   },
 };
@@ -115,8 +124,8 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
                 variant="outline"
                 className={cn(
                   'h-auto min-h-[140px] flex-col items-start justify-start gap-3 rounded-xl px-4 py-4 text-left transition-all border-[0.5px]',
-                  isActive 
-                    ? 'border-brand-blue/40 bg-brand-blue/10' 
+                  isActive
+                    ? 'border-brand-blue/40 bg-brand-blue/10'
                     : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'
                 )}
                 onClick={() => props.onTabChange(item.id)}
@@ -125,8 +134,8 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
                   <div
                     className={cn(
                       'flex h-10 w-10 items-center justify-center rounded-lg border-[0.5px]',
-                      isActive 
-                        ? 'bg-brand-blue text-white border-white/20' 
+                      isActive
+                        ? 'bg-brand-blue text-white border-white/20'
                         : 'bg-black/20 text-white/40 border-white/5'
                     )}
                   >
@@ -141,17 +150,25 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
                 </div>
 
                 <div className="space-y-1">
-                  <p className={cn(
-                    "text-[10px] font-bold uppercase tracking-widest",
-                    isActive ? "text-brand-cyan" : "text-white/30"
-                  )}>
+                  <p
+                    className={cn(
+                      'text-[10px] font-bold uppercase tracking-widest',
+                      isActive ? 'text-brand-cyan' : 'text-white/30'
+                    )}
+                  >
                     {copy.eyebrow}
                   </p>
-                  <p className={cn(
-                    "text-sm font-bold tracking-tight",
-                    isActive ? "text-white" : "text-white/80"
-                  )}>{item.label}</p>
-                  <p className="text-[10px] font-bold text-white/40 font-mono tracking-tighter">{copy.getMetric(props)}</p>
+                  <p
+                    className={cn(
+                      'text-sm font-bold tracking-tight',
+                      isActive ? 'text-white' : 'text-white/80'
+                    )}
+                  >
+                    {item.label}
+                  </p>
+                  <p className="text-[10px] font-bold text-white/40 font-mono tracking-tighter">
+                    {copy.getMetric(props)}
+                  </p>
                 </div>
               </Button>
             );
