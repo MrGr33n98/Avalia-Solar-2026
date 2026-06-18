@@ -11,7 +11,8 @@ module ApplicationCable
     private
 
     def find_verified_user
-      token = request.params[:token].to_s
+      token = cookies.signed[:jwt_token]
+      token = request.params[:token].to_s if token.blank?
       header = request.headers['Authorization'].to_s
       token = header.split.last if token.blank? && header.present?
       return nil if token.blank?

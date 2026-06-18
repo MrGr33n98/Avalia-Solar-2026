@@ -19,6 +19,7 @@ import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HERO_BADGE_SIZE_PX = 48;
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
@@ -57,10 +58,13 @@ export default function CompanyHero({
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const quoteEnabled = canRequestQuote ?? company.active_admin === true;
-  const directChatEnabled =
+  const directChatAvailable =
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
+  const directChatEnabled = directChatAvailable && canUseBuyerChat;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
@@ -260,6 +264,13 @@ export default function CompanyHero({
                     <span className="text-[13px] text-slate-500 sm:text-sm">
                       ({companyStats.reviewCount} avaliações)
                     </span>
+
+                    {directChatAvailable && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-black text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Online
+                      </span>
+                    )}
 
                     {locationLabel && (
                       <span className="inline-flex items-center gap-1.5 text-[13px] text-slate-600 sm:text-sm">

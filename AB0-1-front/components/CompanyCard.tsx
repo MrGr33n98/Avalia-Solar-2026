@@ -34,6 +34,7 @@ import WhatsappButton from '@/components/WhatsappButton';
 import { track } from '@/lib/analytics/lazy';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useComparison } from '@/hooks/useComparison';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
@@ -148,6 +149,8 @@ export default function CompanyCard({
   const isFav = isFavorite(id);
   const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
   const isCompared = isInComparison(company.id);
+  const { user, isAuthenticated } = useAuth();
+  const canUseBuyerChat = isAuthenticated && user?.role === 'review';
 
   const [ctaVisible, setCtaVisible] = useState(false);
   const ctaRef = useCallback(
@@ -290,9 +293,10 @@ export default function CompanyCard({
   const canRequestQuote = company.feature_access
     ? isFeatureEnabled(company.feature_access, 'custom_ctas')
     : company.active_admin === true;
-  const directChatEnabled =
+  const directChatAvailable =
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
+  const directChatEnabled = directChatAvailable && canUseBuyerChat;
   const hasPrimaryContactCta = canRequestQuote || directChatEnabled;
   const wizardCategoryId = resolveWizardCategoryId(company);
 
@@ -613,6 +617,12 @@ export default function CompanyCard({
             {/* Verified + Location row */}
             <div className="flex items-center gap-2 flex-wrap mt-1">
               {company.verified && <PremiumBadge className="h-5" />}
+              {directChatAvailable && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Online
+                </span>
+              )}
               {(city || state) && (
                 <div className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700">
                   <MapPin className="w-3 h-3 text-blue-500 flex-shrink-0" />

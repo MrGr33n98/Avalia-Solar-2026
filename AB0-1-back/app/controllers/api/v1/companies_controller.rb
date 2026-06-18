@@ -579,7 +579,7 @@ module Api
         }.compact
 
         filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
-        "companies:index:v2:#{filter_hash}"
+        "companies:index:v3:#{filter_hash}"
       end
 
       def cache_ttl_for_params(params)
@@ -659,6 +659,7 @@ module Api
             rating_count: company.rating_count,
             featured: company.featured,
             verified: company.verified,
+            p2p_chat_enabled: p2p_chat_enabled_for(company),
             logo_url: company.logo_url,
             banner_url: company.banner_url,
             primary_category: primary_category&.name,
@@ -690,6 +691,7 @@ module Api
           ctas: [],
           cta_whatsapp_enabled: company.respond_to?(:cta_whatsapp_enabled) ? company.cta_whatsapp_enabled : nil,
           cta_whatsapp_url: company.respond_to?(:cta_whatsapp_url) ? company.cta_whatsapp_url : nil,
+          p2p_chat_enabled: p2p_chat_enabled_for(company),
           whatsapp_button_style_json: company.respond_to?(:whatsapp_button_style_json) ? company.whatsapp_button_style_json : nil,
           plan_status: company.respond_to?(:plan_status) ? company.plan_status : nil,
           plan_id: company.respond_to?(:plan_id) ? company.plan_id : nil,
@@ -728,6 +730,10 @@ module Api
       rescue StandardError => e
         Rails.logger.error("Error serializing verified badge URL for company #{company.id}: #{e.message}")
         nil
+      end
+
+      def p2p_chat_enabled_for(company)
+        company.respond_to?(:p2p_chat_enabled) ? company.p2p_chat_enabled : false
       end
 
       def company_badges_payload(company)

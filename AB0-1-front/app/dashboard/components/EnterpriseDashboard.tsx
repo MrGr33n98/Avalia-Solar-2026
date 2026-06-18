@@ -25,7 +25,12 @@ import {
 } from '@/lib/analytics/consolidated';
 import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
-import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
+import {
+  getFeatureAccessEntry,
+  isFeatureEnabled,
+  isFeatureHiddenEntry,
+  type FeatureAccessMap,
+} from '@/lib/feature-access';
 
 // Components
 import ThemeToggle from './ThemeToggle';
@@ -111,6 +116,7 @@ function DashboardTabSkeleton() {
 type DashboardChatCompany = {
   name?: string;
   p2p_chat_enabled?: boolean;
+  feature_access?: FeatureAccessMap;
   cta_whatsapp_enabled?: boolean;
   whatsapp_enabled?: boolean;
   cta_whatsapp_url?: string | null;
@@ -139,7 +145,9 @@ function CompanyChatTab({ company }: { company: DashboardChatCompany | null | un
     };
   }, []);
 
-  const chatEnabled = company?.p2p_chat_enabled === true;
+  const chatEnabled =
+    company?.p2p_chat_enabled === true &&
+    (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
   const whatsappEnabled =
     company?.cta_whatsapp_enabled === true ||
     company?.whatsapp_enabled === true ||

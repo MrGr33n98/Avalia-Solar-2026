@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { MessageCircle, Send, ArrowLeft } from "lucide-react";
-import { createConsumer } from "@rails/actioncable";
-import { getApiBaseUrl } from "@/lib/api-config";
-import { conversationsApi } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { MessageCircle, Send, ArrowLeft } from 'lucide-react';
+import { createConsumer } from '@rails/actioncable';
+import { getApiBaseUrl } from '@/lib/api-config';
+import { conversationsApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Conversation {
   id: number;
@@ -30,43 +30,97 @@ interface Message {
   created_at: string;
 }
 
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
+type ChatApiErrorShape = {
+  status?: number;
+  code?: string;
+  message?: string;
+  details?: {
+    code?: string;
+    error?: string;
+    message?: string;
+    reason?: string;
+  };
+  context?: {
+    status?: number;
+    details?: {
+      code?: string;
+      error?: string;
+      message?: string;
+      reason?: string;
+    };
+  };
+};
+
+type CableSubscription = {
+  unsubscribe: () => void;
+};
+
+function getChatErrorMessage(error: unknown) {
+  const apiError = error as ChatApiErrorShape;
+  const details = apiError.context?.details || apiError.details || {};
+  const status = apiError.status || apiError.context?.status;
+  const code = details.code || apiError.code;
+  const reason = details?.reason;
+  const message = details.error || details.message || apiError.message;
+
+  if (status === 401) {
+    return 'Faça login para iniciar uma conversa com esta empresa.';
+  }
+
+  if (status === 403 && code === 'P2P_CHAT_NOT_AVAILABLE') {
+    return reason === 'upgrade_required'
+      ? 'O chat direto não está disponível no plano atual desta empresa.'
+      : 'O chat direto está bloqueado para esta empresa.';
+  }
+
+  if (status === 403 || message?.includes('Chat is disabled')) {
+    return 'O chat direto está desativado para esta empresa.';
+  }
+
+  return 'Não foi possível carregar o chat agora. Tente novamente em instantes.';
 }
 
 export default function ChatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
-  
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inputMessage, setInputMessage] = useState("");
-  
-  const cableRef = useRef<any>(null);
-  const channelRef = useRef<any>(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
+  const channelRef = useRef<CableSubscription | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push('/login');
       return;
     }
+
+    if (user?.role !== 'review') {
+      setErrorMessage('O chat com empresas está disponível apenas para usuários compradores.');
+      setLoading(false);
+      return;
+    }
+
     loadConversations();
-  }, [isAuthenticated, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, isAuthenticated, router, user?.role]);
 
   const loadConversations = async () => {
     try {
+      setErrorMessage(null);
       const data = await conversationsApi.getAll();
       setConversations(data || []);
-      
-      const companyId = searchParams.get("company_id");
+
+      const companyId = searchParams.get('company_id');
       if (companyId) {
         let conv = data.find((c: Conversation) => c.company_id === Number(companyId));
         if (!conv) {
@@ -79,7 +133,8 @@ export default function ChatClient() {
         selectConversation(data[0]);
       }
     } catch (error) {
-      console.error("Error loading conversations", error);
+      console.error('Error loading conversations', error);
+      setErrorMessage(getChatErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -88,11 +143,13 @@ export default function ChatClient() {
   const selectConversation = async (conv: Conversation) => {
     setActiveConversation(conv);
     try {
+      setErrorMessage(null);
       const msgs = await conversationsApi.getMessages(conv.id);
       setMessages(msgs || []);
       setupActionCable(conv.id);
     } catch (error) {
-      console.error("Error loading messages", error);
+      console.error('Error loading messages', error);
+      setErrorMessage(getChatErrorMessage(error));
     }
   };
 
@@ -101,26 +158,28 @@ export default function ChatClient() {
       channelRef.current.unsubscribe();
     }
     if (!cableRef.current) {
-      const token = getCookie("jwt_token");
-      // Adjust URL if needed (replace http with ws)
+      // Cookies are sent by the browser during the WebSocket handshake; avoid reading HttpOnly cookies in JS.
       const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
-      cableRef.current = createConsumer(`${wsUrl}?token=${token}`);
+      cableRef.current = createConsumer(wsUrl);
     }
 
     channelRef.current = cableRef.current.subscriptions.create(
-      { channel: "ConversationChannel", conversation_id: conversationId },
+      { channel: 'ConversationChannel', conversation_id: conversationId },
       {
+        rejected: () => {
+          console.warn('[P2PChat] ActionCable rejected', { conversationId });
+        },
         received: (data: Message) => {
           setMessages((prev) => [...prev, data]);
           scrollToBottom();
-        }
+        },
       }
     );
   };
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
@@ -131,11 +190,13 @@ export default function ChatClient() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || !activeConversation) return;
     try {
+      setErrorMessage(null);
       const msgText = inputMessage;
-      setInputMessage("");
+      setInputMessage('');
       await conversationsApi.sendMessage(activeConversation.id, msgText);
     } catch (error) {
-      console.error("Error sending message", error);
+      console.error('Error sending message', error);
+      setErrorMessage(getChatErrorMessage(error));
     }
   };
 
@@ -160,6 +221,11 @@ export default function ChatClient() {
           </div>
         </div>
         <ScrollArea className="flex-1">
+          {errorMessage && (
+            <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800">
+              {errorMessage}
+            </div>
+          )}
           {conversations.length === 0 ? (
             <div className="p-4 text-center text-slate-500">Nenhuma conversa encontrada.</div>
           ) : (
@@ -168,18 +234,18 @@ export default function ChatClient() {
                 <button
                   key={conv.id}
                   onClick={() => selectConversation(conv)}
-                  className={`flex w-full items-center gap-3 border-b p-4 text-left transition-colors hover:bg-slate-50 ${activeConversation?.id === conv.id ? "bg-slate-50" : ""}`}
+                  className={`flex w-full items-center gap-3 border-b p-4 text-left transition-colors hover:bg-slate-50 ${activeConversation?.id === conv.id ? 'bg-slate-50' : ''}`}
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={conv.company_logo || ""} />
-                    <AvatarFallback>{(conv.company_name || "C").charAt(0)}</AvatarFallback>
+                    <AvatarImage src={conv.company_logo || ''} />
+                    <AvatarFallback>{(conv.company_name || 'C').charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 overflow-hidden">
                     <div className="font-semibold truncate text-sm">
-                      {user?.role === "company" ? conv.user_name : conv.company_name}
+                      {user?.role === 'company' ? conv.user_name : conv.company_name}
                     </div>
                     <div className="truncate text-xs text-slate-500">
-                      {conv.last_message || "Iniciar conversa"}
+                      {conv.last_message || 'Iniciar conversa'}
                     </div>
                   </div>
                 </button>
@@ -195,24 +261,31 @@ export default function ChatClient() {
           <>
             <div className="flex items-center gap-3 border-b bg-white p-4 shadow-sm">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={activeConversation.company_logo || ""} />
-                <AvatarFallback>{(activeConversation.company_name || "C").charAt(0)}</AvatarFallback>
+                <AvatarImage src={activeConversation.company_logo || ''} />
+                <AvatarFallback>
+                  {(activeConversation.company_name || 'C').charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <div className="font-bold">
-                {user?.role === "company" ? activeConversation.user_name : activeConversation.company_name}
+                {user?.role === 'company'
+                  ? activeConversation.user_name
+                  : activeConversation.company_name}
               </div>
             </div>
-            
+
             <ScrollArea className="flex-1 p-4">
               <div className="flex flex-col gap-3">
                 {messages.map((msg, idx) => {
-                  const isMine = (user?.role === "company" && msg.sender_type === "Company") || 
-                                 (user?.role !== "company" && msg.sender_type === "User");
+                  const isMine =
+                    (user?.role === 'company' && msg.sender_type === 'Company') ||
+                    (user?.role !== 'company' && msg.sender_type === 'User');
                   return (
-                    <div key={idx} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                    <div key={idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                          isMine ? "bg-blue-600 text-white" : "bg-white text-slate-800 shadow-sm border border-slate-100"
+                          isMine
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-slate-800 shadow-sm border border-slate-100'
                         }`}
                       >
                         {msg.body}
@@ -229,7 +302,7 @@ export default function ChatClient() {
                 <Input
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Escreva sua mensagem..."
                   className="flex-1"
                 />

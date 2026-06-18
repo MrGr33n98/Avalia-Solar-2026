@@ -14,7 +14,7 @@ class CompanySerializer < ActiveModel::Serializer
              :instagram, :facebook, :linkedin,
              :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
-             :active_admin,
+             :active_admin, :p2p_chat_enabled,
              :social_proof_enabled, :can_use_social_proof,
              :effect, :media_upload_allowed,
              :faqs,
@@ -172,6 +172,10 @@ class CompanySerializer < ActiveModel::Serializer
 
   def active_admin
     object.respond_to?(:active_admin) ? !!object.active_admin : false
+  end
+
+  def p2p_chat_enabled
+    object.respond_to?(:p2p_chat_enabled) ? !!object.p2p_chat_enabled : false
   end
 
   def coverage_states
