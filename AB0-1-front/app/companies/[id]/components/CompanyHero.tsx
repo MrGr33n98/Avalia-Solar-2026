@@ -19,6 +19,7 @@ import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { useAuth } from '@/contexts/AuthContext';
+import { openSignupGate } from '@/lib/signup-gate';
 
 const HERO_BADGE_SIZE_PX = 48;
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
@@ -64,6 +65,7 @@ export default function CompanyHero({
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
   const directChatEnabled = directChatAvailable && canUseBuyerChat;
+  const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
@@ -313,7 +315,7 @@ export default function CompanyHero({
                     </div>
                   )}
 
-                  {directChatEnabled && (
+                  {directChatAvailable && (
                     <Button
                       size="default"
                       className="h-11 w-full rounded-xl bg-orange-500 px-3 text-sm font-semibold text-white shadow-none hover:bg-orange-600"
@@ -321,8 +323,19 @@ export default function CompanyHero({
                         track('company_direct_chat_click', {
                           company_id: company.id,
                           company_name: company.name,
+                          authenticated: isAuthenticated,
                         });
-                        router.push(`/chat?company_id=${company.id}`);
+                        if (directChatEnabled) {
+                          router.push(directChatReturnTo);
+                          return;
+                        }
+                        openSignupGate({
+                          source: 'direct_chat',
+                          returnTo: directChatReturnTo,
+                          title: 'Crie sua conta para falar com esta empresa',
+                          description:
+                            'O chat direto fica disponível para usuários compradores cadastrados.',
+                        });
                       }}
                     >
                       <MessageCircle className="mr-2 h-4 w-4" />

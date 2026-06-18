@@ -26,15 +26,18 @@ interface SignupGateConfig {
 const DEFAULT_COPY: Record<SignupGateSource, Pick<SignupGateConfig, 'title' | 'description'>> = {
   comparison_cta: {
     title: 'Crie sua conta para continuar comparando',
-    description: 'Desbloqueie a análise completa, salve sua shortlist e volte exatamente para onde parou.',
+    description:
+      'Desbloqueie a análise completa, salve sua shortlist e volte exatamente para onde parou.',
   },
   compare_page: {
     title: 'Crie sua conta para ver a comparação completa',
-    description: 'Libere a visão lado a lado, mantenha suas empresas salvas e siga sua pesquisa sem perder o contexto.',
+    description:
+      'Libere a visão lado a lado, mantenha suas empresas salvas e siga sua pesquisa sem perder o contexto.',
   },
   review_tab: {
     title: 'Quer ver todas as avaliações?',
-    description: 'Crie sua conta para acessar o histórico completo de performance, elogios e pontos de atenção.',
+    description:
+      'Crie sua conta para acessar o histórico completo de performance, elogios e pontos de atenção.',
   },
   contact_reveal: {
     title: 'Crie sua conta para ver os contatos',
@@ -42,15 +45,32 @@ const DEFAULT_COPY: Record<SignupGateSource, Pick<SignupGateConfig, 'title' | 'd
   },
   quote_wizard: {
     title: 'Crie sua conta para continuar seu orçamento',
-    description: 'Desbloqueie o formulário de orçamento, salve sua solicitação e volte exatamente ao ponto em que estava.',
+    description:
+      'Desbloqueie o formulário de orçamento, salve sua solicitação e volte exatamente ao ponto em que estava.',
   },
   quick_lead: {
     title: 'Crie sua conta para continuar sua solicitação',
-    description: 'Desbloqueie o pedido rápido, mantenha seus dados vinculados e siga sem perder o contexto.',
+    description:
+      'Desbloqueie o pedido rápido, mantenha seus dados vinculados e siga sem perder o contexto.',
   },
   dynamic_lead_wizard: {
     title: 'Crie sua conta para continuar seu orçamento',
-    description: 'Desbloqueie o formulário completo e siga com a empresa mais aderente ao seu projeto.',
+    description:
+      'Desbloqueie o formulário completo e siga com a empresa mais aderente ao seu projeto.',
+  },
+  direct_chat: {
+    title: 'Crie sua conta para falar com a empresa',
+    description:
+      'Entre como comprador para iniciar o chat direto e manter o histórico da conversa.',
+  },
+  search_results: {
+    title: 'Crie sua conta para falar com empresas',
+    description: 'Libere os canais de contato e volte exatamente para a empresa que você escolheu.',
+  },
+  comparison_reveal: {
+    title: 'Crie sua conta para comparar melhor',
+    description:
+      'Desbloqueie detalhes da comparação e continue sua pesquisa sem perder o contexto.',
   },
   manual: {
     title: 'Crie sua conta para continuar',
@@ -142,7 +162,17 @@ export default function SignupGateModalHost() {
     }, 900);
 
     return () => window.clearTimeout(timer);
-  }, [authLoading, comparisonLoading, config, count, currentReturnTo, isAuthenticated, pathname, showGate, suppressed]);
+  }, [
+    authLoading,
+    comparisonLoading,
+    config,
+    count,
+    currentReturnTo,
+    isAuthenticated,
+    pathname,
+    showGate,
+    suppressed,
+  ]);
 
   const handlePrimary = useCallback(() => {
     if (!config) return;

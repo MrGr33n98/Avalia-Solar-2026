@@ -8,20 +8,17 @@ const isProduction = process.env.NODE_ENV === 'production';
 const normalizeApiTarget = (value = '') => value.replace(/\/+$/, '').replace(/\/api\/v1$/i, '');
 const apiProxyTarget = normalizeApiTarget(
   process.env.API_PROXY_TARGET ||
-  process.env.API_URL_INTERNAL ||
-  (
-    isProduction
-      ? (process.env.NEXT_PUBLIC_API_URL?.startsWith('http') 
-          ? process.env.NEXT_PUBLIC_API_URL 
-          : 'http://ab0-backend:3001')
-      : (
-          process.env.NEXT_PUBLIC_API_BASE_URL ||
-          process.env.NEXT_PUBLIC_API_URL ||
-          'http://localhost:3001'
-        )
-  )
+    process.env.API_URL_INTERNAL ||
+    (isProduction
+      ? process.env.NEXT_PUBLIC_API_URL?.startsWith('http')
+        ? process.env.NEXT_PUBLIC_API_URL
+        : 'http://ab0-backend:3001'
+      : process.env.NEXT_PUBLIC_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        'http://localhost:3001')
 );
-const stableBuildId = process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.SOURCE_VERSION;
+const stableBuildId =
+  process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.SOURCE_VERSION;
 // Keep image optimization on by default. Only disable with explicit opt-out.
 const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
 const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
@@ -48,7 +45,7 @@ const nextConfig = {
     serverComponentsExternalPackages: [
       '@opentelemetry/instrumentation-http',
       'require-in-the-middle',
-      'import-in-the-middle'
+      'import-in-the-middle',
     ],
     optimizePackageImports: [
       'lucide-react',
@@ -93,8 +90,8 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=300, stale-while-revalidate=86400'
-          }
+            value: 'public, max-age=300, stale-while-revalidate=86400',
+          },
         ],
       },
       {
@@ -102,8 +99,8 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
+            value: 'public, max-age=31536000, immutable',
+          },
         ],
       },
       {
@@ -111,8 +108,8 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
+            value: 'public, max-age=31536000, immutable',
+          },
         ],
       },
       {
@@ -121,73 +118,74 @@ const nextConfig = {
           // ❌ REMOVIDO: CORS headers (deixar o backend gerenciar)
           // O Rails/Rack::CORS já gerencia CORS corretamente
           // Next.js não deve adicionar CORS headers
-          
+
           // ✅ Security headers que o frontend DEVE adicionar
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block'
+            value: '1; mode=block',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=()',
           },
           {
             // Helps debug deployment mismatches (e.g. Server Actions manifest)
             key: 'X-Release',
-            value: process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'unknown'
+            value: process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'unknown',
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://us.i.posthog.com https://f.avaliasolar.com.br https://static.hotjar.com https://growth.avaliasolar.com.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http: https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://viacep.com.br https://us.i.posthog.com https://f.avaliasolar.com.br https://growth.avaliasolar.com.br https://www.google-analytics.com https://www.google.com https://api.avaliasolar.com.br http://localhost:3001 https://www.googletagmanager.com; manifest-src 'self'; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com; object-src 'none';"
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://us.i.posthog.com https://f.avaliasolar.com.br https://static.hotjar.com https://growth.avaliasolar.com.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http: https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' ws: wss: https://viacep.com.br https://us.i.posthog.com https://f.avaliasolar.com.br https://growth.avaliasolar.com.br https://www.google-analytics.com https://www.google.com https://api.avaliasolar.com.br http://localhost:3001 ws://localhost:3001 https://www.googletagmanager.com; manifest-src 'self'; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com; object-src 'none';",
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups'
-          }
+            value: 'same-origin-allow-popups',
+          },
         ],
       },
-    ]
+    ];
   },
 
   webpack: (config, { isServer }) => {
     config.watchOptions = {
       poll: 1000,
       aggregateTimeout: 300,
-    }
+    };
 
     // Fix for OpenTelemetry/require-in-the-middle warnings
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        "require-in-the-middle": false,
-        "import-in-the-middle": false,
-        "module": false,
-        "async_hooks": false,
-        "perf_hooks": false,
+        'require-in-the-middle': false,
+        'import-in-the-middle': false,
+        module: false,
+        async_hooks: false,
+        perf_hooks: false,
       };
     }
 
-    return config
+    return config;
   },
 
   basePath: '',
@@ -230,7 +228,7 @@ const nextConfig = {
     ],
     // Disable optimization only if needed (env override)
     unoptimized: !enableImageOptimization,
-    
+
     // Domínios permitidos (legacy - usar remotePatterns acima)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -258,13 +256,17 @@ const nextConfig = {
           destination: `${apiProxyTarget}/api/v1/:path*`,
         },
         {
+          source: '/cable',
+          destination: `${apiProxyTarget}/cable`,
+        },
+        {
           source: '/users/auth/:path*',
           destination: `${apiProxyTarget}/users/auth/:path*`,
         },
       ],
     };
   },
-  
+
   async redirects() {
     return [
       {
@@ -287,20 +289,21 @@ const nextConfig = {
         destination: '/companies',
         permanent: true,
       },
-    ]
+    ];
   },
-}
+};
 
 // TASK-006: Sentry configuration for Next.js
 // Export the config with Sentry wrapper for source maps
 
 // Only enable Sentry if we have the required configuration
-const hasSentryConfig = process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT;
+const hasSentryConfig =
+  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT;
 const enableSentry = process.env.NODE_ENV === 'production' && hasSentryConfig;
 
 if (enableSentry) {
-  const { withSentryConfig } = require("@sentry/nextjs");
-  
+  const { withSentryConfig } = require('@sentry/nextjs');
+
   const sentryConfig = withSentryConfig(
     nextConfig,
     {
@@ -309,20 +312,20 @@ if (enableSentry) {
       sourcemaps: {
         deleteSourcemapsAfterUpload: true,
       },
-      
+
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
       authToken: process.env.SENTRY_AUTH_TOKEN,
-      
+
       // Automatically tree-shake Sentry logger statements to reduce bundle size
       disableLogger: true,
-      
+
       // Hide source maps from generated client bundles
       hideSourceMaps: true,
-      
+
       // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
-      tunnelRoute: "/monitoring",
-      
+      tunnelRoute: '/monitoring',
+
       // Automatically annotate React components to show their full name in breadcrumbs and session replay
       autoInstrumentServerFunctions: true,
       autoInstrumentMiddleware: true,

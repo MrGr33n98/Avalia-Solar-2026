@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
+import { openSignupGate } from '@/lib/signup-gate';
 
 interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
@@ -278,8 +279,9 @@ export default function CompanyCard({
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
   const directChatEnabled = directChatAvailable && canUseBuyerChat;
-  const hasPrimaryContactCta = canRequestQuote || directChatEnabled;
+  const hasPrimaryContactCta = canRequestQuote || directChatAvailable;
   const wizardCategoryId = resolveWizardCategoryId(company);
+  const directChatReturnTo = `/chat?company_id=${id}`;
 
   const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
 
@@ -686,7 +688,7 @@ export default function CompanyCard({
                     )}
                     preset="brandSolid"
                   />
-                ) : directChatEnabled ? (
+                ) : directChatAvailable ? (
                   <Button
                     type="button"
                     className={cn(
@@ -697,8 +699,19 @@ export default function CompanyCard({
                       track('company_card_direct_chat_click', {
                         company_id: id,
                         company_name: name,
+                        authenticated: isAuthenticated,
                       });
-                      router.push(`/chat?company_id=${id}`);
+                      if (directChatEnabled) {
+                        router.push(directChatReturnTo);
+                        return;
+                      }
+                      openSignupGate({
+                        source: 'direct_chat',
+                        returnTo: directChatReturnTo,
+                        title: 'Crie sua conta para falar com esta empresa',
+                        description:
+                          'O chat direto fica disponível para usuários compradores cadastrados.',
+                      });
                     }}
                   >
                     <MessageCircle className={cn('h-4 w-4', !compact && 'mr-1.5')} />

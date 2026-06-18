@@ -8,6 +8,7 @@ export type SignupGateSource =
   | 'quote_wizard'
   | 'quick_lead'
   | 'dynamic_lead_wizard'
+  | 'direct_chat'
   | 'search_results'
   | 'comparison_reveal'
   | 'manual';
@@ -40,7 +41,9 @@ export function openSignupGate(detail: SignupGateDetail): void {
 }
 
 export function isAuthRoute(pathname: string): boolean {
-  return AUTH_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return AUTH_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 export function buildReturnTo(pathname: string, search: string | null): string {

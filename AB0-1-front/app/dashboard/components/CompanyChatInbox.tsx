@@ -59,7 +59,7 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
       setConversations((current) =>
         current.map((conversation) =>
           conversation.id === conversationId
-            ? { ...conversation, last_message: message.body }
+            ? { ...conversation, last_message: message.body, unread_count: 0 }
             : conversation
         )
       );
@@ -101,6 +101,13 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
       try {
         const data = await conversationsApi.getMessages(selectedConversationId);
         setMessages(data);
+        setConversations((current) =>
+          current.map((conversation) =>
+            conversation.id === selectedConversationId
+              ? { ...conversation, unread_count: 0 }
+              : conversation
+          )
+        );
       } catch {
         setError('Não foi possível carregar as mensagens desta conversa.');
       } finally {
@@ -227,6 +234,7 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
                 <div className="space-y-2">
                   {conversations.map((conversation) => {
                     const active = conversation.id === selectedConversationId;
+                    const unreadCount = conversation.unread_count ?? 0;
                     return (
                       <button
                         key={conversation.id}
@@ -244,9 +252,16 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
                             {(conversation.user_name || 'C').slice(0, 1).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-black text-slate-950">
-                              {conversation.user_name || 'Cliente'}
-                            </p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="truncate text-sm font-black text-slate-950">
+                                {conversation.user_name || 'Cliente'}
+                              </p>
+                              {unreadCount > 0 && (
+                                <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-black text-white">
+                                  {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                              )}
+                            </div>
                             <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
                               {conversation.last_message || 'Nova conversa iniciada.'}
                             </p>
