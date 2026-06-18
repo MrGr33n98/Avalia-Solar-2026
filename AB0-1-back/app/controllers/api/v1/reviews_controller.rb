@@ -52,11 +52,13 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def create
     # Persiste o e-mail no metadata para facilitar auditoria futura e buscas rápidas
-    metadata_with_email = (review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
+    permitted_review_params = review_params
+    metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
     
-    @review = Review.new(review_params.merge(
+    @review = Review.new(permitted_review_params.merge(
       user_id: current_user.id, 
       is_legacy: false,
+      capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
       metadata: metadata_with_email
     ))
 
