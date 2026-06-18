@@ -39,7 +39,7 @@ export default function CompanyIdentityCard({
   return (
     <div
       id="company-identity-card"
-      className="relative mx-auto flex w-full max-w-[820px] flex-col gap-2 rounded-none border border-slate-200 bg-white pb-3 pl-3 pr-3 pt-12 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.22)] sm:gap-3 sm:p-4 lg:max-w-[860px]"
+      className="relative flex w-full flex-col gap-2 rounded-none border border-slate-200 bg-white pb-3 pl-3 pr-3 pt-12 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.22)] sm:gap-3 sm:p-4"
     >
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         {/* Logo Container com Fallback */}
