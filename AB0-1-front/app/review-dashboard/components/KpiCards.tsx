@@ -1,11 +1,13 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { ClipboardList, Clock, MessageCircle, Star, TrendingUp } from 'lucide-react';
+import { Clock, MessageCircle, Star, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface KpiCardsProps {
   data?: {
+    estimated_savings?: number;
     quotes_total: number;
     quotes_open: number;
     quotes_replied: number;
@@ -15,24 +17,60 @@ interface KpiCardsProps {
 }
 
 const kpiConfig = [
-  { key: 'quotes_total', label: 'Orçamentos', icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { key: 'quotes_open', label: 'Em Aberto', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },      
-  { key: 'quotes_replied', label: 'Respondidos', icon: MessageCircle, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  { key: 'reviews_published', label: 'Reviews', icon: Star, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  {
+    key: 'estimated_savings',
+    label: 'Economia',
+    desktopLabel: 'Economia estimada',
+    icon: TrendingUp,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+  },
+  {
+    key: 'quotes_open',
+    label: 'em aberto',
+    desktopLabel: 'Em aberto',
+    icon: Clock,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+  },
+  {
+    key: 'quotes_replied',
+    label: 'respondidos',
+    desktopLabel: 'Respondidos',
+    icon: MessageCircle,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
+  },
+  {
+    key: 'reviews_published',
+    label: 'avaliações',
+    desktopLabel: 'Avaliações',
+    icon: Star,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+  },
 ];
+
+function formatMetricValue(key: string, value: number) {
+  if (key === 'estimated_savings') return `R$ ${value.toLocaleString('pt-BR')},00`;
+  return value.toLocaleString('pt-BR');
+}
 
 export function KpiCards({ data, loading }: KpiCardsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible md:gap-5 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-3xl shadow-sm border-slate-100 overflow-hidden">
-            <CardContent className="p-5 md:p-6">
+          <Card
+            key={i}
+            className="min-w-[148px] shrink-0 overflow-hidden rounded-2xl border-slate-100 shadow-sm sm:min-w-0"
+          >
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-2xl" />
+                <Skeleton className="h-9 w-9 rounded-xl" />
                 <div className="space-y-2">
                   <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-6 w-12" />
+                  <Skeleton className="h-5 w-12" />
                 </div>
               </div>
             </CardContent>
@@ -43,31 +81,45 @@ export function KpiCards({ data, loading }: KpiCardsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible md:gap-5 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
       {kpiConfig.map((kpi) => {
         const Icon = kpi.icon;
         const value = data?.[kpi.key as keyof typeof data] ?? 0;
+        const hasActivity = value > 0 && kpi.key !== 'estimated_savings';
 
         return (
-          <Card key={kpi.key} className="rounded-3xl shadow-md border-none bg-white hover:shadow-xl transition-all hover:scale-[1.02] cursor-default group overflow-hidden relative">
-            {/* Economy Indicator Quick Win */}
-            {kpi.key === 'quotes_total' && (
-               <div className="absolute top-0 right-0 p-2">
-                 <div className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                   <TrendingUp className="h-3 w-3" />
-                   ECONOMIA ESTIMADA
-                 </div>
-               </div>
+          <Card
+            key={kpi.key}
+            className={cn(
+              'relative min-w-fit shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors sm:min-w-0',
+              hasActivity && 'border-blue-200 bg-blue-50/30'
             )}
-
-            <CardContent className="p-5 md:p-6">
-              <div className="flex items-center gap-4">
-                <div className={`p-3.5 rounded-2xl ${kpi.bg} group-hover:scale-110 transition-transform`}>
-                  <Icon className={`h-6 w-6 ${kpi.color}`} />
+          >
+            <CardContent className="p-2.5 sm:p-4">
+              <div className="flex h-10 items-center gap-2 whitespace-nowrap sm:h-auto sm:gap-3">
+                <div
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10',
+                    kpi.bg
+                  )}
+                >
+                  <Icon className={cn('h-4 w-4 sm:h-5 sm:w-5', kpi.color)} />
                 </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{kpi.label}</p>
-                  <h3 className="text-3xl font-black text-slate-950 tracking-tight">{value}</h3>
+                <div className="min-w-0">
+                  <p className="hidden text-[11px] font-medium text-slate-500 sm:block">
+                    {kpi.desktopLabel}
+                  </p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-semibold tracking-tight text-slate-950 sm:text-2xl">
+                      {formatMetricValue(kpi.key, value)}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 sm:hidden">
+                      {kpi.label}
+                    </span>
+                  </div>
+                  <p className="hidden text-xs font-medium text-slate-400 sm:block">
+                    {kpi.key === 'estimated_savings' ? 'estimada' : 'orçamentos'}
+                  </p>
                 </div>
               </div>
             </CardContent>

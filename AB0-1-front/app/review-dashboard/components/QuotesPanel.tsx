@@ -34,12 +34,19 @@ const statusMap: Record<string, { label: string; color: string; bg: string }> = 
   canceled: { label: 'Cancelado', color: 'text-red-700', bg: 'bg-red-100' },
 };
 
-export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChange }: QuotesPanelProps) {
+export function QuotesPanel({
+  data,
+  loading,
+  onViewDetails,
+  onCancel,
+  onTabChange,
+}: QuotesPanelProps) {
   const [activeTab, setActiveTab] = useState('all');
 
   const filteredData = data.filter((item) => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'open') return ['draft', 'pending_otp', 'verified'].includes(item.status || '');    
+    if (activeTab === 'open')
+      return ['draft', 'pending_otp', 'verified'].includes(item.status || '');
     if (activeTab === 'replied') return item.status === 'proposal_sent';
     if (activeTab === 'closed') return item.status === 'canceled';
     return true;
@@ -70,15 +77,32 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
   };
 
   return (
-    <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
-      <CardHeader className="pb-4 bg-slate-50/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-xl font-black text-slate-950 uppercase tracking-tight">Meus Orçamentos</CardTitle>
+    <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="border-b border-slate-100 bg-white pb-3">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Meus Orçamentos
+          </CardTitle>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
-            <TabsList className="bg-white border border-slate-100 p-1 rounded-xl h-10">
-              <TabsTrigger value="all" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Todos</TabsTrigger>
-              <TabsTrigger value="open" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Abertos</TabsTrigger>
-              <TabsTrigger value="replied" className="rounded-lg text-xs font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white">Respondidos</TabsTrigger>
+            <TabsList className="h-9 w-full justify-start overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-1 sm:w-auto">
+              <TabsTrigger
+                value="all"
+                className="rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+              >
+                Todos
+              </TabsTrigger>
+              <TabsTrigger
+                value="open"
+                className="rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+              >
+                Abertos
+              </TabsTrigger>
+              <TabsTrigger
+                value="replied"
+                className="rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+              >
+                Respondidos
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -87,9 +111,9 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
         <div className="divide-y divide-slate-50">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-5 flex items-center justify-between">
+              <div key={i} className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-12 w-12 rounded-2xl" />
+                  <Skeleton className="h-10 w-10 rounded-xl" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-20" />
@@ -99,16 +123,22 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
               </div>
             ))
           ) : filteredData.length === 0 ? (
-            <div className="py-16 text-center space-y-4">
-              <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto">
-                <Building className="h-8 w-8 text-slate-300" />
+            <div className="space-y-3 px-4 py-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
+                <Building className="h-6 w-6 text-slate-300" />
               </div>
               <div className="space-y-1">
-                <p className="text-slate-900 font-black uppercase text-sm">Nenhum orçamento ainda</p>
-                <p className="text-slate-500 text-xs font-medium">Economize agora solicitando orçamentos para integradores.</p>
+                <p className="text-sm font-semibold text-slate-900">Nenhum orçamento ainda</p>
+                <p className="mx-auto max-w-xs text-xs font-medium text-slate-500">
+                  Compare propostas de empresas verificadas.
+                </p>
               </div>
-              <Button variant="default" className="bg-blue-600 hover:bg-blue-700 font-black rounded-xl px-8 shadow-lg shadow-blue-100" asChild>
-                <a href="/empresas">Começar Agora</a>
+              <Button
+                variant="default"
+                className="h-11 w-full rounded-xl bg-blue-600 font-semibold hover:bg-blue-700 sm:w-auto sm:px-6"
+                asChild
+              >
+                <a href="/empresas">Solicitar orçamento</a>
               </Button>
             </div>
           ) : (
@@ -117,71 +147,102 @@ export function QuotesPanel({ data, loading, onViewDetails, onCancel, onTabChang
               const companyInitials = companyName.slice(0, 2).toUpperCase() || 'ES';
 
               return (
-              <div key={quote.id} className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-all group">
-                {/* Z-PATTERN: Left (Company) */}
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Avatar className="h-12 w-12 rounded-2xl border border-slate-100 shadow-sm">
-                      <AvatarImage src={quote.company_logo_url || ''} className="object-cover" />
-                      <AvatarFallback className="bg-slate-100 text-slate-400 font-black">
-                        {companyInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -top-1 -left-1 bg-white rounded-full p-0.5 shadow-sm border border-slate-50" title="Verificada">
-                       <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <div
+                  key={quote.id}
+                  className="group flex flex-col justify-between gap-3 p-4 transition-all hover:bg-slate-50/50 sm:flex-row sm:items-center"
+                >
+                  {/* Z-PATTERN: Left (Company) */}
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative">
+                      <Avatar className="h-11 w-11 rounded-xl border border-slate-100 shadow-sm">
+                        <AvatarImage src={quote.company_logo_url || ''} className="object-cover" />
+                        <AvatarFallback className="bg-slate-100 text-slate-400 font-semibold">
+                          {companyInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className="absolute -left-1 -top-1 rounded-full border border-slate-50 bg-white p-0.5 shadow-sm"
+                        title="Verificada"
+                      >
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
+                        {companyName}
+                      </h4>
+                      <p className="text-xs font-medium text-slate-500">
+                        {quote.product_vertical || 'Energia Solar'} ·{' '}
+                        {new Date(quote.created_at).toLocaleDateString('pt-BR')}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h4 className="font-black text-slate-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                      {companyName}
-                    </h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {quote.product_vertical || 'Energia Solar'} • {new Date(quote.created_at).toLocaleDateString('pt-BR')}
-                    </p>
+
+                  {/* Z-PATTERN: Center (Status) */}
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        'rounded-full px-2.5 py-1 text-xs font-semibold',
+                        statusMap[quote.status || '']?.bg,
+                        statusMap[quote.status || '']?.color
+                      )}
+                    >
+                      {statusMap[quote.status || '']?.label || quote.status}
+                    </Badge>
+                  </div>
+
+                  {/* Z-PATTERN: Right (CTA) */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hidden h-9 rounded-xl border-slate-200 px-3 font-medium text-slate-600 sm:flex"
+                      onClick={() => onViewDetails?.(quote.id.toString())}
+                    >
+                      Ver detalhes
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-sm"
+                        >
+                          <ChevronRight className="h-5 w-5 text-slate-400" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 rounded-2xl border-slate-100 shadow-xl"
+                      >
+                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-slate-400">
+                          Ações
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => onViewDetails?.(quote.id.toString())}
+                          className="rounded-xl font-bold"
+                        >
+                          <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="rounded-xl font-bold">
+                          <a href={`/messages?quoteId=${quote.id}`}>
+                            <MessageCircle className="mr-2 h-4 w-4" /> Mensagens
+                          </a>
+                        </DropdownMenuItem>
+                        {['draft', 'pending_otp', 'verified'].includes(quote.status || '') && (
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600 rounded-xl font-bold"
+                            onClick={() => onCancel?.(quote.id.toString())}
+                          >
+                            <XCircle className="mr-2 h-4 w-4" /> Cancelar
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-
-                {/* Z-PATTERN: Center (Status) */}
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full", statusMap[quote.status || '']?.bg, statusMap[quote.status || '']?.color)}>
-                    {statusMap[quote.status || '']?.label || quote.status}
-                  </Badge>
-                </div>
-
-                {/* Z-PATTERN: Right (CTA) */}
-                <div className="flex items-center gap-2">
-                   <Button variant="outline" size="sm" className="h-10 rounded-xl font-bold border-slate-200 text-slate-600 px-4 hidden sm:flex" onClick={() => onViewDetails?.(quote.id.toString())}>
-                     Ver Detalhes
-                   </Button>
-                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-sm">
-                        <ChevronRight className="h-5 w-5 text-slate-400" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-2xl border-slate-100 shadow-xl">
-                      <DropdownMenuLabel className="text-[10px] font-black uppercase text-slate-400">Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onViewDetails?.(quote.id.toString())} className="rounded-xl font-bold">
-                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="rounded-xl font-bold">
-                        <a href={`/messages?quoteId=${quote.id}`}>
-                          <MessageCircle className="mr-2 h-4 w-4" /> Mensagens
-                        </a>
-                      </DropdownMenuItem>
-                      {['draft', 'pending_otp', 'verified'].includes(quote.status || '') && (
-                        <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600 rounded-xl font-bold"
-                          onClick={() => onCancel?.(quote.id.toString())}
-                        >
-                          <XCircle className="mr-2 h-4 w-4" /> Cancelar
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            );
+              );
             })
           )}
         </div>

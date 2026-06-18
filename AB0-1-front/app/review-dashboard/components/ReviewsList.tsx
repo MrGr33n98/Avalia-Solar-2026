@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, Edit2, Trash2, MessageSquare, ChevronDown } from 'lucide-react';
+import { Star, Edit2, Trash2, MessageSquare } from 'lucide-react';
 import { Review } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -32,9 +32,11 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
   });
 
   return (
-    <Card className="rounded-3xl shadow-sm border border-slate-100 overflow-hidden bg-white">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-50">       
-        <CardTitle className="text-xl font-black text-slate-950 uppercase tracking-tight">Minhas Avaliações</CardTitle>
+    <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="flex flex-col justify-between gap-3 border-b border-slate-100 pb-3 sm:flex-row sm:items-center">
+        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+          Minhas Avaliações
+        </CardTitle>
         <div className="flex flex-wrap gap-1.5">
           {['all', 'approved', 'pending'].map((f) => (
             <Button
@@ -43,8 +45,8 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
               size="sm"
               onClick={() => setFilter(f)}
               className={cn(
-                "rounded-xl text-[10px] font-black uppercase tracking-widest h-8 px-3",
-                filter === f ? "bg-slate-900 text-white" : "border-slate-100 text-slate-400"
+                'h-8 rounded-xl px-3 text-xs font-medium',
+                filter === f ? 'bg-blue-600 text-white' : 'border-slate-200 text-slate-500'
               )}
             >
               {f === 'all' ? 'Todas' : statusMap[f]?.label || f}
@@ -68,50 +70,61 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
               </div>
             ))
           ) : filteredData.length === 0 ? (
-            <div className="py-20 text-center space-y-4 px-6">
-              <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
-                 <MessageSquare className="h-10 w-10 text-slate-200" />
+            <div className="space-y-3 px-4 py-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
+                <MessageSquare className="h-6 w-6 text-slate-300" />
               </div>
               <div className="space-y-1">
-                <p className="text-slate-950 font-black uppercase text-sm">Sua voz faz a diferença</p>
-                <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">Sua primeira avaliação ajuda milhares de pessoas a escolherem o integrador certo.</p>
+                <p className="text-sm font-semibold text-slate-950">Sua voz faz diferença</p>
+                <p className="mx-auto max-w-xs text-xs font-medium text-slate-500">
+                  Avalie empresas e ajude outros consumidores.
+                </p>
               </div>
-              <Button variant="default" className="bg-blue-600 hover:bg-blue-700 font-black rounded-xl px-8 shadow-lg shadow-blue-100 h-11" asChild>
+              <Button
+                variant="default"
+                className="h-11 w-full rounded-xl bg-blue-600 font-semibold hover:bg-blue-700 sm:w-auto sm:px-6"
+                asChild
+              >
                 <a href="/empresas">Escrever Avaliação</a>
               </Button>
             </div>
           ) : (
             filteredData.map((review) => (
-                  <div key={review.id} className="p-5 md:p-6 hover:bg-slate-50/50 transition-all group">
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                      <div className="flex gap-4">
-                        {(() => {
-                          const companyObj = typeof review.company === 'string' ? null : review.company;
-                          const companyName = typeof review.company === 'string'
-                            ? review.company
-                            : companyObj?.name || 'Empresa';
-                          const initialsSource = typeof review.company === 'string'
-                            ? review.company
-                            : companyObj?.name || 'EM';
-                          const initials = initialsSource.substring(0, 2).toUpperCase();
-                          const logoUrl = companyObj?.logo_url || '';
-                          return (
-                        <Avatar className="h-14 w-14 rounded-2xl border border-slate-100 shadow-sm shrink-0">
+              <div key={review.id} className="p-4 transition-all hover:bg-slate-50/50 md:p-5 group">
+                <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                  <div className="flex gap-4">
+                    {(() => {
+                      const companyObj = typeof review.company === 'string' ? null : review.company;
+                      const initialsSource =
+                        typeof review.company === 'string'
+                          ? review.company
+                          : companyObj?.name || 'EM';
+                      const initials = initialsSource.substring(0, 2).toUpperCase();
+                      const logoUrl = companyObj?.logo_url || '';
+                      return (
+                        <Avatar className="h-11 w-11 shrink-0 rounded-xl border border-slate-100 shadow-sm">
                           <AvatarImage src={logoUrl} className="object-cover" />
-                          <AvatarFallback className="bg-slate-50 text-slate-300 font-black">
+                          <AvatarFallback className="bg-slate-50 text-slate-300 font-semibold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                          )
-                        })()}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-black text-slate-950 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                              {typeof review.company === 'string'
-                                ? review.company
-                                : review.company?.name || 'Empresa'}
-                            </h4>  
-                        <Badge variant="secondary" className={cn("text-[10px] font-black uppercase px-2 py-0 h-4 rounded-md tracking-tighter", statusMap[review.status || '']?.bg, statusMap[review.status || '']?.color)}>
+                      );
+                    })()}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-semibold text-slate-950 transition-colors group-hover:text-blue-600">
+                          {typeof review.company === 'string'
+                            ? review.company
+                            : review.company?.name || 'Empresa'}
+                        </h4>
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            'h-5 rounded-full px-2 text-[11px] font-semibold',
+                            statusMap[review.status || '']?.bg,
+                            statusMap[review.status || '']?.color
+                          )}
+                        >
                           {statusMap[review.status || '']?.label || review.status}
                         </Badge>
                       </div>
@@ -120,27 +133,42 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}
-                              className={cn("h-3.5 w-3.5", i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-200')}
+                              className={cn(
+                                'h-3.5 w-3.5',
+                                i < (review.rating || 0)
+                                  ? 'text-amber-400 fill-amber-400'
+                                  : 'text-slate-200'
+                              )}
                             />
                           ))}
                         </div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                           {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                          {new Date(review.created_at).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-1.5 self-start">
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-white" onClick={() => onEdit?.(review.id.toString())}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-white"
+                      onClick={() => onEdit?.(review.id.toString())}
+                    >
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-white" onClick={() => onDelete?.(review.id.toString())}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-white"
+                      onClick={() => onDelete?.(review.id.toString())}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                  <p className="text-sm font-medium leading-relaxed text-slate-600">
                     {review.comment || review.body || 'Sem comentário.'}
                   </p>
                 </div>
@@ -148,9 +176,13 @@ export function ReviewsList({ data, loading, onEdit, onDelete }: ReviewsListProp
                   <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 border-l-4 border-l-blue-500">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="h-1 w-1 rounded-full bg-blue-500" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resposta da Empresa</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Resposta da Empresa
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-600 font-bold leading-relaxed italic">&quot;{review.reply}&quot;</p>
+                    <p className="text-xs font-medium italic leading-relaxed text-slate-600">
+                      &quot;{review.reply}&quot;
+                    </p>
                   </div>
                 )}
               </div>
