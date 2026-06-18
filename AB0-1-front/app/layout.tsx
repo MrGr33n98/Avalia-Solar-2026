@@ -13,12 +13,14 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
+import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Avalia Solar - Marketplace de Energia Solar',
   description: SITE.description,
-  keywords: 'energia solar, painéis solares, instalação solar, empresas solares, comparação, marketplace, energia renovável, sustentabilidade, economia de energia',
+  keywords:
+    'energia solar, painéis solares, instalação solar, empresas solares, comparação, marketplace, energia renovável, sustentabilidade, economia de energia',
   authors: [{ name: 'Avalia Solar' }],
   creator: 'Avalia Solar',
   publisher: 'Avalia Solar',
@@ -76,11 +78,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import NutshellAnalytics from '@/components/NutshellAnalytics';
 import { AnalyticsDebugger } from '@/components/analytics/AnalyticsDebugger';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
   const nutshellEnabled = analyticsEnabled && process.env.NEXT_PUBLIC_ENABLE_NUTSHELL === 'true';
 
@@ -96,7 +94,11 @@ export default function RootLayout({
         <JsonLd />
         {analyticsEnabled && (
           <>
-            <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+            <link
+              rel="preconnect"
+              href="https://www.googletagmanager.com"
+              crossOrigin="anonymous"
+            />
             <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
             {/* PostHog */}
             <link rel="preconnect" href="https://us.i.posthog.com" crossOrigin="anonymous" />
@@ -105,7 +107,11 @@ export default function RootLayout({
         )}
         {nutshellEnabled && (
           <>
-            <link rel="preconnect" href="https://growth.avaliasolar.com.br" crossOrigin="anonymous" />
+            <link
+              rel="preconnect"
+              href="https://growth.avaliasolar.com.br"
+              crossOrigin="anonymous"
+            />
             <link rel="dns-prefetch" href="https://growth.avaliasolar.com.br" />
           </>
         )}
@@ -113,7 +119,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://nyc3.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://nyc3.digitaloceanspaces.com" />
 
-          {/*
+        {/*
           Theme detection: script síncrono mínimo que aplica a classe dark/light
           antes do primeiro paint, eliminando o CLS causado pelo ThemeProvider.
         */}
@@ -123,8 +129,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-sans antialiased">
-          {/* Google Tag Manager (noscript) */}
+      <body suppressHydrationWarning className="font-sans antialiased md:pb-0">
+        {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
 
         {/* GTM + Consent Mode: afterInteractive — não bloqueia TBT */}
@@ -143,8 +149,11 @@ export default function RootLayout({
             <Providers>
               <PwaOfflineController />
               <Navbar />
-              {children}
+              <div className="pb-[calc(5.5rem+var(--safe-area-inset-bottom))] md:pb-0">
+                {children}
+              </div>
               <ConditionalFooter />
+              <MobileBottomNav />
             </Providers>
           </UtmProvider>
         </ThemeProvider>

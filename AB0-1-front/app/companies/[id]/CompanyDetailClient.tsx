@@ -52,7 +52,6 @@ import CompanyComparisonSection from './components/CompanyComparisonSection';
 import WinnerBadge from '@/components/company/WinnerBadge';
 import Top1StickyCTA from '@/components/company/Top1StickyCTA';
 import ReviewIdentityModalTrigger from '@/components/company/ReviewIdentityModalTrigger';
-import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 
 // Dynamic Components for Performance
 const CompanyProducts = dynamic(() => import('./components/CompanyProducts'), {
@@ -461,28 +460,25 @@ export default function CompanyDetailClient({
 
   if (ENABLE_PREMIUM_PROFILE) {
     return (
-      <>
-        <CompanyProfileShell
-          company={currentCompany}
-          companyStats={companyStats as any}
-          products={products}
-          reviews={reviews}
-          productsLoading={productsLoading}
-          reviewsLoading={reviewsLoading}
-          bannerUrl={bannerUrl}
-          bannerError={bannerError}
-          setBannerError={setBannerError}
-          logoUrl={logoUrl}
-          logoError={logoError}
-          setLogoError={setLogoError}
-          canRequestQuote={canRequestQuote}
-          ctaEnabled={ctaEnabled}
-          ctaUrl={ctaUrl}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-        <MobileBottomNav />
-      </>
+      <CompanyProfileShell
+        company={currentCompany}
+        companyStats={companyStats as any}
+        products={products}
+        reviews={reviews}
+        productsLoading={productsLoading}
+        reviewsLoading={reviewsLoading}
+        bannerUrl={bannerUrl}
+        bannerError={bannerError}
+        setBannerError={setBannerError}
+        logoUrl={logoUrl}
+        logoError={logoError}
+        setLogoError={setLogoError}
+        canRequestQuote={canRequestQuote}
+        ctaEnabled={ctaEnabled}
+        ctaUrl={ctaUrl}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
     );
   }
 
@@ -663,7 +659,6 @@ export default function CompanyDetailClient({
       />
 
       <ReviewIdentityModalTrigger activeTab={activeTab} />
-      <MobileBottomNav />
     </div>
   );
 }
