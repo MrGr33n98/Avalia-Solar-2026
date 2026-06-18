@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Building2, Package, Layers, Star } from 'lucide-react';
 import Image from 'next/image';
 import { buildCategoryPath } from '@/lib/slug';
+import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
 
 interface CategoryCardMinimalProps {
   category: {
@@ -22,15 +23,18 @@ interface CategoryCardMinimalProps {
   className?: string;
 }
 
-export default function CategoryCardMinimal({ category, className = "" }: CategoryCardMinimalProps) {
+export default function CategoryCardMinimal({
+  category,
+  className = '',
+}: CategoryCardMinimalProps) {
   const [imageError, setImageError] = useState(false);
 
-  // Prioridade: icon_url > logo > banner_url > placeholder
-  const iconUrl = category?.icon_url;
+  const iconUrl = getPreferredCategoryIcon(category?.seo_url, category?.icon_url, category?.name);
   const logoUrl = category?.logo?.url;
-  const imageUrl = !imageError && (iconUrl || logoUrl || category?.banner_url)
-    ? (iconUrl || logoUrl || category.banner_url)
-    : null;
+  const imageUrl =
+    !imageError && (iconUrl || logoUrl || category?.banner_url)
+      ? iconUrl || logoUrl || category.banner_url
+      : null;
 
   const displayData = {
     name: category?.name || 'Categoria',
@@ -51,7 +55,7 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
         <h3 className="text-base font-bold text-gray-900 flex-1 leading-tight">
           {displayData.name}
         </h3>
-        
+
         {/* Contadores no canto superior direito */}
         <div className="flex flex-col items-end gap-1 ml-2">
           {displayData.companies_count > 0 && (
@@ -77,21 +81,20 @@ export default function CategoryCardMinimal({ category, className = "" }: Catego
 
       {/* Logo/Ícone Centralizado */}
       {/* Área central da imagem: altura fixa com preenchimento sem distorcer em mobile */}
-      <div className="flex items-center justify-center mb-4 h-32">
+      <div className="mb-4 flex h-32 items-center justify-center">
         {imageUrl ? (
-          <div className="relative w-full h-full">
+          <div className="relative h-24 w-24 overflow-hidden rounded-full border border-gray-200 bg-white p-2 shadow-sm">
             <Image
               src={imageUrl}
               alt={displayData.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover object-center"
+              className="object-contain p-1"
               onError={() => setImageError(true)}
             />
           </div>
         ) : (
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 
-                          flex items-center justify-center border border-blue-200">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
             <Layers className="h-10 w-10 text-blue-600" />
           </div>
         )}

@@ -3,12 +3,12 @@
 import React, { useState, useMemo } from 'react';
 import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { CategorySearch } from './CategorySearch';
-import { CategoriesGrid } from './CategoriesGrid';
-import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
+import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
 
 interface CategoriesMegaMenuProps {
   isOpen: boolean;
@@ -55,10 +55,11 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
           </div>
           <h3 className="text-slate-900 text-lg font-bold mb-2">Menu em Manutenção</h3>
           <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
-            Estamos otimizando a árvore de categorias para você. Enquanto isso, explore nossa listagem completa.
+            Estamos otimizando a árvore de categorias para você. Enquanto isso, explore nossa
+            listagem completa.
           </p>
-          <Link 
-            href="/categories" 
+          <Link
+            href="/categories"
             onClick={onClose}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
           >
@@ -69,73 +70,109 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
     }
 
     return (
-      <motion.div 
+      <motion.div
         variants={{
           hidden: { opacity: 0 },
           show: {
             opacity: 1,
             transition: {
-              staggerChildren: 0.05
-            }
-          }
+              staggerChildren: 0.05,
+            },
+          },
         }}
         initial="hidden"
         animate="show"
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-10 gap-y-12"
       >
         {filteredTree.map((category) => {
+          const iconSrc = getPreferredCategoryIcon(
+            category.slug || category.seo_url,
+            category.icon_url,
+            category.name
+          );
 
           return (
             <motion.div
-            key={category.id}
-            variants={{
-              hidden: { opacity: 0, y: 10 },
-              show: { opacity: 1, y: 0 }
-            }}
-            className="group flex flex-col gap-4"
-          >
-            {/* Categoria Pai */}
-            <Link
-              href={`/categories/${category.slug}`}
-              onClick={onClose}
-              className="flex items-start group/parent"
+              key={category.id}
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="group flex flex-col gap-4"
             >
-              <div className="flex flex-col min-w-0">
-                <span className="text-[15px] font-bold text-slate-900 group-hover/parent:text-blue-600 transition-colors truncate leading-tight">
-                  {category.name}
-                </span>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-tight mt-0.5">
-                  {category.companies_count} Empresas
-                </span>
-              </div>
-            </Link>
+              {/* Categoria Pai */}
+              <Link
+                href={`/categories/${category.slug}`}
+                onClick={onClose}
+                className="flex items-start gap-3 group/parent"
+              >
+                {iconSrc ? (
+                  <span className="relative flex h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+                    <Image
+                      src={iconSrc}
+                      alt={`Ícone de ${category.name}`}
+                      fill
+                      sizes="44px"
+                      className="object-contain p-1"
+                    />
+                  </span>
+                ) : null}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[15px] font-bold text-slate-900 group-hover/parent:text-blue-600 transition-colors truncate leading-tight">
+                    {category.name}
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-tight mt-0.5">
+                    {category.companies_count} Empresas
+                  </span>
+                </div>
+              </Link>
 
-            {/* Subcategorias (Filhos) */}
-            {category.children && category.children.length > 0 && (
-              <div className="flex flex-col gap-2.5 pl-1 pr-2 border-l-2 border-slate-50 ml-5">
-                {category.children.slice(0, 4).map((child) => (
-                  <Link
-                    key={child.id}
-                    href={`/categories/${child.slug}`}
-                    onClick={onClose}
-                    className="text-[13px] text-slate-500 hover:text-blue-600 hover:translate-x-1 transition-all font-medium flex items-center gap-2 group/child"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover/child:bg-blue-400 group-hover/child:scale-125 transition-all" />
-                    <span className="truncate">{child.name}</span>
-                  </Link>
-                ))}
-                {category.children.length > 4 && (
-                  <Link
-                    href={`/categories/${category.slug}`}
-                    onClick={onClose}
-                    className="text-[11px] font-bold text-blue-500/80 hover:text-blue-600 mt-1 pl-3.5"
-                  >
-                    + {category.children.length - 4} especialidades
-                  </Link>
-                )}
-              </div>
-            )}
-          </motion.div>
+              {/* Subcategorias (Filhos) */}
+              {category.children && category.children.length > 0 && (
+                <div className="flex flex-col gap-2.5 pl-1 pr-2 border-l-2 border-slate-50 ml-5">
+                  {category.children.slice(0, 4).map((child) => {
+                    const childIconSrc = getPreferredCategoryIcon(
+                      child.slug || child.seo_url,
+                      child.icon_url,
+                      child.name
+                    );
+
+                    return (
+                      <Link
+                        key={child.id}
+                        href={`/categories/${child.slug}`}
+                        onClick={onClose}
+                        className="text-[13px] text-slate-500 hover:text-blue-600 hover:translate-x-1 transition-all font-medium flex items-center gap-2 group/child"
+                      >
+                        {childIconSrc ? (
+                          <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm">
+                            <Image
+                              src={childIconSrc}
+                              alt=""
+                              fill
+                              sizes="24px"
+                              className="object-contain p-0.5"
+                            />
+                          </span>
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover/child:bg-blue-400 group-hover/child:scale-125 transition-all" />
+                        )}
+                        <span className="truncate">{child.name}</span>
+                      </Link>
+                    );
+                  })}
+                  {category.children.length > 4 && (
+                    <Link
+                      href={`/categories/${category.slug}`}
+                      onClick={onClose}
+                      className="text-[11px] font-bold text-blue-500/80 hover:text-blue-600 mt-1 pl-3.5"
+                    >
+                      + {category.children.length - 4} especialidades
+                    </Link>
+                  )}
+                </div>
+              )}
+            </motion.div>
           );
         })}
       </motion.div>
@@ -164,7 +201,6 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
             className="absolute top-full left-0 w-full bg-white shadow-2xl border-t border-slate-100 z-50 overflow-hidden"
           >
             <div className="container mx-auto max-w-7xl flex flex-col max-h-[420px]">
-              
               {/* Sticky Header dentro do Menu */}
               <div className="sticky top-0 bg-white border-b border-slate-50 px-6 py-4 flex items-center justify-between gap-8 z-10">
                 <div className="flex items-center gap-6 flex-1">
@@ -174,13 +210,13 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                     </div>
                     Explorar Categorias
                   </div>
-                  
+
                   <CategorySearch value={searchQuery} onChange={setSearchQuery} />
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <Link 
-                    href="/categories" 
+                  <Link
+                    href="/categories"
                     className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors group"
                     onClick={onClose}
                   >
@@ -199,16 +235,17 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
               {categories.length > 0 && (
                 <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Populares agora:</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Populares agora:
+                    </span>
                     <div className="flex gap-2">
-                      {categories.slice(0, 3).map(cat => (
-                        <Link 
+                      {categories.slice(0, 3).map((cat) => (
+                        <Link
                           key={cat.id}
                           href={`/categories/${cat.slug}`}
                           onClick={onClose}
                           className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-600 hover:border-blue-200 hover:text-blue-600 transition-all shadow-sm"
                         >
-
                           {cat.name}
                         </Link>
                       ))}

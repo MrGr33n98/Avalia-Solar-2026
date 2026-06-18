@@ -3,43 +3,21 @@
 import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  BatteryCharging,
-  Building2,
-  Car,
-  ChevronRight,
-  Factory,
-  Grid2X2,
-  HardHat,
-  Home,
-  Leaf,
-  MonitorCog,
-  Search,
-  X,
-  Zap,
-  RefreshCw,
-} from 'lucide-react';
+import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw } from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
-import { getPreferredCategoryIcon } from '@/components/categories/categoryIcons';
+import {
+  getCategoryIcon,
+  getPreferredCategoryIcon,
+  normalizeCategoryKey,
+} from '@/lib/categoryIcons';
 
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const SUBCATEGORY_ICONS = [
-  { match: ['residencial'], icon: Home },
-  { match: ['comercial', 'industrial'], icon: Factory },
-  { match: ['rural', 'agronegócio', 'agronegocio'], icon: Leaf },
-  { match: ['bateria', 'armazenamento'], icon: BatteryCharging },
-  { match: ['carport', 'cobertura'], icon: Car },
-  { match: ['instalador'], icon: HardHat },
-  { match: ['monitoramento', 'o&m'], icon: MonitorCog },
-];
 
 function getCategoryHref(category: CategoryTreeNode) {
   return `/categories/${category.seo_url || category.slug}`;
@@ -50,18 +28,7 @@ function formatCount(count: number) {
 }
 
 function normalizeText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function getSubcategoryIcon(name: string) {
-  const normalized = normalizeText(name);
-  return (
-    SUBCATEGORY_ICONS.find((entry) => entry.match.some((term) => normalized.includes(term)))
-      ?.icon || Building2
-  );
+  return normalizeCategoryKey(value).replace(/-/g, ' ');
 }
 
 function filterMainCategories(categories: CategoryTreeNode[], query: string) {
@@ -257,7 +224,11 @@ function MainCategoriesView({
   return (
     <div className="space-y-2.5">
       {categories.map((category, index) => {
-        const iconSrc = getPreferredCategoryIcon(category.slug, category.icon_url);
+        const iconSrc = getPreferredCategoryIcon(
+          category.slug || category.seo_url,
+          category.icon_url,
+          category.name
+        );
         const hasChildren = category.children && category.children.length > 0;
 
         return (
@@ -331,7 +302,11 @@ function SubcategoryView({
       </Link>
 
       {subcategories.map((subcategory) => {
-        const Icon = getSubcategoryIcon(subcategory.name);
+        const iconSrc = getPreferredCategoryIcon(
+          subcategory.slug || subcategory.seo_url,
+          subcategory.icon_url,
+          subcategory.name
+        );
         return (
           <Link
             key={subcategory.id}
@@ -339,9 +314,7 @@ function SubcategoryView({
             onClick={onClose}
             className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-2.5 transition-colors hover:bg-slate-50"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-700 shadow-sm">
-              <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-            </span>
+            <CategoryIcon iconSrc={iconSrc} name={subcategory.name} size="sm" />
             <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-bold leading-snug text-slate-950">
               {subcategory.name}
             </p>
@@ -362,19 +335,31 @@ function CategoryIcon({
   iconSrc,
   name,
   highlighted,
+  size = 'md',
 }: {
   iconSrc: string | null;
   name: string;
-  highlighted: boolean;
+  highlighted?: boolean;
+  size?: 'sm' | 'md';
 }) {
+  const fallbackIcon = iconSrc || getCategoryIcon(null, name);
+  const dimensions = size === 'sm' ? 'h-10 w-10' : 'h-12 w-12';
+  const imageSize = size === 'sm' ? '40px' : '48px';
+
   return (
     <span
-      className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 shadow-sm ${
         highlighted ? 'bg-white' : 'bg-slate-50'
       }`}
     >
-      {iconSrc ? (
-        <Image src={iconSrc} alt={name} fill className="object-contain p-1.5" sizes="48px" />
+      {fallbackIcon ? (
+        <Image
+          src={fallbackIcon}
+          alt={`Ícone de ${name}`}
+          fill
+          className="object-contain p-1"
+          sizes={imageSize}
+        />
       ) : (
         <Grid2X2 className="h-5 w-5 text-blue-700" />
       )}

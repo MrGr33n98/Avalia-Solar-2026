@@ -2,25 +2,25 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Category } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
 import { ChevronRight } from 'lucide-react';
+import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
 
 interface CategoryDropdownItemProps {
   category: Category;
   onSelect: () => void;
 }
 
-const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
-  category,
-  onSelect,
-}) => {
+const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, onSelect }) => {
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hoverTimerRef = useRef<number | null>(null);
 
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+  const iconSrc = getPreferredCategoryIcon(category.seo_url, category.icon_url, category.name);
   const categoryKey = String(category.seo_url ?? category.id ?? category.name)
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, '-');
@@ -137,7 +137,20 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
         >
-          <span className="pr-3 font-medium">{category.name}</span>
+          <span className="flex min-w-0 items-center gap-2 pr-3 font-medium">
+            {iconSrc ? (
+              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                <Image
+                  src={iconSrc}
+                  alt={`Ícone de ${category.name}`}
+                  fill
+                  sizes="32px"
+                  className="object-contain p-1"
+                />
+              </span>
+            ) : null}
+            <span className="truncate">{category.name}</span>
+          </span>
           <ChevronRight
             className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isSubMenuOpen ? 'rotate-90 text-primary' : ''}`}
           />
@@ -148,7 +161,20 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
           className="flex min-h-12 items-center justify-between rounded-md px-4 py-3 text-sm text-gray-700 transition-colors duration-150 hover:bg-gray-100 active:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           onClick={onSelect}
         >
-          {category.name}
+          <span className="flex min-w-0 items-center gap-2">
+            {iconSrc ? (
+              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                <Image
+                  src={iconSrc}
+                  alt={`Ícone de ${category.name}`}
+                  fill
+                  sizes="32px"
+                  className="object-contain p-1"
+                />
+              </span>
+            ) : null}
+            <span className="truncate">{category.name}</span>
+          </span>
         </Link>
       )}
       <AnimatePresence>
@@ -173,16 +199,31 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
               >
                 Ver {category.name}
               </Link>
-              {category.subcategories?.map((sub: Category) => (
-                <Link
-                  key={sub.id}
-                  href={buildCategoryPath(sub.seo_url, sub.id)}
-                  className="block rounded-md px-4 py-3 text-sm text-gray-700 transition-colors duration-150 hover:bg-white active:bg-white"
-                  onClick={onSelect}
-                >
-                  {sub.name}
-                </Link>
-              ))}
+              {category.subcategories?.map((sub: Category) => {
+                const subIconSrc = getPreferredCategoryIcon(sub.seo_url, sub.icon_url, sub.name);
+
+                return (
+                  <Link
+                    key={sub.id}
+                    href={buildCategoryPath(sub.seo_url, sub.id)}
+                    className="flex items-center gap-2 rounded-md px-4 py-3 text-sm text-gray-700 transition-colors duration-150 hover:bg-white active:bg-white"
+                    onClick={onSelect}
+                  >
+                    {subIconSrc ? (
+                      <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                        <Image
+                          src={subIconSrc}
+                          alt=""
+                          fill
+                          sizes="28px"
+                          className="object-contain p-0.5"
+                        />
+                      </span>
+                    ) : null}
+                    <span className="truncate">{sub.name}</span>
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
         )}

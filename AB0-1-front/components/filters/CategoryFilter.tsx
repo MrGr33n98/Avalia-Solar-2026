@@ -1,26 +1,21 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Tag } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
 
 interface CategoryFilterProps {
   selectedIds: number[];
   onChange: (ids: number[]) => void;
 }
 
-export const CategoryFilter: React.FC<CategoryFilterProps> = ({
-  selectedIds,
-  onChange,
-}) => {
+export const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedIds, onChange }) => {
   const { categories, loading, error } = useCategoriesTree();
 
   if (error) return null;
@@ -41,7 +36,10 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
           </div>
           <span className="text-sm font-semibold text-slate-700">Categorias</span>
           {selectedIds.length > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50 rounded-full px-2 py-0.5 text-xs">
+            <Badge
+              variant="secondary"
+              className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50 rounded-full px-2 py-0.5 text-xs"
+            >
               {selectedIds.length}
             </Badge>
           )}
@@ -59,49 +57,68 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {categories.map((root) => (
-              <div key={root.id} className="space-y-2">
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    {root.name}
-                  </span>
-                  {root.companies_count > 0 && (
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {root.companies_count}
-                    </span>
-                  )}
-                </div>
-                <div className="grid gap-1.5 pl-1">
-                  {root.children.map((child) => (
-                    <div
-                      key={child.id}
-                      className="flex items-center justify-between group cursor-pointer px-1 py-1 rounded-md hover:bg-slate-50"
-                      onClick={() => handleToggle(child.id)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`cat-${child.id}`}
-                          checked={selectedIds.includes(child.id)}
-                          onCheckedChange={() => handleToggle(child.id)}
-                          className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                        />
-                        <label
-                          htmlFor={`cat-${child.id}`}
-                          className="text-sm text-slate-600 group-hover:text-blue-700 cursor-pointer transition-colors"
-                        >
-                          {child.name}
-                        </label>
-                      </div>
-                      {child.companies_count > 0 && (
-                        <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
-                          {child.companies_count}
+            {categories.map((root) => {
+              const rootIconSrc = getPreferredCategoryIcon(
+                root.slug || root.seo_url,
+                root.icon_url,
+                root.name
+              );
+
+              return (
+                <div key={root.id} className="space-y-2">
+                  <div className="flex items-center justify-between py-1">
+                    <span className="flex min-w-0 items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      {rootIconSrc ? (
+                        <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                          <Image
+                            src={rootIconSrc}
+                            alt={`Ícone de ${root.name}`}
+                            fill
+                            sizes="24px"
+                            className="object-contain p-0.5"
+                          />
                         </span>
-                      )}
-                    </div>
-                  ))}
+                      ) : null}
+                      <span className="truncate">{root.name}</span>
+                    </span>
+                    {root.companies_count > 0 && (
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {root.companies_count}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-1.5 pl-1">
+                    {root.children.map((child) => (
+                      <div
+                        key={child.id}
+                        className="flex items-center justify-between group cursor-pointer px-1 py-1 rounded-md hover:bg-slate-50"
+                        onClick={() => handleToggle(child.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`cat-${child.id}`}
+                            checked={selectedIds.includes(child.id)}
+                            onCheckedChange={() => handleToggle(child.id)}
+                            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                          />
+                          <label
+                            htmlFor={`cat-${child.id}`}
+                            className="text-sm text-slate-600 group-hover:text-blue-700 cursor-pointer transition-colors"
+                          >
+                            {child.name}
+                          </label>
+                        </div>
+                        {child.companies_count > 0 && (
+                          <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {child.companies_count}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </AccordionContent>

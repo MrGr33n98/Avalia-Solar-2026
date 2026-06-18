@@ -1,21 +1,9 @@
 'use client';
 
-import {
-  BatteryCharging,
-  BriefcaseBusiness,
-  Car,
-  ChartNoAxesCombined,
-  CreditCard,
-  Factory,
-  HardHat,
-  Home,
-  Leaf,
-  MonitorCog,
-  PanelTop,
-  Wrench,
-  Zap,
-} from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
+
+import { getCategoryIcon } from '@/lib/categoryIcons';
 
 interface CategoryNiche {
   id?: number;
@@ -54,31 +42,8 @@ const SHORT_NAME_BY_LONG_NAME: Record<string, string> = {
   'Instaladores de Energia Solar': 'Instaladores',
 };
 
-const ICON_BY_LABEL = [
-  { match: ['residencial'], icon: Home },
-  { match: ['comercial', 'industrial'], icon: Factory },
-  { match: ['rural', 'agronegócio', 'agronegocio'], icon: Leaf },
-  { match: ['bateria', 'armazenamento'], icon: BatteryCharging },
-  { match: ['carport', 'cobertura'], icon: Car },
-  { match: ['painel', 'painéis', 'paineis'], icon: PanelTop },
-  { match: ['inversor'], icon: Zap },
-  { match: ['monitoramento', 'o&m'], icon: ChartNoAxesCombined },
-  { match: ['financiamento'], icon: CreditCard },
-  { match: ['instalador'], icon: HardHat },
-  { match: ['serviço', 'servico'], icon: Wrench },
-  { match: ['empresa'], icon: BriefcaseBusiness },
-];
-
 function getShortName(name: string) {
   return SHORT_NAME_BY_LONG_NAME[name] || name.replace(/^Energia Solar\s*/i, '').trim();
-}
-
-function getNicheIcon(label: string) {
-  const normalized = label.toLowerCase();
-  return (
-    ICON_BY_LABEL.find((entry) => entry.match.some((term) => normalized.includes(term)))?.icon ||
-    MonitorCog
-  );
 }
 
 function getNicheHref(niche: CategoryNiche) {
@@ -109,7 +74,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
           <div className="flex gap-3">
             {displayNiches.map((niche) => {
               const label = getShortName(niche.name);
-              const Icon = getNicheIcon(label);
+              const iconSrc = getCategoryIcon(niche.seo_url || niche.slug, niche.name);
 
               return (
                 <Link
@@ -117,8 +82,18 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
                   href={getNicheHref(niche)}
                   className="group flex w-[86px] shrink-0 flex-col items-center text-center sm:w-24"
                 >
-                  <span className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all group-hover:border-blue-200 group-hover:bg-blue-50">
-                    <Icon className="h-8 w-8" strokeWidth={1.8} />
+                  <span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-1.5 shadow-sm transition-all group-hover:border-blue-200 group-hover:shadow-md">
+                    {iconSrc ? (
+                      <Image
+                        src={iconSrc}
+                        alt={`Ícone de ${label}`}
+                        fill
+                        sizes="64px"
+                        className="object-contain p-1"
+                      />
+                    ) : (
+                      <span className="h-8 w-8 rounded-full bg-blue-100" aria-hidden="true" />
+                    )}
                   </span>
                   <span className="mt-2 line-clamp-2 min-h-[32px] text-[11px] font-bold leading-tight text-slate-900 sm:text-xs">
                     {label}
