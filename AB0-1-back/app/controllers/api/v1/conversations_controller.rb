@@ -16,6 +16,8 @@ module Api
       end
 
       def create
+        return render json: { error: 'Only buyer users can start direct chats' }, status: :forbidden unless current_user.review_user?
+
         company = Company.find_by(id: params[:company_id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
         return render json: { error: 'Chat is disabled for this company' }, status: :forbidden unless company.p2p_chat_enabled
