@@ -5,7 +5,6 @@ import { MessageCircle, Share2, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Company } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
@@ -59,7 +58,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
   return (
     <div
       id="company-cta-group"
-      className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3"
+      className="grid w-full grid-cols-[44px_minmax(132px,1fr)] gap-2 sm:grid-cols-[minmax(130px,0.7fr)_minmax(210px,1.2fr)] sm:gap-3"
     >
       {/* Compartilhar */}
       <Button
@@ -74,15 +73,6 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         <Share2 className="h-4 w-4" />
         <span className="hidden sm:inline">Compartilhar</span>
       </Button>
-
-      {/* Comparar */}
-      <ComparisonToggleButton
-        company={company}
-        variant="default"
-        size="sm"
-        animated={true}
-        className="h-11 min-w-0 rounded-xl border-slate-200 px-2 text-xs font-bold text-slate-700 shadow-none transition-all hover:bg-slate-50 [&_span]:truncate [&_span]:whitespace-nowrap sm:px-4 sm:text-sm"
-      />
 
       {/* Solicitar Orçamento ou Avaliar */}
       {canShowQuoteButton ? (

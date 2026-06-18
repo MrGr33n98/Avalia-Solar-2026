@@ -7,7 +7,6 @@ import PremiumBadge from '@/components/PremiumBadge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
-import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Company } from '@/lib/api';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -283,7 +282,7 @@ export default function CompanyHero({
               </div>
 
               <div className="w-full border-t border-slate-100 pt-3 lg:w-auto lg:min-w-[560px] lg:border-t-0 lg:pt-0">
-                <div className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3">
+                <div className="grid w-full grid-cols-[44px_minmax(120px,1fr)_minmax(132px,1.25fr)] gap-2 sm:grid-cols-[minmax(130px,0.7fr)_repeat(2,minmax(150px,1fr))] sm:gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -296,14 +295,6 @@ export default function CompanyHero({
                     <Share2 className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Compartilhar</span>
                   </Button>
-
-                  <ComparisonToggleButton
-                    company={company}
-                    variant="default"
-                    size="sm"
-                    animated={true}
-                    className="h-10 min-w-0 rounded-xl px-2 text-xs font-semibold shadow-none [&_span]:truncate [&_span]:whitespace-nowrap sm:h-11 sm:px-4 sm:text-sm"
-                  />
 
                   {ctaEnabled && ctaUrl && (
                     <div className="contents" {...heroWhatsappHoverIntent}>

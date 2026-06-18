@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
-import { Search, Grid, List, Map as MapIcon, Building, Package, Folder, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import SearchMapPanel from '@/components/search/SearchMapPanel';
+import type { MapCompany } from '@/components/search/MapProvider';
+import MobileLocationGate from '@/components/location/MobileLocationGate';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,10 +36,14 @@ interface CompaniesPageClientProps {
   canonicalPath?: string;
 }
 
-interface CompaniesContentProps extends CompaniesPageClientProps {}
+type CompaniesContentProps = CompaniesPageClientProps;
 const EMPTY_CATEGORY_IDS: number[] = [];
 
-export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canonicalPath }: CompaniesContentProps) {
+export function CompaniesContent({
+  forcedCategoryIds,
+  categoryNames = [],
+  canonicalPath,
+}: CompaniesContentProps) {
   usePageTracking({
     type: 'category',
     title: 'Empresas de Energia Solar - Avalia Solar',
@@ -49,7 +55,10 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   const searchParamsKey = searchParams.toString();
   const activeForcedCategoryIds = forcedCategoryIds ?? EMPTY_CATEGORY_IDS;
   const pathCategoryIds = useMemo(
-    () => (activeForcedCategoryIds.length > 0 ? activeForcedCategoryIds : extractCategoryIdsFromPath(pathname)),
+    () =>
+      activeForcedCategoryIds.length > 0
+        ? activeForcedCategoryIds
+        : extractCategoryIdsFromPath(pathname),
     [activeForcedCategoryIds, pathname]
   );
   const pathSlugById = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
@@ -58,6 +67,8 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [totalCount, setTotalCount] = useState(0);
+  const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
   const PAGE_SIZE = 12;
 
   const filters = useMemo(
@@ -124,10 +135,57 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     router.replace(buildTargetUrl(updated), { scroll: false });
   };
 
-  const removeFilter = (key: keyof CompanyFilters, value?: any) => {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (filters.state.length > 0 || filters.city.length > 0 || filters.lat || filters.lng) {
+      setShowMobileLocationGate(false);
+      return;
+    }
+
+    const dismissedAt = Number(localStorage.getItem('avalia.location_gate.dismissed_at') || 0);
+    const dismissedRecently = Date.now() - dismissedAt < 1000 * 60 * 60 * 24 * 7;
+    setShowMobileLocationGate(!dismissedRecently);
+  }, [filters.city.length, filters.lat, filters.lng, filters.state.length]);
+
+  const handleAllowLocation = () => {
+    if (!navigator.geolocation) {
+      setShowMobileLocationGate(false);
+      return;
+    }
+
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const updated = {
+          ...filters,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          radius_km: filters.radius_km || 50,
+          page: 1,
+        };
+        localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
+        setShowMobileLocationGate(false);
+        setDetectingLocation(false);
+        router.replace(buildTargetUrl(updated), { scroll: false });
+      },
+      () => {
+        localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
+        setShowMobileLocationGate(false);
+        setDetectingLocation(false);
+      },
+      { enableHighAccuracy: false, maximumAge: 1000 * 60 * 15, timeout: 8000 }
+    );
+  };
+
+  const handleSkipLocationGate = () => {
+    localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
+    setShowMobileLocationGate(false);
+  };
+
+  const removeFilter = (key: keyof CompanyFilters, value?: unknown) => {
     let updated: CompanyFilters;
     if (Array.isArray(filters[key])) {
-      const currentArray = filters[key] as any[];
+      const currentArray = filters[key] as unknown[];
       updated = { ...filters, [key]: currentArray.filter((v) => v !== value), page: 1 };
     } else if (typeof filters[key] === 'boolean') {
       updated = { ...filters, [key]: false, page: 1 };
@@ -147,7 +205,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     if (debouncedSearchInput === (filters.search || '')) return;
     const updated = { ...filters, search: debouncedSearchInput, page: 1 };
     router.replace(buildTargetUrl(updated), { scroll: false });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchInput]);
 
   useEffect(() => {
@@ -165,7 +223,7 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
         }
       } catch (err) {
         console.error('[Companies] Fetch error:', err);
-        const errorMsg = (err as any)?.message || 'Erro ao carregar empresas';
+        const errorMsg = err instanceof Error ? err.message : 'Erro ao carregar empresas';
         const detailedError = `${errorMsg}. Verifique se o backend está rodando em http://localhost:3001`;
         if (!cancelled) {
           setError(detailedError);
@@ -193,28 +251,51 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     }
     if (loading) return;
 
-    const activeFilters: Array<{ filter_key: string; filter_value: any }> = [];
+    const activeFilters: Array<{ filter_key: string; filter_value: unknown }> = [];
 
-    if (requestParams.q) activeFilters.push({ filter_key: 'search', filter_value: requestParams.q });
-    if (requestParams.state) activeFilters.push({ filter_key: 'state', filter_value: requestParams.state });
-    if (requestParams.city) activeFilters.push({ filter_key: 'city', filter_value: requestParams.city });
-    if (requestParams.category_ids) activeFilters.push({ filter_key: 'category_ids', filter_value: requestParams.category_ids });
-    if (requestParams.min_rating) activeFilters.push({ filter_key: 'min_rating', filter_value: requestParams.min_rating });
-    if (requestParams.verified) activeFilters.push({ filter_key: 'verified', filter_value: requestParams.verified });
-    if (requestParams.featured) activeFilters.push({ filter_key: 'featured', filter_value: requestParams.featured });
-    if (requestParams.sort) activeFilters.push({ filter_key: 'sort', filter_value: requestParams.sort });
+    if (requestParams.q)
+      activeFilters.push({ filter_key: 'search', filter_value: requestParams.q });
+    if (requestParams.state)
+      activeFilters.push({ filter_key: 'state', filter_value: requestParams.state });
+    if (requestParams.city)
+      activeFilters.push({ filter_key: 'city', filter_value: requestParams.city });
+    if (requestParams.category_ids)
+      activeFilters.push({ filter_key: 'category_ids', filter_value: requestParams.category_ids });
+    if (requestParams.min_rating)
+      activeFilters.push({ filter_key: 'min_rating', filter_value: requestParams.min_rating });
+    if (requestParams.verified)
+      activeFilters.push({ filter_key: 'verified', filter_value: requestParams.verified });
+    if (requestParams.featured)
+      activeFilters.push({ filter_key: 'featured', filter_value: requestParams.featured });
+    if (requestParams.sort)
+      activeFilters.push({ filter_key: 'sort', filter_value: requestParams.sort });
 
     if (activeFilters.length > 0) {
       activeFilters.forEach(({ filter_key, filter_value }) => {
         track('filter_applied', { filter_key, filter_value, page: 'companies' });
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestParams]);
 
-  const visibleCompanies = useMemo(
-    () => companies ?? [],
-    [companies]
+  const visibleCompanies = useMemo(() => companies ?? [], [companies]);
+  const mapCompanies = useMemo<MapCompany[]>(
+    () =>
+      visibleCompanies
+        .filter((company) => company.latitude != null && company.longitude != null)
+        .map((company) => ({
+          id: String(company.id),
+          name: company.name,
+          slug: company.slug || String(company.id),
+          latitude: Number(company.latitude),
+          longitude: Number(company.longitude),
+          ratingAvg: company.rating_avg,
+          isSponsored: Boolean(company.featured || company.sponsored),
+          city: company.city,
+          state: company.state,
+          logo_url: company.logo_url,
+        })),
+    [visibleCompanies]
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -230,11 +311,16 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
     if (loading || visibleCompanies.length === 0) return null;
 
     const baseUrl = 'https://www.avaliasolar.com.br';
-    const resolvedUrl = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search : COMPANIES_PATH);
+    const resolvedUrl =
+      canonicalPath ||
+      (typeof window !== 'undefined'
+        ? window.location.pathname + window.location.search
+        : COMPANIES_PATH);
 
-    const listName = categoryNames.length > 0
-      ? `Empresas de ${categoryNames.join(', ')}`
-      : 'Empresas de energia solar no Brasil';
+    const listName =
+      categoryNames.length > 0
+        ? `Empresas de ${categoryNames.join(', ')}`
+        : 'Empresas de energia solar no Brasil';
 
     return {
       '@context': 'https://schema.org',
@@ -259,29 +345,51 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
               addressRegion: company.state || undefined,
               addressCountry: 'BR',
             },
-            aggregateRating: company.rating_count && company.rating_count > 0
-              ? {
-                  '@type': 'AggregateRating',
-                  ratingValue: company.rating_avg || 0,
-                  reviewCount: company.rating_count,
-                }
-              : undefined,
+            aggregateRating:
+              company.rating_count && company.rating_count > 0
+                ? {
+                    '@type': 'AggregateRating',
+                    ratingValue: company.rating_avg || 0,
+                    reviewCount: company.rating_count,
+                  }
+                : undefined,
           },
         })),
       },
     };
   }, [canonicalPath, categoryNames, loading, visibleCompanies]);
 
-  const pageHeading = categoryNames.length > 0
-    ? `Empresas de ${categoryNames.join(' e ')}`
-    : 'Empresas de Energia Solar';
+  const pageHeading =
+    categoryNames.length > 0
+      ? `Empresas de ${categoryNames.join(' e ')}`
+      : 'Empresas de Energia Solar';
 
   const quickActions = [
-    { label: 'Instalar', href: '/companies', imageSrc: '/icones/icone_instalar_avalia_solar_40x40.png' },
-    { label: 'Produtos', href: '/products', imageSrc: '/icones/icone_produtos_avalia_solar_40x40.png' },
-    { label: 'Categorias', href: '/categories', imageSrc: '/icones/icone_categorias_avalia_solar.png' },
-    { label: 'Avaliar', href: '/reviews/my', imageSrc: '/icones/icone_avaliacoes_avalia_solar.png' },
-    { label: 'Destaques', href: '/companies?featured=true', imageSrc: '/icones/icone_destaques_avalia_solar.png' },
+    {
+      label: 'Instalar',
+      href: '/companies',
+      imageSrc: '/icones/icone_instalar_avalia_solar_40x40.png',
+    },
+    {
+      label: 'Produtos',
+      href: '/products',
+      imageSrc: '/icones/icone_produtos_avalia_solar_40x40.png',
+    },
+    {
+      label: 'Categorias',
+      href: '/categories',
+      imageSrc: '/icones/icone_categorias_avalia_solar.png',
+    },
+    {
+      label: 'Avaliar',
+      href: '/reviews/my',
+      imageSrc: '/icones/icone_avaliacoes_avalia_solar.png',
+    },
+    {
+      label: 'Destaques',
+      href: '/companies?featured=true',
+      imageSrc: '/icones/icone_destaques_avalia_solar.png',
+    },
   ];
 
   if (error) {
@@ -289,25 +397,37 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
       <div className="min-h-screen bg-background py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-destructive mb-3">❌ Erro ao Carregar Empresas</h2>
+            <h2 className="text-lg font-semibold text-destructive mb-3">
+              ❌ Erro ao Carregar Empresas
+            </h2>
             <p className="text-destructive mb-4">{error}</p>
-            
+
             <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200">
               <h3 className="font-medium text-slate-900 mb-2">🔍 Passos para Diagnóstico:</h3>
               <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700">
                 <li>Verifique se o backend Rails está rodando na porta 3001</li>
-                <li>Teste a API diretamente: <code className="bg-slate-100 px-1 rounded">curl http://localhost:3001/api/v1/companies</code></li>
+                <li>
+                  Teste a API diretamente:{' '}
+                  <code className="bg-slate-100 px-1 rounded">
+                    curl http://localhost:3001/api/v1/companies
+                  </code>
+                </li>
                 <li>Verifique as variáveis de ambiente no arquivo .env.local</li>
                 <li>Verifique o console do navegador (F12) para erros detalhados</li>
-                <li>Execute o script de diagnóstico: <code className="bg-slate-100 px-1 rounded">node diagnose-companies-issue.js</code></li>
+                <li>
+                  Execute o script de diagnóstico:{' '}
+                  <code className="bg-slate-100 px-1 rounded">
+                    node diagnose-companies-issue.js
+                  </code>
+                </li>
               </ol>
             </div>
-            
+
             <div className="flex gap-3">
               <Button onClick={() => window.location.reload()} variant="outline">
                 Tentar Novamente
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   window.open('http://localhost:3001/api/v1/companies', '_blank');
                 }}
@@ -323,187 +443,233 @@ export function CompaniesContent({ forcedCategoryIds, categoryNames = [], canoni
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      {localBusinessSchema && (
-        <script
-          type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50">
+      {showMobileLocationGate && (
+        <MobileLocationGate
+          loading={detectingLocation}
+          onAllow={handleAllowLocation}
+          onSkip={handleSkipLocationGate}
         />
       )}
-      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Buscar empresas..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
+      <div className={showMobileLocationGate ? 'hidden md:block' : undefined}>
+        {localBusinessSchema && (
+          <script
+            type="application/ld+json"
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
           />
-        </form>
-      </div>
+        )}
+        <div className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar empresas..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
+            />
+          </form>
+        </div>
 
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          <aside className="lg:w-[300px] shrink-0">
-            <FilterSidebar />
-          </aside>
+        <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex w-full min-w-0 flex-col items-start gap-8 lg:flex-row">
+            <aside className="lg:w-[300px] shrink-0">
+              <FilterSidebar />
+            </aside>
 
-          <div className="flex-1 min-w-0 space-y-6">
-            <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
+            <div className="w-full min-w-0 flex-1 space-y-6">
+              <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{pageHeading}</h1>
-                <p className="text-slate-500 text-sm mt-1">Encontramos {totalCount} empresas que atendem aos seus critérios</p>
-              </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-center">
-                <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('h-8 w-8', viewMode === 'grid' && 'bg-slate-100 text-slate-900')}
-                    onClick={() => setViewMode('grid')}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('h-8 w-8', viewMode === 'list' && 'bg-slate-100 text-slate-900')}
-                    onClick={() => setViewMode('list')}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn('h-8 w-8', viewMode === 'map' && 'bg-slate-100 text-slate-900')}
-                    onClick={() => setViewMode('map')}
-                  >
-                    <MapIcon className="h-4 w-4" />
-                  </Button>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                    {pageHeading}
+                  </h1>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Encontramos {totalCount} empresas que atendem aos seus critérios
+                  </p>
                 </div>
-              </div>
-            </div>
 
-            <section 
-              className="flex md:flex-wrap overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 gap-3 -mx-4 px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {quickActions.map((action) => (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className="flex flex-row items-center justify-center rounded-xl bg-white px-4 py-2 w-auto shrink-0 snap-start border border-slate-200 hover:border-blue-400 shadow-sm transition-all hover:bg-slate-50 group gap-2"
-                >
-                  <div className="relative w-5 h-5 transition-transform duration-300 group-hover:scale-105">
-                    <Image 
-                      src={action.imageSrc} 
-                      alt={action.label}
-                      fill
-                      sizes="20px"
-                      className="object-contain"
-                      unoptimized
-                    />
+                <div className="flex items-center gap-2 self-start sm:self-center">
+                  <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8',
+                        viewMode === 'grid' && 'bg-slate-100 text-slate-900'
+                      )}
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8',
+                        viewMode === 'list' && 'bg-slate-100 text-slate-900'
+                      )}
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn('h-8 w-8', viewMode === 'map' && 'bg-slate-100 text-slate-900')}
+                      onClick={() => setViewMode('map')}
+                    >
+                      <MapIcon className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <span className="text-[13px] font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">{action.label}</span>
-                </Link>
-              ))}
-            </section>
-
-            <div className="space-y-4">
-              {loading ? (
-                <div className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
-                  {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-64 rounded-xl bg-white" />
-                  ))}
                 </div>
-              ) : visibleCompanies.length > 0 ? (
-                <>
-                  {viewMode === 'map' ? (
-                    <div className="h-[600px] w-full rounded-2xl shadow-sm border border-slate-200">
-                      <SearchMapPanel
-                        companies={visibleCompanies as any}
-                        center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : undefined}
+              </div>
+
+              <section
+                className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-x-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {quickActions.map((action) => (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className="flex flex-row items-center justify-center rounded-xl bg-white px-4 py-2 w-auto shrink-0 snap-start border border-slate-200 hover:border-blue-400 shadow-sm transition-all hover:bg-slate-50 group gap-2"
+                  >
+                    <div className="relative w-5 h-5 transition-transform duration-300 group-hover:scale-105">
+                      <Image
+                        src={action.imageSrc}
+                        alt={action.label}
+                        fill
+                        sizes="20px"
+                        className="object-contain"
+                        unoptimized
                       />
                     </div>
-                  ) : (
-                    <div
-                      data-testid="companies-grid"
-                      className={cn('grid gap-4', viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}
-                    >
-                      {visibleCompanies.map((company) => (
-                        <CompanyCard key={company.id} company={company} compact={viewMode === 'list'} />
-                      ))}
-                    </div>
-                  )}
+                    <span className="text-[13px] font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
+                      {action.label}
+                    </span>
+                  </Link>
+                ))}
+              </section>
 
-                  {totalPages > 1 && viewMode !== 'map' && (
-                    <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-                      <Button
-                        variant="outline"
-                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
-                        onClick={() => goToPage(currentPage - 1)}
-                        disabled={currentPage <= 1}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Anterior
-                      </Button>
-                      <span className="text-sm text-slate-500">
-                        Página {currentPage} de {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
-                        onClick={() => goToPage(currentPage + 1)}
-                        disabled={currentPage >= totalPages}
-                      >
-                        Próxima
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-center">
-                  <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <Search className="h-8 w-8 text-slate-300" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900">Nenhuma empresa encontrada</h3>
-                  <p className="text-slate-500 max-w-xs mt-1">Não encontramos resultados para os filtros selecionados. Tente ajustar sua busca.</p>
-                  <Button
-                    variant="link"
-                    className="mt-4 text-blue-600"
-                    onClick={() => {
-                      router.replace(COMPANIES_PATH, { scroll: false });
-                    }}
+              <div className="space-y-4">
+                {loading ? (
+                  <div
+                    className={cn(
+                      'grid gap-4',
+                      viewMode === 'grid'
+                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                        : 'grid-cols-1'
+                    )}
                   >
-                    Limpar todos os filtros
-                  </Button>
-                </div>
-              )}
+                    {[...Array(6)].map((_, i) => (
+                      <Skeleton key={i} className="h-64 rounded-xl bg-white" />
+                    ))}
+                  </div>
+                ) : visibleCompanies.length > 0 ? (
+                  <>
+                    {viewMode === 'map' ? (
+                      <div className="h-[600px] w-full rounded-2xl shadow-sm border border-slate-200">
+                        <SearchMapPanel
+                          companies={mapCompanies}
+                          center={
+                            filters.lat && filters.lng
+                              ? { lat: filters.lat, lng: filters.lng }
+                              : undefined
+                          }
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        data-testid="companies-grid"
+                        className={cn(
+                          'grid w-full min-w-0 gap-4',
+                          viewMode === 'grid'
+                            ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                            : 'grid-cols-1'
+                        )}
+                      >
+                        {visibleCompanies.map((company) => (
+                          <CompanyCard
+                            key={company.id}
+                            company={company}
+                            compact={viewMode === 'list'}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {totalPages > 1 && viewMode !== 'map' && (
+                      <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
+                          onClick={() => goToPage(currentPage - 1)}
+                          disabled={currentPage <= 1}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
+                          Anterior
+                        </Button>
+                        <span className="text-sm text-slate-500">
+                          Página {currentPage} de {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
+                          onClick={() => goToPage(currentPage + 1)}
+                          disabled={currentPage >= totalPages}
+                        >
+                          Próxima
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-center">
+                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                      <Search className="h-8 w-8 text-slate-300" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Nenhuma empresa encontrada
+                    </h3>
+                    <p className="text-slate-500 max-w-xs mt-1">
+                      Não encontramos resultados para os filtros selecionados. Tente ajustar sua
+                      busca.
+                    </p>
+                    <Button
+                      variant="link"
+                      className="mt-4 text-blue-600"
+                      onClick={() => {
+                        router.replace(COMPANIES_PATH, { scroll: false });
+                      }}
+                    >
+                      Limpar todos os filtros
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <section className="pt-4">
+                <BannerByLocation location="companies_footer" />
+              </section>
             </div>
 
-            <section className="pt-4">
-              <BannerByLocation location="companies_footer" />
-            </section>
-          </div>
-
-          <div className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
-            <BannerByLocation
-              location="sidebar"
-              limit={1}
-              categoryId={filters.category_ids[0]}
-              className="rounded-2xl"
-            />
-            <BannerByLocation
-              location="companies_right_rail"
-              limit={1}
-              categoryId={filters.category_ids[0]}
-              className="rounded-2xl"
-            />
+            <div className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
+              <BannerByLocation
+                location="sidebar"
+                limit={1}
+                categoryId={filters.category_ids[0]}
+                className="rounded-2xl"
+              />
+              <BannerByLocation
+                location="companies_right_rail"
+                limit={1}
+                categoryId={filters.category_ids[0]}
+                className="rounded-2xl"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -527,4 +693,3 @@ export default function CompaniesPageClient(props: CompaniesPageClientProps) {
     </Suspense>
   );
 }
-

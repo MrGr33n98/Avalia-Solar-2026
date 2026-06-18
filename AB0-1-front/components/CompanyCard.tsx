@@ -4,17 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {
-  Star,
-  MapPin,
-  Building,
-  Share2,
-  Check,
-  BadgeCheck,
-  Info,
-  Trophy,
-  MessageCircle,
-} from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 
 import { Badge } from '@/components/ui/badge';
@@ -32,8 +22,6 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import WhatsappButton from '@/components/WhatsappButton';
 import { track } from '@/lib/analytics/lazy';
-import { useFavorites } from '@/hooks/useFavorites';
-import { useComparison } from '@/hooks/useComparison';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
@@ -43,6 +31,7 @@ interface ExtendedCompany extends Company {
   cta_whatsapp_url?: string;
   whatsapp_url?: string;
   whatsapp_enabled?: boolean;
+  cta_whatsapp_enabled?: boolean;
   effect?: boolean;
   active_admin?: boolean;
   sponsored?: boolean;
@@ -63,7 +52,7 @@ interface Props {
   onAnalyticsEvent?: (event: {
     type: string;
     companyId: number;
-    meta?: Record<string, any>;
+    meta?: Record<string, unknown>;
   }) => void;
   index?: number;
   onMouseEnter?: () => void;
@@ -119,7 +108,7 @@ export default function CompanyCard({
   rank,
   category,
   onAnalyticsEvent,
-  index = 0,
+  index: _index = 0,
   onMouseEnter,
   onMouseLeave,
 }: Props) {
@@ -128,13 +117,10 @@ export default function CompanyCard({
   const { id, name, city, state, description, website, category_name } = company;
   const intentCompanyId = String(id);
   const rating_count = Number(
-    (company as any).rating_count ??
-      (company as any).total_reviews ??
-      (company as any).reviews_count ??
-      0
+    company.rating_count ?? company.total_reviews ?? company.reviews_count ?? 0
   );
   const average_rating = parseFloat(
-    (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0
+    String(company.average_rating ?? company.rating_avg ?? company.rating ?? 0)
   );
 
   const [bannerError, setBannerError] = useState(false);
@@ -145,10 +131,6 @@ export default function CompanyCard({
   const impressionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const firedImpression = useRef(false);
 
-  const { isFavorite } = useFavorites();
-  const isFav = isFavorite(id);
-  const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
-  const isCompared = isInComparison(company.id);
   const { user, isAuthenticated } = useAuth();
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
 
@@ -274,10 +256,9 @@ export default function CompanyCard({
     setVerifiedBadgeError(false);
   }, [id, verifiedBadgeUrl]);
 
-  const whatsappLinkRaw =
-    (company as any).cta_whatsapp_url || (company as any).whatsapp_url || company.whatsapp;
+  const whatsappLinkRaw = company.cta_whatsapp_url || company.whatsapp_url || company.whatsapp;
   const hasWhatsapp = Boolean(whatsappLinkRaw);
-  const enabledRaw = (company as any).cta_whatsapp_enabled ?? (company as any).whatsapp_enabled;
+  const enabledRaw = company.cta_whatsapp_enabled ?? company.whatsapp_enabled;
   const whatsappEnabled =
     enabledRaw === undefined || enabledRaw === null ? true : Boolean(enabledRaw);
   const whatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
@@ -345,7 +326,7 @@ export default function CompanyCard({
   }, [schemaEnabled, name, city, state, rating, totalReviews, logoUrl, website, companyPath]);
 
   const emit = useCallback(
-    (type: string, meta?: Record<string, any>) => {
+    (type: string, meta?: Record<string, unknown>) => {
       if (onAnalyticsEvent) onAnalyticsEvent({ type, companyId: id, meta });
     },
     [onAnalyticsEvent, id]
@@ -783,62 +764,6 @@ export default function CompanyCard({
                 )}
               </Link>
             </Button>
-          </div>
-
-          {/* ── Capterra-style Compare Checkbox ──────────────── */}
-          <div
-            className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 print:hidden"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isCompared}
-              aria-label={
-                isCompared ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`
-              }
-              className="flex items-center gap-2 cursor-pointer group/check select-none w-full sm:w-fit p-2 -ml-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500/40 min-h-[44px]"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (isCompared) {
-                  removeFromComparison(company.id);
-                } else if (canAddMore) {
-                  addToComparison(company);
-                  track('comparison_add', {
-                    company_id: company.id,
-                    company_name: name,
-                    source: 'card_checkbox',
-                  });
-                }
-              }}
-            >
-              <div
-                className={cn(
-                  'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 shadow-sm',
-                  isCompared
-                    ? 'bg-blue-600 border-blue-600 shadow-blue-200'
-                    : canAddMore
-                      ? 'border-slate-300 dark:border-slate-500 group-hover/check:border-blue-400 bg-white'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 opacity-50 cursor-not-allowed'
-                )}
-              >
-                {isCompared && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-              </div>
-              <span
-                className={cn(
-                  'text-[13px] font-semibold tracking-wide transition-colors',
-                  isCompared
-                    ? 'text-blue-700 dark:text-blue-400'
-                    : 'text-slate-600 dark:text-slate-400 group-hover/check:text-slate-900 dark:group-hover/check:text-white'
-                )}
-              >
-                {isCompared ? 'Selecionada' : 'Comparar'}
-              </span>
-            </button>
           </div>
 
           <div className="hidden print:block">
