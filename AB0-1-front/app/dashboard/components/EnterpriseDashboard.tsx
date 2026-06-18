@@ -68,9 +68,6 @@ const CompanySettings = dynamic(() => import('./CompanySettings'), {
 const OverviewTab = dynamic(() => import('./OverviewTab'), {
   loading: () => <DashboardTabSkeleton />,
 });
-const ReviewsAnalytics = dynamic(() => import('./ReviewsAnalytics'), {
-  loading: () => <DashboardTabSkeleton />,
-});
 const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -115,6 +112,8 @@ function DashboardTabSkeleton() {
 
 type DashboardChatCompany = {
   name?: string;
+  plan_id?: number | string | null;
+  plan_tier?: string | null;
   p2p_chat_enabled?: boolean;
   feature_access?: FeatureAccessMap;
   cta_whatsapp_enabled?: boolean;
@@ -278,6 +277,8 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   chat: 'p2p_chat',
 };
 
+const ALWAYS_VISIBLE_TABS = new Set(['chat']);
+
 const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
   analytics: {
     title: 'Analytics avancado bloqueado',
@@ -341,6 +342,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+  const dashboardCompany = company as DashboardChatCompany | null;
+  const dashboardPlanId = dashboardCompany?.plan_id;
+  const dashboardPlanTier = dashboardCompany?.plan_tier;
 
   const tabAccessEntries = useMemo(
     () =>
@@ -357,21 +361,26 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     () =>
       getFlatNavigationByContext('operational')
         .map((item) => item.id)
-        .filter((tabId) => !isFeatureHiddenEntry(tabAccessEntries[tabId])),
+        .filter(
+          (tabId) =>
+            ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
+        ),
     [tabAccessEntries]
   );
 
   const renderGuardedTab = useCallback(
     (tabId: string, children: ReactNode) => {
       const entry = tabAccessEntries[tabId];
-      if (isFeatureHiddenEntry(entry)) return null;
+      if (isFeatureHiddenEntry(entry) && !ALWAYS_VISIBLE_TABS.has(tabId)) return null;
+      const visibleEntry =
+        ALWAYS_VISIBLE_TABS.has(tabId) && isFeatureHiddenEntry(entry) ? null : entry;
 
       const copy = DASHBOARD_TAB_GUARD_COPY[tabId];
       if (!copy) return children;
 
       return (
         <FeatureGuard
-          entry={entry}
+          entry={visibleEntry}
           title={copy.title}
           description={copy.description}
           featureId={tabId}
@@ -389,7 +398,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
     // Canonical Dashboard View tracking
     trackDashboardViewed(companyId, tab, {
-      plan_tier: (company as any)?.plan_tier || 'free',
+      plan_tier: dashboardPlanTier || 'free',
     });
 
     // Churn Intent Tracking
@@ -401,7 +410,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     if (tab === 'analytics' || tab === 'leads') {
       const entry = tabAccessEntries[tab];
       if (entry && entry.state === 'locked') {
-        trackCheckoutStarted(tab, (company as any)?.plan_id);
+        trackCheckoutStarted(tab, dashboardPlanId);
       }
     }
 
@@ -474,8 +483,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       track('checkout_completed', {
         company_id: companyId,
         user_id: user?.id,
-        plan_id: (company as any)?.plan_id,
-        plan_tier: (company as any)?.plan_tier,
+        plan_id: dashboardPlanId,
+        plan_tier: dashboardPlanTier,
       });
 
       toast({
@@ -489,7 +498,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       params.delete('checkout');
       router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [searchParams, companyId, user, company, pathname, router, toast]);
+  }, [searchParams, companyId, user, dashboardPlanId, dashboardPlanTier, pathname, router, toast]);
 
   if (loading) {
     return (
