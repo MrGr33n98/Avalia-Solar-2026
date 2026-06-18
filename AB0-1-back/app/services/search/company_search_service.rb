@@ -14,16 +14,20 @@ module Search
       latitude: nil, longitude: nil, radius_km: nil, map_bounds: nil
     )
       @q = q.to_s.strip
-      @state = state.presence
-      @city = city.presence
+      @submitted_q = @q
+      @q_normalized = normalize_search_value(@q)
+      @state = normalize_state(state)
+      @city = city.to_s.strip.presence
+      @city_normalized = normalize_search_value(@city)
       @category_id = category_id.presence
       @category_ids = category_ids.presence
       @min_rating = min_rating.presence
       @verified = verified
       @featured = featured
       @sponsored = sponsored
-      @serves_city = serves_city.presence
-      @serves_state = serves_state.presence
+      @serves_city = serves_city.to_s.strip.presence
+      @serves_city_normalized = normalize_search_value(@serves_city)
+      @serves_state = normalize_state(serves_state)
       @segment = segment.presence
       @sort = sort.presence || 'recommended'
       @page = [page.to_i, 1].max
@@ -33,6 +37,7 @@ module Search
       @longitude = longitude.presence&.to_f
       @radius_km = radius_km.presence&.to_i
       @map_bounds = map_bounds # Hash: { north:, south:, east:, west: }
+      infer_location_from_query!
     end
 
     def call
@@ -42,7 +47,7 @@ module Search
                  search_via_postgresql
                end
 
-      if result && result[:nodes] && result[:nodes].empty? && @q.present?
+      if result && result[:nodes] && result[:nodes].empty? && @submitted_q.present?
         log_zero_results(search_enabled? && opensearch_responsive? ? 'opensearch' : 'postgresql')
       end
 
@@ -50,13 +55,62 @@ module Search
     rescue StandardError => e
       Rails.logger.error "[Search] Erro ao buscar no OpenSearch, caindo para PostgreSQL: #{e.message}"
       result = search_via_postgresql
-      if result && result[:nodes] && result[:nodes].empty? && @q.present?
+      if result && result[:nodes] && result[:nodes].empty? && @submitted_q.present?
         log_zero_results('postgresql_fallback')
       end
       result
     end
 
     private
+
+    def normalize_state(value)
+      ::Locations::CoverageNormalizer.normalize_state(value)
+    rescue StandardError
+      value.to_s.strip.upcase.presence
+    end
+
+    def normalize_search_value(value)
+      I18n.transliterate(value.to_s)
+          .downcase
+          .gsub(/[^a-z0-9]+/, ' ')
+          .squeeze(' ')
+          .strip
+          .presence
+    end
+
+    def infer_location_from_query!
+      return if @q_normalized.blank? || @city.present?
+
+      candidate = @q_normalized.sub(/\s*(?:[,\/-]|\s)\s*[a-z]{2}\z/i, '').strip
+      states = @state.present? ? [@state] : ::Locations::BrLocations.states.map { |state| state['acronym'] }
+
+      states.each do |state_code|
+        city = ::Locations::BrLocations.cities_for(state_code).find do |city_name|
+          normalize_search_value(city_name) == candidate
+        end
+        next unless city
+
+        @city = city
+        @city_normalized = normalize_search_value(city)
+        @q = ''
+        @q_normalized = nil
+        @state ||= state_code
+        break
+      end
+    rescue StandardError => e
+      Rails.logger.warn "[Search] Falha ao inferir cidade da busca '#{@submitted_q}': #{e.message}"
+    end
+
+    def apply_city_filter(scope, city)
+      return scope if city.blank?
+
+      adapter = ActiveRecord::Base.connection.adapter_name.downcase
+      if adapter.include?('sqlite')
+        scope.where('LOWER(companies.city) = ?', city.to_s.downcase)
+      else
+        scope.where('unaccent(LOWER(companies.city)) = unaccent(LOWER(?))', city)
+      end
+    end
 
     def search_enabled?
       ENV['SEARCH_ENABLED'] == 'true'
@@ -67,8 +121,8 @@ module Search
     end
 
     def has_geo_filter?
-      geo_enabled? && (@latitude.present? && @longitude.present? && @radius_km.present?) ||
-        (@map_bounds.present?)
+      geo_enabled? && ((@latitude.present? && @longitude.present? && @radius_km.present?) ||
+        @map_bounds.present?)
     end
 
     def opensearch_responsive?
@@ -80,7 +134,7 @@ module Search
     def log_zero_results(search_type)
       begin
         SearchZeroResult.create!(
-          query: @q,
+          query: @submitted_q,
           category_id: @category_id || @category_ids&.first,
           state: @state || @serves_state,
           city: @city || @serves_city,
@@ -94,7 +148,7 @@ module Search
         Analytics::PostHogService.capture(
           'search_zero_results',
           {
-            query: @q,
+            query: @submitted_q,
             category_id: @category_id || @category_ids&.first,
             state: @state || @serves_state,
             city: @city || @serves_city,
@@ -112,16 +166,22 @@ module Search
       where_clause = {}
 
       # Filtros geográficos principais
-      where_clause[:state] = @state.to_s.upcase if @state.present?
-      where_clause[:city] = @city if @city.present?
+      where_clause[:state] = @state if @state.present?
+      where_clause[:city_normalized] = @city_normalized if @city_normalized.present?
 
       # Filtros de cobertura geográfica
       if @serves_state.present?
-        state_code = ::Locations::CoverageNormalizer.normalize_state(@serves_state) rescue @serves_state
-        where_clause[:coverage_states] = state_code.to_s.upcase if state_code.present?
+        where_clause[:coverage_states] = @serves_state if @serves_state.present?
       end
-      if @serves_city.present?
-        where_clause[:coverage_cities] = @serves_city
+      if @serves_city_normalized.present?
+        where_clause[:coverage_cities_normalized] = @serves_city_normalized
+      end
+
+      if has_geo_filter? && @latitude.present? && @longitude.present? && @radius_km.present?
+        where_clause[:location] = {
+          near: { lat: @latitude, lon: @longitude },
+          within: "#{@radius_km}km"
+        }
       end
 
       # Filtro de segmento
@@ -155,6 +215,15 @@ module Search
           city: { limit: 20 }
         },
         includes: %i[categories badges],
+        fields: [
+          { name: :word_start },
+          { category_names: :word_start },
+          { city: :word_start },
+          { city_normalized: :word_start },
+          :description,
+          :short_description
+        ],
+        misspellings: { below: 5 },
         load: true
       }
 
@@ -247,26 +316,41 @@ module Search
         adapter = ActiveRecord::Base.connection.adapter_name.downcase
         if adapter.include?('sqlite')
           q_lower = @q.downcase
-          scope = scope.where(
-            'LOWER(companies.name) LIKE :q OR LOWER(companies.description) LIKE :q OR LOWER(companies.state) LIKE :q OR LOWER(companies.city) LIKE :q OR LOWER(companies.address) LIKE :q',
-            q: "%#{q_lower}%"
-          )
+          normalized = @q_normalized
+          scope = scope.left_joins(:categories).where(
+            <<~SQL.squish,
+              LOWER(companies.name) LIKE :q OR LOWER(companies.description) LIKE :q OR
+              LOWER(companies.state) LIKE :q OR LOWER(companies.city) LIKE :q OR
+              LOWER(companies.address) LIKE :q OR LOWER(categories.name) LIKE :q OR
+              LOWER(categories.description) LIKE :q OR LOWER(companies.city) LIKE :normalized
+            SQL
+            q: "%#{q_lower}%",
+            normalized: "%#{normalized}%"
+          ).distinct
         else
-          scope = scope.where(
-            'companies.name ILIKE :q OR companies.description ILIKE :q OR companies.state ILIKE :q OR companies.city ILIKE :q OR companies.address ILIKE :q',
+          scope = scope.left_joins(:categories).where(
+            <<~SQL.squish,
+              unaccent(companies.name) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(companies.description, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(companies.short_description, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(companies.state, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(companies.city, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(companies.address, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(categories.name, '')) ILIKE unaccent(:q) OR
+              unaccent(COALESCE(categories.description, '')) ILIKE unaccent(:q)
+            SQL
             q: "%#{@q}%"
-          )
+          ).distinct
         end
       end
 
       # Filtros geográficos principais
-      scope = scope.where(state: @state.to_s.upcase) if @state.present?
-      scope = scope.where(city: @city) if @city.present?
+      scope = scope.where(state: @state) if @state.present?
+      scope = apply_city_filter(scope, @city) if @city.present?
 
       # Cobertura geográfica
       if @serves_state.present?
-        state_code = ::Locations::CoverageNormalizer.normalize_state(@serves_state) rescue nil
-        scope = scope.serving_state(state_code) if state_code.present?
+        scope = scope.serving_state(@serves_state) if @serves_state.present?
       end
       if @serves_city.present?
         scope = scope.serving_city(@serves_city, @serves_state)

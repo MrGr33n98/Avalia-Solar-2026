@@ -56,6 +56,19 @@ RSpec.describe Search::CompanySearchService, type: :service do
           Search::CompanySearchService.new(q: 'Solar Tech BR').call
         }.to_not change(SearchZeroResult, :count)
       end
+
+      it 'interpreta uma cidade sem acento no q como filtro de localizacao' do
+        result = Search::CompanySearchService.new(q: 'sao paulo').call
+
+        expect(result[:nodes]).to include(company)
+        expect(result[:nodes].map(&:city)).to all(eq('São Paulo'))
+      end
+
+      it 'busca empresas pelo nome da categoria' do
+        result = Search::CompanySearchService.new(q: 'instaladores').call
+
+        expect(result[:nodes]).to include(company)
+      end
     end
   end
 end

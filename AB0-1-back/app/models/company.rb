@@ -7,7 +7,7 @@ class Company < ApplicationRecord
   include Moderation
 
   # OpenSearch Integration (Searchkick)
-  searchkick word_start: [:name, :city, :state, :description],
+  searchkick word_start: [:name, :city, :city_normalized, :state, :description, :category_names],
              callbacks: :async,
              synonyms: [
                ['painel', 'modulo', 'placa', 'placa solar', 'painel solar'],
@@ -25,6 +25,7 @@ class Company < ApplicationRecord
       description: description,
       short_description: short_description,
       city: city,
+      city_normalized: normalize_search_value(city),
       state: state,
       rating_avg: rating_avg.to_f,
       reviews_count: rating_count.to_i,
@@ -35,7 +36,9 @@ class Company < ApplicationRecord
       category_names: categories.pluck(:name),
       coverage_states: coverage_state_list,
       coverage_cities: coverage_city_list,
+      coverage_cities_normalized: coverage_city_list.map { |value| normalize_search_value(value) },
       geocoding_status: geocoding_status,
+      active: active_status?,
       created_at: created_at
     }
 
@@ -45,6 +48,18 @@ class Company < ApplicationRecord
     end
 
     data
+  end
+
+  def should_index?
+    active_status?
+  end
+
+  def normalize_search_value(value)
+    I18n.transliterate(value.to_s)
+        .downcase
+        .gsub(/[^a-z0-9]+/, ' ')
+        .squeeze(' ')
+        .strip
   end
 
   # Agenda geocodificação assíncrona quando cidade/estado muda e GEO está habilitado
