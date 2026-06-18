@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { Clock3, MessageCircle, PhoneCall, Wifi, WifiOff } from 'lucide-react';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
@@ -15,7 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
-import { trackDashboardViewed, trackChurnIntent, trackCheckoutStarted, track } from '@/lib/analytics/consolidated';
+import {
+  trackDashboardViewed,
+  trackChurnIntent,
+  trackCheckoutStarted,
+  track,
+} from '@/lib/analytics/consolidated';
 import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
 import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
@@ -26,25 +32,63 @@ import ApprovalsPanel from './ApprovalsPanel';
 import FeatureGuard from './FeatureGuard';
 
 // Lazy Loaded Feature Components for Performance
-const CompanyInfo = dynamic(() => import('./CompanyInfo'), { loading: () => <DashboardTabSkeleton /> });
-const CategoriesManagement = dynamic(() => import('./CategoriesManagement'), { loading: () => <DashboardTabSkeleton /> });
-const BannersSponsorship = dynamic(() => import('./BannersSponsorship'), { loading: () => <DashboardTabSkeleton /> });
-const ProductsManagement = dynamic(() => import('./ProductsManagement'), { loading: () => <DashboardTabSkeleton /> });
-const ReviewsManagement = dynamic(() => import('./ReviewsManagement'), { loading: () => <DashboardTabSkeleton /> });
-const MediaGallery = dynamic(() => import('./MediaGallery'), { loading: () => <DashboardTabSkeleton /> });
-const LeadsOpportunities = dynamic(() => import('./LeadsOpportunities'), { loading: () => <DashboardTabSkeleton /> });
-const CampaignsMarketing = dynamic(() => import('./CampaignsMarketing'), { loading: () => <DashboardTabSkeleton /> });
-const CompanySettings = dynamic(() => import('./CompanySettings'), { loading: () => <DashboardTabSkeleton /> });
-const OverviewTab = dynamic(() => import('./OverviewTab'), { loading: () => <DashboardTabSkeleton /> });
-const ReviewsAnalytics = dynamic(() => import('./ReviewsAnalytics'), { loading: () => <DashboardTabSkeleton /> });
-const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), { loading: () => <DashboardTabSkeleton /> });
-const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), { loading: () => <DashboardTabSkeleton /> });
-const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), { loading: () => <DashboardTabSkeleton /> });
-const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), { loading: () => <DashboardTabSkeleton /> });
-const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), { loading: () => <DashboardTabSkeleton /> });
-const BadgesManagement = dynamic(() => import('./BadgesManagement'), { loading: () => <DashboardTabSkeleton /> });
-const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), { loading: () => <DashboardTabSkeleton /> });
-const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), { loading: () => <DashboardTabSkeleton /> });
+const CompanyInfo = dynamic(() => import('./CompanyInfo'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const CategoriesManagement = dynamic(() => import('./CategoriesManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const BannersSponsorship = dynamic(() => import('./BannersSponsorship'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const ProductsManagement = dynamic(() => import('./ProductsManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const ReviewsManagement = dynamic(() => import('./ReviewsManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const MediaGallery = dynamic(() => import('./MediaGallery'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const LeadsOpportunities = dynamic(() => import('./LeadsOpportunities'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const CampaignsMarketing = dynamic(() => import('./CampaignsMarketing'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const CompanySettings = dynamic(() => import('./CompanySettings'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const OverviewTab = dynamic(() => import('./OverviewTab'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const ReviewsAnalytics = dynamic(() => import('./ReviewsAnalytics'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const PerformanceMetrics = dynamic(() => import('./PerformanceMetrics'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const CompetitorBenchmark = dynamic(() => import('./CompetitorBenchmark'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const BadgesManagement = dynamic(() => import('./BadgesManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), {
+  loading: () => <DashboardTabSkeleton />,
+});
+const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 
 function DashboardTabSkeleton() {
   return (
@@ -59,6 +103,149 @@ function DashboardTabSkeleton() {
         <Skeleton className="h-[200px] rounded-xl" />
       </div>
       <Skeleton className="h-[400px] w-full rounded-xl" />
+    </div>
+  );
+}
+
+type DashboardChatCompany = {
+  name?: string;
+  p2p_chat_enabled?: boolean;
+  cta_whatsapp_enabled?: boolean;
+  whatsapp_enabled?: boolean;
+  cta_whatsapp_url?: string | null;
+  whatsapp_url?: string | null;
+  whatsapp?: string | null;
+};
+
+function CompanyChatTab({ company }: { company: DashboardChatCompany | null | undefined }) {
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastSeen, setLastSeen] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      const online = navigator.onLine;
+      setIsOnline(online);
+      setLastSeen(new Date());
+    };
+
+    updateOnlineStatus();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
+  const chatEnabled = company?.p2p_chat_enabled === true;
+  const whatsappEnabled =
+    company?.cta_whatsapp_enabled === true ||
+    company?.whatsapp_enabled === true ||
+    Boolean(company?.cta_whatsapp_url || company?.whatsapp_url || company?.whatsapp);
+  const hasAnyChannel = chatEnabled || whatsappEnabled;
+  const lastSeenLabel = lastSeen
+    ? lastSeen.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : 'agora';
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-2xl font-bold text-foreground lg:text-3xl">Atendimento</h2>
+        <p className="text-sm text-slate-500">
+          Acompanhe se sua empresa está disponível para receber contatos e conversas.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {isOnline ? <Wifi className="h-5 w-5" /> : <WifiOff className="h-5 w-5" />}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-500">Status do painel</p>
+              <p className="text-lg font-black text-slate-950">
+                {isOnline ? 'Online agora' : 'Offline'}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">Atualizado às {lastSeenLabel}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                chatEnabled ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              <MessageCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-500">Chat direto</p>
+              <p className="text-lg font-black text-slate-950">
+                {chatEnabled ? 'Ativo' : 'Não configurado'}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {chatEnabled ? 'Disponível no perfil público' : 'Ative para receber conversas'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                whatsappEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              <PhoneCall className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-500">WhatsApp</p>
+              <p className="text-lg font-black text-slate-950">
+                {whatsappEnabled ? 'Conectado' : 'Não configurado'}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {whatsappEnabled ? 'Canal pronto para leads' : 'Configure nas informações gerais'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <Clock3 className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-950">Disponibilidade no perfil</h3>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+                {hasAnyChannel
+                  ? 'Sua empresa já possui pelo menos um canal de atendimento configurado. O status online considera a conexão atual deste painel.'
+                  : 'Nenhum canal de atendimento foi encontrado. Configure WhatsApp ou chat direto para exibir atendimento ativo no perfil.'}
+              </p>
+            </div>
+          </div>
+          <div
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-black ${
+              isOnline && hasAnyChannel
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-amber-50 text-amber-700'
+            }`}
+          >
+            {isOnline && hasAnyChannel ? 'Atendimento disponível' : 'Ação recomendada'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -124,15 +311,15 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const pathname = usePathname();
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  const { 
-    loading, 
-    company, 
-    companyError, 
-    stats, 
+
+  const {
+    loading,
+    company,
+    companyError,
+    stats,
     featureAccess,
-    notifications, 
-    markNotificationAsRead 
+    notifications,
+    markNotificationAsRead,
   } = useCompanyDashboardData(companyId);
 
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
@@ -167,7 +354,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       if (!copy) return children;
 
       return (
-        <FeatureGuard entry={entry} title={copy.title} description={copy.description} featureId={tabId}>
+        <FeatureGuard
+          entry={entry}
+          title={copy.title}
+          description={copy.description}
+          featureId={tabId}
+        >
           {children}
         </FeatureGuard>
       );
@@ -178,10 +370,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    
+
     // Canonical Dashboard View tracking
     trackDashboardViewed(companyId, tab, {
-      plan_tier: (company as any)?.plan_tier || 'free'
+      plan_tier: (company as any)?.plan_tier || 'free',
     });
 
     // Churn Intent Tracking
@@ -201,7 +393,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     track('Dashboard Tab Viewed', {
       tab_name: tab,
       company_id: companyId,
-      user_id: user?.id
+      user_id: user?.id,
     });
 
     const params = new URLSearchParams(searchParams.toString());
@@ -231,12 +423,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
-    
+
     // Track using unified analytics
     track('Theme Changed', {
       theme_mode: theme,
       company_id: companyId,
-      user_id: user?.id
+      user_id: user?.id,
     });
 
     if (theme === 'dark') {
@@ -251,7 +443,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     const savedTheme = localStorage.getItem('dashboard-theme') as 'light' | 'dark' | null;
     const initialTheme = savedTheme || 'dark';
     setThemeMode(initialTheme);
-    
+
     if (initialTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -267,13 +459,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         company_id: companyId,
         user_id: user?.id,
         plan_id: (company as any)?.plan_id,
-        plan_tier: (company as any)?.plan_tier
+        plan_tier: (company as any)?.plan_tier,
       });
 
       toast({
         title: 'Assinatura confirmada!',
         description: 'Seu plano foi atualizado com sucesso. Aproveite os novos recursos.',
-        variant: 'default'
+        variant: 'default',
       });
 
       // Remove checkout query param
@@ -301,7 +493,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold text-foreground">Acesso pendente</h2>
-          <p className="text-sm text-white/40">Seu acesso ao dashboard está aguardando aprovação ou a empresa não está ativa.</p>
+          <p className="text-sm text-white/40">
+            Seu acesso ao dashboard está aguardando aprovação ou a empresa não está ativa.
+          </p>
         </div>
       </div>
     );
@@ -355,7 +549,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
             {/* Content based on active tab using Shadcn Tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
-              <TabsContent value="overview" className="mt-0 focus-visible:outline-none" data-tour="overview">
+              <TabsContent
+                value="overview"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="overview"
+              >
                 <OverviewTab
                   companyId={companyId}
                   company={company}
@@ -366,7 +564,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               {/* Sprint 5: Ranking Performance Tab */}
-              <TabsContent value="ranking-performance" className="mt-0 focus-visible:outline-none" data-tour="ranking">
+              <TabsContent
+                value="ranking-performance"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="ranking"
+              >
                 <RankingPerformanceTab company={company} stats={stats} themeMode={themeMode} />
               </TabsContent>
 
@@ -375,10 +577,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
-                {renderGuardedTab(
-                  'integrations',
-                  <WebhooksManagement />
-                )}
+                {renderGuardedTab('integrations', <WebhooksManagement />)}
               </TabsContent>
 
               <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
@@ -388,14 +587,22 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Selos Avalia Solar</h2>
-                    <p className="text-sm text-white/40">Gerencie e compartilhe seus selos oficiais de distinção.</p>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                      Selos Avalia Solar
+                    </h2>
+                    <p className="text-sm text-white/40">
+                      Gerencie e compartilhe seus selos oficiais de distinção.
+                    </p>
                   </div>
                   <BadgesManagement companyId={companyId} />
                 </div>
               </TabsContent>
 
-              <TabsContent value="analytics" className="mt-0 focus-visible:outline-none" data-tour="analytics">
+              <TabsContent
+                value="analytics"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="analytics"
+              >
                 {renderGuardedTab(
                   'analytics',
                   <div className="space-y-6">
@@ -499,7 +706,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 )}
               </TabsContent>
 
-              <TabsContent value="product-sponsored-description" className="mt-0 focus-visible:outline-none">
+              <TabsContent
+                value="product-sponsored-description"
+                className="mt-0 focus-visible:outline-none"
+              >
                 {renderGuardedTab(
                   'product-sponsored-description',
                   <div>
@@ -524,11 +734,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                         Conteúdo Baixável
                       </h2>
-                      <p className="text-sm text-white/40">
+                      <p className="text-sm text-slate-500">
                         Envie arquivos e materiais para seus clientes.
                       </p>
                     </div>
-                    <MediaGallery companyId={companyId} />
+                    <MediaGallery companyId={companyId} mode="downloads" />
                   </div>
                 )}
               </TabsContent>
@@ -555,11 +765,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                         Vídeos
                       </h2>
-                      <p className="text-sm text-white/40">
+                      <p className="text-sm text-slate-500">
                         Gerencie vídeos e mídias do seu produto.
                       </p>
                     </div>
-                    <MediaGallery companyId={companyId} />
+                    <MediaGallery companyId={companyId} mode="videos" />
                   </div>
                 )}
               </TabsContent>
@@ -572,11 +782,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                         Imagens
                       </h2>
-                      <p className="text-sm text-white/40">
-                        Gerencie imagens do seu produto.
-                      </p>
+                      <p className="text-sm text-slate-500">Gerencie imagens do seu produto.</p>
                     </div>
-                    <MediaGallery companyId={companyId} />
+                    <MediaGallery companyId={companyId} mode="photos" />
                   </div>
                 )}
               </TabsContent>
@@ -637,7 +845,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none" data-tour="reviews">
+              <TabsContent
+                value="reviews"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="reviews"
+              >
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -674,7 +886,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 )}
               </TabsContent>
 
-              <TabsContent value="leads" className="mt-0 focus-visible:outline-none" data-tour="leads">
+              <TabsContent
+                value="leads"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="leads"
+              >
                 {renderGuardedTab(
                   'leads',
                   <div>
@@ -689,6 +905,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <LeadsOpportunities companyId={companyId} companyName={company?.name} />
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="chat" className="mt-0 focus-visible:outline-none">
+                <CompanyChatTab company={company} />
               </TabsContent>
 
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">
@@ -719,15 +939,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 </div>
               </TabsContent>
 
-              <TabsContent value="settings" className="mt-0 focus-visible:outline-none" data-tour="settings">
+              <TabsContent
+                value="settings"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="settings"
+              >
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Configurações
                     </h2>
-                    <p className="text-sm text-white/40">
-                      Ajuste as configurações da sua conta
-                    </p>
+                    <p className="text-sm text-white/40">Ajuste as configurações da sua conta</p>
                   </div>
                   <CompanySettings companyId={companyId} />
                 </div>

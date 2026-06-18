@@ -13,14 +13,16 @@ import {
   Target,
   Sparkles,
   TrendingUp,
+  MessageCircle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export type NavigationContext = 'operational' | 'quick_access' | 'admin' | 'all';
 
 export interface NavigationItem {
   id: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   context: NavigationContext[];
   group?: string;
   children?: NavigationItem[];
@@ -49,12 +51,12 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     context: ['operational'],
     group: 'metrics',
     children: [
-      { 
-        id: 'analytics', 
-        label: 'Análises', 
-        icon: TrendingUp, 
+      {
+        id: 'analytics',
+        label: 'Análises',
+        icon: TrendingUp,
         context: ['operational'],
-        description: 'Métricas e estatísticas' 
+        description: 'Métricas e estatísticas',
       },
     ],
   },
@@ -65,13 +67,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     context: ['operational', 'quick_access'],
     group: 'engagement',
     children: [
-      { 
-        id: 'reviews', 
-        label: 'Avaliações', 
-        icon: Star, 
+      {
+        id: 'reviews',
+        label: 'Avaliações',
+        icon: Star,
         context: ['operational', 'quick_access'],
         badge: true,
-        description: 'Gerenciar avaliações de clientes' 
+        description: 'Gerenciar avaliações de clientes',
       },
     ],
   },
@@ -82,13 +84,21 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     context: ['operational'],
     group: 'engagement',
     children: [
-      { 
-        id: 'leads', 
-        label: 'Oportunidades', 
-        icon: Target, 
+      {
+        id: 'leads',
+        label: 'Oportunidades',
+        icon: Target,
         context: ['operational', 'quick_access'],
         badge: true,
-        description: 'Gerenciar leads e oportunidades' 
+        description: 'Gerenciar leads e oportunidades',
+      },
+      {
+        id: 'chat',
+        label: 'Atendimento',
+        icon: MessageCircle,
+        context: ['operational', 'quick_access'],
+        badge: true,
+        description: 'Chat, WhatsApp e status online',
       },
     ],
   },
@@ -99,16 +109,56 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     context: ['operational', 'admin'],
     group: 'management',
     children: [
-      { id: 'product-general', label: 'Informações Gerais', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-categories', label: 'Categorias', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-pricing', label: 'Planos e Preços', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-support', label: 'Suporte e Treinamento', icon: FileText, context: ['operational', 'admin'] },
+      {
+        id: 'product-general',
+        label: 'Informações Gerais',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-categories',
+        label: 'Categorias',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-pricing',
+        label: 'Planos e Preços',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-support',
+        label: 'Suporte e Treinamento',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
       { id: 'product-banner', label: 'Banner', icon: Sparkles, context: ['operational', 'admin'] },
-      { id: 'product-sponsored-description', label: 'Descrição Patrocinada', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-downloads', label: 'Conteúdo Baixável', icon: FileText, context: ['operational', 'admin'] },
-      { id: 'product-features', label: 'Funcionalidades', icon: FileText, context: ['operational', 'admin'] },
+      {
+        id: 'product-sponsored-description',
+        label: 'Descrição Patrocinada',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-downloads',
+        label: 'Conteúdo Baixável',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-features',
+        label: 'Funcionalidades',
+        icon: FileText,
+        context: ['operational', 'admin'],
+      },
       { id: 'product-videos', label: 'Vídeos', icon: ImageIcon, context: ['operational', 'admin'] },
-      { id: 'product-images', label: 'Imagens', icon: ImageIcon, context: ['operational', 'admin'] },
+      {
+        id: 'product-images',
+        label: 'Imagens',
+        icon: ImageIcon,
+        context: ['operational', 'admin'],
+      },
     ],
   },
   {
@@ -188,7 +238,13 @@ export function getNavigationItemById(id: string): NavigationItem | undefined {
 }
 
 export function getNavigationGroups(): string[] {
-  return Array.from(new Set(DASHBOARD_NAVIGATION.map((item) => item.group).filter((group): group is string => Boolean(group))));
+  return Array.from(
+    new Set(
+      DASHBOARD_NAVIGATION.map((item) => item.group).filter((group): group is string =>
+        Boolean(group)
+      )
+    )
+  );
 }
 
 export function flattenNavigationItems(items: NavigationItem[]): FlatNavigationItem[] {
