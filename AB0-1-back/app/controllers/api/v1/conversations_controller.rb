@@ -25,7 +25,7 @@ module Api
         return if performed?
 
         @conversation = Conversation.find_or_create_by(user_id: current_user.id, company_id: company.id)
-        
+
         render json: conversation_json(@conversation)
       end
 
@@ -39,6 +39,8 @@ module Api
       end
 
       def conversation_json(conversation)
+        last_message = conversation.direct_messages.order(created_at: :desc).first
+
         {
           id: conversation.id,
           user_id: conversation.user_id,
@@ -48,8 +50,21 @@ module Api
           company_name: conversation.company&.name,
           company_logo: conversation.company&.logo&.attached? ? url_for(conversation.company.logo) : nil,
           company_avatar: conversation.company&.logo&.attached? ? url_for(conversation.company.logo) : nil,
-          last_message: conversation.direct_messages.order(created_at: :desc).first&.body
+          last_message: last_message&.body,
+          last_message_at: last_message&.created_at,
+          unread_count: unread_count_for(conversation)
         }
+      end
+
+      def unread_count_for(conversation)
+        sender_type =
+          if current_user.company_user? && current_user.active_membership_for?(conversation.company_id)
+            'User'
+          else
+            'Company'
+          end
+
+        conversation.direct_messages.where(sender_type: sender_type, read_at: nil).count
       end
     end
   end
