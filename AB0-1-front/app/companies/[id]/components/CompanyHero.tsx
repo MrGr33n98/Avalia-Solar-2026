@@ -166,7 +166,7 @@ export default function CompanyHero({
 
       <div className="!rounded-none border border-slate-200/80 bg-white/80 p-0 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
         <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-200">
-          <div className="relative h-[168px] sm:h-[220px] lg:h-[250px]">
+          <div className="relative h-[160px] sm:h-[205px] lg:h-[230px]">
             <OptimizedImage
               src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
               alt={company.name}
@@ -194,12 +194,12 @@ export default function CompanyHero({
           </div>
         </div>
 
-        <div className="relative z-10 -mt-6 px-4 sm:-mt-10 sm:px-5 lg:px-8">
+        <div className="relative z-10 -mt-9 px-3 sm:-mt-14 sm:px-5 lg:-mt-16 lg:px-8">
           <section
             aria-label="Card da empresa com ações"
-            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6"
+            className="rounded-none border border-slate-200 bg-white p-3 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-4 lg:p-4"
           >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
               <div
                 aria-label="Card de perfil da empresa"
                 className="flex min-w-0 items-center gap-3 sm:gap-5"
@@ -226,7 +226,7 @@ export default function CompanyHero({
 
                   <div
                     className={cn(
-                      'flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-28 sm:w-28',
+                      'flex h-16 w-16 items-center justify-center overflow-hidden rounded-none border border-slate-100 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-24 sm:w-24',
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
@@ -237,7 +237,7 @@ export default function CompanyHero({
                       priority
                       objectFit="contain"
                       className="p-2"
-                      containerClassName="h-full w-full rounded-2xl bg-white"
+                      containerClassName="h-full w-full rounded-none bg-white"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
                     />
@@ -281,7 +281,7 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              <div className="w-full border-t border-slate-100 pt-3 lg:w-auto lg:min-w-[560px] lg:border-t-0 lg:pt-0">
+              <div className="w-full border-t border-slate-100 pt-2 lg:w-auto lg:min-w-[520px] lg:border-t-0 lg:pt-0">
                 <div className="grid w-full grid-cols-[44px_minmax(120px,1fr)_minmax(132px,1.25fr)] gap-2 sm:grid-cols-[minmax(130px,0.7fr)_repeat(2,minmax(150px,1fr))] sm:gap-3">
                   <Button
                     variant="ghost"

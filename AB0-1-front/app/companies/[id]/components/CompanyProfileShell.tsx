@@ -91,7 +91,7 @@ export default function CompanyProfileShell({
         <div className="mx-auto max-w-[1240px] px-4 pt-4 md:px-6">
           <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
             {/* Hero Banner */}
             <CompanyPremiumHero
               company={company}
@@ -101,7 +101,7 @@ export default function CompanyProfileShell({
             />
 
             {/* Identidade da Empresa e CTAs */}
-            <div className="relative z-20 -mt-12 px-4 sm:-mt-16 md:px-6">
+            <div className="relative z-20 -mt-16 px-3 sm:-mt-20 md:-mt-24 md:px-6">
               <CompanyIdentityCard
                 company={company}
                 companyStats={companyStats}
@@ -114,7 +114,7 @@ export default function CompanyProfileShell({
             </div>
 
             {/* Banners Estratégicos Placeholder */}
-            <div className="h-0.5 bg-slate-200/50 w-full mt-2" />
+            <div className="h-px w-full bg-slate-200/50" />
 
             {/* Navegação por Abas Responsiva */}
             <CompanyProfileTabs

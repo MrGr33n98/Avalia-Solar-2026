@@ -39,12 +39,12 @@ export default function CompanyIdentityCard({
   return (
     <div
       id="company-identity-card"
-      className="relative mx-auto flex w-full max-w-[860px] flex-col gap-3 rounded-[22px] border border-slate-200 bg-white pb-4 pl-4 pr-4 pt-14 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.22)] sm:gap-4 sm:pb-5 sm:pl-5 sm:pr-5 sm:pt-5 lg:max-w-[900px]"
+      className="relative mx-auto flex w-full max-w-[820px] flex-col gap-2 rounded-none border border-slate-200 bg-white pb-3 pl-3 pr-3 pt-12 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.22)] sm:gap-3 sm:p-4 lg:max-w-[860px]"
     >
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         {/* Logo Container com Fallback */}
-        <div className="absolute left-5 top-0 -translate-y-1/2 sm:static sm:translate-y-0">
-          <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-[0_12px_24px_-12px_rgba(15,23,42,0.35)] sm:h-20 sm:w-20">
+        <div className="absolute left-4 top-0 -translate-y-1/2 sm:static sm:translate-y-0">
+          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-none border-[3px] border-white bg-white shadow-[0_12px_24px_-12px_rgba(15,23,42,0.35)] sm:h-[72px] sm:w-[72px]">
             {hasLogo ? (
               <OptimizedImage
                 src={logoUrl!}
@@ -52,8 +52,8 @@ export default function CompanyIdentityCard({
                 fill
                 priority
                 objectFit="contain"
-                className="rounded-2xl bg-white p-1"
-                containerClassName="h-full w-full rounded-2xl bg-white"
+                className="rounded-none bg-white p-1"
+                containerClassName="h-full w-full rounded-none bg-white"
                 fallbackSrc="/images/logo-placeholder.svg"
                 onError={() => setLogoError(true)}
               />
@@ -67,15 +67,15 @@ export default function CompanyIdentityCard({
 
         {/* Info Content */}
         <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="max-w-full truncate text-2xl font-black tracking-tight text-slate-950 md:text-[1.65rem]">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h2 className="max-w-full truncate text-xl font-black tracking-tight text-slate-950 md:text-[1.45rem]">
               {company.name}
             </h2>
             <CompanyVerificationBadge company={company} />
             <PremiumHighlightBadge company={company} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <CompanyRatingBadge
               rating={companyStats.rating}
               reviewCount={companyStats.reviewCount}
@@ -91,7 +91,7 @@ export default function CompanyIdentityCard({
         </div>
       </div>
 
-      {children && <div className="border-t border-slate-100 pt-3">{children}</div>}
+      {children && <div className="border-t border-slate-100 pt-2">{children}</div>}
     </div>
   );
 }
