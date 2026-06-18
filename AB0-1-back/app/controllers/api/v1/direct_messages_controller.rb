@@ -46,7 +46,7 @@ module Api
 
       def can_access_conversation?
         return true if current_user.id == @conversation.user_id
-        return true if current_user.company_user? && current_user.company_id == @conversation.company_id
+        return true if current_user.company_user? && current_user.active_membership_for?(@conversation.company_id)
         return true if current_user.admin?
 
         false

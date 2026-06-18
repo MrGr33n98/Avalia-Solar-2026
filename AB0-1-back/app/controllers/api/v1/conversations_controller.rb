@@ -6,8 +6,8 @@ module Api
       before_action :authenticate_user!
 
       def index
-        @conversations = if current_user.company_user? && current_user.company_id
-                           current_user.company.conversations.includes(:user)
+        @conversations = if current_user.company_user?
+                           company_conversations_scope
                          else
                            current_user.conversations.includes(:company)
                          end
@@ -30,6 +30,13 @@ module Api
       end
 
       private
+
+      def company_conversations_scope
+        companies = current_user.active_member_companies
+        companies = Company.where(id: current_user.company&.id) if companies.blank? && current_user.company.present?
+
+        Conversation.where(company_id: companies.select(:id)).includes(:user, :company)
+      end
 
       def conversation_json(conversation)
         {
