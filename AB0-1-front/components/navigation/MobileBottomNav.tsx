@@ -2,39 +2,25 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, Heart, Home, MessageCircle, Scale, User } from 'lucide-react';
+import { Building2, Heart, Home, MessageCircle, User } from 'lucide-react';
 
-import { useComparison } from '@/hooks/useComparison';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const BASE_NAV_ITEMS = [
   { href: '/', label: 'Início', icon: Home },
   { href: '/companies', label: 'Empresas', icon: Building2 },
-  { href: '/compare', label: 'Comparar', icon: Scale, badge: 'comparison' },
+  { href: '/chat', label: 'Chat', icon: MessageCircle, badge: 'chat-online' },
   { href: '/favorites', label: 'Favoritos', icon: Heart },
   { href: '/profile', label: 'Perfil', icon: User },
 ];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { count } = useComparison();
-  const { user, isAuthenticated } = useAuth();
-  const isRegularUser = isAuthenticated && user?.role === 'review';
-  const navItems = isRegularUser
-    ? [
-        BASE_NAV_ITEMS[0],
-        BASE_NAV_ITEMS[1],
-        { href: '/chat', label: 'Chat', icon: MessageCircle, badge: 'chat-online' },
-        BASE_NAV_ITEMS[3],
-        BASE_NAV_ITEMS[4],
-      ]
-    : BASE_NAV_ITEMS;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.5rem,var(--safe-area-inset-bottom))] pt-2 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid max-w-md grid-cols-5">
-        {navItems.map((item) => {
+        {BASE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active =
             item.href === '/'
@@ -52,11 +38,6 @@ export default function MobileBottomNav() {
             >
               <span className="relative">
                 <Icon className="h-6 w-6" strokeWidth={active ? 2.5 : 2} />
-                {item.badge === 'comparison' && count > 0 && (
-                  <span className="absolute -right-2.5 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-black leading-none text-white">
-                    {count}
-                  </span>
-                )}
                 {item.badge === 'chat-online' && (
                   <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
                 )}

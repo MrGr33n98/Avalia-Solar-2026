@@ -4,34 +4,39 @@ import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { 
-  User as UserIcon, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Edit, 
-  Save, 
-  X, 
-  Star, 
-  MessageCircle, 
-  Building, 
-  CreditCard 
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  Calendar,
+  Edit,
+  Save,
+  X,
+  Star,
+  MessageCircle,
+  Building,
+  Scale,
+  Trash2,
 } from 'lucide-react';
 import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import CompanyCard from '@/components/CompanyCard';
 import ReviewCard from '@/components/ReviewCard';
+import { useComparison } from '@/hooks/useComparison';
 import {
   AvatarUploadClientError,
   prepareAvatarFileForUpload,
@@ -53,8 +58,9 @@ export default function ProfilePage() {
   const [avatarUploadProgress, setAvatarUploadProgress] = useState(0);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
-  
+
   const { user, loading, error, logout, refreshAuth } = useAuth();
+  const { comparisonList, removeFromComparison, clearComparison } = useComparison();
   const router = useRouter();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const pendingPreviewObjectUrlRef = useRef<string | null>(null);
@@ -75,9 +81,9 @@ export default function ProfilePage() {
       setEditedUser({
         name: user.name || '',
         email: user.email || '',
-        phone: user.phone || ''
+        phone: user.phone || '',
       });
-      
+
       // Fetch user's companies and reviews
       fetchUserCompanies();
       fetchUserReviews();
@@ -140,7 +146,7 @@ export default function ProfilePage() {
     setEditedUser({
       name: user?.name || '',
       email: user?.email || '',
-      phone: user?.phone || ''
+      phone: user?.phone || '',
     });
     setIsEditing(false);
   };
@@ -214,12 +220,15 @@ export default function ProfilePage() {
           ? 'A nova foto de perfil já está disponível.'
           : 'Upload concluído.',
       });
-    } catch (uploadError: any) {
-      const networkFailure = Boolean(uploadError?.isNetworkError);
-      const detailedMessage =
-        networkFailure
-          ? 'Falha de rede durante o upload. Verifique sua conexão e tente novamente.'
-          : getApiErrorMessage(uploadError, 'Não foi possível enviar a foto de perfil.');
+    } catch (uploadError: unknown) {
+      const networkFailure =
+        typeof uploadError === 'object' &&
+        uploadError !== null &&
+        'isNetworkError' in uploadError &&
+        Boolean(uploadError.isNetworkError);
+      const detailedMessage = networkFailure
+        ? 'Falha de rede durante o upload. Verifique sua conexão e tente novamente.'
+        : getApiErrorMessage(uploadError, 'Não foi possível enviar a foto de perfil.');
       setAvatarError(detailedMessage);
       toast({
         title: 'Erro no upload da foto',
@@ -256,9 +265,7 @@ export default function ProfilePage() {
               <p className="text-gray-600 mb-4">
                 Não foi possível carregar as informações do seu perfil. Por favor, tente novamente.
               </p>
-              <Button onClick={() => router.push('/')}>
-                Voltar para página inicial
-              </Button>
+              <Button onClick={() => router.push('/')}>Voltar para página inicial</Button>
             </CardContent>
           </Card>
         </div>
@@ -290,8 +297,9 @@ export default function ProfilePage() {
       <div className="container mx-auto py-8">
         <div className="max-w-4xl mx-auto">
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">Perfil</TabsTrigger>
+              <TabsTrigger value="compare">Comparar</TabsTrigger>
               <TabsTrigger value="companies">Minhas Empresas</TabsTrigger>
               <TabsTrigger value="reviews">Minhas Avaliações</TabsTrigger>
             </TabsList>
@@ -335,11 +343,7 @@ export default function ProfilePage() {
                       </Button>
                       {pendingAvatarFile && (
                         <>
-                          <Button
-                            size="sm"
-                            onClick={handleAvatarUpload}
-                            disabled={avatarUploading}
-                          >
+                          <Button size="sm" onClick={handleAvatarUpload} disabled={avatarUploading}>
                             {avatarUploading ? 'Enviando...' : 'Salvar Foto'}
                           </Button>
                           <Button
@@ -393,28 +397,28 @@ export default function ProfilePage() {
                         <Input
                           id="name"
                           value={editedUser.name}
-                          onChange={(e) => setEditedUser({...editedUser, name: e.target.value})}
+                          onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
                           className="mt-1"
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="email">Email</Label>
                         <Input
                           id="email"
                           type="email"
                           value={editedUser.email}
-                          onChange={(e) => setEditedUser({...editedUser, email: e.target.value})}
+                          onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
                           className="mt-1"
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="phone">Telefone</Label>
                         <Input
                           id="phone"
                           value={editedUser.phone}
-                          onChange={(e) => setEditedUser({...editedUser, phone: e.target.value})}
+                          onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
                           className="mt-1"
                         />
                       </div>
@@ -425,19 +429,19 @@ export default function ProfilePage() {
                         <UserIcon className="h-5 w-5 text-muted-foreground mr-3" />
                         <span>{user.name}</span>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <Mail className="h-5 w-5 text-muted-foreground mr-3" />
                         <span>{user.email}</span>
                       </div>
-                      
+
                       {user.phone && (
                         <div className="flex items-center">
                           <Phone className="h-5 w-5 text-muted-foreground mr-3" />
                           <span>{user.phone}</span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 text-muted-foreground mr-3" />
                         <span>Membro desde {new Date(user.created_at).toLocaleDateString()}</span>
@@ -469,49 +473,104 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Empresas Cadastradas
-                    </CardTitle>
+                    <CardTitle className="text-sm font-medium">Empresas Cadastradas</CardTitle>
                     <Building className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">
-                      Empresas registradas
-                    </p>
+                    <p className="text-xs text-muted-foreground">Empresas registradas</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Avaliações Feitas
-                    </CardTitle>
+                    <CardTitle className="text-sm font-medium">Avaliações Feitas</CardTitle>
                     <Star className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">
-                      Avaliações registradas
-                    </p>
+                    <p className="text-xs text-muted-foreground">Avaliações registradas</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Comentários
-                    </CardTitle>
+                    <CardTitle className="text-sm font-medium">Comentários</CardTitle>
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">
-                      Comentários feitos
-                    </p>
+                    <p className="text-xs text-muted-foreground">Comentários feitos</p>
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="compare" className="space-y-6">
+              <Card>
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle>Minhas Comparações</CardTitle>
+                    <CardDescription>
+                      Compare empresas salvas para decidir com mais segurança.
+                    </CardDescription>
+                  </div>
+                  {comparisonList.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={clearComparison}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Limpar
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {comparisonList.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid gap-3">
+                        {comparisonList.map((company) => (
+                          <div
+                            key={company.id}
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-foreground">
+                                {company.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {[company.city, company.state].filter(Boolean).join(', ') ||
+                                  'Localização não informada'}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromComparison(company.id)}
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button className="w-full" onClick={() => router.push('/compare')}>
+                        <Scale className="mr-2 h-4 w-4" />
+                        Abrir comparação completa
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                        <Scale className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold">Nenhuma empresa para comparar</h3>
+                      <p className="mx-auto mb-6 max-w-sm text-muted-foreground">
+                        Abra uma empresa e adicione à comparação quando quiser analisar opções lado
+                        a lado.
+                      </p>
+                      <Button onClick={() => router.push('/companies')}>Ver empresas</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="companies" className="space-y-6">
@@ -581,9 +640,7 @@ export default function ProfilePage() {
                       <p className="text-muted-foreground mb-6">
                         Você ainda não deixou nenhuma avaliação para empresas.
                       </p>
-                      <Button onClick={() => router.push('/companies')}>
-                        Ver Empresas
-                      </Button>
+                      <Button onClick={() => router.push('/companies')}>Ver Empresas</Button>
                     </div>
                   )}
                 </CardContent>

@@ -12,12 +12,17 @@ import { getApolloClient } from '@/lib/apollo-client';
 // Lazy load heavy client-side modals and floating components
 const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
 const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
-const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWizardModal'), { ssr: false });
-const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
-const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), { ssr: false });
+const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWizardModal'), {
+  ssr: false,
+});
+const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), {
+  ssr: false,
+});
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/chat/ChatWidget'), { ssr: false });
-const MobiVoltSuccessWidget = dynamic(() => import('@/components/chat/MobiVoltSuccessWidget'), { ssr: false });
+const MobiVoltSuccessWidget = dynamic(() => import('@/components/chat/MobiVoltSuccessWidget'), {
+  ssr: false,
+});
 const Toaster = dynamic(() => import('@/components/ui/sonner').then((mod) => mod.Toaster), {
   ssr: false,
   loading: () => null,
@@ -30,11 +35,7 @@ import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
-export default function Providers({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   const apolloClient = getApolloClient();
   const pathname = usePathname();
   const analyticsLoadedRef = useRef(false);
@@ -60,13 +61,13 @@ export default function Providers({
       const lastVisitDate = new Date(lastVisit);
       const diffTime = Math.abs(now.getTime() - lastVisitDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // Delay to ensure analytics is loaded
       setTimeout(() => {
         trackUserReturned(diffDays);
       }, 3000);
     }
-    
+
     localStorage.setItem(lastVisitKey, today);
   }, []);
 
@@ -79,7 +80,7 @@ export default function Providers({
     // For new users without consent, we wait 5s to prioritize initial LCP
     const timeoutDelay = hasAnalyticsConsent() ? 1500 : 5000;
     const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), timeoutDelay);
-    
+
     return () => {
       window.removeEventListener('pointerdown', handleInteraction);
       window.removeEventListener('keydown', handleInteraction);
@@ -105,7 +106,11 @@ export default function Providers({
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const msg = String((event.reason as any)?.message || event.reason || '');
+      const reasonMessage =
+        typeof event.reason === 'object' && event.reason !== null && 'message' in event.reason
+          ? event.reason.message
+          : event.reason;
+      const msg = String(reasonMessage || '');
       if (isStaleServerActionError(msg)) {
         event.preventDefault();
         tryRecoverStaleServerAction();
@@ -154,13 +159,11 @@ export default function Providers({
                 <QuoteWizardModal />
                 <QuickLeadModal />
                 <DynamicLeadWizardModal />
-                <ComparisonFloatingBar />
                 <SignupGateModalHost />
                 <Toaster />
                 <CookieConsent />
-                {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' && (
-                  pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />
-                )}
+                {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' &&
+                  (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
               </CompanyProvider>
             </AuthProvider>
           </Context7Provider>
