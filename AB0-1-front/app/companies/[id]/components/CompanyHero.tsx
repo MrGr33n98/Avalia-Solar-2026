@@ -157,9 +157,9 @@ export default function CompanyHero({
         </Button>
       </div>
 
-      <div className="!rounded-none border border-slate-200/80 bg-white/80 p-3 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
+      <div className="!rounded-none border border-slate-200/80 bg-white/80 p-0 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
         <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-200">
-          <div className="relative h-[176px] sm:h-[220px] lg:h-[250px]">
+          <div className="relative h-[168px] sm:h-[220px] lg:h-[250px]">
             <OptimizedImage
               src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
               alt={company.name}
@@ -187,12 +187,12 @@ export default function CompanyHero({
           </div>
         </div>
 
-        <div className="relative z-10 -mt-8 px-5 sm:-mt-10 sm:px-5 lg:px-8">
+        <div className="relative z-10 -mt-6 px-4 sm:-mt-10 sm:px-5 lg:px-8">
           <section
             aria-label="Card da empresa com ações"
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.32)] sm:p-5 lg:p-6"
           >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div
                 aria-label="Card de perfil da empresa"
                 className="flex min-w-0 items-center gap-3 sm:gap-5"
@@ -219,7 +219,7 @@ export default function CompanyHero({
 
                   <div
                     className={cn(
-                      'flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-28 sm:w-28',
+                      'flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 shadow-[0_14px_28px_-16px_rgba(15,23,42,0.45)] sm:h-28 sm:w-28',
                       hasLogo ? 'bg-white' : 'bg-slate-50'
                     )}
                   >
@@ -239,23 +239,26 @@ export default function CompanyHero({
 
                 <div className="flex min-w-0 flex-col justify-center">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="min-w-0 text-[1.5rem] font-semibold leading-tight text-slate-950 sm:text-[1.875rem]">
+                    <h1 className="min-w-0 text-[1.35rem] font-semibold leading-tight text-slate-950 sm:text-[1.875rem]">
                       {company.name}
                     </h1>
                     {company.verified && <PremiumBadge className="h-7 px-4" />}
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-slate-600 sm:gap-x-4">
-                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-amber-700">
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                      <span className="text-sm font-bold">{ratingLabel}</span>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-slate-600 sm:gap-x-4 sm:text-sm">
+                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-0.5 text-amber-700 sm:px-2.5 sm:py-1">
+                      <Star
+                        className="h-3.5 w-3.5 fill-amber-400 text-amber-400 sm:h-4 sm:w-4"
+                        strokeWidth={0}
+                      />
+                      <span className="font-bold">{ratingLabel}</span>
                     </div>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-[13px] text-slate-500 sm:text-sm">
                       ({companyStats.reviewCount} avaliações)
                     </span>
 
                     {locationLabel && (
-                      <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1.5 text-[13px] text-slate-600 sm:text-sm">
                         <MapPin className="h-3.5 w-3.5" />
                         {locationLabel}
                       </span>
@@ -264,14 +267,14 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              <div className="w-full border-t border-slate-100 pt-4 lg:w-auto lg:min-w-[560px] lg:border-t-0 lg:pt-0">
+              <div className="w-full border-t border-slate-100 pt-3 lg:w-auto lg:min-w-[560px] lg:border-t-0 lg:pt-0">
                 <div className="grid w-full grid-cols-[44px_minmax(92px,1fr)_minmax(132px,1.35fr)] gap-2 sm:grid-cols-[minmax(130px,0.85fr)_minmax(150px,1fr)_minmax(210px,1.2fr)] sm:gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     title="Compartilhar perfil"
                     aria-label="Compartilhar perfil"
-                    className="h-11 rounded-xl border border-transparent bg-transparent px-0 text-sm font-semibold text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-900 sm:px-4"
+                    className="h-10 rounded-xl border border-transparent bg-transparent px-0 text-sm font-semibold text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-900 sm:h-11 sm:px-4"
                     onClick={handleShare}
                     disabled={isSharing}
                   >
@@ -284,7 +287,7 @@ export default function CompanyHero({
                     variant="default"
                     size="sm"
                     animated={true}
-                    className="h-11 min-w-0 rounded-xl px-2 text-xs font-semibold shadow-none [&_span]:truncate [&_span]:whitespace-nowrap sm:px-4 sm:text-sm"
+                    className="h-10 min-w-0 rounded-xl px-2 text-xs font-semibold shadow-none [&_span]:truncate [&_span]:whitespace-nowrap sm:h-11 sm:px-4 sm:text-sm"
                   />
 
                   {ctaEnabled && ctaUrl && (
@@ -324,7 +327,7 @@ export default function CompanyHero({
                   {quoteEnabled ? (
                     <Button
                       size="default"
-                      className="h-11 min-w-0 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:px-5"
+                      className="h-10 min-w-0 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:h-11 sm:px-5"
                       onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                       onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                       onClick={async () => {
@@ -350,7 +353,7 @@ export default function CompanyHero({
                     <Button
                       size="default"
                       variant="outline"
-                      className="h-11 min-w-0 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:px-5"
+                      className="h-10 min-w-0 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:h-11 sm:px-5"
                       asChild
                     >
                       <Link href={reviewPath}>

@@ -461,25 +461,28 @@ export default function CompanyDetailClient({
 
   if (ENABLE_PREMIUM_PROFILE) {
     return (
-      <CompanyProfileShell
-        company={currentCompany}
-        companyStats={companyStats as any}
-        products={products}
-        reviews={reviews}
-        productsLoading={productsLoading}
-        reviewsLoading={reviewsLoading}
-        bannerUrl={bannerUrl}
-        bannerError={bannerError}
-        setBannerError={setBannerError}
-        logoUrl={logoUrl}
-        logoError={logoError}
-        setLogoError={setLogoError}
-        canRequestQuote={canRequestQuote}
-        ctaEnabled={ctaEnabled}
-        ctaUrl={ctaUrl}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      <>
+        <CompanyProfileShell
+          company={currentCompany}
+          companyStats={companyStats as any}
+          products={products}
+          reviews={reviews}
+          productsLoading={productsLoading}
+          reviewsLoading={reviewsLoading}
+          bannerUrl={bannerUrl}
+          bannerError={bannerError}
+          setBannerError={setBannerError}
+          logoUrl={logoUrl}
+          logoError={logoError}
+          setLogoError={setLogoError}
+          canRequestQuote={canRequestQuote}
+          ctaEnabled={ctaEnabled}
+          ctaUrl={ctaUrl}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <MobileBottomNav />
+      </>
     );
   }
 
