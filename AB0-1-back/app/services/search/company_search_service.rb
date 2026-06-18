@@ -107,9 +107,19 @@ module Search
       adapter = ActiveRecord::Base.connection.adapter_name.downcase
       if adapter.include?('sqlite')
         scope.where('LOWER(companies.city) = ?', city.to_s.downcase)
-      else
+      elsif unaccent_enabled?
         scope.where('unaccent(LOWER(companies.city)) = unaccent(LOWER(?))', city)
+      else
+        scope.where('LOWER(companies.city) = LOWER(?)', city)
       end
+    end
+
+    def unaccent_enabled?
+      return @unaccent_enabled unless @unaccent_enabled.nil?
+
+      @unaccent_enabled = ActiveRecord::Base.connection.extension_enabled?('unaccent')
+    rescue StandardError
+      @unaccent_enabled = false
     end
 
     def search_enabled?
@@ -328,19 +338,35 @@ module Search
             normalized: "%#{normalized}%"
           ).distinct
         else
-          scope = scope.left_joins(:categories).where(
-            <<~SQL.squish,
-              unaccent(companies.name) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(companies.description, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(companies.short_description, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(companies.state, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(companies.city, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(companies.address, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(categories.name, '')) ILIKE unaccent(:q) OR
-              unaccent(COALESCE(categories.description, '')) ILIKE unaccent(:q)
-            SQL
-            q: "%#{@q}%"
-          ).distinct
+          if unaccent_enabled?
+            scope = scope.left_joins(:categories).where(
+              <<~SQL.squish,
+                unaccent(companies.name) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(companies.description, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(companies.short_description, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(companies.state, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(companies.city, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(companies.address, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(categories.name, '')) ILIKE unaccent(:q) OR
+                unaccent(COALESCE(categories.description, '')) ILIKE unaccent(:q)
+              SQL
+              q: "%#{@q}%"
+            ).distinct
+          else
+            scope = scope.left_joins(:categories).where(
+              <<~SQL.squish,
+                companies.name ILIKE :q OR
+                COALESCE(companies.description, '') ILIKE :q OR
+                COALESCE(companies.short_description, '') ILIKE :q OR
+                COALESCE(companies.state, '') ILIKE :q OR
+                COALESCE(companies.city, '') ILIKE :q OR
+                COALESCE(companies.address, '') ILIKE :q OR
+                COALESCE(categories.name, '') ILIKE :q OR
+                COALESCE(categories.description, '') ILIKE :q
+              SQL
+              q: "%#{@q}%"
+            ).distinct
+          end
         end
       end
 

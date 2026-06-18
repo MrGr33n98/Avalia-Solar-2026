@@ -50,6 +50,14 @@ module Search
           .presence
     end
 
+    def unaccent_enabled?
+      return @unaccent_enabled unless @unaccent_enabled.nil?
+
+      @unaccent_enabled = ActiveRecord::Base.connection.extension_enabled?('unaccent')
+    rescue StandardError
+      @unaccent_enabled = false
+    end
+
     def suggest_via_opensearch
       companies = Company.search(
         @q,
@@ -96,7 +104,7 @@ module Search
           'LOWER(companies.name) LIKE :q OR LOWER(companies.description) LIKE :q OR LOWER(companies.state) LIKE :q OR LOWER(companies.city) LIKE :q OR LOWER(companies.address) LIKE :q OR LOWER(categories.name) LIKE :q',
           q: "%#{q_lower}%"
         ).distinct
-      else
+      elsif unaccent_enabled?
         scope = scope.left_joins(:categories).where(
           <<~SQL.squish,
             unaccent(companies.name) ILIKE unaccent(:q) OR
@@ -106,6 +114,19 @@ module Search
             unaccent(COALESCE(companies.city, '')) ILIKE unaccent(:q) OR
             unaccent(COALESCE(companies.address, '')) ILIKE unaccent(:q) OR
             unaccent(COALESCE(categories.name, '')) ILIKE unaccent(:q)
+          SQL
+          q: "%#{@q}%"
+        ).distinct
+      else
+        scope = scope.left_joins(:categories).where(
+          <<~SQL.squish,
+            companies.name ILIKE :q OR
+            COALESCE(companies.description, '') ILIKE :q OR
+            COALESCE(companies.short_description, '') ILIKE :q OR
+            COALESCE(companies.state, '') ILIKE :q OR
+            COALESCE(companies.city, '') ILIKE :q OR
+            COALESCE(companies.address, '') ILIKE :q OR
+            COALESCE(categories.name, '') ILIKE :q
           SQL
           q: "%#{@q}%"
         ).distinct
@@ -122,8 +143,10 @@ module Search
       adapter = ActiveRecord::Base.connection.adapter_name.downcase
       if adapter.include?('sqlite')
         scope.where('LOWER(companies.city) = ?', @city.to_s.downcase)
-      else
+      elsif unaccent_enabled?
         scope.where('unaccent(LOWER(companies.city)) = unaccent(LOWER(?))', @city)
+      else
+        scope.where('LOWER(companies.city) = LOWER(?)', @city)
       end
     end
 
@@ -133,9 +156,14 @@ module Search
       if adapter.include?('sqlite')
         q_lower = @q.downcase
         scope = scope.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q', q: "%#{q_lower}%")
-      else
+      elsif unaccent_enabled?
         scope = scope.where(
           'unaccent(name) ILIKE unaccent(:q) OR unaccent(COALESCE(description, \'\')) ILIKE unaccent(:q)',
+          q: "%#{@q}%"
+        )
+      else
+        scope = scope.where(
+          'name ILIKE :q OR COALESCE(description, \'\') ILIKE :q',
           q: "%#{@q}%"
         )
       end
@@ -149,9 +177,14 @@ module Search
         q_lower = @q.downcase
         scope = scope.where('LOWER(name) LIKE :q OR LOWER(short_description) LIKE :q OR LOWER(description) LIKE :q',
                             q: "%#{q_lower}%")
-      else
+      elsif unaccent_enabled?
         scope = scope.where(
           'unaccent(name) ILIKE unaccent(:q) OR unaccent(COALESCE(short_description, \'\')) ILIKE unaccent(:q) OR unaccent(COALESCE(description, \'\')) ILIKE unaccent(:q)',
+          q: "%#{@q}%"
+        )
+      else
+        scope = scope.where(
+          'name ILIKE :q OR COALESCE(short_description, \'\') ILIKE :q OR COALESCE(description, \'\') ILIKE :q',
           q: "%#{@q}%"
         )
       end
@@ -164,9 +197,14 @@ module Search
       if adapter.include?('sqlite')
         q_lower = @q.downcase
         scope = scope.where('LOWER(title) LIKE :q OR LOWER(content) LIKE :q', q: "%#{q_lower}%")
-      else
+      elsif unaccent_enabled?
         scope = scope.where(
           'unaccent(title) ILIKE unaccent(:q) OR unaccent(COALESCE(content, \'\')) ILIKE unaccent(:q)',
+          q: "%#{@q}%"
+        )
+      else
+        scope = scope.where(
+          'title ILIKE :q OR COALESCE(content, \'\') ILIKE :q',
           q: "%#{@q}%"
         )
       end
