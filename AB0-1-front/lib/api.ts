@@ -178,6 +178,13 @@ export interface Company {
   payment_methods?: string[];
   category_name?: string;
   category_id?: number;
+  review_criterion_scores_attributes?: Array<{
+    id?: number;
+    rating_criterion_id: number;
+    score: number;
+    not_applicable?: boolean;
+    _destroy?: boolean;
+  }>;
   categories?: Category[]; // Array of Category objects for multi-vertical support
   featured?: boolean;
   founded_year?: number;
@@ -493,6 +500,7 @@ export interface Review {
   reply?: string;
   replied_at?: string;
   status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft';
+  capture_flow_source?: 'profile' | 'lead' | 'chat';
   verified?: boolean;
   featured?: boolean;
   display_order?: number;
@@ -2240,7 +2248,8 @@ export const adminApi = {
 // End of API endpoints
 
 export const conversationsApi = {
-  getAll: () => fetchApi<Conversation[]>('/conversations'),
+  getAll: (options?: { silent?: boolean; silentStatusCodes?: number[] }) =>
+    fetchApi<Conversation[]>('/conversations', options),
   create: (companyId: number) =>
     fetchApi<Conversation>('/conversations', {
       method: 'POST',

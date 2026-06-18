@@ -8,11 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { reviewsApi } from '@/lib/api';
+import { Company, reviewsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
-import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/lazy';
 
 import {
@@ -29,13 +28,15 @@ import { ReviewGranularScoreStep } from './components/ReviewGranularScoreStep';
 import { ReviewEditorialStep } from './components/ReviewEditorialStep';
 
 interface ReviewFormProps {
-  company: any;
+  company: Company;
   companyPath: string;
 }
 
 const formatSubmitErrorMessage = (error: unknown) => {
   const fallback = 'Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.';
-  const message = getApiErrorMessage(error, fallback).replace(/^\[\d{3}\]\s*/, '').trim();
+  const message = getApiErrorMessage(error, fallback)
+    .replace(/^\[\d{3}\]\s*/, '')
+    .trim();
   return message || fallback;
 };
 
@@ -50,38 +51,39 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     pros: [] as string[],
     cons: [] as string[],
     buyerTip: '',
-    comment: ''
+    comment: '',
   });
-  
-  const [projectMetadata, setProjectMetadata] = useState({
+
+  const [projectMetadata] = useState({
     projectType: 'residential' as const,
     installationStatus: 'completed' as const,
-    estimatedPower: ''
+    estimatedPower: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  
+
   const router = useRouter();
   const { user } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   const returnTo = (() => {
     const query = searchParams?.toString();
     const fullPath = query ? `${pathname}?${query}` : pathname;
     return encodeURIComponent(fullPath || '/');
   })();
 
-  const availableCategories = Array.isArray(company?.categories) && company.categories.length > 0
-    ? company.categories
-    : company?.category_info
-      ? [company.category_info]
-      : [];
+  const availableCategories =
+    Array.isArray(company?.categories) && company.categories.length > 0
+      ? company.categories
+      : company?.category_info
+        ? [company.category_info]
+        : [];
 
-  const nextStep = () => setStep(s => s + 1);
-  const prevStep = () => setStep(s => s - 1);
+  const nextStep = () => setStep((s) => s + 1);
+  const prevStep = () => setStep((s) => s - 1);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -98,10 +100,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     setSubmitError(null);
 
     try {
-      const review_criterion_scores_attributes = Object.entries(criterionScores).map(([id, score]) => ({
-        rating_criterion_id: Number(id),
-        score: score
-      }));
+      const review_criterion_scores_attributes = Object.entries(criterionScores).map(
+        ([id, score]) => ({
+          rating_criterion_id: Number(id),
+          score: score,
+        })
+      );
 
       await reviewsApi.create({
         company_id: company.id,
@@ -115,24 +119,26 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         project_type: projectMetadata.projectType,
         installation_status: projectMetadata.installationStatus,
         estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
-        review_criterion_scores_attributes
-      } as any);
+        capture_flow_source: 'profile',
+        review_criterion_scores_attributes,
+      });
 
-      track('review_created', { 
-        company_id: String(company.id), 
-        category_id: categoryId ? String(categoryId) : undefined, 
-        rating 
+      track('review_created', {
+        company_id: String(company.id),
+        category_id: categoryId ? String(categoryId) : undefined,
+        rating,
       });
 
       setShowConfirmModal(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting review:', error);
       const message = formatSubmitErrorMessage(error);
       setSubmitError(message);
-      
+
       // Se for erro de unicidade (contém "já avaliou" ou código específico de duplicidade), destaca a categoria e volta ao passo 1
-      const isUniquenessError = message.includes('já avaliou') || message.includes('Você já avaliou');
-      
+      const isUniquenessError =
+        message.includes('já avaliou') || message.includes('Você já avaliou');
+
       if (isUniquenessError) {
         setErrorCategoryId(categoryId);
         setStep(1);
@@ -164,13 +170,23 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           </div>
           <h3 className="text-xl font-bold mb-2 tracking-tight">Faça login para avaliar</h3>
           <p className="text-muted-foreground mb-6 text-sm">
-            Para garantir a integridade da nossa plataforma, apenas usuários autenticados podem enviar avaliações.
+            Para garantir a integridade da nossa plataforma, apenas usuários autenticados podem
+            enviar avaliações.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" onClick={() => router.push(`/login?return_to=${returnTo}`)} className="rounded-full px-8">
+            <Button
+              size="lg"
+              onClick={() => router.push(`/login?return_to=${returnTo}`)}
+              className="rounded-full px-8"
+            >
               Fazer Login
             </Button>
-            <Button variant="outline" size="lg" onClick={() => router.push(`/signup?return_to=${returnTo}`)} className="rounded-full px-8">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => router.push(`/signup?return_to=${returnTo}`)}
+              className="rounded-full px-8"
+            >
               Criar Conta Grátis
             </Button>
           </div>
@@ -183,14 +199,16 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-2">
         <div className="flex gap-1.5">
-          {[1, 2, 3].map(i => (
-            <div 
-              key={i} 
-              className={`h-1.5 w-8 rounded-full transition-all duration-500 ${step >= i ? 'bg-blue-600' : 'bg-slate-200'}`} 
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`h-1.5 w-8 rounded-full transition-all duration-500 ${step >= i ? 'bg-blue-600' : 'bg-slate-200'}`}
             />
           ))}
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Passo {step} de 3</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          Passo {step} de 3
+        </span>
       </div>
 
       <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
@@ -198,20 +216,25 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           {step === 1 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">Sobre qual serviço você deseja falar?</h2>
-                <p className="text-slate-500 text-sm">Cada serviço pode ter critérios de avaliação diferentes.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                  Sobre qual serviço você deseja falar?
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Cada serviço pode ter critérios de avaliação diferentes.
+                </p>
               </div>
-              
-              <ReviewCategoryStep 
-                categories={availableCategories} 
-                onSelect={handleCategorySelect} 
-                selectedId={categoryId} 
+
+              <ReviewCategoryStep
+                categories={availableCategories}
+                onSelect={handleCategorySelect}
+                selectedId={categoryId}
                 errorCategoryId={errorCategoryId}
               />
 
               {availableCategories.length === 0 && (
                 <div className="p-4 bg-amber-50 text-amber-700 text-sm font-medium rounded-xl border border-amber-100">
-                  Esta empresa não possui categorias de serviço configuradas no momento. Tente novamente mais tarde.
+                  Esta empresa não possui categorias de serviço configuradas no momento. Tente
+                  novamente mais tarde.
                 </div>
               )}
 
@@ -222,8 +245,8 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               )}
 
               <div className="flex justify-end pt-4">
-                <Button 
-                  onClick={nextStep} 
+                <Button
+                  onClick={nextStep}
                   disabled={!categoryId || !!errorCategoryId}
                   className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
                 >
@@ -237,12 +260,18 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">Como foi o desempenho técnico?</h2>
-                <p className="text-slate-500 text-sm">Sua nota ajuda a empresa a melhorar e outros clientes a escolherem melhor.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                  Como foi o desempenho técnico?
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Sua nota ajuda a empresa a melhorar e outros clientes a escolherem melhor.
+                </p>
               </div>
 
               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
-                <Label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-3">Satisfação Geral</Label>
+                <Label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-3">
+                  Satisfação Geral
+                </Label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -265,18 +294,22 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               </div>
 
               {categoryId && (
-                <ReviewGranularScoreStep 
-                  categoryId={categoryId} 
-                  onChange={setCriterionScores} 
-                  values={criterionScores} 
+                <ReviewGranularScoreStep
+                  categoryId={categoryId}
+                  onChange={setCriterionScores}
+                  values={criterionScores}
                 />
               )}
 
               <div className="flex justify-between pt-8 border-t">
-                <Button variant="ghost" onClick={prevStep} className="rounded-full px-6 text-slate-500">
+                <Button
+                  variant="ghost"
+                  onClick={prevStep}
+                  className="rounded-full px-6 text-slate-500"
+                >
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={nextStep}
                   disabled={rating === 0}
                   className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
@@ -291,14 +324,15 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           {step === 3 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">Agora, conte-nos em palavras</h2>
-                <p className="text-slate-500 text-sm">O título e os prós/contras ajudam em uma leitura rápida da sua experiência.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                  Agora, conte-nos em palavras
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  O título e os prós/contras ajudam em uma leitura rápida da sua experiência.
+                </p>
               </div>
 
-              <ReviewEditorialStep 
-                data={editorialData} 
-                onChange={setEditorialData} 
-              />
+              <ReviewEditorialStep data={editorialData} onChange={setEditorialData} />
 
               {submitError && (
                 <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
@@ -307,10 +341,14 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               )}
 
               <div className="flex justify-between pt-8 border-t">
-                <Button variant="ghost" onClick={prevStep} className="rounded-full px-6 text-slate-500">
+                <Button
+                  variant="ghost"
+                  onClick={prevStep}
+                  className="rounded-full px-6 text-slate-500"
+                >
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting || editorialData.comment.length < 10}
                   className="rounded-full px-10 h-12 font-black shadow-lg bg-slate-950 hover:bg-blue-700 hover:shadow-blue-200 transition-all gap-2"
@@ -333,13 +371,19 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           </div>
           <div className="p-8 text-center space-y-4">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-slate-900">Avaliação Enviada!</DialogTitle>
+              <DialogTitle className="text-2xl font-black text-slate-900">
+                Avaliação Enviada!
+              </DialogTitle>
               <DialogDescription className="text-slate-500 text-base">
-                Sua contribuição é fundamental. Nossa equipe irá validar os dados editoriais para publicação em breve.
+                Sua contribuição é fundamental. Nossa equipe irá validar os dados editoriais para
+                publicação em breve.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="pt-4">
-              <Button onClick={handleCloseModal} className="w-full rounded-full h-12 font-bold bg-slate-950">
+              <Button
+                onClick={handleCloseModal}
+                className="w-full rounded-full h-12 font-bold bg-slate-950"
+              >
                 Entendi, voltar para a empresa
               </Button>
             </DialogFooter>
@@ -376,9 +420,14 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
           </div>
           <h3 className="text-2xl font-black text-slate-900">Empresa não encontrada</h3>
           <p className="text-slate-500">
-            Não conseguimos localizar a empresa para esta avaliação. Verifique o link ou tente pesquisar novamente.
+            Não conseguimos localizar a empresa para esta avaliação. Verifique o link ou tente
+            pesquisar novamente.
           </p>
-          <Button variant="outline" className="rounded-full px-8" onClick={() => router.push('/companies')}>
+          <Button
+            variant="outline"
+            className="rounded-full px-8"
+            onClick={() => router.push('/companies')}
+          >
             Ver todas as empresas
           </Button>
         </div>
@@ -390,14 +439,16 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
     <div className="min-h-screen bg-[#f8f9fa] py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
         <header className="space-y-2">
-          <Link 
-            href={companyPath} 
+          <Link
+            href={companyPath}
             className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-1 group"
           >
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
             Voltar para {company.name}
           </Link>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900">Sua opinião vale muito.</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900">
+            Sua opinião vale muito.
+          </h1>
         </header>
 
         <Suspense fallback={<div className="h-64 bg-white shadow-xl rounded-3xl animate-pulse" />}>

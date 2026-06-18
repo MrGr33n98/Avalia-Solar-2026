@@ -36,7 +36,10 @@ export default function MobileBottomNav() {
 
     const loadUnreadCount = async () => {
       try {
-        const conversations = await conversationsApi.getAll();
+        const conversations = await conversationsApi.getAll({
+          silent: true,
+          silentStatusCodes: [401],
+        });
         if (cancelled) return;
 
         const nextCount = conversations.reduce(
