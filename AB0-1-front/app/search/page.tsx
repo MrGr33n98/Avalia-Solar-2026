@@ -12,17 +12,27 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  Search, X, SlidersHorizontal, Building2, Package, Tag, FileText,
-  BadgeCheck, Star, TrendingUp, Zap, MessageCircle, ChevronRight,
-  ArrowUpDown, Sparkles, RotateCcw, Diamond, Map as MapIcon, MapPin,
+  Search,
+  X,
+  SlidersHorizontal,
+  Building2,
+  Package,
+  Tag,
+  FileText,
+  BadgeCheck,
+  Star,
+  TrendingUp,
+  Zap,
+  MessageCircle,
+  ChevronRight,
+  ArrowUpDown,
+  Sparkles,
+  RotateCcw,
+  Diamond,
+  Map as MapIcon,
+  MapPin,
 } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
@@ -43,15 +53,60 @@ import { SearchExploreView } from '@/components/search/SearchExploreView';
 // ─── Sort options ─────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
   { value: 'recommended', label: 'Recomendados', icon: Sparkles },
-  { value: 'rating',      label: 'Melhor avaliados', icon: Star },
-  { value: 'reviews',     label: 'Mais avaliações', icon: TrendingUp },
-  { value: 'verified',    label: 'Premium primeiro', icon: Sparkles },
-  { value: 'name',        label: 'A–Z', icon: ArrowUpDown },
+  { value: 'rating', label: 'Melhor avaliados', icon: Star },
+  { value: 'reviews', label: 'Mais avaliações', icon: TrendingUp },
+  { value: 'verified', label: 'Premium primeiro', icon: Sparkles },
+  { value: 'name', label: 'A–Z', icon: ArrowUpDown },
 ] as const;
 
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const KNOWN_CITY_TERMS: Record<string, string> = {
+  aracaju: 'Aracaju',
+  belem: 'Belém',
+  'belo horizonte': 'Belo Horizonte',
+  'boa vista': 'Boa Vista',
+  brasilia: 'Brasília',
+  campinas: 'Campinas',
+  'campo grande': 'Campo Grande',
+  cuiaba: 'Cuiabá',
+  curitiba: 'Curitiba',
+  florianopolis: 'Florianópolis',
+  fortaleza: 'Fortaleza',
+  goiania: 'Goiânia',
+  maceio: 'Maceió',
+  manaus: 'Manaus',
+  natal: 'Natal',
+  palmas: 'Palmas',
+  'porto alegre': 'Porto Alegre',
+  recife: 'Recife',
+  'rio branco': 'Rio Branco',
+  'rio de janeiro': 'Rio de Janeiro',
+  salvador: 'Salvador',
+  'sao luis': 'São Luís',
+  'sao paulo': 'São Paulo',
+  teresina: 'Teresina',
+  vitoria: 'Vitória',
+};
+
+function normalizeSearchText(value: string): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function detectCitySearch(value: string): string | null {
+  const normalized = normalizeSearchText(value);
+  if (!normalized) return null;
+
+  const withoutUf = normalized.replace(/\s*(?:[,/-]|\s)\s*[a-z]{2}$/i, '');
+  return KNOWN_CITY_TERMS[normalized] || KNOWN_CITY_TERMS[withoutUf] || null;
+}
+
 function getNumericField(obj: any, ...keys: string[]): number {
   for (const k of keys) {
     const v = parseFloat(obj?.[k]);
@@ -116,26 +171,34 @@ interface SidebarProps {
   onToggleMap?: () => void;
 }
 
-
 function SearchSidebar({
-  sort, onSortChange,
-  verifiedOnly, onVerifiedChange,
-  whatsappOnly, onWhatsappChange,
-  onReset, hasActiveFilters,
-  radiusKm, onRadiusChange, onCoordsChange, cityName,
-  showMap, onToggleMap,
+  sort,
+  onSortChange,
+  verifiedOnly,
+  onVerifiedChange,
+  whatsappOnly,
+  onWhatsappChange,
+  onReset,
+  hasActiveFilters,
+  radiusKm,
+  onRadiusChange,
+  onCoordsChange,
+  cityName,
+  showMap,
+  onToggleMap,
 }: SidebarProps) {
   return (
     <aside className="w-[264px] flex-shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))] h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-100 hidden lg:block">
       <div className="clay-panel bg-white dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)]">
-
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center">
               <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">Filtros</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+              Filtros
+            </span>
           </div>
           {hasActiveFilters && (
             <button
@@ -150,7 +213,9 @@ function SearchSidebar({
 
         {/* Sort */}
         <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">Ordenar</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
+            Ordenar
+          </p>
           <div className="space-y-0.5">
             {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
               <button
@@ -163,7 +228,12 @@ function SearchSidebar({
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'
                 )}
               >
-                <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', sort === value ? 'text-blue-500' : 'text-slate-400')} />
+                <Icon
+                  className={cn(
+                    'w-3.5 h-3.5 flex-shrink-0',
+                    sort === value ? 'text-blue-500' : 'text-slate-400'
+                  )}
+                />
                 {label}
                 {sort === value && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
@@ -178,7 +248,9 @@ function SearchSidebar({
 
         {/* Quick filters */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">Refinamentos</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
+            Refinamentos
+          </p>
           <div className="space-y-2">
             <ToggleRow
               icon={Diamond}
@@ -230,12 +302,14 @@ function SearchSidebar({
             <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
               {hasActiveFilters ? 'Filtros aplicados' : 'Sem restrições'}
             </span>
-            <span className={cn(
-              'w-2 h-2 rounded-full',
-              hasActiveFilters
-                ? 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]'
-                : 'bg-slate-200 dark:bg-slate-700'
-            )} />
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full',
+                hasActiveFilters
+                  ? 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]'
+                  : 'bg-slate-200 dark:bg-slate-700'
+              )}
+            />
           </div>
         </div>
       </div>
@@ -244,7 +318,11 @@ function SearchSidebar({
 }
 
 function ToggleRow({
-  icon: Icon, iconClass, label, checked, onChange,
+  icon: Icon,
+  iconClass,
+  label,
+  checked,
+  onChange,
 }: {
   icon: React.ElementType;
   iconClass?: string;
@@ -263,19 +341,25 @@ function ToggleRow({
       )}
     >
       <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', checked ? iconClass : 'text-slate-400')} />
-      <span className={cn(
-        'text-sm flex-1',
-        checked ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-600 dark:text-slate-400 font-medium'
-      )}>
+      <span
+        className={cn(
+          'text-sm flex-1',
+          checked
+            ? 'text-blue-700 dark:text-blue-300 font-semibold'
+            : 'text-slate-600 dark:text-slate-400 font-medium'
+        )}
+      >
         {label}
       </span>
-      <span className={cn(
-        'w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all',
-        checked
-          ? 'bg-blue-600 border-blue-600'
-          : 'border-slate-300 dark:border-slate-600'
-      )}>
-        {checked && <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />}
+      <span
+        className={cn(
+          'w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all',
+          checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'
+        )}
+      >
+        {checked && (
+          <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />
+        )}
       </span>
     </button>
   );
@@ -283,11 +367,18 @@ function ToggleRow({
 
 // ─── Mobile filters sheet ─────────────────────────────────────────────────────
 function MobileFilterSheet({
-  sort, onSortChange,
-  verifiedOnly, onVerifiedChange,
-  whatsappOnly, onWhatsappChange,
-  onReset, hasActiveFilters,
-  radiusKm, onRadiusChange, onCoordsChange, cityName,
+  sort,
+  onSortChange,
+  verifiedOnly,
+  onVerifiedChange,
+  whatsappOnly,
+  onWhatsappChange,
+  onReset,
+  hasActiveFilters,
+  radiusKm,
+  onRadiusChange,
+  onCoordsChange,
+  cityName,
 }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
@@ -313,10 +404,15 @@ function MobileFilterSheet({
           >
             <SheetHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <SheetTitle className="text-xl font-black tracking-tight">Ordenar & Filtrar</SheetTitle>
+                <SheetTitle className="text-xl font-black tracking-tight">
+                  Ordenar & Filtrar
+                </SheetTitle>
                 {hasActiveFilters && (
                   <button
-                    onClick={() => { onReset(); setOpen(false); }}
+                    onClick={() => {
+                      onReset();
+                      setOpen(false);
+                    }}
                     className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
                   >
                     <RotateCcw className="w-3 h-3" />
@@ -328,7 +424,9 @@ function MobileFilterSheet({
 
             <div className="overflow-y-auto px-6 py-5 pb-40 h-full">
               <div className="mb-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Ordenar por</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                  Ordenar por
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
                     <button
@@ -364,7 +462,9 @@ function MobileFilterSheet({
               <div className="h-px bg-slate-100 dark:bg-slate-800 mb-6" />
 
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Refinamentos</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                  Refinamentos
+                </p>
                 <div className="space-y-2.5">
                   <MobileToggleRow
                     icon={Diamond}
@@ -384,7 +484,6 @@ function MobileFilterSheet({
                   />
                 </div>
               </div>
-
             </div>
 
             {/* Sticky footer */}
@@ -404,7 +503,12 @@ function MobileFilterSheet({
 }
 
 function MobileToggleRow({
-  icon: Icon, iconClass, label, sublabel, checked, onChange,
+  icon: Icon,
+  iconClass,
+  label,
+  sublabel,
+  checked,
+  onChange,
 }: {
   icon: React.ElementType;
   iconClass?: string;
@@ -423,22 +527,34 @@ function MobileToggleRow({
           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
       )}
     >
-      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0', checked ? 'bg-white dark:bg-slate-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700')}>
+      <div
+        className={cn(
+          'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+          checked ? 'bg-white dark:bg-slate-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700'
+        )}
+      >
         <Icon className={cn('w-4.5 h-4.5', checked ? iconClass : 'text-slate-400')} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-semibold leading-tight', checked ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200')}>
+        <p
+          className={cn(
+            'text-sm font-semibold leading-tight',
+            checked ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'
+          )}
+        >
           {label}
         </p>
-        {sublabel && (
-          <p className="text-[11px] text-slate-400 mt-0.5">{sublabel}</p>
-        )}
+        {sublabel && <p className="text-[11px] text-slate-400 mt-0.5">{sublabel}</p>}
       </div>
-      <div className={cn(
-        'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all',
-        checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'
-      )}>
-        {checked && <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />}
+      <div
+        className={cn(
+          'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all',
+          checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'
+        )}
+      >
+        {checked && (
+          <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />
+        )}
       </div>
     </button>
   );
@@ -446,7 +562,10 @@ function MobileToggleRow({
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({
-  icon: Icon, label, count, colorClass,
+  icon: Icon,
+  label,
+  count,
+  colorClass,
 }: {
   icon: React.ElementType;
   label: string;
@@ -455,18 +574,28 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2.5 mb-5">
-      <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', colorClass)}>
+      <div
+        className={cn(
+          'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+          colorClass
+        )}
+      >
         <Icon className="w-4 h-4" />
       </div>
-      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">{label}</h2>
-      <span className="text-sm font-medium text-slate-400 dark:text-slate-500 tabular-nums">({count})</span>
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+        {label}
+      </h2>
+      <span className="text-sm font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+        ({count})
+      </span>
     </div>
   );
 }
 
 // ─── Sort bar inline (mobile / above results) ─────────────────────────────────
 function SortChips({
-  sort, onSortChange,
+  sort,
+  onSortChange,
 }: {
   sort: SortValue;
   onSortChange: (v: SortValue) => void;
@@ -498,8 +627,10 @@ function SortChips({
 
 // ─── Active filter chips ──────────────────────────────────────────────────────
 function ActiveFilterChips({
-  verifiedOnly, whatsappOnly,
-  onVerifiedChange, onWhatsappChange,
+  verifiedOnly,
+  whatsappOnly,
+  onVerifiedChange,
+  onWhatsappChange,
 }: {
   verifiedOnly: boolean;
   whatsappOnly: boolean;
@@ -534,8 +665,14 @@ function ActiveFilterChips({
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 const SEARCH_SUGGESTIONS = [
-  'Inversores solares', 'Painel fotovoltaico', 'Energia solar residencial',
-  'Instalação solar', 'Financiamento solar', 'WEG', 'Fronius', 'SMA',
+  'Inversores solares',
+  'Painel fotovoltaico',
+  'Energia solar residencial',
+  'Instalação solar',
+  'Financiamento solar',
+  'WEG',
+  'Fronius',
+  'SMA',
 ];
 
 function EmptyState({ query, onSearch }: { query: string; onSearch: (term: string) => void }) {
@@ -546,7 +683,10 @@ function EmptyState({ query, onSearch }: { query: string; onSearch: (term: strin
       </div>
       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
         {query ? (
-          <>Nenhum resultado para <span className="text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span></>
+          <>
+            Nenhum resultado para{' '}
+            <span className="text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span>
+          </>
         ) : (
           <>Nenhuma empresa ou produto encontrado</>
         )}
@@ -570,12 +710,15 @@ function EmptyState({ query, onSearch }: { query: string; onSearch: (term: strin
 }
 
 // ─── Mid-results banner ───────────────────────────────────────────────────────
-function MidBanner({ banners }: { banners: any[] }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+function MidBanner({ banners }: { banners: any[] }) {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
   if (!banners?.length) return null;
   return (
     <div className="my-6">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300 dark:text-slate-600">Patrocinado</span>
+        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300 dark:text-slate-600">
+          Patrocinado
+        </span>
         <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
       </div>
       <BannerContainer banners={banners} position="search_mid" />
@@ -594,7 +737,9 @@ function CategoryPill({ category, onClick }: { category: any; onClick: () => voi
         <Tag className="w-3.5 h-3.5 text-amber-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{category.name}</p>
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+          {category.name}
+        </p>
         {(category.short_description || category.description) && (
           <p className="text-[11px] text-slate-400 truncate mt-0.5">
             {category.short_description || category.description}
@@ -609,7 +754,10 @@ function CategoryPill({ category, onClick }: { category: any; onClick: () => voi
 // ─── Article row ──────────────────────────────────────────────────────────────
 function ArticleRow({ article, onClick }: { article: any; onClick: () => void }) {
   const content = article.content
-    ? article.content.toString().replace(/<[^>]+>/g, '').slice(0, 120)
+    ? article.content
+        .toString()
+        .replace(/<[^>]+>/g, '')
+        .slice(0, 120)
     : '';
   return (
     <button
@@ -647,12 +795,20 @@ function SearchContent() {
   const initialRadius = searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : null;
   const initialLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const initialLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
-  const initialCoords = (initialLat && initialLng) ? { lat: initialLat, lng: initialLng } : null;
+  const initialCoords = initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null;
+  const cityDetectedFromQuery = !initialCity ? detectCitySearch(query) : null;
+  const effectiveQuery = cityDetectedFromQuery ? '' : query;
+  const effectiveCity = initialCity || cityDetectedFromQuery || '';
 
-  const [searchTerm, setSearchTerm] = useState(query);
-  const [locationTerm, setLocationTerm] = useState(initialCity);
-  const [results, setResults] = useState<Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>>({
-    companies: [], products: [], categories: [], articles: [],
+  const [searchTerm, setSearchTerm] = useState(effectiveQuery);
+  const [locationTerm, setLocationTerm] = useState(effectiveCity);
+  const [results, setResults] = useState<
+    Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>
+  >({
+    companies: [],
+    products: [],
+    categories: [],
+    articles: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -669,11 +825,14 @@ function SearchContent() {
   const [showMap, setShowMap] = useState(true);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
 
-  const handleSearchInArea = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
-    // Para o map bounds: por ora salva como estado e re-busca
-    // Implementação futura: passa map_bounds para a API GraphQL
-    track('map_area_searched', { bounds });
-  }, []);
+  const handleSearchInArea = useCallback(
+    (bounds: { north: number; south: number; east: number; west: number }) => {
+      // Para o map bounds: por ora salva como estado e re-busca
+      // Implementação futura: passa map_bounds para a API GraphQL
+      track('map_area_searched', { bounds });
+    },
+    []
+  );
 
   const handleMapCompanySelect = useCallback((company: { id: string }) => {
     setSelectedCompanyId(company.id);
@@ -681,21 +840,32 @@ function SearchContent() {
   }, []);
 
   // Helper: push filter changes to URL without losing ?q=
-  const pushFilterParams = useCallback((updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === '' || value === 'false' || value === 'recommended') {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    router.replace(`/search?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
+  const pushFilterParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === '' || value === 'false' || value === 'recommended') {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
 
   // Banner queries
-  const { data: topBanners = [] }  = useBannersQuery({ position: 'search_top', limit: 3, enabled: true });
-  const { data: midBanners = [] }  = useBannersQuery({ position: 'search_mid', limit: 2, enabled: true });
+  const { data: topBanners = [] } = useBannersQuery({
+    position: 'search_top',
+    limit: 3,
+    enabled: true,
+  });
+  const { data: midBanners = [] } = useBannersQuery({
+    position: 'search_mid',
+    limit: 2,
+    enabled: true,
+  });
   // Fallback to home_top banners if no search-specific ones
   const { data: fallbackBanners = [] } = useBannersQuery({
     position: 'home_top',
@@ -704,16 +874,42 @@ function SearchContent() {
   });
   const effectiveTopBanners = topBanners.length > 0 ? topBanners : fallbackBanners;
 
-  const hasActiveFilters = sort !== 'recommended' || verifiedOnly || whatsappOnly || radiusKm !== null || geoCoords !== null;
+  const hasActiveFilters =
+    sort !== 'recommended' ||
+    verifiedOnly ||
+    whatsappOnly ||
+    radiusKm !== null ||
+    geoCoords !== null;
+
+  useEffect(() => {
+    setSearchTerm(effectiveQuery);
+    setLocationTerm(effectiveCity);
+  }, [effectiveQuery, effectiveCity]);
+
+  useEffect(() => {
+    if (!cityDetectedFromQuery) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    params.set('city', cityDetectedFromQuery);
+    params.set('page', '1');
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  }, [cityDetectedFromQuery, router, searchParams]);
 
   // Track page view on mount
   useEffect(() => {
-    trackPage('search', { search_term: query || undefined });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    trackPage('search', {
+      search_term: effectiveQuery || undefined,
+      city: effectiveCity || undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const resetFilters = useCallback(() => {
-    track('search_filters_cleared', { search_term: query });
+    track('search_filters_cleared', {
+      search_term: effectiveQuery,
+      city: effectiveCity || undefined,
+    });
     setSort('recommended');
     setVerifiedOnly(false);
     setWhatsappOnly(false);
@@ -727,129 +923,152 @@ function SearchContent() {
       lat: undefined,
       lng: undefined,
     });
-  }, [query, pushFilterParams]);
+  }, [effectiveQuery, effectiveCity, pushFilterParams]);
 
   // Typed sort change handler with tracking + URL sync
-  const handleSortChange = useCallback((value: SortValue) => {
-    setSort(value);
-    pushFilterParams({ sort: value });
-    trackEvent('sort_change', {
-      sort_by: value as any,
-      category: `search:${query}`,
-    });
-    track('search_sort_changed', {
-      search_term: query,
-      sort_value: value,
-    });
-  }, [query, pushFilterParams]);
+  const handleSortChange = useCallback(
+    (value: SortValue) => {
+      setSort(value);
+      pushFilterParams({ sort: value });
+      trackEvent('sort_change', {
+        sort_by: value as any,
+        category: `search:${effectiveQuery || effectiveCity}`,
+      });
+      track('search_sort_changed', {
+        search_term: effectiveQuery,
+        city: effectiveCity || undefined,
+        sort_value: value,
+      });
+    },
+    [effectiveQuery, effectiveCity, pushFilterParams]
+  );
 
   // Filter toggle handlers with tracking + URL sync
-  const handleVerifiedChange = useCallback((value: boolean) => {
-    setVerifiedOnly(value);
-    pushFilterParams({ verified: value ? 'true' : undefined });
-    track('search_filter_applied', {
-      search_term: query,
-      filter_key: 'verified_only',
-      filter_value: value,
-    });
-  }, [query, pushFilterParams]);
+  const handleVerifiedChange = useCallback(
+    (value: boolean) => {
+      setVerifiedOnly(value);
+      pushFilterParams({ verified: value ? 'true' : undefined });
+      track('search_filter_applied', {
+        search_term: effectiveQuery,
+        city: effectiveCity || undefined,
+        filter_key: 'verified_only',
+        filter_value: value,
+      });
+    },
+    [effectiveQuery, effectiveCity, pushFilterParams]
+  );
 
-  const handleWhatsappChange = useCallback((value: boolean) => {
-    setWhatsappOnly(value);
-    pushFilterParams({ whatsapp: value ? 'true' : undefined });
-    track('search_filter_applied', {
-      search_term: query,
-      filter_key: 'whatsapp_only',
-      filter_value: value,
-    });
-  }, [query, pushFilterParams]);
+  const handleWhatsappChange = useCallback(
+    (value: boolean) => {
+      setWhatsappOnly(value);
+      pushFilterParams({ whatsapp: value ? 'true' : undefined });
+      track('search_filter_applied', {
+        search_term: effectiveQuery,
+        city: effectiveCity || undefined,
+        filter_key: 'whatsapp_only',
+        filter_value: value,
+      });
+    },
+    [effectiveQuery, effectiveCity, pushFilterParams]
+  );
 
-  const handleRadiusChange = useCallback((value: number | null) => {
-    setRadiusKm(value);
-    pushFilterParams({ radius: value ? value.toString() : undefined });
-    track('search_filter_applied', {
-      search_term: query,
-      filter_key: 'radius_km',
-      filter_value: value,
-    });
-  }, [query, pushFilterParams]);
+  const handleRadiusChange = useCallback(
+    (value: number | null) => {
+      setRadiusKm(value);
+      pushFilterParams({ radius: value ? value.toString() : undefined });
+      track('search_filter_applied', {
+        search_term: effectiveQuery,
+        city: effectiveCity || undefined,
+        filter_key: 'radius_km',
+        filter_value: value,
+      });
+    },
+    [effectiveQuery, effectiveCity, pushFilterParams]
+  );
 
-  const handleCoordsChange = useCallback((coords: { lat: number; lng: number } | null) => {
-    setGeoCoords(coords);
-    pushFilterParams({
-      lat: coords ? coords.lat.toString() : undefined,
-      lng: coords ? coords.lng.toString() : undefined,
-    });
-    track('search_filter_applied', {
-      search_term: query,
-      filter_key: 'coords',
-      filter_value: coords ? `${coords.lat},${coords.lng}` : null,
-    });
-  }, [query, pushFilterParams]);
+  const handleCoordsChange = useCallback(
+    (coords: { lat: number; lng: number } | null) => {
+      setGeoCoords(coords);
+      pushFilterParams({
+        lat: coords ? coords.lat.toString() : undefined,
+        lng: coords ? coords.lng.toString() : undefined,
+      });
+      track('search_filter_applied', {
+        search_term: effectiveQuery,
+        city: effectiveCity || undefined,
+        filter_key: 'coords',
+        filter_value: coords ? `${coords.lat},${coords.lng}` : null,
+      });
+    },
+    [effectiveQuery, effectiveCity, pushFilterParams]
+  );
 
   // Perform search
-  const performSearch = useCallback(async (term: string) => {
-    const searchStartedAt = Date.now();
-    setLoading(true);
-    setError(null);
-    try {
-      const filters: any = {};
-      if (geoCoords?.lat && geoCoords?.lng && radiusKm) {
-        filters.latitude = geoCoords.lat;
-        filters.longitude = geoCoords.lng;
-        filters.radius_km = radiusKm;
-      }
-      
-      const cityParam = new URLSearchParams(window.location.search).get('city');
-      if (cityParam) {
-        filters.city = cityParam;
-      }
-      
-      const res = await searchApi.all(term, filters);
-      const final = {
-        companies:  res.companies  ?? [],
-        products:   res.products   ?? [],
-        categories: res.categories ?? [],
-        articles:   res.articles   ?? [],
-      };
-      setResults(final);
+  const performSearch = useCallback(
+    async (term: string) => {
+      const searchStartedAt = Date.now();
+      setLoading(true);
+      setError(null);
+      try {
+        const filters: any = {};
+        if (geoCoords?.lat && geoCoords?.lng && radiusKm) {
+          filters.latitude = geoCoords.lat;
+          filters.longitude = geoCoords.lng;
+          filters.radius_km = radiusKm;
+        }
 
-      const total = Object.values(final).reduce((acc, arr) => acc + arr.length, 0);
-      const latencyMs = Date.now() - searchStartedAt;
+        if (effectiveCity) {
+          filters.city = effectiveCity;
+        }
 
-      if (total === 0) {
-        // Typed event for search_no_results
-        trackEvent('search_no_results', { search_term: term, search_category: 'all' });
-        track('search_no_results', {
+        const res = await searchApi.all(term, filters);
+        const final = {
+          companies: res.companies ?? [],
+          products: res.products ?? [],
+          categories: res.categories ?? [],
+          articles: res.articles ?? [],
+        };
+        setResults(final);
+
+        const total = Object.values(final).reduce((acc, arr) => acc + arr.length, 0);
+        const latencyMs = Date.now() - searchStartedAt;
+
+        if (total === 0) {
+          // Typed event for search_no_results
+          trackEvent('search_no_results', { search_term: term, search_category: 'all' });
+          track('search_no_results', {
+            search_term: term,
+            search_category: 'all',
+            results_count: 0,
+          });
+        } else {
+          track('search_results_loaded', {
+            search_term: term,
+            total_results: total,
+            companies_count: final.companies.length,
+            products_count: final.products.length,
+            categories_count: final.categories.length,
+            articles_count: final.articles.length,
+            latency_ms: latencyMs,
+          });
+        }
+      } catch (err: any) {
+        track('search_error', {
           search_term: term,
-          search_category: 'all',
-          results_count: 0
+          error_message: err?.message || 'unknown',
         });
-      } else {
-        track('search_results_loaded', {
-          search_term: term,
-          total_results: total,
-          companies_count:  final.companies.length,
-          products_count:   final.products.length,
-          categories_count: final.categories.length,
-          articles_count:   final.articles.length,
-          latency_ms: latencyMs,
-        });
+        setError(err?.message || 'Erro ao realizar a busca');
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      track('search_error', {
-        search_term: term,
-        error_message: err?.message || 'unknown',
-      });
-      setError(err?.message || 'Erro ao realizar a busca');
-    } finally {
-      setLoading(false);
-    }
-  }, [geoCoords, radiusKm]);
+    },
+    [geoCoords, radiusKm, effectiveCity]
+  );
 
   useEffect(() => {
-    performSearch(query);
-  }, [query, performSearch]);
+    if (cityDetectedFromQuery) return;
+    performSearch(effectiveQuery);
+  }, [cityDetectedFromQuery, effectiveQuery, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -884,7 +1103,7 @@ function SearchContent() {
   };
 
   const clearSearch = () => {
-    track('search_cleared', { previous_term: query, previous_location: initialCity });
+    track('search_cleared', { previous_term: effectiveQuery, previous_location: effectiveCity });
     setSearchTerm('');
     setLocationTerm('');
     router.push('/search');
@@ -910,20 +1129,23 @@ function SearchContent() {
   // Processed companies (sorted + filtered)
   const processedCompanies = useMemo(() => {
     let list = [...results.companies];
-    if (verifiedOnly)  list = list.filter((c: any) => c.verified);
-    if (whatsappOnly)  list = list.filter((c: any) => c.whatsapp_enabled || c.whatsapp_url || c.whatsapp);
+    if (verifiedOnly) list = list.filter((c: any) => c.verified);
+    if (whatsappOnly)
+      list = list.filter((c: any) => c.whatsapp_enabled || c.whatsapp_url || c.whatsapp);
 
     switch (sort) {
       case 'rating':
-        list.sort((a, b) =>
-          getNumericField(b, 'average_rating', 'rating_avg', 'rating') -
-          getNumericField(a, 'average_rating', 'rating_avg', 'rating')
+        list.sort(
+          (a, b) =>
+            getNumericField(b, 'average_rating', 'rating_avg', 'rating') -
+            getNumericField(a, 'average_rating', 'rating_avg', 'rating')
         );
         break;
       case 'reviews':
-        list.sort((a, b) =>
-          getNumericField(b, 'rating_count', 'total_reviews', 'reviews_count') -
-          getNumericField(a, 'rating_count', 'total_reviews', 'reviews_count')
+        list.sort(
+          (a, b) =>
+            getNumericField(b, 'rating_count', 'total_reviews', 'reviews_count') -
+            getNumericField(a, 'rating_count', 'total_reviews', 'reviews_count')
         );
         break;
       case 'verified':
@@ -938,33 +1160,48 @@ function SearchContent() {
 
   // Tab counts
   const counts = {
-    companies:  processedCompanies.length,
-    products:   results.products.length,
+    companies: processedCompanies.length,
+    products: results.products.length,
     categories: results.categories.length,
-    articles:   results.articles.length,
+    articles: results.articles.length,
   };
   const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
   const hasResults = totalCount > 0;
 
   // Tab change with tracking + URL sync
-  const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
-    pushFilterParams({ tab: tab === 'companies' ? undefined : tab });
-    track('search_tab_changed', {
-      search_term: query,
-      tab,
-      counts,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, pushFilterParams]);
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setActiveTab(tab);
+      pushFilterParams({ tab: tab === 'companies' ? undefined : tab });
+      track('search_tab_changed', {
+        search_term: query,
+        tab,
+        counts,
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [query, pushFilterParams]
+  );
 
   // Auto-select tab with results
   useEffect(() => {
     if (!loading && hasResults) {
-      if (counts.companies > 0)  { setActiveTab('companies');  return; }
-      if (counts.products > 0)   { setActiveTab('products');   return; }
-      if (counts.categories > 0) { setActiveTab('categories'); return; }
-      if (counts.articles > 0)   { setActiveTab('articles');   return; }
+      if (counts.companies > 0) {
+        setActiveTab('companies');
+        return;
+      }
+      if (counts.products > 0) {
+        setActiveTab('products');
+        return;
+      }
+      if (counts.categories > 0) {
+        setActiveTab('categories');
+        return;
+      }
+      if (counts.articles > 0) {
+        setActiveTab('articles');
+        return;
+      }
     }
   }, [loading, hasResults, counts.companies, counts.products, counts.categories, counts.articles]);
 
@@ -974,9 +1211,8 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
-
       {/* ── Search Hero Header ──────────────────────────────────────────── */}
-      <div 
+      <div
         className="text-white relative overflow-hidden shadow-md z-40 bg-cover bg-center"
         style={{ backgroundImage: "url('/images/banner-landing-page-avalia-solar.jpg')" }}
       >
@@ -984,7 +1220,6 @@ function SearchContent() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
         <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col items-center text-center">
-          
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 tracking-tight text-white drop-shadow-sm font-sans">
             Encontre a empresa certa para você.
           </h1>
@@ -993,11 +1228,19 @@ function SearchContent() {
           </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSubmit} className="w-full max-w-4xl flex flex-col md:flex-row gap-0 md:gap-2 mb-4 relative bg-white md:bg-white md:p-2 md:rounded-3xl shadow-2xl rounded-2xl p-0 overflow-hidden md:overflow-visible">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full max-w-4xl flex flex-col md:flex-row gap-0 md:gap-2 mb-4 relative bg-white md:bg-white md:p-2 md:rounded-3xl shadow-2xl rounded-2xl p-0 overflow-hidden md:overflow-visible"
+          >
             {/* Input 1: O que? */}
             <div className="relative flex-1 group bg-white border-b md:border-b-0 md:border-r border-slate-200 p-2 md:p-0">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={22} />
-              <label htmlFor="search-input" className="sr-only">Buscar empresas, produtos ou serviços</label>
+              <Search
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+                size={22}
+              />
+              <label htmlFor="search-input" className="sr-only">
+                Buscar empresas, produtos ou serviços
+              </label>
               <Input
                 id="search-input"
                 name="q"
@@ -1010,7 +1253,9 @@ function SearchContent() {
               {searchTerm && (
                 <button
                   type="button"
-                  onClick={() => { setSearchTerm(''); }}
+                  onClick={() => {
+                    setSearchTerm('');
+                  }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
                 >
                   <X size={16} />
@@ -1020,8 +1265,13 @@ function SearchContent() {
 
             {/* Input 2: Onde? */}
             <div className="relative flex-1 group bg-white p-2 md:p-0">
-              <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={22} />
-              <label htmlFor="location-input" className="sr-only">Onde?</label>
+              <MapPin
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+                size={22}
+              />
+              <label htmlFor="location-input" className="sr-only">
+                Onde?
+              </label>
               <Input
                 id="location-input"
                 name="city"
@@ -1035,7 +1285,9 @@ function SearchContent() {
               {locationTerm && (
                 <button
                   type="button"
-                  onClick={() => { setLocationTerm(''); }}
+                  onClick={() => {
+                    setLocationTerm('');
+                  }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
                 >
                   <X size={16} />
@@ -1059,19 +1311,23 @@ function SearchContent() {
               {hasResults ? (
                 <>
                   <span className="text-sm font-medium text-white">
-                    <span className="font-bold tabular-nums">{totalCount}</span>
-                    {' '}resultado{totalCount !== 1 ? 's' : ''} para{' '}
+                    <span className="font-bold tabular-nums">{totalCount}</span> resultado
+                    {totalCount !== 1 ? 's' : ''} para{' '}
                     <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
                   </span>
                   {counts.companies > 0 && (
-                    <Badge variant="secondary" className="text-[10px] bg-white/20 text-white border-white/30 px-2.5 py-0.5 h-6 font-bold shadow-sm">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] bg-white/20 text-white border-white/30 px-2.5 py-0.5 h-6 font-bold shadow-sm"
+                    >
                       {counts.companies} empresa{counts.companies !== 1 ? 's' : ''}
                     </Badge>
                   )}
                 </>
               ) : !error ? (
                 <span className="text-sm font-medium text-white">
-                  Nenhum resultado para <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
+                  Nenhum resultado para{' '}
+                  <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
                 </span>
               ) : null}
             </div>
@@ -1105,14 +1361,18 @@ function SearchContent() {
             <div className="w-[264px] flex-shrink-0 hidden lg:block">
               <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-4 space-y-3">
                 <Skeleton className="h-5 w-1/2" />
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full rounded-lg" />
+                ))}
               </div>
             </div>
             {/* Results skeleton */}
             <div className="flex-1 min-w-0">
               <Skeleton className="h-10 w-full rounded-xl mb-4" />
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => <CompanyCardSkeleton key={i} />)}
+                {[...Array(6)].map((_, i) => (
+                  <CompanyCardSkeleton key={i} />
+                ))}
               </div>
             </div>
           </div>
@@ -1138,12 +1398,14 @@ function SearchContent() {
               )
             ) : (
               <Tabs value={activeTab} onValueChange={handleTabChange}>
-
                 {/* Tab bar */}
                 <div className="mb-5 overflow-x-auto scrollbar-none -mx-1 px-1">
                   <TabsList className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl p-1 gap-0.5 h-auto shadow-sm w-auto inline-flex">
                     {counts.companies > 0 && (
-                      <TabsTrigger value="companies" className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150">
+                      <TabsTrigger
+                        value="companies"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
+                      >
                         <Building2 className="w-3.5 h-3.5" />
                         Empresas
                         <span className="ml-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 py-0 text-[10px] font-bold tabular-nums">
@@ -1152,7 +1414,10 @@ function SearchContent() {
                       </TabsTrigger>
                     )}
                     {counts.products > 0 && (
-                      <TabsTrigger value="products" className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150">
+                      <TabsTrigger
+                        value="products"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
+                      >
                         <Package className="w-3.5 h-3.5" />
                         Produtos
                         <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
@@ -1161,7 +1426,10 @@ function SearchContent() {
                       </TabsTrigger>
                     )}
                     {counts.categories > 0 && (
-                      <TabsTrigger value="categories" className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150">
+                      <TabsTrigger
+                        value="categories"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
+                      >
                         <Tag className="w-3.5 h-3.5" />
                         Categorias
                         <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
@@ -1170,7 +1438,10 @@ function SearchContent() {
                       </TabsTrigger>
                     )}
                     {counts.articles > 0 && (
-                      <TabsTrigger value="articles" className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150">
+                      <TabsTrigger
+                        value="articles"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
+                      >
                         <FileText className="w-3.5 h-3.5" />
                         Artigos
                         <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
@@ -1185,17 +1456,17 @@ function SearchContent() {
                 {counts.companies > 0 && (
                   <TabsContent value="companies" className="mt-0">
                     <div className="flex flex-col lg:flex-row gap-6 w-full mx-auto">
-                      
                       {/* Left Column (Results 60%) */}
                       <div className="flex-1 lg:w-[60%] flex flex-col min-w-0 pb-12">
-                        
                         {/* Horizontal Filter Bar (Desktop) */}
                         <div className="hidden lg:flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
                           <div className="flex items-center gap-2">
                             <SlidersHorizontal className="w-4 h-4 text-slate-400" />
-                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Filtros:</span>
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                              Filtros:
+                            </span>
                           </div>
-                          
+
                           <SearchRadiusFilter
                             radiusKm={radiusKm}
                             onRadiusChange={handleRadiusChange}
@@ -1206,7 +1477,7 @@ function SearchContent() {
                           <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
                           <SortChips sort={sort} onSortChange={handleSortChange} />
-                          
+
                           <div className="ml-auto flex items-center gap-2">
                             <ActiveFilterChips
                               verifiedOnly={verifiedOnly}
@@ -1235,7 +1506,10 @@ function SearchContent() {
                           <div className="lg:hidden flex justify-end mb-3">
                             <button
                               id="mobile-show-map-btn"
-                              onClick={() => { setShowMap(!showMap); track('map_opened', { source: 'mobile_btn' }); }}
+                              onClick={() => {
+                                setShowMap(!showMap);
+                                track('map_opened', { source: 'mobile_btn' });
+                              }}
                               className={cn(
                                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                 showMap
@@ -1262,12 +1536,16 @@ function SearchContent() {
                           <div className="lg:hidden w-full h-[55vh] mb-4 rounded-2xl overflow-hidden">
                             <SearchMapPanel
                               companies={(processedCompanies as any[]).map((c: any) => ({
-                                id: c.id, name: c.name, slug: c.slug,
-                                latitude: c.latitude, longitude: c.longitude,
+                                id: c.id,
+                                name: c.name,
+                                slug: c.slug,
+                                latitude: c.latitude,
+                                longitude: c.longitude,
                                 ratingAvg: c.ratingAvg ?? c.rating_avg,
                                 isSponsored: c.isSponsored ?? c.sponsored,
                                 logo_url: c.logo_url,
-                                city: c.city, state: c.state,
+                                city: c.city,
+                                state: c.state,
                               }))}
                               center={geoCoords ?? undefined}
                               radiusKm={radiusKm ?? undefined}
@@ -1280,13 +1558,17 @@ function SearchContent() {
                         )}
 
                         {/* Result count bar */}
-                        <div className={cn(
-                          'flex items-center justify-between mb-4',
-                          (verifiedOnly || whatsappOnly) ? 'mt-3' : ''
-                        )}>
+                        <div
+                          className={cn(
+                            'flex items-center justify-between mb-4',
+                            verifiedOnly || whatsappOnly ? 'mt-3' : ''
+                          )}
+                        >
                           <p className="text-sm text-slate-500 dark:text-slate-400">
-                            <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{processedCompanies.length}</span>
-                            {' '}empresa{processedCompanies.length !== 1 ? 's' : ''}
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                              {processedCompanies.length}
+                            </span>{' '}
+                            empresa{processedCompanies.length !== 1 ? 's' : ''}
                             {hasActiveFilters && (
                               <span className="text-slate-400"> (filtradas)</span>
                             )}
@@ -1294,7 +1576,7 @@ function SearchContent() {
                           {/* Desktop sort label */}
                           <span className="hidden lg:flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                             <ArrowUpDown className="w-3 h-3" />
-                            {SORT_OPTIONS.find(o => o.value === sort)?.label}
+                            {SORT_OPTIONS.find((o) => o.value === sort)?.label}
                           </span>
                         </div>
 
@@ -1302,7 +1584,10 @@ function SearchContent() {
                           <div className="py-12 text-center">
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                               Nenhuma empresa encontrada com os filtros aplicados.{' '}
-                              <button onClick={resetFilters} className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                              <button
+                                onClick={resetFilters}
+                                className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                              >
                                 Limpar filtros
                               </button>
                             </p>
@@ -1330,9 +1615,7 @@ function SearchContent() {
                             </div>
 
                             {/* Mid-banner after 6th result */}
-                            {companiesBelowFold.length > 0 && (
-                              <MidBanner banners={midBanners} />
-                            )}
+                            {companiesBelowFold.length > 0 && <MidBanner banners={midBanners} />}
 
                             {/* Below-fold results */}
                             {companiesBelowFold.length > 0 && (
@@ -1342,12 +1625,18 @@ function SearchContent() {
                                     key={company.id}
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: (i + 6) * 0.03, duration: 0.2, ease: 'easeOut' }}
+                                    transition={{
+                                      delay: (i + 6) * 0.03,
+                                      duration: 0.2,
+                                      ease: 'easeOut',
+                                    }}
                                   >
-                                    <CompanyCard 
-                                      company={company} 
-                                      index={i + 6} 
-                                      onMouseEnter={() => setSelectedCompanyId(company.id.toString())}
+                                    <CompanyCard
+                                      company={company}
+                                      index={i + 6}
+                                      onMouseEnter={() =>
+                                        setSelectedCompanyId(company.id.toString())
+                                      }
                                       onMouseLeave={() => setSelectedCompanyId(undefined)}
                                     />
                                   </motion.div>
@@ -1364,12 +1653,16 @@ function SearchContent() {
                           <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-2xl border border-blue-500/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-900 relative">
                             <SearchMapPanel
                               companies={(processedCompanies as any[]).map((c: any) => ({
-                                id: c.id, name: c.name, slug: c.slug,
-                                latitude: c.latitude, longitude: c.longitude,
+                                id: c.id,
+                                name: c.name,
+                                slug: c.slug,
+                                latitude: c.latitude,
+                                longitude: c.longitude,
                                 ratingAvg: c.ratingAvg ?? c.rating_avg,
                                 isSponsored: c.isSponsored ?? c.sponsored,
                                 logo_url: c.logo_url,
-                                city: c.city, state: c.state,
+                                city: c.city,
+                                state: c.state,
                               }))}
                               center={geoCoords ?? undefined}
                               radiusKm={radiusKm ?? undefined}
@@ -1530,7 +1823,9 @@ export default function Page() {
               <div className="flex-1 space-y-4">
                 <Skeleton className="h-10 w-64 rounded-xl" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => <CompanyCardSkeleton key={i} />)}
+                  {[...Array(6)].map((_, i) => (
+                    <CompanyCardSkeleton key={i} />
+                  ))}
                 </div>
               </div>
             </div>
