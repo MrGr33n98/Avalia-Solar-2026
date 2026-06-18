@@ -1,6 +1,8 @@
 module Api
   module V1
     class DirectMessagesController < BaseController
+      include FeatureGateEnforceable
+
       before_action :authenticate_user!
       before_action :set_conversation
 
@@ -10,6 +12,13 @@ module Api
       end
 
       def create
+        unless @conversation.company.p2p_chat_enabled
+          return render json: { error: 'Chat is disabled for this company' }, status: :forbidden
+        end
+
+        enforce_feature_access!(:p2p_chat, company: @conversation.company)
+        return if performed?
+
         sender_type = current_user.company_user? ? 'Company' : 'User'
         @message = @conversation.direct_messages.build(
           body: params[:body],

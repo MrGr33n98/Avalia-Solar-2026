@@ -1,6 +1,8 @@
 module Api
   module V1
     class ConversationsController < BaseController
+      include FeatureGateEnforceable
+
       before_action :authenticate_user!
 
       def index
@@ -17,6 +19,8 @@ module Api
         company = Company.find_by(id: params[:company_id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
         return render json: { error: 'Chat is disabled for this company' }, status: :forbidden unless company.p2p_chat_enabled
+        enforce_feature_access!(:p2p_chat, company: company)
+        return if performed?
 
         @conversation = Conversation.find_or_create_by(user_id: current_user.id, company_id: company.id)
         

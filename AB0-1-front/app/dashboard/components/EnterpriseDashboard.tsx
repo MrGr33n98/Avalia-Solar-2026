@@ -9,6 +9,7 @@ import { Clock3, MessageCircle, PhoneCall, Wifi, WifiOff } from 'lucide-react';
 import EnterpriseSidebar from './EnterpriseSidebar';
 import EnterpriseHeader from './EnterpriseHeader';
 import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
+import CompanyChatInbox from './CompanyChatInbox';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -246,6 +247,8 @@ function CompanyChatTab({ company }: { company: DashboardChatCompany | null | un
           </div>
         </CardContent>
       </Card>
+
+      <CompanyChatInbox enabled={chatEnabled} />
     </div>
   );
 }
@@ -264,6 +267,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'product-videos': 'media_gallery',
   'product-images': 'media_gallery',
   media: 'media_gallery',
+  chat: 'p2p_chat',
 };
 
 const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
@@ -302,6 +306,10 @@ const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: str
   media: {
     title: 'Galeria de midia bloqueada',
     description: 'Seu plano atual nao inclui upload e gestao completos de midia.',
+  },
+  chat: {
+    title: 'Atendimento direto bloqueado',
+    description: 'Seu plano atual nao inclui chat direto com clientes pelo marketplace.',
   },
 };
 
@@ -908,7 +916,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="chat" className="mt-0 focus-visible:outline-none">
-                <CompanyChatTab company={company} />
+                {renderGuardedTab('chat', <CompanyChatTab company={company} />)}
               </TabsContent>
 
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">

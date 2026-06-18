@@ -115,6 +115,26 @@ export interface CompanyFeatureAccessResponse {
   };
 }
 
+export interface Conversation {
+  id: number;
+  user_id: number;
+  company_id: number;
+  created_at: string;
+  user_name?: string | null;
+  company_name?: string | null;
+  company_logo?: string | null;
+  company_avatar?: string | null;
+  last_message?: string | null;
+}
+
+export interface DirectMessage {
+  id: number;
+  body: string;
+  sender_type: 'User' | 'Company';
+  created_at: string;
+  read_at?: string | null;
+}
+
 export interface Company {
   id: number;
   p2p_chat_enabled?: boolean;
@@ -125,8 +145,8 @@ export interface Company {
   status: string;
   verified: boolean;
   category: string;
-  description: string;         // Corrigido de 'about' para 'description'
-  about?: string;              // Legacy field - some APIs might still use this
+  description: string; // Corrigido de 'about' para 'description'
+  about?: string; // Legacy field - some APIs might still use this
   highlights?: string;
   website: string;
   phone: string;
@@ -150,26 +170,32 @@ export interface Company {
   buttons?: CompanyButton[];
   rating?: number;
   total_reviews?: number;
-  reviews_count?: number;      // Alternative name for total_reviews
+  reviews_count?: number; // Alternative name for total_reviews
   business_hours?: string;
-  working_hours?: string;      // Alternative name for business_hours
+  working_hours?: string; // Alternative name for business_hours
   payment_methods?: string[];
   category_name?: string;
   category_id?: number;
-  categories?: Category[];     // Array of Category objects for multi-vertical support
+  categories?: Category[]; // Array of Category objects for multi-vertical support
   featured?: boolean;
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;
-  average_rating?: number;     // Alternative name for rating_avg
+  average_rating?: number; // Alternative name for rating_avg
   rating_count?: number;
   sector_ratings_enabled?: boolean;
   sector_rating_avg?: number;
   sector_rating_count?: number;
   certifications?: string | string[];
   awards?: string;
-  topBadge?: string | { title?: string; subtitle?: string; label?: string; description?: string } | null;
-  top_badge?: string | { title?: string; subtitle?: string; label?: string; description?: string } | null;
+  topBadge?:
+    | string
+    | { title?: string; subtitle?: string; label?: string; description?: string }
+    | null;
+  top_badge?:
+    | string
+    | { title?: string; subtitle?: string; label?: string; description?: string }
+    | null;
   isTopRated?: boolean;
   partner_brands?: string;
   coverage_states?: string | string[];
@@ -392,7 +418,7 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  short_description?: string;  // Short version of description
+  short_description?: string; // Short version of description
   price: number;
   brand_id?: number;
   brand_slug?: string;
@@ -494,11 +520,13 @@ export interface Review {
     last_aggregated_at?: string;
     reviewer_email?: string;
   };
-  granular_scores?: Array<{
-    title: string;
-    score: number;
-    weight: number;
-  }> | ProductReviewScore[];
+  granular_scores?:
+    | Array<{
+        title: string;
+        score: number;
+        weight: number;
+      }>
+    | ProductReviewScore[];
   review_criterion_scores?: ProductReviewScore[];
 }
 
@@ -733,7 +761,7 @@ const PUBLIC_GET_CACHE = new Map<string, { expiry: number; data: unknown }>();
 const RATE_LIMIT_BLOCKED_UNTIL = new Map<string, number>();
 const DEFAULT_PUBLIC_CACHE_TTL_MS = 5 * 60 * 1000;
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getErrorStatus = (error: any): number | undefined => {
   const contextStatus = error?.context?.status ?? error?.status;
@@ -744,7 +772,8 @@ const getErrorStatus = (error: any): number | undefined => {
 
 const shouldUsePublicCache = (method: string, url: string) => {
   if (method !== 'GET') return false;
-  if (/\/(auth|users\/me|company_access|leads\/mine|reviews\/mine|companies\/mine)\b/i.test(url)) return false;
+  if (/\/(auth|users\/me|company_access|leads\/mine|reviews\/mine|companies\/mine)\b/i.test(url))
+    return false;
   return /\/(states|categories|banners|products|companies)\b/i.test(url);
 };
 
@@ -814,7 +843,7 @@ const attemptRefresh = async (): Promise<boolean> => {
     // automaticamente se o backend enviar os headers Set-Cookie correspondentes.
     const data = await response.json().catch(() => ({}));
     console.log('[API] Session refreshed successfully');
-    
+
     return true;
   } catch (error) {
     console.warn('[API] Refresh failed due to network or parsing error:', error);
@@ -824,13 +853,15 @@ const attemptRefresh = async (): Promise<boolean> => {
 
 export const api = {
   baseUrl: API_BASE_URL,
-  
-  request: async function<T>(config: any): Promise<{ data: T }> {
+
+  request: async function <T>(config: any): Promise<{ data: T }> {
     let lastError: any;
-    const silentStatusCodes = Array.isArray(config?.silentStatusCodes) ? config.silentStatusCodes : [];
+    const silentStatusCodes = Array.isArray(config?.silentStatusCodes)
+      ? config.silentStatusCodes
+      : [];
     const isRequestSilent = config?.silent === true;
     const requestTag = config?.tag ? ` ${config.tag}` : '';
-    
+
     const maxRetries = config.retries ?? MAX_RETRIES;
     const timeoutDuration = config.timeout ?? TIMEOUT;
     const requestMethod = (config.method || 'GET').toUpperCase();
@@ -843,17 +874,17 @@ export const api = {
         method: requestMethod,
       });
     }
-    
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       let url = '';
       try {
         // Use buildApiUrl to ensure consistent and normalized URL construction
         url = buildApiUrl(config.url);
-        
+
         // Handle query parameters
         if (config.params) {
           const searchParams = new URLSearchParams();
-          Object.keys(config.params).forEach(key => {
+          Object.keys(config.params).forEach((key) => {
             if (config.params[key] !== null && config.params[key] !== undefined) {
               searchParams.append(key, config.params[key]);
             }
@@ -863,8 +894,13 @@ export const api = {
             url += (url.includes('?') ? '&' : '?') + queryString;
           }
         }
-        
-        console.log(`[API] Request (Attempt ${attempt + 1}) ->`, requestMethod, url, config.params || '');
+
+        console.log(
+          `[API] Request (Attempt ${attempt + 1}) ->`,
+          requestMethod,
+          url,
+          config.params || ''
+        );
 
         const cacheTtlMs = Number.isFinite(config.cacheTtlMs)
           ? Number(config.cacheTtlMs)
@@ -877,7 +913,7 @@ export const api = {
             return { data: cached };
           }
         }
-        
+
         const isFormData = config.data instanceof FormData;
         const baseHeaders = getApiRequestHeaders(
           isFormData ? {} : { 'Content-Type': 'application/json' }
@@ -907,7 +943,7 @@ export const api = {
             ...(config.next ? { next: config.next } : {}),
             ...(config.cache ? { cache: config.cache } : {}),
             signal: controller.signal,
-            credentials: 'include' // Add this line to send cookies
+            credentials: 'include', // Add this line to send cookies
           });
 
           clearTimeout(timeoutId);
@@ -940,15 +976,19 @@ export const api = {
             try {
               details = await response.json();
             } catch {}
-            
-            const message = details?.errors?.join(', ') || details?.error || details?.message || response.statusText;
+
+            const message =
+              details?.errors?.join(', ') ||
+              details?.error ||
+              details?.message ||
+              response.statusText;
             const errorContext = {
               status: response.status,
               statusText: response.statusText,
               url,
               method: requestMethod,
               params: config.params,
-              details
+              details,
             };
             const shouldSilence = isRequestSilent || silentStatusCodes.includes(response.status);
             if (!shouldSilence) {
@@ -957,31 +997,30 @@ export const api = {
               console.info(`[API] Request failed (silenced)${requestTag}:`, {
                 status: response.status,
                 url,
-                method: config.method
+                method: config.method,
               });
             }
-            
+
             // Don't retry on most 4xx errors (client errors)
             // We also allow retrying 404 once in case of transient backend issues during deployments
-            if (response.status >= 400 && response.status < 500 && 
-                response.status !== 404) {
+            if (response.status >= 400 && response.status < 500 && response.status !== 404) {
               const err = new ApiError(`[${response.status}] ${message}`, {
                 status: response.status,
                 code: details?.code,
                 url,
                 method: requestMethod,
-                details
+                details,
               });
               (err as any).context = errorContext;
               throw err;
             }
-            
+
             const err = new ApiError(`[${response.status}] ${message}`, {
               status: response.status,
               code: details?.code,
               url,
               method: requestMethod,
-              details
+              details,
             });
             (err as any).context = errorContext;
             throw err;
@@ -999,25 +1038,24 @@ export const api = {
               status: 0,
               url,
               method: requestMethod,
-              isTimeout: true
+              isTimeout: true,
             });
           }
           throw fetchError;
         }
-
       } catch (error: any) {
         lastError = error;
-        
+
         // Retry if it's a timeout, network failure, or 5xx (avoid retrying 4xx like 403/429)
         const status = getErrorStatus(error);
         const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(requestMethod);
         const isRetryableStatus =
-          typeof status === 'number' &&
-          (status === 401 || status === 404 || status >= 500);
-        const isRetryable = error.message === 'Request timeout' || 
-                           error.message.includes('Network request failed') ||
-                           (isIdempotent && isRetryableStatus);
-                           
+          typeof status === 'number' && (status === 401 || status === 404 || status >= 500);
+        const isRetryable =
+          error.message === 'Request timeout' ||
+          error.message.includes('Network request failed') ||
+          (isIdempotent && isRetryableStatus);
+
         if (!isRetryable || attempt === maxRetries - 1) {
           const errorStatus = error?.context?.status;
           const shouldSilence = isRequestSilent || silentStatusCodes.includes(errorStatus);
@@ -1025,7 +1063,7 @@ export const api = {
             console.warn(`[API] Resource not found (404) after ${attempt + 1} attempts: ${url}`);
           } else if (!shouldSilence) {
             console.error('[API] Final Error:', error);
-            
+
             // Log to Sentry using centralized error handler
             logError(error instanceof Error ? error : new Error(String(error)), {
               action: 'api_request_failure',
@@ -1035,27 +1073,29 @@ export const api = {
                 attempt: attempt + 1,
                 status: errorStatus,
                 isTimeout: error.message === 'Request timeout',
-                details: error?.context?.details || error?.details
-              }
+                details: error?.context?.details || error?.details,
+              },
             });
           } else {
             console.info('[API] Final Error (silenced):', {
               status: errorStatus,
               url,
-              method: requestMethod
+              method: requestMethod,
             });
           }
           throw error;
         }
-        
+
         const delay = RETRY_DELAY * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
-        console.warn(`[API] Attempt ${attempt + 1} failed (${error.message}), retrying in ${delay}ms...`);
+        console.warn(
+          `[API] Attempt ${attempt + 1} failed (${error.message}), retrying in ${delay}ms...`
+        );
         await sleep(delay); // Exponential backoff
       }
     }
-    
+
     throw lastError;
-  }
+  },
 };
 
 // Removed axios interceptor code that was causing errors
@@ -1063,12 +1103,11 @@ export const api = {
 // =======================
 // Generic fetch wrapper
 // =======================
-export async function fetchApi<T = any>(
-  endpoint: string,
-  options: any = {}
-): Promise<T> {
+export async function fetchApi<T = any>(endpoint: string, options: any = {}): Promise<T> {
   const url = buildApiUrl(endpoint);
-  const silentStatusCodes = Array.isArray(options?.silentStatusCodes) ? options.silentStatusCodes : [];
+  const silentStatusCodes = Array.isArray(options?.silentStatusCodes)
+    ? options.silentStatusCodes
+    : [];
   const isSilent = options?.silent === true;
 
   try {
@@ -1078,7 +1117,7 @@ export async function fetchApi<T = any>(
       data: options.body
         ? options.body instanceof FormData
           ? options.body
-          : typeof options.body === 'string' 
+          : typeof options.body === 'string'
             ? JSON.parse(options.body)
             : options.body
         : undefined,
@@ -1116,20 +1155,20 @@ export async function fetchApi<T = any>(
     const errorContext = error.context || {
       url,
       method: options.method || 'GET',
-      params: options.params
+      params: options.params,
     };
-    
+
     const shouldSilence = isSilent || silentStatusCodes.includes(status);
     if (!shouldSilence) {
       console.error(`[API] fetchApi Error for ${url}:`, {
         message: error.message,
         context: errorContext,
-        stack: error.stack
+        stack: error.stack,
       });
     } else {
       console.info(`[API] fetchApi Error (silenced) for ${url}:`, {
         status,
-        context: errorContext
+        context: errorContext,
       });
     }
 
@@ -1144,12 +1183,12 @@ export async function fetchApi<T = any>(
     if (error.message?.includes('[404]') || error.context?.status === 404) {
       const customMessage = `[404] The requested resource was not found (${url}). Please verify the address and try again.`;
       console.warn(`[API] 404 Error: ${customMessage}`);
-      
+
       const enhancedError = new ApiError(customMessage, {
         status: 404,
         url,
         method: options.method || 'GET',
-        details: errorContext
+        details: errorContext,
       });
       (enhancedError as any).context = errorContext;
       throw enhancedError;
@@ -1157,13 +1196,12 @@ export async function fetchApi<T = any>(
 
     if (error?.response) {
       const msg =
-        error.response.data?.error ||
-        `Erro na API (${error.response.status}): ${error.message}`;
+        error.response.data?.error || `Erro na API (${error.response.status}): ${error.message}`;
       const enhancedError = new ApiError(msg, {
         status: error.response.status,
         url,
         method: options.method || 'GET',
-        details: error.response.data
+        details: error.response.data,
       });
       (enhancedError as any).context = errorContext;
       throw enhancedError;
@@ -1174,7 +1212,7 @@ export async function fetchApi<T = any>(
       status: errorContext?.status,
       url,
       method: options.method || 'GET',
-      details: errorContext
+      details: errorContext,
     });
     enhancedError.message = `${detailedMessage} (Endpoint: ${endpoint})`;
     (enhancedError as any).context = errorContext;
@@ -1389,7 +1427,7 @@ export interface RankingData {
 }
 
 export const companyDashboardApi = {
-  getAnalyticsOverview: (companyId?: string | number) => 
+  getAnalyticsOverview: (companyId?: string | number) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
       params: companyId ? { company_id: companyId } : undefined,
     }),
@@ -1397,7 +1435,7 @@ export const companyDashboardApi = {
     fetchApi('/company_dashboard/analytics/timeseries', {
       params: { company_id: companyId, days },
     }),
-  
+
   // Trust & Certification endpoints (TaaS)
   getTrustHealth: (companyId?: string | number) =>
     fetchApi<TrustHealth>('/company_dashboard/trust_health', {
@@ -1413,7 +1451,7 @@ export const companyDashboardApi = {
     }),
   getRanking: (companyId?: string | number, categoryId?: string | number, criterionSlug?: string) =>
     fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
-      params: { 
+      params: {
         company_id: companyId,
         category_id: categoryId,
         criterion_slug: criterionSlug,
@@ -1422,7 +1460,16 @@ export const companyDashboardApi = {
 };
 
 export const companiesApi = {
-  getAll: async (params: { status?: string; featured?: boolean; limit?: number; include?: string; mine?: boolean; q?: string; } = {}): Promise<Company[]> => {
+  getAll: async (
+    params: {
+      status?: string;
+      featured?: boolean;
+      limit?: number;
+      include?: string;
+      mine?: boolean;
+      q?: string;
+    } = {}
+  ): Promise<Company[]> => {
     try {
       const response = await fetchApi<any>('/companies', { params });
       if (Array.isArray(response)) {
@@ -1443,7 +1490,7 @@ export const companiesApi = {
       const response = await fetchApi<any>('/companies/mine', { params });
       if (Array.isArray(response)) return response;
       if (response?.data && Array.isArray(response.data)) return response.data;
-      
+
       // Fallback to /users/me_companies if needed
       const altResponse = await fetchApi<any>('/users/me_companies', { params });
       return altResponse?.companies || altResponse || [];
@@ -1461,7 +1508,9 @@ export const companiesApi = {
     } catch (error) {
       if (slugCandidate) {
         try {
-          const response = await fetchApi<{ company: Company }>(`/companies/by_slug/${encodeURIComponent(id)}`);
+          const response = await fetchApi<{ company: Company }>(
+            `/companies/by_slug/${encodeURIComponent(id)}`
+          );
           if (response?.company) return response.company;
           return (response as any)?.id ? (response as any) : null;
         } catch (slugError) {
@@ -1476,7 +1525,9 @@ export const companiesApi = {
 
   getBySlug: async (slug: string): Promise<Company | null> => {
     try {
-      const response = await fetchApi<{ company: Company }>(`/companies/by_slug/${encodeURIComponent(slug)}`);
+      const response = await fetchApi<{ company: Company }>(
+        `/companies/by_slug/${encodeURIComponent(slug)}`
+      );
       if (response?.company) return response.company;
       return (response as any)?.id ? (response as any) : null;
     } catch (error) {
@@ -1550,8 +1601,7 @@ export const companiesApi = {
 export const productsApi = {
   getAll: (params?: any) => fetchApi('/products', { params }),
   getById: (id: number) => fetchApi(`/products/${id}`),
-  getReviews: (id: number, params?: any) =>
-    fetchApi(`/products/${id}/reviews`, { params }),
+  getReviews: (id: number, params?: any) => fetchApi(`/products/${id}/reviews`, { params }),
   create: (product: Partial<Product>) =>
     fetchApi('/products', {
       method: 'POST',
@@ -1570,9 +1620,10 @@ export const productsApi = {
 };
 
 export const categoriesApi = {
-  getAll: (params: { include?: string; } = {}) => fetchApi<Category[]>('/categories', { params }),
+  getAll: (params: { include?: string } = {}) => fetchApi<Category[]>('/categories', { params }),
   getById: (id: number) => fetchApi<Category>(`/categories/${id}`),
-  getBySlug: (slug: string) => fetchApi<Category>(`/categories/by_slug/${encodeURIComponent(slug)}`),
+  getBySlug: (slug: string) =>
+    fetchApi<Category>(`/categories/by_slug/${encodeURIComponent(slug)}`),
   getCompanies: async (id: number, params?: any): Promise<Company[]> => {
     try {
       console.time(`[API] Fetch companies for category ${id}`);
@@ -1651,7 +1702,7 @@ export const categoriesApi = {
   delete: (id: number) => fetchApi(`/categories/${id}`, { method: 'DELETE' }),
   search: (query: string) =>
     fetchApi('/categories/search', {
-      params: { q: query }
+      params: { q: query },
     }),
 };
 
@@ -1848,8 +1899,7 @@ export const companyAccessApi = {
       method: 'POST',
       body: JSON.stringify({ company_id, message }),
     }),
-  cancelRequest: (id: number) =>
-    fetchApi(`/company_access_requests/${id}`, { method: 'DELETE' }),
+  cancelRequest: (id: number) => fetchApi(`/company_access_requests/${id}`, { method: 'DELETE' }),
   selectActiveCompany: (company_id: number) =>
     fetchApi('/company_access/select_active_company', {
       method: 'POST',
@@ -1892,8 +1942,7 @@ export const articlesApi = {
 export const badgesApi = {
   getAll: () => fetchApi('/badges'),
   getById: (id: number) => fetchApi(`/badges/${id}`),
-  getByCompany: (companyId: number | string) => 
-    fetchApi<Badge[]>(`/companies/${companyId}/badges`),
+  getByCompany: (companyId: number | string) => fetchApi<Badge[]>(`/companies/${companyId}/badges`),
   getBySlug: (slug: string) =>
     fetchApi<{ badge: Badge; featured_companies: any[] }>(`/badges/${slug}`),
   create: (badge: Partial<Badge>) =>
@@ -1931,12 +1980,26 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signup: (userData: { name: string; email: string; password: string; password_confirmation?: string; date_of_birth?: string; terms_accepted?: boolean }) =>
+  signup: (userData: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation?: string;
+    date_of_birth?: string;
+    terms_accepted?: boolean;
+  }) =>
     fetchApi('/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ user: userData, terms_accepted: userData.terms_accepted ?? true }),
     }),
-  register: (userData: { name: string; email: string; password: string; password_confirmation?: string; date_of_birth?: string; terms_accepted?: boolean }) =>
+  register: (userData: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation?: string;
+    date_of_birth?: string;
+    terms_accepted?: boolean;
+  }) =>
     fetchApi('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ user: userData, terms_accepted: userData.terms_accepted ?? true }),
@@ -2010,7 +2073,7 @@ export const authApi = {
         cacheTtlMs: 0,
       });
       if (resp && (resp as any).user) return (resp as any).user;
-      
+
       // Fallback to /users/me if /auth/me doesn't return the user object directly
       const userResp = await fetchApi<User | null>('/users/me', {
         silentStatusCodes: [401],
@@ -2023,13 +2086,18 @@ export const authApi = {
     } catch (error: any) {
       const status = error?.status || error?.context?.status;
       const msg = error?.message || '';
-      
-      if (status === 401 || msg.includes('[401]') || msg.toLowerCase().includes('not authenticated') || msg.includes('Autenticação necessária')) {
+
+      if (
+        status === 401 ||
+        msg.includes('[401]') ||
+        msg.toLowerCase().includes('not authenticated') ||
+        msg.includes('Autenticação necessária')
+      ) {
         console.warn('[authApi.me] Not authenticated or session expired');
         clearAuthSessionHint();
         return null;
       }
-      
+
       console.error('[authApi.me] Unexpected error:', error);
       throw error;
     }
@@ -2045,8 +2113,7 @@ export const statesApi = {
 export const citiesApi = {
   getAll: () => fetchApi('/cities'),
   getById: (id: number) => fetchApi(`/cities/${id}`),
-  getByState: (stateId: number) =>
-    fetchApi(`/states/${stateId}/cities`),
+  getByState: (stateId: number) => fetchApi(`/states/${stateId}/cities`),
 };
 
 export const searchApi = {
@@ -2073,7 +2140,7 @@ export const searchApi = {
   suggest: async (query: string) => {
     try {
       return await fetchApi('/search/suggest', {
-        params: { q: query }
+        params: { q: query },
       });
     } catch (error) {
       console.error('[searchApi.suggest] Error:', error);
@@ -2083,7 +2150,8 @@ export const searchApi = {
 };
 
 export const sectorQuestionsApi = {
-  list: () => fetchApi<{ questions: SectorQuestion[]; meta: any }>('/company_dashboard/sector_questions'),
+  list: () =>
+    fetchApi<{ questions: SectorQuestion[]; meta: any }>('/company_dashboard/sector_questions'),
   create: (question: SectorQuestion) =>
     fetchApi('/company_dashboard/sector_questions', {
       method: 'POST',
@@ -2096,11 +2164,15 @@ export const sectorQuestionsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ company_sector_question: question }),
     }),
-  destroy: (id: number) => fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' }),
+  destroy: (id: number) =>
+    fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' }),
 };
 
 export const financingOptionsApi = {
-  getAll: async (companyId: number, params?: { audience?: string; active?: boolean }): Promise<FinancingOption[]> => {
+  getAll: async (
+    companyId: number,
+    params?: { audience?: string; active?: boolean }
+  ): Promise<FinancingOption[]> => {
     try {
       const response = await fetchApi<any>(`/companies/${companyId}/financing_options`, { params });
       if (Array.isArray(response)) return response;
@@ -2112,10 +2184,9 @@ export const financingOptionsApi = {
     }
   },
   compare: (companyId: number, ids: number[]) =>
-    fetchApi<{ options: FinancingOption[] }>(
-      `/companies/${companyId}/financing_options/compare`,
-      { params: { ids } }
-    ),
+    fetchApi<{ options: FinancingOption[] }>(`/companies/${companyId}/financing_options/compare`, {
+      params: { ids },
+    }),
   simulate: (companyId: number, params: { amount: number; audience?: string; months?: number }) =>
     fetchApi<{
       best: any;
@@ -2167,16 +2238,19 @@ export const adminApi = {
 // End of API endpoints
 
 export const conversationsApi = {
-  getAll: () => fetchApi<any[]>('/conversations'),
-  create: (companyId: number) => fetchApi<any>('/conversations', {
-    method: 'POST',
-    body: JSON.stringify({ company_id: companyId })
-  }),
-  getMessages: (conversationId: number) => fetchApi<any[]>(`/conversations/${conversationId}/direct_messages`),
-  sendMessage: (conversationId: number, body: string) => fetchApi<any>(`/conversations/${conversationId}/direct_messages`, {
-    method: 'POST',
-    body: JSON.stringify({ body })
-  })
+  getAll: () => fetchApi<Conversation[]>('/conversations'),
+  create: (companyId: number) =>
+    fetchApi<Conversation>('/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ company_id: companyId }),
+    }),
+  getMessages: (conversationId: number) =>
+    fetchApi<DirectMessage[]>(`/conversations/${conversationId}/direct_messages`),
+  sendMessage: (conversationId: number, body: string) =>
+    fetchApi<DirectMessage>(`/conversations/${conversationId}/direct_messages`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }),
 };
 
 // =======================

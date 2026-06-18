@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { isFeatureEnabled } from '@/lib/feature-access';
 
 const HERO_BADGE_SIZE_PX = 48;
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
@@ -57,6 +58,9 @@ export default function CompanyHero({
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
   const quoteEnabled = canRequestQuote ?? company.active_admin === true;
+  const directChatEnabled =
+    company.p2p_chat_enabled === true &&
+    (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
@@ -307,7 +311,7 @@ export default function CompanyHero({
                     </div>
                   )}
 
-                  {company.p2p_chat_enabled && (
+                  {directChatEnabled && (
                     <Button
                       size="default"
                       className="h-11 w-full rounded-xl bg-orange-500 px-3 text-sm font-semibold text-white shadow-none hover:bg-orange-600"

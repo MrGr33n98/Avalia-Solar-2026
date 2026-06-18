@@ -137,6 +137,16 @@ module PlanFeatureCatalog
       group: 'content',
       aliases: %w[allow_media_uploads gallery_uploads media_uploads]
     },
+    'p2p_chat' => {
+      label: 'Chat direto com clientes',
+      description: 'Habilita conversas diretas entre compradores e a empresa pelo marketplace.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'conversion',
+      aliases: %w[p2p_chat_enabled direct_chat customer_chat marketplace_chat]
+    },
     'product_images_limit' => {
       label: 'Limite de Imagens por Produto',
       description: 'Quantidade máxima de imagens que podem ser anexadas a cada produto.',
@@ -316,6 +326,7 @@ module PlanFeatureCatalog
       'downloadable_materials' => false,
       'media_gallery' => false,
       'media_upload' => false,
+      'p2p_chat' => false,
       'product_images_limit' => 3,
       'featured_review' => false,
       'social_proof' => true,
@@ -341,6 +352,7 @@ module PlanFeatureCatalog
       'downloadable_materials' => true,
       'media_gallery' => true,
       'media_upload' => true,
+      'p2p_chat' => true,
       'product_images_limit' => 5,
       'featured_review' => true,
       'social_proof' => true,
@@ -366,6 +378,7 @@ module PlanFeatureCatalog
       'downloadable_materials' => true,
       'media_gallery' => true,
       'media_upload' => true,
+      'p2p_chat' => true,
       'product_images_limit' => 10,
       'featured_review' => true,
       'social_proof' => true,
