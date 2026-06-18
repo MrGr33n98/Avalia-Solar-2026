@@ -107,7 +107,11 @@ export default function ChatClient() {
     if (authLoading) return;
 
     if (!isAuthenticated) {
-      router.push('/login');
+      setErrorMessage('Faça login para iniciar uma conversa com esta empresa.');
+      setConversations([]);
+      setActiveConversation(null);
+      setMessages([]);
+      setLoading(false);
       return;
     }
 
@@ -122,9 +126,14 @@ export default function ChatClient() {
   }, [authLoading, isAuthenticated, router, user?.role]);
 
   const loadConversations = async () => {
+    if (!isAuthenticated || user?.role !== 'review') {
+      setLoading(false);
+      return;
+    }
+
     try {
       setErrorMessage(null);
-      const data = await conversationsApi.getAll();
+      const data = await conversationsApi.getAll({ silent: true, silentStatusCodes: [401] });
       setConversations(data || []);
 
       const companyId = searchParams.get('company_id');
@@ -140,7 +149,11 @@ export default function ChatClient() {
         selectConversation(data[0]);
       }
     } catch (error) {
-      console.error('Error loading conversations', error);
+      const status =
+        (error as ChatApiErrorShape).status || (error as ChatApiErrorShape).context?.status;
+      if (status !== 401) {
+        console.error('Error loading conversations', error);
+      }
       setErrorMessage(getChatErrorMessage(error));
     } finally {
       setLoading(false);
@@ -148,6 +161,8 @@ export default function ChatClient() {
   };
 
   const selectConversation = async (conv: Conversation) => {
+    if (!isAuthenticated || user?.role !== 'review') return;
+
     setActiveConversation(conv);
     try {
       setErrorMessage(null);
@@ -195,7 +210,14 @@ export default function ChatClient() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !activeConversation) return;
+    if (
+      !isAuthenticated ||
+      user?.role !== 'review' ||
+      !inputMessage.trim() ||
+      !activeConversation
+    ) {
+      return;
+    }
     try {
       setErrorMessage(null);
       const msgText = inputMessage;
@@ -232,6 +254,32 @@ export default function ChatClient() {
           {errorMessage && (
             <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800">
               {errorMessage}
+              {!isAuthenticated && (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() =>
+                      router.push(
+                        `/login?return_to=${encodeURIComponent(window.location.pathname + window.location.search)}`
+                      )
+                    }
+                  >
+                    Entrar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      router.push(
+                        `/register?return_to=${encodeURIComponent(window.location.pathname + window.location.search)}`
+                      )
+                    }
+                  >
+                    Criar conta
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           {conversations.length === 0 ? (
