@@ -3,6 +3,8 @@ module Api
   module V1
     class SearchController < BaseController
       def all
+        @search_error_stages = []
+
         query = params[:q].to_s.strip
         state = params[:state].presence
         city  = params[:city].presence
@@ -10,7 +12,7 @@ module Api
         page  = (params[:page] || 1).to_i
         per   = (params[:per_page] || 10).to_i
         category_id = params[:category_id].presence
-        
+
         # GEO args
         latitude = params[:latitude].presence
         longitude = params[:longitude].presence
@@ -18,18 +20,25 @@ module Api
 
         legacy_results = safe_legacy_results(query, state: state, city: city, category_id: category_id)
 
-        company_results = ::Search::CompanySearchService.new(
-          q: query, state: state, city: city, category_id: category_id,
-          sort: sort, page: page, limit: per,
-          latitude: latitude, longitude: longitude, radius_km: radius_km
-        ).call
+        company_results = safe_company_results(
+          query: query,
+          state: state,
+          city: city,
+          category_id: category_id,
+          sort: sort,
+          page: page,
+          per: per,
+          latitude: latitude,
+          longitude: longitude,
+          radius_km: radius_km
+        )
 
         track_search_event(
           query: query,
           state: state,
           city: city,
           category_id: category_id,
-          results_count: company_results[:page_info][:total_count] + safe_count(legacy_results[:products])
+          results_count: safe_company_total_count(company_results) + safe_count(legacy_results[:products])
         )
 
         # ordenação simples sem quebrar nada
@@ -48,22 +57,28 @@ module Api
         articles   = paginate_legacy_collection(legacy_results[:articles], page: page, per: per)
 
         companies_json = company_results[:nodes].filter_map { |company| serialize_company_result(company) }
+        products_json = serialize_products(products)
+        categories_json = serialize_categories(categories)
+        articles_json = serialize_articles(articles)
+
+        meta = {
+          total_count: {
+            companies: safe_company_total_count(company_results),
+            products: safe_count(legacy_results[:products]),
+            categories: safe_count(legacy_results[:categories]),
+            articles: safe_count(legacy_results[:articles])
+          },
+          page: page,
+          per_page: per
+        }
+        meta[:error_stage] = @search_error_stages.uniq.join(',') if @search_error_stages.present?
 
         render json: {
           companies: companies_json,
-          products: products.as_json(only: %i[id name description price company_id image_url]),
-          categories: categories.map { |c| ::CategorySerializer.new(c).as_json },
-          articles: articles.as_json(only: %i[id title slug published_at]),
-          meta: {
-            total_count: {
-              companies: company_results[:page_info][:total_count],
-              products: safe_count(legacy_results[:products]),
-              categories: safe_count(legacy_results[:categories]),
-              articles: safe_count(legacy_results[:articles])
-            },
-            page: page,
-            per_page: per
-          }
+          products: products_json,
+          categories: categories_json,
+          articles: articles_json,
+          meta: meta
         }
       end
 
@@ -146,11 +161,80 @@ module Api
       def safe_legacy_results(query, state:, city:, category_id:)
         ::SearchService.new(query, state: state, city: city, category_id: category_id).call
       rescue StandardError => e
-        Rails.logger.error(
-          "[SearchController] legacy search failed: #{e.class} #{e.message} " \
-          "query=#{query.inspect} state=#{state.inspect} city=#{city.inspect} category_id=#{category_id.inspect}"
+        record_search_error(
+          'legacy_search',
+          e,
+          query: query,
+          state: state,
+          city: city,
+          category_id: category_id
         )
         { companies: Company.none, products: Product.none, categories: Category.none, articles: Article.none }
+      end
+
+      def safe_company_results(
+        query:, state:, city:, category_id:, sort:, page:, per:, latitude:, longitude:, radius_km:
+      )
+        raw_results = ::Search::CompanySearchService.new(
+          q: query, state: state, city: city, category_id: category_id,
+          sort: sort, page: page, limit: per,
+          latitude: latitude, longitude: longitude, radius_km: radius_km
+        ).call
+        normalize_company_results(raw_results, page: page, per: per)
+      rescue StandardError => e
+        record_search_error(
+          'company_search',
+          e,
+          query: query,
+          state: state,
+          city: city,
+          category_id: category_id,
+          sort: sort
+        )
+        empty_company_results(page: page, per: per)
+      end
+
+      def normalize_company_results(results, page:, per:)
+        page_info = results.is_a?(Hash) && results[:page_info].is_a?(Hash) ? results[:page_info] : {}
+        nodes = results.is_a?(Hash) ? Array(results[:nodes]) : []
+        total_count = page_info[:total_count] || page_info['total_count'] || nodes.count
+        total_pages =
+          page_info[:total_pages] || page_info['total_pages'] || (total_count.to_f / per).ceil
+        total_pages = 1 if total_pages.to_i.zero?
+
+        {
+          nodes: nodes,
+          page_info: {
+            current_page: page_info[:current_page] || page_info['current_page'] || page,
+            total_pages: total_pages,
+            total_count: total_count,
+            per_page: page_info[:per_page] || page_info['per_page'] || per,
+            has_next_page: page_info[:has_next_page] || page_info['has_next_page'] || page < total_pages,
+            has_previous_page: page_info[:has_previous_page] || page_info['has_previous_page'] || page > 1
+          },
+          facets: results.is_a?(Hash) ? (results[:facets] || {}) : {},
+          map: results.is_a?(Hash) ? (results[:map] || empty_map_results) : empty_map_results
+        }
+      end
+
+      def empty_map_results
+        { companies: [], total_count: 0 }
+      end
+
+      def empty_company_results(page:, per:)
+        {
+          nodes: [],
+          page_info: {
+            current_page: page,
+            total_pages: 1,
+            total_count: 0,
+            per_page: per,
+            has_next_page: false,
+            has_previous_page: page > 1
+          },
+          facets: {},
+          map: { companies: [], total_count: 0 }
+        }
       end
 
       def paginate_legacy_collection(collection, page:, per:)
@@ -182,15 +266,59 @@ module Api
         0
       end
 
-      def serialize_company_result(company)
-        json = ::CompanySerializer.new(company).as_json
-        json['distance_km'] = company.try(:distance_km)
-        json['latitude'] = company.latitude
-        json['longitude'] = company.longitude
-        json
+      def safe_company_total_count(company_results)
+        company_results.dig(:page_info, :total_count).to_i
       rescue StandardError => e
-        Rails.logger.error("[SearchController] company serialization failed company=#{company&.id}: #{e.class} #{e.message}")
+        record_search_error('company_count', e)
+        0
+      end
+
+      def serialize_company_result(company)
+        ::Search::CompanyResultSerializer.new(company).as_json
+      rescue StandardError => e
+        record_search_error('company_serialization', e, company_id: safe_company_id(company))
         nil
+      end
+
+      def safe_company_id(company)
+        company.respond_to?(:id) ? company.id : nil
+      rescue StandardError
+        nil
+      end
+
+      def serialize_products(products)
+        products.as_json(only: %i[id name description price company_id image_url])
+      rescue StandardError => e
+        record_search_error('product_serialization', e)
+        []
+      end
+
+      def serialize_categories(categories)
+        categories.filter_map do |category|
+          ::CategorySerializer.new(category).as_json
+        rescue StandardError => e
+          record_search_error('category_serialization', e, category_id: category&.id)
+          nil
+        end
+      rescue StandardError => e
+        record_search_error('category_serialization', e)
+        []
+      end
+
+      def serialize_articles(articles)
+        articles.as_json(only: %i[id title slug published_at])
+      rescue StandardError => e
+        record_search_error('article_serialization', e)
+        []
+      end
+
+      def record_search_error(stage, exception, context = {})
+        @search_error_stages ||= []
+        @search_error_stages << stage
+        Rails.logger.error(
+          "[SearchController] stage=#{stage} error=#{exception.class}: #{exception.message} " \
+          "request_id=#{request&.request_id.inspect} context=#{context.compact.inspect}"
+        )
       end
 
       def track_search_event(query:, state:, city:, category_id:, results_count:)
