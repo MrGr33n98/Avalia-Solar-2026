@@ -10,6 +10,7 @@ describe('CategoryHero', () => {
     expect(container.querySelector('.rounded-none')).toBeInTheDocument();
     expect(container.querySelector('.h-16')).toBeInTheDocument();
     expect(container.querySelector('.lg\\:h-64')).toBeInTheDocument();
+    expect(container.querySelector('.object-cover.object-center')).toBeInTheDocument();
     expect(screen.getByText('Energia Solar')).toHaveClass('text-slate-950');
     expect(screen.getByText('Descricao de teste')).toBeInTheDocument();
     expect(screen.queryByText(/Guia \d{4}/i)).not.toBeInTheDocument();

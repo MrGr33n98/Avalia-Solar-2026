@@ -46,7 +46,6 @@ export default function CategoryHero({
     description?.trim() ||
     `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
   const visualUrl = resolvedBannerUrl || FALLBACK_BANNER_SRC;
-  const bannerImageClass = getBannerImageClass(name);
 
   return (
     <section className="bg-white pb-3 pt-4 md:pb-5 md:pt-5">
@@ -84,7 +83,7 @@ export default function CategoryHero({
                 priority
                 quality={92}
                 sizes="(max-width: 768px) 100vw, 1280px"
-                className={bannerImageClass}
+                className="h-full w-full object-cover object-center"
                 fallbackSrc="/images/default-banner.svg"
               />
             ) : (
@@ -109,18 +108,4 @@ export default function CategoryHero({
       </div>
     </section>
   );
-}
-
-function getBannerImageClass(name: string) {
-  const normalized = name.toLowerCase();
-
-  if (normalized.includes('mobilidade') || normalized.includes('elétrica')) {
-    return 'object-cover object-[center_60%] sm:object-[center_56%] lg:object-[center_54%]';
-  }
-
-  if (normalized.includes('solar')) {
-    return 'object-cover object-[center_46%] sm:object-[center_48%] lg:object-[center_50%]';
-  }
-
-  return 'object-cover object-center';
 }
