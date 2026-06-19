@@ -728,7 +728,9 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
+  city?: string | null;
+  state?: string | null;
   role: 'review' | 'company' | 'admin';
   company_id?: number | null;
   approved_by_admin?: boolean;
@@ -2060,6 +2062,8 @@ export const authApi = {
                   email
                   phone
                   avatar_url: avatarUrl
+                  city
+                  state
                   role
                   created_at: createdAt
                 }

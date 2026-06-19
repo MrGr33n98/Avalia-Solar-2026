@@ -62,12 +62,15 @@ Tabelas citadas no produto, mas ainda ausentes no schema atual:
 
 Observação importante: respostas de empresas já existem de forma legada dentro de `reviews.reply` e `reviews.replied_at`. Isso permite entregar a feature estratégica de respostas antes de criar `company_replies`.
 
+Observação sobre propostas: leads/orçamentos já existem no front via `leadsApi.mine()`. A primeira versão de "Oportunidades > Minhas Propostas" deve consumir essa fonte, exibindo status, empresa, tipo de solicitação e data. Uma tabela dedicada de propostas só deve nascer quando houver necessidade de armazenar histórico de mensagens, aceite/recusa, documentos comerciais, SLA ou múltiplas propostas por lead.
+
 ## 4. APIs Existentes Aproveitadas
 
 Frontend:
 - `reviewDashboardApi.getSummary()` chama `/api/v1/review_dashboard/summary`
 - `reviewsApi.listMine()` busca avaliações do usuário
 - `leadsApi.mine()` busca leads/orçamentos do usuário
+- `authApi.me()` e respostas de auth devem retornar o usuário serializado com `avatar_url`, `city` e `state`
 
 Backend:
 - `Api::V1::ReviewDashboardController#summary`
@@ -103,6 +106,8 @@ Foi criada a Central de Reputação Sustentável em `/review-dashboard` usando a
 - Hero profile com reputação, badges e CTA de respostas.
 - Tabela/card mobile de empresas avaliadas.
 - Feature de respostas das empresas com badge, contador e animação.
+- Seção "Oportunidades" com "Minhas Propostas".
+- Card "Acompanhamento de Propostas e Respostas" usando leads reais e respostas derivadas de avaliações.
 - Jornada sustentável gamificada.
 - Conquistas em grid desktop e carousel mobile.
 - Feed de atividades.
@@ -113,4 +118,23 @@ Foi criada a Central de Reputação Sustentável em `/review-dashboard` usando a
 
 ## 7. Risco e Próxima Etapa
 
-Os blocos de sustentabilidade, conquistas, ranking, recomendações e impacto ainda usam dados derivados dos reviews/leads quando não há fonte persistida. A próxima etapa recomendada é definir o contrato de API para `company_replies`, `user_scores`, `achievements` e `green_house_progress` antes de criar migrations.
+Os blocos de sustentabilidade, conquistas, ranking, recomendações e impacto ainda usam dados derivados dos reviews/leads quando não há fonte persistida. A próxima etapa recomendada é definir o contrato de API para `company_replies`, `user_scores`, `achievements`, `green_house_progress` e um agregador de oportunidades antes de criar migrations.
+
+## 8. Evolução Recomendada: Oportunidades
+
+Implementação incremental sugerida:
+- Fase 1: usar `leadsApi.mine()` no dashboard, com status normalizados no front e CTA para solicitar proposta.
+- Fase 2: expor um endpoint agregador, por exemplo `/api/v1/review_dashboard/opportunities`, juntando leads, respostas de avaliações e próximas ações.
+- Fase 3: criar `company_replies` para respostas versionadas e leitura individual.
+- Fase 4: criar entidade de proposta apenas se o funil comercial exigir múltiplas propostas por lead, arquivos, aceite/recusa, expiração ou negociação.
+
+Campos mínimos para a visão de oportunidades:
+- `id`
+- `company`
+- `company_logo_url`
+- `status`
+- `service_type` ou `product_vertical`
+- `created_at`
+- `last_response_at`
+- `unread_count`
+- `next_action`

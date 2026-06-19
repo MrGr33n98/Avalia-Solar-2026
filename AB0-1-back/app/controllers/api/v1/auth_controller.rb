@@ -281,7 +281,7 @@ module Api
         end
 
         tokens = issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: refresh_token)
-        render json: { token: tokens[:access_token], user: user }, status: :ok
+        render json: { token: tokens[:access_token], user: serialized_user(user) }, status: :ok
       rescue StandardError => e
         Rails.logger.error("[Auth] refresh failure: #{e.class}: #{e.message}")
         render_error_response(
@@ -294,7 +294,7 @@ module Api
       def me
         user = current_user
         if user
-          render json: { user: user }, status: :ok
+          render json: { user: serialized_user(user) }, status: :ok
         else
           render_error_response(
             message: 'Not authenticated',
@@ -366,7 +366,7 @@ module Api
           return render json: {
             message: 'Senha redefinida com sucesso.',
             token: tokens[:access_token],
-            user: user,
+            user: serialized_user(user),
             auto_login: true
           }, status: :ok
         end
@@ -468,7 +468,7 @@ module Api
           return render json: {
             message: 'Email confirmado com sucesso.',
             token: tokens[:access_token],
-            user: user,
+            user: serialized_user(user),
             auto_login: true
           }, status: :ok
         end
@@ -532,7 +532,11 @@ module Api
 
       def payload_for(user)
         tokens = issue_tokens_for(user)
-        { token: tokens[:access_token], user: user }
+        { token: tokens[:access_token], user: serialized_user(user) }
+      end
+
+      def serialized_user(user)
+        UserSerializer.new(user).as_json
       end
 
       def issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: nil)

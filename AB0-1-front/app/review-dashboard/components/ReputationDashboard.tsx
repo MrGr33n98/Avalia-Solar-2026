@@ -192,6 +192,12 @@ const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }> = [
     ],
   },
   {
+    title: 'Oportunidades',
+    items: [
+      { label: 'Minhas Propostas', href: '#opportunities', icon: Send },
+    ],
+  },
+  {
     title: 'Jornada Sustentável',
     items: [
       { label: 'Meu Green House', href: '#green-house', icon: Leaf },
@@ -283,6 +289,34 @@ function getLeadCompanyName(lead: Lead) {
   if (lead.company && typeof lead.company === 'object' && lead.company.name) return lead.company.name;
   if (lead.company_obj?.name) return lead.company_obj.name;
   return 'Empresa recomendada';
+}
+
+function getLeadCompanyLogo(lead: Lead) {
+  if (lead.company && typeof lead.company === 'object' && lead.company.logo_url) {
+    return lead.company.logo_url;
+  }
+
+  return lead.company_obj?.logo_url || lead.company_logo_url || null;
+}
+
+function leadStatusMeta(status?: string) {
+  const statusMap: Record<string, { label: string; className: string; progress: number }> = {
+    draft: { label: 'Rascunho', className: 'bg-slate-100 text-slate-700 border-slate-200', progress: 12 },
+    pending_otp: { label: 'Aguardando validação', className: 'bg-amber-50 text-amber-700 border-amber-200', progress: 24 },
+    verified: { label: 'Validada', className: 'bg-blue-50 text-blue-700 border-blue-200', progress: 42 },
+    distributed: { label: 'Enviada às empresas', className: 'bg-indigo-50 text-indigo-700 border-indigo-200', progress: 58 },
+    proposal_submitted: { label: 'Proposta solicitada', className: 'bg-purple-50 text-purple-700 border-purple-200', progress: 68 },
+    proposal_processing: { label: 'Em análise', className: 'bg-amber-50 text-amber-700 border-amber-200', progress: 78 },
+    proposal_sent: { label: 'Respondida', className: 'bg-emerald-50 text-emerald-700 border-emerald-200', progress: 100 },
+    proposal_failed: { label: 'Revisar dados', className: 'bg-red-50 text-red-700 border-red-200', progress: 36 },
+    canceled: { label: 'Cancelada', className: 'bg-red-50 text-red-700 border-red-200', progress: 0 },
+  };
+
+  return statusMap[status || ''] || {
+    label: status || 'Em acompanhamento',
+    className: 'bg-slate-100 text-slate-700 border-slate-200',
+    progress: 35,
+  };
 }
 
 function projectTypeLabel(value?: Review['project_type']) {
@@ -603,7 +637,11 @@ export function ReputationDashboard({
                   onDelete={onDeleteReview}
                 />
 
-                <CompanyReplies rows={companyReplies} onOpenReply={setReplyDialogRow} />
+                <ProposalTracking
+                  leads={leads}
+                  replies={companyReplies}
+                  onOpenReply={setReplyDialogRow}
+                />
 
                 <CommunityImpact
                   views={profileViews}
@@ -1230,39 +1268,117 @@ function RowActions({
   );
 }
 
-function CompanyReplies({ rows, onOpenReply }: { rows: CompanyRow[]; onOpenReply: (row: CompanyRow) => void }) {
+function ProposalTracking({
+  leads,
+  replies,
+  onOpenReply,
+}: {
+  leads: Lead[];
+  replies: CompanyRow[];
+  onOpenReply: (row: CompanyRow) => void;
+}) {
+  const proposalLeads = leads.slice(0, 5);
+  const answeredLeads = leads.filter((lead) => lead.status === 'proposal_sent').length;
+  const openLeads = leads.filter((lead) =>
+    ['draft', 'pending_otp', 'verified', 'distributed', 'proposal_submitted', 'proposal_processing'].includes(
+      lead.status || ''
+    )
+  ).length;
+
   return (
-    <Card id="company-replies" className="rounded-[20px] border-emerald-100 bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-lg font-black text-slate-950">Respostas das Empresas ({rows.length})</CardTitle>
-          <p className="text-sm font-semibold text-slate-500">Visualize, responda, avalie e compartilhe retornos recebidos.</p>
+    <Card id="opportunities" className="rounded-[20px] border-emerald-100 bg-white shadow-sm">
+      <span id="company-replies" className="sr-only" />
+      <CardHeader className="space-y-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle className="text-lg font-black text-slate-950">
+              Acompanhamento de Propostas e Respostas
+            </CardTitle>
+            <p className="text-sm font-semibold text-slate-500">
+              Suas solicitações vindas de propostas e retornos das empresas em um só lugar.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="rounded-full border-blue-200 bg-blue-50 text-blue-700">
+              {openLeads} em andamento
+            </Badge>
+            <Badge variant="outline" className="rounded-full border-emerald-200 bg-emerald-50 text-emerald-700">
+              {answeredLeads + replies.length} respondidas
+            </Badge>
+          </div>
         </div>
-        {rows.length > 0 && <Badge className="animate-pulse bg-red-600 text-white">Novas</Badge>}
       </CardHeader>
-      <CardContent className="space-y-3">
-        {rows.length === 0 ? (
+      <CardContent className="space-y-4">
+        {proposalLeads.length === 0 && replies.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
-            <MessageCircle className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-2 text-sm font-bold text-slate-900">Sem respostas por enquanto</p>
-            <p className="text-xs font-semibold text-slate-500">Quando uma empresa responder, ela aparecerá com destaque aqui.</p>
+            <Send className="mx-auto h-10 w-10 text-slate-300" />
+            <p className="mt-2 text-sm font-bold text-slate-900">Nenhuma proposta em acompanhamento ainda</p>
+            <p className="text-xs font-semibold text-slate-500">
+              Quando você solicitar orçamentos, as etapas aparecem aqui com status real da API.
+            </p>
+            <Button asChild className="mt-4 rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700">
+              <Link href="/companies">Solicitar proposta</Link>
+            </Button>
           </div>
         ) : (
-          rows.slice(0, 4).map((row) => (
-            <button key={row.id} type="button" onClick={() => onOpenReply(row)} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-left transition hover:bg-emerald-50">
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar className="h-11 w-11 border border-white">
-                  <AvatarImage src={row.logoUrl || ''} alt={row.name} />
-                  <AvatarFallback>{row.initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-slate-950">{row.name}</p>
-                  <p className="truncate text-xs font-semibold text-slate-600">{row.reply || 'Resposta disponível para leitura.'}</p>
+          <div className="grid gap-3">
+            {proposalLeads.map((lead) => {
+              const companyName = getLeadCompanyName(lead);
+              const meta = leadStatusMeta(lead.status);
+
+              return (
+                <div key={lead.id} className="rounded-2xl border border-slate-100 p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="h-11 w-11 border border-slate-100">
+                        <AvatarImage src={getLeadCompanyLogo(lead) || ''} alt={companyName} />
+                        <AvatarFallback>{initialsFromName(companyName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-slate-950">{companyName}</p>
+                        <p className="truncate text-xs font-semibold text-slate-500">
+                          {lead.product_vertical || lead.category || 'Energia Solar'} · {formatDate(lead.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={cn('w-fit rounded-full font-bold', meta.className)}>
+                      {meta.label}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                      <span>Progresso da proposta</span>
+                      <span>{meta.progress}%</span>
+                    </div>
+                    <Progress value={meta.progress} className="h-2 bg-slate-100" />
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="h-5 w-5 shrink-0 text-emerald-700" />
-            </button>
-          ))
+              );
+            })}
+
+            {replies.slice(0, 3).map((row) => (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => onOpenReply(row)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-left transition hover:bg-emerald-50"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar className="h-11 w-11 border border-white">
+                    <AvatarImage src={row.logoUrl || ''} alt={row.name} />
+                    <AvatarFallback>{row.initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-950">{row.name}</p>
+                    <p className="truncate text-xs font-semibold text-slate-600">
+                      {row.reply || 'Resposta disponível para leitura.'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-emerald-700" />
+              </button>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
