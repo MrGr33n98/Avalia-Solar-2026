@@ -89,7 +89,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
                         alt={`Ícone de ${label}`}
                         fill
                         sizes="64px"
-                        className="object-contain p-1"
+                        className="scale-125 object-contain p-0.5"
                       />
                     ) : (
                       <span className="h-8 w-8 rounded-full bg-blue-100" aria-hidden="true" />
