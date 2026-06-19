@@ -6,6 +6,7 @@ __pycache__/
 *.obj
 dist/
 build/
+*.tsbuildinfo
 
 # Dependencies
 .venv/
