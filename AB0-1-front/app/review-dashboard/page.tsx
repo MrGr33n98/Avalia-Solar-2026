@@ -4,20 +4,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { reviewsApi, leadsApi, reviewDashboardApi, Review, Lead } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCcw, AlertCircle, Bell, ChevronRight } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
 
 import dynamic from 'next/dynamic';
 
-// Import newly created components
-import { KpiCards } from './components/KpiCards';
-import { QuickActionsPanel } from './components/QuickActionsPanel';
-import { QuotesPanel } from './components/QuotesPanel';
-import { ReviewsList } from './components/ReviewsList';
-import { DashboardStrategicBanner } from './components/DashboardStrategicBanner';
+import { ReputationDashboard } from './components/ReputationDashboard';
 
 interface ReviewDashboardSummary {
   kpis?: {
@@ -105,7 +98,6 @@ export default function ReviewDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const latestLead = leads[0] || null;
 
   // Authentication check
   useEffect(() => {
@@ -229,15 +221,6 @@ export default function ReviewDashboardPage() {
     loadDashboardData(true);
   };
 
-  const handleCancelQuote = async (id: string) => {
-    try {
-      toast.info('Solicitação de cancelamento enviada.');
-      track('quote_cancel_click', { quote_id: id });
-    } catch {
-      toast.error('Erro ao cancelar orçamento.');
-    }
-  };
-
   const handleDeleteReview = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta avaliação?')) return;
 
@@ -259,162 +242,24 @@ export default function ReviewDashboardPage() {
     );
   }
 
+  if (!user) return null;
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 md:pb-12">
-      <div className="border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-[1240px] px-4 py-4 sm:px-6 md:py-6 lg:px-8">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
-                Olá, {user?.name?.split(' ')[0] || 'Usuário'}!
-              </h1>
-              <p className="text-sm font-medium text-slate-500 md:text-base">
-                <span className="md:hidden">Seu painel de energia solar.</span>
-                <span className="hidden md:inline">
-                  Acompanhe suas economias, avaliações e orçamentos em tempo real.
-                </span>
-              </p>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 rounded-xl border-slate-200"
-                >
-                  <Bell className="h-4 w-4 text-slate-600" />
-                </Button>
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-semibold text-white">
-                  3
-                </span>
-              </div>
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="h-10 w-10 rounded-xl border-slate-200"
-              >
-                <RefreshCcw
-                  className={`h-4 w-4 text-slate-600 ${refreshing ? 'animate-spin' : ''}`}
-                />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <main className="mx-auto mt-4 max-w-[1240px] space-y-4 px-4 sm:px-6 md:mt-6 md:space-y-6 lg:px-8">
-        {error && (
-          <Card className="rounded-2xl border-red-100 bg-red-50">
-            <CardContent className="flex items-center gap-3 py-3 text-red-800">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm font-medium">{error}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        <section>
-          <KpiCards data={summary?.kpis} loading={loading} />
-        </section>
-
-        <DashboardStrategicBanner placement="user_dashboard_mobile_top" />
-        <DashboardStrategicBanner placement="user_dashboard_after_metrics" />
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-6">
-          <div className="space-y-4 lg:col-span-8 md:space-y-6">
-            <button
-              type="button"
-              onClick={() => {
-                track(
-                  latestLead ? 'dashboard_quote_cta_clicked' : 'dashboard_first_quote_clicked',
-                  {
-                    quote_id: latestLead?.id,
-                  }
-                );
-                if (latestLead) return;
-                router.push('/empresas');
-              }}
-              className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white p-3 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/40 md:p-4"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-                  <Bell className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate text-sm font-semibold text-slate-950 md:text-base">
-                      {latestLead ? 'Novo orçamento recebido' : 'Solicite seu primeiro orçamento'}
-                    </h3>
-                    {latestLead && (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                        Novo
-                      </span>
-                    )}
-                  </div>
-                  <p className="truncate text-xs font-medium text-slate-500 md:text-sm">
-                    {latestLead
-                      ? 'Uma empresa enviou uma proposta para você.'
-                      : 'Compare propostas de empresas verificadas.'}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 shrink-0 text-blue-600 transition-transform group-hover:translate-x-0.5" />
-            </button>
-
-            <div className="lg:hidden">
-              <QuickActionsPanel
-                profileCompletion={summary?.profile?.completion_percent || 0}
-                compact
-                onActionClick={(actionId) => {
-                  track('dashboard_next_step_clicked', { action_id: actionId, device: 'mobile' });
-                }}
-              />
-            </div>
-
-            <section id="quotes">
-              <QuotesPanel
-                data={leads}
-                loading={loading}
-                onCancel={handleCancelQuote}
-                onViewDetails={(id) => {
-                  track('quote_open_details', { quote_id: id });
-                }}
-              />
-            </section>
-
-            <section id="charts">
-              <ActivityChart data={summary?.charts?.activity_30d} loading={loading} />
-            </section>
-
-            <section id="reviews">
-              <ReviewsList
-                data={reviews}
-                loading={loading}
-                onDelete={handleDeleteReview}
-                onEdit={(id) => {
-                  track('review_edit_click', { review_id: id });
-                  router.push(`/reviews/${id}/edit`);
-                }}
-              />
-            </section>
-          </div>
-
-          <aside className="hidden space-y-4 lg:col-span-4 lg:block">
-            <div className="sticky top-24 space-y-4">
-              <DashboardStrategicBanner placement="user_dashboard_desktop_sidebar" />
-              <QuickActionsPanel
-                profileCompletion={summary?.profile?.completion_percent || 0}
-                onActionClick={(actionId) => {
-                  track('dashboard_next_step_clicked', { action_id: actionId, device: 'desktop' });
-                }}
-              />
-            </div>
-          </aside>
-        </div>
-      </main>
-    </div>
+    <ReputationDashboard
+      user={user}
+      summary={summary}
+      reviews={reviews}
+      leads={leads}
+      loading={loading}
+      refreshing={refreshing}
+      error={error}
+      activityChart={<ActivityChart data={summary?.charts?.activity_30d} loading={loading} />}
+      onRefresh={handleRefresh}
+      onDeleteReview={handleDeleteReview}
+      onEditReview={(id) => {
+        track('review_edit_click', { review_id: id });
+        router.push(`/reviews/${id}/edit`);
+      }}
+    />
   );
 }

@@ -21,6 +21,8 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const { isAuthenticated, loading } = useAuth();
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const isReviewDashboard =
+    pathname === '/review-dashboard' || pathname.startsWith('/review-dashboard/');
   const unreadLabel = useMemo(() => {
     if (unreadChatCount <= 0) return null;
     return unreadChatCount > 9 ? '9+' : String(unreadChatCount);
@@ -60,6 +62,8 @@ export default function MobileBottomNav() {
       window.clearInterval(intervalId);
     };
   }, [isAuthenticated, loading, pathname]);
+
+  if (isReviewDashboard) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.5rem,var(--safe-area-inset-bottom))] pt-2 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl md:hidden">

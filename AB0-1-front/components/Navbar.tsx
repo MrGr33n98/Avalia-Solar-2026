@@ -36,6 +36,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const logoPriority = pathname === '/';
+  const hideNavbar = pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/');
 
   const handleMinhaContaClick = (e: React.MouseEvent) => {
     if (user?.role === 'review') {
@@ -81,6 +82,10 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (hideNavbar) {
+    return null;
+  }
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-slate-200/70 bg-background/90 pt-[var(--safe-area-inset-top)] shadow-[0_14px_36px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_20px_46px_-36px_rgba(0,0,0,0.78)]">
@@ -250,9 +255,9 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileDrawerMounted && (
-        <MobileCategoriesDrawer 
-          isOpen={isMobileDrawerOpen} 
-          onClose={() => setIsMobileDrawerOpen(false)} 
+        <MobileCategoriesDrawer
+          isOpen={isMobileDrawerOpen}
+          onClose={() => setIsMobileDrawerOpen(false)}
         />
       )}
     </nav>
