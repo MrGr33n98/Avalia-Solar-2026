@@ -29,11 +29,27 @@ class SearchService
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
       scope = Company.where(
-        'LOWER(name) LIKE :q OR LOWER(description) LIKE :q OR LOWER(state) LIKE :q OR LOWER(city) LIKE :q OR LOWER(address) LIKE :q', q: "%#{q_lower}%"
+        <<~SQL.squish,
+          LOWER(companies.name) LIKE :q OR
+          LOWER(COALESCE(companies.description, '')) LIKE :q OR
+          LOWER(COALESCE(companies.short_description, '')) LIKE :q OR
+          LOWER(COALESCE(companies.state, '')) LIKE :q OR
+          LOWER(COALESCE(companies.city, '')) LIKE :q OR
+          LOWER(COALESCE(companies.address, '')) LIKE :q
+        SQL
+        q: "%#{q_lower}%"
       )
     else
       scope = Company.where(
-        'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q', q: "%#{@query}%"
+        <<~SQL.squish,
+          companies.name ILIKE :q OR
+          COALESCE(companies.description, '') ILIKE :q OR
+          COALESCE(companies.short_description, '') ILIKE :q OR
+          COALESCE(companies.state, '') ILIKE :q OR
+          COALESCE(companies.city, '') ILIKE :q OR
+          COALESCE(companies.address, '') ILIKE :q
+        SQL
+        q: "%#{@query}%"
       )
     end
     scope = scope.by_state(@state).by_city(@city)
@@ -43,32 +59,60 @@ class SearchService
 
   def search_products
     adapter = ActiveRecord::Base.connection.adapter_name.downcase
+    scope = Product.respond_to?(:active_status) ? Product.active_status : Product.all
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
-      Product.where('LOWER(name) LIKE :q OR LOWER(description) LIKE :q', q: "%#{q_lower}%")
+      scope.where(
+        'LOWER(products.name) LIKE :q OR LOWER(COALESCE(products.description, \'\')) LIKE :q',
+        q: "%#{q_lower}%"
+      )
     else
-      Product.where('name ILIKE :q OR description ILIKE :q', q: "%#{@query}%")
+      scope.where(
+        'products.name ILIKE :q OR COALESCE(products.description, \'\') ILIKE :q',
+        q: "%#{@query}%"
+      )
     end
   end
 
   def search_categories
     adapter = ActiveRecord::Base.connection.adapter_name.downcase
+    scope = Category.respond_to?(:active) ? Category.active : Category.all
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
-      Category.where('LOWER(name) LIKE :q OR LOWER(short_description) LIKE :q OR LOWER(description) LIKE :q',
-                     q: "%#{q_lower}%")
+      scope.where(
+        <<~SQL.squish,
+          LOWER(categories.name) LIKE :q OR
+          LOWER(COALESCE(categories.short_description, '')) LIKE :q OR
+          LOWER(COALESCE(categories.description, '')) LIKE :q
+        SQL
+        q: "%#{q_lower}%"
+      )
     else
-      Category.where('name ILIKE :q OR short_description ILIKE :q OR description ILIKE :q', q: "%#{@query}%")
+      scope.where(
+        <<~SQL.squish,
+          categories.name ILIKE :q OR
+          COALESCE(categories.short_description, '') ILIKE :q OR
+          COALESCE(categories.description, '') ILIKE :q
+        SQL
+        q: "%#{@query}%"
+      )
     end
   end
 
   def search_articles
     adapter = ActiveRecord::Base.connection.adapter_name.downcase
+    scope = Article.respond_to?(:published) ? Article.published : Article.all
     if adapter.include?('sqlite')
       q_lower = @query.to_s.downcase
-      Article.where('LOWER(title) LIKE :q OR LOWER(content) LIKE :q', q: "%#{q_lower}%")
+      scope.where(
+        'LOWER(articles.title) LIKE :q OR LOWER(COALESCE(articles.content, \'\')) LIKE :q',
+        q: "%#{q_lower}%"
+      )
     else
-      Article.where('title ILIKE :q OR content ILIKE :q', q: "%#{@query}%")
+      scope.where(
+        'articles.title ILIKE :q OR COALESCE(articles.content, \'\') ILIKE :q',
+        q: "%#{@query}%"
+      )
     end
   end
 end

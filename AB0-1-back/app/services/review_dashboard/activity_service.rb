@@ -43,7 +43,24 @@ module ReviewDashboard
         .where(created_at: start_date..end_date)
         .group('DATE(created_at)')
         .count
-        .transform_keys { |date_string| Date.parse(date_string) }
+        .transform_keys { |date_value| normalize_grouped_date(date_value) }
+        .compact
+    rescue StandardError => e
+      Rails.logger.error("[ReviewDashboard] activity aggregate failed: #{e.class} #{e.message}")
+      {}
+    end
+
+    def normalize_grouped_date(value)
+      case value
+      when Date
+        value
+      when Time, DateTime
+        value.to_date
+      else
+        Date.parse(value.to_s)
+      end
+    rescue StandardError
+      nil
     end
   end
 end
