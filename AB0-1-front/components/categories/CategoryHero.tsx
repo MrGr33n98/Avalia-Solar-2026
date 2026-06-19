@@ -74,7 +74,7 @@ export default function CategoryHero({
           <span className="font-bold text-slate-950">{name}</span>
         </nav>
 
-        <div className="relative h-16 overflow-hidden rounded-none border border-slate-200 bg-slate-950 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.45)] sm:h-20 md:h-24 lg:h-24">
+        <div className="relative h-16 overflow-hidden rounded-none border border-slate-200 bg-slate-950 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.45)] sm:h-20 md:h-32 lg:h-64">
           <div className="absolute inset-0">
             {visualUrl ? (
               <OptimizedImage
