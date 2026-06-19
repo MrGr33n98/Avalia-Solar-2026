@@ -12,9 +12,16 @@ declare global {
 
 const getGaCookieDomain = (): string => {
   const hostname = window.location.hostname;
-  return hostname === 'avaliasolar.com.br' || hostname.endsWith('.avaliasolar.com.br')
-    ? 'avaliasolar.com.br'
-    : 'auto';
+  const configuredDomain = process.env.NEXT_PUBLIC_GA_COOKIE_DOMAIN?.trim().replace(/^\./, '');
+
+  if (
+    configuredDomain &&
+    (hostname === configuredDomain || hostname.endsWith(`.${configuredDomain}`))
+  ) {
+    return configuredDomain;
+  }
+
+  return 'auto';
 };
 
 /**
@@ -22,10 +29,10 @@ const getGaCookieDomain = (): string => {
  */
 export function initializeGTag(measurementId: string): void {
   if (typeof window === 'undefined') return;
-  
+
   // Garantimos que dataLayer e gtag funcionem corretamente
   window.dataLayer = window.dataLayer || [];
-  
+
   if (!window.gtag) {
     window.gtag = function gtag(...args: any[]) {
       window.dataLayer.push(args);
@@ -38,8 +45,8 @@ export function initializeGTag(measurementId: string): void {
     send_page_view: false, // Manual page view tracking
     cookie_domain: getGaCookieDomain(),
     custom_map: {
-      custom_parameter_1: 'company_id'
-    }
+      custom_parameter_1: 'company_id',
+    },
   });
 
   if (process.env.NODE_ENV === 'development') {
@@ -50,15 +57,12 @@ export function initializeGTag(measurementId: string): void {
 /**
  * Track GA4 event
  */
-export function gtagEvent(
-  eventName: string,
-  params?: Record<string, any>
-): void {
+export function gtagEvent(eventName: string, params?: Record<string, any>): void {
   if (typeof window === 'undefined' || !window.gtag) return;
-  
+
   try {
     window.gtag('event', eventName, params);
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.log('[GA4] Event:', eventName, params);
     }
@@ -70,15 +74,11 @@ export function gtagEvent(
 /**
  * Track page view
  */
-export function gtagPageView(
-  url: string,
-  title?: string,
-  params?: Record<string, any>
-): void {
+export function gtagPageView(url: string, title?: string, params?: Record<string, any>): void {
   gtagEvent('page_view', {
     page_path: url,
     page_title: title,
-    ...params
+    ...params,
   });
 }
 
@@ -87,7 +87,7 @@ export function gtagPageView(
  */
 export function gtagSetUserProperties(properties: Record<string, any>): void {
   if (typeof window === 'undefined' || !window.gtag) return;
-  
+
   try {
     window.gtag('set', 'user_properties', properties);
   } catch (e) {
@@ -100,11 +100,11 @@ export function gtagSetUserProperties(properties: Record<string, any>): void {
  */
 export function gtagSetUserId(userId: string | null): void {
   if (typeof window === 'undefined' || !window.gtag) return;
-  
+
   try {
     window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
       user_id: userId,
-      cookie_domain: getGaCookieDomain()
+      cookie_domain: getGaCookieDomain(),
     });
   } catch (e) {
     console.error('[GA4] Failed to set user ID:', e);
@@ -120,53 +120,55 @@ export function mapToGA4Event(
 ): { name: string; params: Record<string, any> } {
   // Map common events to GA4 recommended events
   const eventMap: Record<string, string> = {
-    'page_view': 'page_view',
-    'search_performance': 'search',
-    'search_submitted': 'search',
-    'search_no_results': 'search',
-    'location_selected': 'select_content',
-    'category_selected': 'select_content',
-    'company_card_impression': 'view_item_list',
-    'company_card_click': 'select_item',
-    'cta_click': 'select_content',
-    'contact_click': 'contact',
-    'whatsapp_click': 'contact',
-    'generate_lead': 'generate_lead',
-    'lead_submitted': 'generate_lead',
-    'lead_verified': 'purchase',
-    'begin_checkout': 'begin_checkout',
-    'wizard_started': 'begin_checkout',
-    'wizard_step_completed': 'checkout_progress',
-    'wizard_step_viewed': 'view_item_list',
-    'wizard_submitted': 'purchase',
-    'company_cta_impression': 'view_promotion',
-    'company_share_click': 'share',
-    'company_comparison_toggle': 'select_content',
-    'regional_data_exposed': 'select_content',
-    'scroll_depth_reached': 'optimize_experience'
+    page_view: 'page_view',
+    search_performance: 'search',
+    search_submitted: 'search',
+    search_no_results: 'search',
+    location_selected: 'select_content',
+    category_selected: 'select_content',
+    company_card_impression: 'view_item_list',
+    company_card_click: 'select_item',
+    cta_click: 'select_content',
+    contact_click: 'contact',
+    whatsapp_click: 'contact',
+    generate_lead: 'generate_lead',
+    lead_submitted: 'generate_lead',
+    lead_verified: 'purchase',
+    begin_checkout: 'begin_checkout',
+    wizard_started: 'begin_checkout',
+    wizard_step_completed: 'checkout_progress',
+    wizard_step_viewed: 'view_item_list',
+    wizard_submitted: 'purchase',
+    company_cta_impression: 'view_promotion',
+    company_share_click: 'share',
+    company_comparison_toggle: 'select_content',
+    regional_data_exposed: 'select_content',
+    scroll_depth_reached: 'optimize_experience',
   };
-  
+
   const ga4EventName = eventMap[eventName] || eventName.toLowerCase().replace(/ /g, '_');
-  
+
   // Map properties to GA4 parameters
   const params: Record<string, any> = {};
-  
+
   // Standard GA4 parameters
   if (properties.company_id) params.item_id = properties.company_id;
   if (properties.company_name) params.item_name = properties.company_name;
-  if (properties.category_id) params.item_category = properties.category_name || properties.category_id;
-  if (properties.search_term || properties.query) params.search_term = properties.search_term || properties.query;
+  if (properties.category_id)
+    params.item_category = properties.category_name || properties.category_id;
+  if (properties.search_term || properties.query)
+    params.search_term = properties.search_term || properties.query;
   if (properties.cta_type) params.content_type = properties.cta_type;
   if (properties.placement) params.creative_slot = properties.placement;
   if (properties.step_index !== undefined) params.checkout_step = properties.step_index + 1;
   if (properties.template_key) params.item_list_name = properties.template_key;
-  
+
   // Pass through other properties
   for (const [key, value] of Object.entries(properties)) {
     if (!params[key] && value !== undefined && value !== null) {
       params[key] = value;
     }
   }
-  
+
   return { name: ga4EventName, params };
 }

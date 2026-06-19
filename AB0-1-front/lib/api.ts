@@ -688,10 +688,11 @@ export interface SearchAllResponse {
   categories: Category[];
   articles: Article[];
   meta?: {
-    total_count?: number;
+    total_count?: number | Record<string, number>;
     page?: number;
     per_page?: number;
     total_pages?: number;
+    error_stage?: string;
   };
 }
 
@@ -2128,23 +2129,31 @@ export const citiesApi = {
 
 export const searchApi = {
   all: async (query: string, filters?: any): Promise<SearchAllResponse> => {
+    const emptySearchResponse: SearchAllResponse = {
+      companies: [],
+      products: [],
+      categories: [],
+      articles: [],
+      meta: {
+        total_count: 0,
+        page: 1,
+        per_page: 10,
+        total_pages: 0,
+      },
+    };
+
     try {
       const params = { q: query, ...filters };
-      return await fetchApi<SearchAllResponse>('/search/all', { params });
+      return await fetchApi<SearchAllResponse>('/search/all', {
+        params,
+        retries: 1,
+        fallback: emptySearchResponse,
+        silentStatusCodes: [500, 502, 503, 504],
+        tag: 'search',
+      });
     } catch (error) {
       console.error('Search error:', error);
-      return {
-        companies: [],
-        products: [],
-        categories: [],
-        articles: [],
-        meta: {
-          total_count: 0,
-          page: 1,
-          per_page: 10,
-          total_pages: 0,
-        },
-      };
+      return emptySearchResponse;
     }
   },
   suggest: async (query: string) => {
