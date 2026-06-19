@@ -47,6 +47,42 @@ function normalizeApiList<T>(response: ApiListResponse<T>): T[] {
   return Array.isArray(response.data) ? response.data : [];
 }
 
+function emptySummary(): ReviewDashboardSummary {
+  const today = new Date();
+  const activity = Array.from({ length: 31 }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (30 - index));
+
+    return {
+      date: date.toISOString().slice(0, 10),
+      profile_views: 0,
+      whatsapp_clicks: 0,
+      cta_clicks: 0,
+    };
+  });
+
+  return {
+    kpis: {
+      estimated_savings: 0,
+      quotes_total: 0,
+      quotes_open: 0,
+      quotes_replied: 0,
+      reviews_published: 0,
+    },
+    profile: {
+      completion_percent: 0,
+    },
+    charts: {
+      activity_30d: activity,
+    },
+  };
+}
+
+function isAuthError(error: unknown) {
+  const apiError = error as { status?: number; message?: string };
+  return apiError?.status === 401 || apiError?.message?.includes('[401]');
+}
+
 const ActivityChart = dynamic(
   () => import('./components/ActivityChart').then((mod) => mod.ActivityChart),
   {
@@ -105,22 +141,59 @@ export default function ReviewDashboardPage() {
 
       setError(null);
       try {
-        const [summaryRes, reviewsRes, leadsRes] = await Promise.all([
+        const [summaryRes, reviewsRes, leadsRes] = await Promise.allSettled([
           reviewDashboardApi.getSummary(),
           reviewsApi.listMine(),
           leadsApi.mine(),
         ]);
 
-        setSummary(summaryRes as ReviewDashboardSummary);
-        setReviews(normalizeApiList(reviewsRes as ApiListResponse<Review>));
-        setLeads(
-          normalizeApiList(leadsRes as ApiListResponse<Lead>).sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
+        const failures = [summaryRes, reviewsRes, leadsRes].filter(
+          (result): result is PromiseRejectedResult => result.status === 'rejected'
         );
 
+        if (failures.some((failure) => isAuthError(failure.reason))) {
+          setIsRedirecting(true);
+          router.push(
+            `/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`
+          );
+          return;
+        }
+
+        if (summaryRes.status === 'fulfilled') {
+          setSummary(summaryRes.value as ReviewDashboardSummary);
+        } else {
+          console.warn('[ReviewDashboard] Summary unavailable', summaryRes.reason);
+          setSummary(emptySummary());
+        }
+
+        if (reviewsRes.status === 'fulfilled') {
+          setReviews(normalizeApiList(reviewsRes.value as ApiListResponse<Review>));
+        } else {
+          console.warn('[ReviewDashboard] Reviews unavailable', reviewsRes.reason);
+          setReviews([]);
+        }
+
+        if (leadsRes.status === 'fulfilled') {
+          setLeads(
+            normalizeApiList(leadsRes.value as ApiListResponse<Lead>).sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+          );
+        } else {
+          console.warn('[ReviewDashboard] Leads unavailable', leadsRes.reason);
+          setLeads([]);
+        }
+
+        if (failures.length === 3) {
+          setError('Não foi possível carregar os dados do painel agora.');
+        }
+
         if (isRefresh) {
-          toast.success('Painel atualizado com sucesso!');
+          if (failures.length > 0) {
+            toast.warning('Painel atualizado parcialmente.');
+          } else {
+            toast.success('Painel atualizado com sucesso!');
+          }
           track('review_dashboard_refresh', { user_id: user?.id });
         }
       } catch (err: unknown) {
