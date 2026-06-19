@@ -13,6 +13,7 @@ export default function ConditionalFooter() {
   const hideFooterRoutes = [
     '/dashboard',
     '/review-dashboard',
+    '/profile',
     '/company-dashboard',
     '/admin',
     '/painel',

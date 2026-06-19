@@ -36,7 +36,10 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const logoPriority = pathname === '/';
-  const hideNavbar = pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/');
+  const hideNavbar =
+    pathname === '/profile' ||
+    pathname === '/review-dashboard' ||
+    pathname?.startsWith('/review-dashboard/');
 
   const handleMinhaContaClick = (e: React.MouseEvent) => {
     if (user?.role === 'review') {
