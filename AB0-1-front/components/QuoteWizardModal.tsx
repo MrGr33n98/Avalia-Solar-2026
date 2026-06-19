@@ -1,5 +1,6 @@
 'use client';
 
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -11,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
-import { track } from '@/lib/analytics/lazy';
 import { trackWizardStart, trackWizardContactSubmitted, trackLeadSuccess } from '@/lib/analytics/consolidated';
 import {
   useBillValueIntent,
@@ -19,8 +19,6 @@ import {
 } from '@/lib/analytics/hooks/useIntentTracking';
 import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 
 type WizardCompany = {
   id: number;
@@ -64,13 +62,11 @@ type QuoteWizardOpenDetail = {
 };
 
 export default function QuoteWizardModal() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<WizardFormState>(INITIAL_FORM);
   const [leadId, setLeadId] = useState<number | null>(null);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
-  const [pendingOpen, setPendingOpen] = useState<QuoteWizardOpenDetail | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,29 +94,11 @@ export default function QuoteWizardModal() {
   }, [resetTracking]);
 
   const handleOpenRequest = useCallback((detail: QuoteWizardOpenDetail) => {
-    if (authLoading) {
-      setPendingOpen(detail);
-      return;
-    }
-
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
-      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
-      openSignupGate({
-        source: 'quote_wizard',
-        returnTo: buildReturnTo(pathname, search),
-        title: 'Crie sua conta para continuar seu orçamento',
-        description: 'Desbloqueie o formulário de orçamento, salve sua solicitação e volte exatamente ao ponto em que estava.',
-      });
-      return;
-    }
-
-    setPendingOpen(null);
     setPreferredCompanyId(detail.preferredCompanyId);
     resetWizard();
     setOpen(true);
     trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
-  }, [authLoading, isAuthenticated, resetWizard]);
+  }, [resetWizard]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -137,13 +115,6 @@ export default function QuoteWizardModal() {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  useEffect(() => {
-    if (authLoading || !pendingOpen) return;
-    const detail = pendingOpen;
-    setPendingOpen(null);
-    handleOpenRequest(detail);
-  }, [authLoading, handleOpenRequest, pendingOpen]);
-
   const handleResend = async () => {
     if (!leadId || resendCooldown > 0) return;
     setSubmitting(true);
@@ -151,8 +122,8 @@ export default function QuoteWizardModal() {
       await leadsWizardApi.resendEmailCode(leadId);
       setResendCooldown(60);
       toast.success('Código reenviado com sucesso!');
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao reenviar código.');
+    } catch (err: unknown) {
+      setError(getWizardErrorMessage(err, 'Erro ao reenviar código.'));
       toast.error('Não foi possível reenviar o código.');
     } finally {
       setSubmitting(false);
@@ -204,14 +175,14 @@ export default function QuoteWizardModal() {
           },
           preferred_company_id: preferredCompanyId
         };
-        const response = await leadsWizardApi.create(payload as any);
+        const response = await leadsWizardApi.create(payload);
         setLeadId(response.lead_id);
         setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
         trackWizardContactSubmitted(String(response.lead_id), preferredCompanyId || '');
         trackStep(8, TOTAL_STEPS, { action: 'lead_created', product_vertical: form.productVertical });
         setStep(8);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(getWizardErrorMessage(err, 'Erro ao iniciar orçamento.'));
       } finally {
         setSubmitting(false);
@@ -247,7 +218,7 @@ export default function QuoteWizardModal() {
         });
         setStep(9);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       trackSubmission(false, leadId);
       setError(getWizardErrorMessage(err, 'Erro na validação.'));
     } finally {
@@ -486,10 +457,16 @@ const WizardHeading = ({ title, subtitle, center }: { title: string; subtitle: s
   </div>
 );
 
-const OptionButton = ({ selected, children, ...props }: any) => (
+type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  selected: boolean;
+  children: ReactNode;
+};
+
+const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
   <button type="button" className={cn(
     'w-full rounded-2xl border-2 px-4 py-4 text-sm font-black transition-all text-left uppercase tracking-tight',
-    selected ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-[1.02]' : 'border-slate-100 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50'
+    selected ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-[1.02]' : 'border-slate-100 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50',
+    className
   )} aria-pressed={selected} {...props}>
     <div className="flex items-center justify-between">
       {children}
@@ -525,8 +502,16 @@ const normalizeFieldMessage = (message: string) => {
   return message;
 };
 
-const getWizardErrorMessage = (error: any, fallback: string) => {
-  const fields = error?.details?.fields;
+type WizardApiError = {
+  message?: string;
+  details?: {
+    fields?: Record<string, unknown>;
+  };
+};
+
+const getWizardErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as WizardApiError;
+  const fields = apiError.details?.fields;
   if (fields && typeof fields === 'object') {
     const [field, messages] = Object.entries(fields)[0] || [];
     if (field) {
@@ -538,8 +523,8 @@ const getWizardErrorMessage = (error: any, fallback: string) => {
     }
   }
 
-  if (typeof error?.message === 'string' && !error.message.includes('validation_failed')) {
-    return error.message;
+  if (typeof apiError.message === 'string' && !apiError.message.includes('validation_failed')) {
+    return apiError.message;
   }
 
   return fallback;

@@ -4,11 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2, X } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { LeadWizardEngine } from '@/src/modules/leadWizard/components/LeadWizardEngine';
 import { companiesApiSafe } from '@/lib/api-client';
 import { resolveWizardCategoryId } from '@/lib/lead-engine';
-import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 
 type LeadWizardEventDetail = {
   categoryId?: number;
@@ -22,15 +20,38 @@ type CategoryOption = {
   seo_url?: string;
 };
 
+type RawCategoryOption = {
+  id?: number | string | null;
+  name?: string | null;
+  seo_url?: string | null;
+  seoUrl?: string | null;
+  slug?: string | null;
+};
+
+type CompanyCategorySource = {
+  category_id?: number;
+  category_info?: CategoryOption | null;
+  categories?: RawCategoryOption[] | null;
+};
+
+const normalizeCategoryOption = (category: RawCategoryOption): CategoryOption | null => {
+  const id = Number(category.id);
+  if (!Number.isFinite(id)) return null;
+
+  return {
+    id,
+    name: category.name || undefined,
+    seo_url: category.seo_url || category.seoUrl || category.slug || undefined,
+  };
+};
+
 export default function DynamicLeadWizardModal() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [isResolvingCategory, setIsResolvingCategory] = useState(false);
   const [categoryResolutionError, setCategoryResolutionError] = useState<string | null>(null);
-  const [pendingOpen, setPendingOpen] = useState<LeadWizardEventDetail | null>(null);
 
   const resetWizardState = useCallback(() => {
     setCategoryId(undefined);
@@ -41,29 +62,11 @@ export default function DynamicLeadWizardModal() {
   }, []);
 
   const handleOpenRequest = useCallback((detail: LeadWizardEventDetail) => {
-    if (authLoading) {
-      setPendingOpen(detail);
-      return;
-    }
-
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
-      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
-      openSignupGate({
-        source: 'dynamic_lead_wizard',
-        returnTo: buildReturnTo(pathname, search),
-        title: 'Crie sua conta para continuar seu orçamento',
-        description: 'Desbloqueie o formulário completo e siga com a empresa mais aderente ao seu projeto.',
-      });
-      return;
-    }
-
-    setPendingOpen(null);
     resetWizardState();
     setCategoryId(detail.categoryId);
     setPreferredCompanyId(detail.preferredCompanyId);
     setOpen(true);
-  }, [authLoading, isAuthenticated, resetWizardState]);
+  }, [resetWizardState]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -84,13 +87,6 @@ export default function DynamicLeadWizardModal() {
   };
 
   useEffect(() => {
-    if (authLoading || !pendingOpen) return;
-    const detail = pendingOpen;
-    setPendingOpen(null);
-    handleOpenRequest(detail);
-  }, [authLoading, handleOpenRequest, pendingOpen]);
-
-  useEffect(() => {
     if (!open || categoryId || !preferredCompanyId) return;
 
     let cancelled = false;
@@ -100,23 +96,23 @@ export default function DynamicLeadWizardModal() {
       setCategoryResolutionError(null);
 
       try {
-        const company = await companiesApiSafe.getById(preferredCompanyId);
+        const company = await companiesApiSafe.getById(preferredCompanyId) as CompanyCategorySource | null;
         if (cancelled) return;
         if (!company) {
           setCategoryResolutionError('Nao foi possivel identificar a empresa.');
           return;
         }
 
-        const categories = Array.isArray((company as any)?.categories)
-          ? (company as any).categories
-              .map((category: any) => ({
-                id: Number(category?.id),
-                name: category?.name,
-                seo_url: category?.seo_url || category?.seoUrl || category?.slug,
-              }))
-              .filter((c: CategoryOption) => Number.isFinite(c.id))
+        const categories = Array.isArray(company.categories)
+          ? company.categories
+              .map(normalizeCategoryOption)
+              .filter((category): category is CategoryOption => Boolean(category))
           : [];
-        const inferredCategoryId = resolveWizardCategoryId(company as any);
+        const inferredCategoryId = resolveWizardCategoryId({
+          category_id: company.category_id,
+          category_info: company.category_info,
+          categories,
+        });
 
         setCategoryOptions(categories);
 
@@ -127,7 +123,7 @@ export default function DynamicLeadWizardModal() {
         } else if (categories.length === 0) {
           setCategoryResolutionError('Nao foi possivel identificar uma categoria para esta empresa.');
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setCategoryResolutionError('Nao foi possivel carregar as categorias desta empresa.');
         }

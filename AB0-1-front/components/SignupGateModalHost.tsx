@@ -44,19 +44,19 @@ const DEFAULT_COPY: Record<SignupGateSource, Pick<SignupGateConfig, 'title' | 'd
     description: 'Libere telefone, e-mail e outros canais de contato desta empresa.',
   },
   quote_wizard: {
-    title: 'Crie sua conta para continuar seu orçamento',
+    title: 'Quer salvar seu orçamento?',
     description:
-      'Desbloqueie o formulário de orçamento, salve sua solicitação e volte exatamente ao ponto em que estava.',
+      'Voce pode preencher a solicitacao agora. Criar conta ajuda a acompanhar respostas e historico depois.',
   },
   quick_lead: {
-    title: 'Crie sua conta para continuar sua solicitação',
+    title: 'Quer acompanhar sua solicitacao?',
     description:
-      'Desbloqueie o pedido rápido, mantenha seus dados vinculados e siga sem perder o contexto.',
+      'O pedido pode seguir pelo formulario. A conta fica para salvar dados e acompanhar os retornos.',
   },
   dynamic_lead_wizard: {
-    title: 'Crie sua conta para continuar seu orçamento',
+    title: 'Quer acompanhar seu orçamento?',
     description:
-      'Desbloqueie o formulário completo e siga com a empresa mais aderente ao seu projeto.',
+      'Voce pode preencher o formulario agora e usar a conta depois para acompanhar empresas e propostas.',
   },
   direct_chat: {
     title: 'Crie sua conta para falar com a empresa',
@@ -77,6 +77,46 @@ const DEFAULT_COPY: Record<SignupGateSource, Pick<SignupGateConfig, 'title' | 'd
     description: 'Desbloqueie mais detalhes e volte exatamente para o ponto em que estava.',
   },
 };
+
+const DISMISSED_SIGNUP_GATES_KEY = 'avalia_solar_dismissed_signup_gates_v1';
+
+function signupGateKey(config: Pick<SignupGateConfig, 'source' | 'returnTo'>): string {
+  const path = (config.returnTo || '/').split('?')[0] || '/';
+  return `${config.source}:${path}`;
+}
+
+function readDismissedSignupGates(): string[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const rawValue = window.sessionStorage.getItem(DISMISSED_SIGNUP_GATES_KEY);
+    const parsedValue = rawValue ? JSON.parse(rawValue) : [];
+    return Array.isArray(parsedValue)
+      ? parsedValue.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function wasSignupGateDismissed(config: SignupGateConfig): boolean {
+  return readDismissedSignupGates().includes(signupGateKey(config));
+}
+
+function rememberSignupGateDismissed(config: SignupGateConfig): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const dismissedGates = new Set(readDismissedSignupGates());
+    dismissedGates.add(signupGateKey(config));
+    window.sessionStorage.setItem(
+      DISMISSED_SIGNUP_GATES_KEY,
+      JSON.stringify(Array.from(dismissedGates).slice(-50))
+    );
+  } catch {
+    // Nao bloqueia a navegacao se storage estiver indisponivel.
+  }
+}
 
 export default function SignupGateModalHost() {
   const router = useRouter();
@@ -99,13 +139,15 @@ export default function SignupGateModalHost() {
 
       const copy = DEFAULT_COPY[detail.source] || DEFAULT_COPY.manual;
 
-      return {
+      const nextConfig = {
         source: detail.source,
         returnTo: detail.returnTo || currentReturnTo,
         title: detail.title || copy.title,
         description: detail.description || copy.description,
         comparisonCount: detail.comparisonCount,
       };
+
+      return wasSignupGateDismissed(nextConfig) ? null : nextConfig;
     },
     [authLoading, currentReturnTo, isAuthenticated, suppressed]
   );
@@ -174,9 +216,24 @@ export default function SignupGateModalHost() {
     suppressed,
   ]);
 
+  const handleDismiss = useCallback(() => {
+    if (!config) return;
+
+    rememberSignupGateDismissed(config);
+    track('signup_gate_dismissed', {
+      source: config.source,
+      return_to: config.returnTo,
+      pathname,
+      comparison_count: config.comparisonCount ?? count,
+    });
+
+    setConfig(null);
+  }, [config, count, pathname]);
+
   const handlePrimary = useCallback(() => {
     if (!config) return;
 
+    rememberSignupGateDismissed(config);
     track('signup_gate_primary_clicked', {
       source: config.source,
       return_to: config.returnTo,
@@ -191,6 +248,7 @@ export default function SignupGateModalHost() {
   const handleSecondary = useCallback(() => {
     if (!config) return;
 
+    rememberSignupGateDismissed(config);
     track('signup_gate_secondary_clicked', {
       source: config.source,
       return_to: config.returnTo,
@@ -207,7 +265,7 @@ export default function SignupGateModalHost() {
   return (
     <IdentityBridgeModal
       isOpen={Boolean(config)}
-      onClose={() => setConfig(null)}
+      onClose={handleDismiss}
       onLogin={handlePrimary}
       onSecondaryAction={handleSecondary}
       title={config.title}
@@ -215,7 +273,7 @@ export default function SignupGateModalHost() {
       primaryActionLabel="Criar conta grátis"
       secondaryActionLabel="Já tenho conta"
       showSecondaryAction
-      canDismiss={false}
+      canDismiss
       trackAnalytics={false}
     />
   );

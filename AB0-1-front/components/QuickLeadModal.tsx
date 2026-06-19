@@ -7,10 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { useAuth } from '@/contexts/AuthContext';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
-import { buildReturnTo, isAuthRoute, openSignupGate } from '@/lib/signup-gate';
 import { Zap, ShieldCheck, Clock, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
 
 type QuickLeadOpenDetail = {
@@ -19,11 +17,9 @@ type QuickLeadOpenDetail = {
 };
 
 export default function QuickLeadModal() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1); // 1: Form, 2: OTP, 3: Success
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
-  const [pendingOpen, setPendingOpen] = useState<QuickLeadOpenDetail | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<number | null>(null);
@@ -64,29 +60,11 @@ export default function QuickLeadModal() {
   }, []);
 
   const handleOpenRequest = useCallback((detail: QuickLeadOpenDetail) => {
-    if (authLoading) {
-      setPendingOpen(detail);
-      return;
-    }
-
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    if (pathname && !isAuthRoute(pathname) && !isAuthenticated) {
-      const search = typeof window !== 'undefined' ? window.location.search.slice(1) : null;
-      openSignupGate({
-        source: 'quick_lead',
-        returnTo: buildReturnTo(pathname, search),
-        title: 'Crie sua conta para continuar sua solicitação',
-        description: 'Desbloqueie o pedido rápido, mantenha seus dados vinculados e siga sem perder o contexto.',
-      });
-      return;
-    }
-
-    setPendingOpen(null);
     resetQuickLead();
     setPreferredCompanyId(detail.preferredCompanyId);
     setOpen(true);
     track('Quick Lead Opened', { source: detail.source });
-  }, [authLoading, isAuthenticated, resetQuickLead]);
+  }, [resetQuickLead]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -104,13 +82,6 @@ export default function QuickLeadModal() {
     }, 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
-
-  useEffect(() => {
-    if (authLoading || !pendingOpen) return;
-    const detail = pendingOpen;
-    setPendingOpen(null);
-    handleOpenRequest(detail);
-  }, [authLoading, handleOpenRequest, pendingOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +129,7 @@ export default function QuickLeadModal() {
       setResendCooldown(60);
       setStep(2);
       track('Quick Lead Created', { lead_id: response.lead_id });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getWizardErrorMessage(err, 'Erro ao enviar solicitação.'));
     } finally {
       setSubmitting(false);
@@ -178,8 +149,8 @@ export default function QuickLeadModal() {
       await leadsWizardApi.verifyEmailCode(leadId, otpCode);
       setStep(3);
       track('Quick Lead Verified', { lead_id: leadId });
-    } catch (err: any) {
-      setError(err?.message || 'Código inválido.');
+    } catch (err: unknown) {
+      setError(getWizardErrorMessage(err, 'Código inválido.'));
     } finally {
       setSubmitting(false);
     }
@@ -191,8 +162,8 @@ export default function QuickLeadModal() {
     try {
       await leadsWizardApi.resendEmailCode(leadId);
       setResendCooldown(60);
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao reenviar.');
+    } catch (err: unknown) {
+      setError(getWizardErrorMessage(err, 'Erro ao reenviar.'));
     } finally {
       setSubmitting(false);
     }
@@ -348,8 +319,16 @@ const normalizeFieldMessage = (message: string) => {
   return message;
 };
 
-const getWizardErrorMessage = (error: any, fallback: string) => {
-  const fields = error?.details?.fields;
+type WizardApiError = {
+  message?: string;
+  details?: {
+    fields?: Record<string, unknown>;
+  };
+};
+
+const getWizardErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as WizardApiError;
+  const fields = apiError.details?.fields;
   if (fields && typeof fields === 'object') {
     const [field, messages] = Object.entries(fields)[0] || [];
     if (field) {
@@ -361,8 +340,8 @@ const getWizardErrorMessage = (error: any, fallback: string) => {
     }
   }
 
-  if (typeof error?.message === 'string' && !error.message.includes('validation_failed')) {
-    return error.message;
+  if (typeof apiError.message === 'string' && !apiError.message.includes('validation_failed')) {
+    return apiError.message;
   }
 
   return fallback;
