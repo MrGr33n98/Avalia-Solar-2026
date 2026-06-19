@@ -2,7 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { getFullImageUrl } from '@/utils/image';
-import { ChevronRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface Subcategory {
@@ -74,7 +74,7 @@ export default function CategoryHero({
           <span className="font-bold text-slate-950">{name}</span>
         </nav>
 
-        <div className="relative overflow-hidden rounded-none border border-slate-200 bg-slate-950 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.45)]">
+        <div className="relative h-16 overflow-hidden rounded-none border border-slate-200 bg-slate-950 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.45)] sm:h-20 md:h-24 lg:h-24">
           <div className="absolute inset-0">
             {visualUrl ? (
               <OptimizedImage
@@ -92,39 +92,18 @@ export default function CategoryHero({
             )}
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/92 via-slate-950/76 to-slate-950/28" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/58 via-black/18 to-black/8" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/22 via-transparent to-slate-950/10" />
+        </div>
 
-          <div className="relative z-10 flex h-28 flex-col items-center justify-center gap-1.5 px-4 py-3 text-center sm:h-32 sm:gap-2 sm:px-6 md:h-36 lg:h-40">
-            <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1 bg-amber-400 px-2 py-0.5 text-[9px] font-black uppercase tracking-tight text-slate-950 sm:px-2.5 sm:py-1 sm:text-[10px]">
-                <Sparkles className="h-3 w-3" />
-                Guia {new Date().getFullYear()}
-              </span>
-              <span className="inline-flex bg-amber-400 px-2 py-0.5 text-[9px] font-black uppercase tracking-tight text-slate-950 sm:px-2.5 sm:py-1 sm:text-[10px]">
-                Categoria estratégica
-              </span>
-            </div>
-
-            <h1 className="line-clamp-2 max-w-3xl text-[1.12rem] font-black uppercase leading-tight text-white drop-shadow-md sm:text-[1.35rem] md:text-[1.65rem] lg:text-[1.9rem]">
+        <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-5">
+          <div className="max-w-[46rem]">
+            <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
               {name}
             </h1>
 
-            <p className="hidden max-w-[34rem] text-xs font-medium leading-snug text-slate-100 drop-shadow-sm sm:line-clamp-1 sm:block md:text-sm">
+            <p className="mt-1.5 line-clamp-2 max-w-[38rem] text-sm font-medium leading-relaxed text-slate-600 md:text-[15px]">
               {heroDescription}
             </p>
-
-            <div className="hidden items-center gap-2 bg-white/10 px-2.5 py-1 text-white shadow-sm backdrop-blur-md md:inline-flex">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center bg-emerald-500 text-white">
-                <ShieldCheck className="h-4 w-4" />
-              </span>
-              <div className="text-left leading-tight">
-                <p className="text-[11px] font-black">Empresas verificadas</p>
-                <p className="text-[10px] font-medium text-slate-200">
-                  Qualidade e reputação comprovadas
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
