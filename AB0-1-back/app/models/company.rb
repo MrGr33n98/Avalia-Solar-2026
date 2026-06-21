@@ -1084,6 +1084,7 @@ class Company < ApplicationRecord
       overrides['social_proof'] = true if respond_to?(:social_proof_enabled) && social_proof_enabled
       overrides['financing_simulation'] = true if respond_to?(:financing_tab_visible) && financing_tab_visible
       overrides['media_upload'] = true if featured? || verified?
+      overrides['p2p_chat'] = true if respond_to?(:p2p_chat_enabled) && p2p_chat_enabled
       overrides['intent_scores'] = true if respond_to?(:intent_pro?) && intent_pro?
       overrides['webhooks'] = true if respond_to?(:intent_enterprise?) && intent_enterprise?
     end

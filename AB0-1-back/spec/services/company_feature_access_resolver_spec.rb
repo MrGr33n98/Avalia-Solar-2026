@@ -24,6 +24,18 @@ RSpec.describe CompanyFeatureAccessResolver, type: :service do
           'value' => false
         )
       end
+
+      it 'allows admins to manually enable direct chat through the company toggle' do
+        company.update!(p2p_chat_enabled: true)
+
+        access = described_class.call(company: company)
+
+        expect(access['p2p_chat']).to include(
+          'state' => 'enabled',
+          'value' => true,
+          'reason' => 'included_in_plan'
+        )
+      end
     end
 
     context 'for an enterprise company' do
