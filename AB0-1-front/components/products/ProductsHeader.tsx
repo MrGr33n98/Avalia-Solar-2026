@@ -1,7 +1,10 @@
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ShoppingBag } from "lucide-react"
+
+const PRODUCT_PAGE_BANNER = "/images/banner-avalia-solar-product-page.png"
 
 interface ProductsHeaderProps {
   totalProducts: number
@@ -31,12 +34,21 @@ export function ProductsHeader({
 
   return (
     <div className="space-y-6 mb-8">
-      <div className="relative overflow-hidden rounded-2xl bg-white p-6 md:p-10 border border-slate-100 shadow-sm">
-        <div className="flex-1 space-y-3 max-w-2xl text-left">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <Image
+          src={PRODUCT_PAGE_BANNER}
+          alt="Produtos do marketplace Avalia Solar"
+          width={2804}
+          height={561}
+          priority
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1200px"
+          className="h-auto w-full object-cover"
+        />
+        <div className="sr-only">
+          <h1>
             Produtos do marketplace Avalia Solar
           </h1>
-          <p className="text-base text-slate-600 leading-relaxed">
+          <p>
             Compare equipamentos cadastrados por fornecedores reais e solicite orientação para escolher a melhor solução para seu projeto.
           </p>
         </div>
