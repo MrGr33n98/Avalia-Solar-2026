@@ -13,12 +13,14 @@ default: &default
 development:
   <<: *default
   database: <%= ENV.fetch("POSTGRES_DB") { ENV.fetch("DB_NAME", "ab0_development") } %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD") { "postgres" } %>
+  username: postgres
+  password: postgres
 
 test:
   <<: *default
   database: <%= ENV.fetch("POSTGRES_TEST_DB") { ENV.fetch("DB_TEST_NAME", "avalia_solar_test") } %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD") { "postgres" } %>
+  username: postgres
+  password: postgres
 
 production:
   <<: *default
