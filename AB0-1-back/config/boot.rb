@@ -6,4 +6,11 @@ require "bootsnap/setup" # Speed up boot time by caching expensive operations.
 
 # Load .env early to check Redis configuration
 require 'dotenv'
-Dotenv.load('.env.development', '.env')
+backend_root = File.expand_path('..', __dir__)
+workspace_root = File.expand_path('..', backend_root)
+
+Dotenv.load(
+  File.join(backend_root, '.env.development'),
+  File.join(backend_root, '.env'),
+  File.join(workspace_root, '.env')
+)

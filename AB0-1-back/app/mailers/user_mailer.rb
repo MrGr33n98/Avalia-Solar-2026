@@ -1,5 +1,5 @@
 class UserMailer < Devise::Mailer
-  default from: ENV.fetch('MAILER_FROM_EMAIL', 'noreply@ab0-1.com')
+  default from: ENV.fetch('MAILER_FROM_EMAIL', 'noreply@avaliasolar.com.br')
   layout 'mailer'
 
   def approval_email(user)

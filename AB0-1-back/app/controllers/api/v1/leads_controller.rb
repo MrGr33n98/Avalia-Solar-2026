@@ -8,6 +8,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
   IDENTITY_KEYS = %w[anonymous_id session_id].freeze
+  EmailDeliveryFailed = Class.new(StandardError)
 
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
   before_action :authenticate_api_user, only: %i[index show update destroy mine]
@@ -165,6 +166,12 @@ class Api::V1::LeadsController < Api::V1::BaseController
     else
       render json: { error: 'validation_failed', fields: result[:errors] }, status: :unprocessable_entity
     end
+  rescue EmailDeliveryFailed => e
+    Rails.logger.error("Leads wizard_create email delivery error: #{e.message}")
+    render json: {
+      error: 'Nao conseguimos enviar o codigo de verificacao. Tente novamente em instantes.',
+      code: 'EMAIL_DELIVERY_FAILED'
+    }, status: :service_unavailable
   rescue StandardError => e
     Rails.logger.error("Leads wizard_create critical error: #{e.class} - #{e.message}\n#{e.backtrace.first(5).join("\n")}")
     render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
@@ -188,6 +195,12 @@ class Api::V1::LeadsController < Api::V1::BaseController
       verification_channel: 'email',
       email_hint: mask_email(@lead.email)
     }, status: :ok
+  rescue EmailDeliveryFailed => e
+    Rails.logger.error("Leads send_otp email delivery error: #{e.message}")
+    render json: {
+      error: 'Nao conseguimos reenviar o codigo de verificacao. Tente novamente em instantes.',
+      code: 'EMAIL_DELIVERY_FAILED'
+    }, status: :service_unavailable
   rescue StandardError => e
     Rails.logger.error("Leads send_otp error: #{e.message}")
     render json: { error: 'Unable to send verification email' }, status: :internal_server_error
@@ -473,7 +486,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def deliver_otp_email!(lead, code)
     raise ArgumentError, 'Lead e-mail is required for verification' if lead.email.blank?
+    if ActionMailer::Base.delivery_method.to_sym == :test && !Rails.env.test?
+      raise 'E-mail delivery is disabled because ActionMailer is using the test delivery method'
+    end
+
     LeadVerificationMailer.verification_code(lead.id, code).deliver_now
+  rescue StandardError => e
+    Rails.logger.error("OTP e-mail delivery failed for lead #{lead.id}: #{e.class} - #{e.message}")
+    raise EmailDeliveryFailed, e.message
   end
 
   def mask_email(email)
