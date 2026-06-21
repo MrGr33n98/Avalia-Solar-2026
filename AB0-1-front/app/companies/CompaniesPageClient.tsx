@@ -49,6 +49,11 @@ export function CompaniesContent({
     title: 'Empresas de Energia Solar - Avalia Solar',
   });
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -442,6 +447,17 @@ export function CompaniesContent({
     );
   }
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50">
       {showMobileLocationGate && (
@@ -573,6 +589,7 @@ export function CompaniesContent({
                       <div className="h-[600px] w-full rounded-2xl shadow-sm border border-slate-200">
                         <SearchMapPanel
                           companies={mapCompanies}
+                          className="h-full"
                           center={
                             filters.lat && filters.lng
                               ? { lat: filters.lat, lng: filters.lng }
