@@ -1,10 +1,7 @@
-import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, ShoppingBag } from "lucide-react"
-
-const PRODUCT_PAGE_BANNER = "/images/banner-avalia-solar-product-page.png"
+import { MapPin, Search, X } from "lucide-react"
 
 interface ProductsHeaderProps {
   totalProducts: number
@@ -18,10 +15,10 @@ export function ProductsHeader({
   totalProducts, 
   searchQuery, 
   onSearchChange,
-  onClearFilters,
   selectedCategory = "Todas as categorias"
 }: ProductsHeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery)
+  const [locationQuery, setLocationQuery] = useState("")
 
   // Sync local search state with prop when prop changes
   useEffect(() => {
@@ -29,79 +26,92 @@ export function ProductsHeader({
   }, [searchQuery])
 
   const handleSearchSubmit = () => {
-    onSearchChange(localSearch)
+    onSearchChange(localSearch.trim())
   }
 
+  const handleClearSearch = () => {
+    setLocalSearch("")
+    onSearchChange("")
+  }
+
+  const resultTerm = localSearch.trim() || searchQuery.trim()
+  const resultLabel = totalProducts === 1 ? "resultado" : "resultados"
+  const categoryLabel =
+    selectedCategory && selectedCategory !== "Todas as categorias"
+      ? selectedCategory
+      : null
+
   return (
-    <div className="space-y-6 mb-8">
-      <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <Image
-          src={PRODUCT_PAGE_BANNER}
-          alt="Produtos do marketplace Avalia Solar"
-          width={2804}
-          height={561}
-          priority
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1200px"
-          className="h-auto w-full object-cover"
-        />
-        <div className="sr-only">
-          <h1>
-            Produtos do marketplace Avalia Solar
-          </h1>
-          <p>
-            Compare equipamentos cadastrados por fornecedores reais e solicite orientação para escolher a melhor solução para seu projeto.
-          </p>
-        </div>
-      </div>
+    <section className="relative isolate overflow-hidden border-b border-[#08284a] bg-[#061b33] text-white">
+      <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(135deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="absolute -left-20 top-8 h-56 w-56 rotate-45 border border-white/10" />
+      <div className="absolute right-10 top-10 h-44 w-44 rotate-45 border border-white/10" />
+      <div className="relative mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 md:py-16">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+          Encontre a empresa certa para você.
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-200 md:text-lg">
+          Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.
+        </p>
 
-      {/* Search Bar Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 flex flex-col md:flex-row items-stretch md:items-center gap-3">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <Input
-            placeholder="Buscar produto, marca ou modelo..."
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-            className="pl-10 h-12 border-none focus-visible:ring-0 text-slate-700 placeholder:text-slate-400 text-base shadow-none bg-transparent"
-          />
-        </div>
-
-        {/* Action Button */}
-        <Button onClick={handleSearchSubmit} className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm">
-          Buscar
-        </Button>
-
-        {/* Divider */}
-        <div className="hidden md:block w-[1px] h-8 bg-slate-200"></div>
-
-        {/* Results Counter / Info */}
-        <div className="flex items-center justify-between md:justify-start gap-4 px-3 py-1">
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="font-bold text-slate-900 text-sm whitespace-nowrap">
-                {totalProducts} {totalProducts === 1 ? 'produto encontrado' : 'produtos encontrados'}
-              </span>
-              <span className="text-xs text-slate-500 whitespace-nowrap">
-                {selectedCategory}
-              </span>
-            </div>
+        <div className="mx-auto mt-8 grid max-w-4xl overflow-hidden rounded-lg border border-white/15 bg-white text-left shadow-[0_22px_55px_rgba(0,16,40,0.34)] md:grid-cols-[minmax(0,1fr)_280px_128px]">
+          <div className="relative flex h-14 items-center border-b border-slate-200 px-4 md:border-b-0 md:border-r">
+            <Search className="h-5 w-5 flex-shrink-0 text-slate-500" />
+            <Input
+              aria-label="Buscar produto, marca ou modelo"
+              placeholder="Buscar produto, marca ou modelo..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+              className="h-full border-none bg-transparent pl-3 pr-9 text-base text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+            {localSearch && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-          
-          {(searchQuery || selectedCategory !== "all") && (
-            <button
-              onClick={onClearFilters}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer whitespace-nowrap"
-            >
-              Limpar filtros
-            </button>
-          )}
+
+          <div className="relative flex h-14 items-center border-b border-slate-200 px-4 md:border-b-0 md:border-r">
+            <MapPin className="h-5 w-5 flex-shrink-0 text-slate-500" />
+            <Input
+              aria-label="Buscar por localização"
+              placeholder="CEP ou Cidade..."
+              value={locationQuery}
+              onChange={(e) => setLocationQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+              className="h-full border-none bg-transparent pl-3 text-base text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </div>
+
+          <Button
+            onClick={handleSearchSubmit}
+            className="h-14 rounded-none bg-[#ffbd2e] px-8 text-sm font-semibold text-[#061b33] shadow-none hover:bg-[#ffc84d]"
+          >
+            Buscar
+          </Button>
         </div>
+
+        <p className="mt-7 text-sm text-slate-200">
+          {totalProducts} {resultLabel}
+          {resultTerm ? (
+            <>
+              {" "}para <span className="font-semibold text-[#ffbd2e]">&quot;{resultTerm}&quot;</span>
+            </>
+          ) : categoryLabel ? (
+            <>
+              {" "}em <span className="font-semibold text-[#ffbd2e]">{categoryLabel}</span>
+            </>
+          ) : (
+            " encontrados"
+          )}
+        </p>
       </div>
-    </div>
+    </section>
   )
 }

@@ -4,9 +4,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Building2, Eye, MessageSquare, ShieldCheck, Tag, Star } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowRight, Building2, Eye, MessageSquare, ShieldCheck, Tag, Star } from 'lucide-react';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
@@ -341,139 +339,96 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
 
   return (
     <>
-      <article itemScope itemType="https://schema.org/Product" className="h-full group relative text-left">
-        <Card ref={cardRef} className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col overflow-hidden border-slate-200 hover:border-blue-500/20 bg-white">
+      <article itemScope itemType="https://schema.org/Product" className="group relative h-full text-left">
+        <Card ref={cardRef} className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
           {/* Image Section */}
           <Link href={friendlyUrl} aria-label={`Ver detalhes de ${product.name}`} className="block relative cursor-pointer">
-            <div className="relative w-full aspect-[4/3] bg-slate-50 overflow-hidden group-hover:bg-slate-100/30 transition-colors">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-white transition-colors group-hover:bg-slate-50/40">
               {displayImage ? (
                 <Image
                   src={displayImage}
                   alt={product.name}
                   fill
-                  className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                  className="object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]"
                   onError={() => setImageError(true)}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   loading="lazy"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs font-semibold text-slate-400">
+                <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs font-medium text-slate-400">
                   Imagem indisponível
                 </div>
               )}
               
               {/* Badges Overlay */}
-              <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+              <div className="absolute left-3 top-3 z-10 flex flex-col gap-1">
                 {product.featured && (
-                  <Badge className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 border-none shadow-sm">
+                  <Badge className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 shadow-none">
                     Destaque
                   </Badge>
                 )}
                 {product.company?.verified && (
-                  <Badge className="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 border-none shadow-sm">
+                  <Badge className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 shadow-none">
                     Verificado
                   </Badge>
                 )}
-              </div>
-
-              {/* Status Badge */}
-              <div className="absolute top-2 right-2 z-10">
-                <Badge variant={statusVariant} className="shadow-sm opacity-90 backdrop-blur-sm text-[10px]">
-                  {statusLabel}
-                </Badge>
-              </div>
-
-              {/* Quick View Button */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/5 pointer-events-none">
-                 <div className="pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    size="sm" 
-                                    variant="secondary" 
-                                    className="shadow-lg bg-white hover:bg-slate-50 text-slate-900 hover:text-blue-600 gap-2 border border-slate-150"
-                                    onClick={handleQuickView}
-                                >
-                                    <Eye className="w-4 h-4" />
-                                    Espiar
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Visualização rápida</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                 </div>
               </div>
             </div>
           </Link>
 
           {/* Content Section */}
-          <CardContent className="flex-grow p-4 flex flex-col gap-2.5">
+          <CardContent className="flex flex-grow flex-col gap-2.5 p-4">
               {/* Category */}
-              <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                  <div className="flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="uppercase tracking-wider">
-                        {categoryName}
-                    </span>
-                  </div>
+              <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
+                  <span className="uppercase tracking-wide text-blue-700">
+                    {categoryName}
+                  </span>
                   {/* Rating inline */}
                   {ratingAvg !== undefined && ratingAvg !== null ? (
                     <div className="flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="font-bold text-slate-700">{ratingAvg.toFixed(1)}</span>
+                      <Star className="h-3 w-3 fill-[#ffbd2e] text-[#ffbd2e]" />
+                      <span className="font-semibold text-slate-700">{ratingAvg.toFixed(1)}</span>
                     </div>
                   ) : null}
               </div>
 
               {/* Title */}
-              <Link href={friendlyUrl} className="group-hover:text-blue-600 transition-colors block">
-                  <h2 itemProp="name" className="text-base font-bold text-slate-800 leading-snug line-clamp-2 min-h-[2.5rem]">
+              <Link href={friendlyUrl} className="block transition-colors group-hover:text-blue-700">
+                  <h2 itemProp="name" className="line-clamp-2 min-h-[2.5rem] text-base font-semibold leading-snug text-slate-900">
                       {product.name}
                   </h2>
               </Link>
 
               {/* Company Info */}
-              <div className="flex items-center gap-2 mt-1 py-1.5 px-2 bg-slate-50 rounded-md border border-slate-100 group-hover:border-slate-200 transition-colors">
-                  <div className="bg-white p-1 rounded-full border shadow-sm">
-                    <Building2 className="w-3 h-3 text-blue-500" />
-                  </div>
-                  <div className="flex-1 min-w-0 leading-none text-left">
-                      <span className="text-xs font-bold text-slate-700 truncate block">{companyName}</span>
-                      <span className="text-[10px] text-slate-400 flex items-center gap-0.5 mt-0.5">
-                        Fornecedor {product.company?.verified && <ShieldCheck className="w-3 h-3 text-blue-500" />}
-                      </span>
-                  </div>
+              <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-600">
+                <span className="truncate">{companyName}</span>
+                {product.company?.verified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-blue-600" />}
               </div>
 
-              <Separator className="my-1" />
-              
               {/* Price block */}
-              <div className="flex flex-col" itemProp="offers" itemScope itemType="https://schema.org/Offer">
-                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Preço Sugerido</span>
+              <div className="mt-auto flex flex-col pt-2" itemProp="offers" itemScope itemType="https://schema.org/Offer">
                 {priceAvailable ? (
                   <>
                     <div className="flex items-baseline gap-1">
                         <meta itemProp="priceCurrency" content="BRL" />
-                        <span itemProp="price" className="text-lg font-black text-blue-600">
+                        <span itemProp="price" className="text-lg font-semibold text-blue-700">
                           R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                     {installments && <span className="text-[10px] text-slate-500 text-left">12x de R$ {installments} sem juros</span>}
                   </>
                 ) : (
-                  <span className="text-lg font-black text-blue-600">Consultar preço</span>
+                  <span className="text-lg font-semibold text-blue-700">Consultar preço</span>
                 )}
               </div>
           </CardContent>
 
           {/* Footer Section - CTAs */}
-          <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2 mt-auto">
-            <Button asChild variant="outline" size="sm" className="w-full text-xs h-10 border-slate-200 text-slate-600 hover:text-slate-800 font-semibold bg-white hover:bg-slate-50">
+          <CardFooter className="mt-auto p-4 pt-0">
+            <Button asChild variant="outline" size="sm" className="h-10 w-full rounded-lg border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900">
               <Link 
                 href={friendlyUrl}
+                className="gap-2"
                 onClick={() => track('product_click', {
                   product_id: product.id,
                   product_name: product.name,
@@ -482,17 +437,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                 })}
               >
                 Detalhes
-              </Link>
-            </Button>
-            <Button 
-              size="sm" 
-              className="w-full text-xs h-10 gap-1.5 shadow-sm bg-blue-600 hover:bg-blue-700 text-white font-bold"
-              onClick={handleBudgetClick}
-              asChild
-            >
-              <Link href={friendlyUrl}>
-                <MessageSquare className="w-3.5 h-3.5" />
-                Orçamento
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           </CardFooter>

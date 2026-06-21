@@ -6,17 +6,15 @@ import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
-import { FeaturedCompaniesStrip } from '@/components/products/FeaturedCompaniesStrip';
 import { Button } from '@/components/ui/button';
 import { Filter, Building2, ChevronRight, RefreshCw } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
-import { useBannersQuery } from '@/hooks/useBannersQuery';
-import { BannerContainer } from '@/components/BannerContainer';
 import { track } from '@/lib/analytics/lazy';
 
 function ProductsPageContent() {
@@ -85,22 +83,6 @@ function ProductsPageContent() {
     totalPages
   } = useProducts(hookParams);
 
-  // Buscar banners dinâmicos por categoria ou posição global
-  const { data: topBanners = [] } = useBannersQuery({
-    position: 'products_top',
-    category_id: filters.category !== 'all' ? filters.category : undefined,
-    enabled: true
-  });
-  const visibleTopBanners = useMemo(
-    () => topBanners
-      .filter((banner) => Boolean(banner.image_url))
-      .map((banner) => ({
-        ...banner,
-        image_url: banner.image_url ?? null,
-      })),
-    [topBanners]
-  );
-
   // Telemetria: busca/resultados carregados
   useEffect(() => {
     if (!loading) {
@@ -116,20 +98,6 @@ function ProductsPageContent() {
     filters.category === 'all'
       ? 'Todas as categorias'
       : categoriesMeta.find((category) => String(category.id) === filters.category)?.name || 'Categoria selecionada';
-  const companySummaries = useMemo(() => {
-    return companiesMeta
-      .map((company) => ({
-        name: company.name,
-        slug: company.slug || String(company.id),
-        logo_url: company.logo_url || undefined,
-        productCount: company.products_count,
-        isVerified: company.verified ?? false,
-        rating: company.rating_avg ?? undefined,
-        city: [company.city, company.state].filter(Boolean).join(', ') || undefined,
-      }))
-      .sort((a, b) => b.productCount - a.productCount)
-      .slice(0, 10);
-  }, [companiesMeta]);
 
   // Update max price in filters when data loads
   useEffect(() => {
@@ -227,13 +195,8 @@ function ProductsPageContent() {
     setCurrentPage(1);
   };
 
-  const categoryChips = useMemo(() => [
-    { label: "Todos", value: "all" },
-    ...categoriesMeta.slice(0, 8).map((category) => ({
-      label: category.name,
-      value: String(category.id),
-    })),
-  ], [categoriesMeta]);
+  const formattedTotal = total.toLocaleString('pt-BR');
+  const resultNoun = total === 1 ? 'resultado encontrado' : 'resultados encontrados';
 
   if (error) {
     return (
@@ -248,51 +211,58 @@ function ProductsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <ProductsHeader
-          totalProducts={total}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onClearFilters={clearFilters}
-          selectedCategory={selectedCategoryName}
-        />
+    <div className="min-h-screen bg-[#f4f7fb] pb-20">
+      <ProductsHeader
+        totalProducts={total}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onClearFilters={clearFilters}
+        selectedCategory={selectedCategoryName}
+      />
 
-        {/* Categories Quick Chips */}
-        <div className="mb-6 flex overflow-x-auto whitespace-nowrap scrollbar-none pb-2 gap-2 border-b border-slate-100">
-          {categoryChips.map((chip) => {
-            const isActive = filters.category === chip.value;
-            return (
-              <button
-                key={chip.value}
-                onClick={() => {
-                  handleFilterChange('category', chip.value);
-                  track('quick_filter_click', { filter_id: chip.value });
-                }}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                  isActive 
-                    ? "bg-blue-600 text-white shadow-sm" 
-                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                {chip.label}
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Resultados</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {formattedTotal} {resultNoun}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 text-sm font-medium text-blue-700">
+                Todos
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">{formattedTotal}</span>
               </button>
-            );
-          })}
+              <button className="inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+                Produtos
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{formattedTotal}</span>
+              </button>
+              <Link
+                href={searchQuery ? `/companies?search=${encodeURIComponent(searchQuery)}` : "/companies"}
+                className="inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Empresas
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">0</span>
+              </Link>
+            </div>
+
+            <Select value={filters.sort} onValueChange={(val) => handleFilterChange('sort', val)}>
+              <SelectTrigger className="h-11 w-full rounded-lg border-slate-200 bg-white px-4 text-sm shadow-sm md:w-48">
+                <SelectValue placeholder="Mais relevantes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="relevance">Mais relevantes</SelectItem>
+                <SelectItem value="price_asc">Menor preço</SelectItem>
+                <SelectItem value="price_desc">Maior preço</SelectItem>
+                <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Banner container dinâmico */}
-        {!loading && visibleTopBanners.length > 0 && (
-          <BannerContainer banners={visibleTopBanners} position="products_top" className="mb-6 animate-in fade-in duration-300" />
-        )}
-
-        {/* Featured Companies Strip */}
-        {!loading && companySummaries.length > 0 && paginatedProducts.length > 1 && (
-          <FeaturedCompaniesStrip companies={companySummaries} />
-        )}
-
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
           {/* Mobile Filter Button & Sheet */}
           <div className="lg:hidden mb-4">
             <Sheet>
@@ -315,6 +285,9 @@ function ProductsPageContent() {
                     brands={brandsMeta}
                     maxPrice={maxPrice}
                     onClearFilters={clearFilters}
+                    showSort={false}
+                    totalProducts={total}
+                    companiesCount={0}
                   />
                 </div>
               </SheetContent>
@@ -322,8 +295,8 @@ function ProductsPageContent() {
           </div>
 
           {/* Desktop Sidebar Filters */}
-          <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <aside className="hidden w-64 flex-shrink-0 lg:block">
+            <div className="sticky top-24 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <ProductsFilters 
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -335,6 +308,9 @@ function ProductsPageContent() {
                 brands={brandsMeta}
                 maxPrice={maxPrice}
                 onClearFilters={clearFilters}
+                showSort={false}
+                totalProducts={total}
+                companiesCount={0}
               />
             </div>
           </aside>
@@ -342,10 +318,10 @@ function ProductsPageContent() {
           {/* Product Grid / Main content */}
           <main className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex flex-col space-y-3 bg-white p-4 rounded-xl border">
-                    <Skeleton className="h-[200px] w-full rounded-lg bg-slate-100" />
+                  <div key={i} className="flex flex-col space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+                    <Skeleton className="h-[190px] w-full rounded-lg bg-slate-100" />
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full bg-slate-100" />
                       <Skeleton className="h-4 w-3/4 bg-slate-100" />
@@ -355,7 +331,7 @@ function ProductsPageContent() {
               </div>
             ) : paginatedProducts.length > 0 ? (
               <div className="space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {paginatedProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

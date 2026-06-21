@@ -35,6 +35,9 @@ interface ProductsFiltersProps {
   specFiltersMeta?: ProductSpecFilterMeta[]
   activeSpecFilters?: Record<string, ProductSpecFilterValue>
   onClearFilters: () => void
+  showSort?: boolean
+  totalProducts?: number
+  companiesCount?: number
 }
 
 const formatCurrencyCompact = (value: number) =>
@@ -54,7 +57,10 @@ export function ProductsFilters({
   maxPrice,
   specFiltersMeta = [],
   activeSpecFilters = {},
-  onClearFilters
+  onClearFilters,
+  showSort = true,
+  totalProducts = 0,
+  companiesCount = 0
 }: ProductsFiltersProps) {
   const [techOpen, setTechOpen] = useState(false)
 
@@ -162,11 +168,16 @@ export function ProductsFilters({
   }
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-5 text-left">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-lg text-slate-900">Filtros</h3>
+        <h3 className="text-base font-semibold text-slate-900">Filtros</h3>
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={onClearFilters} className="h-8 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearFilters}
+            className="h-8 px-2 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
             Limpar tudo
           </Button>
         )}
@@ -175,58 +186,118 @@ export function ProductsFilters({
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2">
           {filters.category !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1 cursor-pointer bg-slate-100 text-slate-800 hover:bg-slate-200" onClick={() => onFilterChange('category', 'all')}>
-              {categoryById.get(filters.category)?.name || 'Categoria'} <X className="w-3 h-3 hover:text-red-500" />
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('category', 'all')}>
+              {categoryById.get(filters.category)?.name || 'Categoria'} <X className="h-3 w-3" />
             </Badge>
           )}
           {filters.company !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1 cursor-pointer bg-slate-100 text-slate-800 hover:bg-slate-200" onClick={() => onFilterChange('company', 'all')}>
-              {companyById.get(filters.company)?.name || 'Fornecedor'} <X className="w-3 h-3 hover:text-red-500" />
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('company', 'all')}>
+              {companyById.get(filters.company)?.name || 'Fornecedor'} <X className="h-3 w-3" />
             </Badge>
           )}
           {filters.brand !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1 cursor-pointer bg-slate-100 text-slate-800 hover:bg-slate-200" onClick={() => onFilterChange('brand', 'all')}>
-              {brandById.get(filters.brand)?.name || 'Marca'} <X className="w-3 h-3 hover:text-red-500" />
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('brand', 'all')}>
+              {brandById.get(filters.brand)?.name || 'Marca'} <X className="h-3 w-3" />
             </Badge>
           )}
           {(filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) && (
-            <Badge variant="secondary" className="gap-1 pr-1 cursor-pointer bg-slate-100 text-slate-800 hover:bg-slate-200" onClick={() => onFilterChange('priceRange', [0, maxPrice])}>
-              {formatCurrencyCompact(filters.priceRange[0])} - {formatCurrencyCompact(filters.priceRange[1])} <X className="w-3 h-3 hover:text-red-500" />
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('priceRange', [0, maxPrice])}>
+              {formatCurrencyCompact(filters.priceRange[0])} - {formatCurrencyCompact(filters.priceRange[1])} <X className="h-3 w-3" />
             </Badge>
           )}
           {Object.entries(activeSpecFilters || {}).map(([key, value]) => (
             value !== undefined && value !== null && value !== '' && value !== 'all' ? (
-              <Badge key={key} variant="secondary" className="gap-1 pr-1 cursor-pointer bg-slate-100 text-slate-800 hover:bg-slate-200" onClick={() => onSpecFilterChange?.(key, null)}>
-                {specByKey.get(key)?.label || key}: {Array.isArray(value) ? `${value[0]} - ${value[1]}` : String(value)} <X className="w-3 h-3 hover:text-red-500" />
+              <Badge key={key} variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onSpecFilterChange?.(key, null)}>
+                {specByKey.get(key)?.label || key}: {Array.isArray(value) ? `${value[0]} - ${value[1]}` : String(value)} <X className="h-3 w-3" />
               </Badge>
             ) : null
           ))}
         </div>
       )}
-      
+
+      {showSort && (
+        <>
+          <Separator />
+          <div className="space-y-2">
+            <Label className="font-semibold text-slate-800">Ordenar por</Label>
+            <Select value={filters.sort} onValueChange={(val) => onFilterChange('sort', val)}>
+              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="relevance">Mais relevantes</SelectItem>
+                <SelectItem value="price_asc">Menor preço</SelectItem>
+                <SelectItem value="price_desc">Maior preço</SelectItem>
+                <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+
       <Separator />
 
-      <div className="space-y-2">
-        <Label className="font-semibold text-slate-700">Ordenar por</Label>
-        <Select value={filters.sort} onValueChange={(val) => onFilterChange('sort', val)}>
-          <SelectTrigger className="h-10 bg-slate-50/50 border-slate-200">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="relevance">Mais relevantes</SelectItem>
-            <SelectItem value="price_asc">Menor preço</SelectItem>
-            <SelectItem value="price_desc">Maior preço</SelectItem>
-            <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="space-y-3">
+        <Label className="block text-sm font-semibold text-slate-900">Tipo</Label>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Checkbox id="product-type-products" checked />
+              <Label htmlFor="product-type-products" className="cursor-pointer text-sm font-normal text-slate-600">
+                Produtos
+              </Label>
+            </div>
+            <span className="text-xs text-slate-500">({totalProducts.toLocaleString('pt-BR')})</span>
+          </div>
+          <div className="flex items-center justify-between gap-3 opacity-60">
+            <div className="flex items-center gap-2">
+              <Checkbox id="product-type-companies" disabled />
+              <Label htmlFor="product-type-companies" className="text-sm font-normal text-slate-600">
+                Empresas
+              </Label>
+            </div>
+            <span className="text-xs text-slate-500">({companiesCount.toLocaleString('pt-BR')})</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <Label className="block text-sm font-semibold text-slate-900">Categoria</Label>
+        {categories.length === 0 ? (
+          <div className="py-2 text-xs text-slate-400">Nenhuma categoria de produto ativa.</div>
+        ) : (
+          <div className="max-h-60 space-y-3 overflow-y-auto pr-1">
+            {categories.map((category) => {
+              const value = String(category.id)
+              const isChecked = filters.category === value
+              return (
+                <div key={category.id} className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Checkbox
+                      id={`check-cat-${category.id}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => onFilterChange('category', checked ? value : 'all')}
+                    />
+                    <Label htmlFor={`check-cat-${category.id}`} className="cursor-pointer truncate text-sm font-normal text-slate-600 hover:text-slate-900">
+                      {category.name}
+                    </Label>
+                  </div>
+                  <span className="text-xs text-slate-500">({category.products_count})</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <Separator />
 
       <div className="space-y-2">
-        <Label className="font-semibold text-slate-700">Fornecedor</Label>
+        <Label className="font-semibold text-slate-800">Fornecedor</Label>
         <Select value={filters.company} onValueChange={(val) => onFilterChange('company', val)}>
-          <SelectTrigger className="h-10 bg-slate-50/50 border-slate-200">
+          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
             <SelectValue placeholder="Selecionar" />
           </SelectTrigger>
           <SelectContent>
@@ -244,9 +315,9 @@ export function ProductsFilters({
         <>
           <Separator />
           <div className="space-y-2">
-            <Label className="font-semibold text-slate-700">Marca</Label>
+            <Label className="font-semibold text-slate-800">Marca</Label>
             <Select value={filters.brand} onValueChange={(val) => onFilterChange('brand', val)}>
-              <SelectTrigger className="h-10 bg-slate-50/50 border-slate-200">
+              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent>
@@ -265,8 +336,8 @@ export function ProductsFilters({
       <Separator />
 
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Label className="font-semibold text-slate-700">Faixa de preço</Label>
+        <div className="flex items-center justify-between">
+          <Label className="font-semibold text-slate-800">Faixa de preço</Label>
           <span className="text-xs font-medium text-slate-500">
             {formatCurrencyCompact(filters.priceRange[0])} - {formatCurrencyCompact(filters.priceRange[1])}
           </span>
@@ -284,46 +355,18 @@ export function ProductsFilters({
       <Separator />
 
       <div className="space-y-3">
-        <Label className="font-semibold text-slate-700 block">Tipo de produto</Label>
-        {categories.length === 0 ? (
-          <div className="text-xs text-slate-400 py-2">Nenhuma categoria de produto ativa.</div>
-        ) : (
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {categories.map((category) => {
-              const value = String(category.id)
-              const isChecked = filters.category === value
-              return (
-                <div key={category.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`check-cat-${category.id}`}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => onFilterChange('category', checked ? value : 'all')}
-                  />
-                  <Label htmlFor={`check-cat-${category.id}`} className="text-sm text-slate-600 hover:text-slate-900 cursor-pointer font-normal">
-                    {category.name}
-                  </Label>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
         <button
           onClick={() => setTechOpen(!techOpen)}
-          className="flex w-full items-center justify-between py-2 text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors"
+          className="flex w-full items-center justify-between py-2 text-sm font-semibold text-slate-900 transition-colors hover:text-blue-700"
         >
           <span>{techOpen ? "Ocultar filtros técnicos" : "Mostrar filtros técnicos"}</span>
-          {techOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {techOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
 
         {techOpen && (
-          <div className="space-y-5 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
+          <div className="space-y-5 border-t border-slate-100 pt-2 animate-in fade-in duration-200">
             {specFiltersMeta.length === 0 ? (
-              <div className="text-xs text-slate-400 py-2">Nenhum atributo técnico carregado.</div>
+              <div className="py-2 text-xs text-slate-400">Nenhum atributo técnico carregado.</div>
             ) : (
               specFiltersMeta.map(renderSpecFilter)
             )}
