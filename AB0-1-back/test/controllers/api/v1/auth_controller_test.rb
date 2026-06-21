@@ -17,6 +17,7 @@ module Api
         json_response = JSON.parse(response.body)
         assert_not_nil json_response['user']
         assert_equal @user.email, json_response['user']['email']
+        assert_equal @user.role, json_response['user']['role']
         # Check that token is not in response body but in cookie
         assert_nil json_response['token']
         assert_includes response.headers['Set-Cookie'], 'jwt_token='
