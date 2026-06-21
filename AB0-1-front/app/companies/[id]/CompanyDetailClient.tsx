@@ -30,7 +30,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Company, Product, Review } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { productsApiSafe, reviewsApiSafe } from '@/lib/api-client';
-import { resolveWizardCategoryId } from '@/lib/lead-engine';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
 // GTM Tracking
@@ -305,7 +304,6 @@ export default function CompanyDetailClient({
       (currentCompany as any)?.whatsapp ||
       null
     : null;
-  const wizardCategoryId = resolveWizardCategoryId(currentCompany);
   const scrollPauseMetadata = useMemo(
     () => ({
       source: 'company_profile',
@@ -474,8 +472,6 @@ export default function CompanyDetailClient({
         logoError={logoError}
         setLogoError={setLogoError}
         canRequestQuote={canRequestQuote}
-        ctaEnabled={ctaEnabled}
-        ctaUrl={ctaUrl}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />

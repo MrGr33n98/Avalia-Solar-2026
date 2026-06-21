@@ -42,8 +42,6 @@ interface CompanyProfileShellProps {
   logoError: boolean;
   setLogoError: (error: boolean) => void;
   canRequestQuote: boolean;
-  ctaEnabled: boolean;
-  ctaUrl: string | null;
   activeTab: string;
   onTabChange: (tabId: string) => void;
 }
@@ -62,8 +60,6 @@ export default function CompanyProfileShell({
   logoError,
   setLogoError,
   canRequestQuote,
-  ctaEnabled,
-  ctaUrl,
   activeTab,
   onTabChange,
 }: CompanyProfileShellProps) {
@@ -245,12 +241,7 @@ export default function CompanyProfileShell({
 
             {/* Coluna da Direita (4 Colunas) — Sidebar Premium */}
             <aside className="lg:col-span-4 space-y-6">
-              <SidebarPremium
-                company={company}
-                canRequestQuote={canRequestQuote}
-                ctaEnabled={ctaEnabled}
-                ctaUrl={ctaUrl}
-              />
+              <SidebarPremium company={company} />
             </aside>
           </div>
         </Tabs>
