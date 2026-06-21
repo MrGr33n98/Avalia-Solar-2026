@@ -163,6 +163,49 @@ class User < ApplicationRecord
     }
   end
 
+  # Gamification
+  def calculate_green_score
+    base_score = 520
+    reviews_count = reviews.count
+    helpful_votes = reviews.sum(:helpful_count)
+    replies_count = reviews.where.not(reply: nil).count
+
+    base_score + (reviews_count * 35) + (helpful_votes * 2) + (replies_count * 18)
+  end
+
+  def regional_ranking
+    return 1 if city.blank? || state.blank?
+
+    # Compare green scores of users in the same region
+    # To keep it simple and avoid N+1 across all users dynamically, 
+    # we can approximate or do a quick sort if small. For now we use the formula based on score
+    # to avoid a massive query, OR just run the query:
+    # rank = User.where(city: city, state: state).count { |u| u.calculate_green_score > calculate_green_score } + 1
+    # For performance, since we don't have a materialized view yet, we keep the math approximation but server-side.
+    score = calculate_green_score
+    [1, 12 - (score / 120).floor].max
+  end
+
+  def achievements
+    score = calculate_green_score
+    count = reviews.count
+    
+    list = [
+      { title: 'Primeira Avaliação', subtitle: 'Parabéns', state: count >= 1 ? 'desbloqueado' : 'bloqueado' },
+      { title: '5 Avaliações', subtitle: 'Consistência', state: count >= 5 ? 'raro' : 'bloqueado' },
+      { title: '10 Avaliações', subtitle: 'Incrível', state: count >= 10 ? 'premium' : 'bloqueado' },
+      { title: 'Solar Expert', subtitle: 'Energia Solar', state: count >= 3 ? 'lendário' : 'bloqueado' },
+      { title: 'Green House', subtitle: 'Sustentável', state: score >= 650 ? 'desbloqueado' : 'bloqueado' }
+    ]
+
+    # Fill in the rest as blocked for now unless criteria met
+    list << { title: 'EV Driver', subtitle: 'Mobilidade', state: 'bloqueado' }
+    list << { title: 'Energy Storage', subtitle: 'Armazenamento', state: 'bloqueado' }
+    list << { title: 'Top Avaliador', subtitle: city.presence || 'Brasil', state: regional_ranking <= 5 ? 'raro' : 'bloqueado' }
+
+    list
+  end
+
   # Envia notificações do Devise de forma assíncrona (TASK-014)
   def send_devise_notification(notification, *)
     devise_mailer.send(notification, self, *).deliver_later

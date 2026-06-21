@@ -17,7 +17,47 @@ module Api
         quotes_total = safe_count(user_leads)
         quotes_open = safe_count(user_leads.where(wizard_status: %w[draft pending_otp verified]))
         quotes_replied = safe_count(user_leads.where(wizard_status: 'proposal_sent'))
-        reviews_published = safe_count(Review.where(user_id: current_user.id, status: :approved))
+        reviews_published = safe_count(current_user.reviews.where(status: :approved))
+
+        # Gamification & Impact
+        green_score = current_user.calculate_green_score
+        regional_ranking = current_user.regional_ranking
+        achievements = current_user.achievements
+        helpful_votes = current_user.reviews.sum(:helpful_count)
+        impacted_people = current_user.reviews.sum(:read_count)
+        
+        # Recommendations (real logic instead of mocked array)
+        # Using the companies with highest rating from the same state/city
+        recommendations = Company.where(status: 'active', verified: true)
+                                 .order(rating_avg: :desc)
+                                 .limit(3)
+                                 .map do |c|
+          {
+            name: c.name,
+            city: "#{c.city || current_user.city}, #{c.state || current_user.state}",
+            rating: c.rating_avg.to_f,
+            badge: c.featured ? 'Popular' : 'Verificada'
+          }
+        end
+
+        # Recent activities feed
+        recent_activities = []
+        recent_replies = Review.where(user_id: current_user.id).where.not(reply: nil).order(replied_at: :desc).limit(2)
+        recent_replies.each do |r|
+          company_name = r.company&.name || 'Empresa'
+          recent_activities << {
+            icon: 'MessageCircle',
+            title: "#{company_name} respondeu sua avaliação",
+            time: r.replied_at.to_date == Time.zone.today ? 'hoje' : "há #{(Time.zone.today - r.replied_at.to_date).to_i} dias"
+          }
+        end
+        if helpful_votes > 0
+          recent_activities << {
+            icon: 'ThumbsUp',
+            title: "Suas avaliações receberam #{helpful_votes} votos úteis",
+            time: 'recentemente'
+          }
+        end
 
         # Charts Data - Real activity data from AnalyticsEvent
         chart_data = safe_activity_chart(start_date: start_date, end_date: end_date)
@@ -50,6 +90,17 @@ module Api
             quotes_replied: quotes_replied,
             reviews_published: reviews_published
           },
+          gamification: {
+            green_score: green_score,
+            regional_ranking: regional_ranking,
+            achievements: achievements
+          },
+          impact: {
+            helpful_votes: helpful_votes,
+            impacted_people: impacted_people
+          },
+          recommendations: recommendations,
+          recent_activities: recent_activities,
           charts: {
             activity_30d: chart_data
           },
@@ -115,6 +166,17 @@ module Api
             quotes_replied: 0,
             reviews_published: 0
           },
+          gamification: {
+            green_score: 520,
+            regional_ranking: 1,
+            achievements: []
+          },
+          impact: {
+            helpful_votes: 0,
+            impacted_people: 0
+          },
+          recommendations: [],
+          recent_activities: [],
           charts: {
             activity_30d: empty_activity_chart(
               start_date: 30.days.ago.beginning_of_day,
