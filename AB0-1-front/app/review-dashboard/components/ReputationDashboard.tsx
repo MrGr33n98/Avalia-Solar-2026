@@ -117,26 +117,7 @@ import { toast } from 'sonner';
 import { Lead, Review, User } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-interface ReviewDashboardSummary {
-  kpis?: {
-    estimated_savings?: number;
-    quotes_total: number;
-    quotes_open: number;
-    quotes_replied: number;
-    reviews_published: number;
-  };
-  profile?: {
-    completion_percent?: number;
-  };
-  charts?: {
-    activity_30d?: Array<{
-      date: string;
-      profile_views: number;
-      whatsapp_clicks: number;
-      cta_clicks: number;
-    }>;
-  };
-}
+import { type ReviewDashboardSummary } from '../DashboardLayoutClient';
 
 interface ReputationDashboardProps {
   user: User;
@@ -168,70 +149,6 @@ interface CompanyRow {
   date: string;
   reply?: string;
 }
-
-type DashboardNavItem = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  replies?: boolean;
-  notifications?: boolean;
-};
-
-const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }> = [
-  {
-    title: 'Dashboard',
-    items: [{ label: 'Meu Dashboard', href: '#overview', icon: Home }],
-  },
-  {
-    title: 'Avaliações',
-    items: [
-      { label: 'Minhas Avaliações', href: '#reviews', icon: ClipboardList },
-      { label: 'Empresas Avaliadas', href: '#companies', icon: Building2 },
-      { label: 'Rascunhos', href: '#drafts', icon: FileText },
-      { label: 'Respostas das Empresas', href: '#company-replies', icon: MessageCircle, replies: true },
-    ],
-  },
-  {
-    title: 'Oportunidades',
-    items: [
-      { label: 'Minhas Propostas', href: '#opportunities', icon: Send },
-    ],
-  },
-  {
-    title: 'Jornada Sustentável',
-    items: [
-      { label: 'Meu Green House', href: '#green-house', icon: Leaf },
-      { label: 'Mobilidade Elétrica', href: '#mobility', icon: Car },
-      { label: 'Bateria e Armazenamento', href: '#battery', icon: BatteryCharging },
-      { label: 'Consumo Consciente', href: '#consumption', icon: Recycle },
-    ],
-  },
-  {
-    title: 'Perfil',
-    items: [
-      { label: 'Meu Perfil', href: '/profile', icon: UserRound },
-      { label: 'Conquistas', href: '#achievements', icon: Trophy },
-      { label: 'Reputação', href: '#reputation', icon: Medal },
-      { label: 'Notificações', href: '#notifications', icon: Bell, notifications: true },
-    ],
-  },
-  {
-    title: 'Comunidade',
-    items: [
-      { label: 'Feed', href: '#activity-feed', icon: Network },
-      { label: 'Ranking', href: '#ranking', icon: Award },
-      { label: 'Eventos', href: '#events', icon: CalendarDays },
-    ],
-  },
-];
-
-const bottomNav: DashboardNavItem[] = [
-  { label: 'Dashboard', href: '#overview', icon: Home },
-  { label: 'Avaliações', href: '#reviews', icon: ClipboardList },
-  { label: 'Respostas', href: '#company-replies', icon: MessageCircle, replies: true },
-  { label: 'Green', href: '#green-house', icon: Leaf },
-  { label: 'Perfil', href: '/profile', icon: UserRound },
-];
 
 function greeting() {
   const hour = new Date().getHours();
@@ -333,8 +250,9 @@ function buildCompanyRows(reviews: Review[], leads: Lead[]): CompanyRow[] {
   return reviews.map((review, index) => {
     const company = getCompanyInfo(review);
     const relatedLeads = leads.filter((lead) => getLeadCompanyName(lead) === company.name);
-    const requests = Math.max(relatedLeads.length, review.reply ? 2 : index % 4);
-    const views = Number(review.metadata?.read_count || 78 + index * 31 + Math.round((review.rating || 0) * 12));
+    const requests = relatedLeads.length;
+    // @ts-ignore - read_count might not be typed yet
+    const views = Number(review.read_count || review.metadata?.read_count || 0);
     const status: CompanyRow['status'] =
       review.reply || review.replied_at
         ? isRecent(review.replied_at)
@@ -356,7 +274,7 @@ function buildCompanyRows(reviews: Review[], leads: Lead[]): CompanyRow[] {
       status,
       views,
       requests,
-      conversions: Math.max(0, Math.round(requests * 0.35)),
+      conversions: relatedLeads.filter(l => ['verified', 'proposal_sent', 'proposal_processing'].includes(l.status || '')).length,
       date: review.created_at,
       reply: review.reply,
     };
@@ -406,16 +324,20 @@ export function ReputationDashboard({
 
   const rows = useMemo(() => buildCompanyRows(reviews, leads), [reviews, leads]);
   const monthlyReviews = reviews.filter((review) => isRecent(review.created_at)).length;
-  const helpfulVotes = reviews.reduce((total, review) => total + Number(review.helpful_count || 0), 0);
-  const fallbackHelpfulVotes = helpfulVotes || Math.max(0, reviews.length * 4);
+  
+  // Real values from the API summary
+  const helpfulVotes = summary?.impact?.helpful_votes || 0;
+  const impactedPeople = summary?.impact?.impacted_people || 0;
+  const greenScore = summary?.gamification?.green_score || 0;
+  const rankingPosition = summary?.gamification?.regional_ranking || 1;
+  const achievementsList = summary?.gamification?.achievements || [];
+  const recommendationsList = summary?.recommendations || [];
+  const recentActivitiesList = summary?.recent_activities || [];
+  
   const companyReplies = rows.filter((row) => row.reply || row.status.includes('Respond'));
   const profileViews = summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) || 0;
   const ctaClicks = summary?.charts?.activity_30d?.reduce((total, point) => total + point.cta_clicks + point.whatsapp_clicks, 0) || 0;
-  const impactedPeople = Math.max(profileViews, reviews.length * 82 + leads.length * 24);
-  const energyGenerated = Math.max(0, reviews.length * 240 + leads.length * 80);
-  const financialSavings = Math.round(energyGenerated * 0.68);
-  const greenScore = Math.min(999, 520 + reviews.length * 35 + fallbackHelpfulVotes * 2 + companyReplies.length * 18);
-  const rankingPosition = Math.max(1, 12 - Math.floor(greenScore / 120));
+  
   const profileCompletion = summary?.profile?.completion_percent || 0;
   const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
 
@@ -438,9 +360,9 @@ export function ReputationDashboard({
     },
     {
       label: 'Votos úteis recebidos',
-      value: `${fallbackHelpfulVotes}`,
+      value: `${helpfulVotes}`,
       suffix: 'votos',
-      helper: `+${Math.max(0, Math.round(fallbackHelpfulVotes * 0.3))} este mês`,
+      helper: `Verificado e contabilizado`,
       icon: ThumbsUp,
       iconClass: 'bg-orange-100 text-orange-700',
     },
@@ -448,7 +370,7 @@ export function ReputationDashboard({
       label: 'Pessoas impactadas',
       value: impactedPeople.toLocaleString('pt-BR'),
       suffix: 'pessoas',
-      helper: `+${Math.max(monthlyReviews * 24, ctaClicks)} este mês`,
+      helper: `Leituras e engajamentos reais`,
       icon: Users,
       iconClass: 'bg-rose-100 text-rose-700',
     },
@@ -456,7 +378,7 @@ export function ReputationDashboard({
       label: 'Ranking regional',
       value: `${rankingPosition}º`,
       suffix: userLocation,
-      helper: 'Entre 124 usuários',
+      helper: 'Posição na sua região',
       icon: Trophy,
       iconClass: 'bg-yellow-100 text-yellow-700',
     },
@@ -470,36 +392,40 @@ export function ReputationDashboard({
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const achievements = [
-    { title: 'Primeira Avaliação', subtitle: 'Parabéns', icon: Medal, state: 'desbloqueado', unlocked: reviews.length >= 1 },
-    { title: '5 Avaliações', subtitle: 'Consistência', icon: Trophy, state: 'raro', unlocked: reviews.length >= 5 },
-    { title: '10 Avaliações', subtitle: 'Incrível', icon: Sun, state: 'premium', unlocked: reviews.length >= 10 },
-    { title: 'Solar Expert', subtitle: projectTypeLabel(reviews[0]?.project_type), icon: ShieldCheck, state: 'lendário', unlocked: reviews.length >= 3 },
-    { title: 'Green House', subtitle: 'Sustentável', icon: Leaf, state: 'desbloqueado', unlocked: greenScore >= 650 },
-    { title: 'EV Driver', subtitle: 'Mobilidade', icon: Car, state: 'bloqueado', unlocked: false },
-    { title: 'Energy Storage', subtitle: 'Armazenamento', icon: BatteryCharging, state: 'bloqueado', unlocked: false },
-    { title: 'Top Avaliador', subtitle: userLocation, icon: Award, state: 'raro', unlocked: rankingPosition <= 5 },
-  ];
+  const achievements = achievementsList.map(a => {
+    let icon = Award;
+    if (a.title.includes('Primeira')) icon = Medal;
+    else if (a.title.includes('5')) icon = Trophy;
+    else if (a.title.includes('10')) icon = Sun;
+    else if (a.title.includes('Expert')) icon = ShieldCheck;
+    else if (a.title.includes('Green House')) icon = Leaf;
+    else if (a.title.includes('EV')) icon = Car;
+    else if (a.title.includes('Storage')) icon = BatteryCharging;
+    
+    return {
+      title: a.title,
+      subtitle: a.subtitle,
+      icon,
+      state: a.state,
+      unlocked: a.state !== 'bloqueado'
+    };
+  });
 
-  const recommendations = [
-    { name: 'Intelbras Solar', city: 'Florianópolis, SC', rating: 4.7, badge: 'Popular' },
-    { name: 'WEG Solar', city: 'Jaraguá do Sul, SC', rating: 4.6, badge: 'Verificada' },
-    { name: 'Solis Solar', city: 'São José, SC', rating: 4.5, badge: 'Próxima' },
-  ];
+  const recommendations = recommendationsList;
 
-  const activityEvents = [
-    {
-      icon: MessageCircle,
-      title:
-        companyReplies.length > 0
-          ? `${companyReplies[0].name} respondeu sua avaliação`
-          : 'Sua central está pronta para novas respostas',
-      time: companyReplies.length > 0 ? 'há 1 dia' : 'agora',
-    },
-    { icon: ThumbsUp, title: `Suas avaliações receberam ${fallbackHelpfulVotes} votos úteis`, time: 'há 2 horas' },
-    { icon: Leaf, title: greenScore >= 650 ? 'Você ganhou o badge Green House' : 'Complete seu Green House', time: 'há 2 dias' },
-    { icon: Trophy, title: `Você está em ${rankingPosition}º no ranking regional`, time: 'há 3 dias' },
-  ];
+  const activityEvents = recentActivitiesList.map(a => {
+    let icon = Bell;
+    if (a.icon === 'MessageCircle') icon = MessageCircle;
+    else if (a.icon === 'ThumbsUp') icon = ThumbsUp;
+    else if (a.icon === 'Leaf') icon = Leaf;
+    else if (a.icon === 'Trophy') icon = Trophy;
+
+    return {
+      title: a.title,
+      time: a.time,
+      icon
+    };
+  });
 
   const sustainableItems = [
     {
@@ -509,54 +435,39 @@ export function ReputationDashboard({
       progress: reviews.length > 0 ? 100 : 0,
       icon: Sun,
       tone: 'bg-yellow-100 text-yellow-700',
-      details: ['potencia_kwp: estimado pelo perfil', 'ano_instalacao: pendente', 'economia_mensal: em validação'],
+      details: reviews.length > 0 ? ['Com avaliações no perfil'] : ['Sem avaliações ainda'],
     },
     {
       id: 'mobility',
       title: 'Mobilidade Elétrica',
       state: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 'Em progresso' : 'Não iniciado',
-      progress: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 55 : 12,
+      progress: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 55 : 0,
       icon: Car,
       tone: 'bg-green-100 text-green-700',
-      details: ['possui_ev: a confirmar', 'possui_hibrido: a confirmar', 'possui_wallbox: planejado'],
+      details: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? ['Interesse demonstrado em propostas'] : ['Sem propostas na área'],
     },
     {
       id: 'battery',
       title: 'Bateria / Armazenamento',
-      state: 'Planejado',
-      progress: 36,
+      state: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? 'Em progresso' : 'Não iniciado',
+      progress: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? 36 : 0,
       icon: BatteryCharging,
       tone: 'bg-orange-100 text-orange-700',
-      details: ['possui_bateria: planejado', 'capacidade_kwh: não informado'],
+      details: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? ['Interesse demonstrado em propostas'] : ['Sem propostas na área'],
     },
     {
       id: 'consumption',
       title: 'Consumo Consciente',
-      state: 'Em progresso',
-      progress: Math.max(28, profileCompletion),
+      state: profileCompletion > 50 ? 'Em progresso' : 'Não iniciado',
+      progress: Math.max(0, profileCompletion),
       icon: Recycle,
       tone: 'bg-blue-100 text-blue-700',
-      details: ['captação_agua: pendente', 'reciclagem: em andamento', 'eficiência_energética: em andamento'],
+      details: [`Perfil ${profileCompletion}% preenchido`],
     },
   ];
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-[#f3f7f5] text-slate-950">
-        <DesktopSidebar repliesCount={companyReplies.length} notificationsCount={activityEvents.length} />
-
-        <div className="lg:pl-[280px]">
-          <main className="mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-4 pb-28 sm:px-6 sm:py-6 lg:pb-8">
-            <Header
-              firstName={firstName}
-              user={profileUser}
-              greenScore={greenScore}
-              notificationsCount={activityEvents.length}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              onOpenCommand={() => setCommandOpen(true)}
-              onOpenMobileNav={() => setMobileNavOpen(true)}
-            />
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 pb-28">
 
             {error && (
               <Card className="rounded-[20px] border-red-100 bg-red-50 shadow-sm">
@@ -611,7 +522,7 @@ export function ReputationDashboard({
                 user={profileUser}
                 reviewsCount={reviews.length}
                 companiesCount={rows.length}
-              helpfulVotes={fallbackHelpfulVotes}
+              helpfulVotes={helpfulVotes}
               impactedPeople={impactedPeople}
               repliesCount={companyReplies.length}
               onOpenReplies={() => {
@@ -648,8 +559,6 @@ export function ReputationDashboard({
                   requests={leads.length}
                   conversions={Math.round(leads.length * 0.35)}
                   impactedPeople={impactedPeople}
-                  energyGenerated={energyGenerated}
-                  financialSavings={financialSavings}
                   activityChart={activityChart}
                 />
               </div>
@@ -665,275 +574,12 @@ export function ReputationDashboard({
               <div className="xl:col-span-8">
                 <GreenHouseCertification greenScore={greenScore} />
               </div>
-              <div className="xl:col-span-4">
+              <div className="lg:col-span-2">
                 <AiRecommendations recommendations={recommendations} />
               </div>
             </div>
-          </main>
-        </div>
-
-        <MobileDashboardNav repliesCount={companyReplies.length} />
-        <MobileDrawer open={mobileNavOpen} onOpenChange={setMobileNavOpen} repliesCount={companyReplies.length} notificationsCount={activityEvents.length} />
-
-        <ReplyDialog row={replyDialogRow} onOpenChange={(open) => !open && setReplyDialogRow(null)} />
-
-        <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
-          <CommandInput placeholder="Buscar ações, empresas e seções..." />
-          <CommandList>
-            <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-            <CommandGroup heading="Ações rápidas">
-              {[
-                { label: 'Avaliar empresa', href: '/companies', icon: Plus },
-                { label: 'Ver respostas das empresas', href: '#company-replies', icon: MessageCircle },
-                { label: 'Abrir conquistas', href: '#achievements', icon: Trophy },
-                { label: 'Completar perfil', href: '/profile', icon: UserRound },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <CommandItem
-                    key={item.label}
-                    onSelect={() => {
-                      setCommandOpen(false);
-                      if (item.href.startsWith('#')) {
-                        document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' });
-                      } else {
-                        window.location.href = item.href;
-                      }
-                    }}
-                  >
-                    <Icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
-      </div>
-    </TooltipProvider>
-  );
-}
-
-function Header({
-  firstName,
-  user,
-  greenScore,
-  notificationsCount,
-  refreshing,
-  onRefresh,
-  onOpenCommand,
-  onOpenMobileNav,
-}: {
-  firstName: string;
-  user: User & { avatar_url?: string };
-  greenScore: number;
-  notificationsCount: number;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onOpenCommand: () => void;
-  onOpenMobileNav: () => void;
-}) {
-  return (
-    <header className="flex min-h-[72px] items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl border-slate-200 bg-white lg:hidden" onClick={onOpenMobileNav}>
-          <Menu className="h-5 w-5" />
-        </Button>
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold text-slate-950 md:text-3xl">
-            {greeting()}, {firstName}!
-          </h1>
-          <p className="truncate text-sm font-semibold text-slate-600">
-            Que bom ter você aqui construindo um futuro mais sustentável.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="hidden h-11 w-11 rounded-2xl border-slate-200 bg-white md:inline-flex" onClick={onOpenCommand}>
-              <Command className="h-5 w-5 text-slate-600" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Menu de comandos</TooltipContent>
-        </Tooltip>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" className="relative h-11 w-11 rounded-2xl border-slate-200 bg-white">
-              <Bell className="h-5 w-5 text-slate-600" />
-              {notificationsCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                  {notificationsCount}
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 rounded-2xl border-slate-200 p-0 shadow-xl">
-            <div className="p-4">
-              <p className="text-sm font-bold text-slate-950">Notificações</p>
-              <p className="text-xs font-medium text-slate-500">Curtidas, comentários, respostas e conquistas.</p>
-            </div>
-            <Separator />
-            <div className="space-y-1 p-2">
-              {['Novas respostas das empresas', 'Curtidas em avaliações', 'Conquista desbloqueada'].map((item) => (
-                <button key={item} type="button" className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-slate-50">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                    <Bell className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-semibold text-slate-700">{item}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl border-slate-200 bg-white" onClick={onRefresh} disabled={refreshing}>
-          <RefreshCcw className={cn('h-5 w-5 text-slate-600', refreshing && 'animate-spin')} />
-        </Button>
-
-        <div className="hidden items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm md:flex">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar_url || ''} alt={user.name} />
-            <AvatarFallback>{initialsFromName(user.name)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-[120px]">
-            <p className="truncate text-sm font-bold text-slate-950">{user.name}</p>
-            <p className="text-xs font-semibold text-amber-600">Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}</p>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function DesktopSidebar({ repliesCount, notificationsCount }: { repliesCount: number; notificationsCount: number }) {
-  return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[280px] border-r border-slate-200 bg-white lg:flex lg:flex-col">
-      <SidebarContent repliesCount={repliesCount} notificationsCount={notificationsCount} />
-    </aside>
-  );
-}
-
-function MobileDrawer({
-  open,
-  onOpenChange,
-  repliesCount,
-  notificationsCount,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  repliesCount: number;
-  notificationsCount: number;
-}) {
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[300px] p-0">
-        <SheetHeader className="sr-only">
-          <SheetTitle>Navegação</SheetTitle>
-          <SheetDescription>Menu principal da Central de Reputação.</SheetDescription>
-        </SheetHeader>
-        <SidebarContent repliesCount={repliesCount} notificationsCount={notificationsCount} onNavigate={() => onOpenChange(false)} />
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function SidebarContent({
-  repliesCount,
-  notificationsCount,
-  onNavigate,
-}: {
-  repliesCount: number;
-  notificationsCount: number;
-  onNavigate?: () => void;
-}) {
-  return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="flex h-[72px] items-center gap-2 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-          <Sun className="h-6 w-6 fill-yellow-400" />
-        </div>
-        <span className="text-lg font-black uppercase text-slate-950">Avalia Solar</span>
-      </div>
-
-      <ScrollArea className="flex-1 px-4">
-        <nav className="space-y-6 pb-6">
-          {sidebarSections.map((section) => (
-            <div key={section.title} className="space-y-2">
-              <p className="px-2 text-xs font-black uppercase text-slate-500">{section.title}</p>
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const count = item.replies ? repliesCount : item.notifications ? notificationsCount : 0;
-                  const active = item.label === 'Meu Dashboard';
-                  return (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={cn(
-                        'group flex h-11 items-center justify-between rounded-xl px-3 text-sm font-bold transition-colors',
-                        active ? 'bg-green-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
-                        item.replies && repliesCount > 0 && 'border border-emerald-300 bg-emerald-50 text-slate-950'
-                      )}
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-emerald-700' : 'text-slate-500')} />
-                        <span className="truncate">
-                          {item.label}
-                          {item.replies && repliesCount > 0 ? ` (${repliesCount})` : ''}
-                        </span>
-                      </span>
-                      {count > 0 && (
-                        <span className={cn('flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-black text-white', item.replies ? 'animate-pulse bg-red-600' : 'bg-red-500')}>
-                          {count}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </ScrollArea>
-
-      <div className="border-t border-slate-100 p-4">
-        <Button className="h-12 w-full rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700" asChild>
-          <Link href="/companies">
-            <Plus className="mr-2 h-4 w-4" />
-            Avaliar empresa
-          </Link>
-        </Button>
-      </div>
+      <ReplyDialog row={replyDialogRow} onOpenChange={(open) => !open && setReplyDialogRow(null)} />
     </div>
-  );
-}
-
-function MobileDashboardNav({ repliesCount }: { repliesCount: number }) {
-  return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,var(--safe-area-inset-bottom))] pt-2 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5">
-        {bottomNav.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.label} href={item.href} className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] font-bold text-slate-600 hover:text-emerald-700">
-              <span className="relative">
-                <Icon className="h-6 w-6" />
-                {item.replies && repliesCount > 0 && (
-                  <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-black leading-none text-white">
-                    {repliesCount}
-                  </span>
-                )}
-              </span>
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
   );
 }
 
@@ -1476,25 +1122,21 @@ function CommunityImpact({
   requests,
   conversions,
   impactedPeople,
-  energyGenerated,
-  financialSavings,
   activityChart,
 }: {
   views: number;
   requests: number;
   conversions: number;
   impactedPeople: number;
-  energyGenerated: number;
-  financialSavings: number;
   activityChart: ReactNode;
 }) {
   return (
     <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-      <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm xl:col-span-2">
         <CardHeader>
           <CardTitle className="text-lg font-black text-slate-950">Impacto na comunidade</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             ['Visualizações', views],
             ['Solicitações', requests],
@@ -1504,23 +1146,6 @@ function CommunityImpact({
             <div key={label} className="rounded-2xl bg-slate-50 p-4">
               <p className="text-xs font-bold text-slate-500">{label}</p>
               <p className="mt-2 text-2xl font-black text-slate-950">{Number(value).toLocaleString('pt-BR')}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-black text-slate-950">Métricas ambientais</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          {[
-            ['Energia gerada', `${energyGenerated.toLocaleString('pt-BR')} kWh`],
-            ['Economia financeira', `R$ ${financialSavings.toLocaleString('pt-BR')}`],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-emerald-50 p-4">
-              <p className="text-xs font-bold text-emerald-800">{label}</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
             </div>
           ))}
         </CardContent>

@@ -393,48 +393,8 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f4faf7] text-slate-950">
-      <header className="border-b border-emerald-100/70 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[72px] max-w-[1600px] flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
-                Avalia Solar
-              </p>
-              <h1 className="truncate text-2xl font-black text-slate-950 md:text-3xl">
-                Meu Perfil
-              </h1>
-              <p className="truncate text-sm font-semibold text-slate-600">
-                Sua identidade dentro da Central de Reputação Sustentável.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="rounded-xl border-emerald-200 bg-white font-bold text-emerald-800 hover:bg-emerald-50"
-              onClick={() => router.push(dashboardHref)}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Central
-            </Button>
-            <Button
-              variant="outline"
-              className="rounded-xl border-red-100 bg-white font-bold text-red-600 hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#0A2C33,#0F5B53_56%,#114D43)] p-5 text-white shadow-sm md:p-6">
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 p-4 md:p-6 lg:p-8 pb-28">
+      <section className="overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#0A2C33,#0F5B53_56%,#114D43)] p-5 text-white shadow-sm md:p-6">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-center">
               <div className="relative w-fit shrink-0">
@@ -899,7 +859,6 @@ export default function ProfilePage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
     </div>
   );
 }
