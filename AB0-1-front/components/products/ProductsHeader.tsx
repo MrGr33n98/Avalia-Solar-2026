@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { MapPin, Search, X } from "lucide-react"
+import Image from "next/image"
 
 interface ProductsHeaderProps {
   totalProducts: number
@@ -42,11 +43,20 @@ export function ProductsHeader({
       : null
 
   return (
-    <section className="relative isolate overflow-hidden border-b border-[#08284a] bg-[#061b33] text-white">
-      <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(135deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px]" />
-      <div className="absolute -left-20 top-8 h-56 w-56 rotate-45 border border-white/10" />
-      <div className="absolute right-10 top-10 h-44 w-44 rotate-45 border border-white/10" />
-      <div className="relative mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 md:py-16">
+    <section className="relative isolate overflow-hidden border-b border-[#08284a] bg-[#061b33] text-white min-h-[300px]">
+      {/* Imagem de Fundo Premium */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/banner-avalia-solar-product-page.png"
+          alt="Banner de Produtos"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+        {/* Overlay escuro para garantir contraste e legibilidade do texto */}
+        <div className="absolute inset-0 bg-slate-950/80 mix-blend-multiply" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 md:py-16">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
           Encontre a empresa certa para você.
         </h1>
