@@ -486,7 +486,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def deliver_otp_email!(lead, code)
     raise ArgumentError, 'Lead e-mail is required for verification' if lead.email.blank?
-    if ActionMailer::Base.delivery_method.to_sym == :test && !Rails.env.test?
+    if ActionMailer::Base.delivery_method.to_sym == :test && !(Rails.env.test? || Rails.env.development?)
       raise 'E-mail delivery is disabled because ActionMailer is using the test delivery method'
     end
 
