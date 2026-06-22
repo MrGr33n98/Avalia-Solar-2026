@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Building2, Eye, MessageSquare, ShieldCheck, Tag, Star } from 'lucide-react';
+import { ArrowRight, Building2, Eye, MessageSquare, ShieldCheck, Tag, Star, Heart, Info } from 'lucide-react';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
@@ -340,95 +340,115 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   return (
     <>
       <article itemScope itemType="https://schema.org/Product" className="group relative h-full text-left">
-        <Card ref={cardRef} className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+        <Card ref={cardRef} className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
           {/* Image Section */}
-          <Link href={friendlyUrl} aria-label={`Ver detalhes de ${product.name}`} className="block relative cursor-pointer">
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-white transition-colors group-hover:bg-slate-50/40">
-              {displayImage ? (
-                <Image
-                  src={displayImage}
-                  alt={product.name}
-                  fill
-                  className="object-contain p-6 transition-transform duration-500 group-hover:scale-[1.03]"
-                  onError={() => setImageError(true)}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs font-medium text-slate-400">
-                  Imagem indisponível
-                </div>
-              )}
-              
-              {/* Badges Overlay */}
-              <div className="absolute left-3 top-3 z-10 flex flex-col gap-1">
-                {product.featured && (
-                  <Badge className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 shadow-none">
-                    Destaque
-                  </Badge>
-                )}
-                {product.company?.verified && (
-                  <Badge className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 shadow-none">
-                    Verificado
-                  </Badge>
+          <div className="relative cursor-pointer">
+            <Link href={friendlyUrl} aria-label={`Ver detalhes de ${product.name}`} className="block">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+                {displayImage ? (
+                  <Image
+                    src={displayImage}
+                    alt={product.name}
+                    fill
+                    className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
+                    onError={() => setImageError(true)}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs font-medium text-slate-400">
+                    Imagem indisponível
+                  </div>
                 )}
               </div>
+            </Link>
+
+            {/* Badges Overlay */}
+            <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
+              {product.featured && (
+                <span className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700 shadow-sm">
+                  Destaque
+                </span>
+              )}
+              {product.company?.verified && (
+                <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 shadow-sm">
+                  Verificado
+                </span>
+              )}
             </div>
-          </Link>
+
+            {/* Favorite Icon (Coração) */}
+            <div className="absolute right-3 top-3 z-10">
+              <button 
+                type="button"
+                aria-label="Adicionar aos favoritos"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-slate-400 shadow-sm hover:text-red-500 hover:scale-105 transition-all border border-slate-100/60"
+              >
+                <Heart className="w-4.5 h-4.5 fill-transparent transition-colors" />
+              </button>
+            </div>
+          </div>
 
           {/* Content Section */}
-          <CardContent className="flex flex-grow flex-col gap-2.5 p-4">
-              {/* Category */}
-              <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
-                  <span className="uppercase tracking-wide text-blue-700">
-                    {categoryName}
-                  </span>
-                  {/* Rating inline */}
-                  {ratingAvg !== undefined && ratingAvg !== null ? (
-                    <div className="flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-[#ffbd2e] text-[#ffbd2e]" />
-                      <span className="font-semibold text-slate-700">{ratingAvg.toFixed(1)}</span>
-                    </div>
-                  ) : null}
-              </div>
+          <CardContent className="flex flex-grow flex-col gap-2 p-4 pt-3">
+            {/* Category & Rating */}
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span>{categoryName}</span>
+              {ratingAvg !== undefined && ratingAvg !== null ? (
+                <div className="flex items-center gap-0.5 normal-case font-extrabold text-slate-700">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  <span>{ratingAvg.toFixed(1)}</span>
+                </div>
+              ) : null}
+            </div>
 
-              {/* Title */}
-              <Link href={friendlyUrl} className="block transition-colors group-hover:text-blue-700">
-                  <h2 itemProp="name" className="line-clamp-2 min-h-[2.5rem] text-base font-semibold leading-snug text-slate-900">
-                      {product.name}
-                  </h2>
-              </Link>
+            {/* Title */}
+            <Link href={friendlyUrl} className="block transition-colors group-hover:text-blue-700">
+              <h2 itemProp="name" className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-slate-900">
+                {product.name}
+              </h2>
+            </Link>
 
-              {/* Company Info */}
-              <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-600">
-                <span className="truncate">{companyName}</span>
-                {product.company?.verified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-blue-600" />}
-              </div>
+            {/* Brand / Fornecedor */}
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-0.5">
+              <span>{companyName}</span>
+              <button type="button" aria-label="Mais informações sobre a marca" className="text-slate-400 hover:text-slate-600">
+                <Info className="h-3 w-3" />
+              </button>
+            </div>
 
-              {/* Price block */}
-              <div className="mt-auto flex flex-col pt-2" itemProp="offers" itemScope itemType="https://schema.org/Offer">
-                {priceAvailable ? (
-                  <>
-                    <div className="flex items-baseline gap-1">
-                        <meta itemProp="priceCurrency" content="BRL" />
-                        <span itemProp="price" className="text-lg font-semibold text-blue-700">
-                          R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                    </div>
-                    {installments && <span className="text-[10px] text-slate-500 text-left">12x de R$ {installments} sem juros</span>}
-                  </>
-                ) : (
-                  <span className="text-lg font-semibold text-blue-700">Consultar preço</span>
-                )}
-              </div>
+            {/* Price block */}
+            <div className="mt-auto flex flex-col pt-3" itemProp="offers" itemScope itemType="https://schema.org/Offer">
+              {priceAvailable ? (
+                <>
+                  <div className="flex items-baseline gap-1">
+                    <meta itemProp="priceCurrency" content="BRL" />
+                    <span itemProp="price" className="text-lg font-black text-slate-900">
+                      R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  {installments && (
+                    <span className="text-[10px] font-medium text-slate-500 text-left mt-0.5">
+                      10x de R$ {installments} sem juros
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-sm font-bold text-blue-600 bg-blue-50/50 border border-blue-100 rounded-lg px-2.5 py-1 w-fit">
+                  Consultar Preço e Orçamento
+                </span>
+              )}
+            </div>
           </CardContent>
 
-          {/* Footer Section - CTAs */}
+          {/* Footer Section - CTA */}
           <CardFooter className="mt-auto p-4 pt-0">
-            <Button asChild variant="outline" size="sm" className="h-10 w-full rounded-lg border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+            <Button 
+              asChild 
+              className="h-10 w-full rounded-xl border-2 border-slate-900 bg-white text-xs font-extrabold text-slate-900 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+            >
               <Link 
                 href={friendlyUrl}
-                className="gap-2"
                 onClick={() => track('product_click', {
                   product_id: product.id,
                   product_name: product.name,
@@ -436,8 +456,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                   ...brandContext
                 })}
               >
-                Detalhes
-                <ArrowRight className="h-3.5 w-3.5" />
+                Ver Detalhes e Orçamento
               </Link>
             </Button>
           </CardFooter>

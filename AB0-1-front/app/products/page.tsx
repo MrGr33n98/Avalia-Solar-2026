@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { Button } from '@/components/ui/button';
-import { Filter, Building2, ChevronRight, RefreshCw } from 'lucide-react';
+import { Filter, Building2, ChevronRight, RefreshCw, Star } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -219,6 +219,115 @@ function ProductsPageContent() {
         onClearFilters={clearFilters}
         selectedCategory={selectedCategoryName}
       />
+
+      {/* Seção Destaque do Especialista */}
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Destaque do Especialista</span>
+            <h2 className="text-xl font-black text-slate-900 md:text-2xl mt-0.5">Aprovado por Especialistas do Setor</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr_320px]">
+            {/* Esquerda: Selo de Qualidade */}
+            <div className="flex flex-col items-center justify-center border-b border-slate-100 pb-6 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6 text-center">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">Selo de Qualidade <br/> Avalia Solar - 4.8/5</span>
+              <span className="text-6xl font-black text-slate-900 mt-3 leading-none">4.8</span>
+              <div className="flex text-amber-400 mt-2 gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-current" />
+                ))}
+              </div>
+            </div>
+
+            {/* Centro: Produtos em Destaque */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:px-4">
+              {/* Produto Destaque 1 (Maxeon) */}
+              <div className="flex gap-4 rounded-2xl border border-slate-200/85 bg-slate-50/50 p-4 hover:border-blue-200 transition-all justify-between flex-col h-full">
+                <div className="flex gap-3">
+                  <div className="relative w-16 h-16 shrink-0 rounded-xl bg-white p-2 border border-slate-200 flex items-center justify-center">
+                    <img src="/images/banner-avalia-solar-product-page.png" className="object-contain w-full h-full" alt="SunPower Maxeon" onError={(e)=>{e.currentTarget.src="/icones/icone_produtos_avalia_solar_40x40.png"}} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">PAINÉIS SOLARES</span>
+                    <h3 className="text-xs font-black text-slate-900 leading-snug truncate">SunPower Maxeon 6 AC</h3>
+                    <span className="text-[10px] font-bold text-slate-500 mt-0.5 block">SunPower</span>
+                    <p className="text-[10px] text-slate-500 mt-1 leading-normal">Productw: 400W <br/> T6a medo: Hx <br/> 2x análise: 300 ms</p>
+                  </div>
+                </div>
+                <Button variant="outline" className="h-9 w-full rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 mt-3" asChild>
+                  <Link href="/products?search=Maxeon">Ver Análise Completa</Link>
+                </Button>
+              </div>
+
+              {/* Produto Destaque 2 (Microinverter) */}
+              <div className="flex gap-4 rounded-2xl border border-slate-200/85 bg-slate-50/50 p-4 hover:border-blue-200 transition-all justify-between flex-col h-full">
+                <div className="flex gap-3">
+                  <div className="relative w-16 h-16 shrink-0 rounded-xl bg-white p-2 border border-slate-200 flex items-center justify-center">
+                    <img src="/images/banner-avalia-solar-product-page.png" className="object-contain w-full h-full" alt="SunPower Microinverter" onError={(e)=>{e.currentTarget.src="/icones/icone_produtos_avalia_solar_40x40.png"}} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">MICROINVERSORES</span>
+                    <h3 className="text-xs font-black text-slate-900 leading-snug truncate">SunPower AC Microinverter</h3>
+                    <span className="text-[10px] font-bold text-slate-500 mt-0.5 block">SunPower</span>
+                    <p className="text-[10px] text-slate-500 mt-1 leading-normal">Produtos: 400W <br/> T5s medo: 15x <br/> 2x análise: 350 ms</p>
+                  </div>
+                </div>
+                <Button variant="outline" className="h-9 w-full rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 mt-3" asChild>
+                  <Link href="/products?search=Microinverter">Ver Análise Completa</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Direita: Depoimentos de Especialistas */}
+            <div className="flex flex-col justify-between gap-4 border-t border-slate-100 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+              {/* Especialista 1 */}
+              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Mathous S." />
+                </div>
+                <div className="leading-tight min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-slate-900 truncate">Mathous S.</h4>
+                  <span className="text-[10px] text-slate-400">Engenheiro Chefe</span>
+                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                  </div>
+                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Fernanda G."</p>
+                </div>
+              </div>
+
+              {/* Especialista 2 */}
+              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Fernanda G." />
+                </div>
+                <div className="leading-tight min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-slate-900 truncate">Fernanda G.</h4>
+                  <span className="text-[10px] text-slate-400">Codediere Energitics</span>
+                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                  </div>
+                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Fernanda G."</p>
+                </div>
+              </div>
+
+              {/* Especialista 3 */}
+              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Ricardo P." />
+                </div>
+                <div className="leading-tight min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-slate-900 truncate">Ricardo P.</h4>
+                  <span className="text-[10px] text-slate-400">Instalador Certificado</span>
+                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                  </div>
+                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Frannanta E."</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
