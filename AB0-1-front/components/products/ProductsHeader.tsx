@@ -1,126 +1,138 @@
-import { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { MapPin, Search, X } from "lucide-react"
+import { Star, CheckCircle } from "lucide-react"
 import Image from "next/image"
 
 interface ProductsHeaderProps {
   totalProducts: number
-  searchQuery: string
-  onSearchChange: (value: string) => void
-  onClearFilters: () => void
   selectedCategory?: string
+  searchQuery?: string
+  onSearchChange?: (value: string) => void
+  onClearFilters?: () => void
 }
 
 export function ProductsHeader({ 
   totalProducts, 
-  searchQuery, 
-  onSearchChange,
   selectedCategory = "Todas as categorias"
 }: ProductsHeaderProps) {
-  const [localSearch, setLocalSearch] = useState(searchQuery)
-  const [locationQuery, setLocationQuery] = useState("")
-
-  // Sync local search state with prop when prop changes
-  useEffect(() => {
-    setLocalSearch(searchQuery)
-  }, [searchQuery])
-
-  const handleSearchSubmit = () => {
-    onSearchChange(localSearch.trim())
-  }
-
-  const handleClearSearch = () => {
-    setLocalSearch("")
-    onSearchChange("")
-  }
-
-  const resultTerm = localSearch.trim() || searchQuery.trim()
-  const resultLabel = totalProducts === 1 ? "resultado" : "resultados"
   const categoryLabel =
     selectedCategory && selectedCategory !== "Todas as categorias"
       ? selectedCategory
       : null
 
   return (
-    <section className="relative isolate overflow-hidden border-b border-[#08284a] bg-[#061b33] text-white min-h-[300px]">
-      {/* Imagem de Fundo Premium */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/banner-avalia-solar-product-page.png"
-          alt="Banner de Produtos"
-          fill
-          priority
-          className="object-cover object-center"
-        />
-        {/* Overlay escuro para garantir contraste e legibilidade do texto */}
-        <div className="absolute inset-0 bg-slate-950/80 mix-blend-multiply" />
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#f0f6fc] via-[#f5f9fd] to-[#f8fafc] border-b border-slate-100 py-12 md:py-16">
+      {/* Elementos decorativos de fundo */}
+      <div className="absolute top-0 right-0 w-[40%] h-full opacity-35 pointer-events-none">
+        <div className="absolute right-[-10%] top-[-20%] w-[500px] h-[500px] rounded-full bg-blue-100/40 blur-3xl" />
       </div>
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 md:py-16">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-          Encontre a empresa certa para você.
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-200 md:text-lg">
-          Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.
-        </p>
 
-        <div className="mx-auto mt-8 grid max-w-4xl overflow-hidden rounded-lg border border-white/15 bg-white text-left shadow-[0_22px_55px_rgba(0,16,40,0.34)] md:grid-cols-[minmax(0,1fr)_280px_128px]">
-          <div className="relative flex h-14 items-center border-b border-slate-200 px-4 md:border-b-0 md:border-r">
-            <Search className="h-5 w-5 flex-shrink-0 text-slate-500" />
-            <Input
-              aria-label="Buscar produto, marca ou modelo"
-              placeholder="Buscar produto, marca ou modelo..."
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="h-full border-none bg-transparent pl-3 pr-9 text-base text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            {localSearch && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Limpar busca"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 z-10">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.2fr_1fr_0.8fr]">
+          
+          {/* Lado Esquerdo: Textos e Selos */}
+          <div className="space-y-5 text-left">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-blue-600">
+              Encontre com Confiança
+            </span>
+            
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-[1.1]">
+              Produtos solares <br/>
+              <span className="text-blue-600">avaliados por especialistas</span>
+            </h1>
+            
+            <p className="max-w-xl text-sm leading-relaxed text-slate-500 font-medium">
+              Compare, avalie e escolha os melhores produtos para sua instalação solar com base em testes reais e opiniões de quem entende do assunto.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <div className="flex items-center gap-2 text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm">
+                <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
+                <span className="text-xs font-bold text-slate-800">Testes aprofundados por especialistas</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm">
+                <Star className="w-5 h-5 text-blue-500 fill-blue-500 shrink-0" />
+                <span className="text-xs font-bold text-slate-800">Avaliações reais de instaladores</span>
+              </div>
+            </div>
           </div>
 
-          <div className="relative flex h-14 items-center border-b border-slate-200 px-4 md:border-b-0 md:border-r">
-            <MapPin className="h-5 w-5 flex-shrink-0 text-slate-500" />
-            <Input
-              aria-label="Buscar por localização"
-              placeholder="CEP ou Cidade..."
-              value={locationQuery}
-              onChange={(e) => setLocationQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="h-full border-none bg-transparent pl-3 text-base text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
+          {/* Centro: Imagem de Equipamentos */}
+          <div className="relative flex items-center justify-center min-h-[220px]">
+            <div className="relative w-full max-w-[340px] aspect-[4/3]">
+              <Image
+                src="/images/banner-avalia-solar-product-page.png"
+                alt="Equipamentos Solares Avaliados"
+                fill
+                priority
+                className="object-contain"
+                unoptimized
+              />
+            </div>
           </div>
 
-          <Button
-            onClick={handleSearchSubmit}
-            className="h-14 rounded-none bg-[#ffbd2e] px-8 text-sm font-semibold text-[#061b33] shadow-none hover:bg-[#ffc84d]"
-          >
-            Buscar
-          </Button>
+          {/* Lado Direito: Card de Estatísticas (Avaliação) */}
+          <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-100/80 border border-slate-100/70 flex flex-col w-full max-w-[300px] mx-auto lg:ml-auto">
+            <div className="text-center">
+              <span className="text-5xl font-black text-slate-900 leading-none">4.8</span>
+              <div className="flex justify-center text-amber-400 mt-2.5 gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-current" />
+                ))}
+              </div>
+              <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase tracking-wider">
+                Avaliação geral dos <br/> produtos testados
+              </p>
+            </div>
+
+            {/* Barras de distribuição */}
+            <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className="w-3">5</span>
+                <span className="text-amber-400">★</span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: "68%" }} />
+                </div>
+                <span className="w-7 text-right">68%</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className="w-3">4</span>
+                <span className="text-amber-400">★</span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: "21%" }} />
+                </div>
+                <span className="w-7 text-right">21%</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className="w-3">3</span>
+                <span className="text-amber-400">★</span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: "7%" }} />
+                </div>
+                <span className="w-7 text-right">7%</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className="w-3">2</span>
+                <span className="text-amber-400">★</span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: "3%" }} />
+                </div>
+                <span className="w-7 text-right">3%</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className="w-3">1</span>
+                <span className="text-amber-400">★</span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: "1%" }} />
+                </div>
+                <span className="w-7 text-right">1%</span>
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        <p className="mt-7 text-sm text-slate-200">
-          {totalProducts} {resultLabel}
-          {resultTerm ? (
-            <>
-              {" "}para <span className="font-semibold text-[#ffbd2e]">&quot;{resultTerm}&quot;</span>
-            </>
-          ) : categoryLabel ? (
-            <>
-              {" "}em <span className="font-semibold text-[#ffbd2e]">{categoryLabel}</span>
-            </>
-          ) : (
-            " encontrados"
-          )}
-        </p>
       </div>
     </section>
   )

@@ -7,7 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { Button } from '@/components/ui/button';
-import { Filter, Building2, ChevronRight, RefreshCw, Star } from 'lucide-react';
+import { Filter, Building2, ChevronRight, RefreshCw, Star, Grid, List } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,6 +30,7 @@ function ProductsPageContent() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list'); // Lista como padrão
   const itemsPerPage = 12;
 
   // Filter States — initialised from URL for shareability / back-navigation
@@ -42,7 +44,10 @@ function ProductsPageContent() {
       Number(searchParams.get('price_max') || 50000)
     ] as [number, number],
     sort: searchParams.get('sort') || 'relevance',
-    specs: {} as Record<string, ProductSpecFilterValue>
+    specs: {} as Record<string, ProductSpecFilterValue>,
+    minRating: 'all' as string,
+    onlyVerified: false as boolean,
+    onlyTested: false as boolean
   });
 
   // Debounce price range to avoid hammering the URL on every slider tick
@@ -120,10 +125,26 @@ function ProductsPageContent() {
     router.replace(`/products${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   }, [searchQuery, filters.category, filters.company, filters.brand, filters.sort, debouncedPriceRange, router, maxPrice]);
 
-  // Local filtering — only price range and spec filters applied client-side
+  // Local filtering — price range, spec, rating, verified and tested filters applied client-side
   // (search, category, sort are handled by the backend)
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
+      // Minimum rating filter
+      if (filters.minRating && filters.minRating !== 'all') {
+        const rating = Number(product.company?.rating_avg || 0);
+        if (rating < Number(filters.minRating)) return false;
+      }
+
+      // Verified filter
+      if (filters.onlyVerified) {
+        if (!product.company?.verified) return false;
+      }
+
+      // Tested by specialists (featured) filter
+      if (filters.onlyTested) {
+        if (!product.featured) return false;
+      }
+
       // Dynamic spec filters
       const activeSpecFilters = Object.entries(filters.specs || {}).filter(
         ([, value]) => value !== undefined && value !== null && value !== '' && value !== 'all'
@@ -157,29 +178,22 @@ function ProductsPageContent() {
 
       return true;
     });
-  }, [products, filters.specs]);
+  }, [products, filters.specs, filters.minRating, filters.onlyVerified, filters.onlyTested]);
 
   const paginatedProducts = filteredProducts;
 
   const handleFilterChange = (
-    key: 'category' | 'company' | 'brand' | 'priceRange' | 'sort' | 'specs',
-    value: string | [number, number] | Record<string, ProductSpecFilterValue> | undefined
+    key: keyof typeof filters,
+    value: any
   ) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1); // Reset page on filter change
     
     // Telemetria: filtro aplicado
-    if (key === 'specs') {
-      track('filter_applied', {
-        filter_key: 'specs',
-        filter_value: value
-      });
-    } else {
-      track('filter_applied', {
-        filter_key: key,
-        filter_value: value
-      });
-    }
+    track('filter_applied', {
+      filter_key: key,
+      filter_value: value
+    });
   };
 
   const clearFilters = () => {
@@ -189,7 +203,10 @@ function ProductsPageContent() {
       brand: 'all',
       priceRange: [0, maxPrice],
       sort: 'relevance',
-      specs: {}
+      specs: {},
+      minRating: 'all',
+      onlyVerified: false,
+      onlyTested: false
     });
     setSearchQuery('');
     setCurrentPage(1);
@@ -210,8 +227,92 @@ function ProductsPageContent() {
     );
   }
 
+  // Mapeamento dinâmico das categorias rápidas a partir do metadados da API
+  const quickCategories = useMemo(() => {
+    const findCat = (keywords: string[], exclude?: string[]) => {
+      return categoriesMeta.find(c => {
+        const slug = (c.slug || c.seo_url || '').toLowerCase();
+        const matchesKeyword = keywords.some(k => slug.includes(k));
+        const matchesExclude = exclude ? exclude.some(ex => slug.includes(ex)) : false;
+        return matchesKeyword && !matchesExclude;
+      });
+    };
+
+    const cats = [
+      {
+        key: 'inversores',
+        name: 'Inversores',
+        dbCat: findCat(['inversor'], ['micro']),
+        defaultCount: 132,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        )
+      },
+      {
+        key: 'microinversores',
+        name: 'Microinversores',
+        dbCat: findCat(['microinversor']),
+        defaultCount: 86,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        )
+      },
+      {
+        key: 'baterias',
+        name: 'Baterias',
+        dbCat: findCat(['bateria']),
+        defaultCount: 54,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        )
+      },
+      {
+        key: 'carregadores',
+        name: 'Carregadores VE',
+        dbCat: findCat(['carregador']),
+        defaultCount: 28,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        )
+      },
+      {
+        key: 'estruturas',
+        name: 'Estruturas',
+        dbCat: findCat(['estrutura', 'fixacao']),
+        defaultCount: 64,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+          </svg>
+        )
+      },
+      {
+        key: 'cabos',
+        name: 'Cabos e Acessórios',
+        dbCat: findCat(['cabo', 'acessorio']),
+        defaultCount: 102,
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+          </svg>
+        )
+      }
+    ];
+
+    return cats;
+  }, [categoriesMeta]);
+
   return (
-    <div className="min-h-screen bg-[#f4f7fb] pb-20">
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
       <ProductsHeader
         totalProducts={total}
         searchQuery={searchQuery}
@@ -220,154 +321,96 @@ function ProductsPageContent() {
         selectedCategory={selectedCategoryName}
       />
 
-      {/* Seção Destaque do Especialista */}
-      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-          <div className="mb-5">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Destaque do Especialista</span>
-            <h2 className="text-xl font-black text-slate-900 md:text-2xl mt-0.5">Aprovado por Especialistas do Setor</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr_320px]">
-            {/* Esquerda: Selo de Qualidade */}
-            <div className="flex flex-col items-center justify-center border-b border-slate-100 pb-6 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6 text-center">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">Selo de Qualidade <br/> Avalia Solar - 4.8/5</span>
-              <span className="text-6xl font-black text-slate-900 mt-3 leading-none">4.8</span>
-              <div className="flex text-amber-400 mt-2 gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-current" />
-                ))}
-              </div>
-            </div>
-
-            {/* Centro: Produtos em Destaque */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:px-4">
-              {/* Produto Destaque 1 (Maxeon) */}
-              <div className="flex gap-4 rounded-2xl border border-slate-200/85 bg-slate-50/50 p-4 hover:border-blue-200 transition-all justify-between flex-col h-full">
-                <div className="flex gap-3">
-                  <div className="relative w-16 h-16 shrink-0 rounded-xl bg-white p-2 border border-slate-200 flex items-center justify-center">
-                    <img src="/images/banner-avalia-solar-product-page.png" className="object-contain w-full h-full" alt="SunPower Maxeon" onError={(e)=>{e.currentTarget.src="/icones/icone_produtos_avalia_solar_40x40.png"}} />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">PAINÉIS SOLARES</span>
-                    <h3 className="text-xs font-black text-slate-900 leading-snug truncate">SunPower Maxeon 6 AC</h3>
-                    <span className="text-[10px] font-bold text-slate-500 mt-0.5 block">SunPower</span>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-normal">Productw: 400W <br/> T6a medo: Hx <br/> 2x análise: 300 ms</p>
-                  </div>
+      {/* Encontre o produto ideal para seu projeto */}
+      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
+        <h2 className="text-xl font-bold tracking-tight text-slate-800 text-left mb-6">
+          Encontre o produto ideal para seu projeto
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {quickCategories.map((cat) => {
+            const isSelected = cat.dbCat ? String(cat.dbCat.id) === filters.category : false;
+            const count = cat.dbCat ? cat.dbCat.products_count : cat.defaultCount;
+            
+            return (
+              <button
+                key={cat.key}
+                onClick={() => {
+                  if (cat.dbCat) {
+                    handleFilterChange('category', isSelected ? 'all' : String(cat.dbCat.id));
+                  }
+                }}
+                className={cn(
+                  "flex flex-col items-center justify-center p-5 bg-white rounded-2xl border transition-all text-center group w-full shadow-sm hover:shadow-md",
+                  isSelected
+                    ? "border-blue-600 bg-blue-50/20 text-blue-600 ring-1 ring-blue-600"
+                    : "border-slate-200/80 hover:border-blue-500/30 text-slate-800"
+                )}
+              >
+                <div className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-colors mb-3",
+                  isSelected 
+                    ? "bg-blue-100/70 text-blue-600" 
+                    : "bg-slate-50 text-blue-500 group-hover:bg-blue-50"
+                )}>
+                  {cat.icon}
                 </div>
-                <Button variant="outline" className="h-9 w-full rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 mt-3" asChild>
-                  <Link href="/products?search=Maxeon">Ver Análise Completa</Link>
-                </Button>
-              </div>
-
-              {/* Produto Destaque 2 (Microinverter) */}
-              <div className="flex gap-4 rounded-2xl border border-slate-200/85 bg-slate-50/50 p-4 hover:border-blue-200 transition-all justify-between flex-col h-full">
-                <div className="flex gap-3">
-                  <div className="relative w-16 h-16 shrink-0 rounded-xl bg-white p-2 border border-slate-200 flex items-center justify-center">
-                    <img src="/images/banner-avalia-solar-product-page.png" className="object-contain w-full h-full" alt="SunPower Microinverter" onError={(e)=>{e.currentTarget.src="/icones/icone_produtos_avalia_solar_40x40.png"}} />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">MICROINVERSORES</span>
-                    <h3 className="text-xs font-black text-slate-900 leading-snug truncate">SunPower AC Microinverter</h3>
-                    <span className="text-[10px] font-bold text-slate-500 mt-0.5 block">SunPower</span>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-normal">Produtos: 400W <br/> T5s medo: 15x <br/> 2x análise: 350 ms</p>
-                  </div>
-                </div>
-                <Button variant="outline" className="h-9 w-full rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 mt-3" asChild>
-                  <Link href="/products?search=Microinverter">Ver Análise Completa</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Direita: Depoimentos de Especialistas */}
-            <div className="flex flex-col justify-between gap-4 border-t border-slate-100 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-              {/* Especialista 1 */}
-              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Mathous S." />
-                </div>
-                <div className="leading-tight min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">Mathous S.</h4>
-                  <span className="text-[10px] text-slate-400">Engenheiro Chefe</span>
-                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                  </div>
-                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Fernanda G."</p>
-                </div>
-              </div>
-
-              {/* Especialista 2 */}
-              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Fernanda G." />
-                </div>
-                <div className="leading-tight min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">Fernanda G.</h4>
-                  <span className="text-[10px] text-slate-400">Codediere Energitics</span>
-                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                  </div>
-                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Fernanda G."</p>
-                </div>
-              </div>
-
-              {/* Especialista 3 */}
-              <div className="flex items-start gap-3 bg-slate-50/40 p-2.5 rounded-xl border border-slate-100">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                  <img src="/icones/icone_avaliacoes_avalia_solar.png" className="w-full h-full object-cover" alt="Ricardo P." />
-                </div>
-                <div className="leading-tight min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">Ricardo P.</h4>
-                  <span className="text-[10px] text-slate-400">Instalador Certificado</span>
-                  <div className="flex text-amber-400 mt-0.5 scale-75 origin-left">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                  </div>
-                  <p className="text-[10px] text-slate-500 italic mt-1 leading-snug">"Instalação impecável, retorno rápido - Frannanta E."</p>
-                </div>
-              </div>
-            </div>
-          </div>
+                <strong className="text-sm font-bold block">{cat.name}</strong>
+                <span className="text-[11px] text-slate-400 font-semibold mt-0.5">{count} produtos</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Resultados</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {formattedTotal} {resultNoun}
-            </p>
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/50 pb-5">
+          <div className="text-left">
+            <span className="text-sm font-bold text-slate-500">
+              {formattedTotal} {total === 1 ? 'produto encontrado' : 'produtos encontrados'}
+            </span>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 text-sm font-medium text-blue-700">
-                Todos
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">{formattedTotal}</span>
-              </button>
-              <button className="inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-                Produtos
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{formattedTotal}</span>
-              </button>
-              <Link
-                href={searchQuery ? `/companies?search=${encodeURIComponent(searchQuery)}` : "/companies"}
-                className="inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Empresas
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">0</span>
-              </Link>
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ordenar por</span>
+              <Select value={filters.sort} onValueChange={(val) => handleFilterChange('sort', val)}>
+                <SelectTrigger className="h-10 w-44 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold shadow-sm">
+                  <SelectValue placeholder="Mais relevantes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">Mais relevantes</SelectItem>
+                  <SelectItem value="price_asc">Menor preço</SelectItem>
+                  <SelectItem value="price_desc">Maior preço</SelectItem>
+                  <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <Select value={filters.sort} onValueChange={(val) => handleFilterChange('sort', val)}>
-              <SelectTrigger className="h-11 w-full rounded-lg border-slate-200 bg-white px-4 text-sm shadow-sm md:w-48">
-                <SelectValue placeholder="Mais relevantes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="relevance">Mais relevantes</SelectItem>
-                <SelectItem value="price_asc">Menor preço</SelectItem>
-                <SelectItem value="price_desc">Maior preço</SelectItem>
-                <SelectItem value="name_asc">Nome (A-Z)</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Alternador de Layout */}
+            <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm h-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-8 w-8 rounded-md',
+                  viewMode === 'list' && 'bg-blue-50 text-blue-600'
+                )}
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-8 w-8 rounded-md',
+                  viewMode === 'grid' && 'bg-blue-50 text-blue-600'
+                )}
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -427,22 +470,40 @@ function ProductsPageContent() {
           {/* Product Grid / Main content */}
           <main className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              <div className={cn(
+                "gap-5",
+                viewMode === 'grid'
+                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
+                  : "flex flex-col w-full"
+              )}>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex flex-col space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-                    <Skeleton className="h-[190px] w-full rounded-lg bg-slate-100" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full bg-slate-100" />
+                  <div key={i} className={cn(
+                    "flex bg-white rounded-2xl border border-slate-200 p-5",
+                    viewMode === 'grid' ? "flex-col space-y-3" : "flex-row gap-5"
+                  )}>
+                    <Skeleton className={cn("bg-slate-100 rounded-xl", viewMode === 'grid' ? "h-[190px] w-full" : "h-36 w-48 shrink-0")} />
+                    <div className="flex-1 space-y-3 py-1">
                       <Skeleton className="h-4 w-3/4 bg-slate-100" />
+                      <Skeleton className="h-4 w-1/2 bg-slate-100" />
+                      <Skeleton className="h-6 w-1/4 bg-slate-100" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
               <div className="space-y-8">
-                <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div className={cn(
+                  "mb-8 gap-5",
+                  viewMode === 'grid'
+                    ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
+                    : "flex flex-col w-full"
+                )}>
                   {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      layout={viewMode === 'list' ? 'horizontal' : 'vertical'}
+                    />
                   ))}
                 </div>
                 

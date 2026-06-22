@@ -5,8 +5,11 @@ import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { X, Check, ChevronDown, ChevronUp } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { X, Check, ChevronDown, ChevronUp, Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import type {
   ProductBrandFilter,
   ProductCategoryFilter,
@@ -22,11 +25,14 @@ interface FilterState {
   priceRange: [number, number]
   sort: string
   specs?: Record<string, ProductSpecFilterValue>
+  minRating?: string
+  onlyVerified?: boolean
+  onlyTested?: boolean
 }
 
 interface ProductsFiltersProps {
   filters: FilterState
-  onFilterChange: (key: keyof FilterState, value: FilterState[keyof FilterState]) => void
+  onFilterChange: (key: keyof FilterState, value: any) => void
   onSpecFilterChange?: (key: string, value: ProductSpecFilterValue) => void
   categories: ProductCategoryFilter[]
   companies: ProductCompanyFilter[]
@@ -63,6 +69,8 @@ export function ProductsFilters({
   companiesCount = 0
 }: ProductsFiltersProps) {
   const [techOpen, setTechOpen] = useState(false)
+  const [brandSearch, setBrandSearch] = useState("")
+  const [showAllBrands, setShowAllBrands] = useState(false)
 
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [String(category.id), category])),
@@ -87,11 +95,25 @@ export function ProductsFilters({
     filters.brand !== 'all' ||
     filters.priceRange[0] > 0 || 
     (maxPrice > 0 && filters.priceRange[1] < maxPrice) ||
+    filters.minRating !== undefined && filters.minRating !== 'all' ||
+    filters.onlyVerified === true ||
+    filters.onlyTested === true ||
     Object.values(activeSpecFilters || {}).some(v => v !== undefined && v !== null && v !== '' && v !== 'all')
 
   const handleSpecCheckbox = (key: string, value: ProductSpecFilterValue) => {
     onSpecFilterChange?.(key, value)
   }
+
+  // Filtragem de marcas client-side com base no input de busca
+  const filteredBrands = useMemo(() => {
+    return brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()))
+  }, [brands, brandSearch])
+
+  // Limite visual de marcas
+  const visibleBrands = useMemo(() => {
+    if (showAllBrands || brandSearch) return filteredBrands;
+    return filteredBrands.slice(0, 5);
+  }, [filteredBrands, showAllBrands, brandSearch])
 
   const renderSpecFilter = (spec: ProductSpecFilterMeta) => {
     const current = activeSpecFilters[spec.key]
@@ -170,21 +192,19 @@ export function ProductsFilters({
   return (
     <div className="space-y-5 text-left">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-slate-900">Filtros</h3>
+        <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Filtros</h3>
         {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onClearFilters}
-            className="h-8 px-2 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
           >
-            Limpar tudo
-          </Button>
+            Limpar filtros
+          </button>
         )}
       </div>
 
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 pb-2">
           {filters.category !== 'all' && (
             <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('category', 'all')}>
               {categoryById.get(filters.category)?.name || 'Categoria'} <X className="h-3 w-3" />
@@ -200,9 +220,24 @@ export function ProductsFilters({
               {brandById.get(filters.brand)?.name || 'Marca'} <X className="h-3 w-3" />
             </Badge>
           )}
-          {(filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) && (
+          {(filters.priceRange[0] > 0 || (maxPrice > 0 && filters.priceRange[1] < maxPrice)) && (
             <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('priceRange', [0, maxPrice])}>
               {formatCurrencyCompact(filters.priceRange[0])} - {formatCurrencyCompact(filters.priceRange[1])} <X className="h-3 w-3" />
+            </Badge>
+          )}
+          {filters.minRating !== undefined && filters.minRating !== 'all' && (
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('minRating', 'all')}>
+              {filters.minRating}★+ <X className="h-3 w-3" />
+            </Badge>
+          )}
+          {filters.onlyVerified && (
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('onlyVerified', false)}>
+              Verificados <X className="h-3 w-3" />
+            </Badge>
+          )}
+          {filters.onlyTested && (
+            <Badge variant="secondary" className="cursor-pointer gap-1 rounded-md bg-slate-100 pr-1 text-slate-700 hover:bg-slate-200" onClick={() => onFilterChange('onlyTested', false)}>
+              Testados <X className="h-3 w-3" />
             </Badge>
           )}
           {Object.entries(activeSpecFilters || {}).map(([key, value]) => (
@@ -219,9 +254,9 @@ export function ProductsFilters({
         <>
           <Separator />
           <div className="space-y-2">
-            <Label className="font-semibold text-slate-800">Ordenar por</Label>
+            <Label className="font-bold text-slate-800 text-xs uppercase tracking-wider">Ordenar por</Label>
             <Select value={filters.sort} onValueChange={(val) => onFilterChange('sort', val)}>
-              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
+              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -237,38 +272,16 @@ export function ProductsFilters({
 
       <Separator />
 
+      {/* Tipo de Produto / Categorias */}
       <div className="space-y-3">
-        <Label className="block text-sm font-semibold text-slate-900">Tipo</Label>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox id="product-type-products" checked />
-              <Label htmlFor="product-type-products" className="cursor-pointer text-sm font-normal text-slate-600">
-                Produtos
-              </Label>
-            </div>
-            <span className="text-xs text-slate-500">({totalProducts.toLocaleString('pt-BR')})</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 opacity-60">
-            <div className="flex items-center gap-2">
-              <Checkbox id="product-type-companies" disabled />
-              <Label htmlFor="product-type-companies" className="text-sm font-normal text-slate-600">
-                Empresas
-              </Label>
-            </div>
-            <span className="text-xs text-slate-500">({companiesCount.toLocaleString('pt-BR')})</span>
-          </div>
+        <div className="flex items-center justify-between">
+          <Label className="block text-sm font-extrabold text-slate-900">Tipo de produto</Label>
+          <ChevronUp className="h-4 w-4 text-slate-400" />
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <Label className="block text-sm font-semibold text-slate-900">Categoria</Label>
         {categories.length === 0 ? (
           <div className="py-2 text-xs text-slate-400">Nenhuma categoria de produto ativa.</div>
         ) : (
-          <div className="max-h-60 space-y-3 overflow-y-auto pr-1">
+          <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
             {categories.map((category) => {
               const value = String(category.id)
               const isChecked = filters.category === value
@@ -280,11 +293,11 @@ export function ProductsFilters({
                       checked={isChecked}
                       onCheckedChange={(checked) => onFilterChange('category', checked ? value : 'all')}
                     />
-                    <Label htmlFor={`check-cat-${category.id}`} className="cursor-pointer truncate text-sm font-normal text-slate-600 hover:text-slate-900">
+                    <Label htmlFor={`check-cat-${category.id}`} className="cursor-pointer truncate text-sm font-semibold text-slate-500 hover:text-slate-900">
                       {category.name}
                     </Label>
                   </div>
-                  <span className="text-xs text-slate-500">({category.products_count})</span>
+                  <span className="text-xs font-semibold text-slate-400">({category.products_count})</span>
                 </div>
               )
             })}
@@ -294,62 +307,154 @@ export function ProductsFilters({
 
       <Separator />
 
-      <div className="space-y-2">
-        <Label className="font-semibold text-slate-800">Fornecedor</Label>
-        <Select value={filters.company} onValueChange={(val) => onFilterChange('company', val)}>
-          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
-            <SelectValue placeholder="Selecionar" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os fornecedores</SelectItem>
-            {companies.map((company) => (
-              <SelectItem key={company.id} value={String(company.id)}>
-                {company.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Marca / Brand com busca */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="block text-sm font-extrabold text-slate-900">Marca</Label>
+          <ChevronUp className="h-4 w-4 text-slate-400" />
+        </div>
+        
+        {brands.length === 0 ? (
+          <div className="py-2 text-xs text-slate-400">Nenhuma marca de produto ativa.</div>
+        ) : (
+          <div className="space-y-2.5">
+            {/* Input de busca de marcas */}
+            <Input
+              type="text"
+              placeholder="Buscar marca..."
+              value={brandSearch}
+              onChange={(e) => setBrandSearch(e.target.value)}
+              className="h-9 text-xs border-slate-200/80 rounded-lg placeholder-slate-400 focus-visible:ring-blue-500/20"
+            />
 
-      {brands.length > 0 && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <Label className="font-semibold text-slate-800">Marca</Label>
-            <Select value={filters.brand} onValueChange={(val) => onFilterChange('brand', val)}>
-              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/50">
-                <SelectValue placeholder="Selecionar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as marcas</SelectItem>
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id} value={String(brand.id)}>
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
+              {visibleBrands.map((brand) => {
+                const value = String(brand.id)
+                const isChecked = filters.brand === value
+                return (
+                  <div key={brand.id} className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Checkbox
+                        id={`check-brand-${brand.id}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => onFilterChange('brand', checked ? value : 'all')}
+                      />
+                      <Label htmlFor={`check-brand-${brand.id}`} className="cursor-pointer truncate text-sm font-semibold text-slate-500 hover:text-slate-900">
+                        {brand.name}
+                      </Label>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-400">({brand.products_count})</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {filteredBrands.length > 5 && !brandSearch && (
+              <button
+                onClick={() => setShowAllBrands(!showAllBrands)}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                {showAllBrands ? "Ver menos" : "Ver todos"}
+              </button>
+            )}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       <Separator />
 
+      {/* Faixa de Preço */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="font-semibold text-slate-800">Faixa de preço</Label>
-          <span className="text-xs font-medium text-slate-500">
-            {formatCurrencyCompact(filters.priceRange[0])} - {formatCurrencyCompact(filters.priceRange[1])}
-          </span>
+          <Label className="block text-sm font-extrabold text-slate-900">Faixa de preço</Label>
+          <ChevronUp className="h-4 w-4 text-slate-400" />
         </div>
-        <Slider
-          value={[filters.priceRange[0], filters.priceRange[1]]}
-          max={Math.max(maxPrice, 1)}
-          step={100}
-          minStepsBetweenThumbs={1}
-          onValueChange={(val) => onFilterChange('priceRange', val as [number, number])}
-          className="py-1"
-        />
+        <div className="pt-2 px-1">
+          <Slider
+            value={[filters.priceRange[0], filters.priceRange[1]]}
+            max={Math.max(maxPrice, 25000)}
+            step={100}
+            minStepsBetweenThumbs={1}
+            onValueChange={(val) => onFilterChange('priceRange', val as [number, number])}
+            className="[&_.relative]:bg-blue-600 [&_[role=slider]]:border-blue-600 [&_[role=slider]]:bg-white [&_[role=slider]]:shadow-sm"
+          />
+        </div>
+        <div className="flex justify-between items-center text-[11px] font-bold text-slate-400">
+          <span>R$ 0</span>
+          <span>R$ 25.000+</span>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Avaliação Mínima */}
+      <div className="space-y-3">
+        <Label className="block text-sm font-extrabold text-slate-900">Avaliação mínima</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {["5", "4", "3", "2"].map((val) => {
+            const num = Number(val);
+            const isSelected = filters.minRating === val;
+            
+            return (
+              <button
+                key={val}
+                type="button"
+                onClick={() => onFilterChange('minRating', isSelected ? 'all' : val)}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 h-10 border rounded-xl transition-all",
+                  isSelected
+                    ? "border-blue-600 bg-blue-50/20 text-blue-600 ring-1 ring-blue-600"
+                    : "border-slate-200/70 hover:bg-slate-50 text-slate-700"
+                )}
+              >
+                <div className="flex gap-0.5 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "w-3 h-3",
+                        i < num ? "fill-current" : "text-slate-200 fill-transparent"
+                      )}
+                    />
+                  ))}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Toggles inferiores */}
+      <div className="space-y-4 pt-1">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="toggle-verified" className="cursor-pointer text-sm font-bold text-slate-800">
+              Mostrar apenas verificados
+            </Label>
+          </div>
+          <Switch
+            id="toggle-verified"
+            checked={!!filters.onlyVerified}
+            onCheckedChange={(checked) => onFilterChange('onlyVerified', checked)}
+            className="data-[state=checked]:bg-blue-600"
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="toggle-tested" className="cursor-pointer text-sm font-bold text-slate-800">
+              Produtos testados por especialistas
+            </Label>
+          </div>
+          <Switch
+            id="toggle-tested"
+            checked={!!filters.onlyTested}
+            onCheckedChange={(checked) => onFilterChange('onlyTested', checked)}
+            className="data-[state=checked]:bg-blue-600"
+          />
+        </div>
       </div>
 
       <Separator />
@@ -357,7 +462,7 @@ export function ProductsFilters({
       <div className="space-y-3">
         <button
           onClick={() => setTechOpen(!techOpen)}
-          className="flex w-full items-center justify-between py-2 text-sm font-semibold text-slate-900 transition-colors hover:text-blue-700"
+          className="flex w-full items-center justify-between py-2 text-sm font-semibold text-slate-950 transition-colors hover:text-blue-700"
         >
           <span>{techOpen ? "Ocultar filtros técnicos" : "Mostrar filtros técnicos"}</span>
           {techOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -376,3 +481,4 @@ export function ProductsFilters({
     </div>
   )
 }
+

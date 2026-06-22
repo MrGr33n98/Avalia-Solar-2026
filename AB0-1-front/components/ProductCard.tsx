@@ -156,170 +156,143 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   }), [product, displayImage, priceValue, priceAvailable, statusLabel, companyName]);
 
   if (layout === 'horizontal') {
+    const inlineSpecs = product.specs && product.specs.length > 0
+      ? product.specs
+          .slice(0, 3)
+          .map(spec => `${spec.label}: ${spec.value}${spec.unit ? ` ${spec.unit}` : ''}`)
+          .join('  |  ')
+      : null;
+
+    const rating = ratingAvg || 0;
+
     return (
       <>
         <article itemScope itemType="https://schema.org/Product" className="w-full relative text-left">
-          <Card ref={cardRef} className="w-full flex flex-col md:flex-row overflow-hidden border-slate-200 hover:border-blue-500/20 hover:shadow-lg transition-all duration-300 bg-white">
+          <Card ref={cardRef} className="w-full flex flex-col md:flex-row overflow-hidden border-slate-200/80 hover:border-blue-500/20 hover:shadow-lg transition-all duration-300 bg-white rounded-2xl relative">
+            
             {/* Left: Image Box */}
-            <div className="relative w-full md:w-80 bg-slate-50 flex items-center justify-center p-4 flex-shrink-0 border-r border-slate-100">
-              <Link href={friendlyUrl} className="block w-full h-48 md:h-full relative min-h-[14rem]">
+            <div className="relative w-full md:w-64 bg-slate-50/50 flex items-center justify-center p-4 flex-shrink-0 border-r border-slate-100/60">
+              <Link href={friendlyUrl} className="block w-full h-44 relative min-h-[11rem]">
                 {displayImage ? (
                   <Image
                     src={displayImage}
                     alt={product.name}
                     fill
-                    className="object-contain p-2 transition-transform duration-500 hover:scale-105"
+                    className="object-contain p-4 transition-transform duration-500 hover:scale-105"
                     onError={() => setImageError(true)}
-                    sizes="(max-width: 640px) 100vw, 320px"
+                    sizes="(max-width: 640px) 100vw, 256px"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-400">
+                  <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-400">
                     Imagem indisponível
                   </div>
                 )}
               </Link>
-              {/* Badge Overlay */}
-              <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+
+              {/* Badges Overlay */}
+              <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                 {product.featured && (
-                  <Badge className="bg-blue-600 text-white shadow-sm font-semibold border-none text-[11px] px-2 py-0.5">
+                  <span className="inline-flex items-center rounded-md bg-[#2563eb] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm">
                     Destaque
-                  </Badge>
+                  </span>
                 )}
                 {product.company?.verified && (
-                  <Badge className="bg-emerald-600 text-white shadow-sm font-semibold border-none text-[11px] px-2 py-0.5">
+                  <span className="inline-flex items-center rounded-md bg-[#10b981] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm">
                     Verificado
-                  </Badge>
+                  </span>
                 )}
-              </div>
-              
-              <div className="absolute top-3 right-3 z-10">
-                <Badge variant={statusVariant} className="shadow-sm font-medium opacity-90 backdrop-blur-sm">
-                  {statusLabel}
-                </Badge>
-              </div>
-
-              {/* Quick View Button */}
-              <div className="absolute bottom-3 right-3">
-                <Button 
-                  size="icon" 
-                  variant="secondary" 
-                  className="shadow-md bg-white hover:bg-slate-100 text-slate-700 h-8 w-8 rounded-full"
-                  onClick={handleQuickView}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
               </div>
             </div>
 
             {/* Center: Info Box */}
-            <div className="flex-1 p-6 flex flex-col justify-between gap-4">
+            <div className="flex-1 p-5 flex flex-col justify-between gap-3 relative pr-12">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold uppercase tracking-wider">
-                  <Tag className="w-3.5 h-3.5" />
-                  <span>{categoryName}</span>
-                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#94a3b8] block">
+                  {categoryName}
+                </span>
                 
                 <Link href={friendlyUrl} className="hover:text-blue-600 transition-colors block">
-                  <h2 itemProp="name" className="text-xl md:text-2xl font-extrabold text-slate-900 leading-tight">
+                  <h2 itemProp="name" className="text-lg font-black text-[#0f172a] leading-snug">
                     {product.name}
                   </h2>
                 </Link>
                 
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <span className="font-medium text-slate-400">Categoria: <strong className="text-slate-600 font-semibold">{categoryName}</strong></span>
-                  {applicationSpec && (
-                    <>
-                      <span className="text-slate-300">|</span>
-                      <span className="font-medium text-slate-400">Aplicação: <strong className="text-slate-600 font-semibold">{applicationSpec}</strong></span>
-                    </>
-                  )}
-                </div>
+                {inlineSpecs && (
+                  <p className="text-xs font-semibold text-[#64748b] pt-0.5">
+                    {inlineSpecs}
+                  </p>
+                )}
+
+                {product.short_description && (
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    {product.short_description}
+                  </p>
+                )}
 
                 {/* Rating */}
                 {ratingAvg !== undefined && ratingAvg !== null ? (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <div className="flex text-amber-400">
+                  <div className="flex items-center gap-2 pt-1 text-xs font-bold text-slate-700">
+                    <div className="flex gap-0.5 text-amber-400">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`w-4 h-4 ${i < Math.round(ratingAvg) ? 'fill-current' : ''}`} />
+                        <Star
+                          key={i}
+                          className={cn(
+                            "w-3.5 h-3.5",
+                            i < Math.floor(rating) ? "fill-current" : "text-slate-200 fill-transparent"
+                          )}
+                        />
                       ))}
                     </div>
-                    <span className="text-sm font-bold text-slate-800">{ratingAvg.toFixed(1)}</span>
+                    <span className="text-slate-700 font-extrabold">{ratingAvg.toFixed(1)}</span>
                     {reviewsCount !== undefined && reviewsCount !== null && (
-                      <span className="text-xs text-slate-400">({reviewsCount} avaliações)</span>
+                      <span className="text-slate-400 font-medium">({reviewsCount} avaliações)</span>
                     )}
                   </div>
                 ) : null}
               </div>
-
-              {/* Technical badges */}
-              {realFeatures.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {realFeatures.map((feat, idx) => (
-                    <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-600 text-xs px-2.5 py-1 font-medium">
-                      {feat}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Right: Price & CTA Box */}
-            <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-slate-100 p-6 bg-slate-50/40 flex flex-col justify-between gap-6">
-              <div className="space-y-4">
-                {/* Price Display */}
-                <div className="space-y-1">
-                  <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Preço Sugerido</span>
-                  {priceAvailable ? (
-                    <>
-                      <div className="text-2xl md:text-3xl font-black text-blue-600">
-                        R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
-                      {installments && (
-                        <div className="text-xs text-slate-500 leading-normal">
-                          à vista no PIX <br/>
-                          ou <strong className="text-slate-700">12x de R$ {installments}</strong> sem juros
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-2xl md:text-3xl font-black text-blue-600">
-                      Consultar preço
+            <div className="w-full md:w-60 border-t md:border-t-0 md:border-l border-slate-100 p-5 bg-white flex flex-col justify-center items-end gap-4 text-right">
+              <div className="space-y-1.5 w-full">
+                {priceAvailable ? (
+                  <>
+                    <div className="text-2xl font-black text-slate-900 leading-none">
+                      R$ {priceValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
-                  )}
-                </div>
-
-                {/* Company details */}
-                <div className="flex items-start gap-2 pt-2 border-t border-slate-100">
-                  <div className="bg-white p-2 rounded-lg border shadow-sm text-slate-400 flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-blue-500" />
+                    {installments && (
+                      <div className="text-[10px] font-semibold text-slate-400">
+                        10x de R$ {installments} sem juros
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm font-bold text-slate-500">
+                    Preço sob consulta
                   </div>
-                  <div className="text-xs leading-tight">
-                    <span className="text-slate-400 block">Fornecedor</span>
-                    <strong className="text-slate-700 font-bold flex items-center gap-0.5 text-sm">
-                      {companyName}
-                      {product.company?.verified && <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />}
-                    </strong>
-                    {companyLocation && <span className="text-slate-400 block mt-0.5">{companyLocation}</span>}
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2">
-                <Button asChild variant="outline" className="w-full text-xs h-10 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold">
-                  <Link href={friendlyUrl} onClick={() => track('product_click', { product_id: product.id, product_name: product.name, click_type: 'details', ...brandContext })}>
-                    Ver detalhes
-                  </Link>
-                </Button>
-                <Button asChild className="w-full text-xs h-10 gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm shadow-blue-100">
-                  <Link href={friendlyUrl} onClick={handleBudgetClick}>
-                    <MessageSquare className="w-4 h-4" />
-                    Solicitar orçamento
-                  </Link>
-                </Button>
-              </div>
+              <Button asChild variant="outline" className="h-10 w-full rounded-xl border border-blue-600 bg-white text-xs font-black text-blue-600 hover:bg-blue-50/50 hover:text-blue-700 hover:border-blue-700 transition-all shadow-sm">
+                <Link href={friendlyUrl} onClick={() => track('product_click', { product_id: product.id, product_name: product.name, click_type: 'details', ...brandContext })}>
+                  Ver detalhes
+                </Link>
+              </Button>
             </div>
+
+            {/* Favorite Icon (Coração) no topo direito do card */}
+            <div className="absolute right-4 top-4 z-10">
+              <button 
+                type="button"
+                aria-label="Adicionar aos favoritos"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 hover:text-red-500 hover:scale-105 transition-all border border-slate-100/60 shadow-sm"
+              >
+                <Heart className="w-4.5 h-4.5 fill-transparent transition-colors" />
+              </button>
+            </div>
+
           </Card>
 
           <script
