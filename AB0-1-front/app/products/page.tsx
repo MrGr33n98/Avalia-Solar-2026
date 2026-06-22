@@ -340,22 +340,26 @@ function ProductsPageContent() {
                   }
                 }}
                 className={cn(
-                  "flex flex-col items-center justify-center p-5 bg-white rounded-2xl border transition-all text-center group w-full shadow-sm hover:shadow-md",
+                  "flex flex-col items-center justify-center min-h-[140px] p-4 bg-white rounded-2xl border transition-all text-center group w-full shadow-sm hover:shadow-md gap-1",
                   isSelected
                     ? "border-blue-600 bg-blue-50/20 text-blue-600 ring-1 ring-blue-600"
                     : "border-slate-200/80 hover:border-blue-500/30 text-slate-800"
                 )}
               >
                 <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center transition-colors mb-3",
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-colors mb-1.5",
                   isSelected 
                     ? "bg-blue-100/70 text-blue-600" 
                     : "bg-slate-50 text-blue-500 group-hover:bg-blue-50"
                 )}>
                   {cat.icon}
                 </div>
-                <strong className="text-sm font-bold block">{cat.name}</strong>
-                <span className="text-[11px] text-slate-400 font-semibold mt-0.5">{count} produtos</span>
+                <strong className="text-xs font-black text-slate-800 leading-tight block w-full truncate px-1">
+                  {cat.name}
+                </strong>
+                <span className="text-[10px] text-slate-400 font-bold block">
+                  {count} produtos
+                </span>
               </button>
             );
           })}
