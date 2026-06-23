@@ -322,7 +322,7 @@ function ProductsPageContent() {
       />
 
       {/* Encontre o produto ideal para seu projeto */}
-      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
         <h2 className="text-xl font-bold tracking-tight text-slate-800 text-left mb-6">
           Encontre o produto ideal para seu projeto
         </h2>

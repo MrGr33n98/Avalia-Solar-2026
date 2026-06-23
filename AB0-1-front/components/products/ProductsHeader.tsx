@@ -14,7 +14,7 @@ export function ProductsHeader({
   selectedCategory = "Todas as categorias"
 }: ProductsHeaderProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#f0f6fc] via-[#f5f9fd] to-[#f8fafc] border-b border-slate-100 py-10 md:py-12">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#f0f6fc] via-[#f5f9fd] to-[#f8fafc] border-b border-slate-100 pt-10 pb-4 md:pt-12 md:pb-5">
       {/* Elementos decorativos de fundo */}
       <div className="absolute top-0 right-0 w-[40%] h-full opacity-35 pointer-events-none">
         <div className="absolute right-[-10%] top-[-20%] w-[500px] h-[500px] rounded-full bg-blue-100/40 blur-3xl" />
