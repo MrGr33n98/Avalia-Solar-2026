@@ -198,9 +198,18 @@ ActiveAdmin.register Product do
         f.input :image_url, label: "URL da Imagem (Opcional)", hint: "URL externa da imagem, caso não use upload"
       end
 
-      # Add categories select2
-      f.input :categories, as: :select, multiple: true, input_html: { class: 'select2-input' },
-                           collection: Category.all.order(:name)   
+      # Add categories as hierarchical checkboxes
+      build_category_hierarchy = ->(parent_id = nil, depth = 0, memo = []) {
+        Category.where(parent_id: parent_id).order(:name).each do |cat|
+          memo << [cat, depth]
+          build_category_hierarchy.call(cat.id, depth + 1, memo)
+        end
+        memo
+      }
+      categories_with_depth = build_category_hierarchy.call(nil)
+      categories_collection = categories_with_depth.map { |cat, d| ["#{'— ' * d} #{cat.name}", cat.id] }
+
+      f.input :categories, as: :check_boxes, collection: categories_collection
     end
     f.inputs 'SEO & Metadados' do
       f.input :seo_title, 

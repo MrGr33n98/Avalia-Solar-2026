@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_21_162509) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2245,6 +2245,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_21_162509) do
     t.string "capture_flow_source"
     t.integer "helpful_count", default: 0, null: false
     t.integer "read_count", default: 0, null: false
+    t.string "reviewable_type"
+    t.bigint "reviewable_id"
     t.index ["category_id"], name: "index_reviews_on_category_id"
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "rating"], name: "index_reviews_on_company_id_and_rating", order: { rating: :desc }
@@ -2259,6 +2261,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_21_162509) do
     t.index ["metadata"], name: "index_reviews_on_metadata", using: :gin
     t.index ["project_context"], name: "index_reviews_on_project_context", using: :gin
     t.index ["project_type"], name: "index_reviews_on_project_type"
+    t.index ["reviewable_type", "reviewable_id"], name: "index_reviews_on_reviewable_type_and_reviewable_id"
     t.index ["user_id", "company_id", "category_id"], name: "idx_reviews_user_company_category", unique: true
     t.index ["user_id"], name: "index_reviews_on_user_id"
     t.check_constraint "rating >= 0::numeric AND rating <= 5::numeric", name: "chk_reviews_rating_range"

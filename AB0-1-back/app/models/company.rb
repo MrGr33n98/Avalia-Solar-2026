@@ -130,7 +130,7 @@ class Company < ApplicationRecord
     category.update_metrics! if category.respond_to?(:update_metrics!)
   end
 
-  has_many :reviews, dependent: :destroy
+  has_many :reviews, as: :reviewable, dependent: :destroy
   has_many :conversations, dependent: :destroy
   has_many :review_aggregates, dependent: :destroy
   has_many :pending_changes, dependent: :destroy

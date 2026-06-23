@@ -1,7 +1,8 @@
 class Review < ApplicationRecord
   include ReviewCallbacks
 
-  belongs_to :company, counter_cache: true
+  belongs_to :reviewable, polymorphic: true, optional: true
+  belongs_to :company, counter_cache: true, optional: true
   belongs_to :user
   belongs_to :category, optional: true
   has_many :review_decision_logs, dependent: :destroy
