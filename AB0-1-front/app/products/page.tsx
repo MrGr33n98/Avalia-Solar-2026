@@ -326,7 +326,7 @@ function ProductsPageContent() {
           <div className="grid grid-cols-2 gap-y-2 gap-x-0 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-slate-100">
             {quickCategories.map((cat) => {
               const isSelected = cat.dbCat ? String(cat.dbCat.id) === filters.category : false;
-              const count = cat.dbCat ? cat.dbCat.products_count : cat.defaultCount;
+              const count = cat.dbCat ? cat.dbCat.products_count : 0;
               
               return (
                 <button
