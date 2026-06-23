@@ -3,7 +3,7 @@ module Api
     class ConversationsController < BaseController
       include FeatureGateEnforceable
 
-      before_action :authenticate_user!
+      before_action :authenticate_api_user
 
       def index
         @conversations = if current_user.company_user?

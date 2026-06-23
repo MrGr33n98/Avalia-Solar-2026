@@ -3,7 +3,7 @@ module Api
     class DirectMessagesController < BaseController
       include FeatureGateEnforceable
 
-      before_action :authenticate_user!
+      before_action :authenticate_api_user
       before_action :set_conversation
 
       def index

@@ -107,7 +107,7 @@ export default function ChatClient() {
     if (authLoading) return;
 
     if (!isAuthenticated) {
-      setErrorMessage('Faça login para iniciar uma conversa com esta empresa.');
+      setErrorMessage('Faça login para iniciar uma conversa.');
       setConversations([]);
       setActiveConversation(null);
       setMessages([]);
@@ -115,8 +115,8 @@ export default function ChatClient() {
       return;
     }
 
-    if (user?.role !== 'review') {
-      setErrorMessage('O chat com empresas está disponível apenas para usuários compradores.');
+    // Tanto compradores (review) quanto usuários de empresa (company) podem acessar o chat
+    if (!user?.role) {
       setLoading(false);
       return;
     }
@@ -126,7 +126,7 @@ export default function ChatClient() {
   }, [authLoading, isAuthenticated, router, user?.role]);
 
   const loadConversations = async () => {
-    if (!isAuthenticated || user?.role !== 'review') {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
@@ -136,15 +136,21 @@ export default function ChatClient() {
       const data = await conversationsApi.getAll({ silent: true, silentStatusCodes: [401] });
       setConversations(data || []);
 
+      // Somente compradores (review) podem iniciar uma nova conversa via company_id na URL
       const companyId = searchParams.get('company_id');
-      if (companyId) {
+      if (companyId && user?.role === 'review') {
         let conv = data.find((c: Conversation) => c.company_id === Number(companyId));
         if (!conv) {
-          // If no conversation exists for this company, create one
-          conv = await conversationsApi.create(Number(companyId));
-          setConversations((prev) => [conv, ...prev]);
+          try {
+            conv = await conversationsApi.create(Number(companyId));
+            setConversations((prev) => [conv, ...prev]);
+          } catch (createError) {
+            // Se não conseguir criar (403 feature gate), apenas mostra as conversas existentes
+            console.warn('Could not create conversation:', createError);
+            setErrorMessage(getChatErrorMessage(createError));
+          }
         }
-        selectConversation(conv);
+        if (conv) selectConversation(conv);
       } else if (data.length > 0) {
         selectConversation(data[0]);
       }
@@ -161,7 +167,7 @@ export default function ChatClient() {
   };
 
   const selectConversation = async (conv: Conversation) => {
-    if (!isAuthenticated || user?.role !== 'review') return;
+    if (!isAuthenticated) return;
 
     setActiveConversation(conv);
     try {
@@ -212,7 +218,6 @@ export default function ChatClient() {
   const sendMessage = async () => {
     if (
       !isAuthenticated ||
-      user?.role !== 'review' ||
       !inputMessage.trim() ||
       !activeConversation
     ) {
