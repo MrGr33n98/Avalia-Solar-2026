@@ -320,49 +320,52 @@ function ProductsPageContent() {
         onClearFilters={clearFilters}
         selectedCategory={selectedCategoryName}
       />
-
-      {/* Encontre o produto ideal para seu projeto */}
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
-        <h2 className="text-xl font-bold tracking-tight text-slate-800 text-left mb-6">
-          Encontre o produto ideal para seu projeto
-        </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {quickCategories.map((cat) => {
-            const isSelected = cat.dbCat ? String(cat.dbCat.id) === filters.category : false;
-            const count = cat.dbCat ? cat.dbCat.products_count : cat.defaultCount;
-            
-            return (
-              <button
-                key={cat.key}
-                onClick={() => {
-                  if (cat.dbCat) {
-                    handleFilterChange('category', isSelected ? 'all' : String(cat.dbCat.id));
-                  }
-                }}
-                className="flex flex-col items-center text-center group focus:outline-none transition-all w-full py-2"
-              >
-                <div className={cn(
-                  "w-16 h-16 rounded-full border bg-white flex items-center justify-center shadow-sm transition-all mb-2.5",
-                  isSelected 
-                    ? "border-blue-600 ring-2 ring-blue-600/20 text-blue-600" 
-                    : "border-slate-200/80 text-blue-500 group-hover:border-blue-500 group-hover:shadow-md group-hover:scale-105"
-                )}>
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    {cat.icon}
+      {/* Barra de Categorias Rápidas */}
+      <div className="w-full bg-white border-y border-slate-200/60 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-1">
+          <div className="grid grid-cols-2 gap-y-2 gap-x-0 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-slate-100">
+            {quickCategories.map((cat) => {
+              const isSelected = cat.dbCat ? String(cat.dbCat.id) === filters.category : false;
+              const count = cat.dbCat ? cat.dbCat.products_count : cat.defaultCount;
+              
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => {
+                    if (cat.dbCat) {
+                      handleFilterChange('category', isSelected ? 'all' : String(cat.dbCat.id));
+                    }
+                  }}
+                  className={cn(
+                    "flex flex-row items-center gap-3 py-3 px-4 transition-all text-left w-full hover:bg-slate-50/80 group focus:outline-none min-h-[4.5rem]",
+                    isSelected && "bg-blue-50/40"
+                  )}
+                >
+                  <div className={cn(
+                    "w-12 h-12 rounded-full border bg-slate-50 flex items-center justify-center transition-colors shrink-0",
+                    isSelected 
+                      ? "border-blue-600 bg-blue-100/50 text-blue-600" 
+                      : "border-slate-100 text-blue-500 group-hover:bg-blue-50"
+                  )}>
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      {cat.icon}
+                    </div>
                   </div>
-                </div>
-                <strong className={cn(
-                  "text-xs font-black leading-tight block w-full truncate px-1",
-                  isSelected ? "text-blue-600 font-extrabold" : "text-slate-800"
-                )}>
-                  {cat.name}
-                </strong>
-                <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
-                  {count} {count === 1 ? 'produto' : 'produtos'}
-                </span>
-              </button>
-            );
-          })}
+                  <div className="flex flex-col min-w-0">
+                    <strong className={cn(
+                      "text-xs font-black leading-tight truncate",
+                      isSelected ? "text-blue-600 font-extrabold" : "text-slate-800"
+                    )}>
+                      {cat.name}
+                    </strong>
+                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                      {count} {count === 1 ? 'produto' : 'produtos'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

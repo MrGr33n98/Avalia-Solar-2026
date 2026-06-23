@@ -156,11 +156,12 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   }), [product, displayImage, priceValue, priceAvailable, statusLabel, companyName]);
 
   if (layout === 'horizontal') {
-    const inlineSpecs = product.specs && product.specs.length > 0
-      ? product.specs
-          .slice(0, 3)
-          .map(spec => `${spec.label}: ${spec.value}${spec.unit ? ` ${spec.unit}` : ''}`)
-          .join('  |  ')
+    const specPills = product.specs && product.specs.length > 0
+      ? product.specs.slice(0, 4).map((spec, idx) => (
+          <span key={idx} className="inline-flex items-center rounded-md bg-[#f1f5f9] px-2.5 py-1 text-xs font-bold text-[#475569] shadow-sm">
+            {spec.value}
+          </span>
+        ))
       : null;
 
     const rating = ratingAvg || 0;
@@ -206,23 +207,17 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
             </div>
 
             {/* Center: Info Box */}
-            <div className="flex-1 p-5 flex flex-col justify-between gap-3 relative pr-12">
+            <div className="flex-1 p-5 flex flex-col justify-center gap-3 relative pr-6">
               <div className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#94a3b8] block">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#2563eb] block">
                   {categoryName}
                 </span>
                 
                 <Link href={friendlyUrl} className="hover:text-blue-600 transition-colors block">
-                  <h2 itemProp="name" className="text-lg font-black text-[#0f172a] leading-snug">
+                  <h2 itemProp="name" className="text-xl font-bold text-[#0f172a] leading-snug">
                     {product.name}
                   </h2>
                 </Link>
-                
-                {inlineSpecs && (
-                  <p className="text-xs font-semibold text-[#64748b] pt-0.5">
-                    {inlineSpecs}
-                  </p>
-                )}
 
                 {product.short_description && (
                   <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
@@ -230,32 +225,39 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                   </p>
                 )}
 
-                {/* Rating */}
-                {ratingAvg !== undefined && ratingAvg !== null ? (
-                  <div className="flex items-center gap-2 pt-1 text-xs font-bold text-slate-700">
-                    <div className="flex gap-0.5 text-amber-400">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={cn(
-                            "w-3.5 h-3.5",
-                            i < Math.floor(rating) ? "fill-current" : "text-slate-200 fill-transparent"
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-slate-700 font-extrabold">{ratingAvg.toFixed(1)}</span>
-                    {reviewsCount !== undefined && reviewsCount !== null && (
-                      <span className="text-slate-400 font-medium">({reviewsCount} avaliações)</span>
-                    )}
+                {specPills && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {specPills}
                   </div>
-                ) : null}
+                )}
               </div>
             </div>
 
             {/* Right: Price & CTA Box */}
-            <div className="w-full md:w-60 border-t md:border-t-0 md:border-l border-slate-100 p-5 bg-white flex flex-col justify-center items-end gap-4 text-right">
-              <div className="space-y-1.5 w-full">
+            <div className="w-full md:w-64 border-t md:border-t-0 md:border-l border-slate-100 p-5 bg-white flex flex-col justify-center items-end gap-3 text-right relative pr-6">
+              
+              {/* Rating positioned above price */}
+              {ratingAvg !== undefined && ratingAvg !== null ? (
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-700 w-full justify-end">
+                  <span className="text-slate-800 font-extrabold">{ratingAvg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+                  <div className="flex gap-0.5 text-amber-500">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "w-3.5 h-3.5 fill-current",
+                          i < Math.round(ratingAvg) ? "text-amber-500" : "text-slate-200 fill-transparent"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  {reviewsCount !== undefined && reviewsCount !== null && (
+                    <span className="text-slate-400 font-medium">({reviewsCount.toLocaleString('pt-BR')})</span>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="space-y-1 w-full mt-1">
                 {priceAvailable ? (
                   <>
                     <div className="text-2xl font-black text-slate-900 leading-none">
@@ -275,7 +277,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
               </div>
 
               {/* Action Buttons */}
-              <Button asChild variant="outline" className="h-10 w-full rounded-xl border border-blue-600 bg-white text-xs font-black text-blue-600 hover:bg-blue-50/50 hover:text-blue-700 hover:border-blue-700 transition-all shadow-sm">
+              <Button asChild variant="outline" className="h-10 w-full rounded-lg border border-blue-600 bg-white text-xs font-bold text-blue-600 hover:bg-blue-50/50 hover:text-blue-700 hover:border-blue-700 transition-all shadow-sm">
                 <Link href={friendlyUrl} onClick={() => track('product_click', { product_id: product.id, product_name: product.name, click_type: 'details', ...brandContext })}>
                   Ver detalhes
                 </Link>
