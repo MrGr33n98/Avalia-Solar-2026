@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1256,9 +1256,51 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
     t.bigint "company_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "open", null: false
+    t.datetime "last_message_at"
+    t.integer "user_unread_count", default: 0, null: false
+    t.integer "company_unread_count", default: 0, null: false
+    t.datetime "user_last_read_at"
+    t.datetime "company_last_read_at"
+    t.datetime "sla_due_at"
+    t.datetime "resolved_at"
+    t.datetime "blocked_at"
+    t.string "blocked_by_type"
+    t.bigint "blocked_by_id"
+    t.text "block_reason"
+    t.integer "report_count", default: 0, null: false
+    t.index ["blocked_by_type", "blocked_by_id"], name: "index_conversations_on_blocked_by"
     t.index ["company_id"], name: "index_conversations_on_company_id"
+    t.index ["last_message_at"], name: "index_conversations_on_last_message_at"
+    t.index ["sla_due_at"], name: "index_conversations_on_sla_due_at"
+    t.index ["status"], name: "index_conversations_on_status"
     t.index ["user_id", "company_id"], name: "index_conversations_on_user_id_and_company_id_unique", unique: true
     t.index ["user_id"], name: "index_conversations_on_user_id"
+  end
+
+  create_table "conversation_events", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "actor_id"
+    t.string "event_type", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_conversation_events_on_actor_id"
+    t.index ["conversation_id"], name: "index_conversation_events_on_conversation_id"
+    t.index ["event_type"], name: "index_conversation_events_on_event_type"
+  end
+
+  create_table "conversation_reports", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "reporter_id", null: false
+    t.string "reason", null: false
+    t.text "details"
+    t.string "status", default: "open", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_conversation_reports_on_conversation_id"
+    t.index ["reporter_id"], name: "index_conversation_reports_on_reporter_id"
+    t.index ["status"], name: "index_conversation_reports_on_status"
   end
 
   create_table "daily_growth_snapshots", force: :cascade do |t|
@@ -1310,7 +1352,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
     t.datetime "read_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "sender_id"
+    t.string "client_message_id"
+    t.datetime "delivered_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.index ["conversation_id", "client_message_id"], name: "index_direct_messages_on_conversation_and_client_id", unique: true, where: "(client_message_id IS NOT NULL)"
     t.index ["conversation_id"], name: "index_direct_messages_on_conversation_id"
+    t.index ["sender_id"], name: "index_direct_messages_on_sender_id"
   end
 
   create_table "downloadables", force: :cascade do |t|
@@ -2095,6 +2143,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
     t.index ["product_id"], name: "index_pricings_on_product_id"
   end
 
+  create_table "push_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "token", null: false
+    t.string "platform", null: false
+    t.string "device_id"
+    t.boolean "active", default: true, null: false
+    t.datetime "last_seen_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_push_tokens_on_token", unique: true
+    t.index ["user_id", "platform"], name: "index_push_tokens_on_user_id_and_platform"
+    t.index ["user_id"], name: "index_push_tokens_on_user_id"
+  end
+
   create_table "product_accesses", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.bigint "user_id", null: false
@@ -2527,6 +2589,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
   add_foreign_key "company_videos", "companies"
   add_foreign_key "company_webhooks", "companies"
   add_foreign_key "consent_logs", "users"
+  add_foreign_key "conversation_events", "conversations"
+  add_foreign_key "conversation_events", "users", column: "actor_id"
+  add_foreign_key "conversation_reports", "conversations"
+  add_foreign_key "conversation_reports", "users", column: "reporter_id"
   add_foreign_key "conversations", "companies"
   add_foreign_key "conversations", "users"
   add_foreign_key "direct_messages", "conversations"
@@ -2560,6 +2626,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_23_034850) do
   add_foreign_key "pending_changes", "users"
   add_foreign_key "posts", "users"
   add_foreign_key "pricings", "products"
+  add_foreign_key "push_tokens", "users"
   add_foreign_key "product_accesses", "products"
   add_foreign_key "product_accesses", "users"
   add_foreign_key "product_price_histories", "products"

@@ -14,6 +14,16 @@ class ConversationChannel < ApplicationCable::Channel
     end
   end
 
+  def typing(data)
+    return unless current_user && @conversation && can_access_conversation?
+
+    P2pChat::Broadcaster.typing(
+      @conversation,
+      actor: current_user,
+      typing: ActiveModel::Type::Boolean.new.cast(data['typing'])
+    )
+  end
+
   private
 
   def can_access_conversation?

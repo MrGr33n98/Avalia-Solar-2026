@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
   ScrollView,
   TouchableOpacity,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/store/auth';
+import { conversationsApi } from '@/lib/api';
 
 interface Notification {
   id: number;
@@ -30,41 +32,57 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const canUseP2PChat = user?.role === 'review';
+  const [loading, setLoading] = useState(false);
 
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      title: 'Nova proposta recebida!',
-      body: 'EcoVolt Engenharia respondeu ao seu pedido de orçamento solar. Veja a conversa.',
-      time: 'Há 5 min',
-      type: 'message',
-      unread: true,
-    },
-    {
-      id: 2,
-      title: 'Avaliação publicada!',
-      body: 'Sua avaliação sobre Fronius Brasil Solar foi aprovada e já está visível no perfil da empresa.',
-      time: 'Há 2 horas',
-      type: 'review',
-      unread: true,
-    },
-    {
-      id: 3,
-      title: 'Economize mais hoje',
-      body: 'Experimente a nova ferramenta de Scanner de Faturas de energia e simule grátis.',
-      time: 'Há 1 dia',
-      type: 'system',
-      unread: false,
-    },
-    {
-      id: 4,
-      title: 'Orçamento entregue',
-      body: 'Seu lead para BYD Energy foi entregue com sucesso.',
-      time: 'Há 3 dias',
-      type: 'lead',
-      unread: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadNotifications = async () => {
+      if (!canUseP2PChat) {
+        setNotifications([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const conversations = await conversationsApi.getAll();
+        if (!active) return;
+
+        setNotifications(
+          conversations
+            .filter((conversation) => (conversation.unread_count || 0) > 0)
+            .map((conversation) => ({
+              id: conversation.id,
+              title: conversation.company_name || conversation.company?.name || 'Nova mensagem',
+              body:
+                typeof conversation.last_message === 'string'
+                  ? conversation.last_message || 'Você recebeu uma nova mensagem.'
+                  : conversation.last_message?.body || 'Você recebeu uma nova mensagem.',
+              time: conversation.last_message_at
+                ? new Date(conversation.last_message_at).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : 'Agora',
+              type: 'message',
+              unread: true,
+            }))
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadNotifications();
+
+    return () => {
+      active = false;
+    };
+  }, [canUseP2PChat]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
@@ -80,7 +98,7 @@ export default function NotificationsScreen() {
     
     // Redirecionamento baseado no tipo
     if (n.type === 'message') {
-      router.push(canUseP2PChat ? '/p2p_chat' : '/profile');
+      router.push(canUseP2PChat ? { pathname: '/p2p_chat', params: { conversation_id: String(n.id) } } : '/profile');
     } else if (n.type === 'lead') {
       router.push('/requests');
     } else if (n.type === 'review') {
@@ -127,7 +145,9 @@ export default function NotificationsScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {notifications.length === 0 ? (
+          {loading ? (
+            <ActivityIndicator color={colors.tint} style={{ marginTop: Spacing.six }} />
+          ) : notifications.length === 0 ? (
             <View style={styles.emptyContainer}>
               <BellOff size={48} color={colors.textSecondary} />
               <ThemedText type="subtitle" style={styles.emptyTitle}>
@@ -202,7 +222,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.tint,
+    color: '#208AEF',
   },
   scrollContent: {
     paddingHorizontal: Spacing.four,

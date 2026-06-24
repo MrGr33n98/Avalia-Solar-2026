@@ -225,8 +225,17 @@ Rails.application.routes.draw do
       # P2P Chat endpoints
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       resources :conversations, only: %i[index create] do
+        member do
+          post :read
+          post :resolve
+          post :reopen
+          post :block
+          post :report
+          get :events
+        end
         resources :direct_messages, only: %i[index create]
       end
+      resources :push_tokens, only: %i[create]
 
       resources :banners, only: [:index]
       resources :banner_globals, only: [:index]

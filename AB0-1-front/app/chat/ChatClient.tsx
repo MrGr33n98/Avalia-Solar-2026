@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MessageCircle, Send, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCheck, MessageCircle, Paperclip, Send, ShieldAlert, X } from 'lucide-react';
 import { createConsumer } from '@rails/actioncable';
 import { resolveCableUrl } from '@/lib/cable';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
@@ -15,6 +15,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type Message = DirectMessage;
 type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
+type PendingAttachment = {
+  data: string;
+  filename: string;
+  content_type: string;
+};
+
+type ChatCablePayload = Partial<Message> & {
+  event?: string;
+  conversation_id?: number;
+  message?: Message;
+  conversation?: Conversation;
+  reader_type?: 'User' | 'Company';
+  read_at?: string;
+  message_ids?: number[];
+  actor_type?: 'User' | 'Company';
+};
 
 type ChatApiErrorShape = {
   status?: number;
@@ -39,6 +55,7 @@ type ChatApiErrorShape = {
 
 type CableSubscription = {
   unsubscribe: () => void;
+  perform?: (action: string, data?: Record<string, unknown>) => void;
 };
 
 function getChatErrorMessage(error: unknown) {
@@ -87,17 +104,92 @@ export default function ChatClient() {
   const [inputMessage, setInputMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
+  const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
+  const [typingByCompany, setTypingByCompany] = useState(false);
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
+  const listChannelRef = useRef<CableSubscription | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const appendMessage = useCallback((message: Message) => {
     setMessages((prev) => {
-      if (prev.some((item) => item.id === message.id)) return prev;
+      if (prev.some((item) => item.id === message.id || (message.client_message_id && item.client_message_id === message.client_message_id))) return prev;
       return [...prev, message];
     });
   }, []);
+
+  const upsertConversation = useCallback((conversation: Conversation) => {
+    setConversations((prev) => {
+      const next = prev.some((item) => item.id === conversation.id)
+        ? prev.map((item) => (item.id === conversation.id ? { ...item, ...conversation } : item))
+        : [conversation, ...prev];
+
+      return [...next].sort((a, b) => {
+        const dateA = new Date(a.last_message_at || a.updated_at || a.created_at).getTime();
+        const dateB = new Date(b.last_message_at || b.updated_at || b.created_at).getTime();
+        return dateB - dateA;
+      });
+    });
+
+    setActiveConversation((current) =>
+      current?.id === conversation.id ? { ...current, ...conversation } : current
+    );
+  }, []);
+
+  const applyReadReceipt = useCallback((payload: ChatCablePayload) => {
+    if (!payload.read_at) return;
+
+    setMessages((prev) =>
+      prev.map((message) => {
+        const matchesExplicitId = payload.message_ids?.includes(message.id);
+        const matchesReaderSide =
+          payload.reader_type === 'Company' && message.sender_type === 'User';
+
+        return matchesExplicitId || matchesReaderSide
+          ? { ...message, read_at: message.read_at || payload.read_at || null }
+          : message;
+      })
+    );
+  }, []);
+
+  const handleConversationPayload = useCallback(
+    (payload: ChatCablePayload) => {
+      if (payload.conversation) {
+        upsertConversation(payload.conversation);
+      }
+
+      if (payload.event === 'message.created' && payload.message) {
+        appendMessage(payload.message);
+        setTypingByCompany(false);
+        scrollToBottom();
+        return;
+      }
+
+      if (payload.event === 'message.read') {
+        applyReadReceipt(payload);
+        return;
+      }
+
+      if (payload.event === 'typing.started' && payload.actor_type === 'Company') {
+        setTypingByCompany(true);
+        return;
+      }
+
+      if (payload.event === 'typing.stopped' && payload.actor_type === 'Company') {
+        setTypingByCompany(false);
+        return;
+      }
+
+      if (!payload.event && payload.id) {
+        appendMessage(payload as Message);
+        scrollToBottom();
+      }
+    },
+    [appendMessage, applyReadReceipt, upsertConversation]
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -123,6 +215,35 @@ export default function ChatClient() {
     loadConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, canUseP2PChat, isAuthenticated, router, user?.role]);
+
+  useEffect(() => {
+    if (!canUseP2PChat) {
+      listChannelRef.current?.unsubscribe();
+      listChannelRef.current = null;
+      return;
+    }
+
+    if (!cableRef.current) {
+      cableRef.current = createConsumer(resolveCableUrl());
+    }
+
+    listChannelRef.current?.unsubscribe();
+    listChannelRef.current = cableRef.current.subscriptions.create(
+      { channel: 'ConversationListChannel' },
+      {
+        received: (payload: ChatCablePayload) => {
+          if (payload.conversation) {
+            upsertConversation(payload.conversation);
+          }
+        },
+      }
+    );
+
+    return () => {
+      listChannelRef.current?.unsubscribe();
+      listChannelRef.current = null;
+    };
+  }, [canUseP2PChat, upsertConversation]);
 
   const loadConversations = async () => {
     if (!canUseP2PChat) {
@@ -211,9 +332,8 @@ export default function ChatClient() {
           console.warn('[P2PChat] ActionCable rejected', { conversationId });
           setErrorMessage('A conexão em tempo real caiu. Atualize a conversa se as mensagens demorarem.');
         },
-        received: (data: Message) => {
-          appendMessage(data);
-          scrollToBottom();
+        received: (data: ChatCablePayload) => {
+          handleConversationPayload(data);
         },
       }
     );
@@ -229,19 +349,115 @@ export default function ChatClient() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      channelRef.current?.unsubscribe();
+      listChannelRef.current?.unsubscribe();
+      cableRef.current?.disconnect();
+    };
+  }, []);
+
+  const createClientMessageId = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+
+    return `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  };
+
+  const handleInputChange = (value: string) => {
+    setInputMessage(value);
+
+    if (!activeConversation || realtimeStatus !== 'connected') return;
+
+    channelRef.current?.perform?.('typing', { typing: true });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      channelRef.current?.perform?.('typing', { typing: false });
+    }, 1200);
+  };
+
+  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
+      setErrorMessage('Anexe apenas imagem ou PDF.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('O anexo deve ter no máximo 10MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPendingAttachment({
+          data: reader.result,
+          filename: file.name,
+          content_type: file.type,
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const blockConversation = async () => {
+    if (!activeConversation) return;
+    const reason = window.prompt('Motivo do bloqueio');
+    if (reason === null) return;
+
+    try {
+      const updated = await conversationsApi.block(activeConversation.id, reason);
+      upsertConversation(updated);
+    } catch (error) {
+      setErrorMessage(getChatErrorMessage(error));
+    }
+  };
+
+  const reportConversation = async () => {
+    if (!activeConversation) return;
+    const details = window.prompt('Descreva o problema');
+    if (details === null) return;
+
+    try {
+      const result = await conversationsApi.report(activeConversation.id, 'other', details);
+      upsertConversation(result.conversation);
+      setErrorMessage('Denúncia registrada para auditoria.');
+    } catch (error) {
+      setErrorMessage(getChatErrorMessage(error));
+    }
+  };
+
   const sendMessage = async () => {
     if (
       !canUseP2PChat ||
-      !inputMessage.trim() ||
+      (!inputMessage.trim() && !pendingAttachment) ||
       !activeConversation
     ) {
       return;
     }
+    if (activeConversation.status === 'blocked') {
+      setErrorMessage('Esta conversa está bloqueada.');
+      return;
+    }
+
     try {
       setErrorMessage(null);
       const msgText = inputMessage;
+      const attachment = pendingAttachment;
       setInputMessage('');
-      const newMessage = await conversationsApi.sendMessage(activeConversation.id, msgText);
+      setPendingAttachment(null);
+      channelRef.current?.perform?.('typing', { typing: false });
+      const newMessage = await conversationsApi.sendMessage(activeConversation.id, msgText, {
+        client_message_id: createClientMessageId(),
+        attachments: attachment ? [attachment] : undefined,
+        client: 'web',
+      });
       appendMessage(newMessage);
     } catch (error) {
       console.error('Error sending message', error);
@@ -316,11 +532,20 @@ export default function ChatClient() {
                     <AvatarFallback>{(conv.company_name || 'C').charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 overflow-hidden">
-                    <div className="font-semibold truncate text-sm">
-                      {conv.company_name || 'Empresa'}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate text-sm font-semibold">
+                        {conv.company_name || 'Empresa'}
+                      </div>
+                      {(conv.unread_count || 0) > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
+                          {(conv.unread_count || 0) > 9 ? '9+' : conv.unread_count}
+                        </span>
+                      )}
                     </div>
                     <div className="truncate text-xs text-slate-500">
-                      {conv.last_message || 'Iniciar conversa'}
+                      {conv.status === 'blocked'
+                        ? 'Conversa bloqueada'
+                        : conv.last_message || 'Iniciar conversa'}
                     </div>
                   </div>
                 </button>
@@ -356,7 +581,28 @@ export default function ChatClient() {
                     }`}
                   />
                   {getRealtimeLabel(realtimeStatus)}
+                  {typingByCompany && <span className="font-medium text-blue-600">empresa digitando</span>}
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={reportConversation}
+                  aria-label="Denunciar conversa"
+                >
+                  <ShieldAlert className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={blockConversation}
+                  disabled={activeConversation.status === 'blocked'}
+                >
+                  Bloquear
+                </Button>
               </div>
             </div>
 
@@ -365,7 +611,7 @@ export default function ChatClient() {
                 {messages.map((msg, idx) => {
                   const isMine = msg.sender_type === 'User';
                   return (
-                    <div key={idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                           isMine
@@ -373,25 +619,85 @@ export default function ChatClient() {
                             : 'bg-white text-slate-800 shadow-sm border border-slate-100'
                         }`}
                       >
-                        {msg.body}
+                        {msg.body && <p className="whitespace-pre-wrap text-sm">{msg.body}</p>}
+                        {(msg.attachments || []).length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {(msg.attachments || []).map((attachment) => (
+                              <a
+                                key={attachment.id}
+                                href={attachment.url || '#'}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold ${
+                                  isMine ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                <Paperclip className="h-3.5 w-3.5" />
+                                <span className="truncate">{attachment.filename}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        {isMine && (
+                          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-white/80">
+                            <CheckCheck className="h-3 w-3" />
+                            {msg.read_at ? 'Lida' : msg.delivered_at ? 'Entregue' : 'Enviando'}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+                {activeConversation.status === 'blocked' && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-center text-sm font-semibold text-red-700">
+                    Esta conversa está bloqueada. Novas mensagens estão desativadas.
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
             <div className="border-t bg-white p-4">
+              {pendingAttachment && (
+                <div className="mx-auto mb-2 flex max-w-4xl items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+                  <span className="truncate">{pendingAttachment.filename}</span>
+                  <button type="button" onClick={() => setPendingAttachment(null)} aria-label="Remover anexo">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               <div className="mx-auto flex max-w-4xl items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  className="hidden"
+                  onChange={handleAttachmentChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={activeConversation.status === 'blocked'}
+                  aria-label="Anexar arquivo"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Input
                   value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
+                  onChange={(e) => handleInputChange(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Escreva sua mensagem..."
                   className="flex-1"
+                  disabled={activeConversation.status === 'blocked'}
                 />
-                <Button onClick={sendMessage} size="icon" className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  onClick={sendMessage}
+                  size="icon"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={activeConversation.status === 'blocked' || (!inputMessage.trim() && !pendingAttachment)}
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

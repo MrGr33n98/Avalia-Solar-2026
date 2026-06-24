@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Building2, Heart, Home, MessageCircle, User } from 'lucide-react';
+import { createConsumer } from '@rails/actioncable';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { conversationsApi } from '@/lib/api';
+import { conversationsApi, type Conversation } from '@/lib/api';
+import { resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
 
 const BASE_NAV_ITEMS = [
@@ -16,6 +18,11 @@ const BASE_NAV_ITEMS = [
   { href: '/favorites', label: 'Favoritos', icon: Heart },
   { href: '/profile', label: 'Perfil', icon: User },
 ];
+
+type ChatListPayload = {
+  event?: string;
+  conversation?: Conversation;
+};
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -43,6 +50,14 @@ export default function MobileBottomNav() {
 
     let cancelled = false;
 
+    const applyConversations = (conversations: Conversation[]) => {
+      const nextCount = conversations.reduce(
+        (total, conversation) => total + (conversation.unread_count ?? 0),
+        0
+      );
+      setUnreadChatCount(nextCount);
+    };
+
     const loadUnreadCount = async () => {
       try {
         const conversations = await conversationsApi.getAll({
@@ -51,11 +66,7 @@ export default function MobileBottomNav() {
         });
         if (cancelled) return;
 
-        const nextCount = conversations.reduce(
-          (total, conversation) => total + (conversation.unread_count ?? 0),
-          0
-        );
-        setUnreadChatCount(nextCount);
+        applyConversations(conversations);
       } catch {
         if (!cancelled) setUnreadChatCount(0);
       }
@@ -63,10 +74,23 @@ export default function MobileBottomNav() {
 
     void loadUnreadCount();
     const intervalId = window.setInterval(loadUnreadCount, 60000);
+    const consumer = createConsumer(resolveCableUrl());
+    const subscription = consumer.subscriptions.create(
+      { channel: 'ConversationListChannel' },
+      {
+        received: (payload: ChatListPayload) => {
+          if (!payload.conversation) return;
+
+          void loadUnreadCount();
+        },
+      }
+    );
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
+      consumer.subscriptions.remove(subscription);
+      consumer.disconnect();
     };
   }, [canUseP2PChat, loading, pathname]);
 

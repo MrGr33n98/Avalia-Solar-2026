@@ -69,13 +69,23 @@ export interface Review {
 
 export interface Message {
   id: number;
+  conversation_id?: number;
   body: string;
   created_at: string;
   sender_id?: number;
   sender_type?: string;
+  client_message_id?: string | null;
+  delivered_at?: string | null;
   read?: boolean;
   read_at?: string | null;
-  attachment_url?: string;
+  attachment_url?: string | null;
+  attachments?: Array<{
+    id: number;
+    filename: string;
+    content_type: string;
+    byte_size: number;
+    url?: string | null;
+  }>;
 }
 
 export interface Conversation {
@@ -86,9 +96,19 @@ export interface Conversation {
   company_name?: string | null;
   company_logo?: string | null;
   company_avatar?: string | null;
+  status?: 'open' | 'pending_user' | 'pending_company' | 'resolved' | 'blocked';
   last_message?: string | Message | null;
   last_message_at?: string | null;
   unread_count?: number;
+  user_unread_count?: number;
+  company_unread_count?: number;
+  user_last_read_at?: string | null;
+  company_last_read_at?: string | null;
+  sla_due_at?: string | null;
+  resolved_at?: string | null;
+  blocked_at?: string | null;
+  block_reason?: string | null;
+  report_count?: number;
   updated_at?: string;
   company?: {
     id: number;
@@ -433,8 +453,40 @@ export const conversationsApi = {
     body: JSON.stringify({ company_id: companyId })
   }),
   getMessages: (conversationId: number) => fetchApi<Message[]>(`conversations/${conversationId}/direct_messages`),
-  sendMessage: (conversationId: number, body: string, attachmentBase64?: string) => fetchApi<Message>(`conversations/${conversationId}/direct_messages`, {
+  sendMessage: (
+    conversationId: number,
+    body: string,
+    attachmentBase64?: string,
+    options?: {
+      client_message_id?: string;
+      attachments?: Array<{ data: string; filename: string; content_type: string }>;
+      client?: string;
+    }
+  ) => fetchApi<Message>(`conversations/${conversationId}/direct_messages`, {
     method: 'POST',
-    body: JSON.stringify({ body, attachment: attachmentBase64 })
-  })
+    body: JSON.stringify({
+      body,
+      attachment: attachmentBase64,
+      ...(options || {}),
+    })
+  }),
+  markRead: (conversationId: number) => fetchApi<Conversation>(`conversations/${conversationId}/read`, {
+    method: 'POST',
+  }),
+  block: (conversationId: number, reason?: string) => fetchApi<Conversation>(`conversations/${conversationId}/block`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  }),
+  report: (conversationId: number, reason: string, details?: string) => fetchApi<{ success: boolean; report_id: number; conversation: Conversation }>(`conversations/${conversationId}/report`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, details }),
+  }),
+};
+
+export const pushTokensApi = {
+  register: (payload: { token: string; platform: 'ios' | 'android' | 'expo'; device_id?: string | null }) =>
+    fetchApi<{ success: boolean; id: number }>('push_tokens', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };

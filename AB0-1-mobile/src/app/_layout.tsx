@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DefaultTheme, ThemeProvider, useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -10,6 +10,10 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { GlobalErrorFallback } from '@/components/GlobalErrorFallback';
 import { useAuthStore } from '@/store/auth';
 import { apolloClient } from '@/lib/apolloClient';
+import {
+  addP2PNotificationResponseListener,
+  registerForPushNotificationsAsync,
+} from '@/lib/pushNotifications';
 
 import { PostHogProvider } from 'posthog-react-native';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
@@ -37,12 +41,35 @@ let LazyAppTabs: any = null;
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const initializeAuth = useAuthStore((state) => state.initialize);
+  const user = useAuthStore((state) => state.user);
 
   // Inicializa a sessão ao abrir o app
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    registerForPushNotificationsAsync().catch((error) => {
+      console.warn('[Push] Não foi possível registrar token:', error);
+    });
+
+    const subscription = addP2PNotificationResponseListener((conversationId) => {
+      if (conversationId) {
+        router.push({
+          pathname: '/p2p_chat',
+          params: { conversation_id: String(conversationId) },
+        });
+      } else {
+        router.push('/p2p_chat');
+      }
+    });
+
+    return () => subscription.remove();
+  }, [router, user]);
 
   if (!LazyAppTabs) {
     LazyAppTabs = require('@/components/app-tabs').default;

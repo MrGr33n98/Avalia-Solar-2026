@@ -120,21 +120,48 @@ export interface Conversation {
   user_id: number;
   company_id: number;
   created_at: string;
+  updated_at?: string;
   user_name?: string | null;
   company_name?: string | null;
   company_logo?: string | null;
   company_avatar?: string | null;
+  status?: 'open' | 'pending_user' | 'pending_company' | 'resolved' | 'blocked';
   last_message?: string | null;
   last_message_at?: string | null;
   unread_count?: number;
+  user_unread_count?: number;
+  company_unread_count?: number;
+  user_last_read_at?: string | null;
+  company_last_read_at?: string | null;
+  sla_due_at?: string | null;
+  resolved_at?: string | null;
+  blocked_at?: string | null;
+  blocked_by_type?: string | null;
+  blocked_by_id?: number | null;
+  block_reason?: string | null;
+  report_count?: number;
+}
+
+export interface DirectMessageAttachment {
+  id: number;
+  filename: string;
+  content_type: string;
+  byte_size: number;
+  url?: string | null;
 }
 
 export interface DirectMessage {
   id: number;
+  conversation_id?: number;
   body: string;
   sender_type: 'User' | 'Company';
+  sender_id?: number | null;
+  client_message_id?: string | null;
+  delivered_at?: string | null;
   created_at: string;
   read_at?: string | null;
+  attachments?: DirectMessageAttachment[];
+  attachment_url?: string | null;
 }
 
 export interface Company {
@@ -2270,11 +2297,51 @@ export const conversationsApi = {
     }),
   getMessages: (conversationId: number) =>
     fetchApi<DirectMessage[]>(`/conversations/${conversationId}/direct_messages`),
-  sendMessage: (conversationId: number, body: string) =>
+  sendMessage: (
+    conversationId: number,
+    body: string,
+    options?: {
+      client_message_id?: string;
+      attachment?: string;
+      attachments?: Array<{ data: string; filename: string; content_type: string }>;
+      client?: string;
+    }
+  ) =>
     fetchApi<DirectMessage>(`/conversations/${conversationId}/direct_messages`, {
       method: 'POST',
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({ body, ...(options || {}) }),
     }),
+  markRead: (conversationId: number) =>
+    fetchApi<Conversation>(`/conversations/${conversationId}/read`, { method: 'POST' }),
+  resolve: (conversationId: number) =>
+    fetchApi<Conversation>(`/conversations/${conversationId}/resolve`, { method: 'POST' }),
+  reopen: (conversationId: number) =>
+    fetchApi<Conversation>(`/conversations/${conversationId}/reopen`, { method: 'POST' }),
+  block: (conversationId: number, reason?: string) =>
+    fetchApi<Conversation>(`/conversations/${conversationId}/block`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  report: (conversationId: number, reason: string, details?: string) =>
+    fetchApi<{ success: boolean; report_id: number; conversation: Conversation }>(
+      `/conversations/${conversationId}/report`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason, details }),
+      }
+    ),
+  getEvents: (conversationId: number) =>
+    fetchApi<
+      Array<{
+        id: number;
+        conversation_id: number;
+        event_type: string;
+        actor_id?: number | null;
+        actor_name?: string | null;
+        metadata?: Record<string, any>;
+        created_at: string;
+      }>
+    >(`/conversations/${conversationId}/events`),
 };
 
 // =======================
