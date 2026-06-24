@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -14,6 +13,7 @@ import { ArrowLeft, Bell, BellOff, MessageSquare, ClipboardCheck, Star, Trash2 }
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
+import { useAuthStore } from '@/store/auth';
 
 interface Notification {
   id: number;
@@ -28,6 +28,8 @@ export default function NotificationsScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const canUseP2PChat = user?.role === 'review';
 
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -78,7 +80,7 @@ export default function NotificationsScreen() {
     
     // Redirecionamento baseado no tipo
     if (n.type === 'message') {
-      router.push('/chat');
+      router.push(canUseP2PChat ? '/p2p_chat' : '/profile');
     } else if (n.type === 'lead') {
       router.push('/requests');
     } else if (n.type === 'review') {

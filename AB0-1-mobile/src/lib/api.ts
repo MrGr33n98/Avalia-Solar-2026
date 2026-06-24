@@ -74,12 +74,23 @@ export interface Message {
   sender_id?: number;
   sender_type?: string;
   read?: boolean;
+  read_at?: string | null;
   attachment_url?: string;
 }
 
 export interface Conversation {
   id: number;
-  company: {
+  user_id?: number;
+  company_id?: number;
+  user_name?: string | null;
+  company_name?: string | null;
+  company_logo?: string | null;
+  company_avatar?: string | null;
+  last_message?: string | Message | null;
+  last_message_at?: string | null;
+  unread_count?: number;
+  updated_at?: string;
+  company?: {
     id: number;
     name: string;
     logo_url?: string | null;
@@ -89,16 +100,13 @@ export interface Conversation {
     id: number;
     name: string;
   };
-  last_message?: Message;
-  unread_count?: number;
-  updated_at?: string;
 }
 
 export interface User {
   id: number;
   email: string;
   name: string;
-  role: 'consumer' | 'company' | 'admin';
+  role: 'review' | 'consumer' | 'company' | 'admin';
   company_id?: number | null;
 }
 

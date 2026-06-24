@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -44,6 +43,7 @@ export default function CompanyDetailScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { trackLeadSent } = useTracking();
+  const canUseP2PChat = user?.role === 'review';
 
   // Estado para novo review
   const [newRating, setNewRating] = useState(5);
@@ -228,7 +228,7 @@ export default function CompanyDetailScreen() {
           <ThemedText type="subtitle" style={styles.sectionTitle}>Canais de Contato</ThemedText>
           
           <View style={styles.contactList}>
-            {company.p2p_chat_enabled && (
+            {company.p2p_chat_enabled && canUseP2PChat && (
               <TouchableOpacity
                 style={[styles.contactItem, { backgroundColor: '#F97316' }]}
                 onPress={() => router.push(`/p2p_chat?company_id=${company.id}`)}

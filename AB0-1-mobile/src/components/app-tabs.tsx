@@ -1,11 +1,14 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme, Platform } from 'react-native';
 import { Colors } from '@/constants/theme';
-import { Home, Compass, Calculator, MessageSquare, User } from 'lucide-react-native';
+import { Home, Compass, MessageSquare, User } from 'lucide-react-native';
+import { useAuthStore } from '@/store/auth';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+  const user = useAuthStore((state) => state.user);
+  const canUseP2PChat = user?.role === 'review';
   
   // Cores personalizadas baseadas no app de referência
   const activeColor = colors.brandDarkBlue || colors.brandDarkBlue; // Azul Escuro da referência
@@ -57,6 +60,7 @@ export default function AppTabs() {
       <Tabs.Screen
         name="p2p_chat/index"
         options={{
+          href: canUseP2PChat ? undefined : null,
           title: 'Mensagens',
           tabBarIcon: ({ color, focused }) => (
             <MessageSquare color={color} size={focused ? 24 : 22} strokeWidth={focused ? 2.5 : 2} />

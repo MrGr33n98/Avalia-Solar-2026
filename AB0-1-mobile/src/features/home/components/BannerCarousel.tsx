@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
-import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View, NativeSyntheticEvent, NativeScrollEvent } , useColorScheme } from 'react-native';
+import {
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  View,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  useColorScheme,
+} from 'react-native';
 import { Image } from 'expo-image';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - Spacing.four * 2;
@@ -19,6 +27,8 @@ interface BannerCarouselProps {
 }
 
 export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (!banners || banners.length === 0) return null;
@@ -69,6 +79,7 @@ export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
             style={[
               styles.dot,
               activeIndex === index ? styles.activeDot : styles.inactiveDot,
+              { backgroundColor: activeIndex === index ? colors.tint : colors.border },
             ]}
           />
         ))}
@@ -112,27 +123,5 @@ const styles = StyleSheet.create({
   },
   inactiveDot: {
     width: 6,
-  },
-});
-colors.surfaceSubtle',
-  },
-  pagination: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dot: {
-    height: 6,
-    borderRadius: 3,
-  },
-  activeDot: {
-    width: 16,
-    backgroundColor: colors.tint, // Roxo premium como o da referência
-  },
-  inactiveDot: {
-    width: 6,
-    backgroundColor: colors.border,
   },
 });

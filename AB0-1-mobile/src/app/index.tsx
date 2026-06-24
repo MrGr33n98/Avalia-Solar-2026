@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   ScrollView,
@@ -42,6 +41,7 @@ import { CategoryScroll } from '@/features/home/components/CategoryScroll';
 import { FeaturedCompanies } from '@/features/home/components/FeaturedCompanies';
 import { LatestArticles } from '@/features/home/components/LatestArticles';
 import { BannerSlot } from '@/components/BannerSlot';
+import { useAuthStore } from '@/store/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -68,6 +68,8 @@ export default function HomeScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const canUseP2PChat = user?.role === 'review';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('MT'); 
   const [selectedCity, setSelectedCity] = useState('Cuiabá');
@@ -304,9 +306,11 @@ export default function HomeScreen() {
                 <ThemedText style={styles.notificationBadgeText}>4</ThemedText>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/chat')} style={{ marginLeft: 16 }}>
-              <MessageSquare color={colors.text} size={22} />
-            </TouchableOpacity>
+            {canUseP2PChat && (
+              <TouchableOpacity onPress={() => router.push('/p2p_chat')} style={{ marginLeft: 16 }}>
+                <MessageSquare color={colors.text} size={22} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </SafeAreaView>

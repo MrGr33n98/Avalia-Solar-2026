@@ -1,6 +1,5 @@
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions } , useColorScheme } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Dimensions , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -81,7 +80,7 @@ export default function DashboardScreen() {
 
         <TouchableOpacity 
           style={styles.actionCard} 
-          onPress={() => router.push('/chat')}
+          onPress={() => router.push('/dashboard/leads')}
         >
           <View style={[styles.actionIcon, { backgroundColor: '#DCFCE7' }]}>
             <MessageSquare size={24} color="#16A34A" />

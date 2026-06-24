@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
+import type { FallbackProps } from 'react-error-boundary';
 import { ThemedText } from './themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from 'react-native';
 
-interface GlobalErrorFallbackProps {
-  error: Error;
-  resetError: () => void;
-}
+type GlobalErrorFallbackProps = FallbackProps & {
+  resetError?: () => void;
+};
 
-export function GlobalErrorFallback({ error, resetError }: GlobalErrorFallbackProps) {
+export function GlobalErrorFallback({ error, resetError, resetErrorBoundary }: GlobalErrorFallbackProps) {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+  const handleReset = resetError || resetErrorBoundary;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -30,14 +31,14 @@ export function GlobalErrorFallback({ error, resetError }: GlobalErrorFallbackPr
       {__DEV__ && (
         <View style={[styles.errorBox, { backgroundColor: colors.backgroundSelected, borderColor: colors.border }]}>
           <ThemedText style={[styles.errorText, { color: colors.danger }]}>
-            {error.toString()}
+            {String(error)}
           </ThemedText>
         </View>
       )}
 
       <TouchableOpacity 
         style={[styles.button, { backgroundColor: colors.brandActiveBlue }]}
-        onPress={resetError}
+        onPress={handleReset}
       >
         <RefreshCw size={18} color="#FFFFFF" style={styles.buttonIcon} />
         <ThemedText style={styles.buttonText}>Tentar Novamente</ThemedText>
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.five,
     paddingVertical: 14,
-    borderRadius: Spacing.full,
+    borderRadius: 9999,
   },
   buttonIcon: {
     marginRight: Spacing.two,

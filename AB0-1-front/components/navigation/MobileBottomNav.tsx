@@ -19,8 +19,13 @@ const BASE_NAV_ITEMS = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const canUseP2PChat = isAuthenticated && user?.role === 'review';
+  const navItems = useMemo(
+    () => BASE_NAV_ITEMS.filter((item) => !item.isChat || canUseP2PChat),
+    [canUseP2PChat]
+  );
   const isInternalProfile =
     pathname === '/profile' ||
     pathname === '/review-dashboard' ||
@@ -31,7 +36,7 @@ export default function MobileBottomNav() {
   }, [unreadChatCount]);
 
   useEffect(() => {
-    if (loading || !isAuthenticated) {
+    if (loading || !canUseP2PChat) {
       setUnreadChatCount(0);
       return;
     }
@@ -63,14 +68,14 @@ export default function MobileBottomNav() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [isAuthenticated, loading, pathname]);
+  }, [canUseP2PChat, loading, pathname]);
 
   if (isInternalProfile) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.5rem,var(--safe-area-inset-bottom))] pt-2 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5">
-        {BASE_NAV_ITEMS.map((item) => {
+      <div className={cn('mx-auto grid max-w-md', canUseP2PChat ? 'grid-cols-5' : 'grid-cols-4')}>
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active =
             item.href === '/'

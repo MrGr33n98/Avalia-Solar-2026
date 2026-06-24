@@ -278,8 +278,9 @@ export default function CompanyCard({
   const directChatAvailable =
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatEnabled = directChatAvailable && canUseBuyerChat;
-  const hasPrimaryContactCta = canRequestQuote || directChatAvailable;
+  const directChatVisible = directChatAvailable && canUseBuyerChat;
+  const directChatEnabled = directChatVisible;
+  const hasPrimaryContactCta = canRequestQuote || directChatVisible;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const directChatReturnTo = `/chat?company_id=${id}`;
 
@@ -600,7 +601,7 @@ export default function CompanyCard({
             {/* Verified + Location row */}
             <div className="flex items-center gap-2 flex-wrap mt-1">
               {company.verified && <PremiumBadge className="h-5" />}
-              {directChatAvailable && (
+              {directChatVisible && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   Online
@@ -688,7 +689,7 @@ export default function CompanyCard({
                     )}
                     preset="brandSolid"
                   />
-                ) : directChatAvailable ? (
+                ) : directChatVisible ? (
                   <Button
                     type="button"
                     className={cn(

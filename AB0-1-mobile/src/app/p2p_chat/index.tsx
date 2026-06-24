@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -18,25 +17,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/store/auth';
-import { conversationsApi } from '@/lib/api';
+import { conversationsApi, type Conversation, type Message } from '@/lib/api';
 import { createConsumer, Consumer } from '@rails/actioncable';
 import { getApiBaseUrl, getStoredToken } from '@/lib/api';
-
-interface Conversation {
-  id: number;
-  user_id: number;
-  company_id: number;
-  user_name: string;
-  company_name: string;
-  last_message?: string;
-}
-
-interface Message {
-  id: number;
-  body: string;
-  sender_type: string;
-  created_at: string;
-}
 
 export default function P2PChatScreen() {
   const { company_id } = useLocalSearchParams<{ company_id?: string }>();
@@ -44,6 +27,7 @@ export default function P2PChatScreen() {
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
   const { user } = useAuthStore();
+  const canUseP2PChat = user?.role === 'review';
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -57,9 +41,15 @@ export default function P2PChatScreen() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/profile');
+      router.replace('/profile');
       return;
     }
+
+    if (!canUseP2PChat) {
+      router.replace('/profile');
+      return;
+    }
+
     loadConversations();
     
     return () => {
@@ -67,23 +57,24 @@ export default function P2PChatScreen() {
         channelRef.current.unsubscribe();
       }
     };
-  }, [user]);
+  }, [canUseP2PChat, company_id, user?.id]);
 
   const loadConversations = async () => {
     try {
       setLoading(true);
       const data = await conversationsApi.getAll();
-      setConversations(data || []);
+      const list = data || [];
+      setConversations(list);
       
       if (company_id) {
-        let conv = data.find((c: Conversation) => c.company_id === Number(company_id));
+        let conv = list.find((c) => c.company_id === Number(company_id));
         if (!conv) {
           conv = await conversationsApi.create(Number(company_id));
-          setConversations((prev) => [conv, ...prev]);
+          setConversations((prev) => (conv ? [conv, ...prev] : prev));
         }
-        selectConversation(conv);
-      } else if (data.length > 0) {
-        selectConversation(data[0]);
+        if (conv) selectConversation(conv);
+      } else if (list.length > 0) {
+        selectConversation(list[0]);
       }
     } catch (error) {
       console.error("Erro ao carregar conversas", error);
@@ -131,13 +122,17 @@ export default function P2PChatScreen() {
     try {
       const msgText = inputMessage;
       setInputMessage("");
-      await conversationsApi.sendMessage(activeConversation.id, msgText);
+      const sentMessage = await conversationsApi.sendMessage(activeConversation.id, msgText);
+      setMessages((prev) => {
+        if (prev.some((message) => message.id === sentMessage.id)) return prev;
+        return [...prev, sentMessage];
+      });
     } catch (error) {
       console.error("Erro ao enviar mensagem", error);
     }
   };
 
-  if (!user) {
+  if (!user || !canUseP2PChat) {
     return <ThemedView style={styles.container}><ActivityIndicator color={colors.tint} style={{marginTop: 50}} /></ThemedView>;
   }
 
@@ -169,10 +164,10 @@ export default function P2PChatScreen() {
                 >
                   <View style={styles.chatInfo}>
                     <ThemedText style={styles.chatName}>
-                      {user.role === 'company' ? conv.user_name : conv.company_name}
+                      {conv.company_name || conv.company?.name || 'Empresa'}
                     </ThemedText>
-                    <ThemedText style={styles.chatLastMessage}>
-                      {conv.last_message || 'Iniciar conversa...'}
+                    <ThemedText style={[styles.chatLastMessage, { color: colors.textSecondary }]}>
+                      {typeof conv.last_message === 'string' ? conv.last_message : conv.last_message?.body || 'Iniciar conversa...'}
                     </ThemedText>
                   </View>
                 </TouchableOpacity>
@@ -203,7 +198,7 @@ export default function P2PChatScreen() {
               <ArrowLeft color={colors.text} size={22} />
             </TouchableOpacity>
             <ThemedText type="subtitle" style={styles.chatTitle}>
-              {activeConversation ? (user.role === 'company' ? activeConversation.user_name : activeConversation.company_name) : 'Carregando...'}
+              {activeConversation ? activeConversation.company_name || activeConversation.company?.name || 'Empresa' : 'Carregando...'}
             </ThemedText>
           </View>
 
@@ -217,11 +212,23 @@ export default function P2PChatScreen() {
                 onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
               >
                 {messages.map((msg, idx) => {
-                  const isMine = (user.role === 'company' && msg.sender_type === 'Company') || 
-                                 (user.role !== 'company' && msg.sender_type === 'User');
+                  const isMine = msg.sender_type === 'User';
                   return (
-                    <View key={idx} style={[styles.messageBubble, isMine ? styles.myMessage : styles.theirMessage]}>
-                      <ThemedText style={[styles.messageText, isMine ? styles.myMessageText : styles.theirMessageText]}>
+                    <View
+                      key={msg.id ?? idx}
+                      style={[
+                        styles.messageBubble,
+                        isMine
+                          ? [styles.myMessage, { backgroundColor: colors.tint }]
+                          : styles.theirMessage,
+                      ]}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.messageText,
+                          isMine ? { color: colors.backgroundElement } : styles.theirMessageText,
+                        ]}
+                      >
                         {msg.body}
                       </ThemedText>
                     </View>
@@ -239,7 +246,11 @@ export default function P2PChatScreen() {
                   multiline
                 />
                 <TouchableOpacity 
-                  style={[styles.sendButton, !inputMessage.trim() && { opacity: 0.5 }]} 
+                  style={[
+                    styles.sendButton,
+                    { backgroundColor: colors.tint },
+                    !inputMessage.trim() && { opacity: 0.5 },
+                  ]} 
                   onPress={sendMessage}
                   disabled={!inputMessage.trim()}
                 >
@@ -298,7 +309,6 @@ const styles = StyleSheet.create({
   },
   chatLastMessage: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
   messagesContainer: {
     padding: Spacing.four,
@@ -311,7 +321,6 @@ const styles = StyleSheet.create({
   },
   myMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.tint,
     borderBottomRightRadius: 4,
   },
   theirMessage: {
@@ -322,9 +331,6 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 15,
     lineHeight: 20,
-  },
-  myMessageText: {
-    color: colors.backgroundElement,
   },
   theirMessageText: {
     color: '#000000',
@@ -352,7 +358,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.tint,
     justifyContent: 'center',
     alignItems: 'center',
   },

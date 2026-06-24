@@ -4,8 +4,10 @@ import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react
 import { useEffect } from 'react';
 import { ApolloProvider } from '@apollo/client/react';
 import NetInfo from '@react-native-community/netinfo';
+import { ErrorBoundary } from 'react-error-boundary';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { GlobalErrorFallback } from '@/components/GlobalErrorFallback';
 import { useAuthStore } from '@/store/auth';
 import { apolloClient } from '@/lib/apolloClient';
 

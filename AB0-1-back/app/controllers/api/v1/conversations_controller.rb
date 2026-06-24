@@ -18,13 +18,13 @@ module Api
       def create
         return render json: { error: 'Only buyer users can start direct chats' }, status: :forbidden unless current_user.review_user?
 
-        company = Company.find_by(id: params[:company_id])
+        company = ::Company.find_by(id: params[:company_id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
         return render json: { error: 'Chat is disabled for this company' }, status: :forbidden unless company.p2p_chat_enabled
         enforce_feature_access!(:p2p_chat, company: company)
         return if performed?
 
-        @conversation = Conversation.find_or_create_by(user_id: current_user.id, company_id: company.id)
+        @conversation = ::Conversation.find_or_create_by(user_id: current_user.id, company_id: company.id)
 
         render json: conversation_json(@conversation)
       end
@@ -33,9 +33,9 @@ module Api
 
       def company_conversations_scope
         companies = current_user.active_member_companies
-        companies = Company.where(id: current_user.company&.id) if companies.blank? && current_user.company.present?
+        companies = ::Company.where(id: current_user.company&.id) if companies.blank? && current_user.company.present?
 
-        Conversation.where(company_id: companies.select(:id)).includes(:user, :company)
+        ::Conversation.where(company_id: companies.select(:id)).includes(:user, :company)
       end
 
       def conversation_json(conversation)

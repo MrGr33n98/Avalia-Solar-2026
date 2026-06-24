@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageCircle, Send, ArrowLeft } from 'lucide-react';
 import { createConsumer } from '@rails/actioncable';
 import { getApiBaseUrl } from '@/lib/api-config';
-import { conversationsApi } from '@/lib/api';
+import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,22 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-interface Conversation {
-  id: number;
-  user_id: number;
-  company_id: number;
-  user_name: string;
-  company_name: string;
-  company_logo?: string;
-  last_message?: string;
-}
-
-interface Message {
-  id: number;
-  body: string;
-  sender_type: string;
-  created_at: string;
-}
+type Message = DirectMessage;
 
 type ChatApiErrorShape = {
   status?: number;
@@ -84,6 +69,7 @@ export default function ChatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const canUseP2PChat = isAuthenticated && user?.role === 'review';
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -115,18 +101,21 @@ export default function ChatClient() {
       return;
     }
 
-    // Tanto compradores (review) quanto usuários de empresa (company) podem acessar o chat
-    if (!user?.role) {
+    if (!canUseP2PChat) {
+      setErrorMessage('O chat direto fica disponível apenas para usuários compradores cadastrados.');
+      setConversations([]);
+      setActiveConversation(null);
+      setMessages([]);
       setLoading(false);
       return;
     }
 
     loadConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, isAuthenticated, router, user?.role]);
+  }, [authLoading, canUseP2PChat, isAuthenticated, router, user?.role]);
 
   const loadConversations = async () => {
-    if (!isAuthenticated) {
+    if (!canUseP2PChat) {
       setLoading(false);
       return;
     }
@@ -138,12 +127,12 @@ export default function ChatClient() {
 
       // Somente compradores (review) podem iniciar uma nova conversa via company_id na URL
       const companyId = searchParams.get('company_id');
-      if (companyId && user?.role === 'review') {
-        let conv = data.find((c: Conversation) => c.company_id === Number(companyId));
+      if (companyId) {
+        let conv = data.find((c) => c.company_id === Number(companyId));
         if (!conv) {
           try {
             conv = await conversationsApi.create(Number(companyId));
-            setConversations((prev) => [conv, ...prev]);
+            setConversations((prev) => (conv ? [conv, ...prev] : prev));
           } catch (createError) {
             // Se não conseguir criar (403 feature gate), apenas mostra as conversas existentes
             console.warn('Could not create conversation:', createError);
@@ -167,7 +156,7 @@ export default function ChatClient() {
   };
 
   const selectConversation = async (conv: Conversation) => {
-    if (!isAuthenticated) return;
+    if (!canUseP2PChat) return;
 
     setActiveConversation(conv);
     try {
@@ -217,7 +206,7 @@ export default function ChatClient() {
 
   const sendMessage = async () => {
     if (
-      !isAuthenticated ||
+      !canUseP2PChat ||
       !inputMessage.trim() ||
       !activeConversation
     ) {
@@ -303,7 +292,7 @@ export default function ChatClient() {
                   </Avatar>
                   <div className="flex-1 overflow-hidden">
                     <div className="font-semibold truncate text-sm">
-                      {user?.role === 'company' ? conv.user_name : conv.company_name}
+                      {conv.company_name || 'Empresa'}
                     </div>
                     <div className="truncate text-xs text-slate-500">
                       {conv.last_message || 'Iniciar conversa'}
@@ -328,18 +317,14 @@ export default function ChatClient() {
                 </AvatarFallback>
               </Avatar>
               <div className="font-bold">
-                {user?.role === 'company'
-                  ? activeConversation.user_name
-                  : activeConversation.company_name}
+                {activeConversation.company_name || 'Empresa'}
               </div>
             </div>
 
             <ScrollArea className="flex-1 p-4">
               <div className="flex flex-col gap-3">
                 {messages.map((msg, idx) => {
-                  const isMine =
-                    (user?.role === 'company' && msg.sender_type === 'Company') ||
-                    (user?.role !== 'company' && msg.sender_type === 'User');
+                  const isMine = msg.sender_type === 'User';
                   return (
                     <div key={idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div

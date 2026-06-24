@@ -37,7 +37,7 @@ module Api
       private
 
       def set_conversation
-        @conversation = Conversation.find_by(id: params[:conversation_id])
+        @conversation = ::Conversation.find_by(id: params[:conversation_id])
         return render json: { error: 'Conversation not found' }, status: :not_found unless @conversation
         
         unless can_access_conversation?

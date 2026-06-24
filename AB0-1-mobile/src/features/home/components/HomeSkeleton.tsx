@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, Animated, Dimensions, useColorScheme } from 'react-native';
 import { Spacing, Colors } from '@/constants/theme';
-import { useColorScheme } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +40,9 @@ const SkeletonItem = ({ style }: { style?: any }) => {
 };
 
 export const HomeSkeleton = () => {
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+
   return (
     <View style={styles.container}>
       {/* Banner Skeleton */}
@@ -183,18 +185,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardLineSmall: {
-    width: '60%',
-    height: 10,
-    borderRadius: 4,
-    marginBottom: 12,
-  },
-  cardLineMedium: {
-    width: '40%',
-    height: 12,
-    borderRadius: 4,
-  },
-});
-{
     width: '60%',
     height: 10,
     borderRadius: 4,

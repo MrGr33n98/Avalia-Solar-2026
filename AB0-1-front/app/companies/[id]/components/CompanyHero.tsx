@@ -64,7 +64,8 @@ export default function CompanyHero({
   const directChatAvailable =
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatEnabled = directChatAvailable && canUseBuyerChat;
+  const directChatVisible = directChatAvailable && canUseBuyerChat;
+  const directChatEnabled = directChatVisible;
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
@@ -266,7 +267,7 @@ export default function CompanyHero({
                       ({companyStats.reviewCount} avaliações)
                     </span>
 
-                    {directChatAvailable && (
+                    {directChatVisible && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-black text-emerald-700">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         Online
@@ -315,7 +316,7 @@ export default function CompanyHero({
                     </div>
                   )}
 
-                  {directChatAvailable && (
+                  {directChatVisible && (
                     <Button
                       size="default"
                       className="h-11 w-full rounded-xl bg-orange-500 px-3 text-sm font-semibold text-white shadow-none hover:bg-orange-600"

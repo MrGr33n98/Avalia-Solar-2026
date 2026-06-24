@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -25,13 +24,14 @@ export default function ProfileScreen() {
 
   // Estados de Sessão
   const { user, login, register, logout, isLoading } = useAuthStore();
+  const canUseP2PChat = user?.role === 'review';
 
   // Estados dos Formulários
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'consumer' | 'company'>('consumer');
+  const [role, setRole] = useState<'review' | 'company'>('review');
   
   // Tratamento de erros e loading local
   const [errorMsg, setErrorMsg] = useState('');
@@ -110,18 +110,18 @@ export default function ProfileScreen() {
             <View style={styles.actionSection}>
               <ThemedText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Opções da Conta</ThemedText>
               
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: colors.backgroundElement }]}
-                onPress={() => router.push('/chat')}
-              >
-                <View style={styles.menuItemLeft}>
-                  <ClipboardCheck size={20} color={colors.tint} />
-                  <ThemedText style={styles.menuItemText}>
-                    {user.role === 'company' ? 'Inbox de Orçamentos' : 'Minhas Negociações'}
-                  </ThemedText>
-                </View>
-                <ArrowRight size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
+              {canUseP2PChat && (
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.backgroundElement }]}
+                  onPress={() => router.push('/p2p_chat')}
+                >
+                  <View style={styles.menuItemLeft}>
+                    <ClipboardCheck size={20} color={colors.tint} />
+                    <ThemedText style={styles.menuItemText}>Minhas Negociações</ThemedText>
+                  </View>
+                  <ArrowRight size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
 
               {user.role === 'company' && (
                 <TouchableOpacity
@@ -241,11 +241,11 @@ export default function ProfileScreen() {
                     style={[
                       styles.roleButton,
                       { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 },
-                      role === 'consumer' && { backgroundColor: colors.tint + '15', borderColor: colors.tint, borderWidth: 1.5 },
+                      role === 'review' && { backgroundColor: colors.tint + '15', borderColor: colors.tint, borderWidth: 1.5 },
                     ]}
-                    onPress={() => setRole('consumer')}
+                    onPress={() => setRole('review')}
                   >
-                    <ThemedText style={[styles.roleButtonText, { color: role === 'consumer' ? colors.tint : colors.textSecondary }, role === 'consumer' && { fontWeight: 'bold' }]}>
+                    <ThemedText style={[styles.roleButtonText, { color: role === 'review' ? colors.tint : colors.textSecondary }, role === 'review' && { fontWeight: 'bold' }]}>
                       Consumidor
                     </ThemedText>
                   </TouchableOpacity>
