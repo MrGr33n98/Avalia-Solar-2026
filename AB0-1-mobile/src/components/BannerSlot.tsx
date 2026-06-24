@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, View, Image, TouchableOpacity, Linking, ActivityIndicator } , useColorScheme } from 'react-native';
+import { StyleSheet, View, Image, TouchableOpacity, Linking, ActivityIndicator , useColorScheme } from 'react-native';
 import { fetchApi } from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
 import { Spacing } from '../constants/theme';

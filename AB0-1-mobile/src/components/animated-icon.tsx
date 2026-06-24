@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Colors } from '@/constants/theme';
 import { useState } from 'react';
-import { Dimensions, StyleSheet, View } , useColorScheme } from 'react-native';
+import { Dimensions, StyleSheet, View , useColorScheme } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 

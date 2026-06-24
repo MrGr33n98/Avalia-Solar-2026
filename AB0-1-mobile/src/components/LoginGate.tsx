@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, ActivityIndicator } , useColorScheme } from 'react-native';
+import { StyleSheet, ActivityIndicator , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/auth';
 import { ThemedText } from './themed-text';

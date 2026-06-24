@@ -1,6 +1,6 @@
 import React from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, View } , useColorScheme } from 'react-native';
+import { StyleSheet, View , useColorScheme } from 'react-native';
 import { Inbox } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { Spacing } from '@/constants/theme';

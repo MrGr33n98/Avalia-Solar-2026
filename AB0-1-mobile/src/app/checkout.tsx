@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator } , useColorScheme } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator , useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, ShieldCheck, CreditCard, Lock, CheckCircle2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

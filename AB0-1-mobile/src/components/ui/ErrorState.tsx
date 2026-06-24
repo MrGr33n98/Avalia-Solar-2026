@@ -1,6 +1,6 @@
 import React from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, View, TouchableOpacity } , useColorScheme } from 'react-native';
+import { StyleSheet, View, TouchableOpacity , useColorScheme } from 'react-native';
 import { AlertCircle, RefreshCw } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { Colors, Spacing } from '@/constants/theme';

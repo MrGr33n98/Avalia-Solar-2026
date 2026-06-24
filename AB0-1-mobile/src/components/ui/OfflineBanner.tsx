@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Animated, useColorScheme } , useColorScheme } from 'react-native';
+import { StyleSheet, Animated, useColorScheme , useColorScheme } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { WifiOff } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';

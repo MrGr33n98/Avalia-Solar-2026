@@ -1,6 +1,6 @@
 import React from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme } , useColorScheme } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme , useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';

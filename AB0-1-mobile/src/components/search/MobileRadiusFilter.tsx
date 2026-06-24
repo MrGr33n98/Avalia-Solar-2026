@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } , useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet , useColorScheme } from 'react-native';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
 

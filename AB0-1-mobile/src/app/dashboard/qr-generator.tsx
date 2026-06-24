@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, View, TouchableOpacity, Share, Image, ActivityIndicator } , useColorScheme } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Share, Image, ActivityIndicator , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Share2, Info } from 'lucide-react-native';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Colors } from '@/constants/theme';
-import { StyleSheet, View, TouchableOpacity, useColorScheme } , useColorScheme } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, useColorScheme , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Sparkles, Lock } from 'lucide-react-native';
 

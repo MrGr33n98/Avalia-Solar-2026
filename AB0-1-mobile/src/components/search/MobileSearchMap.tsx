@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text } , useColorScheme } from 'react-native';
+import { StyleSheet, View, Text , useColorScheme } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Company } from '@/lib/api';
 import { Colors } from '@/constants/theme';
