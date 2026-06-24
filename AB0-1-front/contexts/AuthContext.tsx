@@ -18,6 +18,7 @@ import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
+import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
 
 interface AuthContextType {
   user: User | null;
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuth = useCallback(async (): Promise<User | null> => {
     if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
       setUser(null);
+      clearRealtimeAuthToken();
       setLoading(false);
       return null;
     }
@@ -116,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setError(getApiErrorMessage(authError, 'Falha ao validar sessao.'));
         clearAuthSessionHint();
+        clearRealtimeAuthToken();
       }
       return null;
     } finally {
@@ -176,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       nextAuthRequest();
       setError(null);
       const response: any = await authApi.login(email, password);
+      setRealtimeAuthToken(response?.token);
       const nextUser: User | null = response?.user || (await checkAuth());
 
       if (!nextUser) {
@@ -218,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     reset();
     await authApi.logout();
     clearAuthSessionHint();
+    clearRealtimeAuthToken();
     setUser(null);
     setError(null);
     setLoading(false);

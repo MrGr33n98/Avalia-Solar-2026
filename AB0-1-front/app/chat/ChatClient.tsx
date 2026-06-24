@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageCircle, Send, ArrowLeft } from 'lucide-react';
 import { createConsumer } from '@rails/actioncable';
-import { getApiBaseUrl } from '@/lib/api-config';
+import { resolveCableUrl } from '@/lib/cable';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type Message = DirectMessage;
+type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
 
 type ChatApiErrorShape = {
   status?: number;
@@ -65,6 +66,14 @@ function getChatErrorMessage(error: unknown) {
   return 'Não foi possível carregar o chat agora. Tente novamente em instantes.';
 }
 
+function getRealtimeLabel(status: RealtimeStatus) {
+  if (status === 'connected') return 'ao vivo';
+  if (status === 'connecting') return 'conectando';
+  if (status === 'disconnected') return 'reconectando';
+  if (status === 'rejected') return 'offline';
+  return 'aguardando';
+}
+
 export default function ChatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,6 +86,7 @@ export default function ChatClient() {
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
@@ -155,14 +165,18 @@ export default function ChatClient() {
     }
   };
 
+  const loadMessagesForConversation = useCallback(async (conversationId: number) => {
+    const msgs = await conversationsApi.getMessages(conversationId);
+    setMessages(msgs || []);
+  }, []);
+
   const selectConversation = async (conv: Conversation) => {
     if (!canUseP2PChat) return;
 
     setActiveConversation(conv);
     try {
       setErrorMessage(null);
-      const msgs = await conversationsApi.getMessages(conv.id);
-      setMessages(msgs || []);
+      await loadMessagesForConversation(conv.id);
       setupActionCable(conv.id);
     } catch (error) {
       console.error('Error loading messages', error);
@@ -174,17 +188,28 @@ export default function ChatClient() {
     if (channelRef.current) {
       channelRef.current.unsubscribe();
     }
+    setRealtimeStatus('connecting');
+
     if (!cableRef.current) {
-      // Cookies are sent by the browser during the WebSocket handshake; avoid reading HttpOnly cookies in JS.
-      const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
-      cableRef.current = createConsumer(wsUrl);
+      cableRef.current = createConsumer(resolveCableUrl());
     }
 
     channelRef.current = cableRef.current.subscriptions.create(
       { channel: 'ConversationChannel', conversation_id: conversationId },
       {
+        connected: () => {
+          setRealtimeStatus('connected');
+          void loadMessagesForConversation(conversationId).catch((error) => {
+            console.warn('[P2PChat] Could not reconcile messages after reconnect', error);
+          });
+        },
+        disconnected: () => {
+          setRealtimeStatus('disconnected');
+        },
         rejected: () => {
+          setRealtimeStatus('rejected');
           console.warn('[P2PChat] ActionCable rejected', { conversationId });
+          setErrorMessage('A conexão em tempo real caiu. Atualize a conversa se as mensagens demorarem.');
         },
         received: (data: Message) => {
           appendMessage(data);
@@ -316,8 +341,22 @@ export default function ChatClient() {
                   {(activeConversation.company_name || 'C').charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <div className="font-bold">
-                {activeConversation.company_name || 'Empresa'}
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-bold">
+                  {activeConversation.company_name || 'Empresa'}
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      realtimeStatus === 'connected'
+                        ? 'bg-emerald-500'
+                        : realtimeStatus === 'connecting'
+                          ? 'bg-amber-500'
+                          : 'bg-slate-300'
+                    }`}
+                  />
+                  {getRealtimeLabel(realtimeStatus)}
+                </div>
               </div>
             </div>
 

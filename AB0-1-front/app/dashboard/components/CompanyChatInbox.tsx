@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
-import { getApiBaseUrl } from '@/lib/api-config';
+import { resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
 
 interface CompanyChatInboxProps {
@@ -18,6 +18,7 @@ interface CompanyChatInboxProps {
 type CableSubscription = {
   unsubscribe: () => void;
 };
+type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
 
 function formatMessageTime(value?: string | null) {
   if (!value) return '';
@@ -32,6 +33,14 @@ function formatMessageTime(value?: string | null) {
   });
 }
 
+function getRealtimeLabel(status: RealtimeStatus) {
+  if (status === 'connected') return 'Ao vivo';
+  if (status === 'connecting') return 'Conectando';
+  if (status === 'disconnected') return 'Reconectando';
+  if (status === 'rejected') return 'Offline';
+  return 'Aguardando';
+}
+
 export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
@@ -41,6 +50,7 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
 
@@ -122,16 +132,29 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
     if (!selectedConversationId || !enabled) return;
 
     channelRef.current?.unsubscribe();
+    setRealtimeStatus('connecting');
 
     if (!cableRef.current) {
-      const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
-      cableRef.current = createConsumer(wsUrl);
+      cableRef.current = createConsumer(resolveCableUrl());
     }
 
     channelRef.current = cableRef.current.subscriptions.create(
       { channel: 'ConversationChannel', conversation_id: selectedConversationId },
       {
+        connected: () => {
+          setRealtimeStatus('connected');
+          void conversationsApi
+            .getMessages(selectedConversationId)
+            .then(setMessages)
+            .catch((reconcileError) => {
+              console.warn('[P2PChat:CompanyInbox] Could not reconcile messages', reconcileError);
+            });
+        },
+        disconnected: () => {
+          setRealtimeStatus('disconnected');
+        },
         rejected: () => {
+          setRealtimeStatus('rejected');
           console.warn('[P2PChat:CompanyInbox] ActionCable rejected', {
             conversationId: selectedConversationId,
           });
@@ -295,9 +318,16 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
                     : 'Selecione uma conversa para responder'}
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black',
+                  realtimeStatus === 'connected'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-600'
+                )}
+              >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Canal ativo
+                {getRealtimeLabel(realtimeStatus)}
               </span>
             </div>
 

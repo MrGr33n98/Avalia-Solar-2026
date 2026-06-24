@@ -21,6 +21,16 @@ import { conversationsApi, type Conversation, type Message } from '@/lib/api';
 import { createConsumer, Consumer } from '@rails/actioncable';
 import { getApiBaseUrl, getStoredToken } from '@/lib/api';
 
+type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
+
+function getRealtimeLabel(status: RealtimeStatus) {
+  if (status === 'connected') return 'ao vivo';
+  if (status === 'connecting') return 'conectando';
+  if (status === 'disconnected') return 'reconectando';
+  if (status === 'rejected') return 'offline';
+  return 'aguardando';
+}
+
 export default function P2PChatScreen() {
   const { company_id } = useLocalSearchParams<{ company_id?: string }>();
   const scheme = useColorScheme();
@@ -34,6 +44,7 @@ export default function P2PChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputMessage, setInputMessage] = useState("");
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
   
   const cableRef = useRef<Consumer | null>(null);
   const channelRef = useRef<any>(null);
@@ -86,18 +97,24 @@ export default function P2PChatScreen() {
   const selectConversation = async (conv: Conversation) => {
     setActiveConversation(conv);
     try {
-      const msgs = await conversationsApi.getMessages(conv.id);
-      setMessages(msgs || []);
+      await loadMessagesForConversation(conv.id);
       setupActionCable(conv.id);
     } catch (error) {
       console.error("Erro ao carregar mensagens", error);
     }
   };
 
+  const loadMessagesForConversation = async (conversationId: number) => {
+    const msgs = await conversationsApi.getMessages(conversationId);
+    setMessages(msgs || []);
+  };
+
   const setupActionCable = async (conversationId: number) => {
     if (channelRef.current) {
       channelRef.current.unsubscribe();
     }
+    setRealtimeStatus('connecting');
+
     if (!cableRef.current) {
       const token = await getStoredToken();
       const wsUrl = getApiBaseUrl().replace('http', 'ws').replace('/api/v1', '/cable');
@@ -107,8 +124,23 @@ export default function P2PChatScreen() {
     channelRef.current = cableRef.current.subscriptions.create(
       { channel: "ConversationChannel", conversation_id: conversationId },
       {
+        connected: () => {
+          setRealtimeStatus('connected');
+          loadMessagesForConversation(conversationId).catch((error) => {
+            console.warn('[P2PChat] Could not reconcile messages after reconnect', error);
+          });
+        },
+        disconnected: () => {
+          setRealtimeStatus('disconnected');
+        },
+        rejected: () => {
+          setRealtimeStatus('rejected');
+        },
         received: (data: Message) => {
-          setMessages((prev) => [...prev, data]);
+          setMessages((prev) => {
+            if (prev.some((message) => message.id === data.id)) return prev;
+            return [...prev, data];
+          });
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 100);
@@ -197,9 +229,26 @@ export default function P2PChatScreen() {
             }}>
               <ArrowLeft color={colors.text} size={22} />
             </TouchableOpacity>
-            <ThemedText type="subtitle" style={styles.chatTitle}>
-              {activeConversation ? activeConversation.company_name || activeConversation.company?.name || 'Empresa' : 'Carregando...'}
-            </ThemedText>
+            <View style={styles.headerTitle}>
+              <ThemedText type="subtitle" style={styles.chatTitle}>
+                {activeConversation ? activeConversation.company_name || activeConversation.company?.name || 'Empresa' : 'Carregando...'}
+              </ThemedText>
+              <View style={styles.realtimeStatus}>
+                <View
+                  style={[
+                    styles.realtimeDot,
+                    realtimeStatus === 'connected'
+                      ? styles.realtimeDotConnected
+                      : realtimeStatus === 'connecting'
+                        ? styles.realtimeDotConnecting
+                        : null,
+                  ]}
+                />
+                <ThemedText style={[styles.realtimeLabel, { color: colors.textSecondary }]}>
+                  {getRealtimeLabel(realtimeStatus)}
+                </ThemedText>
+              </View>
+            </View>
           </View>
 
           {loading && !activeConversation ? (
@@ -283,6 +332,31 @@ const styles = StyleSheet.create({
   },
   chatTitle: {
     flex: 1,
+  },
+  headerTitle: {
+    flex: 1,
+  },
+  realtimeStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  realtimeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 7,
+    backgroundColor: '#CBD5E1',
+  },
+  realtimeDotConnected: {
+    backgroundColor: '#10B981',
+  },
+  realtimeDotConnecting: {
+    backgroundColor: '#F59E0B',
+  },
+  realtimeLabel: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   scrollContent: {
     padding: Spacing.four,

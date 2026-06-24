@@ -1,5 +1,6 @@
 import { createConsumer, Cable } from '@rails/actioncable'
 import { getApiOrigin } from './api-config'
+import { getRealtimeAuthToken } from './realtime-auth'
 
 type DashboardMessage = {
   type: string
@@ -53,22 +54,30 @@ function toWsOrigin(origin: string): string {
   return `wss://${origin.replace(/^\/+/, '')}`
 }
 
-function resolveCableUrl(): string {
+function appendQueryParam(url: string, key: string, value: string | null) {
+  if (!value) return url
+
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+}
+
+export function resolveCableUrl(): string {
   const envUrl = sanitizeOrigin(process.env.NEXT_PUBLIC_CABLE_URL || '')
-  if (envUrl) return ensureCablePath(envUrl)
+  const token = getRealtimeAuthToken()
+  if (envUrl) return appendQueryParam(ensureCablePath(envUrl), 'token', token)
 
   const apiOrigin = sanitizeOrigin(getApiOrigin())
-  if (apiOrigin) return ensureCablePath(toWsOrigin(apiOrigin))
+  if (apiOrigin) return appendQueryParam(ensureCablePath(toWsOrigin(apiOrigin)), 'token', token)
 
   if (process.env.NODE_ENV === 'production') {
-    return ensureCablePath(toWsOrigin(PROD_API_ORIGIN))
+    return appendQueryParam(ensureCablePath(toWsOrigin(PROD_API_ORIGIN)), 'token', token)
   }
 
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return ensureCablePath(toWsOrigin(window.location.origin))
+    return appendQueryParam(ensureCablePath(toWsOrigin(window.location.origin)), 'token', token)
   }
 
-  return 'ws://localhost:3001/cable'
+  return appendQueryParam('ws://localhost:3001/cable', 'token', token)
 }
 
 function isRealtimeEnabled(): boolean {
