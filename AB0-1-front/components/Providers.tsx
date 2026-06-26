@@ -38,6 +38,9 @@ import { PostHogProvider } from '@/components/PostHogProvider';
 export default function Providers({ children }: { children: React.ReactNode }) {
   const apolloClient = getApolloClient();
   const pathname = usePathname();
+  const isAppSurface = Boolean(
+    pathname?.startsWith('/chat') || pathname?.startsWith('/review-dashboard')
+  );
   const analyticsLoadedRef = useRef(false);
 
   const loadAnalytics = useCallback((reason: string) => {
@@ -161,9 +164,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 <DynamicLeadWizardModal />
                 <SignupGateModalHost />
                 <Toaster />
-                {!pathname?.startsWith('/chat') && <CookieConsent />}
+                {!isAppSurface && <CookieConsent />}
                 {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' &&
-                  !pathname?.startsWith('/chat') &&
+                  !isAppSurface &&
                   (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
               </CompanyProvider>
             </AuthProvider>

@@ -12,19 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import {
   Dialog,
   DialogContent,
@@ -44,15 +32,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -64,40 +44,25 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
   Award,
   BatteryCharging,
   Bell,
   Building2,
-  CalendarDays,
   Car,
   CheckCircle2,
   ChevronRight,
   CircleHelp,
-  ClipboardList,
-  Command,
   Edit3,
   Eye,
-  FileText,
   Filter,
   Flame,
-  Home,
   Leaf,
   Lock,
   MapPin,
   Medal,
-  Menu,
   MessageCircle,
   MoreHorizontal,
-  Network,
-  Plus,
   Recycle,
-  RefreshCcw,
   Search,
   Send,
   Share2,
@@ -108,7 +73,6 @@ import {
   ThumbsUp,
   Trash2,
   Trophy,
-  UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -150,17 +114,30 @@ interface CompanyRow {
   reply?: string;
 }
 
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'Bom dia';
-  if (hour >= 12 && hour < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
+type ReviewDashboardTab =
+  | 'overview'
+  | 'companies'
+  | 'reviews'
+  | 'proposals'
+  | 'reputation'
+  | 'profile';
+
+type ReviewKpi = {
+  label: string;
+  value: string;
+  suffix: string;
+  helper: string;
+  icon: LucideIcon;
+  iconClass: string;
+};
 
 function initialsFromName(name?: string | null) {
   const safeName = name?.trim() || 'Usuário';
   const parts = safeName.split(/\s+/).slice(0, 2);
-  return parts.map((part) => part[0]).join('').toUpperCase();
+  return parts
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 }
 
 function formatDate(value?: string) {
@@ -203,7 +180,8 @@ function getCompanyInfo(review: Review) {
 
 function getLeadCompanyName(lead: Lead) {
   if (typeof lead.company === 'string' && lead.company.trim()) return lead.company;
-  if (lead.company && typeof lead.company === 'object' && lead.company.name) return lead.company.name;
+  if (lead.company && typeof lead.company === 'object' && lead.company.name)
+    return lead.company.name;
   if (lead.company_obj?.name) return lead.company_obj.name;
   return 'Empresa recomendada';
 }
@@ -218,22 +196,60 @@ function getLeadCompanyLogo(lead: Lead) {
 
 function leadStatusMeta(status?: string) {
   const statusMap: Record<string, { label: string; className: string; progress: number }> = {
-    draft: { label: 'Rascunho', className: 'bg-slate-100 text-slate-700 border-slate-200', progress: 12 },
-    pending_otp: { label: 'Aguardando validação', className: 'bg-amber-50 text-amber-700 border-amber-200', progress: 24 },
-    verified: { label: 'Validada', className: 'bg-blue-50 text-blue-700 border-blue-200', progress: 42 },
-    distributed: { label: 'Enviada às empresas', className: 'bg-indigo-50 text-indigo-700 border-indigo-200', progress: 58 },
-    proposal_submitted: { label: 'Proposta solicitada', className: 'bg-purple-50 text-purple-700 border-purple-200', progress: 68 },
-    proposal_processing: { label: 'Em análise', className: 'bg-amber-50 text-amber-700 border-amber-200', progress: 78 },
-    proposal_sent: { label: 'Respondida', className: 'bg-emerald-50 text-emerald-700 border-emerald-200', progress: 100 },
-    proposal_failed: { label: 'Revisar dados', className: 'bg-red-50 text-red-700 border-red-200', progress: 36 },
-    canceled: { label: 'Cancelada', className: 'bg-red-50 text-red-700 border-red-200', progress: 0 },
+    draft: {
+      label: 'Rascunho',
+      className: 'bg-slate-100 text-slate-700 border-slate-200',
+      progress: 12,
+    },
+    pending_otp: {
+      label: 'Aguardando validação',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      progress: 24,
+    },
+    verified: {
+      label: 'Validada',
+      className: 'bg-blue-50 text-blue-700 border-blue-200',
+      progress: 42,
+    },
+    distributed: {
+      label: 'Enviada às empresas',
+      className: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      progress: 58,
+    },
+    proposal_submitted: {
+      label: 'Proposta solicitada',
+      className: 'bg-purple-50 text-purple-700 border-purple-200',
+      progress: 68,
+    },
+    proposal_processing: {
+      label: 'Em análise',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      progress: 78,
+    },
+    proposal_sent: {
+      label: 'Respondida',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      progress: 100,
+    },
+    proposal_failed: {
+      label: 'Revisar dados',
+      className: 'bg-red-50 text-red-700 border-red-200',
+      progress: 36,
+    },
+    canceled: {
+      label: 'Cancelada',
+      className: 'bg-red-50 text-red-700 border-red-200',
+      progress: 0,
+    },
   };
 
-  return statusMap[status || ''] || {
-    label: status || 'Em acompanhamento',
-    className: 'bg-slate-100 text-slate-700 border-slate-200',
-    progress: 35,
-  };
+  return (
+    statusMap[status || ''] || {
+      label: status || 'Em acompanhamento',
+      className: 'bg-slate-100 text-slate-700 border-slate-200',
+      progress: 35,
+    }
+  );
 }
 
 function projectTypeLabel(value?: Review['project_type']) {
@@ -247,12 +263,13 @@ function projectTypeLabel(value?: Review['project_type']) {
 }
 
 function buildCompanyRows(reviews: Review[], leads: Lead[]): CompanyRow[] {
-  return reviews.map((review, index) => {
+  return reviews.map((review) => {
     const company = getCompanyInfo(review);
     const relatedLeads = leads.filter((lead) => getLeadCompanyName(lead) === company.name);
     const requests = relatedLeads.length;
-    // @ts-ignore - read_count might not be typed yet
-    const views = Number(review.read_count || review.metadata?.read_count || 0);
+    const views = Number(
+      (review as Review & { read_count?: number }).read_count || review.metadata?.read_count || 0
+    );
     const status: CompanyRow['status'] =
       review.reply || review.replied_at
         ? isRecent(review.replied_at)
@@ -274,7 +291,9 @@ function buildCompanyRows(reviews: Review[], leads: Lead[]): CompanyRow[] {
       status,
       views,
       requests,
-      conversions: relatedLeads.filter(l => ['verified', 'proposal_sent', 'proposal_processing'].includes(l.status || '')).length,
+      conversions: relatedLeads.filter((l) =>
+        ['verified', 'proposal_sent', 'proposal_processing'].includes(l.status || '')
+      ).length,
       date: review.created_at,
       reply: review.reply,
     };
@@ -282,7 +301,8 @@ function buildCompanyRows(reviews: Review[], leads: Lead[]): CompanyRow[] {
 }
 
 function statusClassName(status: CompanyRow['status']) {
-  if (status === 'Respondida recentemente') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (status === 'Respondida recentemente')
+    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
   if (status === 'Respondeu') return 'bg-green-50 text-green-700 border-green-200';
   if (status === 'Em análise') return 'bg-amber-50 text-amber-700 border-amber-200';
   return 'bg-red-50 text-red-700 border-red-100';
@@ -306,25 +326,26 @@ export function ReputationDashboard({
   reviews,
   leads,
   loading,
-  refreshing,
+  refreshing: _refreshing,
   error,
   activityChart,
-  onRefresh,
+  onRefresh: _onRefresh,
   onDeleteReview,
   onEditReview,
 }: ReputationDashboardProps) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [commandOpen, setCommandOpen] = useState(false);
   const [replyDialogRow, setReplyDialogRow] = useState<CompanyRow | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [categoryFilter, setCategoryFilter] = useState('todos');
+  const [activeTab, setActiveTab] = useState<ReviewDashboardTab>('overview');
   const profileUser = user as User & { city?: string; state?: string; avatar_url?: string };
-  const firstName = user.name?.split(' ')[0] || 'Felipe';
 
   const rows = useMemo(() => buildCompanyRows(reviews, leads), [reviews, leads]);
   const monthlyReviews = reviews.filter((review) => isRecent(review.created_at)).length;
-  
+  const commentsCount = reviews.filter(
+    (review) => review.comment || review.headline || review.buyer_tip
+  ).length;
+
   // Real values from the API summary
   const helpfulVotes = summary?.impact?.helpful_votes || 0;
   const impactedPeople = summary?.impact?.impacted_people || 0;
@@ -333,11 +354,11 @@ export function ReputationDashboard({
   const achievementsList = summary?.gamification?.achievements || [];
   const recommendationsList = summary?.recommendations || [];
   const recentActivitiesList = summary?.recent_activities || [];
-  
+
   const companyReplies = rows.filter((row) => row.reply || row.status.includes('Respond'));
-  const profileViews = summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) || 0;
-  const ctaClicks = summary?.charts?.activity_30d?.reduce((total, point) => total + point.cta_clicks + point.whatsapp_clicks, 0) || 0;
-  
+  const profileViews =
+    summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) || 0;
+
   const profileCompletion = summary?.profile?.completion_percent || 0;
   const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
 
@@ -345,42 +366,42 @@ export function ReputationDashboard({
     {
       label: 'Green Score',
       value: `${greenScore}`,
-      suffix: 'pontos',
-      helper: greenScore >= 760 ? 'Nível Eco Expert' : greenScore >= 650 ? 'Nível Green Pro' : 'Nível em evolução',
+      suffix: 'score',
+      helper: greenScore >= 760 ? 'Eco Expert' : greenScore >= 650 ? 'Green Pro' : 'Em evolução',
       icon: Leaf,
       iconClass: 'bg-green-100 text-green-700',
     },
     {
-      label: 'Avaliações realizadas',
+      label: 'Avaliações',
       value: `${reviews.length}`,
-      suffix: 'avaliações',
-      helper: `+${monthlyReviews} este mês`,
+      suffix: 'total',
+      helper: monthlyReviews > 0 ? `+${monthlyReviews} recentes` : 'registradas',
       icon: Star,
       iconClass: 'bg-amber-100 text-amber-700',
     },
     {
-      label: 'Votos úteis recebidos',
+      label: 'Votos úteis',
       value: `${helpfulVotes}`,
       suffix: 'votos',
-      helper: `Verificado e contabilizado`,
+      helper: 'recebidos',
       icon: ThumbsUp,
       iconClass: 'bg-orange-100 text-orange-700',
     },
     {
-      label: 'Pessoas impactadas',
+      label: 'Impactados',
       value: impactedPeople.toLocaleString('pt-BR'),
       suffix: 'pessoas',
-      helper: `Leituras e engajamentos reais`,
+      helper: 'pessoas',
       icon: Users,
       iconClass: 'bg-rose-100 text-rose-700',
     },
     {
-      label: 'Ranking regional',
-      value: `${rankingPosition}º`,
-      suffix: userLocation,
-      helper: 'Posição na sua região',
-      icon: Trophy,
-      iconClass: 'bg-yellow-100 text-yellow-700',
+      label: 'Comentários',
+      value: `${commentsCount}`,
+      suffix: 'feitos',
+      helper: `ranking ${rankingPosition}º`,
+      icon: MessageCircle,
+      iconClass: 'bg-blue-100 text-blue-700',
     },
   ];
 
@@ -392,7 +413,7 @@ export function ReputationDashboard({
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const achievements = achievementsList.map(a => {
+  const achievements = achievementsList.map((a) => {
     let icon = Award;
     if (a.title.includes('Primeira')) icon = Medal;
     else if (a.title.includes('5')) icon = Trophy;
@@ -401,19 +422,19 @@ export function ReputationDashboard({
     else if (a.title.includes('Green House')) icon = Leaf;
     else if (a.title.includes('EV')) icon = Car;
     else if (a.title.includes('Storage')) icon = BatteryCharging;
-    
+
     return {
       title: a.title,
       subtitle: a.subtitle,
       icon,
       state: a.state,
-      unlocked: a.state !== 'bloqueado'
+      unlocked: a.state !== 'bloqueado',
     };
   });
 
   const recommendations = recommendationsList;
 
-  const activityEvents = recentActivitiesList.map(a => {
+  const activityEvents = recentActivitiesList.map((a) => {
     let icon = Bell;
     if (a.icon === 'MessageCircle') icon = MessageCircle;
     else if (a.icon === 'ThumbsUp') icon = ThumbsUp;
@@ -423,7 +444,7 @@ export function ReputationDashboard({
     return {
       title: a.title,
       time: a.time,
-      icon
+      icon,
     };
   });
 
@@ -440,20 +461,28 @@ export function ReputationDashboard({
     {
       id: 'mobility',
       title: 'Mobilidade Elétrica',
-      state: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 'Em progresso' : 'Não iniciado',
+      state: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || ''))
+        ? 'Em progresso'
+        : 'Não iniciado',
       progress: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 55 : 0,
       icon: Car,
       tone: 'bg-green-100 text-green-700',
-      details: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? ['Interesse demonstrado em propostas'] : ['Sem propostas na área'],
+      details: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || ''))
+        ? ['Interesse demonstrado em propostas']
+        : ['Sem propostas na área'],
     },
     {
       id: 'battery',
       title: 'Bateria / Armazenamento',
-      state: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? 'Em progresso' : 'Não iniciado',
+      state: leads.some((lead) => /bater/i.test(lead.product_vertical || ''))
+        ? 'Em progresso'
+        : 'Não iniciado',
       progress: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? 36 : 0,
       icon: BatteryCharging,
       tone: 'bg-orange-100 text-orange-700',
-      details: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? ['Interesse demonstrado em propostas'] : ['Sem propostas na área'],
+      details: leads.some((lead) => /bater/i.test(lead.product_vertical || ''))
+        ? ['Interesse demonstrado em propostas']
+        : ['Sem propostas na área'],
     },
     {
       id: 'consumption',
@@ -466,120 +495,245 @@ export function ReputationDashboard({
     },
   ];
 
+  const renderCompanies = () => (
+    <CompaniesTable
+      rows={filteredRows}
+      allRows={rows}
+      loading={loading}
+      categories={categories}
+      searchTerm={searchTerm}
+      statusFilter={statusFilter}
+      categoryFilter={categoryFilter}
+      onSearchChange={setSearchTerm}
+      onStatusChange={setStatusFilter}
+      onCategoryChange={setCategoryFilter}
+      onOpenReply={setReplyDialogRow}
+      onEdit={onEditReview}
+      onDelete={onDeleteReview}
+    />
+  );
+
+  const renderProposals = () => (
+    <ProposalTracking leads={leads} replies={companyReplies} onOpenReply={setReplyDialogRow} />
+  );
+
+  const renderImpact = () => (
+    <CommunityImpact
+      views={profileViews}
+      requests={leads.length}
+      conversions={Math.round(leads.length * 0.35)}
+      impactedPeople={impactedPeople}
+      activityChart={activityChart}
+    />
+  );
+
+  const renderReputation = () => (
+    <div className="space-y-4 md:space-y-6">
+      <GreenScoreCompact greenScore={greenScore} rankingPosition={rankingPosition} />
+      <SustainableJourney items={sustainableItems} />
+      <Achievements achievements={achievements} />
+      <ActivityFeed events={activityEvents} />
+      <GreenHouseCertification greenScore={greenScore} />
+    </div>
+  );
+
+  const renderMobileTabContent = () => {
+    if (activeTab === 'companies') return renderCompanies();
+    if (activeTab === 'reviews') {
+      return (
+        <ReviewsPanel
+          rows={rows}
+          reviews={reviews}
+          loading={loading}
+          helpfulVotes={helpfulVotes}
+          commentsCount={commentsCount}
+          onOpenReply={setReplyDialogRow}
+          onEdit={onEditReview}
+          onDelete={onDeleteReview}
+        />
+      );
+    }
+    if (activeTab === 'proposals') return renderProposals();
+    if (activeTab === 'reputation') return renderReputation();
+    if (activeTab === 'profile') {
+      return (
+        <ProfileSummaryPanel
+          user={profileUser}
+          greenScore={greenScore}
+          profileCompletion={profileCompletion}
+          location={userLocation}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {renderCompanies()}
+        {renderProposals()}
+        {renderImpact()}
+        <AiRecommendations recommendations={recommendations} />
+      </div>
+    );
+  };
+
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 pb-28">
+    <div className="mx-auto flex min-w-0 w-full max-w-[1600px] flex-col gap-4 overflow-x-hidden px-4 pb-[calc(88px+var(--safe-area-inset-bottom))] pt-3 md:gap-6 md:px-6 md:pb-8 lg:px-8">
+      {error && (
+        <Card className="rounded-2xl border-red-100 bg-red-50 shadow-none">
+          <CardContent className="flex items-center gap-3 p-3 text-red-800 md:p-4">
+            <CircleHelp className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
-            {error && (
-              <Card className="rounded-[20px] border-red-100 bg-red-50 shadow-sm">
-                <CardContent className="flex items-center gap-3 p-4 text-red-800">
-                  <CircleHelp className="h-5 w-5 shrink-0" />
-                  <p className="text-sm font-semibold">{error}</p>
-                </CardContent>
-              </Card>
-            )}
+      <section id="overview" className="min-w-0 max-w-full">
+        <ReviewMobileStatsStrip kpis={kpis} loading={loading} />
+      </section>
 
-            <section id="overview">
-              <div className="flex gap-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-3 md:overflow-visible xl:grid-cols-6 [&::-webkit-scrollbar]:hidden">
-                {loading
-                  ? Array.from({ length: 6 }).map((_, index) => (
-                      <Card key={index} className="h-[120px] min-w-[210px] rounded-[20px] border-slate-200 bg-white shadow-sm md:min-w-0">
-                        <CardContent className="flex h-full items-center gap-3 p-4">
-                          <Skeleton className="h-11 w-11 rounded-full" />
-                          <div className="space-y-2">
-                            <Skeleton className="h-3 w-24" />
-                            <Skeleton className="h-7 w-20" />
-                            <Skeleton className="h-3 w-28" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  : kpis.map((kpi) => {
-                      const Icon = kpi.icon;
-                      return (
-                        <Card key={kpi.label} className="h-[120px] min-w-[210px] rounded-[20px] border-slate-200 bg-white shadow-sm md:min-w-0">
-                          <CardContent className="flex h-full flex-col justify-between p-4">
-                            <div className="flex items-center gap-3">
-                              <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-full', kpi.iconClass)}>
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <p className="min-w-0 text-xs font-bold text-slate-700">{kpi.label}</p>
-                            </div>
-                            <div>
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold text-slate-950">{kpi.value}</span>
-                                <span className="min-w-0 text-xs font-semibold text-slate-600">{kpi.suffix}</span>
-                              </div>
-                              <p className="truncate text-xs font-semibold text-emerald-700">{kpi.helper}</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-              </div>
-            </section>
+      <HeroProfile
+        user={profileUser}
+        reviewsCount={reviews.length}
+        companiesCount={rows.length}
+        helpfulVotes={helpfulVotes}
+        impactedPeople={impactedPeople}
+        repliesCount={companyReplies.length}
+        onOpenReplies={() => {
+          document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
-              <HeroProfile
-                user={profileUser}
-                reviewsCount={reviews.length}
-                companiesCount={rows.length}
-              helpfulVotes={helpfulVotes}
-              impactedPeople={impactedPeople}
-              repliesCount={companyReplies.length}
-              onOpenReplies={() => {
-                document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
+      <ReviewTabsCompact activeTab={activeTab} onChange={setActiveTab} />
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-              <div className="space-y-6 xl:col-span-8">
-                <CompaniesTable
-                  rows={filteredRows}
-                  allRows={rows}
-                  loading={loading}
-                  categories={categories}
-                  searchTerm={searchTerm}
-                  statusFilter={statusFilter}
-                  categoryFilter={categoryFilter}
-                  onSearchChange={setSearchTerm}
-                  onStatusChange={setStatusFilter}
-                  onCategoryChange={setCategoryFilter}
-                  onOpenReply={setReplyDialogRow}
-                  onEdit={onEditReview}
-                  onDelete={onDeleteReview}
-                />
+      <div className="min-w-0 md:hidden">{renderMobileTabContent()}</div>
 
-                <ProposalTracking
-                  leads={leads}
-                  replies={companyReplies}
-                  onOpenReply={setReplyDialogRow}
-                />
+      <div className="hidden md:block">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="space-y-6 xl:col-span-8">
+            {renderCompanies()}
+            {renderProposals()}
+            {renderImpact()}
+          </div>
 
-                <CommunityImpact
-                  views={profileViews}
-                  requests={leads.length}
-                  conversions={Math.round(leads.length * 0.35)}
-                  impactedPeople={impactedPeople}
-                  activityChart={activityChart}
-                />
-              </div>
+          <aside className="space-y-6 xl:col-span-4">
+            <SustainableJourney items={sustainableItems} />
+            <Achievements achievements={achievements} />
+            <ActivityFeed events={activityEvents} />
+          </aside>
+        </div>
 
-              <aside className="space-y-6 xl:col-span-4">
-                <SustainableJourney items={sustainableItems} />
-                <Achievements achievements={achievements} />
-                <ActivityFeed events={activityEvents} />
-              </aside>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-              <div className="xl:col-span-8">
-                <GreenHouseCertification greenScore={greenScore} />
-              </div>
-              <div className="lg:col-span-2">
-                <AiRecommendations recommendations={recommendations} />
-              </div>
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-8">
+            <GreenHouseCertification greenScore={greenScore} />
+          </div>
+          <div className="xl:col-span-4">
+            <AiRecommendations recommendations={recommendations} />
+          </div>
+        </div>
+      </div>
       <ReplyDialog row={replyDialogRow} onOpenChange={(open) => !open && setReplyDialogRow(null)} />
     </div>
+  );
+}
+
+function ReviewMobileStatsStrip({ kpis, loading }: { kpis: ReviewKpi[]; loading: boolean }) {
+  return (
+    <div className="flex min-w-0 max-w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-3 md:gap-4 md:overflow-visible xl:grid-cols-5 [&::-webkit-scrollbar]:hidden">
+      {loading
+        ? Array.from({ length: 5 }).map((_, index) => (
+            <Card
+              key={index}
+              className="h-[82px] min-w-[118px] rounded-2xl border-slate-200 bg-white shadow-none md:h-[118px] md:min-w-0 md:shadow-sm"
+            >
+              <CardContent className="flex h-full flex-col justify-between p-3 md:p-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-6 w-14" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))
+        : kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <Card
+                key={kpi.label}
+                className="h-[82px] min-w-[118px] rounded-2xl border-slate-200 bg-white shadow-none md:h-[118px] md:min-w-0 md:shadow-sm"
+              >
+                <CardContent className="flex h-full flex-col justify-between p-3 md:p-4">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={cn(
+                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full md:h-9 md:w-9',
+                        kpi.iconClass
+                      )}
+                    >
+                      <Icon className="h-3 w-3 md:h-4 md:w-4" />
+                    </span>
+                    <p className="truncate text-[10px] font-medium uppercase tracking-[0.03em] text-slate-500 md:text-xs">
+                      {kpi.label}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-semibold leading-none text-slate-950 md:text-3xl">
+                        {kpi.value}
+                      </span>
+                      <span className="truncate text-[10px] font-normal text-slate-500 md:text-xs">
+                        {kpi.suffix}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-[10px] font-medium text-emerald-700 md:text-xs">
+                      {kpi.helper}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+    </div>
+  );
+}
+
+function ReviewTabsCompact({
+  activeTab,
+  onChange,
+}: {
+  activeTab: ReviewDashboardTab;
+  onChange: (tab: ReviewDashboardTab) => void;
+}) {
+  const tabs: Array<{ value: ReviewDashboardTab; label: string }> = [
+    { value: 'overview', label: 'Visão geral' },
+    { value: 'companies', label: 'Empresas' },
+    { value: 'reviews', label: 'Avaliações' },
+    { value: 'proposals', label: 'Propostas' },
+    { value: 'reputation', label: 'Reputação' },
+    { value: 'profile', label: 'Perfil' },
+  ];
+
+  return (
+    <nav
+      aria-label="Seções da central de reputação"
+      className="-mx-4 flex w-[calc(100%+2rem)] max-w-[calc(100%+2rem)] gap-2 overflow-x-auto border-y border-slate-200 bg-white px-4 py-2 [-ms-overflow-style:none] [scrollbar-width:none] md:mx-0 md:w-full md:max-w-full md:rounded-2xl md:border md:px-3 md:shadow-sm [&::-webkit-scrollbar]:hidden"
+    >
+      {tabs.map((tab) => {
+        const active = activeTab === tab.value;
+        return (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => onChange(tab.value)}
+            className={cn(
+              'h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition-colors md:h-10 md:px-4',
+              active
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-100 hover:text-slate-800'
+            )}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -600,40 +754,54 @@ function HeroProfile({
   repliesCount: number;
   onOpenReplies: () => void;
 }) {
-  const badges = ['Solar Expert', 'Green House', 'EV Driver', 'Energy Storage', 'Top Avaliador', 'Especialista Residencial'];
+  const badges = ['Solar Expert', 'Green House', 'Top Avaliador'];
   const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
 
   return (
-    <section id="reputation" className="rounded-[20px] bg-[linear-gradient(135deg,#0A2C33,#0F5B53_54%,#114D43)] p-5 text-white shadow-sm md:min-h-[140px]">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-center">
-          <Avatar className="h-20 w-20 shrink-0 border-4 border-white/20">
+    <section
+      id="reputation"
+      className="overflow-hidden rounded-[18px] border border-emerald-900/10 bg-[linear-gradient(135deg,#052E2B,#0F5B53_58%,#064E3B)] p-4 text-white shadow-sm md:min-h-[150px] md:rounded-[20px] md:p-5"
+    >
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
+          <Avatar className="h-16 w-16 shrink-0 border-[3px] border-white/25 md:h-20 md:w-20 md:border-4">
             <AvatarImage src={user.avatar_url || ''} alt={user.name} />
-            <AvatarFallback className="bg-white text-2xl font-black text-emerald-900">{initialsFromName(user.name)}</AvatarFallback>
+            <AvatarFallback className="bg-white text-lg font-semibold text-emerald-900 md:text-2xl">
+              {initialsFromName(user.name)}
+            </AvatarFallback>
           </Avatar>
-          <div className="min-w-0 space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate text-2xl font-black">{user.name}</h2>
-                <CheckCircle2 className="h-5 w-5 fill-emerald-400 text-emerald-400" />
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="truncate text-lg font-semibold md:text-2xl">{user.name}</h2>
+                <CheckCircle2 className="h-4 w-4 shrink-0 fill-emerald-400 text-emerald-400 md:h-5 md:w-5" />
               </div>
-              <p className="text-sm font-semibold text-white/78">Especialista Solar · Membro desde {formatMonthYear(user.created_at)}</p>
-              <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-white/78">
-                <MapPin className="h-4 w-4" />
+              <p className="text-xs font-medium text-white/80 md:text-sm">
+                Especialista Solar · Membro desde {formatMonthYear(user.created_at)}
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-xs font-normal text-white/75 md:text-sm">
+                <MapPin className="h-3.5 w-3.5" />
                 {location}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {badges.map((badge) => (
-                <Badge key={badge} className="rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15">
+                <Badge
+                  key={badge}
+                  className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-white/15 md:text-xs"
+                >
                   {badge}
                 </Badge>
               ))}
             </div>
+            <p className="text-[11px] font-medium text-emerald-100 md:hidden">
+              {reviewsCount} avaliação registrada · {impactedPeople.toLocaleString('pt-BR')} pessoas
+              impactadas
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:min-w-[390px]">
+        <div className="hidden grid-cols-2 gap-4 sm:grid-cols-4 md:grid xl:min-w-[390px]">
           {[
             ['Avaliações', reviewsCount],
             ['Empresas', companiesCount],
@@ -641,8 +809,8 @@ function HeroProfile({
             ['Impactados', impactedPeople.toLocaleString('pt-BR')],
           ].map(([label, value]) => (
             <div key={label} className="text-center">
-              <p className="text-2xl font-black">{value}</p>
-              <p className="text-xs font-semibold text-white/70">{label}</p>
+              <p className="text-2xl font-semibold">{value}</p>
+              <p className="text-xs font-medium text-white/70">{label}</p>
             </div>
           ))}
         </div>
@@ -651,7 +819,7 @@ function HeroProfile({
           type="button"
           onClick={onOpenReplies}
           className={cn(
-            'group flex min-h-[74px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/8 p-4 text-left transition hover:bg-white/12 xl:max-w-[430px]',
+            'group hidden min-h-[68px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.08] p-4 text-left transition hover:bg-white/[0.12] md:flex xl:max-w-[430px]',
             repliesCount > 0 && 'ring-1 ring-emerald-300/50'
           )}
         >
@@ -660,11 +828,15 @@ function HeroProfile({
               <MessageCircle className="h-6 w-6" />
             </span>
             <span>
-              <span className="flex items-center gap-2 text-sm font-black">
+              <span className="flex items-center gap-2 text-sm font-semibold">
                 Respostas das Empresas
-                {repliesCount > 0 && <Badge className="animate-pulse bg-red-600 text-white">{repliesCount}</Badge>}
+                {repliesCount > 0 && (
+                  <Badge className="animate-pulse bg-red-600 text-white">{repliesCount}</Badge>
+                )}
               </span>
-              <span className="text-xs font-semibold text-white/72">Empresas responderam suas avaliações</span>
+              <span className="text-xs font-semibold text-white/72">
+                Empresas responderam suas avaliações
+              </span>
             </span>
           </span>
           <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -703,12 +875,27 @@ function CompaniesTable({
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const mobileFilters = [
+    { label: 'Todas', value: 'todos' },
+    { label: 'Respondidas', value: 'Respondeu' },
+    { label: 'Sem resposta', value: 'Não respondeu' },
+    { label: 'Mais recentes', value: 'todos' },
+  ];
+
   return (
-    <Card id="companies" className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="space-y-4">
+    <Card
+      id="companies"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
+    >
+      <CardHeader className="space-y-3 p-4 md:space-y-4 md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-lg font-black text-slate-950">Empresas que você avaliou</CardTitle>
-          <Button variant="ghost" className="h-9 justify-start rounded-xl text-sm font-bold text-slate-700">
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Empresas que você avaliou
+          </CardTitle>
+          <Button
+            variant="ghost"
+            className="hidden h-9 justify-start rounded-xl text-sm font-medium text-slate-700 md:inline-flex"
+          >
             Ver todas <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
@@ -720,12 +907,15 @@ function CompaniesTable({
               value={searchTerm}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Buscar por nome da empresa"
-              className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 font-semibold"
+              className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm font-normal md:h-11"
             />
           </div>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="h-11 rounded-xl border-slate-200 bg-white font-bold">
+              <Button
+                variant="outline"
+                className="hidden h-11 rounded-xl border-slate-200 bg-white font-medium md:inline-flex"
+              >
                 <Filter className="mr-2 h-4 w-4" />
                 Filtros
               </Button>
@@ -733,10 +923,23 @@ function CompaniesTable({
             <PopoverContent align="end" className="w-80 rounded-2xl border-slate-200">
               <div className="space-y-4">
                 <div>
-                  <p className="mb-2 text-xs font-black uppercase text-slate-500">Status</p>
+                  <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Status</p>
                   <div className="flex flex-wrap gap-2">
-                    {['todos', 'Respondeu', 'Não respondeu', 'Em análise', 'Respondida recentemente'].map((status) => (
-                      <Button key={status} type="button" size="sm" variant={statusFilter === status ? 'default' : 'outline'} className="h-8 rounded-full text-xs" onClick={() => onStatusChange(status)}>
+                    {[
+                      'todos',
+                      'Respondeu',
+                      'Não respondeu',
+                      'Em análise',
+                      'Respondida recentemente',
+                    ].map((status) => (
+                      <Button
+                        key={status}
+                        type="button"
+                        size="sm"
+                        variant={statusFilter === status ? 'default' : 'outline'}
+                        className="h-8 rounded-full text-xs"
+                        onClick={() => onStatusChange(status)}
+                      >
                         {status === 'todos' ? 'Todos' : status}
                       </Button>
                     ))}
@@ -744,10 +947,17 @@ function CompaniesTable({
                 </div>
                 <Separator />
                 <div>
-                  <p className="mb-2 text-xs font-black uppercase text-slate-500">Categoria</p>
+                  <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Categoria</p>
                   <div className="flex flex-wrap gap-2">
                     {['todos', ...categories].map((category) => (
-                      <Button key={category} type="button" size="sm" variant={categoryFilter === category ? 'default' : 'outline'} className="h-8 rounded-full text-xs" onClick={() => onCategoryChange(category)}>
+                      <Button
+                        key={category}
+                        type="button"
+                        size="sm"
+                        variant={categoryFilter === category ? 'default' : 'outline'}
+                        className="h-8 rounded-full text-xs"
+                        onClick={() => onCategoryChange(category)}
+                      >
                         {category === 'todos' ? 'Todas' : category}
                       </Button>
                     ))}
@@ -756,6 +966,26 @@ function CompaniesTable({
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+          {mobileFilters.map((filter) => (
+            <Button
+              key={filter.label}
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onStatusChange(filter.value)}
+              className={cn(
+                'h-8 shrink-0 rounded-full px-3 text-[11px] font-medium',
+                statusFilter === filter.value
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 bg-white text-slate-500'
+              )}
+            >
+              {filter.label}
+            </Button>
+          ))}
         </div>
       </CardHeader>
 
@@ -780,14 +1010,20 @@ function CompaniesTable({
                 Array.from({ length: 4 }).map((_, index) => (
                   <TableRow key={index}>
                     {Array.from({ length: 9 }).map((__, cellIndex) => (
-                      <TableCell key={cellIndex}><Skeleton className="h-5 w-full" /></TableCell>
+                      <TableCell key={cellIndex}>
+                        <Skeleton className="h-5 w-full" />
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="h-36 text-center">
-                    <p className="text-sm font-bold text-slate-900">{allRows.length === 0 ? 'Nenhuma empresa avaliada ainda.' : 'Nenhum resultado para os filtros.'}</p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {allRows.length === 0
+                        ? 'Nenhuma empresa avaliada ainda.'
+                        : 'Nenhum resultado para os filtros.'}
+                    </p>
                     <Button asChild className="mt-3 rounded-xl bg-emerald-600 hover:bg-emerald-700">
                       <Link href="/companies">Avaliar empresa</Link>
                     </Button>
@@ -802,27 +1038,37 @@ function CompaniesTable({
                           <AvatarImage src={row.logoUrl || ''} alt={row.name} />
                           <AvatarFallback>{row.initials}</AvatarFallback>
                         </Avatar>
-                        <span className="font-bold text-slate-950">{row.name}</span>
+                        <span className="font-semibold text-slate-950">{row.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold text-slate-600">{row.category}</TableCell>
+                    <TableCell className="font-medium text-slate-600">{row.category}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {ratingStars(row.rating)}
-                        <span className="ml-1 text-xs font-black">{row.rating.toFixed(1)}</span>
+                        <span className="ml-1 text-xs font-semibold">{row.rating.toFixed(1)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={cn('rounded-full font-bold', statusClassName(row.status))}>
+                      <Badge
+                        variant="outline"
+                        className={cn('rounded-full font-medium', statusClassName(row.status))}
+                      >
                         {row.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-bold">{row.views}</TableCell>
-                    <TableCell className="font-bold">{row.requests}</TableCell>
-                    <TableCell className="font-bold">{row.conversions}</TableCell>
-                    <TableCell className="font-semibold text-slate-500">{formatDate(row.date)}</TableCell>
+                    <TableCell className="font-semibold">{row.views}</TableCell>
+                    <TableCell className="font-semibold">{row.requests}</TableCell>
+                    <TableCell className="font-semibold">{row.conversions}</TableCell>
+                    <TableCell className="font-medium text-slate-500">
+                      {formatDate(row.date)}
+                    </TableCell>
                     <TableCell>
-                      <RowActions row={row} onOpenReply={onOpenReply} onEdit={onEdit} onDelete={onDelete} />
+                      <RowActions
+                        row={row}
+                        onOpenReply={onOpenReply}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -831,37 +1077,59 @@ function CompaniesTable({
           </Table>
         </div>
 
-        <div className="space-y-3 p-4 md:hidden">
+        <div className="space-y-2.5 px-4 pb-4 md:hidden">
           {loading ? (
-            Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-36 rounded-2xl" />)
+            Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-24 rounded-2xl" />
+            ))
           ) : rows.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
-              <p className="text-sm font-bold text-slate-900">Nenhuma empresa avaliada ainda.</p>
-              <Button asChild className="mt-3 rounded-xl bg-emerald-600 hover:bg-emerald-700">
-                <Link href="/companies">Avaliar empresa</Link>
-              </Button>
-            </div>
+            <ReviewEmptyStateCompact
+              icon={Building2}
+              title="Nenhuma empresa avaliada ainda"
+              description="As empresas avaliadas por você aparecem aqui."
+              href="/companies"
+              action="Avaliar empresa"
+            />
           ) : (
             rows.map((row) => (
-              <div key={row.id} className="rounded-2xl border border-slate-100 p-4">
+              <div key={row.id} className="min-h-[96px] rounded-2xl border border-slate-200 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar className="h-11 w-11 border border-slate-100">
+                    <Avatar className="h-11 w-11 shrink-0 border border-slate-100">
                       <AvatarImage src={row.logoUrl || ''} alt={row.name} />
                       <AvatarFallback>{row.initials}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-slate-950">{row.name}</p>
-                      <p className="truncate text-xs font-semibold text-slate-500">{row.category}</p>
+                      <p className="truncate text-sm font-semibold text-slate-950">{row.name}</p>
+                      <p className="truncate text-xs font-normal text-slate-500">{row.category}</p>
+                      <div className="mt-1 flex items-center gap-1">
+                        {ratingStars(row.rating)}
+                        <span className="text-[11px] font-medium text-slate-500">
+                          {row.rating.toFixed(1)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <RowActions row={row} onOpenReply={onOpenReply} onEdit={onEdit} onDelete={onDelete} />
+                  <RowActions
+                    row={row}
+                    onOpenReply={onOpenReply}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div>{ratingStars(row.rating)}</div>
-                  <Badge variant="outline" className={cn('justify-center rounded-full font-bold', statusClassName(row.status))}>{row.status}</Badge>
-                  <p className="font-semibold text-slate-600">{row.views} visualizações</p>
-                  <p className="font-semibold text-slate-600">{row.requests} solicitações</p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'rounded-full text-[11px] font-medium',
+                      statusClassName(row.status)
+                    )}
+                  >
+                    {row.status}
+                  </Badge>
+                  <p className="truncate text-[11px] font-normal text-slate-500">
+                    {row.views} visualizações · {row.requests} solicitações
+                  </p>
                 </div>
               </div>
             ))
@@ -905,12 +1173,355 @@ function RowActions({
           Compartilhar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => onDelete(row.reviewId)}>
+        <DropdownMenuItem
+          className="text-red-600 focus:text-red-600"
+          onClick={() => onDelete(row.reviewId)}
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           Excluir
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function GreenScoreCompact({
+  greenScore,
+  rankingPosition,
+}: {
+  greenScore: number;
+  rankingPosition: number;
+}) {
+  const level =
+    greenScore >= 900
+      ? 'Platinum'
+      : greenScore >= 760
+        ? 'Gold'
+        : greenScore >= 650
+          ? 'Green Pro'
+          : 'Em evolução';
+  const progress = Math.min(100, Math.max(0, Math.round((greenScore / 900) * 100)));
+
+  return (
+    <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
+      <CardContent className="p-4 md:p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 md:h-14 md:w-14">
+            <Leaf className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.03em] text-slate-500">
+                  Green Score
+                </p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="text-3xl font-semibold leading-none text-slate-950">{greenScore}</p>
+                  <span className="text-xs font-medium text-emerald-700">{level}</span>
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700"
+              >
+                {rankingPosition}º
+              </Badge>
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <Progress value={progress} className="h-2 flex-1 bg-slate-100" />
+              <span className="text-[11px] font-medium text-slate-500">{progress}%</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReviewsPanel({
+  rows,
+  reviews,
+  loading,
+  helpfulVotes,
+  commentsCount,
+  onOpenReply,
+  onEdit,
+  onDelete,
+}: {
+  rows: CompanyRow[];
+  reviews: Review[];
+  loading: boolean;
+  helpfulVotes: number;
+  commentsCount: number;
+  onOpenReply: (row: CompanyRow) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [filter, setFilter] = useState<'todas' | 'comentario' | 'resposta' | 'pendente'>('todas');
+  const rowByReviewId = useMemo(() => new Map(rows.map((row) => [row.reviewId, row])), [rows]);
+  const filteredReviews = reviews.filter((review) => {
+    const hasText = Boolean(review.comment || review.body || review.headline || review.buyer_tip);
+    const hasReply = Boolean(review.reply || review.replied_at);
+    if (filter === 'comentario') return hasText;
+    if (filter === 'resposta') return hasReply;
+    if (filter === 'pendente') return !hasReply;
+    return true;
+  });
+
+  const filters = [
+    ['todas', 'Todas'],
+    ['comentario', 'Com comentário'],
+    ['resposta', 'Com resposta'],
+    ['pendente', 'Pendentes'],
+  ] as const;
+
+  return (
+    <Card
+      id="reviews"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm"
+    >
+      <CardHeader className="space-y-3 p-4 md:p-6">
+        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+          Minhas avaliações
+        </CardTitle>
+        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {[
+            ['Avaliações', reviews.length],
+            ['Votos úteis', helpfulVotes],
+            ['Comentários', commentsCount],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="h-16 min-w-[112px] rounded-2xl border border-slate-200 bg-slate-50 p-3"
+            >
+              <p className="text-[10px] font-medium uppercase tracking-[0.03em] text-slate-500">
+                {label}
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-950">{value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {filters.map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setFilter(value)}
+              className={cn(
+                'h-8 shrink-0 rounded-full border px-3 text-[11px] font-medium',
+                filter === value
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 bg-white text-slate-500'
+              )}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4 pt-0 md:p-6 md:pt-0">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-36 rounded-2xl" />
+          ))
+        ) : filteredReviews.length === 0 ? (
+          <ReviewEmptyStateCompact
+            icon={MessageCircle}
+            title="Nenhuma avaliação encontrada"
+            description="As avaliações publicadas com seus filtros atuais aparecem aqui."
+            href="/companies"
+            action="Avaliar empresa"
+          />
+        ) : (
+          filteredReviews.map((review) => {
+            const row = rowByReviewId.get(String(review.id));
+            const company = getCompanyInfo(review);
+            const text =
+              review.comment ||
+              review.body ||
+              review.buyer_tip ||
+              review.headline ||
+              'Avaliação sem comentário.';
+            const hasReply = Boolean(review.reply || review.replied_at);
+
+            return (
+              <article key={review.id} className="rounded-2xl border border-slate-200 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">{company.name}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-0.5">{ratingStars(review.rating)}</div>
+                      <span className="text-[11px] font-normal text-slate-500">
+                        {formatDate(review.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  {row ? (
+                    <RowActions
+                      row={row}
+                      onOpenReply={onOpenReply}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-xl"
+                      onClick={() => onEdit(String(review.id))}
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <p className="mt-3 overflow-hidden text-sm font-normal leading-5 text-slate-700 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+                  {text}
+                </p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'rounded-full text-[11px] font-medium',
+                      hasReply
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-red-100 bg-red-50 text-red-700'
+                    )}
+                  >
+                    {hasReply ? 'Respondida' : 'Não respondeu'}
+                  </Badge>
+                  <span className="text-[11px] font-normal text-slate-500">
+                    {Number(review.helpful_count || 0)} úteis
+                  </span>
+                </div>
+              </article>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProfileSummaryPanel({
+  user,
+  greenScore,
+  profileCompletion,
+  location,
+}: {
+  user: User & { city?: string | null; state?: string | null; avatar_url?: string | null };
+  greenScore: number;
+  profileCompletion: number;
+  location: string;
+}) {
+  const level =
+    greenScore >= 760 ? 'Avançado' : greenScore >= 650 ? 'Intermediário' : 'Em evolução';
+  const rows = [
+    ['Nome', user.name],
+    ['Email', user.email],
+    ['Telefone', user.phone || 'Não informado'],
+    ['Membro desde', formatDate(user.created_at)],
+    ['Localização', location],
+    ['Nível', level],
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Informações pessoais
+          </CardTitle>
+          <Button
+            asChild
+            variant="ghost"
+            className="h-8 rounded-xl px-2 text-xs font-medium text-emerald-700"
+          >
+            <Link href="/review-dashboard/profile">
+              <Edit3 className="mr-1.5 h-3.5 w-3.5" />
+              Editar perfil
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1 p-4 pt-0 md:p-6 md:pt-0">
+          {rows.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex items-center justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0"
+            >
+              <span className="text-xs font-medium text-slate-500">{label}</span>
+              <span className="min-w-0 truncate text-right text-sm font-normal text-slate-900">
+                {value}
+              </span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Foto e reputação
+          </CardTitle>
+          <Button
+            asChild
+            variant="ghost"
+            className="h-8 rounded-xl px-2 text-xs font-medium text-emerald-700"
+          >
+            <Link href="/review-dashboard/profile">Alterar foto</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <Avatar className="h-20 w-20 border-[3px] border-white shadow-sm">
+              <AvatarImage src={user.avatar_url || ''} alt={user.name} />
+              <AvatarFallback className="bg-emerald-50 text-lg font-semibold text-emerald-800">
+                {initialsFromName(user.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-950">{user.name}</p>
+              <p className="mt-1 text-xs font-normal text-slate-500">
+                Green Score {greenScore} · Perfil {profileCompletion}% completo
+              </p>
+              <Progress value={profileCompletion} className="mt-3 h-2 bg-slate-200" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ReviewEmptyStateCompact({
+  icon: Icon,
+  title,
+  description,
+  href,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href?: string;
+  action?: string;
+}) {
+  return (
+    <div className="flex min-h-[132px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center">
+      <Icon className="h-7 w-7 text-slate-300" />
+      <p className="mt-2 text-sm font-semibold text-slate-900">{title}</p>
+      <p className="mt-1 max-w-xs text-xs font-normal text-slate-500">{description}</p>
+      {href && action && (
+        <Button
+          asChild
+          className="mt-3 h-9 rounded-xl bg-emerald-700 px-4 text-xs font-medium hover:bg-emerald-800"
+        >
+          <Link href={href}>{action}</Link>
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -926,46 +1537,57 @@ function ProposalTracking({
   const proposalLeads = leads.slice(0, 5);
   const answeredLeads = leads.filter((lead) => lead.status === 'proposal_sent').length;
   const openLeads = leads.filter((lead) =>
-    ['draft', 'pending_otp', 'verified', 'distributed', 'proposal_submitted', 'proposal_processing'].includes(
-      lead.status || ''
-    )
+    [
+      'draft',
+      'pending_otp',
+      'verified',
+      'distributed',
+      'proposal_submitted',
+      'proposal_processing',
+    ].includes(lead.status || '')
   ).length;
 
   return (
-    <Card id="opportunities" className="rounded-[20px] border-emerald-100 bg-white shadow-sm">
+    <Card
+      id="opportunities"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
+    >
       <span id="company-replies" className="sr-only" />
-      <CardHeader className="space-y-2">
+      <CardHeader className="space-y-2 p-4 md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle className="text-lg font-black text-slate-950">
-              Acompanhamento de Propostas e Respostas
+            <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+              Propostas e respostas
             </CardTitle>
-            <p className="text-sm font-semibold text-slate-500">
+            <p className="text-xs font-normal text-slate-500 md:text-sm">
               Suas solicitações vindas de propostas e retornos das empresas em um só lugar.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="rounded-full border-blue-200 bg-blue-50 text-blue-700">
+            <Badge
+              variant="outline"
+              className="rounded-full border-blue-200 bg-blue-50 text-xs font-medium text-blue-700"
+            >
               {openLeads} em andamento
             </Badge>
-            <Badge variant="outline" className="rounded-full border-emerald-200 bg-emerald-50 text-emerald-700">
+            <Badge
+              variant="outline"
+              className="rounded-full border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700"
+            >
               {answeredLeads + replies.length} respondidas
             </Badge>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 p-4 pt-0 md:p-6 md:pt-0">
         {proposalLeads.length === 0 && replies.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
-            <Send className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-2 text-sm font-bold text-slate-900">Nenhuma proposta em acompanhamento ainda</p>
-            <p className="text-xs font-semibold text-slate-500">
-              Quando você solicitar orçamentos, as etapas aparecem aqui com status real da API.
-            </p>
-            <Button asChild className="mt-4 rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700">
-              <Link href="/companies">Solicitar proposta</Link>
-            </Button>
-          </div>
+          <ReviewEmptyStateCompact
+            icon={Send}
+            title="Nenhuma proposta solicitada ainda"
+            description="Solicite propostas para acompanhar respostas e etapas por aqui."
+            href="/companies"
+            action="Solicitar proposta"
+          />
         ) : (
           <div className="grid gap-3">
             {proposalLeads.map((lead) => {
@@ -973,26 +1595,32 @@ function ProposalTracking({
               const meta = leadStatusMeta(lead.status);
 
               return (
-                <div key={lead.id} className="rounded-2xl border border-slate-100 p-4">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={lead.id} className="rounded-2xl border border-slate-200 p-3 md:p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <Avatar className="h-11 w-11 border border-slate-100">
+                      <Avatar className="h-11 w-11 shrink-0 border border-slate-100">
                         <AvatarImage src={getLeadCompanyLogo(lead) || ''} alt={companyName} />
                         <AvatarFallback>{initialsFromName(companyName)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-slate-950">{companyName}</p>
-                        <p className="truncate text-xs font-semibold text-slate-500">
-                          {lead.product_vertical || lead.category || 'Energia Solar'} · {formatDate(lead.created_at)}
+                        <p className="truncate text-sm font-semibold text-slate-950">
+                          {companyName}
+                        </p>
+                        <p className="truncate text-xs font-normal text-slate-500">
+                          {lead.product_vertical || lead.category || 'Energia Solar'} ·{' '}
+                          {formatDate(lead.created_at)}
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className={cn('w-fit rounded-full font-bold', meta.className)}>
+                    <Badge
+                      variant="outline"
+                      className={cn('w-fit rounded-full text-xs font-medium', meta.className)}
+                    >
                       {meta.label}
                     </Badge>
                   </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-medium text-slate-500">
                       <span>Progresso da proposta</span>
                       <span>{meta.progress}%</span>
                     </div>
@@ -1007,7 +1635,7 @@ function ProposalTracking({
                 key={row.id}
                 type="button"
                 onClick={() => onOpenReply(row)}
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-left transition hover:bg-emerald-50"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 text-left transition hover:bg-emerald-50 md:p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar className="h-11 w-11 border border-white">
@@ -1015,8 +1643,8 @@ function ProposalTracking({
                     <AvatarFallback>{row.initials}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-slate-950">{row.name}</p>
-                    <p className="truncate text-xs font-semibold text-slate-600">
+                    <p className="truncate text-sm font-semibold text-slate-950">{row.name}</p>
+                    <p className="truncate text-xs font-normal text-slate-600">
                       {row.reply || 'Resposta disponível para leitura.'}
                     </p>
                   </div>
@@ -1031,29 +1659,60 @@ function ProposalTracking({
   );
 }
 
-function SustainableJourney({ items }: { items: Array<{ id: string; title: string; state: string; progress: number; icon: typeof Sun; tone: string; details: string[] }> }) {
+function SustainableJourney({
+  items,
+}: {
+  items: Array<{
+    id: string;
+    title: string;
+    state: string;
+    progress: number;
+    icon: typeof Sun;
+    tone: string;
+    details: string[];
+  }>;
+}) {
   return (
-    <Card id="green-house" className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-black text-slate-950">Jornada Sustentável</CardTitle>
-        <Button variant="ghost" className="h-8 rounded-xl text-xs font-bold">
+    <Card
+      id="green-house"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
+    >
+      <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+          Jornada Sustentável
+        </CardTitle>
+        <Button
+          variant="ghost"
+          className="hidden h-8 rounded-xl text-xs font-medium md:inline-flex"
+        >
           Ver Green House <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         <Accordion type="multiple" defaultValue={['solar']} className="space-y-2">
           {items.map((item) => {
             const Icon = item.icon;
             return (
-              <AccordionItem key={item.id} value={item.id} className="rounded-2xl border border-slate-100 px-3">
-                <AccordionTrigger className="hover:no-underline">
+              <AccordionItem
+                key={item.id}
+                value={item.id}
+                className="rounded-2xl border border-slate-200 px-3"
+              >
+                <AccordionTrigger className="py-2.5 hover:no-underline md:py-4">
                   <div className="flex min-w-0 items-center gap-3 text-left">
-                    <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-full', item.tone)}>
-                      <Icon className="h-5 w-5" />
+                    <span
+                      className={cn(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full md:h-11 md:w-11',
+                        item.tone
+                      )}
+                    >
+                      <Icon className="h-4 w-4 md:h-5 md:w-5" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-black text-slate-950">{item.title}</span>
-                      <span className="block text-xs font-semibold text-slate-500">{item.state}</span>
+                      <span className="block truncate text-sm font-semibold text-slate-950">
+                        {item.title}
+                      </span>
+                      <span className="block text-xs font-normal text-slate-500">{item.state}</span>
                     </span>
                   </div>
                 </AccordionTrigger>
@@ -1061,7 +1720,9 @@ function SustainableJourney({ items }: { items: Array<{ id: string; title: strin
                   <Progress value={item.progress} className="mb-3 h-2 bg-slate-100" />
                   <div className="space-y-1 pb-2">
                     {item.details.map((detail) => (
-                      <p key={detail} className="text-xs font-semibold text-slate-500">{detail}</p>
+                      <p key={detail} className="text-xs font-normal text-slate-500">
+                        {detail}
+                      </p>
                     ))}
                   </div>
                 </AccordionContent>
@@ -1074,28 +1735,66 @@ function SustainableJourney({ items }: { items: Array<{ id: string; title: strin
   );
 }
 
-function Achievements({ achievements }: { achievements: Array<{ title: string; subtitle: string; icon: typeof Trophy; state: string; unlocked: boolean }> }) {
+function Achievements({
+  achievements,
+}: {
+  achievements: Array<{
+    title: string;
+    subtitle: string;
+    icon: typeof Trophy;
+    state: string;
+    unlocked: boolean;
+  }>;
+}) {
   const AchievementCard = ({ achievement }: { achievement: (typeof achievements)[number] }) => {
     const Icon = achievement.icon;
     return (
-      <div className={cn('flex min-h-[128px] flex-col items-center justify-center rounded-2xl border p-3 text-center', achievement.unlocked ? 'border-slate-100 bg-white' : 'border-slate-100 bg-slate-50 opacity-70')}>
-        <div className={cn('mb-3 flex h-14 w-14 items-center justify-center rounded-full', achievement.unlocked ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400')}>
-          {achievement.unlocked ? <Icon className="h-7 w-7" /> : <Lock className="h-6 w-6" />}
+      <div
+        className={cn(
+          'flex min-h-[104px] flex-col items-center justify-center rounded-2xl border p-3 text-center md:min-h-[128px]',
+          achievement.unlocked
+            ? 'border-slate-200 bg-white'
+            : 'border-slate-100 bg-slate-50 opacity-70'
+        )}
+      >
+        <div
+          className={cn(
+            'mb-2 flex h-10 w-10 items-center justify-center rounded-full md:mb-3 md:h-14 md:w-14',
+            achievement.unlocked ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'
+          )}
+        >
+          {achievement.unlocked ? (
+            <Icon className="h-5 w-5 md:h-7 md:w-7" />
+          ) : (
+            <Lock className="h-5 w-5 md:h-6 md:w-6" />
+          )}
         </div>
-        <p className="text-xs font-black text-slate-950">{achievement.title}</p>
-        <p className="text-[11px] font-semibold text-slate-500">{achievement.subtitle}</p>
-        <Badge variant="outline" className="mt-2 rounded-full text-[10px] capitalize">{achievement.state}</Badge>
+        <p className="text-xs font-semibold text-slate-950">{achievement.title}</p>
+        <p className="text-[11px] font-normal text-slate-500">{achievement.subtitle}</p>
+        <Badge variant="outline" className="mt-2 rounded-full text-[10px] capitalize">
+          {achievement.state}
+        </Badge>
       </div>
     );
   };
 
   return (
-    <Card id="achievements" className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-black text-slate-950">Conquistas</CardTitle>
-        <Button variant="ghost" className="h-8 rounded-xl text-xs font-bold">Ver todas</Button>
+    <Card
+      id="achievements"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
+    >
+      <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+          Conquistas
+        </CardTitle>
+        <Button
+          variant="ghost"
+          className="hidden h-8 rounded-xl text-xs font-medium md:inline-flex"
+        >
+          Ver todas
+        </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
         <div className="hidden grid-cols-2 gap-3 md:grid">
           {achievements.slice(0, 6).map((achievement) => (
             <AchievementCard key={achievement.title} achievement={achievement} />
@@ -1131,33 +1830,48 @@ function CommunityImpact({
   activityChart: ReactNode;
 }) {
   return (
-    <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-      <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm xl:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-lg font-black text-slate-950">Impacto na comunidade</CardTitle>
+    <section className="grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-2">
+      <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm xl:col-span-2">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Impacto na comunidade
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <CardContent className="grid grid-cols-2 gap-2 p-4 pt-0 md:grid-cols-4 md:gap-4 md:p-6 md:pt-0">
           {[
             ['Visualizações', views],
             ['Solicitações', requests],
             ['Conversões', conversions],
             ['Pessoas impactadas', impactedPeople],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-xs font-bold text-slate-500">{label}</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">{Number(value).toLocaleString('pt-BR')}</p>
+            <div
+              key={label}
+              className="flex h-16 flex-col justify-center rounded-2xl bg-slate-50 p-3 md:h-auto md:p-4"
+            >
+              <p className="truncate text-[11px] font-medium text-slate-500 md:text-xs">{label}</p>
+              <p className="mt-1 text-lg font-semibold text-slate-950 md:mt-2 md:text-2xl">
+                {Number(value).toLocaleString('pt-BR')}
+              </p>
             </div>
           ))}
         </CardContent>
       </Card>
 
-      <div className="xl:col-span-2">
+      <div className="hidden md:block xl:col-span-2">
         <Tabs defaultValue="30d" className="space-y-3">
           <TabsList className="rounded-2xl bg-white p-1 shadow-sm">
-            <TabsTrigger value="7d" className="rounded-xl">7 dias</TabsTrigger>
-            <TabsTrigger value="30d" className="rounded-xl">30 dias</TabsTrigger>
-            <TabsTrigger value="90d" className="rounded-xl">90 dias</TabsTrigger>
-            <TabsTrigger value="12m" className="rounded-xl">12 meses</TabsTrigger>
+            <TabsTrigger value="7d" className="rounded-xl">
+              7 dias
+            </TabsTrigger>
+            <TabsTrigger value="30d" className="rounded-xl">
+              30 dias
+            </TabsTrigger>
+            <TabsTrigger value="90d" className="rounded-xl">
+              90 dias
+            </TabsTrigger>
+            <TabsTrigger value="12m" className="rounded-xl">
+              12 meses
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="7d">{activityChart}</TabsContent>
           <TabsContent value="30d">{activityChart}</TabsContent>
@@ -1169,28 +1883,50 @@ function CommunityImpact({
   );
 }
 
-function ActivityFeed({ events }: { events: Array<{ icon: typeof Bell; title: string; time: string }> }) {
+function ActivityFeed({
+  events,
+}: {
+  events: Array<{ icon: typeof Bell; title: string; time: string }>;
+}) {
   return (
-    <Card id="activity-feed" className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-black text-slate-950">Atividade recente</CardTitle>
-        <Button variant="ghost" className="h-8 rounded-xl text-xs font-bold">Ver todas</Button>
+    <Card
+      id="activity-feed"
+      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
+    >
+      <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+          Atividade recente
+        </CardTitle>
+        <Button
+          variant="ghost"
+          className="hidden h-8 rounded-xl text-xs font-medium md:inline-flex"
+        >
+          Ver todas
+        </Button>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {events.map((event) => {
-          const Icon = event.icon;
-          return (
-            <div key={event.title} className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
-                <Icon className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-slate-800">{event.title}</p>
+      <CardContent className="space-y-3 p-4 pt-0 md:p-6 md:pt-0">
+        {events.length === 0 ? (
+          <ReviewEmptyStateCompact
+            icon={Bell}
+            title="Sem atividade recente"
+            description="Curtidas, respostas e conquistas aparecem aqui."
+          />
+        ) : (
+          events.map((event) => {
+            const Icon = event.icon;
+            return (
+              <div key={event.title} className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700 md:h-10 md:w-10">
+                  <Icon className="h-4 w-4 md:h-5 md:w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">{event.title}</p>
+                </div>
+                <span className="text-xs font-normal text-slate-500">{event.time}</span>
               </div>
-              <span className="text-xs font-semibold text-slate-500">{event.time}</span>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );
@@ -1204,21 +1940,41 @@ function GreenHouseCertification({ greenScore }: { greenScore: number }) {
     ['Platinum', 'Completo', greenScore >= 900, Trophy],
   ] as const;
   return (
-    <Card className="rounded-[20px] border-emerald-100 bg-emerald-50/70 shadow-sm">
-      <CardContent className="p-5">
-        <div className="mb-4">
-          <h3 className="text-lg font-black text-emerald-900">Green House Certification</h3>
-          <p className="text-sm font-semibold text-emerald-800">Conquiste selos e mostre ao mundo que sua casa é sustentável.</p>
+    <Card className="rounded-[18px] border-emerald-100 bg-emerald-50/70 shadow-none md:rounded-[20px] md:shadow-sm">
+      <CardContent className="p-4 md:p-5">
+        <div className="mb-3 md:mb-4">
+          <h3 className="text-base font-semibold text-emerald-900 md:text-lg">
+            Green House Certification
+          </h3>
+          <p className="text-xs font-normal text-emerald-800 md:text-sm">
+            Conquiste selos e mostre ao mundo que sua casa é sustentável.
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
           {tiers.map(([tier, label, unlocked, Icon]) => (
-            <div key={tier} className="flex items-center gap-3 rounded-2xl bg-white/70 p-3">
-              <span className={cn('flex h-12 w-12 items-center justify-center rounded-full', unlocked ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400')}>
-                {unlocked ? <Icon className="h-6 w-6" /> : <Lock className="h-5 w-5" />}
+            <div
+              key={tier}
+              className="flex h-16 items-center gap-2 rounded-2xl bg-white/70 p-2 md:h-auto md:gap-3 md:p-3"
+            >
+              <span
+                className={cn(
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full md:h-12 md:w-12',
+                  unlocked ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'
+                )}
+              >
+                {unlocked ? (
+                  <Icon className="h-4 w-4 md:h-6 md:w-6" />
+                ) : (
+                  <Lock className="h-4 w-4 md:h-5 md:w-5" />
+                )}
               </span>
-              <span>
-                <span className="block text-sm font-black text-slate-950">{tier}</span>
-                <span className="block text-xs font-semibold text-slate-500">{label}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-slate-950 md:text-sm">
+                  {tier}
+                </span>
+                <span className="block truncate text-[11px] font-normal text-slate-500 md:text-xs">
+                  {label}
+                </span>
               </span>
             </div>
           ))}
@@ -1228,40 +1984,71 @@ function GreenHouseCertification({ greenScore }: { greenScore: number }) {
   );
 }
 
-function AiRecommendations({ recommendations }: { recommendations: Array<{ name: string; city: string; rating: number; badge: string }> }) {
+function AiRecommendations({
+  recommendations,
+}: {
+  recommendations: Array<{ name: string; city: string; rating: number; badge: string }>;
+}) {
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
         <div>
-          <CardTitle className="text-lg font-black text-slate-950">Recomendações por IA</CardTitle>
-          <p className="text-xs font-semibold text-slate-500">Empresas que combinam com seu perfil e região.</p>
+          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
+            Recomendações por IA
+          </CardTitle>
+          <p className="text-xs font-normal text-slate-500">
+            Empresas que combinam com seu perfil e região.
+          </p>
         </div>
         <Sparkles className="h-5 w-5 text-amber-500" />
       </CardHeader>
-      <CardContent className="space-y-3">
-        {recommendations.map((company) => (
-          <div key={company.name} className="rounded-2xl border border-slate-100 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-black text-slate-950">{company.name}</p>
-                <p className="text-xs font-semibold text-slate-500">{company.city}</p>
+      <CardContent className="space-y-3 p-4 pt-0 md:p-6 md:pt-0">
+        {recommendations.length === 0 ? (
+          <ReviewEmptyStateCompact
+            icon={Sparkles}
+            title="Sem recomendações no momento"
+            description="As sugestões personalizadas aparecem conforme seu perfil evolui."
+          />
+        ) : (
+          recommendations.map((company) => (
+            <div key={company.name} className="rounded-2xl border border-slate-100 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{company.name}</p>
+                  <p className="text-xs font-normal text-slate-500">{company.city}</p>
+                </div>
+                <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+                  {company.badge}
+                </Badge>
               </div>
-              <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50">{company.badge}</Badge>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  {ratingStars(company.rating)}
+                  <span className="ml-1 text-xs font-semibold">{company.rating}</span>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8 rounded-xl bg-emerald-700 text-xs font-medium hover:bg-emerald-800"
+                  asChild
+                >
+                  <Link href="/companies">Avaliar</Link>
+                </Button>
+              </div>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-1">{ratingStars(company.rating)}<span className="ml-1 text-xs font-black">{company.rating}</span></div>
-              <Button size="sm" className="h-8 rounded-xl bg-emerald-600 text-xs font-bold hover:bg-emerald-700" asChild>
-                <Link href="/companies">Avaliar</Link>
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function ReplyDialog({ row, onOpenChange }: { row: CompanyRow | null; onOpenChange: (open: boolean) => void }) {
+function ReplyDialog({
+  row,
+  onOpenChange,
+}: {
+  row: CompanyRow | null;
+  onOpenChange: (open: boolean) => void;
+}) {
   return (
     <Dialog open={!!row} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-xl">
@@ -1271,19 +2058,31 @@ function ReplyDialog({ row, onOpenChange }: { row: CompanyRow | null; onOpenChan
         </DialogHeader>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
           <p className="text-sm font-semibold leading-relaxed text-slate-700">
-            {row?.reply || 'A empresa agradeceu sua avaliação e informou que acompanhará seu atendimento pela plataforma.'}
+            {row?.reply ||
+              'A empresa agradeceu sua avaliação e informou que acompanhará seu atendimento pela plataforma.'}
           </p>
         </div>
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" className="rounded-xl" onClick={() => toast.success('Resposta compartilhada.')}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => toast.success('Resposta compartilhada.')}
+          >
             <Share2 className="mr-2 h-4 w-4" />
             Compartilhar
           </Button>
-          <Button variant="outline" className="rounded-xl" onClick={() => toast.success('Avaliação da resposta registrada.')}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => toast.success('Avaliação da resposta registrada.')}
+          >
             <ThumbsUp className="mr-2 h-4 w-4" />
             Avaliar resposta
           </Button>
-          <Button className="rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={() => toast.info('Fluxo de resposta será conectado ao chat P2P.')}>
+          <Button
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => toast.info('Fluxo de resposta será conectado ao chat P2P.')}
+          >
             <Send className="mr-2 h-4 w-4" />
             Responder empresa
           </Button>
