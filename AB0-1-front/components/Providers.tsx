@@ -161,8 +161,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 <DynamicLeadWizardModal />
                 <SignupGateModalHost />
                 <Toaster />
-                <CookieConsent />
+                {!pathname?.startsWith('/chat') && <CookieConsent />}
                 {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' &&
+                  !pathname?.startsWith('/chat') &&
                   (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
               </CompanyProvider>
             </AuthProvider>

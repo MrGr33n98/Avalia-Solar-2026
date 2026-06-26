@@ -3,6 +3,7 @@ import '@/lib/env'; // Validate environment variables
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 
+import AppContentFrame from '@/components/layout/AppContentFrame';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
 import Navbar from '@/components/Navbar';
 import JsonLd from '@/components/JsonLd';
@@ -149,9 +150,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Providers>
               <PwaOfflineController />
               <Navbar />
-              <div className="pb-[calc(5.5rem+var(--safe-area-inset-bottom))] md:pb-0">
-                {children}
-              </div>
+              <AppContentFrame>{children}</AppContentFrame>
               <ConditionalFooter />
               <MobileBottomNav />
             </Providers>

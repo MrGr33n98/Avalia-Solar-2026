@@ -14,13 +14,16 @@ export default function ConditionalFooter() {
     '/dashboard',
     '/review-dashboard',
     '/profile',
+    '/chat',
     '/company-dashboard',
     '/admin',
     '/painel',
     '/control',
   ];
 
-  const isInternal = pathname && hideFooterRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isInternal =
+    pathname &&
+    hideFooterRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   if (isInternal) return null;
 

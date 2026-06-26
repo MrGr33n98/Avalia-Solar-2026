@@ -1,17 +1,40 @@
 'use client';
 
-import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, CheckCheck, MessageCircle, Paperclip, Send, ShieldAlert, X } from 'lucide-react';
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createConsumer } from '@rails/actioncable';
-import { resolveCableUrl } from '@/lib/cable';
-import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  ArrowLeft,
+  Ban,
+  Building2,
+  CheckCheck,
+  Flag,
+  MessageCircle,
+  MoreVertical,
+  Paperclip,
+  RefreshCw,
+  Send,
+  ShieldAlert,
+  X,
+} from 'lucide-react';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
+import { resolveCableUrl } from '@/lib/cable';
+import { cn } from '@/lib/utils';
 
 type Message = DirectMessage;
 type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
@@ -91,6 +114,65 @@ function getRealtimeLabel(status: RealtimeStatus) {
   return 'aguardando';
 }
 
+function getConversationTime(conversation: Conversation) {
+  const value = conversation.last_message_at || conversation.updated_at || conversation.created_at;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function dedupeConversations(conversations: Conversation[]) {
+  const byCompany = new Map<string, Conversation>();
+
+  conversations.forEach((conversation) => {
+    const key = conversation.company_id
+      ? `company-${conversation.company_id}`
+      : `conversation-${conversation.id}`;
+    const current = byCompany.get(key);
+
+    if (!current || getConversationTime(conversation) >= getConversationTime(current)) {
+      byCompany.set(key, conversation);
+    }
+  });
+
+  return Array.from(byCompany.values()).sort(
+    (a, b) => getConversationTime(b) - getConversationTime(a)
+  );
+}
+
+function formatConversationTime(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const sameDay =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (sameDay) {
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+function getConversationPreview(conversation: Conversation) {
+  if (conversation.status === 'blocked') return 'Conversa bloqueada';
+  if (conversation.status === 'resolved') return 'Conversa resolvida';
+  return conversation.last_message || 'Iniciar conversa';
+}
+
+function getInitials(name?: string | null) {
+  return (name || 'Empresa')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+}
+
 export default function ChatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,11 +183,13 @@ export default function ChatClient() {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [typingByCompany, setTypingByCompany] = useState(false);
+  const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
@@ -114,26 +198,32 @@ export default function ChatClient() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const visibleConversations = useMemo(() => dedupeConversations(conversations), [conversations]);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    window.setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+    }, 80);
+  }, []);
+
   const appendMessage = useCallback((message: Message) => {
     setMessages((prev) => {
-      if (prev.some((item) => item.id === message.id || (message.client_message_id && item.client_message_id === message.client_message_id))) return prev;
+      if (
+        prev.some(
+          (item) =>
+            item.id === message.id ||
+            (message.client_message_id && item.client_message_id === message.client_message_id)
+        )
+      ) {
+        return prev;
+      }
+
       return [...prev, message];
     });
   }, []);
 
   const upsertConversation = useCallback((conversation: Conversation) => {
-    setConversations((prev) => {
-      const next = prev.some((item) => item.id === conversation.id)
-        ? prev.map((item) => (item.id === conversation.id ? { ...item, ...conversation } : item))
-        : [conversation, ...prev];
-
-      return [...next].sort((a, b) => {
-        const dateA = new Date(a.last_message_at || a.updated_at || a.created_at).getTime();
-        const dateB = new Date(b.last_message_at || b.updated_at || b.created_at).getTime();
-        return dateB - dateA;
-      });
-    });
-
+    setConversations((prev) => dedupeConversations([conversation, ...prev]));
     setActiveConversation((current) =>
       current?.id === conversation.id ? { ...current, ...conversation } : current
     );
@@ -188,8 +278,122 @@ export default function ChatClient() {
         scrollToBottom();
       }
     },
-    [appendMessage, applyReadReceipt, upsertConversation]
+    [appendMessage, applyReadReceipt, scrollToBottom, upsertConversation]
   );
+
+  const loadMessagesForConversation = useCallback(
+    async (conversationId: number) => {
+      const msgs = await conversationsApi.getMessages(conversationId);
+      setMessages(msgs || []);
+      scrollToBottom('auto');
+    },
+    [scrollToBottom]
+  );
+
+  const setupActionCable = useCallback(
+    (conversationId: number) => {
+      channelRef.current?.unsubscribe();
+      setRealtimeStatus('connecting');
+
+      if (!cableRef.current) {
+        cableRef.current = createConsumer(resolveCableUrl());
+      }
+
+      channelRef.current = cableRef.current.subscriptions.create(
+        { channel: 'ConversationChannel', conversation_id: conversationId },
+        {
+          connected: () => {
+            setRealtimeStatus('connected');
+            void loadMessagesForConversation(conversationId).catch((error) => {
+              console.warn('[P2PChat] Could not reconcile messages after reconnect', error);
+            });
+          },
+          disconnected: () => {
+            setRealtimeStatus('disconnected');
+          },
+          rejected: () => {
+            setRealtimeStatus('rejected');
+            console.warn('[P2PChat] ActionCable rejected', { conversationId });
+            setErrorMessage(
+              'A conexão em tempo real caiu. Atualize a conversa se as mensagens demorarem.'
+            );
+          },
+          received: (data: ChatCablePayload) => {
+            handleConversationPayload(data);
+          },
+        }
+      );
+    },
+    [handleConversationPayload, loadMessagesForConversation]
+  );
+
+  const selectConversation = useCallback(
+    async (conversation: Conversation, options?: { openOnMobile?: boolean }) => {
+      if (!canUseP2PChat) return;
+
+      setActiveConversation(conversation);
+      setIsMobileConversationOpen(options?.openOnMobile ?? true);
+      setLoadingMessages(true);
+
+      try {
+        setErrorMessage(null);
+        await loadMessagesForConversation(conversation.id);
+        setupActionCable(conversation.id);
+      } catch (error) {
+        console.error('Error loading messages', error);
+        setErrorMessage(getChatErrorMessage(error));
+      } finally {
+        setLoadingMessages(false);
+      }
+    },
+    [canUseP2PChat, loadMessagesForConversation, setupActionCable]
+  );
+
+  const loadConversations = useCallback(async () => {
+    if (!canUseP2PChat) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setErrorMessage(null);
+      const data = await conversationsApi.getAll({ silent: true, silentStatusCodes: [401] });
+      const dedupedData = dedupeConversations(data || []);
+      setConversations(dedupedData);
+
+      const companyId = searchParams.get('company_id');
+      if (companyId) {
+        let conversation = dedupedData.find((item) => item.company_id === Number(companyId));
+
+        if (!conversation) {
+          try {
+            conversation = await conversationsApi.create(Number(companyId));
+            setConversations((prev) =>
+              conversation ? dedupeConversations([conversation, ...prev]) : prev
+            );
+          } catch (createError) {
+            console.warn('Could not create conversation:', createError);
+            setErrorMessage(getChatErrorMessage(createError));
+          }
+        }
+
+        if (conversation) {
+          await selectConversation(conversation, { openOnMobile: true });
+        }
+      } else if (dedupedData.length > 0) {
+        await selectConversation(dedupedData[0], { openOnMobile: false });
+      }
+    } catch (error) {
+      const status =
+        (error as ChatApiErrorShape).status || (error as ChatApiErrorShape).context?.status;
+      if (status !== 401) {
+        console.error('Error loading conversations', error);
+      }
+      setErrorMessage(getChatErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }, [canUseP2PChat, searchParams, selectConversation]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -204,7 +408,9 @@ export default function ChatClient() {
     }
 
     if (!canUseP2PChat) {
-      setErrorMessage('O chat direto fica disponível apenas para usuários compradores cadastrados.');
+      setErrorMessage(
+        'O chat direto fica disponível apenas para usuários compradores cadastrados.'
+      );
       setConversations([]);
       setActiveConversation(null);
       setMessages([]);
@@ -212,9 +418,8 @@ export default function ChatClient() {
       return;
     }
 
-    loadConversations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, canUseP2PChat, isAuthenticated, router, user?.role]);
+    void loadConversations();
+  }, [authLoading, canUseP2PChat, isAuthenticated, loadConversations]);
 
   useEffect(() => {
     if (!canUseP2PChat) {
@@ -245,109 +450,9 @@ export default function ChatClient() {
     };
   }, [canUseP2PChat, upsertConversation]);
 
-  const loadConversations = async () => {
-    if (!canUseP2PChat) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setErrorMessage(null);
-      const data = await conversationsApi.getAll({ silent: true, silentStatusCodes: [401] });
-      setConversations(data || []);
-
-      // Somente compradores (review) podem iniciar uma nova conversa via company_id na URL
-      const companyId = searchParams.get('company_id');
-      if (companyId) {
-        let conv = data.find((c) => c.company_id === Number(companyId));
-        if (!conv) {
-          try {
-            conv = await conversationsApi.create(Number(companyId));
-            setConversations((prev) => (conv ? [conv, ...prev] : prev));
-          } catch (createError) {
-            // Se não conseguir criar (403 feature gate), apenas mostra as conversas existentes
-            console.warn('Could not create conversation:', createError);
-            setErrorMessage(getChatErrorMessage(createError));
-          }
-        }
-        if (conv) selectConversation(conv);
-      } else if (data.length > 0) {
-        selectConversation(data[0]);
-      }
-    } catch (error) {
-      const status =
-        (error as ChatApiErrorShape).status || (error as ChatApiErrorShape).context?.status;
-      if (status !== 401) {
-        console.error('Error loading conversations', error);
-      }
-      setErrorMessage(getChatErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMessagesForConversation = useCallback(async (conversationId: number) => {
-    const msgs = await conversationsApi.getMessages(conversationId);
-    setMessages(msgs || []);
-  }, []);
-
-  const selectConversation = async (conv: Conversation) => {
-    if (!canUseP2PChat) return;
-
-    setActiveConversation(conv);
-    try {
-      setErrorMessage(null);
-      await loadMessagesForConversation(conv.id);
-      setupActionCable(conv.id);
-    } catch (error) {
-      console.error('Error loading messages', error);
-      setErrorMessage(getChatErrorMessage(error));
-    }
-  };
-
-  const setupActionCable = async (conversationId: number) => {
-    if (channelRef.current) {
-      channelRef.current.unsubscribe();
-    }
-    setRealtimeStatus('connecting');
-
-    if (!cableRef.current) {
-      cableRef.current = createConsumer(resolveCableUrl());
-    }
-
-    channelRef.current = cableRef.current.subscriptions.create(
-      { channel: 'ConversationChannel', conversation_id: conversationId },
-      {
-        connected: () => {
-          setRealtimeStatus('connected');
-          void loadMessagesForConversation(conversationId).catch((error) => {
-            console.warn('[P2PChat] Could not reconcile messages after reconnect', error);
-          });
-        },
-        disconnected: () => {
-          setRealtimeStatus('disconnected');
-        },
-        rejected: () => {
-          setRealtimeStatus('rejected');
-          console.warn('[P2PChat] ActionCable rejected', { conversationId });
-          setErrorMessage('A conexão em tempo real caiu. Atualize a conversa se as mensagens demorarem.');
-        },
-        received: (data: ChatCablePayload) => {
-          handleConversationPayload(data);
-        },
-      }
-    );
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom('auto');
+  }, [messages.length, scrollToBottom]);
 
   useEffect(() => {
     return () => {
@@ -434,13 +539,10 @@ export default function ChatClient() {
   };
 
   const sendMessage = async () => {
-    if (
-      !canUseP2PChat ||
-      (!inputMessage.trim() && !pendingAttachment) ||
-      !activeConversation
-    ) {
+    if (!canUseP2PChat || (!inputMessage.trim() && !pendingAttachment) || !activeConversation) {
       return;
     }
+
     if (activeConversation.status === 'blocked') {
       setErrorMessage('Esta conversa está bloqueada.');
       return;
@@ -459,57 +561,79 @@ export default function ChatClient() {
         client: 'web',
       });
       appendMessage(newMessage);
+      scrollToBottom();
     } catch (error) {
       console.error('Error sending message', error);
       setErrorMessage(getChatErrorMessage(error));
     }
   };
 
+  const openLogin = () => {
+    const returnTo =
+      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/chat';
+    router.push(`/login?return_to=${encodeURIComponent(returnTo)}`);
+  };
+
+  const openRegister = () => {
+    const returnTo =
+      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/chat';
+    router.push(`/register?return_to=${encodeURIComponent(returnTo)}`);
+  };
+
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Skeleton className="h-[400px] w-full max-w-4xl" />
+      <div className="mx-auto flex h-[calc(100dvh-4rem-4.75rem-var(--safe-area-inset-bottom))] w-full max-w-7xl items-center justify-center bg-[#F8FAFC] p-4 md:my-4 md:h-[calc(100vh-7rem)] md:rounded-2xl md:border md:border-slate-200 md:bg-white">
+        <Skeleton className="h-full min-h-[420px] w-full max-w-4xl rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl flex-col bg-white md:flex-row md:border md:shadow-sm">
-      {/* Sidebar */}
-      <div className="w-full border-r border-slate-200 md:w-1/3 md:max-w-xs flex-col flex">
-        <div className="border-b p-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-xl font-bold">Mensagens</h2>
+    <main className="mx-auto flex h-[calc(100dvh-4rem-4.75rem-var(--safe-area-inset-bottom))] w-full max-w-7xl overflow-hidden bg-[#F8FAFC] text-[#111827] md:my-4 md:h-[calc(100vh-7rem)] md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-sm">
+      <section
+        className={cn(
+          'h-full w-full flex-col bg-white md:flex md:w-[340px] md:shrink-0 md:border-r md:border-slate-200',
+          isMobileConversationOpen ? 'hidden md:flex' : 'flex'
+        )}
+        aria-label="Lista de conversas"
+      >
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-4">
+          <div>
+            <h1 className="text-lg font-semibold tracking-normal text-[#111827]">Mensagens</h1>
+            <p className="text-xs font-normal text-[#64748B]">
+              {visibleConversations.length} conversa{visibleConversations.length === 1 ? '' : 's'}
+            </p>
           </div>
-        </div>
-        <ScrollArea className="flex-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full text-[#64748B]"
+            onClick={() => void loadConversations()}
+            aria-label="Atualizar conversas"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white">
           {errorMessage && (
-            <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800">
+            <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
               {errorMessage}
               {!isAuthenticated && (
                 <div className="mt-3 flex gap-2">
                   <Button
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                    onClick={() =>
-                      router.push(
-                        `/login?return_to=${encodeURIComponent(window.location.pathname + window.location.search)}`
-                      )
-                    }
+                    className="h-9 rounded-full bg-[#0F3D8E] px-4 text-white hover:bg-[#1646A0]"
+                    onClick={openLogin}
                   >
                     Entrar
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() =>
-                      router.push(
-                        `/register?return_to=${encodeURIComponent(window.location.pathname + window.location.search)}`
-                      )
-                    }
+                    className="h-9 rounded-full"
+                    onClick={openRegister}
                   >
                     Criar conta
                   </Button>
@@ -517,78 +641,129 @@ export default function ChatClient() {
               )}
             </div>
           )}
-          {conversations.length === 0 ? (
-            <div className="p-4 text-center text-slate-500">Nenhuma conversa encontrada.</div>
+
+          {visibleConversations.length === 0 ? (
+            <div className="flex min-h-[320px] flex-col items-center justify-center px-6 text-center text-[#64748B]">
+              <MessageCircle className="mb-3 h-9 w-9 text-slate-300" />
+              <p className="text-sm font-medium text-[#111827]">Nenhuma conversa encontrada</p>
+              <p className="mt-1 text-xs leading-relaxed">
+                Quando você iniciar um chat com uma empresa, ele aparecerá aqui.
+              </p>
+            </div>
           ) : (
-            <div className="flex flex-col">
-              {conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => selectConversation(conv)}
-                  className={`flex w-full items-center gap-3 border-b p-4 text-left transition-colors hover:bg-slate-50 ${activeConversation?.id === conv.id ? 'bg-slate-50' : ''}`}
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={conv.company_logo || ''} />
-                    <AvatarFallback>{(conv.company_name || 'C').charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-sm font-semibold">
-                        {conv.company_name || 'Empresa'}
+            <div className="divide-y divide-[#E5E7EB]">
+              {visibleConversations.map((conversation) => {
+                const active = activeConversation?.id === conversation.id;
+                const unreadCount =
+                  conversation.unread_count ?? conversation.user_unread_count ?? 0;
+                const timeLabel = formatConversationTime(
+                  conversation.last_message_at || conversation.updated_at || conversation.created_at
+                );
+
+                return (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    onClick={() => void selectConversation(conversation, { openOnMobile: true })}
+                    className={cn(
+                      'flex h-[72px] w-full items-center gap-3 bg-white px-4 text-left transition-colors hover:bg-slate-50',
+                      active && 'md:bg-slate-50'
+                    )}
+                  >
+                    <Avatar className="h-11 w-11 shrink-0 border border-[#E5E7EB] bg-slate-50">
+                      <AvatarImage
+                        src={conversation.company_logo || conversation.company_avatar || ''}
+                      />
+                      <AvatarFallback className="bg-slate-100 text-sm font-medium text-[#0F3D8E]">
+                        {getInitials(conversation.company_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-medium text-[#111827]">
+                          {conversation.company_name || 'Empresa'}
+                        </p>
+                        {timeLabel && (
+                          <span className="ml-auto shrink-0 text-[11px] font-normal text-[#64748B]">
+                            {timeLabel}
+                          </span>
+                        )}
                       </div>
-                      {(conv.unread_count || 0) > 0 && (
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
-                          {(conv.unread_count || 0) > 9 ? '9+' : conv.unread_count}
-                        </span>
-                      )}
+                      <div className="mt-1 flex min-w-0 items-center gap-2">
+                        <p className="truncate text-xs font-normal leading-tight text-[#64748B]">
+                          {getConversationPreview(conversation)}
+                        </p>
+                        {unreadCount > 0 && (
+                          <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#2563EB] px-1.5 text-[10px] font-semibold leading-none text-white">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="truncate text-xs text-slate-500">
-                      {conv.status === 'blocked'
-                        ? 'Conversa bloqueada'
-                        : conv.last_message || 'Iniciar conversa'}
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
-        </ScrollArea>
-      </div>
+        </div>
+      </section>
 
-      {/* Chat Window */}
-      <div className="flex flex-1 flex-col bg-slate-50">
+      <section
+        className={cn(
+          'h-full min-w-0 flex-1 flex-col bg-[#F8FAFC] md:flex',
+          isMobileConversationOpen ? 'flex' : 'hidden md:flex'
+        )}
+        aria-label="Conversa"
+      >
         {activeConversation ? (
           <>
-            <div className="flex items-center gap-3 border-b bg-white p-4 shadow-sm">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={activeConversation.company_logo || ''} />
-                <AvatarFallback>
-                  {(activeConversation.company_name || 'C').charAt(0)}
+            <header className="flex h-16 shrink-0 items-center gap-3 border-b border-[#E5E7EB] bg-white px-3 md:h-[72px] md:px-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 shrink-0 rounded-full text-[#64748B] md:hidden"
+                onClick={() => setIsMobileConversationOpen(false)}
+                aria-label="Voltar para mensagens"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+
+              <Avatar className="h-10 w-10 shrink-0 border border-[#E5E7EB] bg-slate-50">
+                <AvatarImage
+                  src={activeConversation.company_logo || activeConversation.company_avatar || ''}
+                />
+                <AvatarFallback className="bg-slate-100 text-sm font-medium text-[#0F3D8E]">
+                  {getInitials(activeConversation.company_name)}
                 </AvatarFallback>
               </Avatar>
+
               <div className="min-w-0 flex-1">
-                <div className="truncate font-bold">
+                <h2 className="truncate text-sm font-semibold leading-tight text-[#111827] md:text-base">
                   {activeConversation.company_name || 'Empresa'}
-                </div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                </h2>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs font-normal text-[#64748B]">
                   <span
-                    className={`h-2 w-2 rounded-full ${
+                    className={cn(
+                      'h-2 w-2 rounded-full',
                       realtimeStatus === 'connected'
                         ? 'bg-emerald-500'
                         : realtimeStatus === 'connecting'
                           ? 'bg-amber-500'
                           : 'bg-slate-300'
-                    }`}
+                    )}
                   />
-                  {getRealtimeLabel(realtimeStatus)}
-                  {typingByCompany && <span className="font-medium text-blue-600">empresa digitando</span>}
-                </div>
+                  <span>{getRealtimeLabel(realtimeStatus)}</span>
+                  {typingByCompany && <span className="text-[#2563EB]">digitando</span>}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="hidden items-center gap-2 md:flex">
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
+                  className="h-9 w-9 rounded-full border-[#E5E7EB] text-[#64748B]"
                   onClick={reportConversation}
                   aria-label="Denunciar conversa"
                 >
@@ -598,74 +773,167 @@ export default function ChatClient() {
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="h-9 rounded-full border-[#E5E7EB] px-3 text-sm font-medium text-[#64748B]"
                   onClick={blockConversation}
                   disabled={activeConversation.status === 'blocked'}
                 >
                   Bloquear
                 </Button>
               </div>
+
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full text-[#64748B]"
+                      aria-label="Abrir ações da conversa"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 rounded-xl border-[#E5E7EB]">
+                    <DropdownMenuLabel className="text-xs font-medium text-[#64748B]">
+                      Ações
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
+                      <Link href={`/companies/${activeConversation.company_id}`}>
+                        <Building2 className="h-4 w-4" />
+                        Ver empresa
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-2 rounded-lg text-sm"
+                      onClick={reportConversation}
+                    >
+                      <Flag className="h-4 w-4" />
+                      Denunciar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 rounded-lg text-sm text-red-600 focus:text-red-600"
+                      disabled={activeConversation.status === 'blocked'}
+                      onClick={blockConversation}
+                    >
+                      <Ban className="h-4 w-4" />
+                      Bloquear
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F8FAFC] px-4 py-3">
+              {errorMessage && (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+                  {errorMessage}
+                </div>
+              )}
+
+              {loadingMessages ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Skeleton
+                      key={index}
+                      className={cn(
+                        'h-11 rounded-2xl',
+                        index % 2 === 0 ? 'mr-auto w-7/12' : 'ml-auto w-8/12'
+                      )}
+                    />
+                  ))}
+                </div>
+              ) : messages.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {messages.map((message, index) => {
+                    const isMine = message.sender_type === 'User';
+
+                    return (
+                      <div
+                        key={message.id || message.client_message_id || index}
+                        className={cn('flex', isMine ? 'justify-end' : 'justify-start')}
+                      >
+                        <div
+                          className={cn(
+                            'max-w-[82%] break-words rounded-2xl px-3.5 py-2 text-sm font-normal leading-relaxed md:max-w-[68%]',
+                            isMine
+                              ? 'rounded-br-md bg-[#1646A0] text-white'
+                              : 'rounded-bl-md border border-[#E5E7EB] bg-white text-[#111827]'
+                          )}
+                        >
+                          {message.body && (
+                            <p className="whitespace-pre-wrap break-words">{message.body}</p>
+                          )}
+                          {(message.attachments || []).length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {(message.attachments || []).map((attachment) => (
+                                <a
+                                  key={attachment.id}
+                                  href={attachment.url || '#'}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={cn(
+                                    'flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium',
+                                    isMine
+                                      ? 'bg-white/15 text-white'
+                                      : 'bg-slate-100 text-slate-700'
+                                  )}
+                                >
+                                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="truncate">{attachment.filename}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                          {isMine && (
+                            <p className="mt-1 flex items-center justify-end gap-1 text-[11px] font-normal leading-none text-white/75">
+                              <CheckCheck className="h-3 w-3" />
+                              {message.read_at
+                                ? 'Lida'
+                                : message.delivered_at
+                                  ? 'Entregue'
+                                  : 'Enviando'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {activeConversation.status === 'blocked' && (
+                    <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-center text-sm font-medium text-red-700">
+                      Esta conversa está bloqueada. Novas mensagens estão desativadas.
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              ) : (
+                <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center">
+                  <MessageCircle className="mb-3 h-10 w-10 text-slate-300" />
+                  <p className="text-sm font-medium text-[#111827]">Sem mensagens ainda</p>
+                  <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#64748B]">
+                    Envie uma primeira mensagem para iniciar o atendimento.
+                  </p>
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
             </div>
 
-            <ScrollArea className="flex-1 p-4">
-              <div className="flex flex-col gap-3">
-                {messages.map((msg, idx) => {
-                  const isMine = msg.sender_type === 'User';
-                  return (
-                    <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                      <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                          isMine
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-slate-800 shadow-sm border border-slate-100'
-                        }`}
-                      >
-                        {msg.body && <p className="whitespace-pre-wrap text-sm">{msg.body}</p>}
-                        {(msg.attachments || []).length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {(msg.attachments || []).map((attachment) => (
-                              <a
-                                key={attachment.id}
-                                href={attachment.url || '#'}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold ${
-                                  isMine ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-700'
-                                }`}
-                              >
-                                <Paperclip className="h-3.5 w-3.5" />
-                                <span className="truncate">{attachment.filename}</span>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                        {isMine && (
-                          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-white/80">
-                            <CheckCheck className="h-3 w-3" />
-                            {msg.read_at ? 'Lida' : msg.delivered_at ? 'Entregue' : 'Enviando'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {activeConversation.status === 'blocked' && (
-                  <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-center text-sm font-semibold text-red-700">
-                    Esta conversa está bloqueada. Novas mensagens estão desativadas.
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-
-            <div className="border-t bg-white p-4">
+            <footer className="shrink-0 border-t border-[#E5E7EB] bg-white px-3 py-2">
               {pendingAttachment && (
-                <div className="mx-auto mb-2 flex max-w-4xl items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+                <div className="mx-auto mb-2 flex max-w-4xl items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-[#0F3D8E]">
                   <span className="truncate">{pendingAttachment.filename}</span>
-                  <button type="button" onClick={() => setPendingAttachment(null)} aria-label="Remover anexo">
+                  <button
+                    type="button"
+                    onClick={() => setPendingAttachment(null)}
+                    aria-label="Remover anexo"
+                    className="rounded-full p-1 text-[#64748B] hover:bg-white"
+                  >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               )}
+
               <div className="mx-auto flex max-w-4xl items-center gap-2">
                 <input
                   ref={fileInputRef}
@@ -678,6 +946,7 @@ export default function ChatClient() {
                   type="button"
                   variant="outline"
                   size="icon"
+                  className="h-10 w-10 shrink-0 rounded-full border-[#E5E7EB] text-[#64748B]"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={activeConversation.status === 'blocked'}
                   aria-label="Anexar arquivo"
@@ -686,30 +955,43 @@ export default function ChatClient() {
                 </Button>
                 <Input
                   value={inputMessage}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Escreva sua mensagem..."
-                  className="flex-1"
+                  onChange={(event) => handleInputChange(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      void sendMessage();
+                    }
+                  }}
+                  placeholder="Digite sua mensagem..."
+                  className="h-10 flex-1 rounded-full border-[#E5E7EB] bg-[#F8FAFC] px-4 text-sm font-normal focus-visible:ring-[#2563EB]/20"
                   disabled={activeConversation.status === 'blocked'}
                 />
                 <Button
-                  onClick={sendMessage}
+                  type="button"
+                  onClick={() => void sendMessage()}
                   size="icon"
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={activeConversation.status === 'blocked' || (!inputMessage.trim() && !pendingAttachment)}
+                  className="h-10 w-10 shrink-0 rounded-full bg-[#0F3D8E] text-white hover:bg-[#1646A0]"
+                  disabled={
+                    activeConversation.status === 'blocked' ||
+                    (!inputMessage.trim() && !pendingAttachment)
+                  }
+                  aria-label="Enviar mensagem"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
+            </footer>
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center text-slate-400">
-            <MessageCircle className="mb-4 h-12 w-12 opacity-50" />
-            <p>Selecione uma conversa para começar</p>
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center text-[#64748B]">
+            <MessageCircle className="mb-4 h-12 w-12 text-slate-300" />
+            <p className="text-sm font-medium text-[#111827]">Selecione uma conversa</p>
+            <p className="mt-1 max-w-sm text-xs leading-relaxed">
+              No desktop, escolha uma conversa na lista para visualizar o histórico.
+            </p>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

@@ -4,6 +4,7 @@ import { useComparison } from '@/hooks/useComparison';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Mock company data for testing
 const mockCompanies: Company[] = [
@@ -54,23 +55,29 @@ const mockCompanies: Company[] = [
     address: 'Test address 3',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }
+  },
 ];
 
 export default function ComparisonDebugger() {
-  const { 
-    comparisonList, 
-    addToComparison, 
-    removeFromComparison, 
+  const pathname = usePathname();
+  const {
+    comparisonList,
+    addToComparison,
+    removeFromComparison,
     clearComparison,
     count,
-    isInComparison 
+    isInComparison,
   } = useComparison();
+
+  const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
 
   useEffect(() => {
     console.log('[DEBUG] Comparison list updated:', comparisonList);
     console.log('[DEBUG] Count:', count);
-    console.log('[DEBUG] List contents:', comparisonList.map(c => ({ id: c.id, name: c.name })));
+    console.log(
+      '[DEBUG] List contents:',
+      comparisonList.map((c) => ({ id: c.id, name: c.name }))
+    );
   }, [comparisonList, count]);
 
   const handleTestAdd = (company: Company) => {
@@ -88,17 +95,22 @@ export default function ComparisonDebugger() {
     clearComparison();
   };
 
+  if (isChatRoute) return null;
+
   return (
     <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-md z-50">
       <div className="text-sm font-bold mb-2">
         Comparison Debug ({count}/{3})
       </div>
-      
+
       <div className="space-y-2 mb-4">
         {comparisonList.map((company) => (
-          <div key={company.id} className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded">
+          <div
+            key={company.id}
+            className="flex justify-between items-center text-xs bg-gray-50 p-2 rounded"
+          >
             <span>{company.name}</span>
-            <button 
+            <button
               onClick={() => handleTestRemove(company.id)}
               className="text-red-500 hover:text-red-700 px-2 py-1 text-xs"
             >
@@ -107,9 +119,7 @@ export default function ComparisonDebugger() {
           </div>
         ))}
         {comparisonList.length === 0 && (
-          <div className="text-gray-400 text-xs text-center py-2">
-            No companies in comparison
-          </div>
+          <div className="text-gray-400 text-xs text-center py-2">No companies in comparison</div>
         )}
       </div>
 
@@ -119,7 +129,7 @@ export default function ComparisonDebugger() {
           <Button
             key={company.id}
             size="sm"
-            variant={isInComparison(company.id) ? "secondary" : "outline"}
+            variant={isInComparison(company.id) ? 'secondary' : 'outline'}
             onClick={() => handleTestAdd(company)}
             className="w-full text-xs h-8"
             disabled={isInComparison(company.id)}
@@ -128,7 +138,7 @@ export default function ComparisonDebugger() {
             {company.name}
           </Button>
         ))}
-        
+
         <Button
           size="sm"
           variant="destructive"
