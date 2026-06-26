@@ -135,7 +135,7 @@ export function LandingHeroSearch({
   };
 
   return (
-    <Card className="p-2 md:p-3 shadow-2xl border-slate-100 rounded-2xl md:rounded-full bg-white max-w-3xl mx-auto">
+    <Card className="p-1.5 md:p-2 shadow-none border border-brand-border rounded-xl bg-white max-w-2xl w-full mx-0">
       <div className="flex flex-col md:flex-row items-center gap-2">
         <div className="flex-1 w-full relative group">
           <label htmlFor="category-select" className="sr-only">
@@ -143,7 +143,7 @@ export function LandingHeroSearch({
           </label>
           <select
             id="category-select"
-            className="w-full h-12 md:h-14 pl-12 pr-10 bg-slate-50 border-none rounded-xl md:rounded-l-full focus:ring-2 focus:ring-brand-blue appearance-none text-slate-700 font-medium cursor-pointer transition-colors hover:bg-slate-100"
+            className="w-full h-12 pl-12 pr-10 bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-brand-blue appearance-none text-slate-700 font-medium cursor-pointer transition-colors hover:bg-slate-100"
             value={selectedCategory}
             onChange={handleCategoryChange}
             aria-label="Selecionar categoria de serviço"
@@ -165,22 +165,20 @@ export function LandingHeroSearch({
 
         <div className="flex-1 w-full">
           <LocationSearch
-            className="w-full h-12 md:h-14 border-none bg-slate-50 md:bg-transparent rounded-xl focus:ring-2 focus:ring-brand-blue font-medium"
+            className="w-full h-12 border-none bg-slate-50 md:bg-transparent rounded-lg focus:ring-2 focus:ring-brand-blue font-medium"
             onLocationSelect={setLocation}
           />
         </div>
 
-        <CTAPrimaryButton
-          label="Buscar Empresas"
-          ctaType="search_submitted"
-          trackProps={{
-            source: 'landing_hero',
-            hero_variant: heroVariant,
-            experiment_id: experimentId,
-          }}
+        <button
           onClick={handleSearch}
-          className="w-full md:w-auto h-12 md:h-14 px-8 rounded-xl md:rounded-full bg-brand-blue hover:bg-brand-blue-light text-white font-bold text-lg shadow-lg shadow-brand-blue/20 transition-all hover:scale-105 active:scale-95"
-        />
+          className="w-full md:w-auto h-12 px-6 rounded-lg bg-brand-navy hover:bg-slate-900 text-white font-bold text-sm uppercase tracking-wider transition-colors shrink-0 flex items-center justify-center gap-2"
+        >
+          <span>Buscar empresas</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
       </div>
 
       {usingFallbackCategories ? (

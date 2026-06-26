@@ -10,6 +10,7 @@ import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
 import { resolveBrandContext } from '@/lib/analytics/brand';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;

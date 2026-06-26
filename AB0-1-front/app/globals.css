@@ -59,33 +59,33 @@
     --spacing-section-mobile: 2rem;
     --spacing-section-desktop: 2.5rem;
     --banner-height-max: 18rem;
-    --background: 222 47% 95%; /* Light Slate */
-    --foreground: 222 47% 11%;
+    --background: 210 40% 98%; /* Fundo Claro #F8FAFC */
+    --foreground: 222 47% 11.2%; /* Texto #0F172A */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 47% 11.2%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 222 47% 11.2%;
 
-    --primary: 221 83% 53%; /* Blue 600 #2563EB */
+    --primary: 221 83% 53.3%; /* Azul Primário #2563EB */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 38 92% 38%; /* Amber escurecido #B8740A — ratio 4.8:1 ✅ WCAG AA */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 222 47% 11.2%; /* Navy #0F172A */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 36%; /* Escurecido — ratio 5.3:1 ✅ WCAG AA */
+    --muted: 210 40% 96.1%; /* Cinza Suave #F1F5F9 */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Texto Secundário #64748B */
 
-    --accent: 142 71% 33%; /* Emerald escurecido #0A7A56 — ratio 5.2:1 ✅ WCAG AA */
-    --accent-foreground: 222 47% 11%;
+    --accent: 162.1 76.2% 40.6%; /* Verde de Suporte #10B981 */
+    --accent-foreground: 222 47% 11.2%;
 
-    --destructive: 0 72% 45%; /* Vermelho escurecido — ratio 4.6:1 ✅ WCAG AA */
+    --destructive: 0 84.2% 60.2%; /* Vermelho #EF4444 */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
+    --border: 213.8 26.8% 83.7%; /* Borda Principal #CBD5E1 */
+    --input: 213.8 26.8% 83.7%;
+    --ring: 221 83% 53.3%;
 
     --radius: 0.75rem;
 

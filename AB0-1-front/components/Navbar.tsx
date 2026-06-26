@@ -97,7 +97,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-[1000] border-b border-slate-200/70 bg-background/90 pt-[var(--safe-area-inset-top)] shadow-[0_14px_36px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl dark:border-white/8 dark:bg-[#07111f]/90 dark:shadow-[0_20px_46px_-36px_rgba(0,0,0,0.78)]">
+    <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-[#F8FAFC]/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl dark:border-white/10 dark:bg-[#020617]/95">
       <div
         className={cn(
           'mx-auto flex max-w-[86rem] items-center px-2 sm:px-4 lg:px-4 xl:px-5',
@@ -106,7 +106,7 @@ export default function Navbar() {
       >
         <Link
           href="/"
-          className="group -ml-1 flex shrink-0 items-center gap-1.5 rounded-[1.1rem] px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group -ml-1 flex shrink-0 items-center gap-1.5 rounded-xl px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
           <Image
@@ -120,7 +120,7 @@ export default function Navbar() {
             )}
             priority={logoPriority}
           />
-          <span className="hidden text-[11px] font-medium uppercase tracking-[0.12em] text-foreground/78 sm:inline dark:text-white/78">
+          <span className="hidden text-[11px] font-bold uppercase tracking-[0.12em] text-slate-900 sm:inline dark:text-white/78">
             Avalia Solar
           </span>
         </Link>
@@ -129,13 +129,13 @@ export default function Navbar() {
           <div className="flex min-w-0 max-w-[900px] flex-[1.4] items-center gap-2.5">
             <NavbarSearch
               className="min-w-[10rem] flex-[1.45]"
-              inputClassName="bg-white/92 dark:bg-[#081a2e]/82"
+              inputClassName="bg-white dark:bg-[#081a2e]/82 border-brand-border"
               placeholder="Buscar empresas, produtos e serviços"
               onSearch={handleSearch}
             />
             <div className="w-[156px] shrink-0">
               <LocationSearch
-                className="w-full bg-white/92 dark:bg-[#081a2e]/82"
+                className="w-full bg-white dark:bg-[#081a2e]/82 border-brand-border"
                 onLocationSelect={handleLocationSelect}
               />
             </div>
@@ -151,9 +151,9 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  'h-10 rounded-full border border-slate-200/80 bg-white/76 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] transition-all hover:border-brand-blue/18 hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-brand-cyan/25 dark:hover:bg-white/8 dark:hover:text-white',
+                  'h-10 rounded-xl border border-brand-border bg-white px-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/8 dark:hover:text-white',
                   isMegaMenuOpen
-                    ? 'border-transparent bg-brand-blue text-white shadow-[0_12px_24px_-18px_rgba(0,86,210,0.7)] dark:bg-brand-blue dark:text-white'
+                    ? 'border-transparent bg-brand-blue text-white shadow-none'
                     : ''
                 )}
                 onClick={toggleMegaMenu}
@@ -184,28 +184,28 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-full px-3 py-2 text-sm font-semibold text-foreground/62 transition-colors hover:bg-brand-blue/5 hover:text-brand-blue dark:text-white/62 dark:hover:bg-white/6 dark:hover:text-white"
+                  className="rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100 hover:text-brand-blue dark:text-white/62 dark:hover:bg-white/6 dark:hover:text-white"
                 >
                   {link.label}
                 </Link>
               ))}
             </nav>
 
-            <div className="flex items-center gap-2 border-l border-slate-200/70 pl-4 dark:border-white/10">
+            <div className="flex items-center gap-2 border-l border-brand-borderSoft pl-4 dark:border-white/10">
               {!isAuthenticated ? (
                 <>
                   <Button
                     asChild
                     variant="ghost"
                     size="sm"
-                    className="h-10 rounded-full px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-foreground/62 hover:bg-brand-blue/5 hover:text-brand-blue dark:text-white/60 dark:hover:bg-white/6 dark:hover:text-white"
+                    className="h-10 rounded-xl px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-slate-100 dark:text-white/60"
                   >
                     <Link href="/login">Login</Link>
                   </Button>
                   <Button
                     asChild
                     size="sm"
-                    className="h-10 rounded-full border border-white/20 bg-brand-blue px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_28px_-18px_rgba(0,86,210,0.72)] transition-transform hover:-translate-y-0.5 hover:bg-brand-blue-light"
+                    className="h-10 rounded-xl bg-brand-blue hover:bg-brand-blue/90 px-5 text-[11px] font-bold uppercase tracking-[0.12em] text-white shadow-none"
                   >
                     <Link href="/register">Cadastre sua empresa</Link>
                   </Button>
@@ -214,12 +214,12 @@ export default function Navbar() {
                 <div className="flex items-center gap-2">
                   {user?.role !== 'review' && <CompanySwitcher className="h-10 w-44" />}
 
-                  <div className="flex items-center rounded-full border border-slate-200/80 bg-white/76 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+                  <div className="flex items-center rounded-xl border border-brand-border bg-white p-1 dark:border-white/10 dark:bg-white/5">
                     <Button
                       asChild
                       variant="ghost"
                       size="sm"
-                      className="h-8 rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/70 hover:bg-transparent hover:text-brand-blue dark:text-white/65 dark:hover:text-white"
+                      className="h-8 rounded-lg px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-transparent hover:text-brand-blue dark:text-white/65 dark:hover:text-white"
                     >
                       <Link
                         href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
@@ -235,7 +235,7 @@ export default function Navbar() {
                         asChild
                         variant="ghost"
                         size="sm"
-                        className="h-8 rounded-full border border-brand-blue/10 bg-brand-blue/8 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-blue hover:bg-brand-blue/12 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
+                        className="h-8 rounded-lg border border-brand-blue/10 bg-brand-blue/8 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-blue hover:bg-brand-blue/12 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
                       >
                         <Link href="/dashboard">
                           <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
@@ -248,7 +248,7 @@ export default function Navbar() {
                       variant="ghost"
                       size="sm"
                       onClick={handleLogout}
-                      className="h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/5 hover:text-red-700"
+                      className="h-8 rounded-lg px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-red-500 hover:bg-red-500/5 hover:text-red-700"
                     >
                       <LogOut className="h-4 w-4" />
                     </Button>
@@ -264,8 +264,8 @@ export default function Navbar() {
             asChild
             variant="ghost"
             className={cn(
-              'shrink-0 border border-slate-200/80 bg-white/90 px-3 text-sm font-semibold text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
-              isChatRoute ? 'h-10 rounded-2xl' : 'h-11 rounded-[1.15rem]'
+              'shrink-0 border border-brand-border bg-white px-3 text-sm font-semibold text-slate-600 shadow-none hover:bg-slate-50 hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
+              isChatRoute ? 'h-10 rounded-xl' : 'h-11 rounded-xl'
             )}
           >
             <Link href="/search" aria-label="Buscar">
@@ -281,7 +281,7 @@ export default function Navbar() {
             )}
           >
             <LocationSearch
-              className="max-w-none text-xs sm:text-sm"
+              className="max-w-none text-xs sm:text-sm border-brand-border rounded-xl"
               onLocationSelect={handleLocationSelect}
             />
           </div>
@@ -299,8 +299,8 @@ export default function Navbar() {
             }}
             aria-label="Menu"
             className={cn(
-              'shrink-0 border border-slate-200/80 bg-white/90 text-foreground/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
-              isChatRoute ? 'h-10 w-10 rounded-2xl' : 'h-12 w-12 rounded-[1.15rem]'
+              'shrink-0 border border-brand-border bg-white text-slate-600 shadow-none hover:bg-slate-50 hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
+              isChatRoute ? 'h-10 w-10 rounded-xl' : 'h-11 w-11 rounded-xl'
             )}
           >
             <Menu className={cn(isChatRoute ? 'h-5 w-5' : 'h-6 w-6')} />

@@ -57,97 +57,51 @@ export default function LandingHeroClient({
   }, [experimentEnabled, experimentId, variant]);
 
   return (
-    <div className="container relative mx-auto px-4 z-10">
-      <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-12 lg:items-center">
+    <div className="w-full space-y-6 text-left flex flex-col items-start z-10">
+      {/* Label */}
+      <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-brand-blue dark:text-blue-400">
+        Energia solar e mobilidade elétrica
+      </span>
 
-        {/* Full Width Content & Search */}
-        <div className="lg:col-span-12 text-center max-w-4xl mx-auto">
+      {/* Main Title */}
+      <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-tight leading-[1.02] max-w-[620px]">
+        Compare empresas de energia solar e mobilidade elétrica.
+      </h1>
 
+      {/* Subtitle */}
+      <p className="text-base md:text-lg text-slate-600 max-w-[560px]">
+        Avaliações reais, propostas confiáveis e empresas verificadas em um só lugar para o seu projeto.
+      </p>
 
-          <h1 className={isVariant ? 'text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 mx-auto' : 'text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight mb-6 mx-auto'}>
-            {isVariant ? (
-              <>
-                Energia solar e mobilidade{' '}
-                <span className="text-brand-blue">com mais economia</span>
-              </>
-            ) : (
-              <>
-                Encontre as melhores empresas de{' '}
-                <span className="text-brand-blue">energia solar e mobilidade elétrica</span>{' '}
-                perto de você.
-              </>
-            )}
-          </h1>
+      {/* Search Input Card */}
+      <div className="w-full pt-2">
+        <LandingHeroSearch
+          categories={categories}
+          heroVariant={variant}
+          experimentId={experimentId}
+        />
+      </div>
 
-          <h2 className={isVariant ? 'text-xl md:text-2xl text-slate-600 mb-8 max-w-3xl mx-auto' : 'text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto'}>
-            Compare empresas verificadas, avaliações reais e propostas confiáveis para instalar solar, baterias ou carregadores veiculares.
-          </h2>
-
-          {isVariant ? (
-            <>
-              <div className="flex justify-center">
-                <CTAPrimaryButton
-                  label="Ver empresas na minha região"
-                  ctaType="quote_request"
-                  trackProps={{
-                    source: 'landing_hero_primary',
-                    hero_variant: variant,
-                    experiment_id: experimentId,
-                  }}
-                  onClick={() => openQuoteWizard({ source: 'home-hero-primary' })}
-                  className="w-full md:w-auto h-14 px-10 text-lg"
-                />
-              </div>
-
-              <div className="mt-6 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 md:p-5 max-w-2xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-black text-emerald-700">
-                      {hasActiveCount ? `${formatCompactCount(trustMetrics.totalActiveCompanies || 0)}+` : 'Empresas'}
-                    </p>
-                    <p className="text-sm font-medium text-emerald-900">
-                      {hasActiveCount ? 'Empresas ativas' : 'Empresas verificadas'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-black text-emerald-700">
-                      {hasVerifiedCount ? `${formatCompactCount(trustMetrics.totalVerifiedCompanies || 0)}+` : '100%'}
-                    </p>
-                    <p className="text-sm font-medium text-emerald-900">
-                      {hasVerifiedCount ? 'Empresas verificadas' : 'Orçamentos gratuitos'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-black text-emerald-700">Suporte</p>
-                    <p className="text-sm font-medium text-emerald-900">Especializado</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="max-w-3xl mx-auto">
-                <LandingHeroSearch
-                  categories={categories}
-                  heroVariant={variant}
-                  experimentId={experimentId}
-                />
-              </div>
-
-              <div className="mt-8 flex flex-wrap justify-center items-center gap-6 md:gap-10 opacity-70">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-sm font-medium text-slate-600">Orçamentos Gratuitos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-sm font-medium text-slate-600">Suporte Especializado</span>
-                </div>
-              </div>
-            </>
-          )}
+      {/* Checkmarks */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4">
+        <div className="flex items-center gap-1.5 text-brand-green">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-xs font-bold text-slate-600">Empresas verificadas</span>
         </div>
-
+        <div className="flex items-center gap-1.5 text-brand-green">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-xs font-bold text-slate-600">Avaliações reais</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-brand-green">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-xs font-bold text-slate-600">Propostas seguras</span>
+        </div>
       </div>
     </div>
   );

@@ -12,54 +12,54 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-white">
+    <footer className="bg-[#020617] border-t border-brand-border/10 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand & Contact Info */}
           <div className="flex flex-col items-start space-y-4">
-            <Link href="/" className="font-bold text-2xl mb-2 hover:text-cyan-400 transition-colors">
+            <Link href="/" className="font-extrabold text-2xl tracking-tight mb-2 hover:text-brand-blue transition-colors">
               Avalia Solar
             </Link>
-            <p className="text-gray-200 text-sm leading-snug max-w-xs">
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Compare empresas verificadas, encontre a melhor solução para sua casa ou empresa e fale com os responsáveis certos sem ruído.
             </p>
             <div className="space-y-3 pt-2 w-full">
               <a
                 href={`mailto:${CONTACT.founder.email}`}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
               >
-                <Mail className="h-4 w-4 text-gray-400" />
+                <Mail className="h-4 w-4 text-slate-400" />
                 <span className="text-sm">Fale com Felipe</span>
               </a>
               <a
                 href={`mailto:${CONTACT.team.email}`}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
               >
-                <Mail className="h-4 w-4 text-gray-400" />
+                <Mail className="h-4 w-4 text-slate-400" />
                 <span className="text-sm">Fale com a equipe</span>
               </a>
               <a
                 href={CONTACT.phone.href}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
               >
-                <Phone className="h-4 w-4 text-gray-400" />
+                <Phone className="h-4 w-4 text-slate-400" />
                 <span className="text-sm">{CONTACT.phone.display}</span>
               </a>
-              <div className="flex items-center gap-2 text-gray-300">
-                <Clock3 className="h-4 w-4 text-gray-400" />
+              <div className="flex items-center gap-2 text-slate-300">
+                <Clock3 className="h-4 w-4 text-slate-400" />
                 <span className="text-sm">{CONTACT.hours}</span>
               </div>
-              <p className="text-gray-400 text-sm">{CONTACT.coverage}</p>
+              <p className="text-slate-400 text-xs">{CONTACT.coverage}</p>
             </div>
           </div>
 
           {/* Company Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Empresa</h3>
-            <ul className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400 mb-4">Empresa</h3>
+            <ul className="space-y-2.5">
               {FOOTER_COMPANY_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-slate-300 hover:text-brand-blue transition-colors duration-200 text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -69,11 +69,11 @@ export default function Footer() {
 
           {/* Trust Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Confiança</h3>
-            <ul className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400 mb-4">Confiança</h3>
+            <ul className="space-y-2.5">
               {FOOTER_TRUST_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-slate-300 hover:text-brand-blue transition-colors duration-200 text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -83,11 +83,11 @@ export default function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Legal</h3>
-            <ul className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400 mb-4">Legal</h3>
+            <ul className="space-y-2.5">
               {FOOTER_LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-base">
+                  <Link href={link.href} className="text-slate-300 hover:text-brand-blue transition-colors duration-200 text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -97,11 +97,11 @@ export default function Footer() {
 
           {/* Local Solar Links */}
           <div className="md:col-span-2 lg:col-span-1">
-            <h3 className="font-bold text-lg mb-4">Energia Solar por cidade</h3>
-            <ul className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400 mb-4">Energia Solar por cidade</h3>
+            <ul className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2.5">
               {FOOTER_LOCAL_SOLAR_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-100 hover:text-cyan-400 transition-colors duration-200 text-sm">
+                  <Link href={link.href} className="text-slate-300 hover:text-brand-blue transition-colors duration-200 text-xs">
                     {link.label}
                   </Link>
                 </li>
@@ -111,9 +111,9 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-16 pt-8 border-t border-gray-800">
+        <div className="mt-16 pt-8 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
-            <div className="text-gray-400 text-sm">
+            <div className="text-slate-400 text-sm">
               © 2026 Avalia Solar. Todos os direitos reservados.
             </div>
             <div className="flex space-x-5">
@@ -121,15 +121,15 @@ export default function Footer() {
                 <a
                   key={social.url}
                   href={social.url}
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                  className="text-slate-400 hover:text-white transition-colors duration-200"
                   aria-label={social.name}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   {social.name === 'Instagram' ? (
-                    <Instagram className="h-6 w-6" />
+                    <Instagram className="h-5 w-5" />
                   ) : (
-                    <Linkedin className="h-6 w-6" />
+                    <Linkedin className="h-5 w-5" />
                   )}
                 </a>
               ))}

@@ -79,21 +79,21 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section className={[zebra ? 'bg-clay-bg' : '', 'py-8 md:py-12'].join(' ')}>
-      <div className={['container mx-auto', 'px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
+    <section className={['py-16 md:py-24 border-b border-brand-borderSoft', zebra ? 'bg-[#F8FAFC]' : 'bg-white'].join(' ')}>
+      <div className={['container mx-auto max-w-[86rem] px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
     </section>
   );
 }
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: ReactNode }) {
   return (
-    <div className="mb-6 md:mb-8">
-      <div className="flex items-end justify-between gap-4">
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">{title}</h2>
-          {subtitle ? <p className="text-gray-600 max-w-2xl leading-relaxed">{subtitle}</p> : null}
+    <div className="mb-10 md:mb-12 border-b border-brand-borderSoft pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-3">
+          <h2 className="text-3xl md:text-[40px] font-bold text-slate-900 tracking-tight leading-tight">{title}</h2>
+          {subtitle ? <p className="text-slate-500 max-w-2xl leading-relaxed text-sm md:text-base">{subtitle}</p> : null}
         </div>
-        {right ? <div className="hidden md:block">{right}</div> : null}
+        {right ? <div className="shrink-0">{right}</div> : null}
       </div>
     </div>
   );

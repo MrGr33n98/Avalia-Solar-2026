@@ -68,13 +68,13 @@ export default function WhatsappButton({
   const text = s.text_color || (variant === 'solid' ? '#ffffff' : '#0f172a');
   const border = s.border_color || '#16a34a';
   const icon = s.icon_color || (variant === 'solid' ? '#ffffff' : '#16a34a');
-  const rounded = typeof s.rounded_px === 'number' ? s.rounded_px : 12;
+  const rounded = typeof s.rounded_px === 'number' ? s.rounded_px : 8;
 
   const isBrandSolid = preset === 'brandSolid';
-  const brandBg = '#25D366';
-  const brandHover = '#1ebe5d';
+  const brandBg = '#10B981'; // Usando Verde de suporte de sustentabilidade e sucesso no whatsapp também de forma limpa
+  const brandHover = '#047857';
   const brandText = '#ffffff';
-  const brandBorder = '#25D366';
+  const brandBorder = '#10B981';
   const brandIcon = '#ffffff';
   const isNeutralOutline = !isBrandSolid && (preset === 'neutralOutline' || (variant === 'outline' && !styles));
   const baseStyle: React.CSSProperties = isNeutralOutline
@@ -89,8 +89,8 @@ export default function WhatsappButton({
   const btnClasses = [
     className,
     variant === 'outline' ? 'border' : '',
-    'transition-colors',
-    'shadow-sm',
+    'transition-colors duration-150',
+    'shadow-none',
     'w-full',
   ].join(' ').trim();
 
@@ -186,7 +186,7 @@ export default function WhatsappButton({
     <Button
       size={size}
       variant={variant === 'outline' ? 'outline' : undefined as any}
-      className={`${btnClasses} ${isNeutralOutline ? 'border-border hover:bg-muted text-foreground' : ''}`}
+      className={`${btnClasses} ${isNeutralOutline ? 'border-border hover:bg-muted text-foreground rounded-lg' : ''}`}
       style={baseStyle}
       aria-label={label || 'Conversar no WhatsApp'}
       onMouseEnter={(e) => {

@@ -407,16 +407,15 @@ export default function CompanyCard({
       <Card
         ref={cardRef}
         className={cn(
-          'relative flex flex-col bg-white dark:bg-slate-900/95 cursor-pointer group h-full',
+          'relative flex flex-col bg-white dark:bg-[#0F172A] cursor-pointer group h-full',
           'overflow-hidden',
-          'border border-slate-200/80 dark:border-slate-700/60',
-          'shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)]',
-          'hover:shadow-[0_12px_32px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.06)]',
-          'hover:border-blue-300 dark:hover:border-blue-700/60',
-          'transition-all duration-300 ease-out transform hover:-translate-y-1',
-          'focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-1',
-          'data-[selected=true]:ring-2 data-[selected=true]:ring-blue-500/30',
-          compact ? 'rounded-xl min-h-[260px]' : 'rounded-2xl'
+          'border border-[#CBD5E1] dark:border-slate-800',
+          'shadow-none',
+          'hover:border-[#2563EB] dark:hover:border-[#2563EB]',
+          'transition-all duration-200 ease-out',
+          'focus-visible:ring-2 focus-visible:ring-[#2563EB]/30 focus-visible:ring-offset-1',
+          'data-[selected=true]:ring-2 data-[selected=true]:ring-[#2563EB]/30',
+          compact ? 'rounded-lg min-h-[220px]' : 'rounded-xl'
         )}
         onClick={handleCardClick}
         onKeyDown={handleKeyDown}
@@ -442,12 +441,12 @@ export default function CompanyCard({
                   <TooltipTrigger asChild>
                     <Badge
                       variant="secondary"
-                      className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-help shadow-sm tracking-wide"
+                      className="bg-white dark:bg-slate-900 text-[10px] font-bold py-0 h-5 border border-[#CBD5E1] dark:border-slate-800 text-slate-700 dark:text-slate-300 cursor-help shadow-none tracking-wide rounded-md"
                     >
                       PATROCINADO <Info className="ml-0.5 w-3 h-3 text-slate-400" />
                     </Badge>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
+                  <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-none rounded-md">
                     <p>
                       Destaque Patrocinado – empresa que investe na qualidade e visibilidade no
                       AvaliaSolar.
@@ -461,7 +460,7 @@ export default function CompanyCard({
           {rank && rank <= 3 && (
             <div
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight shadow-sm border pointer-events-auto',
+                'flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight border pointer-events-auto shadow-none',
                 rank === 1
                   ? 'bg-amber-50 text-amber-700 border-amber-200/80'
                   : rank === 2
@@ -478,18 +477,18 @@ export default function CompanyCard({
         {/* ── Banner + Overlay ───────────────────────────────────── */}
         <div className={cn('relative', compact ? 'px-3 pt-2.5' : 'px-3.5 pt-3')}>
           {/* Inner banner container — contained & rounded */}
-          <div className="relative rounded-xl overflow-hidden">
+          <div className="relative rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-slate-800">
             {/* Action buttons — always visible at low opacity, full on hover */}
             <div
               className={cn(
                 'absolute right-2 top-2 flex flex-col gap-1.5 z-10',
-                'opacity-50 group-hover:opacity-100 transition-opacity duration-200'
+                'opacity-80 group-hover:opacity-100 transition-opacity duration-200'
               )}
             >
               <Button
                 size="icon"
                 variant="secondary"
-                className="h-8 w-8 rounded-lg bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
+                className="h-8 w-8 rounded-md bg-white dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 shadow-none hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
                 onClick={handleShare}
                 title="Compartilhar"
                 aria-label={`Compartilhar perfil de ${name}`}
@@ -517,7 +516,7 @@ export default function CompanyCard({
                 />
 
                 {/* Subtle vignette on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               </div>
             </AspectRatio>
           </div>
@@ -529,7 +528,7 @@ export default function CompanyCard({
             <div className="relative">
               {verifiedBadgeUrl && !verifiedBadgeError && (
                 <div
-                  className="absolute -top-1.5 -left-1.5 z-30 rounded-md bg-white dark:bg-slate-900 shadow-md p-0.5"
+                  className="absolute -top-1.5 -left-1.5 z-30 rounded bg-white dark:bg-slate-900 border border-[#CBD5E1] p-0.5"
                   style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
                   title="Selo de conquista"
                 >
@@ -538,14 +537,14 @@ export default function CompanyCard({
                     alt="Selo de conquista"
                     fill
                     sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                    className="object-contain rounded-md"
+                    className="object-contain rounded"
                     onError={() => setVerifiedBadgeError(true)}
                     priority
                   />
                 </div>
               )}
               <div
-                className="relative rounded-[16px] overflow-hidden bg-white dark:bg-slate-800 border-[3px] border-white dark:border-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.1),0_1px_3px_rgba(0,0,0,0.05)] transition-transform duration-300 group-hover:scale-105"
+                className="relative rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-white dark:border-[#0F172A] shadow-none"
                 style={{ width: avatarSize, height: avatarSize }}
               >
                 {logoUrl && !logoError ? (
@@ -556,7 +555,7 @@ export default function CompanyCard({
                       fill
                       sizes="80px"
                       onError={() => setLogoError(true)}
-                      className="object-contain object-center rounded-lg"
+                      className="object-contain object-center rounded"
                       data-testid="company-logo"
                       unoptimized
                     />
