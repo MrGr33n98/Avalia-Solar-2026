@@ -57,8 +57,7 @@ export default function TimeSeriesChart({
   chartType = 'line',
   showLines = ['views', 'cta_clicks', 'leads'],
 }: TimeSeriesChartProps) {
-  // Lock to dark theme for consistency with Silicon foundation
-  const isDark = true;
+  const isDark = themeMode === 'dark';
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -78,8 +77,8 @@ export default function TimeSeriesChart({
   const lineConfigs = {
     views: {
       dataKey: 'Visualizações',
-      stroke: '#0056D2', // brand-blue
-      fill: '#0056D2',
+      stroke: '#2563EB', // brand-blue oficial
+      fill: '#2563EB',
     },
     cta_clicks: {
       dataKey: 'CTAs',
@@ -88,13 +87,13 @@ export default function TimeSeriesChart({
     },
     leads: {
       dataKey: 'Leads',
-      stroke: '#34C759', // brand-green
-      fill: '#34C759',
+      stroke: '#10B981', // brand-green suporte
+      fill: '#10B981',
     },
     whatsapp: {
       dataKey: 'WhatsApp',
-      stroke: '#28A745', // dark green
-      fill: '#28A745',
+      stroke: '#047857', // dark green suporte
+      fill: '#047857',
     },
     email: {
       dataKey: 'Email',
@@ -103,13 +102,13 @@ export default function TimeSeriesChart({
     },
     phone: {
       dataKey: 'Telefone',
-      stroke: '#FCEE21', // brand-yellow
-      fill: '#FCEE21',
+      stroke: '#F59E0B', // brand-yellow
+      fill: '#F59E0B',
     },
     website: {
       dataKey: 'Website',
-      stroke: '#6D6E71', // brand-gray
-      fill: '#6D6E71',
+      stroke: '#64748B', // brand-muted
+      fill: '#64748B',
     },
   };
 
@@ -117,13 +116,13 @@ export default function TimeSeriesChart({
 
   if (loading) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
         <CardHeader className="p-4">
-          <Skeleton className="h-6 w-[200px] bg-white/5" />
-          <Skeleton className="h-4 w-[300px] mt-2 bg-white/5" />
+          <Skeleton className="h-6 w-[200px]" />
+          <Skeleton className="h-4 w-[300px] mt-2" />
         </CardHeader>
         <CardContent className="p-4">
-          <Skeleton className="h-[300px] w-full bg-white/5 rounded-xl" />
+          <Skeleton className="h-[300px] w-full rounded-xl" />
         </CardContent>
       </Card>
     );
@@ -131,13 +130,13 @@ export default function TimeSeriesChart({
 
   if (!data || data.length === 0) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
         <CardHeader className="p-4">
-          <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
-          <CardDescription className="text-white/40">{description}</CardDescription>
+          <CardTitle className={cn("text-lg font-bold tracking-tight", isDark ? "text-white" : "text-slate-850")}>{title}</CardTitle>
+          <CardDescription className={isDark ? "text-white/40" : "text-slate-500"}>{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[300px] p-4">
-          <p className="text-sm text-white/30 font-medium">
+          <p className={cn("text-sm font-medium", isDark ? "text-white/30" : "text-slate-400")}>
             Sem dados disponíveis para o período selecionado
           </p>
         </CardContent>
@@ -156,47 +155,47 @@ export default function TimeSeriesChart({
   const DataComponent: any = chartType === 'area' ? Area : Line;
 
   return (
-    <Card className="bg-[#002B4D] border-white/10 shadow-none">
-      <CardHeader className="p-4 border-b border-white/5">
-        <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
-        <CardDescription className="text-white/40 text-xs">{description}</CardDescription>
+    <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
+      <CardHeader className={cn("p-4 border-b", isDark ? "border-slate-800" : "border-slate-100")}>
+        <CardTitle className={cn("text-lg font-bold tracking-tight", isDark ? "text-white" : "text-slate-800")}>{title}</CardTitle>
+        <CardDescription className={cn("text-xs", isDark ? "text-white/40" : "text-slate-500")}>{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4">
         <ResponsiveContainer width="100%" height={300}>
           <Chart {...commonProps}>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#ffffff"
-              opacity={0.05}
+              stroke={isDark ? "#ffffff" : "#64748B"}
+              opacity={0.08}
               vertical={false}
             />
             <XAxis
               dataKey="date"
-              stroke="#ffffff"
-              opacity={0.3}
-              style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
+              stroke={isDark ? "#ffffff" : "#64748B"}
+              opacity={0.4}
+              style={{ fontSize: '10px', fontWeight: 'bold' }}
               tickLine={false}
               axisLine={false}
               dy={10}
             />
             <YAxis 
-              stroke="#ffffff" 
-              opacity={0.3} 
-              style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
+              stroke={isDark ? "#ffffff" : "#64748B"} 
+              opacity={0.4} 
+              style={{ fontSize: '10px', fontWeight: 'bold' }}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#002B4D',
-                border: '0.5px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
+                backgroundColor: isDark ? '#0F172A' : '#ffffff',
+                border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+                borderRadius: '10px',
                 boxShadow: 'none',
                 padding: '12px',
               }}
               itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
-              labelStyle={{ color: 'rgba(255,255,255,0.4)', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}
-              cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+              labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
+              cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
             />
             <Legend
               verticalAlign="top"
@@ -209,7 +208,7 @@ export default function TimeSeriesChart({
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                color: 'rgba(255,255,255,0.5)',
+                color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
               }}
             />
             {activeLinesConfig.map((config, index) => (
@@ -222,7 +221,7 @@ export default function TimeSeriesChart({
                 fillOpacity={chartType === 'area' ? 0.1 : undefined}
                 strokeWidth={2.5}
                 dot={false}
-                activeDot={{ r: 4, stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
               />
             ))}
           </Chart>
@@ -231,3 +230,4 @@ export default function TimeSeriesChart({
     </Card>
   );
 }
+

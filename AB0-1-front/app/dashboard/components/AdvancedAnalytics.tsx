@@ -135,14 +135,16 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
     if (active && payload && payload.length) {
       return (
         <div className={cn(
-          'px-3 py-2 rounded-lg shadow-none border',
-          isDark ? 'bg-[#002B4D] border-white/10' : 'bg-[#002B4D] border-white/10'
+          'px-3 py-2 rounded-lg shadow-none border text-xs',
+          isDark 
+            ? 'bg-slate-900 border-slate-800 text-white' 
+            : 'bg-white border-slate-200 text-slate-800'
         )}>
-          <p className={cn('text-xs font-medium mb-1', isDark ? 'text-white/80' : 'text-white')}>
+          <p className="font-semibold mb-1">
             {label}
           </p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-xs" style={{ color: entry.color }}>
+            <p key={index} className="font-medium" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
             </p>
           ))}
@@ -153,9 +155,9 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
   };
 
   const metricConfig = {
-    views: { label: 'Visualizações', color: '#3b82f6', icon: Eye },
+    views: { label: 'Visualizações', color: '#2563EB', icon: Eye }, // Usando o azul oficial Avalia Solar
     clicks: { label: 'Cliques', color: '#8b5cf6', icon: MousePointer },
-    leads: { label: 'Leads', color: '#10b981', icon: Target },
+    leads: { label: 'Leads', color: '#10b981', icon: Target }, // Verde de suporte
     conversion: { label: 'Conversão %', color: '#f59e0b', icon: TrendingUp }
   };
 
@@ -169,10 +171,10 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
       <div className="space-y-4">
         <div className="flex items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-white' : 'text-white')}>
+            <div className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-white' : 'text-slate-900')}>
               Analytics Histórico
             </div>
-            <div className={cn('text-xs', isDark ? 'text-white/40' : 'text-gray-600')}>
+            <div className={cn('text-xs', isDark ? 'text-white/40' : 'text-slate-500')}>
               Análise detalhada de performance e tendências
             </div>
           </div>
@@ -199,13 +201,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
         <div>
           <h3 className={cn(
             'text-lg font-semibold tracking-tight',
-            isDark ? 'text-white' : 'text-white'
+            isDark ? 'text-white' : 'text-slate-900'
           )}>
             Analytics Histórico
           </h3>
           <p className={cn(
             'text-xs mt-0.5',
-            isDark ? 'text-white/40' : 'text-gray-600'
+            isDark ? 'text-white/40' : 'text-slate-500'
           )}>
             Análise detalhada de performance e tendências
           </p>
@@ -215,7 +217,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className={cn(
               'w-[130px] h-8 text-xs',
-              isDark ? 'bg-[#002B4D] border-white/10' : 'bg-[#002B4D] border-white/10'
+              isDark ? 'bg-[#002B4D] border-white/10' : 'bg-white border-[#CBD5E1] text-slate-800'
             )}>
               <Calendar className="h-3 w-3 mr-1" />
               <SelectValue />
@@ -232,7 +234,7 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             size="sm"
             className={cn(
               'h-8 text-xs gap-1.5',
-              isDark ? 'border-white/10 hover:bg-[#002B4D]' : 'border-white/10 hover:bg-[#002B4D]'
+              isDark ? 'border-white/10 hover:bg-[#002B4D]' : 'border-[#CBD5E1] bg-white text-slate-700 hover:bg-slate-50'
             )}
           >
             <Download className="h-3 w-3" />
@@ -243,8 +245,8 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
 
       {/* Main Chart */}
       <Card className={cn(
-        'border',
-        isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
+        'border shadow-none',
+        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#CBD5E1]'
       )}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -258,13 +260,13 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
               <div>
                 <CardTitle className={cn(
                   'text-sm font-medium',
-                  isDark ? 'text-white/80' : 'text-white'
+                  isDark ? 'text-white/80' : 'text-slate-800'
                 )}>
                   {currentConfig.label} - Tendência
                 </CardTitle>
                 <p className={cn(
                   'text-xs mt-0.5',
-                  isDark ? 'text-white/40' : 'text-gray-600'
+                  isDark ? 'text-white/40' : 'text-slate-500'
                 )}>
                   Evolução ao longo do tempo
                 </p>
@@ -272,20 +274,20 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             </div>
 
             {/* Metric Selector */}
-            <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
               {Object.entries(metricConfig).map(([key, config]) => (
                 <button
                   key={key}
                   onClick={() => setSelectedMetric(key as any)}
                   className={cn(
-                    'px-2 py-1 rounded text-xs font-medium transition-all',
+                    'px-2.5 py-1 rounded text-xs font-semibold transition-all',
                     selectedMetric === key
                       ? isDark
-                        ? 'bg-[#002B4D] text-white shadow-none'
-                        : 'bg-[#002B4D] text-white shadow-none'
+                        ? 'bg-slate-900 text-white shadow-none'
+                        : 'bg-white text-[#2563EB] shadow-sm border border-[#E5E7EB]'
                       : isDark
                         ? 'text-white/40 hover:text-white/70'
-                        : 'text-gray-600 hover:text-white'
+                        : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
                   {config.label}
@@ -305,17 +307,17 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
               </defs>
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                stroke={isDark ? '#334155' : '#e5e7eb'}
+                stroke={isDark ? '#334155' : '#E5E7EB'}
                 vertical={false}
               />
               <XAxis 
                 dataKey="date" 
-                stroke={isDark ? '#64748b' : '#9ca3af'}
+                stroke={isDark ? '#64748b' : '#64748B'}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
               />
               <YAxis 
-                stroke={isDark ? '#64748b' : '#9ca3af'}
+                stroke={isDark ? '#64748b' : '#64748B'}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
@@ -338,19 +340,19 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Conversion Funnel */}
         <Card className={cn(
-          'border',
-          isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
+          'border shadow-none',
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#CBD5E1]'
         )}>
           <CardHeader className="pb-2">
             <CardTitle className={cn(
               'text-sm font-medium',
-              isDark ? 'text-white/80' : 'text-white'
+              isDark ? 'text-white/80' : 'text-slate-800'
             )}>
               Funil de Conversão
             </CardTitle>
             <p className={cn(
               'text-xs',
-              isDark ? 'text-white/40' : 'text-gray-600'
+              isDark ? 'text-white/40' : 'text-slate-500'
             )}>
               Jornada do visitante ao lead
             </p>
@@ -366,19 +368,19 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                   className="space-y-1.5"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className={isDark ? 'text-white/70' : 'text-white/60'}>
+                    <span className={isDark ? 'text-white/70' : 'text-slate-600'}>
                       {item.name}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className={isDark ? 'text-white/40' : 'text-gray-600'}>
+                      <span className={isDark ? 'text-white/40' : 'text-slate-400'}>
                         {item.value.toLocaleString('pt-BR')}
                       </span>
-                      <span className="font-medium" style={{ color: item.color }}>
+                      <span className="font-bold" style={{ color: item.color }}>
                         {item.percentage}%
                       </span>
                     </div>
                   </div>
-                  <div className="h-2 rounded-full overflow-hidden bg-muted/20">
+                  <div className="h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${item.percentage}%` }}
@@ -394,19 +396,19 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
             {/* Conversion Rate Insight */}
             <div className={cn(
               'mt-4 p-3 rounded-lg',
-              isDark ? 'bg-brand-green/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'
+              isDark ? 'bg-brand-green/10 border border-emerald-500/20' : 'bg-emerald-50/50 border border-emerald-100'
             )}>
               <div className="flex items-start gap-2">
                 <TrendingUp className="h-[18px] w-[18px] text-brand-green mt-0.5" />
                 <div>
                   <p className={cn(
-                    'text-xs font-medium',
-                    isDark ? 'text-emerald-400' : 'text-emerald-700'
+                    'text-xs font-semibold',
+                    isDark ? 'text-emerald-400' : 'text-emerald-800'
                   )}>
                     Taxa de Conversão: {statsQuery.data?.conversion_rate || 0}%
                   </p>
                   <p className={cn(
-                    'text-xs mt-1',
+                    'text-[11px] mt-1',
                     isDark ? 'text-brand-green/70' : 'text-emerald-600'
                   )}>
                     Acompanhe a eficácia do seu perfil
@@ -419,19 +421,19 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
 
         {/* Traffic Sources */}
         <Card className={cn(
-          'border',
-          isDark ? 'bg-[#002B4D]/50 border-slate-800' : 'bg-[#002B4D] border-white/10'
+          'border shadow-none',
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-[#CBD5E1]'
         )}>
           <CardHeader className="pb-2">
             <CardTitle className={cn(
               'text-sm font-medium',
-              isDark ? 'text-white/80' : 'text-white'
+              isDark ? 'text-white/80' : 'text-slate-800'
             )}>
               Fontes de Tráfego
             </CardTitle>
             <p className={cn(
               'text-xs',
-              isDark ? 'text-white/40' : 'text-gray-600'
+              isDark ? 'text-white/40' : 'text-slate-500'
             )}>
               De onde vêm seus visitantes
             </p>
@@ -450,15 +452,15 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                       paddingAngle={2}
                       dataKey="value"
                     >
-                  {trafficSourceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+                      {trafficSourceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-          <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-2">
                 {trafficSourceData.map((item, index) => (
                   <div key={item.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
@@ -466,15 +468,15 @@ export default function AdvancedAnalytics({ themeMode, companyId }: AdvancedAnal
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className={isDark ? 'text-white/70' : 'text-white/60'}>
+                      <span className={isDark ? 'text-white/70' : 'text-slate-600'}>
                         {item.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={isDark ? 'text-white/40' : 'text-gray-600'}>
+                      <span className={isDark ? 'text-white/40' : 'text-slate-400'}>
                         {item.value.toLocaleString('pt-BR')}
                       </span>
-                      <span className="font-medium w-10 text-right" style={{ color: item.color }}>
+                      <span className="font-semibold w-10 text-right" style={{ color: item.color }}>
                         {item.percentage}%
                       </span>
                     </div>
