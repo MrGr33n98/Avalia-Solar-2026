@@ -54,6 +54,13 @@ export interface ReviewDashboardSummary {
       cta_clicks: number;
     }>;
   };
+  sustainable_journey?: Array<{
+    id: string;
+    title: string;
+    state: string;
+    progress: number;
+    details: string[];
+  }>;
 }
 
 export function emptySummary(): ReviewDashboardSummary {
@@ -94,7 +101,13 @@ export function emptySummary(): ReviewDashboardSummary {
     },
     charts: {
       activity_30d: activity
-    }
+    },
+    sustainable_journey: [
+      { id: 'solar', title: 'Energia Solar', state: 'Não iniciado', progress: 0, details: ['Sem avaliações ainda'] },
+      { id: 'mobility', title: 'Mobilidade Elétrica', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
+      { id: 'battery', title: 'Bateria / Armazenamento', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
+      { id: 'consumption', title: 'Consumo Consciente', state: 'Não iniciado', progress: 0, details: ['Perfil 0% preenchido'] }
+    ]
   };
 }
 
@@ -263,10 +276,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
 
   return (
     <DashboardContext.Provider value={{ summary, reviews, leads, loading, refreshing, error, onRefresh: () => fetchDashboardData(true) }}>
-      <div className="flex min-h-screen w-full bg-slate-50">
+      <div className="flex min-h-screen w-full bg-slate-50 overflow-x-hidden">
         <DesktopSidebar repliesCount={companyReplies.length} notificationsCount={activityEvents.length} />
 
-        <div className="flex flex-1 flex-col lg:pl-[280px]">
+        <div className="flex flex-1 flex-col min-w-0 lg:pl-[280px]">
           <Header
             firstName={firstName}
             user={user as User & { avatar_url?: string }}
@@ -278,7 +291,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             onOpenMobileNav={() => setMobileNavOpen(true)}
           />
 
-          <main className="flex-1">
+          <main className="flex-1 min-w-0">
             {children}
           </main>
         </div>

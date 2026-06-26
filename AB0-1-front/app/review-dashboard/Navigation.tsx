@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sheet,
   SheetContent,
@@ -38,6 +39,7 @@ import {
   BatteryCharging,
   Recycle,
   Medal,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
@@ -316,6 +318,8 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -360,7 +364,7 @@ function SidebarContent({
                       <span className="flex min-w-0 items-center gap-3">
                         <Icon
                           className={cn(
-                            'h-5 w-5 shrink-0',
+                             'h-5 w-5 shrink-0',
                             active ? 'text-emerald-700' : 'text-slate-500'
                           )}
                         />
@@ -388,7 +392,7 @@ function SidebarContent({
         </nav>
       </ScrollArea>
 
-      <div className="border-t border-slate-100 p-4">
+      <div className="border-t border-slate-100 p-4 space-y-2">
         <Button
           className="h-12 w-full rounded-xl bg-emerald-600 font-medium hover:bg-emerald-700"
           asChild
@@ -397,6 +401,18 @@ function SidebarContent({
             <Plus className="mr-2 h-4 w-4" />
             Avaliar empresa
           </Link>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-11 w-full rounded-xl border-slate-200 text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900"
+          onClick={async () => {
+            if (onNavigate) onNavigate();
+            await logout();
+            router.push('/login');
+          }}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair da Conta
         </Button>
       </div>
     </div>

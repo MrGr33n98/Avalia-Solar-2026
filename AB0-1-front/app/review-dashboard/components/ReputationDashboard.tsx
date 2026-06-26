@@ -448,52 +448,25 @@ export function ReputationDashboard({
     };
   });
 
-  const sustainableItems = [
-    {
-      id: 'solar',
-      title: 'Energia Solar',
-      state: reviews.length > 0 ? 'Completo' : 'Não iniciado',
-      progress: reviews.length > 0 ? 100 : 0,
-      icon: Sun,
-      tone: 'bg-yellow-100 text-yellow-700',
-      details: reviews.length > 0 ? ['Com avaliações no perfil'] : ['Sem avaliações ainda'],
-    },
-    {
-      id: 'mobility',
-      title: 'Mobilidade Elétrica',
-      state: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || ''))
-        ? 'Em progresso'
-        : 'Não iniciado',
-      progress: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || '')) ? 55 : 0,
-      icon: Car,
-      tone: 'bg-green-100 text-green-700',
-      details: leads.some((lead) => /car|ev|mobil/i.test(lead.product_vertical || ''))
-        ? ['Interesse demonstrado em propostas']
-        : ['Sem propostas na área'],
-    },
-    {
-      id: 'battery',
-      title: 'Bateria / Armazenamento',
-      state: leads.some((lead) => /bater/i.test(lead.product_vertical || ''))
-        ? 'Em progresso'
-        : 'Não iniciado',
-      progress: leads.some((lead) => /bater/i.test(lead.product_vertical || '')) ? 36 : 0,
-      icon: BatteryCharging,
-      tone: 'bg-orange-100 text-orange-700',
-      details: leads.some((lead) => /bater/i.test(lead.product_vertical || ''))
-        ? ['Interesse demonstrado em propostas']
-        : ['Sem propostas na área'],
-    },
-    {
-      id: 'consumption',
-      title: 'Consumo Consciente',
-      state: profileCompletion > 50 ? 'Em progresso' : 'Não iniciado',
-      progress: Math.max(0, profileCompletion),
-      icon: Recycle,
-      tone: 'bg-blue-100 text-blue-700',
-      details: [`Perfil ${profileCompletion}% preenchido`],
-    },
-  ];
+  const sustainableJourneyIcons: Record<string, { icon: any; tone: string }> = {
+    solar: { icon: Sun, tone: 'bg-yellow-100 text-yellow-700' },
+    mobility: { icon: Car, tone: 'bg-green-100 text-green-700' },
+    battery: { icon: BatteryCharging, tone: 'bg-orange-100 text-orange-700' },
+    consumption: { icon: Recycle, tone: 'bg-blue-100 text-blue-700' },
+  };
+
+  const sustainableItems = (summary?.sustainable_journey || []).map((item) => {
+    const meta = sustainableJourneyIcons[item.id] || { icon: Sun, tone: 'bg-slate-100 text-slate-700' };
+    return {
+      id: item.id,
+      title: item.title,
+      state: item.state,
+      progress: item.progress,
+      icon: meta.icon,
+      tone: meta.tone,
+      details: item.details,
+    };
+  });
 
   const renderCompanies = () => (
     <CompaniesTable
@@ -601,6 +574,7 @@ export function ReputationDashboard({
         onOpenReplies={() => {
           document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
         }}
+        badges={achievementsList.filter((a) => a.state !== 'bloqueado').map((a) => a.title)}
       />
 
       <ReviewTabsCompact activeTab={activeTab} onChange={setActiveTab} />
@@ -745,6 +719,7 @@ function HeroProfile({
   impactedPeople,
   repliesCount,
   onOpenReplies,
+  badges = [],
 }: {
   user: User & { city?: string; state?: string; avatar_url?: string };
   reviewsCount: number;
@@ -753,8 +728,8 @@ function HeroProfile({
   impactedPeople: number;
   repliesCount: number;
   onOpenReplies: () => void;
+  badges?: string[];
 }) {
-  const badges = ['Solar Expert', 'Green House', 'Top Avaliador'];
   const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
 
   return (

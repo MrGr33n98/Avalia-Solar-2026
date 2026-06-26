@@ -176,12 +176,17 @@ class User < ApplicationRecord
   def regional_ranking
     return 1 if city.blank? || state.blank?
 
-    # Compare green scores of users in the same region
-    # To keep it simple and avoid N+1 across all users dynamically, 
-    # we can approximate or do a quick sort if small. For now we use the formula based on score
-    # to avoid a massive query, OR just run the query:
-    # rank = User.where(city: city, state: state).count { |u| u.calculate_green_score > calculate_green_score } + 1
-    # For performance, since we don't have a materialized view yet, we keep the math approximation but server-side.
+    Rails.cache.fetch("user:#{id}:regional_ranking:#{calculate_green_score}", expires_in: 30.minutes) do
+      users_in_region = User.where(city: city, state: state, role: 'review')
+      if users_in_region.count <= 1
+        1
+      else
+        my_score = calculate_green_score
+        better_users = users_in_region.select { |u| u.calculate_green_score > my_score }.count
+        better_users + 1
+      end
+    end
+  rescue StandardError
     score = calculate_green_score
     [1, 12 - (score / 120).floor].max
   end
@@ -198,9 +203,12 @@ class User < ApplicationRecord
       { title: 'Green House', subtitle: 'Sustentável', state: score >= 650 ? 'desbloqueado' : 'bloqueado' }
     ]
 
-    # Fill in the rest as blocked for now unless criteria met
-    list << { title: 'EV Driver', subtitle: 'Mobilidade', state: 'bloqueado' }
-    list << { title: 'Energy Storage', subtitle: 'Armazenamento', state: 'bloqueado' }
+    user_leads = Lead.where(email: email)
+    has_ev = user_leads.where("LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?", '%car%', '%ev%', '%mobil%').exists?
+    has_battery = user_leads.where("LOWER(product_vertical) LIKE ?", '%bater%').exists?
+
+    list << { title: 'EV Driver', subtitle: 'Mobilidade', state: has_ev ? 'premium' : 'bloqueado' }
+    list << { title: 'Energy Storage', subtitle: 'Armazenamento', state: has_battery ? 'lendário' : 'bloqueado' }
     list << { title: 'Top Avaliador', subtitle: city.presence || 'Brasil', state: regional_ranking <= 5 ? 'raro' : 'bloqueado' }
 
     list
