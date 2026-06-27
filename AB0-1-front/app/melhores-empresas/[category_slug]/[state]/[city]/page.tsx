@@ -68,8 +68,59 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
     const companies = companiesResponse?.companies || [];
     const paginationMeta = companiesResponse?.meta || null;
 
+    const getCategorySchemaType = (slug: string): string => {
+      const s = slug.toLowerCase();
+      if (s.includes('solar') || s.includes('painel') || s.includes('inversor')) {
+        return 'SolarEnergySystemInstaller';
+      }
+      return 'LocalBusiness';
+    };
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      'name': `Melhores Empresas de ${category.name} em ${cityName}, ${stateName}`,
+      'description': `Lista das melhores empresas e instaladores de ${category.name} que atendem na região de ${cityName} - ${stateName}.`,
+      'url': `https://www.avaliasolar.com.br/melhores-empresas/${category.seo_url}/${params.state.toLowerCase()}/${params.city.toLowerCase()}`,
+      'numberOfItems': companies.length,
+      'itemListElement': companies.map((company, index) => {
+        const schemaType = getCategorySchemaType(category.seo_url || params.category_slug);
+        return {
+          '@type': 'ListItem',
+          'position': index + 1,
+          'item': {
+            '@type': schemaType,
+            '@id': `https://www.avaliasolar.com.br/companies/${company.slug}`,
+            'name': company.name,
+            'image': company.logo_url || 'https://www.avaliasolar.com.br/logo.png',
+            'url': `https://www.avaliasolar.com.br/companies/${company.slug}`,
+            'telephone': company.phone || undefined,
+            'address': {
+              '@type': 'PostalAddress',
+              'addressLocality': company.city || cityName,
+              'addressRegion': company.state || stateName,
+              'addressCountry': 'BR'
+            },
+            ...(company.rating_avg && company.rating_count ? {
+              'aggregateRating': {
+                '@type': 'AggregateRating',
+                'ratingValue': company.rating_avg,
+                'reviewCount': company.rating_count,
+                'bestRating': '5',
+                'worstRating': '1'
+              }
+            } : {})
+          }
+        };
+      })
+    };
+
     return (
       <div className="relative">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {/* US12: SEO Copywriting Section */}
         <div className="bg-slate-900 text-white py-12 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-900 to-slate-900"></div>

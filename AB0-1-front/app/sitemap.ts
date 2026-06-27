@@ -3,6 +3,7 @@ import { buildApiUrl } from '@/lib/api-config';
 import { BRAZIL_CAPITAL_SOLAR_PAGES, BRAZIL_STATE_SOLAR_PAGES } from '@/lib/locations/local-page-slugs';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
+import { SEO_CITIES } from '@/lib/constants/seo-cities';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE.url;
@@ -45,9 +46,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate blog sitemap:', error);
   }
 
-  // Dynamic Categories
+  // Dynamic Categories and Local Rankings
   let categoryRoutes: MetadataRoute.Sitemap = [];
   let companyCategoryRoutes: MetadataRoute.Sitemap = [];
+  let localRankingRoutes: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(buildApiUrl('categories?per_page=100'), { next: { revalidate: 3600 } });
     if (res.ok) {
@@ -72,9 +74,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: 'weekly' as const,
           priority: 0.75,
         }));
+
+      // Generate local ranking page URLs for each active category and city polo
+      localRankingRoutes = data
+        .filter((cat: any) => Number(cat.companies_count || 0) > 0)
+        .flatMap((cat: any) =>
+          SEO_CITIES.map((city) => ({
+            url: `${baseUrl}/melhores-empresas/${cat.seo_url}/${city.state.toLowerCase()}/${city.slug}`,
+            lastModified: cat.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
+            changeFrequency: 'weekly' as const,
+            priority: 0.7,
+          }))
+        );
     }
   } catch (error) {
-    console.error('Failed to generate categories sitemap:', error);
+    console.error('Failed to generate categories or local rankings sitemap:', error);
   }
 
   // Dynamic Companies
@@ -144,5 +158,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate local solar sitemap:', error);
   }
 
-  return [...routes, ...blogRoutes, ...categoryRoutes, ...companyCategoryRoutes, ...companyRoutes, ...localSolarRoutes];
+  return [
+    ...routes,
+    ...blogRoutes,
+    ...categoryRoutes,
+    ...companyCategoryRoutes,
+    ...localRankingRoutes,
+    ...companyRoutes,
+    ...localSolarRoutes,
+  ];
 }
