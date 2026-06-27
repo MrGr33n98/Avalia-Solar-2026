@@ -45,7 +45,7 @@ export default function LandingHero(props: LandingHeroProps) {
   return (
     <section 
       className="relative overflow-hidden border-b border-brand-borderSoft pt-12 pb-16 lg:pt-20 lg:pb-28 min-h-[500px] md:min-h-[600px] flex items-center"
-      style={{ background: 'linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 45%, #FFFFFF 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 45%, #F8FAFC 100%)' }}
     >
       {/* 1. Grid pontilhado técnico quase invisível */}
       <div 

@@ -79,7 +79,7 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section className={['py-16 md:py-24 border-b border-brand-borderSoft', zebra ? 'bg-[#F8FAFC]' : 'bg-white'].join(' ')}>
+    <section className={['py-16 md:py-24 border-b border-brand-borderSoft', zebra ? 'bg-[#F1F5F9]' : 'bg-[#F8FAFC]'].join(' ')}>
       <div className={['container mx-auto max-w-[86rem] px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
     </section>
   );
