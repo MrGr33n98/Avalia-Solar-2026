@@ -57,23 +57,28 @@ export default function LandingHero(props: LandingHeroProps) {
       />
 
       {/* 2. Elementos Abstratos Técnicos (Linhas finas, circuitos e conexões) */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
+      <svg 
+        viewBox="0 0 1000 1000" 
+        preserveAspectRatio="none" 
+        className="absolute inset-0 w-full h-full pointer-events-none z-0" 
+        xmlns="http://www.w3.org/2000/svg"
+      >
         {/* Linhas diagonais técnicas */}
-        <line x1="8%" y1="15%" x2="25%" y2="32%" stroke="#2563EB" strokeWidth="1" strokeDasharray="3 3" opacity="0.06" />
-        <line x1="85%" y1="12%" x2="98%" y2="35%" stroke="#2563EB" strokeWidth="1" opacity="0.05" />
+        <line x1="80" y1="150" x2="250" y2="320" stroke="#2563EB" strokeWidth="1" strokeDasharray="3 3" opacity="0.06" />
+        <line x1="850" y1="120" x2="980" y2="350" stroke="#2563EB" strokeWidth="1" opacity="0.05" />
         
         {/* Traço conectando com um ponto (circuito sutil) */}
-        <path d="M 52%, 18% L 58%, 18% L 62%, 24%" fill="none" stroke="#2563EB" strokeWidth="1" opacity="0.06" />
-        <circle cx="52%" cy="18%" r="2" fill="#2563EB" opacity="0.08" />
-        <circle cx="62%" cy="24%" r="2" fill="#2563EB" opacity="0.08" />
+        <path d="M 520 180 L 580 180 L 620 240" fill="none" stroke="#2563EB" strokeWidth="1" opacity="0.06" />
+        <circle cx="520" cy="180" r="3" fill="#2563EB" opacity="0.08" />
+        <circle cx="620" cy="240" r="3" fill="#2563EB" opacity="0.08" />
 
         {/* Detalhe verde de apoio sutil */}
-        <path d="M 40%, 82% L 43%, 85% L 50%, 85%" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.05" />
-        <circle cx="50%" cy="85%" r="1.8" fill="#10B981" opacity="0.06" />
+        <path d="M 400 820 L 430 850 L 500 850" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.05" />
+        <circle cx="500" cy="850" r="2.5" fill="#10B981" opacity="0.06" />
 
         {/* Detalhe geométrico angular (navy técnico) */}
-        <rect x="4%" y="55%" width="10" height="10" rx="1.5" fill="none" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
-        <line x1="4%" y1="60%" x2="14%" y2="60%" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
+        <rect x="40" y="550" width="10" height="10" rx="1.5" fill="none" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
+        <line x1="40" y1="600" x2="140" y2="600" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
       </svg>
 
       {/* 3. Halo suave de luz e círculo vazado grande ao redor da imagem principal */}
@@ -93,7 +98,7 @@ export default function LandingHero(props: LandingHeroProps) {
           </div>
 
           {/* Coluna Direita: Imagem de Casa Sustentável */}
-          <div className="lg:col-span-5 hidden lg:block relative h-[450px] w-full rounded-2xl overflow-hidden border border-brand-border shadow-soft">
+          <div className="lg:col-span-5 hidden lg:block relative h-[450px] w-full rounded-[8px] overflow-hidden border border-brand-border shadow-soft">
             <Image
               src="/images/lp-avalia-solar-image.png"
               alt="Casa inteligente sustentável com carro elétrico e energia solar"
