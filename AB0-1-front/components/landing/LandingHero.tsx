@@ -57,7 +57,7 @@ export default function LandingHero(props: LandingHeroProps) {
           {/* Coluna Direita: Imagem de Casa Sustentável */}
           <div className="lg:col-span-5 hidden lg:block relative h-[450px] w-full rounded-2xl overflow-hidden border border-brand-border shadow-soft">
             <Image
-              src="/images/banner-landing-page-avalia-solar.jpg"
+              src="/images/lp-avalia-solar-image.png"
               alt="Casa inteligente sustentável com carro elétrico e energia solar"
               fill
               priority
