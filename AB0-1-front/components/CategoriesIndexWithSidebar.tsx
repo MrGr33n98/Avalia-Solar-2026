@@ -123,7 +123,7 @@ export default function CategoriesIndexWithSidebar() {
           {/* 2. Sidebar de Filtros - Hierarquia Reforçada */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-[calc(6rem+var(--safe-area-inset-top))] space-y-6">
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="bg-slate-50 p-6 rounded-[8px] border border-slate-100 shadow-sm">
                 <SidebarFilters
                   filters={filters}
                   onFilterChange={handleFilterChange}
@@ -135,7 +135,7 @@ export default function CategoriesIndexWithSidebar() {
               <BannerByLocation
                 location="categories_filter_sidebar"
                 limit={1}
-                className="rounded-2xl"
+                className="rounded-[8px]"
               />
             </div>
           </aside>
@@ -146,11 +146,11 @@ export default function CategoriesIndexWithSidebar() {
             {/* Toolbar: Busca + Mobile Toggle */}
             <div
               data-testid="categories-toolbar"
-              className="bg-white px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))] rounded-2xl border border-slate-200 shadow-sm sticky top-[calc(5rem+var(--safe-area-inset-top))] z-20 flex flex-col sm:flex-row gap-4 items-center justify-between backdrop-blur-md bg-white/90"
+              className="bg-white px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))] rounded-[8px] border border-slate-200 shadow-sm sticky top-[calc(5rem+var(--safe-area-inset-top))] z-20 flex flex-col sm:flex-row gap-4 items-center justify-between backdrop-blur-md bg-white/90"
             >
                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden w-full sm:w-auto h-11 font-bold">
+                    <Button variant="outline" className="lg:hidden w-full sm:w-auto h-11 font-bold rounded-[6px]">
                       <Filter className="h-4 w-4 mr-2" />
                       Filtros
                     </Button>
@@ -169,17 +169,17 @@ export default function CategoriesIndexWithSidebar() {
                     placeholder="Buscar categorias..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-11 pl-11 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all rounded-xl"
+                    className="h-11 pl-11 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all rounded-[6px]"
                   />
                 </div>
 
                 <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-bold border-blue-100 h-8 px-3">
+                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 font-bold border-blue-100 h-8 px-3 rounded-[4px]">
                     {meta?.total_items || allCategories.length} RESULTADOS
                   </Badge>
                   
                   <Select value={filters.sort_by} onValueChange={(val) => handleFilterChange('sort_by', val)}>
-                    <SelectTrigger className="w-[180px] h-10 rounded-xl border-slate-200 font-medium">
+                    <SelectTrigger className="w-[180px] h-10 rounded-[6px] border-slate-200 font-medium">
                       <SelectValue placeholder="Ordenar por" />
                     </SelectTrigger>
                     <SelectContent>
@@ -231,13 +231,13 @@ export default function CategoriesIndexWithSidebar() {
             {/* Paginação */}
             {meta && meta.total_pages > 1 && (
               <div className="flex justify-center items-center gap-4 pt-4">
-                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-200" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                <Button variant="outline" size="icon" className="h-10 w-10 rounded-[6px] border-slate-200" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
                 <span className="text-sm font-black text-slate-700 uppercase tracking-widest">
                   Página {page} de {meta.total_pages}
                 </span>
-                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-200" onClick={() => setPage(p => Math.min(meta.total_pages, p + 1))} disabled={page === meta.total_pages}>
+                <Button variant="outline" size="icon" className="h-10 w-10 rounded-[6px] border-slate-200" onClick={() => setPage(p => Math.min(meta.total_pages, p + 1))} disabled={page === meta.total_pages}>
                   <ChevronRight className="h-5 w-5" />
                 </Button>
               </div>
@@ -248,7 +248,7 @@ export default function CategoriesIndexWithSidebar() {
           <BannerByLocation
             location="categories_right_rail"
             limit={1}
-            className="hidden xl:block w-[300px] flex-shrink-0 sticky top-[calc(6rem+var(--safe-area-inset-top))] rounded-2xl"
+            className="hidden xl:block w-[300px] flex-shrink-0 sticky top-[calc(6rem+var(--safe-area-inset-top))] rounded-[8px]"
           />
         </div>
       </div>
@@ -271,7 +271,7 @@ function SidebarFilters({ filters, onFilterChange, onClear, hasActiveFilters }: 
       <div className="space-y-3">
         <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Região</Label>
         <Select value={filters.region} onValueChange={(val) => onFilterChange('region', val === 'all' ? '' : val)}>
-          <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white">
+          <SelectTrigger className="h-11 rounded-[6px] border-slate-200 bg-white">
             <SelectValue placeholder="Selecione o estado" />
           </SelectTrigger>
           <SelectContent>
@@ -286,7 +286,7 @@ function SidebarFilters({ filters, onFilterChange, onClear, hasActiveFilters }: 
       <div className="space-y-3">
         <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tipo de Solução</Label>
         <Select value={filters.kind} onValueChange={(val) => onFilterChange('kind', val === 'all' ? '' : val)}>
-          <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white">
+          <SelectTrigger className="h-11 rounded-[6px] border-slate-200 bg-white">
             <SelectValue placeholder="Qualquer tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -320,13 +320,13 @@ function SidebarFilters({ filters, onFilterChange, onClear, hasActiveFilters }: 
 function LoadingSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <Skeleton className="w-full h-[240px] rounded-3xl" />
+      <Skeleton className="w-full h-[240px] rounded-[8px]" />
       <div className="flex gap-8">
-        <Skeleton className="hidden lg:block w-72 h-[600px] rounded-2xl" />
+        <Skeleton className="hidden lg:block w-72 h-[600px] rounded-[8px]" />
         <div className="flex-1 space-y-6">
-          <Skeleton className="w-full h-16 rounded-2xl" />
+          <Skeleton className="w-full h-16 rounded-[8px]" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[320px] rounded-2xl" />)}
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[320px] rounded-[8px]" />)}
           </div>
         </div>
       </div>
@@ -336,11 +336,11 @@ function LoadingSkeleton() {
 
 function EmptyState({ onClear }: { onClear: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-slate-200 rounded-[8px] bg-slate-50/50">
       <div className="bg-white p-5 rounded-full shadow-lg mb-6"><Search className="h-10 w-10 text-slate-300" /></div>
       <h3 className="text-xl font-black text-slate-950 mb-2 uppercase">Nenhum resultado encontrado</h3>
       <p className="text-slate-500 max-w-md mb-8 font-medium">Não encontramos categorias que correspondam aos seus filtros. Tente ajustar os termos de busca.</p>
-      <Button onClick={onClear} variant="default" className="bg-blue-600 hover:bg-blue-700 font-bold px-8 h-12 rounded-xl shadow-lg">Limpar Filtros</Button>
+      <Button onClick={onClear} variant="default" className="bg-blue-600 hover:bg-blue-700 font-bold px-8 h-12 rounded-[6px] shadow-lg">Limpar Filtros</Button>
     </div>
   );
 }

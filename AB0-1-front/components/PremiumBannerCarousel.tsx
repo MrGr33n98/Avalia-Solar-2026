@@ -124,7 +124,7 @@ export function PremiumBannerCarousel({
   return (
     <div 
       ref={containerRef}
-      className={cn("group relative w-full overflow-hidden rounded-2xl shadow-md transition-shadow hover:shadow-lg", className)}
+      className={cn("group relative w-full overflow-hidden rounded-[8px] shadow-md transition-shadow hover:shadow-lg", className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

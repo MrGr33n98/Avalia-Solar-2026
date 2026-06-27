@@ -57,7 +57,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
       >
         <Card
           className={cn(
-            'h-full overflow-hidden transition-all duration-300 flex flex-col clay-card hover:shadow-xl border-[0.5px] border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl bg-white dark:bg-slate-900',
+            'h-full overflow-hidden transition-all duration-300 flex flex-col clay-card hover:shadow-xl border-[0.5px] border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 rounded-[8px] bg-white dark:bg-slate-900',
             isHovered && 'ring-2 ring-primary/5 shadow-2xl'
           )}
           onMouseEnter={() => setIsHovered(true)}
@@ -95,7 +95,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
                   <motion.div
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="bg-primary/90 text-white shadow-md px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-sm"
+                    className="bg-primary/90 text-white shadow-sm px-2.5 py-1 rounded-[4px] flex items-center gap-1.5 backdrop-blur-sm"
                   >
                     <span className="font-bold uppercase text-[8px] tracking-[0.2em]">
                       Destaque
@@ -107,7 +107,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1.5 border-[0.5px] border-slate-200/40 dark:border-slate-800/40"
+                    className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-[4px] shadow-sm flex items-center gap-1.5 border-[0.5px] border-slate-200/40 dark:border-slate-800/40"
                   >
                     <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                     <span className="font-bold text-[11px] text-slate-950 dark:text-white">
@@ -122,13 +122,13 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
           {/* New Floating Title Container - Hairline Style */}
           <div className="relative -mt-6 px-5 z-20">
             <motion.div
-              className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl clay-card clay-precision shadow-lg border-[0.5px] border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-4"
+              className="bg-white dark:bg-slate-800 px-4 py-3 rounded-[6px] clay-card clay-precision shadow-sm border-[0.5px] border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-4"
               animate={isHovered ? { y: -2, scale: 1.01 } : { y: 0, scale: 1 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {displayData.iconUrl ? (
-                  <span className="relative flex h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700">
+                  <span className="relative flex h-12 w-12 shrink-0 overflow-hidden rounded-[6px] border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700">
                     <Image
                       src={displayData.iconUrl}
                       alt={`Ícone de ${category.name}`}
@@ -142,7 +142,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
                   {displayData.title}
                 </h3>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-lg text-slate-400 flex-shrink-0 border-[0.5px] border-slate-100 dark:border-slate-800">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-[4px] text-slate-400 flex-shrink-0 border-[0.5px] border-slate-100 dark:border-slate-800">
                 <ArrowRight
                   size={12}
                   className={cn(
@@ -160,8 +160,8 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
             </p>
 
             <div className="grid grid-cols-2 gap-3 mt-auto">
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
-                <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-lg text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 p-2 rounded-[6px] bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-[4px] text-blue-600 dark:text-blue-400">
                   <Building2 size={10} />
                 </div>
                 <div>
@@ -173,8 +173,8 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
-                <div className="bg-emerald-100 dark:bg-emerald-500/20 p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-2 p-2 rounded-[6px] bg-slate-50 dark:bg-slate-800/50 border-[0.5px] border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="bg-emerald-100 dark:bg-emerald-500/20 p-1.5 rounded-[4px] text-emerald-600 dark:text-emerald-400">
                   <Package size={10} />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 transition-colors group-hover/btn:text-primary">
                 Ver Detalhes
               </span>
-              <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-2 text-muted-foreground group-hover/btn:bg-primary group-hover/btn:text-white transition-all duration-300 transform group-hover/btn:rotate-[-45deg]">
+              <div className="rounded-[4px] bg-slate-100 dark:bg-slate-800 p-2 text-muted-foreground group-hover/btn:bg-primary group-hover/btn:text-white transition-all duration-300 transform group-hover/btn:rotate-[-45deg]">
                 <ArrowRight size={16} />
               </div>
             </div>
