@@ -30,13 +30,13 @@ export default function TopRankingSection({
     <section className="border-t border-slate-200 pt-5">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <Trophy className="h-9 w-9 shrink-0 fill-amber-400 text-amber-400" />
+          <Award className="h-9 w-9 shrink-0 fill-blue-600 text-blue-600" />
           <div>
             <h2 className="text-xl font-black uppercase tracking-tight text-slate-950">
-              Top {topCompanies.length} da categoria
+              Destaques Patrocinados
             </h2>
             <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Ranking baseado em confiabilidade
+              Empresas parceiras e recomendadas
             </p>
           </div>
         </div>
@@ -99,14 +99,14 @@ function RankingCompanyCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:shadow-md ${cardBorderTone} sm:p-4`}
+      className={`relative overflow-hidden rounded-[8px] border border-slate-200 bg-white p-3 shadow-sm transition-all hover:shadow-md ${cardBorderTone} sm:p-4`}
     >
       <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)_70px] sm:gap-4">
         <div className="space-y-2">
           <RankBadge rank={rank} className={rankTone} />
           <Link
             href={href}
-            className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl border-2 bg-white shadow-sm ${logoBorderTone}`}
+            className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-[8px] border-2 bg-white shadow-sm ${logoBorderTone}`}
           >
             <OptimizedImage
               src={logoUrl}
@@ -152,7 +152,7 @@ function RankingCompanyCard({
             <Button
               size="sm"
               onClick={() => openQuoteWizard({ source: 'category-ranking' })}
-              className="h-9 rounded-lg bg-blue-700 text-[11px] font-bold text-white hover:bg-blue-800 sm:text-xs"
+              className="h-9 rounded-[6px] bg-blue-700 text-[11px] font-bold text-white hover:bg-blue-800 sm:text-xs"
             >
               Orçamento
             </Button>
@@ -160,7 +160,7 @@ function RankingCompanyCard({
               size="sm"
               variant="outline"
               asChild
-              className="h-9 rounded-lg border-slate-200 text-[11px] font-bold text-blue-700 sm:text-xs"
+              className="h-9 rounded-[6px] border-slate-200 text-[11px] font-bold text-blue-700 sm:text-xs"
             >
               <Link href={`${href}/review`}>
                 <Star className="mr-1 h-4 w-4" />
@@ -170,7 +170,7 @@ function RankingCompanyCard({
             <ComparisonToggleButton
               company={company}
               size="sm"
-              className="h-9 min-w-0 rounded-lg px-2 text-[11px] font-bold shadow-none [&_svg]:mx-auto [&_span]:hidden"
+              className="h-9 min-w-0 rounded-[6px] px-2 text-[11px] font-bold shadow-none [&_svg]:mx-auto [&_span]:hidden"
             />
           </div>
         </div>
@@ -186,17 +186,17 @@ function RankingCompanyCard({
 function RankBadge({ rank, className }: { rank: number; className: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-black uppercase ${className}`}
+      className={`inline-flex items-center gap-1 rounded-[4px] px-2 py-0.5 text-[11px] font-black uppercase ${className}`}
     >
       <Award className="h-3.5 w-3.5" />
-      Top {rank}
+      Patrocinado
     </span>
   );
 }
 
 function RatingBadge({ rating, count }: { rating: string; count: number }) {
   return (
-    <div className="shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-1 text-center shadow-sm">
+    <div className="shrink-0 rounded-[6px] border border-slate-200 bg-white px-2 py-1 text-center shadow-sm">
       <div className="flex items-center justify-center gap-1 text-xs font-black text-slate-950">
         <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
         {rating}
