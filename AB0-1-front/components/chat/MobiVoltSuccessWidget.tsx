@@ -137,7 +137,7 @@ export default function MobiVoltSuccessWidget() {
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.png"
+                    src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt Success Avatar"
                     className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
                   />
@@ -223,7 +223,7 @@ export default function MobiVoltSuccessWidget() {
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
                     <img
-                      src="/images/mobivolt-ai-avaliasolar.png"
+                      src="/images/mobivolt-ai-avaliasolar.webp"
                       alt="MobiVolt Success"
                       className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
                     />
@@ -274,7 +274,7 @@ export default function MobiVoltSuccessWidget() {
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.png"
+                    src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt Success"
                     className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
                   />
@@ -367,7 +367,7 @@ export default function MobiVoltSuccessWidget() {
           </span>
 
           <img
-            src="/images/mobivolt-ai-avaliasolar.png"
+            src="/images/mobivolt-ai-avaliasolar.webp"
             alt="MobiVolt Success Avatar"
             className="w-full h-full object-cover rounded-full filter saturate-150 hue-rotate-15"
           />

@@ -245,6 +245,12 @@
     transform: translateZ(0); /* Aciona aceleração por hardware (GPU) */
   }
 
+  @media (max-width: 767px) {
+    body::before {
+      display: none !important;
+    }
+  }
+
   .dark body::before {
     opacity: 0.02;
     filter: brightness(0.8);

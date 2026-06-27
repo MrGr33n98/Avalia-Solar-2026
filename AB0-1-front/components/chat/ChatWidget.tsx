@@ -428,7 +428,7 @@ export default function ChatWidget() {
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.png"
+                    src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt AI Avatar"
                     className="w-full h-full object-cover"
                   />
@@ -515,9 +515,9 @@ export default function ChatWidget() {
               <div className="flex flex-col items-center justify-center min-h-full space-y-4 py-8 px-5 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    <img
-                    src="/images/mobivolt-ai-avaliasolar.png"
+                    src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt AI"
-                    className="w-12 h-12 object-cover rounded-full"
+                    className="w-24 h-24 object-cover rounded-full"
                   />
                 </div>
                 <div className="space-y-1">
@@ -607,7 +607,7 @@ export default function ChatWidget() {
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                     <img
-                      src="/images/mobivolt-ai-avaliasolar.png"
+                      src="/images/mobivolt-ai-avaliasolar.webp"
                       alt="MobiVolt AI"
                       className="w-full h-full object-cover"
                     />
@@ -674,7 +674,7 @@ export default function ChatWidget() {
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.png"
+                    src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt AI"
                     className="w-full h-full object-cover"
                   />
@@ -925,7 +925,7 @@ export default function ChatWidget() {
 
           {/* Avatar Image as launcher icon */}
           <img
-            src="/images/mobivolt-ai-avaliasolar.png"
+            src="/images/mobivolt-ai-avaliasolar.webp"
             alt="MobiVolt AI Avatar"
             className="w-full h-full object-cover rounded-full"
           />

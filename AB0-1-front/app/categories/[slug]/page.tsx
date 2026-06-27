@@ -5,6 +5,8 @@ import CategoryPageServer from './CategoryPageServer';
 import { categoriesApi } from '@/lib/api';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
+export const revalidate = 3600; // ISR - 1 hora
+
 interface CategorySlugPageProps {
   params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };

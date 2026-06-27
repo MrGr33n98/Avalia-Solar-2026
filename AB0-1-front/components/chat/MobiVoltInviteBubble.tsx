@@ -119,7 +119,7 @@ export default function MobiVoltInviteBubble({
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-brand-blue/20 bg-white">
               <img
-                src="/images/mobivolt-ai-avaliasolar.png"
+                src="/images/mobivolt-ai-avaliasolar.webp"
                 alt="MobiVolt AI"
                 className="w-full h-full object-cover"
               />
