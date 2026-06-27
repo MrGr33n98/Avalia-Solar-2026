@@ -4,6 +4,7 @@ import { buildApiUrl } from '@/lib/api-config';
 import { SEO_CITIES, SeoCity } from '@/lib/constants/seo-cities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
 export const revalidate = 86400; // 24 horas (muda raramente)
 

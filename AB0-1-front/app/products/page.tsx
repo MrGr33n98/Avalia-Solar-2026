@@ -313,13 +313,7 @@ function ProductsPageContent() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20">
-      <ProductsHeader
-        totalProducts={total}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onClearFilters={clearFilters}
-        selectedCategory={selectedCategoryName}
-      />
+      <ProductsHeader />
       {/* Barra de Categorias Rápidas */}
       <div className="w-full bg-white border-y border-slate-200/60 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-1">

@@ -21,7 +21,7 @@ export function useWebVitals() {
       track('web_vitals', {
         metric_name: metric.name as any,
         metric_value: metric.value,
-        metric_rating: metric.rating,
+        metric_rating: (metric.rating || 'needs-improvement') as 'good' | 'needs-improvement' | 'poor',
         page_url: window.location.href,
         page_path: window.location.pathname,
       });

@@ -67,7 +67,7 @@ const nextConfig = {
 
   // TASK-023: Enable TypeScript and ESLint checks
   eslint: {
-    ignoreDuringBuilds: true, // Allow build to succeed even with lint warnings
+    ignoreDuringBuilds: true,
     dirs: ['app', 'components', 'lib', 'utils', 'contexts', 'hooks'],
   },
 
@@ -80,7 +80,7 @@ const nextConfig = {
   },
 
   typescript: {
-    ignoreBuildErrors: true, // Allow build to succeed - type checking done in CI
+    ignoreBuildErrors: false,
   },
 
   async headers() {

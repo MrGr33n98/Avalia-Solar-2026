@@ -3,9 +3,57 @@ import { Suspense } from 'react';
 
 import CategoryPageClientV2 from './CategoryPageClientV2';
 import { fetchCategoryBySlug, categoriesApi, api, Banner } from '@/lib/api';
+import FAQSection from '@/components/seo/FAQSection';
 
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+const categoryFaqs: Record<string, { question: string; answer: string }[]> = {
+  'energia-solar': [
+    {
+      question: 'Como escolher o melhor instalador de energia solar?',
+      answer: 'Para escolher o melhor integrador, verifique as avaliações de clientes reais, o portfólio de obras concluídas, o tempo de garantia do serviço de instalação e as certificações técnicas (como NR10, NR35 e registro no CFT/CREA). A comparação de orçamentos e a reputação técnica no Avalia Solar ajudam a filtrar as empresas mais qualificadas.'
+    },
+    {
+      question: 'Quais os equipamentos necessários para gerar energia solar residencial?',
+      answer: 'O sistema é composto por painéis solares fotovoltaicos (que captam a radiação), um inversor ou microinversor (que converte a corrente contínua em corrente alternada para uso doméstico), estrutura de fixação metálica e o string box (sistema de disjuntores e proteções elétricas contra surtos).'
+    }
+  ],
+  'inversores-solares': [
+    {
+      question: 'Qual a vida útil média de um inversor ou microinversor solar?',
+      answer: 'Os inversores tradicionais (string) possuem vida útil estimada entre 10 e 15 anos, necessitando de uma troca no meio do ciclo de vida útil dos painéis (que duram 25 anos). Já os microinversores costumam oferecer garantias de fábrica estendidas de 15 a 25 anos devido à robustez e menor estresse térmico.'
+    }
+  ],
+  'carregadores-residenciais': [
+    {
+      question: 'Qual a potência recomendada para um carregador de parede (Wallbox)?',
+      answer: 'A potência recomendada para residências com rede monofásica ou bifásica comum é de 7,4 kW (AC), o que carrega a maioria dos veículos elétricos de 0% a 100% em aproximadamente 6 a 8 horas. Para redes trifásicas industriais ou comerciais, carregadores de 11 kW ou 22 kW reduzem o tempo de carga pela metade.'
+    }
+  ],
+  'financiamento-energia-solar': [
+    {
+      question: 'Vale a pena financiar um sistema de energia solar?',
+      answer: 'Sim. Em 2026, as taxas de juros para crédito verde e energia solar são bastante atrativas. Na maioria dos casos, a parcela do financiamento é equivalente ou menor do que a economia imediata gerada na conta de luz mensal, tornando o projeto financeiramente viável desde o primeiro mês.'
+    }
+  ]
+};
+
+function getCategoryFaqs(catName: string, slug: string) {
+  const custom = categoryFaqs[slug.toLowerCase()];
+  if (custom) return custom;
+
+  return [
+    {
+      question: `Como funciona o serviço de ${catName}?`,
+      answer: `Os especialistas em ${catName} realizam o dimensionamento técnico, fornecimento de equipamentos certificados e a prestação do serviço sob medida para garantir eficiência e conformidade técnica no seu projeto.`
+    },
+    {
+      question: `Qual a média de preço para ${catName} no Brasil?`,
+      answer: `Os custos de ${catName} variam conforme a complexidade e tamanho do projeto. Recomenda-se solicitar um orçamento e comparar as propostas técnicas de empresas qualificadas na nossa plataforma.`
+    }
+  ];
+}
 
 interface CategorySlugPageProps {
   params: { slug: string };
@@ -201,6 +249,17 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
             paginationMeta={paginationMeta}
           />
         </Suspense>
+
+        {/* FAQ Section específica da Categoria */}
+        <section className="bg-slate-50 border-t border-slate-200/60 py-16 md:py-24">
+          <div className="container mx-auto max-w-4xl px-4 md:px-6">
+            <FAQSection
+              title={`Dúvidas Frequentes sobre ${category.name}`}
+              subtitle={`Veja respostas rápidas para as principais dúvidas sobre ${category.name.toLowerCase()} e compare com segurança.`}
+              items={getCategoryFaqs(category.name, params.slug)}
+            />
+          </div>
+        </section>
       </div>
     );
   } catch (error) {

@@ -47,7 +47,14 @@ export function CurrentPlanCard({
   const status = subscription?.status || 'active';
 
   // Configuração visual de acordo com o plano
-  const planInfo = {
+  const planInfoMap: Record<string, {
+    name: string;
+    icon: React.ComponentType<any>;
+    accentText: string;
+    iconBg: string;
+    cardCls: string;
+    description: string;
+  }> = {
     free: {
       name: 'Gratuito',
       icon: Building2,
@@ -72,7 +79,9 @@ export function CurrentPlanCard({
       cardCls: 'clay-card border-violet-100 bg-violet-50/15 shadow-[0_20px_50px_-12px_rgba(108,92,231,0.1)] ring-1 ring-brand-purple/10',
       description: 'Dados estratégicos avançados, webhooks de integração e inteligência corporativa.',
     },
-  }[planSlug] || {
+  };
+
+  const planInfo = planInfoMap[planSlug] || {
     name: 'Gratuito',
     icon: Building2,
     accentText: 'text-slate-900',

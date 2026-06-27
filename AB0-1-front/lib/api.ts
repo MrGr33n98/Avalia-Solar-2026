@@ -1464,6 +1464,7 @@ export interface RankingData {
     criterion_slug?: string;
     criterion_title?: string;
   }>;
+  historical_data?: any[];
 }
 
 export const companyDashboardApi = {

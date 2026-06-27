@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { ArrowLeft, CreditCard, ChevronRight, HelpCircle, Check, Info, ShieldCheck, X, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBillingSubscription } from '@/hooks/useBillingSubscription';
@@ -16,12 +16,12 @@ import { ErrorBanner } from '@/components/billing/ErrorBanner';
 
 // ─── Animações ────────────────────────────────────────────────────────────
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
-const modalVariant = {
+const modalVariant: Variants = {
   hidden: { opacity: 0, scale: 0.95, y: 16 },
   visible: { 
     opacity: 1, scale: 1, y: 0,
@@ -29,7 +29,7 @@ const modalVariant = {
   },
   exit: { 
     opacity: 0, scale: 0.95, y: 16,
-    transition: { duration: 0.2, ease: 'easeIn' } 
+    transition: { duration: 0.2, ease: 'easeIn' as const } 
   }
 };
 

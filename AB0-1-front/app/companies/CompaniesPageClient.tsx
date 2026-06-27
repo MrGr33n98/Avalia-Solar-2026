@@ -295,10 +295,10 @@ export function CompaniesContent({
           latitude: Number(company.latitude),
           longitude: Number(company.longitude),
           ratingAvg: company.rating_avg,
-          isSponsored: Boolean(company.featured || company.sponsored),
+          isSponsored: Boolean(company.featured || (company as any).sponsored),
           city: company.city,
           state: company.state,
-          logo_url: company.logo_url,
+          logo_url: company.logo_url || undefined,
         })),
     [visibleCompanies]
   );

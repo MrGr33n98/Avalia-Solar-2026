@@ -45,6 +45,7 @@ interface MediaGalleryProps {
   showControls?: boolean;
   showHeader?: boolean;
   mode?: 'all' | 'photos' | 'videos' | 'downloads';
+  planFeatures?: any;
 }
 
 const MEDIA_COPY = {

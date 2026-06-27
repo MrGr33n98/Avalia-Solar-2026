@@ -51,6 +51,11 @@ export interface ReviewAnalytics {
     neutral: number;
     negative: number;
   };
+  monthly_trend?: number;
+  response_rate?: number;
+  category_average?: number;
+  industry_rank?: number;
+  total_competitors?: number;
 }
 
 export interface CompetitorMetrics {

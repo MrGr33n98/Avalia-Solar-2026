@@ -8,6 +8,30 @@ import { cookies } from 'next/headers';
 import LandingHero from '@/components/landing/LandingHero';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
+import FAQSection from '@/components/seo/FAQSection';
+
+const homeFaqs = [
+  {
+    question: 'Como funciona o Avalia Solar?',
+    answer: 'O Avalia Solar é uma plataforma de comparação técnica que ajuda você a encontrar as melhores empresas de energia solar e carregadores veiculares. Reunimos avaliações reais, reputação das empresas e qualificações para conectar você diretamente ao parceiro ideal da sua região de forma gratuita.'
+  },
+  {
+    question: 'Quanto custa instalar energia solar residencial no Brasil em 2026?',
+    answer: 'O investimento médio para um sistema fotovoltaico residencial padrão em 2026 varia entre R$ 12.000 e R$ 18.000, a depender da potência e da região. O retorno do investimento (payback) ocorre em média de 3 a 5 anos devido à redução instantânea de até 95% na fatura de energia.'
+  },
+  {
+    question: 'Qual a diferença técnica entre inversor central e microinversor?',
+    answer: 'O inversor central gerencia a geração das placas em série, reduzindo a produção geral se uma única placa for sombreada. O microinversor gerencia cada painel de forma individual, otimizando o rendimento de cada placa contra sombras e sujeira, além de operar em menor tensão.'
+  },
+  {
+    question: 'Como funcionam os créditos de energia solar?',
+    answer: 'Toda eletricidade excedente gerada pelo seu sistema e não consumida de imediato é injetada na rede da concessionária. Isso gera créditos energéticos válidos por 60 meses, que abatem automaticamente o seu consumo nos períodos em que o sistema não gera eletricidade (como à noite).'
+  },
+  {
+    question: 'O Avalia Solar vende equipamentos ou faz a instalação?',
+    answer: 'Não. O Avalia Solar atua de forma 100% independente como um portal de reputação, comparação e reviews de fornecedores. Nós não vendemos produtos e não garantimos transações, servindo como uma camada de confiança para te ajudar a escolher o melhor fornecedor local.'
+  }
+];
 
 const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
   ssr: false,
@@ -254,6 +278,13 @@ export default async function Home() {
       <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
         <CompaniesSectionWrapper dataPromise={companiesDataPromise} />
       </Suspense>
+
+      {/* FAQ Section */}
+      <section className="py-16 md:py-24 bg-white border-t border-slate-100">
+        <div className="container mx-auto max-w-4xl px-4 md:px-6">
+          <FAQSection items={homeFaqs} />
+        </div>
+      </section>
 
       {/* Conversion Banner */}
       <section className="dark py-20 bg-slate-900 text-white overflow-hidden relative">

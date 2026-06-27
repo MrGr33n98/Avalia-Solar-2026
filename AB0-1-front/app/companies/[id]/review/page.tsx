@@ -121,7 +121,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
         capture_flow_source: 'profile',
         review_criterion_scores_attributes,
-      });
+      } as any);
 
       track('review_created', {
         company_id: String(company.id),

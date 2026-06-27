@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -39,17 +39,17 @@ import { DefaultPricingAdBanner } from '@/components/banners/DefaultPricingAdBan
 
 // ─── Variantes de Animação ──────────────────────────────────────────────────
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.56, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.56, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
-const modalVariant = {
+const modalVariant: Variants = {
   hidden: { opacity: 0, scale: 0.96, y: 16 },
   visible: { 
     opacity: 1, scale: 1, y: 0,
@@ -57,7 +57,7 @@ const modalVariant = {
   },
   exit: { 
     opacity: 0, scale: 0.96, y: 16,
-    transition: { duration: 0.18, ease: 'easeIn' } 
+    transition: { duration: 0.18, ease: 'easeIn' as const } 
   }
 };
 

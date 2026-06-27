@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Check, Lock, X, ChevronDown } from 'lucide-react';
 import {
   pricingFeatureGroups,
@@ -12,12 +12,12 @@ import { CompactComparison } from './CompactComparison';
 
 // ─── Variants ─────────────────────────────────────────────────────────────
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.10 } },
 };
@@ -65,7 +65,7 @@ export function CompareRow({ row }: CompareRowProps) {
     <motion.tr
       className="group align-middle"
       whileHover={{ x: 4 }}
-      transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] as const }}
     >
       <td className="rounded-l-2xl bg-slate-50/80 px-5 py-4 pr-5 transition-colors group-hover:bg-slate-100/80">
         <div className="text-sm font-semibold leading-snug text-slate-900">{row.label}</div>

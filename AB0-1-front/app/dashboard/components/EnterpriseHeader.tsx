@@ -408,7 +408,7 @@ export default function EnterpriseHeader({
                 className="gap-2 px-2 hover:bg-slate-100 text-slate-600"
               >
                 <Avatar className="h-7 w-7 border border-slate-200">
-                  <AvatarImage src={user?.avatar_url} alt="User" />
+                  <AvatarImage src={user?.avatar_url || undefined} alt="User" />
                   <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-bold">
                     {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
                   </AvatarFallback>

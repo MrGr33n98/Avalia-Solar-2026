@@ -104,7 +104,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       value: s.totalReviews.toString(),
       icon: MessageSquare,
       change: s.monthlyTrend ? `+${s.monthlyTrend}%` : 'N/D',
-      changeType: s.monthlyTrend > 0 ? "positive" : "neutral",
+      changeType: s.monthlyTrend > 0 ? "positive" as const : "neutral" as const,
       color: "blue",
       trend: []
     },
@@ -113,7 +113,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       value: s.averageRating > 0 ? s.averageRating.toFixed(1) : '0',
       icon: Star,
       change: "N/D",
-      changeType: "neutral",
+      changeType: "neutral" as const,
       color: "yellow",
       trend: []
     },
@@ -122,7 +122,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       value: s.responseRate ? `${s.responseRate}%` : 'N/D',
       icon: Zap,
       change: "N/D",
-      changeType: "neutral",
+      changeType: "neutral" as const,
       color: "emerald",
       trend: []
     },
@@ -131,7 +131,7 @@ export default function ReviewsAnalytics({ companyId, themeMode = 'dark' }: Revi
       value: s.industryRank ? `#${s.industryRank}` : 'N/D',
       icon: Award,
       change: "N/D",
-      changeType: "neutral",
+      changeType: "neutral" as const,
       color: "purple",
       trend: []
     }

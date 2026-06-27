@@ -10,7 +10,7 @@ const getGraphqlUrl = () => {
   return `${origin}/graphql`;
 };
 
-let clientInstance: ApolloClient<any> | null = null;
+let clientInstance: any = null;
 
 /**
  * Retorna uma instância do Apollo Client.
@@ -38,9 +38,9 @@ function createApolloClient() {
     credentials: 'include',
   });
 
-  const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+  const errorLink = onError(({ graphQLErrors, networkError, operation }: any) => {
     if (graphQLErrors) {
-      graphQLErrors.forEach(({ message, path }) => {
+      graphQLErrors.forEach(({ message, path }: any) => {
         console.error(`[GraphQL error]: Message: ${message}, Path: ${path}`);
         track('graphql_error', {
           error_message: message,
