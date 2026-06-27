@@ -127,5 +127,43 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  return <ProductDetailClient {...pageData} />;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br';
+  const canonicalUrl = `${siteUrl}/products/${params.slug}`;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': canonicalUrl,
+    name: pageData.product.name,
+    description: pageData.product.description || undefined,
+    image: pageData.product.image_url || undefined,
+    sku: pageData.product.sku || undefined,
+    brand: pageData.product.brand?.name || pageData.company?.name || 'Avalia Solar',
+    offers: {
+      '@type': 'Offer',
+      price: pageData.product.price || undefined,
+      priceCurrency: 'BRL',
+      availability: 'https://schema.org/InStock',
+      url: canonicalUrl,
+    },
+    ...(pageData.reviewsData?.summary ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: pageData.reviewsData.summary.average_rating,
+        reviewCount: pageData.reviewsData.summary.total_reviews,
+        bestRating: '5',
+        worstRating: '1',
+      }
+    } : {}),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetailClient {...pageData} />
+    </>
+  );
 }

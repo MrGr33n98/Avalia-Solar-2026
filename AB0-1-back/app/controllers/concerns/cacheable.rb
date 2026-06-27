@@ -44,7 +44,9 @@ module Cacheable
 
     Rails.logger.debug("✅ Cache HIT for key: #{key}") if Rails.cache.exist?(key)
 
-    render json: cached_data
+    if stale?(etag: cached_data, public: true)
+      render json: cached_data
+    end
   end
 
   # Generate cache key from controller, action, and params

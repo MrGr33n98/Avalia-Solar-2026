@@ -18,7 +18,7 @@ import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import { SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Avalia Solar - Marketplace de Energia Solar',
+  title: 'Avalia Solar | Compare Empresas de Energia Solar',
   description: SITE.description,
   keywords:
     'energia solar, painéis solares, instalação solar, empresas solares, comparação, marketplace, energia renovável, sustentabilidade, economia de energia',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
     url: SITE.url,
     siteName: SITE.name,
-    title: 'Avalia Solar - Marketplace de Energia Solar',
+    title: 'Avalia Solar | Compare Empresas de Energia Solar',
     description: SITE.description,
     images: [
       {
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Avalia Solar - Marketplace de Energia Solar',
+    title: 'Avalia Solar | Compare Empresas de Energia Solar',
     description: SITE.description,
     images: [SITE.ogImagePath],
   },

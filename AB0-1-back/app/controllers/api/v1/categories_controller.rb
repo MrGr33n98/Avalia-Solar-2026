@@ -138,7 +138,7 @@ module Api
           companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
 
           render json: {
-            companies: companies_scope.map { |c| ::CompanySerializer.new(c).as_json },
+            companies: companies_scope.map { |c| CompanyListSerializer.new(c).as_json },
             meta: pagination_metadata(companies_scope)
           }, status: :ok
         else
@@ -147,7 +147,7 @@ module Api
           # Optimization: Eager load associations
           companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
 
-          render json: companies_scope.map { |c| ::CompanySerializer.new(c).as_json }, status: :ok
+          render json: companies_scope.map { |c| CompanyListSerializer.new(c).as_json }, status: :ok
         end
       end
 

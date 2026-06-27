@@ -31,7 +31,7 @@ async function BreadcrumbsWrapper({ slug }: { slug: string }) {
   }
 }
 
-export async function generateMetadata({ params }: CategorySlugPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: CategorySlugPageProps): Promise<Metadata> {
   try {
     const category = await categoriesApi.getBySlug(params.slug);
     
@@ -41,8 +41,20 @@ export async function generateMetadata({ params }: CategorySlugPageProps): Promi
       };
     }
 
-    const title = category.seo_title || `${category.name} | Avalia Solar`;
-    const description = category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`;
+    const city = typeof searchParams?.city === 'string' ? searchParams.city : '';
+    const state = typeof searchParams?.state === 'string' ? searchParams.state.toUpperCase() : '';
+
+    let locationSuffix = '';
+    if (city) {
+      const formattedCity = city.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      locationSuffix = ` em ${formattedCity}${state ? ` - ${state}` : ''}`;
+    } else if (state) {
+      locationSuffix = ` em ${state}`;
+    }
+
+    const baseTitle = category.name;
+    const title = `${baseTitle}${locationSuffix} | Avalia Solar`;
+    const description = `${category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`}${locationSuffix ? ` Atendendo na região de ${locationSuffix.replace(' em ', '')}.` : ''}`;
     
     return {
       title,

@@ -28,18 +28,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
     return {
-      title: `${company.name} | Avalia Solar`,
-      description: `${company.description || ''} - Localizada em ${company.address || 'Endereço não informado'}. Telefone: ${company.phone || 'N/A'}`,
+      title: `${company.name} - Avaliações e Orçamento | Avalia Solar`,
+      description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar. ${company.description || ''}`,
       openGraph: {
-        title: `${company.name} - Empresa de Energia Solar`,
-        description: `${company.description || ''} - Localizada em ${company.address || 'Endereço não informado'}. Telefone: ${company.phone || 'N/A'}`,
+        title: `${company.name} - Avaliações e Orçamento`,
+        description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
         url: canonicalUrl,
         images: company.banner_url ? [{ url: company.banner_url }] : [],
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${company.name} | Avalia Solar`,
-        description: company.description || '',
+        title: `${company.name} - Avaliações e Orçamento`,
+        description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
       },
       alternates: {
         canonical: canonicalUrl,

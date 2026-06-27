@@ -52,10 +52,12 @@ class CompanySerializer < ActiveModel::Serializer
     empty_review_aggregates
   end
 
+  def self.review_aggregates_table_exists?
+    @review_aggregates_table_exists ||= (ActiveRecord::Base.connection.table_exists?(:review_aggregates) rescue false)
+  end
+
   def review_aggregates_available?
-    ReviewAggregate.table_exists?
-  rescue StandardError
-    false
+    self.class.review_aggregates_table_exists?
   end
 
   def empty_review_aggregates

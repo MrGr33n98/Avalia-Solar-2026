@@ -34,10 +34,8 @@ module Api
           fetch_companies_data
         end
 
-        if params[:page].present?
-          render json: result, status: :ok
-        else
-          render json: result, status: :ok
+        if stale?(etag: result, public: true)
+          render json: result
         end
       rescue StandardError => e
         Rails.logger.error("Error in companies#index: #{e.message}")
@@ -46,14 +44,15 @@ module Api
 
       # GET /api/v1/companies/featured
       def featured
-        cache_key = "companies_featured_v1"
-        @companies = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-          ::Company.active.where(featured: true).limit(10).to_a
+        cache_key = "companies_featured_v2"
+        companies_json = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+          companies = ::Company.active.where(featured: true).limit(10).to_a
+          companies.map { |company| company_json_attributes(company) }
         end
-        companies_json = @companies.map do |company|
-          company_json_attributes(company)
+
+        if stale?(etag: companies_json, public: true)
+          render json: companies_json
         end
-        render json: companies_json
       end
 
       # GET /api/v1/companies/mine
@@ -643,34 +642,26 @@ module Api
         }
       end
 
-      # Serializer used by index/featured endpoints
+      # Serializer usado pelos endpoints de busca, listagem e destaques (index/featured)
       def company_json_attributes(company)
-        if params[:fields].to_s == 'card'
-          # Use preloaded association to avoid N+1
+        if params[:fields].to_s == 'detail'
+          company_detail_payload(company)
+        else
+          # Usa o CompanyListSerializer (payload reduzido e sem N+1 de FAQs/Financiamento)
+          serialized = CompanyListSerializer.new(company).as_json
+
           categories_array = company.categories.to_a
           primary_category = categories_array.first
-          {
-            id: company.id,
-            slug: company.slug,
-            name: company.name,
-            city: company.city,
-            state: company.state,
-            rating_avg: company.rating_avg,
-            rating_count: company.rating_count,
-            featured: company.featured,
-            verified: company.verified,
-            p2p_chat_enabled: p2p_chat_enabled_for(company),
-            logo_url: company.logo_url,
-            banner_url: company.banner_url,
+
+          serialized.merge!(
             primary_category: primary_category&.name,
             category_ids: categories_array.take(5).map(&:id),
             feature_access: company.respond_to?(:feature_access) ? company.feature_access : {},
             distance_km: company.has_attribute?(:distance_km) ? company.distance_km : nil,
             latitude: company.latitude,
             longitude: company.longitude
-          }
-        else
-          company_detail_payload(company)
+          )
+          serialized
         end
       end
 
