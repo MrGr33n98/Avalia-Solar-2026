@@ -290,10 +290,11 @@ export default function OverviewTab({ companyId, company, featureAccess, themeMo
   void isPremium;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* NPS / Ranking (Figma: 432x280) */}
         <motion.div
+          className="lg:col-span-5"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.45 }}
@@ -308,31 +309,25 @@ export default function OverviewTab({ companyId, company, featureAccess, themeMo
             />
           </div>
         </motion.div>
+
+        {/* Gráfico Principal de Tendências */}
+        <motion.div
+          className="lg:col-span-7"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} layout="main-only" />
+        </motion.div>
       </div>
 
-      {/* ═══ ROW 5: Full-width Analytics Block (Figma: 892x280) ═══ */}
+      {/* ═══ ROW 5: Gráficos Secundários do Analytics (Funil & Fontes de Tráfego) ═══ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        transition={{ duration: 0.5, delay: 0.55 }}
       >
-        <div className={cn(
-          'rounded-xl overflow-hidden',
-          CLAY_PANEL,
-        )}>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Activity className="h-4 w-4 text-slate-400 dark:text-white/40" />
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Analytics Avançado</p>
-              </div>
-              <Badge variant="outline" className="text-[10px] font-medium border-slate-300 dark:border-white/10 text-slate-500 dark:text-white/40">
-                30 dias
-              </Badge>
-            </div>
-            <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} />
-          </div>
-        </div>
+        <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} layout="secondary-only" />
       </motion.div>
 
       {/* ═══ ROW 6: Operational Cards (Profile + Conversion + Status) ═══ */}
