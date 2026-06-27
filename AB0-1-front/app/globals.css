@@ -228,6 +228,26 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    position: relative;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    background-image: url('/images/texture-avalia-solar-v2.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.035; /* Textura extremamente suave para não competir com textos */
+    pointer-events: none;
+    transform: translateZ(0); /* Aciona aceleração por hardware (GPU) */
+  }
+
+  .dark body::before {
+    opacity: 0.02;
+    filter: brightness(0.8);
   }
   
   /* Custom Scrollbar */
