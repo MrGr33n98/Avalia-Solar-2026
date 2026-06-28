@@ -31,35 +31,9 @@ done
 
 echo "✅ Postgres disponível!"
 
-# === CONFIGURAÇÃO DO BANCO DE DADOS ===
-
-# Configurar ambiente Rails
-echo "🔧 Configurando ambiente Rails..."
-bundle exec rails db:environment:set RAILS_ENV=production > /dev/null 2>&1 || true
-
-# Usar db:prepare que é idempotente e cuida de tudo:
-# - Cria o banco se não existir
-# - Carrega o schema se o banco estiver vazio
-# - Executa migrações pendentes se o banco já tiver schema
-echo "🔧 Preparando banco de dados (db:prepare)..."
-bundle exec rails db:prepare 2>&1 | tail -20
-
-# Tentar criar extensões necessárias (requer superuser, pode falhar mas o deploy continua)
-echo "🔧 Tentando criar extensões PostgreSQL..."
-psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS btree_gin;" > /dev/null 2>&1 || true
-psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" > /dev/null 2>&1 || true
-
-# === INÍCIO DA APLICAÇÃO ===
-
-echo "🔍 Verificando boot do Rails..."
-if ! bundle exec rails runner "puts '✅ Rails boot check passed'" > /tmp/rails_boot.log 2>&1; then
-  echo "❌ Rails boot falhou! Primeiras linhas do erro:"
-  head -80 /tmp/rails_boot.log
-  echo "--- (últimas linhas) ---"
-  tail -30 /tmp/rails_boot.log
-  exit 1
-fi
-head -5 /tmp/rails_boot.log
-
-echo "Starting Rails server..."
+# Migrations are intentionally not run here. The deploy workflow executes them
+# once, before replacing the running application containers. Keeping database
+# work out of the shared entrypoint also prevents Sidekiq restarts from booting
+# extra Rails processes on the production host.
+echo "Starting application process..."
 exec "$@"

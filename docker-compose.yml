@@ -1,8 +1,11 @@
 services:
   db:
     image: postgres:14
+    pull_policy: missing
     container_name: ab0-postgres
     restart: unless-stopped
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-320m}
+    pids_limit: 128
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -21,9 +24,12 @@ services:
 
   redis:
     image: redis:7-alpine
+    pull_policy: missing
     container_name: ab0-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --maxmemory-samples 5
+    mem_limit: ${REDIS_MEMORY_LIMIT:-224m}
+    pids_limit: 128
+    command: redis-server --appendonly yes --maxmemory ${REDIS_MAXMEMORY:-192mb} --maxmemory-policy ${REDIS_MAXMEMORY_POLICY:-noeviction} --maxmemory-samples 5
     volumes:
       - redis_data:/data
     ports:
@@ -40,9 +46,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
+    image: ${BACKEND_IMAGE:-ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest}
     container_name: ab0-backend
     restart: unless-stopped
+    mem_limit: ${BACKEND_MEMORY_LIMIT:-560m}
+    pids_limit: 256
     env_file: .env
     depends_on:
       db:
@@ -57,7 +65,9 @@ services:
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
-      SEARCH_ENABLED: ${SEARCH_ENABLED:-true}
+      SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # As chaves de SPACES virão do .env via env_file
       # Fallbacks para o SDK da AWS (Active Storage)
@@ -88,9 +98,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    image: ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest
+    image: ${BACKEND_IMAGE:-ghcr.io/mrgr33n98/avalia-solar-2026-backend:latest}
     container_name: ab0-worker
     restart: unless-stopped
+    stop_grace_period: 60s
+    mem_limit: ${WORKER_MEMORY_LIMIT:-320m}
+    pids_limit: 256
     command: bundle exec sidekiq
     env_file: .env
     depends_on:
@@ -105,7 +118,9 @@ services:
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
-      SEARCH_ENABLED: ${SEARCH_ENABLED:-true}
+      SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
+      RAILS_MAX_THREADS: ${SIDEKIQ_CONCURRENCY:-5}
+      SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-5}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # Fallbacks para o worker também processar imagens
       AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
@@ -119,9 +134,11 @@ services:
       - storage_data:/app/storage
 
   frontend:
-    image: ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest
+    image: ${FRONTEND_IMAGE:-ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest}
     container_name: ab0-frontend
     restart: unless-stopped
+    mem_limit: ${FRONTEND_MEMORY_LIMIT:-280m}
+    pids_limit: 256
     depends_on:
       backend:
         condition: service_healthy

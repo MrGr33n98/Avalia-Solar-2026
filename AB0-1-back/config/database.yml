@@ -24,7 +24,7 @@ test:
 
 production:
   <<: *default
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 15 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   host: <%= ENV.fetch("POSTGRES_HOST") { "localhost" } %>
   username: <%= ENV.fetch("POSTGRES_USER") { "postgres" } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { "password" } %>

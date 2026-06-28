@@ -1,28 +1,31 @@
 name: Enterprise Deploy - Avalia Solar
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Enterprise CI/CD Pipeline"]
+    branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  group: deploy-production
+  # Never interrupt a remote deploy halfway through a container replacement.
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  packages: write
-  deployments: write
-  id-token: write
+
+env:
+  RELEASE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   build-and-push:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     # Specific job permissions
     permissions:
       contents: read
       packages: write
-      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -30,6 +33,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
 
       - name: Lowercase Repository Name
         id: repo_name
@@ -89,7 +94,9 @@ jobs:
           context: .
           file: ./Dockerfile.backend
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
+          tags: |
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:latest
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:${{ env.RELEASE_SHA }}
           secrets: |
             "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
           cache-from: |
@@ -104,8 +111,11 @@ jobs:
           context: .
           file: ./Dockerfile.frontend
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
+          tags: |
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:latest
+            ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ env.RELEASE_SHA }}
           build-args: |
+            GIT_SHA=${{ env.RELEASE_SHA }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
             NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}
@@ -128,6 +138,13 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: production
+      url: https://www.avaliasolar.com.br
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Validate Secrets
         run: |
@@ -146,16 +163,18 @@ jobs:
         env:
           DOCKER_USER: ${{ github.actor }}
           DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_SHA: ${{ env.RELEASE_SHA }}
+          GH_REPOSITORY: ${{ github.repository }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
-          script_stop: false
-          envs: DOCKER_USER,DOCKER_TOKEN
+          script_stop: true
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY
           script: |
-            set -ex
+            set -Eeuo pipefail
             cd ~/Avalia-Solar-2026
 
             echo "?? Padronizando Git para SSH..."
@@ -190,7 +209,8 @@ jobs:
 
             echo "?? Atualizando codigo local..."
             git fetch origin main
-            git reset --hard origin/main
+            git cat-file -e "${GIT_SHA}^{commit}"
+            git reset --hard "$GIT_SHA"
 
             echo "?? Ajustando limite de upload no Nginx (413 safeguard)..."
             UPLOAD_LIMIT="${NGINX_CLIENT_MAX_BODY_SIZE:-25m}"
@@ -259,30 +279,44 @@ jobs:
               nginx -t 2>/dev/null && (systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true)
             fi
 
-            echo "?? Login no GitHub Container Registry (ghcr.io)..."
+            echo "?? Login temporario no GitHub Container Registry (ghcr.io)..."
             if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
               echo "!! ERRO: DOCKER_USER ou DOCKER_TOKEN vazios no ambiente SSH"
               exit 1
             fi
-            
-            echo "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
 
-            echo "🧹 Limpando imagens Docker antigas (liberar espaço)..."
-            # Remove containers parados, imagens sem tag e volumes dangling
-            docker container prune -f || true
-            docker image prune -f || true
-            # Se disco ainda crítico (< 2GB livres), limpeza mais agressiva
+            DOCKER_CONFIG=$(mktemp -d)
+            export DOCKER_CONFIG
+            cleanup_registry_auth() {
+              docker logout ghcr.io >/dev/null 2>&1 || true
+              rm -rf "$DOCKER_CONFIG"
+            }
+            trap cleanup_registry_auth EXIT
+            printf '%s' "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
+
+            REPO_LOWER=$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+            BACKEND_REPO="ghcr.io/${REPO_LOWER}-backend"
+            FRONTEND_REPO="ghcr.io/${REPO_LOWER}-frontend"
+            BACKEND_IMAGE="${BACKEND_REPO}:${GIT_SHA}"
+            FRONTEND_IMAGE="${FRONTEND_REPO}:${GIT_SHA}"
+            BACKEND_ROLLBACK_IMAGE="${BACKEND_REPO}:rollback"
+            FRONTEND_ROLLBACK_IMAGE="${FRONTEND_REPO}:rollback"
+            export BACKEND_IMAGE FRONTEND_IMAGE
+
+            PREVIOUS_BACKEND_ID=$(docker inspect --format='{{.Image}}' ab0-backend 2>/dev/null || true)
+            PREVIOUS_FRONTEND_ID=$(docker inspect --format='{{.Image}}' ab0-frontend 2>/dev/null || true)
+            [ -z "$PREVIOUS_BACKEND_ID" ] || docker image tag "$PREVIOUS_BACKEND_ID" "$BACKEND_ROLLBACK_IMAGE"
+            [ -z "$PREVIOUS_FRONTEND_ID" ] || docker image tag "$PREVIOUS_FRONTEND_ID" "$FRONTEND_ROLLBACK_IMAGE"
+
+            echo "?? Baixando imagens imutaveis, uma por vez..."
+            docker pull "$BACKEND_IMAGE"
+            docker pull "$FRONTEND_IMAGE"
+
             FREE_KB=$(df / --output=avail | tail -1 | tr -d ' ')
-            if [ "${FREE_KB:-0}" -lt 2097152 ]; then
-              echo "⚠️  Disco crítico (< 2GB). Removendo imagens não utilizadas..."
-              docker image prune -a -f || true
-              docker volume prune -f || true
-              docker builder prune -f || true
+            if [ "${FREE_KB:-0}" -lt 1048576 ]; then
+              echo "!! ERRO: menos de 1 GB livre apos o pull; abortando antes de trocar containers"
+              exit 1
             fi
-            echo "📊 Espaço disponível após limpeza: $(df -h / | tail -1 | awk '{print $4}')"
-
-            echo "?? Pulling novas imagens de ghcr.io..."
-            docker compose pull --quiet
 
             echo "?? Status dos recursos no servidor:"
             free -h
@@ -300,82 +334,100 @@ jobs:
               fi
             done
 
-            echo "?? Garantindo dependencias (db/redis) ativas..."
-            docker compose up -d --remove-orphans db redis
-            
-            echo "?? Aguardando db/redis ficarem healthy..."
+            wait_for_health() {
+              SERVICE="$1"
+              MAX_ATTEMPTS="$2"
+              CID=$(docker compose ps -q "$SERVICE")
+              if [ -z "$CID" ]; then
+                echo "!! ERRO: container de $SERVICE nao encontrado"
+                return 1
+              fi
+
+              for i in $(seq 1 "$MAX_ATTEMPTS"); do
+                STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$CID" 2>/dev/null || echo missing)
+                STATE=$(docker inspect --format='{{.State.Status}}' "$CID" 2>/dev/null || echo missing)
+                if [ "$STATUS" = "healthy" ]; then
+                  echo "?? $SERVICE healthy"
+                  return 0
+                fi
+                if [ "$STATE" = "exited" ] || [ "$STATUS" = "unhealthy" ] || [ "$STATUS" = "missing" ]; then
+                  docker compose logs --tail=200 "$SERVICE" || true
+                  return 1
+                fi
+                sleep 2
+              done
+
+              echo "!! Timeout aguardando $SERVICE"
+              docker compose logs --tail=200 "$SERVICE" || true
+              return 1
+            }
+
+            rollback_apps() {
+              echo "!! Restaurando imagens anteriores..."
+              set +e
+              if docker image inspect "$BACKEND_ROLLBACK_IMAGE" >/dev/null 2>&1; then
+                export BACKEND_IMAGE="$BACKEND_ROLLBACK_IMAGE"
+                docker compose up -d --no-deps --no-build backend
+                wait_for_health backend 90
+              fi
+              if docker image inspect "$FRONTEND_ROLLBACK_IMAGE" >/dev/null 2>&1; then
+                export FRONTEND_IMAGE="$FRONTEND_ROLLBACK_IMAGE"
+                docker compose up -d --no-deps --no-build frontend
+                wait_for_health frontend 90
+              fi
+              if docker image inspect "$BACKEND_ROLLBACK_IMAGE" >/dev/null 2>&1; then
+                docker compose up -d --no-deps --no-build worker
+              else
+                docker start ab0-worker >/dev/null 2>&1 || true
+              fi
+              set -e
+            }
+
+            echo "?? Garantindo db/redis ativos sem atualizar suas imagens..."
+            docker compose up -d --no-build db redis
+            wait_for_health db 60
+            wait_for_health redis 60
+
+            echo "?? Parando worker para liberar memoria e drenar jobs..."
+            docker compose stop -t 60 worker || true
+
+            echo "?? Executando migrations uma unica vez com a nova imagem..."
+            if ! docker compose run --rm --no-deps --no-build --entrypoint bundle backend exec rails db:migrate; then
+              echo "!! Migration falhou; mantendo a aplicacao anterior"
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
+            echo "?? Atualizando backend..."
+            docker compose up -d --no-deps --no-build backend
+            if ! wait_for_health backend 90; then
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Atualizando frontend..."
+            docker compose up -d --no-deps --no-build frontend
+            if ! wait_for_health frontend 90; then
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Atualizando worker somente apos os health checks..."
+            docker compose up -d --no-deps --no-build worker
             sleep 5
-
-            echo "?? Reiniciando backend..."
-            # Suba o backend isoladamente. O worker depende de service_healthy e faria
-            # o Compose abortar antes de conseguirmos imprimir os logs de boot.
-            docker compose up -d --remove-orphans backend
-
-            BACKEND_CID=$(docker compose ps -q backend)
-            if [ -z "$BACKEND_CID" ]; then
-              echo "!! ERRO: nao foi possivel obter o container ID do backend"
-              docker compose ps || true
+            WORKER_CID=$(docker compose ps -q worker)
+            WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
+            if [ "$WORKER_STATE" != "running" ]; then
+              docker compose logs --tail=200 worker || true
+              rollback_apps
               exit 1
             fi
 
-            echo "?? Aguardando backend ficar healthy..."
-            BACKEND_STATUS=""
-            for i in $(seq 1 90); do
-              BACKEND_STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$BACKEND_CID" 2>/dev/null || echo "missing")
-              BACKEND_STATE=$(docker inspect --format='{{.State.Status}}' "$BACKEND_CID" 2>/dev/null || echo "missing")
+            mkdir -p .deploy
+            printf 'GIT_SHA=%s\nBACKEND_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$GIT_SHA" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > .deploy/current.env.tmp
+            mv .deploy/current.env.tmp .deploy/current.env
 
-              if [ "$BACKEND_STATUS" = "healthy" ]; then
-                echo "?? backend healthy"
-                break
-              fi
-
-              if [ "$BACKEND_STATE" = "exited" ] || [ "$BACKEND_STATUS" = "unhealthy" ] || [ "$BACKEND_STATUS" = "missing" ]; then
-                echo "!! backend nao ficou saudavel (state=$BACKEND_STATE, health=$BACKEND_STATUS)"
-                echo "?? docker compose ps backend:"
-                docker compose ps backend || true
-                echo "?? docker inspect backend health:"
-                docker inspect "$BACKEND_CID" --format='{{json .State.Health}}' || true
-                echo "?? ultimos logs do backend:"
-                docker compose logs --tail=500 backend || true
-                exit 1
-              fi
-
-              echo "Aguardando backend... ($i/90) state=$BACKEND_STATE health=$BACKEND_STATUS"
-              sleep 2
-            done
-
-            if [ "$BACKEND_STATUS" != "healthy" ]; then
-              echo "!! Timeout aguardando backend healthy"
-              docker compose ps backend || true
-              docker inspect "$BACKEND_CID" --format='{{json .State.Health}}' || true
-              docker compose logs --tail=500 backend || true
-              exit 1
-            fi
-
-            echo "?? Reiniciando worker..."
-            docker compose up -d --remove-orphans worker
-
-            echo "?? Reiniciando frontend..."
-            docker compose up -d --remove-orphans frontend
-
-            echo "?? Migracoes de banco..."
-            docker compose exec -T backend bundle exec rails db:migrate
-
-            echo "?? Verificando se ha dados no banco..."
-            # Captura robusta com marcador para evitar confusao com logs
-            HAS_DATA=$(docker compose exec -T backend bundle exec rails runner "puts \"MARKER_COUNT:#{Company.count}\"" 2>/dev/null | grep "MARKER_COUNT:" | tail -n 1 | tr -cd '0-9')
-            HAS_DATA="${HAS_DATA:-0}"
-            
-            echo "?? Empresas encontradas: $HAS_DATA"
-
-            # Voltamos para 'if' mas garantindo que o comando falso nao mate o script
-            if [ "$HAS_DATA" = "0" ]; then
-              echo "?? Banco vazio, executando seeds e restauracao..."
-              docker compose exec -T backend bundle exec rails runner "require 'json'; f = Rails.root.join('companies.json'); if File.exist?(f); data = JSON.parse(File.read(f)); data.each { |d| Company.find_or_create_by(id: d['id']).update(d.except('id')) }; puts 'Restaurado'; end" || echo "?? Falha na restauracao"
-              docker compose exec -T backend bundle exec rails db:seed || echo "?? Falha no seed"
-            else
-              echo "?? Banco ja possui dados. Ignorando seeds/restauracao."
-            fi
+            docker container prune -f >/dev/null 2>&1 || true
+            docker image prune -f >/dev/null 2>&1 || true
 
             echo "?? Deploy finalizado com sucesso!"
-            exit 0

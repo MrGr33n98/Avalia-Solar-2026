@@ -13,13 +13,10 @@ on:
 
 concurrency:
   group: deploy-staging-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  packages: write
-  deployments: write
-  id-token: write
 
 jobs:
   # ─────────────────────────────────────────────
@@ -55,7 +52,7 @@ jobs:
         run: npm run lint -- --quiet
 
       - name: Type check
-        run: npm run typecheck || true
+        run: npm run typecheck
 
       - name: Unit tests
         run: npm run test:ci
@@ -80,6 +77,9 @@ jobs:
     needs: quality-gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       fail-fast: false
@@ -139,6 +139,7 @@ jobs:
             ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:staging
             ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:staging-${{ github.sha }}
           build-args: |
+            GIT_SHA=${{ github.sha }}
             NEXT_PUBLIC_API_URL=${{ vars.STAGING_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
             NEXT_PUBLIC_API_BASE_URL=${{ vars.STAGING_API_BASE_URL || vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
@@ -161,6 +162,9 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
 
     environment:
       name: staging
@@ -170,14 +174,13 @@ jobs:
       - name: Validate Secrets
         run: |
           MISSING=()
-          [ -z "${{ secrets.STAGING_SSH_HOST || secrets.SSH_HOST }}" ] && MISSING+=("STAGING_SSH_HOST or SSH_HOST")
-          [ -z "${{ secrets.STAGING_SSH_USER || secrets.SSH_USER }}" ] && MISSING+=("STAGING_SSH_USER or SSH_USER")
-          [ -z "${{ secrets.STAGING_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" ] && MISSING+=("STAGING_SSH_KEY or SSH_PRIVATE_KEY")
+          [ -z "${{ secrets.STAGING_SSH_HOST }}" ] && MISSING+=("STAGING_SSH_HOST")
+          [ -z "${{ secrets.STAGING_SSH_USER }}" ] && MISSING+=("STAGING_SSH_USER")
+          [ -z "${{ secrets.STAGING_SSH_KEY }}" ] && MISSING+=("STAGING_SSH_KEY")
 
           if [ ${#MISSING[@]} -ne 0 ]; then
-            echo "::warning::Missing staging secrets: ${MISSING[*]}"
-            echo "Skipping deploy — configure secrets to enable staging deployment."
-            exit 0
+            echo "::error::Missing staging secrets: ${MISSING[*]}"
+            exit 1
           fi
 
       - name: Deploy over SSH to Staging
@@ -186,29 +189,56 @@ jobs:
           DOCKER_USER: ${{ github.actor }}
           DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_SHA: ${{ github.sha }}
+          GH_REPOSITORY: ${{ github.repository }}
         with:
-          host: ${{ secrets.STAGING_SSH_HOST || secrets.SSH_HOST }}
-          username: ${{ secrets.STAGING_SSH_USER || secrets.SSH_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.STAGING_SSH_PORT || secrets.SSH_PORT || '22' }}
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || '22' }}
           command_timeout: 15m
-          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA
+          script_stop: true
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY
           script: |
-            set -ex
-            # Navigate to staging deploy directory (separate from prod)
+            set -Eeuo pipefail
             STAGING_DIR="${STAGING_DIR:-$HOME/avaliasolar-staging}"
-            [ -d "$STAGING_DIR" ] || mkdir -p "$STAGING_DIR"
+            COMPOSE_FILE="docker-compose.staging.yml"
+            if [ ! -d "$STAGING_DIR" ] || [ ! -f "$STAGING_DIR/$COMPOSE_FILE" ]; then
+              echo "ERRO: $STAGING_DIR/$COMPOSE_FILE nao esta configurado no servidor"
+              exit 1
+            fi
             cd "$STAGING_DIR"
 
-            # Pull staging images
-            echo "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
+            DOCKER_CONFIG=$(mktemp -d)
+            export DOCKER_CONFIG
+            cleanup_registry_auth() {
+              docker logout ghcr.io >/dev/null 2>&1 || true
+              rm -rf "$DOCKER_CONFIG"
+            }
+            trap cleanup_registry_auth EXIT
+            printf '%s' "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
 
-            REPO=$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]' 2>/dev/null || echo "mrgrn98/avalia-solar-2026")
-            docker pull ghcr.io/${REPO}-backend:staging || true
-            docker pull ghcr.io/${REPO}-frontend:staging || true
+            REPO=$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+            BACKEND_IMAGE="ghcr.io/${REPO}-backend:staging-${GIT_SHA}"
+            FRONTEND_IMAGE="ghcr.io/${REPO}-frontend:staging-${GIT_SHA}"
+            export BACKEND_IMAGE FRONTEND_IMAGE
 
-            echo "✅ Staging deploy triggered for SHA: $GIT_SHA"
-            echo "ℹ️  Configure docker-compose.staging.yml on server to complete setup."
+            docker pull "$BACKEND_IMAGE"
+            docker pull "$FRONTEND_IMAGE"
+
+            docker compose -f "$COMPOSE_FILE" config --images | grep -Fx "$BACKEND_IMAGE" >/dev/null
+            docker compose -f "$COMPOSE_FILE" config --images | grep -Fx "$FRONTEND_IMAGE" >/dev/null
+
+            docker compose -f "$COMPOSE_FILE" up -d --no-build --wait --wait-timeout 120 db redis
+            docker compose -f "$COMPOSE_FILE" stop -t 60 worker || true
+            if ! docker compose -f "$COMPOSE_FILE" run --rm --no-deps --no-build --entrypoint bundle backend exec rails db:migrate; then
+              docker compose -f "$COMPOSE_FILE" start worker || true
+              exit 1
+            fi
+            docker compose -f "$COMPOSE_FILE" up -d --no-deps --no-build --wait --wait-timeout 240 backend
+            docker compose -f "$COMPOSE_FILE" up -d --no-deps --no-build --wait --wait-timeout 240 frontend
+            docker compose -f "$COMPOSE_FILE" up -d --no-deps --no-build worker
+
+            echo "Staging deploy concluido para SHA: $GIT_SHA"
 
   # ─────────────────────────────────────────────
   # Notify on completion

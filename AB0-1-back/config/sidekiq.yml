@@ -11,7 +11,7 @@
   - [Sidekiq::Middleware::Client::Logging]
 
 # Concurrency (number of threads)
-:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 25 } %>
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 5 } %>
 
 # Queues with priority (higher number = higher priority)
 :queues:
@@ -28,7 +28,7 @@
 :verbose: false
 
 # Log file
-:logfile: ./log/sidekiq.log
+:logfile: <%= ENV.fetch("SIDEKIQ_LOGFILE") { "/dev/stdout" } %>
 
 # PID file
 :pidfile: ./tmp/pids/sidekiq.pid
@@ -48,7 +48,7 @@
 
 # Environment-specific settings
 production:
-  :concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 25 } %>
+  :concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 5 } %>
   :verbose: false
   :timeout: 30
   :max_retries: 5
