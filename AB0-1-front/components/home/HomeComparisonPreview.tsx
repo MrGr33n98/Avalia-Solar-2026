@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowRight, BadgeCheck, Clock3, MapPinned, Scale, Star } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Building2, Clock3, MapPinned, Scale, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import type { Company } from '@/lib/api';
+import { getFullImageUrl } from '@/utils/image';
 
 type HomeComparisonPreviewProps = {
   companies: Company[];
@@ -53,13 +54,30 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
               <thead>
                 <tr>
                   <th className="w-48 p-4 text-xs font-bold uppercase tracking-[0.1em] text-slate-500 sm:p-5">Critério</th>
-                  {selected.map((company) => (
-                    <th key={company.id} className="border-l border-slate-200 p-4 text-base font-black text-slate-950 sm:p-5">
-                      <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700">
-                        {company.name}
-                      </Link>
-                    </th>
-                  ))}
+                  {selected.map((company) => {
+                    const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+                    return (
+                      <th key={company.id} className="border-l border-slate-200 p-4 text-base font-black text-slate-950 sm:p-5">
+                        <div className="flex flex-col gap-3">
+                          <div className="relative flex h-10 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1">
+                            {logoUrl ? (
+                              <img
+                                src={logoUrl}
+                                alt={`Logo da ${company.name}`}
+                                className="h-full w-full object-contain"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />
+                            )}
+                          </div>
+                          <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700">
+                            {company.name}
+                          </Link>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
