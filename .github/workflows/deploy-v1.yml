@@ -173,8 +173,18 @@ jobs:
           script: |
             cd ~/Avalia-Solar-2026 || exit 1
 
-            echo "?? Padronizando Git para SSH..."
-            CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "none")
+            IS_GIT=0
+            [ -d .git ] && IS_GIT=1 || true
+
+            CURRENT_REMOTE="none"
+            if [ "$IS_GIT" -eq 1 ]; then
+              HAS_ORIGIN=0
+              git remote | grep "^origin$" >/dev/null && HAS_ORIGIN=1 || true
+              if [ "$HAS_ORIGIN" -eq 1 ]; then
+                CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null) || CURRENT_REMOTE="none"
+              fi
+            fi
+
             TARGET_REMOTE="git@github.com:MrGr33n98/Avalia-Solar-2026.git"
 
             IS_HTTP=0
@@ -184,10 +194,15 @@ jobs:
 
             if [ "$IS_HTTP" -eq 1 ]; then
               echo "?? Detectado remote HTTP/HTTPS ($CURRENT_REMOTE). Trocando para SSH..."
-              git remote set-url origin "$TARGET_REMOTE"
-            elif [ "$CURRENT_REMOTE" = "none" ] || [ -z "$CURRENT_REMOTE" ]; then
+              git remote set-url origin "$TARGET_REMOTE" || true
+            elif [ "$CURRENT_REMOTE" = "none" ]; then
               echo "!! Remote origin nao encontrado. Configurando para SSH..."
-              git remote add origin "$TARGET_REMOTE"
+              if [ "$IS_GIT" -eq 1 ]; then
+                git remote add origin "$TARGET_REMOTE" || true
+              else
+                git init || true
+                git remote add origin "$TARGET_REMOTE" || true
+              fi
             else
               echo "?? Remote ja esta configurado como SSH ou outro formato nao-HTTP."
             fi
