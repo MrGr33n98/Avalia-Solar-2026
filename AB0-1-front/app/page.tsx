@@ -10,7 +10,6 @@ import FAQSection from '@/components/seo/FAQSection';
 import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
 import HomeCompanyCard from '@/components/home/HomeCompanyCard';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
-import HomeTrustSignature from '@/components/home/HomeTrustSignature';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import HowItWorks from '@/components/landing/HowItWorks';
 import DecisionTransparency from '@/components/landing/DecisionTransparency';
@@ -212,7 +211,6 @@ export default async function Home() {
         />
       </Suspense>
 
-      <HomeTrustSignature />
       <DecisionTransparency />
       <HowItWorks />
       <SavingsCalculator />
