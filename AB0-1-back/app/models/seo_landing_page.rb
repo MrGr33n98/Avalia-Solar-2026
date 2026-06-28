@@ -59,7 +59,12 @@ class SeoLandingPage < ApplicationRecord
     self.state_abbr = Locations::CoverageNormalizer.normalize_state(state_abbr) || state_abbr.to_s.strip.upcase
     canonical_city = Locations::CoverageNormalizer.normalize_city(city_name, state: state_abbr)
     self.city_name = canonical_city if canonical_city.present?
-    self.slug = self.class.local_solar_slug(state_abbr, city_name) if slug.blank? && state_abbr.present? && city_name.present?
-    self.metadata_cache = (metadata_cache || {}).merge('local_route' => local_solar_path) if state_abbr.present? && city_name.present?
+    if slug.blank? && state_abbr.present? && city_name.present?
+      self.slug = self.class.local_solar_slug(state_abbr,
+                                              city_name)
+    end
+    return unless state_abbr.present? && city_name.present?
+
+    self.metadata_cache = (metadata_cache || {}).merge('local_route' => local_solar_path)
   end
 end

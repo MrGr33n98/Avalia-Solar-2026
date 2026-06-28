@@ -26,7 +26,7 @@ ActiveAdmin.register Banner do
                 :width, :height, :slot_key, :target_states, :target_cities, category_ids: []
 
   scope :all, default: true
-  scope('Ativos agora') { |scope| scope.currently_active }
+  scope('Ativos agora', &:currently_active)
   scope('Aprovados') { |scope| scope.where(moderation_status: 'approved') }
   scope('Inativos') { |scope| scope.where(active: false) }
   scope('Agendados') { |scope| scope.where('start_date > ?', Time.current) }
@@ -39,7 +39,7 @@ ActiveAdmin.register Banner do
     column :image do |banner|
       if banner.image.attached?
         image_tag url_for(banner.image),
-                  style: "max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;"
+                  style: 'max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;'
       end
     end
     column 'Status Operacional' do |banner|
@@ -81,12 +81,12 @@ ActiveAdmin.register Banner do
             ['Retangular Grande (6:1 / 4:1)', 'rectangular_large'],
             ['Retangular Pequeno', 'rectangular_small']
           ], include_blank: false
-          
+
           f.input :position, as: :select, collection: banner_position_options, include_blank: false
 
-          f.input :slot_key, label: 'Slot Key (Opcional)', 
-                  hint: 'Chave técnica para injeção em locais específicos (ex: home_hero, sponsored_v2)'
-          
+          f.input :slot_key, label: 'Slot Key (Opcional)',
+                             hint: 'Chave técnica para injeção em locais específicos (ex: home_hero, sponsored_v2)'
+
           f.inputs 'Dimensões (px)' do
             f.input :width, input_html: { id: 'banner_width' }, hint: 'Padrão sugerido pela posição'
             f.input :height, input_html: { id: 'banner_height' }, hint: 'Padrão sugerido pela posição'
@@ -96,16 +96,16 @@ ActiveAdmin.register Banner do
 
       tab 'Targeting (Segmentação)' do
         f.inputs 'Audiência' do
-          f.input :company, label: 'Empresa Proprietária (Opcional)', 
-                  hint: 'Se selecionado, o banner será vinculado à performance desta empresa.'
+          f.input :company, label: 'Empresa Proprietária (Opcional)',
+                            hint: 'Se selecionado, o banner será vinculado à performance desta empresa.'
           f.input :categories, as: :check_boxes, collection: Category.order(:name),
                                label: 'Exibir nestas categorias',
                                hint: 'Deixe vazio para exibição global (se a posição permitir).'
-          f.input :target_states, as: :string, 
+          f.input :target_states, as: :string,
                                   input_html: { value: Array(f.object.target_states).join(', ') },
                                   label: 'Estados Alvo (Sigla)',
                                   hint: 'Separe múltiplos estados por vírgula. Ex: SP, RJ. Deixe vazio para todos.'
-          f.input :target_cities, as: :string, 
+          f.input :target_cities, as: :string,
                                   input_html: { value: Array(f.object.target_cities).join(', ') },
                                   label: 'Cidades Alvo',
                                   hint: 'Separe múltiplas cidades por vírgula. Ex: São Paulo, Campinas. Deixe vazio para todas.'
@@ -183,7 +183,7 @@ ActiveAdmin.register Banner do
       row :image do |banner|
         if banner.image.attached?
           image_tag url_for(banner.image),
-                    style: "max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;"
+                    style: 'max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;'
         end
       end
       row :link do |banner|

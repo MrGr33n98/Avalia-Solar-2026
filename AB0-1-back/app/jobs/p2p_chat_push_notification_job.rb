@@ -29,7 +29,9 @@ class P2pChatPushNotificationJob < ApplicationJob
     end
 
     response = Net::HTTP.post(EXPO_PUSH_URL, payload.to_json, 'Content-Type' => 'application/json')
-    Rails.logger.warn("[P2P Push] Expo returned #{response.code}: #{response.body}") unless response.is_a?(Net::HTTPSuccess)
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.warn("[P2P Push] Expo returned #{response.code}: #{response.body}")
+    end
   rescue StandardError => e
     Rails.logger.error("[P2P Push] #{e.class}: #{e.message}")
     raise

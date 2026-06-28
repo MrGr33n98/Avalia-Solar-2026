@@ -25,11 +25,11 @@ class IntentScoreHistory < ApplicationRecord
   end
 
   def score_increased?
-    score_delta > 0
+    score_delta.positive?
   end
 
   def score_decreased?
-    score_delta < 0
+    score_delta.negative?
   end
 
   def level_changed?

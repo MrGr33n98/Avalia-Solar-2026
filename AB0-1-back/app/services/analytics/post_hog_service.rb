@@ -4,12 +4,12 @@ module Analytics
     def self.capture(event_name, properties = {}, distinct_id: nil)
       return unless enabled?
 
-      properties = properties.is_a?(Hash) ? properties : {}
+      properties = {} unless properties.is_a?(Hash)
       distinct_id = opaque_distinct_id(distinct_id || properties[:distinct_id] || properties['distinct_id'] || 'anonymous')
-      
+
       # Sanitize properties (remove PII)
       sanitized_props = sanitize_properties(properties)
-      
+
       # Adiciona contexto do Rails (ambiente)
       sanitized_props[:rails_env] = Rails.env
       sanitized_props[:$lib] = 'ruby-service'
@@ -48,7 +48,7 @@ module Analytics
         item_category: lead.product_vertical, # VAR-016
         status: lead.status,
         created_at: lead.created_at,
-        "$set" => {
+        '$set' => {
           last_lead_at: lead.created_at
         }
       }
@@ -89,11 +89,9 @@ module Analytics
       capture(event_name, properties, distinct_id: d_id)
     end
 
-    private
-
     def self.posthog
       @posthog ||= PostHog::Client.new(
-        api_key: ENV['POSTHOG_API_KEY'] || ENV['NEXT_PUBLIC_POSTHOG_KEY'],
+        api_key: ENV['POSTHOG_API_KEY'] || ENV.fetch('NEXT_PUBLIC_POSTHOG_KEY', nil),
         host: ENV['POSTHOG_HOST'] || 'https://us.i.posthog.com'
       )
     end

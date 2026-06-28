@@ -10,7 +10,10 @@ module Api
         return render json: { error: 'Localidade não encontrada' }, status: :not_found if state.blank?
 
         city = resolve_city(state)
-        return render json: { error: 'Localidade não encontrada' }, status: :not_found if params[:city].present? && city.blank?
+        if params[:city].present? && city.blank?
+          return render json: { error: 'Localidade não encontrada' },
+                        status: :not_found
+        end
 
         base_scope = local_base_scope(state, city)
         filtered_scope = apply_filters(base_scope)
@@ -143,8 +146,8 @@ module Api
 
       def parsed_project_types
         requested = Array(params[:project_types]).flat_map { |value| value.to_s.split(',') }
-                                                .map(&:strip)
-                                                .reject(&:blank?)
+                                                 .map(&:strip)
+                                                 .reject(&:blank?)
 
         requested.filter_map do |value|
           ::Company::PROJECT_TYPES.find { |project_type| same_project_type?(project_type, value) }
@@ -209,12 +212,12 @@ module Api
                   .order(Arel.sql('local_companies_count DESC, categories.name ASC'))
                   .limit(12)
                   .map do |category|
-          {
-            id: category.id,
-            name: category.name,
-            seo_url: category.seo_url,
-            companies_count: category.read_attribute(:local_companies_count).to_i
-          }
+                    {
+                      id: category.id,
+                      name: category.name,
+                      seo_url: category.seo_url,
+                      companies_count: category.read_attribute(:local_companies_count).to_i
+                    }
         end
       end
 
@@ -246,8 +249,8 @@ module Api
       def nearby_locations_payload(state, city)
         vertical_slug = params[:vertical].presence || 'energia-solar'
         scope = ::Company.active
-                          .where(state: state)
-                          .where.not(city: [nil, ''])
+                         .where(state: state)
+                         .where.not(city: [nil, ''])
 
         if params[:vertical].present?
           vertical_cat = ::Category.main_categories.active.find_by(seo_url: params[:vertical])
@@ -263,12 +266,12 @@ module Api
               .sort_by { |name, count| [-count, name.to_s] }
               .first(8)
               .map do |name, count|
-          {
-            state: state,
-            city: name,
-            href: "/companies/#{vertical_slug}/#{state.downcase}/#{::Locations::CoverageNormalizer.city_slug(name)}",
-            companies_count: count
-          }
+                {
+                  state: state,
+                  city: name,
+                  href: "/companies/#{vertical_slug}/#{state.downcase}/#{::Locations::CoverageNormalizer.city_slug(name)}",
+                  companies_count: count
+                }
         end
       end
 

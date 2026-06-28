@@ -95,9 +95,9 @@ class LeadWizardVersion < ApplicationRecord
   end
 
   def validate_scope_exclusivity
-    if company_id.present? && category_id.present?
-      errors.add(:base, 'Use apenas um escopo por versão: empresa, categoria ou global')
-    end
+    return unless company_id.present? && category_id.present?
+
+    errors.add(:base, 'Use apenas um escopo por versão: empresa, categoria ou global')
   end
 
   def validate_version_uniqueness
@@ -112,13 +112,11 @@ class LeadWizardVersion < ApplicationRecord
   end
 
   def validate_published_structure
-    if lead_wizard_sections.empty?
-      errors.add(:base, 'uma versão publicada precisa ter ao menos uma seção')
-    end
+    errors.add(:base, 'uma versão publicada precisa ter ao menos uma seção') if lead_wizard_sections.empty?
 
-    if lead_wizard_fields.empty?
-      errors.add(:base, 'uma versão publicada precisa ter ao menos um campo')
-    end
+    return unless lead_wizard_fields.empty?
+
+    errors.add(:base, 'uma versão publicada precisa ter ao menos um campo')
   end
 
   def validate_published_choice_fields

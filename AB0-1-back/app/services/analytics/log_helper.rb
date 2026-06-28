@@ -2,7 +2,8 @@
 
 module Analytics
   module LogHelper
-    def self.json_log(level: 'INFO', component: nil, pipeline: nil, event_id: nil, duration_ms: nil, rows: nil, error_class: nil, error_message: nil)
+    def self.json_log(level: 'INFO', component: nil, pipeline: nil, event_id: nil, duration_ms: nil, rows: nil,
+                      error_class: nil, error_message: nil)
       log_data = {
         timestamp: Time.current.iso8601,
         level: level,

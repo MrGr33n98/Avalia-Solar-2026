@@ -101,9 +101,10 @@ module Types
       argument :latitude, Float, required: false, description: 'Latitude da origem para busca por raio'
       argument :longitude, Float, required: false, description: 'Longitude da origem para busca por raio'
       argument :radius_km, Integer, required: false, description: 'Raio de busca em km (requer latitude e longitude)'
-      argument :map_bounds, Types::MapBoundsInputType, required: false, description: 'Viewport do mapa para busca por área'
+      argument :map_bounds, Types::MapBoundsInputType, required: false,
+                                                       description: 'Viewport do mapa para busca por área'
 
-      complexity ->(ctx, args, child_complexity) {
+      complexity lambda { |_ctx, args, child_complexity|
         limit = args[:limit] || 20
         child_complexity * limit
       }
@@ -246,9 +247,7 @@ module Types
 
       query = query.where(position: position) if position.present?
 
-      if slot_key.present? && ::Banner.column_names.include?('slot_key')
-        query = query.where(slot_key: slot_key)
-      end
+      query = query.where(slot_key: slot_key) if slot_key.present? && ::Banner.column_names.include?('slot_key')
 
       if company_id.present? && ::Banner.column_names.include?('company_id')
         query = query.where('company_id = ? OR company_id IS NULL', company_id)
@@ -274,13 +273,13 @@ module Types
         query = query.where("target_cities = '{}' OR target_cities IS NULL OR ? = ANY(target_cities)", city_name)
       end
 
-      if ::Banner.column_names.include?('priority')
-        query = query.order(priority: :asc, sponsored: :desc, created_at: :desc)
-      elsif ::Banner.column_names.include?('sponsored')
-        query = query.order(sponsored: :desc, created_at: :desc)
-      else
-        query = query.order(created_at: :desc)
-      end
+      query = if ::Banner.column_names.include?('priority')
+                query.order(priority: :asc, sponsored: :desc, created_at: :desc)
+              elsif ::Banner.column_names.include?('sponsored')
+                query.order(sponsored: :desc, created_at: :desc)
+              else
+                query.order(created_at: :desc)
+              end
 
       query = query.limit(limit) if limit.present? && limit.positive?
       query.includes(:categories, :company, image_attachment: :blob)
@@ -293,9 +292,7 @@ module Types
         scope = scope.joins(:category).where('categories.seo_url = ? OR categories.name = ?', category, category)
       end
 
-      if q.present?
-        scope = scope.where('articles.title ILIKE ? OR articles.content ILIKE ?', "%#{q}%", "%#{q}%")
-      end
+      scope = scope.where('articles.title ILIKE ? OR articles.content ILIKE ?', "%#{q}%", "%#{q}%") if q.present?
 
       scope = scope.order(published_at: :desc)
       paginated = scope.page(page).per(per_page)
@@ -324,7 +321,7 @@ module Types
       companies = companies.where(city: city) if city.present?
 
       options_scope = ::FinancingOption.where(company_id: companies.pluck(:id)).where(active: true)
-      
+
       if audience.present?
         normalized_aud = normalize_audience(audience)
         options_scope = options_scope.where(target_audience: normalized_aud)
@@ -373,7 +370,7 @@ module Types
     end
 
     def my_leads(status: nil, page: 1, per_page: 10)
-      raise GraphQL::ExecutionError.new("Autenticação necessária") if context[:current_user].nil?
+      raise GraphQL::ExecutionError, 'Autenticação necessária' if context[:current_user].nil?
 
       scope = ::Lead.where(email: context[:current_user].email)
       scope = scope.where(wizard_status: status) if status.present?
@@ -395,15 +392,15 @@ module Types
     end
 
     def my_reviews(status: nil, page: 1, per_page: 10)
-      raise GraphQL::ExecutionError.new("Autenticação necessária") if context[:current_user].nil?
+      raise GraphQL::ExecutionError, 'Autenticação necessária' if context[:current_user].nil?
 
       scope = ::Review.where(user_id: context[:current_user].id)
-      
+
       if status.present?
         status_value = ::Review.statuses[status] || status
         scope = scope.where(status: status_value)
       end
-      
+
       scope = scope.order(created_at: :desc)
 
       paginated = scope.page(page).per(per_page)
@@ -439,9 +436,9 @@ module Types
         # 'recommended' — mesmo critério de ranking do REST
         scope.order(
           Arel.sql(
-            "CASE WHEN sponsored THEN 1 ELSE 0 END DESC, " \
-            "(COALESCE(rating_avg, 0) * 0.6 + COALESCE(rating_count, 0) * 0.0001) DESC, " \
-            "COALESCE(rating_avg, 0) DESC, name ASC"
+            'CASE WHEN sponsored THEN 1 ELSE 0 END DESC, ' \
+            '(COALESCE(rating_avg, 0) * 0.6 + COALESCE(rating_count, 0) * 0.0001) DESC, ' \
+            'COALESCE(rating_avg, 0) DESC, name ASC'
           )
         )
       end

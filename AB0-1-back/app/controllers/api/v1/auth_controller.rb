@@ -47,7 +47,7 @@ module Api
 
           # Verificação de e-mail confirmado (Obrigatória conforme solicitado)
           if !Rails.env.development? && user.respond_to?(:confirmed?) && !user.confirmed?
-            Rails.logger.warn("[Auth] Login blocked for unconfirmed user")
+            Rails.logger.warn('[Auth] Login blocked for unconfirmed user')
             return render_error_response(
               message: 'Por favor, confirme seu e-mail antes de fazer login.',
               status: :forbidden,
@@ -110,7 +110,7 @@ module Api
       end
 
       def register
-        Rails.logger.info "[Audit] Initing user registration"
+        Rails.logger.info '[Audit] Initing user registration'
         attrs = user_params
 
         # Injeta localização da borda (Cloudflare) se não fornecida
@@ -122,7 +122,7 @@ module Api
 
         terms_accepted = params[:terms_accepted] || (params[:user] && params[:user][:terms_accepted])
         unless ActiveModel::Type::Boolean.new.cast(terms_accepted)
-          Rails.logger.warn "[Audit] Registration failed: terms not accepted"
+          Rails.logger.warn '[Audit] Registration failed: terms not accepted'
           return render_error_response(
             message: 'Você deve aceitar os Termos e a Política de Privacidade',
             status: :unprocessable_entity,
@@ -316,9 +316,9 @@ module Api
         user = User.find_by(email: email)
         if user
           user.send_reset_password_instructions
-          Rails.logger.info("[Auth] Reset password instructions triggered")
+          Rails.logger.info('[Auth] Reset password instructions triggered')
         else
-          Rails.logger.info("[Auth] Skip forgot_password: User not found")
+          Rails.logger.info('[Auth] Skip forgot_password: User not found')
         end
         render json: { message: 'Se o e-mail existir, você receberá instruções para redefinir a senha.' }, status: :ok
       end
@@ -333,7 +333,7 @@ module Api
         if token.blank?
           query_token = request.query_parameters['reset_password_token'] || request.query_parameters['token']
           if query_token.present?
-            Rails.logger.warn "[Security] Password reset token rejected from query string"
+            Rails.logger.warn '[Security] Password reset token rejected from query string'
             return render_error_response(
               message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
               status: :unprocessable_entity,
@@ -394,12 +394,12 @@ module Api
         if user.respond_to?(:confirmed?) && !user.confirmed?
           begin
             user.send_confirmation_instructions
-            Rails.logger.info("[Auth] Confirmation instructions resent")
+            Rails.logger.info('[Auth] Confirmation instructions resent')
           rescue StandardError => e
             Rails.logger.error("[Auth] resend_confirmation failure: #{e.class}: #{e.message}")
           end
         else
-          Rails.logger.info("[Auth] Skip resend_confirmation: User not found, already confirmed or not supported")
+          Rails.logger.info('[Auth] Skip resend_confirmation: User not found, already confirmed or not supported')
         end
 
         # Anti-enumeration: do not reveal whether the email exists.
@@ -413,7 +413,7 @@ module Api
         if token.blank?
           query_token = request.query_parameters['confirmation_token'] || request.query_parameters['token']
           if query_token.present?
-            Rails.logger.warn "[Security] Confirmation token rejected from query string"
+            Rails.logger.warn '[Security] Confirmation token rejected from query string'
             return render_error_response(
               message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
               status: :unprocessable_entity,
@@ -424,7 +424,7 @@ module Api
         end
 
         if token.blank?
-          Rails.logger.warn("[Auth] Confirmation blocked: token missing")
+          Rails.logger.warn('[Auth] Confirmation blocked: token missing')
           return render_error_response(
             message: 'Token inválido ou ausente',
             status: :unprocessable_entity,
@@ -432,7 +432,7 @@ module Api
           )
         end
 
-        Rails.logger.info "[Audit] Processing email confirmation"
+        Rails.logger.info '[Audit] Processing email confirmation'
 
         user = User.confirm_by_token(token)
         if user.errors.empty?

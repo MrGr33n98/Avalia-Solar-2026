@@ -19,20 +19,20 @@ module Chat
           nome: @company.name,
           cidade: @company.city,
           estado: @company.state,
-          nota_media: @company.rating_avg ? @company.rating_avg.to_f.round(2) : nil,
+          nota_media: @company.rating_avg&.to_f&.round(2),
           total_avaliacoes: @company.rating_count || 0,
           link_perfil: "https://www.avaliasolar.com.br/companies/#{@company.slug}",
-          patrocinada: !!@company.sponsored,
-          verificada: !!@company.verified,
+          patrocinada: !@company.sponsored.nil?,
+          verificada: !@company.verified.nil?,
           recommendation_score: @company.respond_to?(:calculate_ranking_score) ? @company.calculate_ranking_score.to_f.round(2) : nil,
           recommendation_reason: build_recommendation_reason,
           servicos: Array(@company.services_offered),
           nichos: Array(@company.niche_tags),
           logo_url: @company.respond_to?(:logo_url) ? @company.logo_url : nil,
           warranty_years: @company.respond_to?(:warranty_years) ? @company.warranty_years : nil,
-          has_financing: @company.respond_to?(:financing_enabled) ? !!@company.financing_enabled : false,
+          has_financing: @company.respond_to?(:financing_enabled) ? !@company.financing_enabled.nil? : false,
           years_in_business: @company.respond_to?(:founded_year) && @company.founded_year ? Date.today.year - @company.founded_year : nil,
-          post_sales_support: @company.respond_to?(:post_sales_support) ? !!@company.post_sales_support : false
+          post_sales_support: @company.respond_to?(:post_sales_support) ? !@company.post_sales_support.nil? : false
         }
       rescue StandardError => e
         Rails.logger.error("[Chat::Mobivolt::SafeCompanySerializer] Error serializing company #{@company&.id}: #{e.message}")
@@ -43,12 +43,12 @@ module Chat
 
       def build_recommendation_reason
         reasons = []
-        reasons << "Empresa Destaque/Patrocinada" if @company.sponsored
-        reasons << "Instalador Verificado com selo de confiança" if @company.verified
+        reasons << 'Empresa Destaque/Patrocinada' if @company.sponsored
+        reasons << 'Instalador Verificado com selo de confiança' if @company.verified
         reasons << "Excelente reputação com nota #{@company.rating_avg}" if @company.rating_avg.to_f >= 4.5
         reasons << "Especialista em #{@company.niche_tags.first}" if @company.niche_tags.present?
-        
-        reasons.join(" • ").presence
+
+        reasons.join(' • ').presence
       end
     end
   end

@@ -21,7 +21,9 @@ ActiveAdmin.register SponsoredPlan do
     column :product
     column :category
     column :plan
-    column('Ativo?') { |record| status_tag(record.active? ? 'Ativo' : 'Inativo', class: record.active? ? 'ok' : 'warning') }
+    column('Ativo?') do |record|
+      status_tag(record.active? ? 'Ativo' : 'Inativo', class: record.active? ? 'ok' : 'warning')
+    end
     column :start_at
     column :end_at
     column :created_at

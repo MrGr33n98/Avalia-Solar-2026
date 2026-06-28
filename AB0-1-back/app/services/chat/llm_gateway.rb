@@ -259,11 +259,11 @@ module Chat
       R: Sim! O Tour pode ser reiniciado a qualquer momento pelo botão no canto superior do dashboard.
     PROMPT
 
-    def self.call(messages:, context: nil, model: nil, system_prompt: nil, &block)
-      new.call(messages: messages, context: context, model: model, system_prompt: system_prompt, &block)
+    def self.call(messages:, context: nil, model: nil, system_prompt: nil, &)
+      new.call(messages: messages, context: context, model: model, system_prompt: system_prompt, &)
     end
 
-    def call(messages:, context: nil, model: nil, is_fallback: false, system_prompt: nil, &block)
+    def call(messages:, context: nil, model: nil, is_fallback: false, system_prompt: nil, &)
       api_key = ENV.fetch('AI_API_KEY', nil)
       unless api_key.present?
         Rails.logger.warn('[Chat::LlmGateway] AI_API_KEY not configured')
@@ -272,9 +272,14 @@ module Chat
 
       provider = ENV.fetch('AI_PROVIDER', 'openai').to_s.downcase
       base_url = ENV.fetch('AI_BASE_URL', provider == 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1')
-      
-      model_name = model || (is_fallback ? ENV.fetch('AI_FALLBACK_MODEL', DEFAULT_MODEL) : ENV.fetch('AI_MODEL', DEFAULT_MODEL))
-      
+
+      model_name = model || (if is_fallback
+                               ENV.fetch('AI_FALLBACK_MODEL',
+                                         DEFAULT_MODEL)
+                             else
+                               ENV.fetch('AI_MODEL', DEFAULT_MODEL)
+                             end)
+
       sys_prompt = system_prompt || SYSTEM_PROMPT
       system_content = context.present? ? "#{sys_prompt}\n\nCONTEXTO ATUAL:\n#{context}" : sys_prompt
 
@@ -305,11 +310,11 @@ module Chat
 
       if block_given?
         payload[:stream] = true
-        full_content = +""
-        buffer = +""
+        full_content = +''
+        buffer = +''
 
         response = HTTParty.post(
-          "#{base_url.gsub(/\/+$/, '')}/chat/completions",
+          "#{base_url.gsub(%r{/+$}, '')}/chat/completions",
           headers: headers,
           body: payload.to_json,
           timeout: DEFAULT_TIMEOUT,
@@ -317,24 +322,24 @@ module Chat
         ) do |fragment|
           buffer << fragment
           while (index = buffer.index("\n\n"))
-            chunk = buffer.slice!(0..index + 1)
+            chunk = buffer.slice!(0..(index + 1))
             next if chunk.strip.empty?
 
             chunk.split("\n").each do |line|
-              if line.start_with?("data: ")
-                data_str = line.sub("data: ", "").strip
-                next if data_str == "[DONE]"
+              next unless line.start_with?('data: ')
 
-                begin
-                  json = JSON.parse(data_str)
-                  delta = json.dig('choices', 0, 'delta', 'content')
-                  if delta
-                    full_content << delta
-                    yield(delta, false, nil)
-                  end
-                rescue JSON::ParserError
-                  # Ignore malformed JSON in stream chunks
+              data_str = line.sub('data: ', '').strip
+              next if data_str == '[DONE]'
+
+              begin
+                json = JSON.parse(data_str)
+                delta = json.dig('choices', 0, 'delta', 'content')
+                if delta
+                  full_content << delta
+                  yield(delta, false, nil)
                 end
+              rescue JSON::ParserError
+                # Ignore malformed JSON in stream chunks
               end
             end
           end
@@ -352,13 +357,15 @@ module Chat
           }
         else
           handle_error_response(response, latency_ms)
-          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
+          return try_fallback(
+            messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &
+          )
         end
       end
 
       # Non-streaming fallback path
       response = HTTParty.post(
-        "#{base_url.gsub(/\/+$/, '')}/chat/completions",
+        "#{base_url.gsub(%r{/+$}, '')}/chat/completions",
         headers: headers,
         body: payload.to_json,
         timeout: DEFAULT_TIMEOUT
@@ -373,8 +380,10 @@ module Chat
         usage = body['usage'] || {}
 
         if content.blank?
-          Rails.logger.error("[Chat::LlmGateway] Empty response content from API")
-          return try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
+          Rails.logger.error('[Chat::LlmGateway] Empty response content from API')
+          return try_fallback(
+            messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &
+          )
         end
 
         {
@@ -386,35 +395,39 @@ module Chat
         }
       else
         handle_error_response(response, latency_ms)
-        try_fallback(messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &block)
+        try_fallback(
+          messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &
+        )
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &block)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &)
     rescue StandardError => e
       Rails.logger.error("[Chat::LlmGateway] Error: #{e.class} - #{e.message}")
-      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &block)
+      try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &)
     end
 
     private
 
-    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil, system_prompt: nil, &block)
+    def try_fallback(messages:, context:, is_fallback:, latency_ms: nil, system_prompt: nil, &)
       fallback_model = ENV.fetch('AI_FALLBACK_MODEL', nil)
       if !is_fallback && fallback_model.present?
         Rails.logger.warn("[Chat::LlmGateway] Call failed. Retrying with fallback model: #{fallback_model}")
-        return call(messages: messages, context: context, model: fallback_model, is_fallback: true, system_prompt: system_prompt, &block)
+        return call(
+          messages: messages, context: context, model: fallback_model, is_fallback: true, system_prompt: system_prompt, &
+        )
       end
       fallback_response(latency_ms: latency_ms)
     end
 
-    def handle_error_response(response, latency_ms)
+    def handle_error_response(response, _latency_ms)
       case response.code
       when 401
-        Rails.logger.error("[Chat::LlmGateway] Auth error (401): Invalid API Key")
+        Rails.logger.error('[Chat::LlmGateway] Auth error (401): Invalid API Key')
       when 402
-        Rails.logger.error("[Chat::LlmGateway] Insufficient credits / Payment Required (402)")
+        Rails.logger.error('[Chat::LlmGateway] Insufficient credits / Payment Required (402)')
       when 429
-        Rails.logger.error("[Chat::LlmGateway] Rate limited by provider (429)")
+        Rails.logger.error('[Chat::LlmGateway] Rate limited by provider (429)')
       else
         Rails.logger.error("[Chat::LlmGateway] API error: #{response.code} - #{response.body}")
       end
@@ -431,5 +444,3 @@ module Chat
     end
   end
 end
-
-

@@ -8,7 +8,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
   IDENTITY_KEYS = %w[anonymous_id session_id].freeze
-  EmailDeliveryFailed = Class.new(StandardError)
+  class EmailDeliveryFailed < StandardError
+  end
 
   before_action :set_lead, only: %i[show update destroy send_otp resend_otp verify_otp wizard_result]
   before_action :authenticate_api_user, only: %i[index show update destroy mine]
@@ -42,14 +43,16 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar leads', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar leads',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def mine
     start_time = Time.current
     return render json: { error: 'Authentication required' }, status: :unauthorized if current_user.nil?
+
     @leads = ::Lead.where(email: current_user.email).order(created_at: :desc)
-    
+
     duration_ms = ((Time.current - start_time) * 1000).round(2)
     Rails.logger.info({
       event: 'api_performance',
@@ -59,14 +62,15 @@ class Api::V1::LeadsController < Api::V1::BaseController
       count: @leads.count,
       timestamp: Time.current.iso8601
     }.to_json)
-    
+
     render json: {
       data: @leads.map { |l| serialize_lead(l) },
       meta: { page: 1, total_pages: 1, total_count: @leads.count }
     }
   rescue StandardError => e
     Rails.logger.error("Leads mine error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar seus orçamentos', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar seus orçamentos',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def serialize_lead(lead)
@@ -89,7 +93,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def create
@@ -182,9 +187,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.otp_verified_at.present?
       return render json: { error: 'Verification code already confirmed' }, status: :unprocessable_entity
     end
+
     unless @lead.otp_can_resend?
       retry_in = ::Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
-      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i }, status: :too_many_requests
+      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i },
+                    status: :too_many_requests
     end
     otp_code = @lead.generate_otp!
     log_otp_code(@lead, otp_code)
@@ -212,6 +219,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def verify_otp
     return render json: { error: 'Lead not found' }, status: :not_found if @lead.nil?
+
     if @lead.otp_verified_at.present?
       companies = distributed_companies(@lead)
       return render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok
@@ -220,8 +228,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
       return render json: { error: 'Verification attempts exceeded' }, status: :unprocessable_entity
     end
     return render json: { error: 'Verification code expired' }, status: :unprocessable_entity if @lead.otp_expired?
+
     otp_code = params[:otp_code].presence || params.dig(:lead, :otp_code)
     return render json: { error: 'Verification code is required' }, status: :unprocessable_entity if otp_code.blank?
+
     unless @lead.valid_otp?(otp_code)
       @lead.increment_otp_attempts!
       return render json: { error: 'Invalid verification code' }, status: :unprocessable_entity
@@ -231,22 +241,22 @@ class Api::V1::LeadsController < Api::V1::BaseController
     identity_metadata = identity_tracking_metadata(@lead)
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
-      
+
       distinct_id = current_user&.id || "anon_lead_#{@lead.id}"
-      
+
       # 1. OTP Verified
       Analytics::PostHogService.track_server_event(
         'otp_verified',
         distinct_id,
         { lead_id: @lead.id, auth_method: 'email' }
       )
-      
+
       # 2. Lead Created (Successfully persisted and verified)
       Analytics::PostHogService.track_server_event(
         'lead_created',
         distinct_id,
-        { 
-          lead_id: @lead.id, 
+        {
+          lead_id: @lead.id,
           company_id: @lead.company_id,
           category_id: @lead.respond_to?(:product_vertical) ? @lead.product_vertical : nil
         }.compact
@@ -261,7 +271,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
       @lead.update!(wizard_status: 'distributed')
-      
+
       # 3. Lead Dispatched (One event per recipient as per V2)
       companies.each do |comp|
         Analytics::PostHogService.track_server_event(
@@ -299,13 +309,15 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.update(lead_params)
       render json: @lead
     else
-      render_error_response(error: 'Unprocessable Entity', message: 'Não foi possível atualizar o lead', status: :unprocessable_entity, code: 'UNPROCESSABLE_ENTITY', details: @lead.errors.full_messages)
+      render_error_response(error: 'Unprocessable Entity', message: 'Não foi possível atualizar o lead',
+                            status: :unprocessable_entity, code: 'UNPROCESSABLE_ENTITY', details: @lead.errors.full_messages)
     end
   rescue ActiveRecord::RecordNotFound
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   def destroy
@@ -315,7 +327,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor', status: :internal_server_error, code: 'INTERNAL_ERROR')
+    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+                          status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
   private
@@ -326,20 +339,24 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def scoped_leads
     return ::Lead.all if current_user&.admin?
+
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
       unless company_active?(company)
-        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden, code: 'COMPANY_INACTIVE')
+        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden,
+                              code: 'COMPANY_INACTIVE')
         return nil
       end
       return ::Lead.where(company_id: current_user.company_id)
     end
-    render_error_response(error: 'Forbidden', message: 'Not authorized to list leads', status: :forbidden, code: 'FORBIDDEN')
+    render_error_response(error: 'Forbidden', message: 'Not authorized to list leads', status: :forbidden,
+                          code: 'FORBIDDEN')
     nil
   end
 
   def ensure_leads_access!
     return if performed? || current_user.nil?
+
     scoped_leads
   end
 
@@ -352,15 +369,18 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def ensure_lead_access!
     return if performed? || current_user.nil?
     return if current_user&.admin?
+
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
       unless company_active?(company)
-        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden, code: 'COMPANY_INACTIVE')
+        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden,
+                              code: 'COMPANY_INACTIVE')
         return
       end
       return if @lead.company_id == current_user.company_id
     end
-    render_error_response(error: 'Forbidden', message: 'Not authorized to access this lead', status: :forbidden, code: 'FORBIDDEN')
+    render_error_response(error: 'Forbidden', message: 'Not authorized to access this lead', status: :forbidden,
+                          code: 'FORBIDDEN')
   end
 
   def lead_params
@@ -377,7 +397,9 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def check_honeypot
     return if params.dig(:lead, :nickname).blank?
-    render_error_response(error: 'Unprocessable Entity', message: 'Spam detected', status: :unprocessable_entity, code: 'SPAM_DETECTED')
+
+    render_error_response(error: 'Unprocessable Entity', message: 'Spam detected', status: :unprocessable_entity,
+                          code: 'SPAM_DETECTED')
   end
 
   def distributed_companies(lead)
@@ -411,16 +433,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def extract_utm_payload
     raw = params[:utm] || params.dig(:lead, :utm)
     return {} unless raw.is_a?(Hash) || raw.is_a?(ActionController::Parameters)
+
     raw.to_unsafe_h.stringify_keys.slice(*ALLOWED_UTM_KEYS).transform_values { |v| sanitize_utm_value(v) }.compact
   end
 
   def sanitize_attribution_payload(raw)
     return nil unless raw.is_a?(Hash) || raw.is_a?(ActionController::Parameters)
+
     data = raw.to_unsafe_h
     touches = {}
     %w[first_touch last_touch].each do |key|
       touch = data[key] || data[key.to_sym]
       next unless touch.is_a?(Hash)
+
       values = sanitize_utm_hash(touch['values'] || touch[:values] || {})
       touch_payload = {
         values: values,
@@ -437,16 +462,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def sanitize_utm_hash(hash)
     return {} unless hash.is_a?(Hash)
+
     hash.stringify_keys.slice(*ALLOWED_UTM_KEYS).transform_values { |v| sanitize_utm_value(v) }.compact
   end
 
   def sanitize_utm_value(val)
     return nil if val.blank?
+
     val.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
   end
 
   def strip_path(path)
     return nil if path.blank?
+
     uri = begin
       URI.parse(path)
     rescue StandardError
@@ -457,6 +485,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def strip_host(ref)
     return nil if ref.blank?
+
     uri = begin
       URI.parse(ref)
     rescue StandardError
@@ -467,11 +496,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def apply_utm_to_lead(lead, utm_data, attribution)
     return if lead.nil?
+
     utm_data.each do |key, value|
       next if value.blank?
+
       lead.send("#{key}=", value) if lead.respond_to?("#{key}=")
     end
     return unless attribution.present?
+
     landing = attribution.dig('last_touch', 'landing_path') || attribution.dig(:last_touch, :landing_path)
     ref_host = attribution.dig('last_touch', 'referrer_host') || attribution.dig(:last_touch, :referrer_host)
     lead.landing_path = strip_path(landing) if lead.respond_to?(:landing_path=)
@@ -481,6 +513,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def log_otp_code(lead, code)
     return unless Rails.env.development? || Rails.env.test?
+
     Rails.logger.info("OTP for lead #{lead.id}: #{code}")
   end
 
@@ -498,9 +531,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def mask_email(email)
     return nil if email.blank?
+
     local_part, domain = email.split('@', 2)
     return email if local_part.blank? || domain.blank?
     return email if local_part.length <= 2
+
     "#{local_part[0, 2]}***@#{domain}"
   end
 

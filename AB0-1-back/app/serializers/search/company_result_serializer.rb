@@ -61,7 +61,7 @@ module Search
       end
     rescue StandardError => e
       Rails.logger.warn(
-        "[Search::CompanyResultSerializer] categories failed " \
+        '[Search::CompanyResultSerializer] categories failed ' \
         "company=#{company.id}: #{e.class}: #{e.message}"
       )
       []
@@ -84,7 +84,7 @@ module Search
       access.slice(*MINIMAL_FEATURE_KEYS)
     rescue StandardError => e
       Rails.logger.warn(
-        "[Search::CompanyResultSerializer] feature_access failed " \
+        '[Search::CompanyResultSerializer] feature_access failed ' \
         "company=#{company.id}: #{e.class}: #{e.message}"
       )
       {}
@@ -106,7 +106,7 @@ module Search
       rails_storage_proxy_url(attachment, options)
     rescue StandardError => e
       Rails.logger.warn(
-        "[Search::CompanyResultSerializer] attachment failed " \
+        '[Search::CompanyResultSerializer] attachment failed ' \
         "company=#{company.id}: #{e.class}: #{e.message}"
       )
       nil

@@ -248,8 +248,8 @@ module Api
         []
       end
 
-      def order_legacy_collection(collection, *args)
-        return collection.order(*args) if collection.respond_to?(:order)
+      def order_legacy_collection(collection, *)
+        return collection.order(*) if collection.respond_to?(:order)
 
         collection
       rescue StandardError => e

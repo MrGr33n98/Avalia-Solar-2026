@@ -35,7 +35,7 @@ class Lead < ApplicationRecord
 
   def update_score_cache
     return unless respond_to?(:cached_score=)
-    
+
     insights = SaasLeads::LeadInsights.new(self)
     self.cached_score = insights.score
     self.score_band = insights.score_band.to_s

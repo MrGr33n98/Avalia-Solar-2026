@@ -4,7 +4,7 @@ module Api
       # Permite acesso público às páginas de SEO
       def show
         @seo_page = SeoLandingPage.find_by_slug!(params[:slug])
-        
+
         render json: {
           slug: @seo_page.slug,
           city_name: @seo_page.city_name,

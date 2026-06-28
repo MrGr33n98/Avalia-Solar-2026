@@ -57,7 +57,8 @@ ActiveAdmin.register KnowledgeArticle do
       f.input :status, as: :select, collection: [%w[Rascunho draft], %w[Publicado published]],
                        include_blank: false
       f.input :published_at, as: :datepicker
-      f.input :content, as: :text, input_html: { rows: 10 }, hint: 'Escreva a resposta ou artigo técnico em formato de texto simples ou Markdown.'
+      f.input :content, as: :text, input_html: { rows: 10 },
+                        hint: 'Escreva a resposta ou artigo técnico em formato de texto simples ou Markdown.'
     end
     f.actions
   end

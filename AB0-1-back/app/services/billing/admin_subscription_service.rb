@@ -21,7 +21,7 @@ module Billing
           stripe_price_id: nil # Não é controlado por preço do Stripe
         )
         @company.update!(plan: enterprise_plan)
-        
+
         Billing::SlackNotifier.notify_enterprise_manual(
           company: @company,
           admin: @admin,
@@ -34,7 +34,7 @@ module Billing
     def force_downgrade_to_free!(reason:)
       with_audit('force_downgrade', metadata: { reason: reason }) do
         sub = find_subscription!
-        
+
         # Cancela no Stripe se houver assinatura ativa
         if sub.stripe_subscription_id.present? && sub.status != 'canceled'
           begin
@@ -49,7 +49,7 @@ module Billing
           canceled_at: Time.current,
           stripe_price_id: nil
         )
-        
+
         free_plan = ::Plan.find_by(name: 'Free') || ::Plan.first
         @company.update!(plan: free_plan)
         sub.update!(plan: free_plan)
@@ -66,7 +66,7 @@ module Billing
     def sync_with_stripe!
       with_audit('sync_stripe') do
         sub = find_subscription!
-        raise "Cannot sync. stripe_subscription_id is missing." if sub.stripe_subscription_id.blank?
+        raise 'Cannot sync. stripe_subscription_id is missing.' if sub.stripe_subscription_id.blank?
 
         stripe_sub = Stripe::Subscription.retrieve(sub.stripe_subscription_id)
         Billing::SubscriptionSyncService.new(stripe_sub).call
@@ -76,7 +76,7 @@ module Billing
     def cancel_at_period_end!
       with_audit('cancel_at_period_end') do
         sub = find_subscription!
-        raise "Cannot cancel at period end. stripe_subscription_id is missing." if sub.stripe_subscription_id.blank?
+        raise 'Cannot cancel at period end. stripe_subscription_id is missing.' if sub.stripe_subscription_id.blank?
 
         Stripe::Subscription.update(sub.stripe_subscription_id, cancel_at_period_end: true)
         sub.update!(cancel_at_period_end: true)
@@ -95,8 +95,7 @@ module Billing
     private
 
     def find_subscription!
-      sub = Billing::CompanySubscription.find_by!(company: @company)
-      sub
+      Billing::CompanySubscription.find_by!(company: @company)
     end
 
     def find_or_initialize_subscription
@@ -105,9 +104,9 @@ module Billing
 
     def with_audit(action_type, metadata: {})
       sub = Billing::CompanySubscription.find_by(company: @company)
-      
+
       result = yield
-      
+
       # Recarrega a assinatura pós-yield para pegar novo estado se criada/modificada
       sub ||= Billing::CompanySubscription.find_by(company: @company)
 

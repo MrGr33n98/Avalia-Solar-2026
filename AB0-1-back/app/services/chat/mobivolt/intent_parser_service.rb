@@ -54,7 +54,7 @@ module Chat
 
       def detect_recommendation_intent
         words = @clean_text.split(/\s+/)
-        (words & RECOMMENDATION_KEYWORDS).any?
+        words.intersect?(RECOMMENDATION_KEYWORDS)
       end
 
       def detect_state
@@ -92,7 +92,7 @@ module Chat
         services = %w[carregador wallbox eletroposto manutencao limpeza instalacao inversor bateria solar eolica]
 
         words = @clean_text.split(/\s+/)
-        
+
         matched_brand = words.find { |w| brands.include?(w) }
         return matched_brand.capitalize if matched_brand
 
@@ -100,10 +100,10 @@ module Chat
         return matched_service if matched_service
 
         (brands + services).each do |term|
-          if @clean_text.match?(/\b#{Regexp.escape(term)}[a-z]*\b/)
-            return term.capitalize if brands.include?(term)
-            return term
-          end
+          next unless @clean_text.match?(/\b#{Regexp.escape(term)}[a-z]*\b/)
+          return term.capitalize if brands.include?(term)
+
+          return term
         end
 
         nil

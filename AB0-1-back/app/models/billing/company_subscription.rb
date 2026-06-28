@@ -19,7 +19,7 @@ module Billing
     ].freeze
 
     validates :status, presence: true, inclusion: { in: STATUSES }
-    
+
     # Scopes
     scope :active_saas, -> { where(status: %w[active trialing past_due manual]) }
     scope :past_due, -> { where(status: 'past_due') }

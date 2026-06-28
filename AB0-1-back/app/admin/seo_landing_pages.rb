@@ -30,10 +30,10 @@ ActiveAdmin.register SeoLandingPage do
     selectable_column
     id_column
     column :slug
-    column('Cidade') { |page| page.city_name }
-    column('UF') { |page| page.state_abbr }
+    column('Cidade', &:city_name)
+    column('UF', &:state_abbr)
     column('Categoria') { |page| page.category&.name }
-    column('Rota pública') { |page| page.local_solar_path }
+    column('Rota pública', &:local_solar_path)
     column :updated_at
     actions
   end
@@ -41,9 +41,13 @@ ActiveAdmin.register SeoLandingPage do
   form do |f|
     f.semantic_errors(*f.object.errors.attribute_names)
     f.inputs 'Página local' do
-      f.input :category, as: :select, collection: Category.active.order(:name).map { |category| [category.name, category.id] }
+      f.input :category, as: :select, collection: Category.active.order(:name).map { |category|
+        [category.name, category.id]
+      }
       f.input :state_abbr, label: 'UF', as: :select,
-                           collection: Locations::BrLocations.states.map { |state| ["#{state['name']} (#{state['acronym']})", state['acronym']] },
+                           collection: Locations::BrLocations.states.map { |state|
+                             ["#{state['name']} (#{state['acronym']})", state['acronym']]
+                           },
                            include_blank: 'Selecione uma UF'
       f.input :city_name, label: 'Cidade'
       f.input :slug, hint: 'Opcional. Se ficar vazio, será gerado como energia-solar-uf-cidade.'
@@ -51,14 +55,14 @@ ActiveAdmin.register SeoLandingPage do
     f.actions
   end
 
-  show title: proc { |page| page.slug } do
+  show title: proc(&:slug) do
     attributes_table do
       row :id
       row :slug
-      row('Cidade') { |page| page.city_name }
-      row('UF') { |page| page.state_abbr }
+      row('Cidade', &:city_name)
+      row('UF', &:state_abbr)
       row('Categoria') { |page| page.category&.name }
-      row('Rota pública') { |page| page.local_solar_path }
+      row('Rota pública', &:local_solar_path)
       row :metadata_cache
       row :created_at
       row :updated_at

@@ -189,7 +189,10 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       if timeline.events.any?
         table_for timeline.events.reverse do
           column('Quando') { |event| l(event.occurred_at, format: :short) }
-          column('Fase') { |event| status_tag(event.phase == 'pre_lead' ? 'antes' : 'depois', class: event.phase == 'pre_lead' ? 'warning' : 'ok') }
+          column('Fase') do |event|
+            status_tag(event.phase == 'pre_lead' ? 'antes' : 'depois',
+                       class: event.phase == 'pre_lead' ? 'warning' : 'ok')
+          end
           column('Categoria') do |event|
             case event.intent_category
             when :buyer_intent
@@ -200,9 +203,9 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
               status_tag 'NAVIGATION', class: 'light'
             end
           end
-          column('Fonte') { |event| event.source }
-          column('Evento') { |event| event.event_type }
-          column('Acao') { |event| event.action }
+          column('Fonte', &:source)
+          column('Evento', &:event_type)
+          column('Acao', &:action)
           column('Detalhes', sortable: false) { |event| timeline_pretty_details(event.details) }
         end
       else

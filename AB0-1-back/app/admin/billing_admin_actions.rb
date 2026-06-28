@@ -2,7 +2,7 @@
 
 ActiveAdmin.register Billing::AdminAction do
   menu label: 'Billing — Auditoria', priority: 21, parent: 'Billing'
-  
+
   # Apenas leitura
   actions :index, :show
 

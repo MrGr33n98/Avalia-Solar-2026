@@ -27,5 +27,5 @@ export default function ConditionalFooter() {
 
   if (isInternal) return null;
 
-  return <Footer />;
+  return <Footer compact={pathname === '/'} />;
 }

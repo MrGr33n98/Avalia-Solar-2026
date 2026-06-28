@@ -4,7 +4,7 @@ module Api
     class CompanyDashboardController < BaseController
       include PendingChangeIdempotency
       include FeatureGateEnforceable
-      
+
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
@@ -242,21 +242,21 @@ module Api
         begin
           # Get stored trust score
           trust_record = CompanyTrustScore.find_by(company_id: @company.id)
-          
+
           # Calculate current score using unified service with cache
           result = Rails.cache.fetch("company_#{@company.id}_trust_health_score_calc", expires_in: 1.hour) do
             TrustScore::CalculationService.new(@company).calculate!
           end
-          
+
           # Determine health status based on score
           health_status = case result[:score]
-                         when 0..30 then 'critical'
-                         when 31..50 then 'poor'
-                         when 51..70 then 'fair'
-                         when 71..85 then 'good'
-                         else 'excellent'
-                         end
-          
+                          when 0..30 then 'critical'
+                          when 31..50 then 'poor'
+                          when 51..70 then 'fair'
+                          when 71..85 then 'good'
+                          else 'excellent'
+                          end
+
           # Calculate trend (would need historical data for real trend)
           score_trend = if trust_record&.computed_at
                           days_since = (Time.current - trust_record.computed_at).to_i / 1.day
@@ -264,9 +264,10 @@ module Api
                           elsif days_since < 30 then 'stable'
                           else 'stale'
                           end
-                        else 'new'
+                        else
+                          'new'
                         end
-          
+
           render json: {
             trust_score: result[:score],
             health_status: health_status,
@@ -287,7 +288,7 @@ module Api
       # Returns buyer intent score summary and top leads
       def intent_summary
         authorize @company, :view_analytics?
-        
+
         begin
           unless defined?(IntentScore) && IntentScore.table_exists?
             return render json: {
@@ -298,28 +299,28 @@ module Api
             }
           end
 
-          selectable_columns = [
-            :id,
-            :company_id,
-            :lead_id,
-            :total_score,
-            :intent_level,
-            :confidence_score,
-            :total_signals_count,
-            :recommended_action,
-            :last_interaction_at,
-            :updated_at,
-            :top_signals
+          selectable_columns = %i[
+            id
+            company_id
+            lead_id
+            total_score
+            intent_level
+            confidence_score
+            total_signals_count
+            recommended_action
+            last_interaction_at
+            updated_at
+            top_signals
           ].select { |column| IntentScore.column_names.include?(column.to_s) }
 
           # ✅ EAGER LOAD tudo que será usado - 1 query intent_scores + 1 query leads
           intent_scores = IntentScore
-            .where(company_id: @company.id)
-            .select(*selectable_columns)
-            .includes(:lead_record)
-            .order(total_score: :desc)
-            .limit(10)
-            .to_a
+                          .where(company_id: @company.id)
+                          .select(*selectable_columns)
+                          .includes(:lead_record)
+                          .order(total_score: :desc)
+                          .limit(10)
+                          .to_a
 
           total_signals = intent_scores.sum { |score| score.total_signals_count.to_i }
           avg_confidence = if intent_scores.any?
@@ -394,7 +395,7 @@ module Api
         begin
           badges = @company.badges
           all_badges = Badge.all
-          
+
           # Current badges
           earned_badges = badges.map do |badge|
             {
@@ -406,7 +407,7 @@ module Api
               verified: @company.company_badges.find_by(badge_id: badge.id)&.verified?
             }
           end
-          
+
           # Available badges not yet earned
           available_badges = all_badges.where.not(id: badges.ids).map do |badge|
             {
@@ -417,10 +418,10 @@ module Api
               category: badge.badge_type
             }
           end
-          
+
           # Verification status
           pending_verifications = @company.company_badges.where(verified: false).count
-          
+
           render json: {
             earned_badges: earned_badges,
             available_badges: available_badges,
@@ -440,8 +441,8 @@ module Api
         base_url = ENV['APP_HOST'] || 'https://avaliasolar.com.br'
         profile_url = "#{base_url}/empresas/#{@company.slug}"
         badge_svg_url = "#{base_url}/api/v1/badges/#{@company.slug}.svg"
-        utm_params = "utm_source=badge&utm_medium=referral&utm_campaign=trust_badge"
-        
+        utm_params = 'utm_source=badge&utm_medium=referral&utm_campaign=trust_badge'
+
         render json: {
           public_profile_url: profile_url,
           logo_url: @company.logo&.url,
@@ -489,7 +490,7 @@ module Api
 
         # Generate a unique reference for the payment provider
         checkout_session_id = "PAY-#{SecureRandom.hex(8).upcase}"
-        
+
         sub = @company.banner_subscriptions.create!(
           banner_offer: offer,
           status: 'pending_payment',
@@ -517,7 +518,6 @@ module Api
             return render json: { message: 'Alterações aplicadas com sucesso' }, status: :ok
           end
 
-
           return render json: { errors: @company.errors }, status: :unprocessable_entity
 
         end
@@ -534,9 +534,11 @@ module Api
           }
         )
 
-        message = pending_change.previously_persisted? ?
-          'Solicitação já enviada' :
-          'Alterações enviadas para aprovação'
+        message = if pending_change.previously_persisted?
+                    'Solicitação já enviada'
+                  else
+                    'Alterações enviadas para aprovação'
+                  end
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -557,7 +559,7 @@ module Api
       # POST /api/v1/company_dashboard/add_categories
       def add_categories
         authorize @company, :edit_categories?
-        
+
         pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
@@ -566,9 +568,11 @@ module Api
           }
         )
 
-        message = pending_change.previously_persisted? ?
-          'Solicitação já enviada' :
-          'Solicitação de categorias enviada para aprovação'
+        message = if pending_change.previously_persisted?
+                    'Solicitação já enviada'
+                  else
+                    'Solicitação de categorias enviada para aprovação'
+                  end
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -591,7 +595,7 @@ module Api
       # POST /api/v1/company_dashboard/remove_category
       def remove_category
         authorize @company, :edit_categories?
-        
+
         pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
@@ -600,9 +604,11 @@ module Api
           }
         )
 
-        message = pending_change.previously_persisted? ?
-          'Solicitação já enviada' :
-          'Solicitação de remoção enviada para aprovação'
+        message = if pending_change.previously_persisted?
+                    'Solicitação já enviada'
+                  else
+                    'Solicitação de remoção enviada para aprovação'
+                  end
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -625,7 +631,7 @@ module Api
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
         authorize @company, :edit_company?
-        
+
         pending_change = create_idempotent_pending_change(
           change_type: 'cta_config',
           data: cta_params
@@ -668,9 +674,9 @@ module Api
           )
         )
 
-        render json: { 
-          message: 'Logo enviada para aprovação', 
-          pending_change: pending_change 
+        render json: {
+          message: 'Logo enviada para aprovação',
+          pending_change: pending_change
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -716,9 +722,9 @@ module Api
           )
         )
 
-        render json: { 
-          message: 'Banner enviado para aprovação', 
-          pending_change: pending_change 
+        render json: {
+          message: 'Banner enviado para aprovação',
+          pending_change: pending_change
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -827,9 +833,9 @@ module Api
           data: { signed_ids: signed_ids }
         )
 
-        render json: { 
-          message: 'Mídia enviada para aprovação', 
-          pending_change: pending_change 
+        render json: {
+          message: 'Mídia enviada para aprovação',
+          pending_change: pending_change
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -857,10 +863,10 @@ module Api
             action: 'add'
           }
         )
-        
-        render json: { 
-          message: 'Vídeo enviado para aprovação', 
-          pending_change: pending_change 
+
+        render json: {
+          message: 'Vídeo enviado para aprovação',
+          pending_change: pending_change
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -881,10 +887,10 @@ module Api
           change_type: 'video',
           data: { video_id: vid, action: 'remove' }
         )
-        
-        render json: { 
-          message: 'Remoção de vídeo enviada para aprovação', 
-          pending_change: pending_change 
+
+        render json: {
+          message: 'Remoção de vídeo enviada para aprovação',
+          pending_change: pending_change
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -895,9 +901,9 @@ module Api
         begin
           # ✅ Eager load user para não ter N+1 + select para limitar colunas
           reviews = @company.reviews
-            .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
-            .includes(:user)
-            .order(created_at: :desc)
+                            .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
+                            .includes(:user)
+                            .order(created_at: :desc)
 
           feature_permission = current_user&.admin? || (@company.respond_to?(:can_use_social_proof?) && @company.can_use_social_proof?)
 
@@ -1045,15 +1051,17 @@ module Api
 
       def generate_trust_recommendations(components, company)
         recommendations = []
-        
+
         # Verification recommendation
-        recommendations << {
-          type: 'verification',
-          message: 'Complete company verification to gain +20 trust points',
-          impact: 20,
-          action_url: '/dashboard/settings/verification'
-        } unless company.verified?
-        
+        unless company.verified?
+          recommendations << {
+            type: 'verification',
+            message: 'Complete company verification to gain +20 trust points',
+            impact: 20,
+            action_url: '/dashboard/settings/verification'
+          }
+        end
+
         # Reviews recommendation
         if components['reviews'].to_i < 5
           recommendations << {
@@ -1063,7 +1071,7 @@ module Api
             action_url: '/dashboard/reviews/invite'
           }
         end
-        
+
         # Rating recommendation
         if company.rating_avg.to_f < 4.0
           recommendations << {
@@ -1073,13 +1081,13 @@ module Api
             action_url: '/dashboard/reviews'
           }
         end
-        
+
         recommendations
       end
 
       def calculate_verification_progress(earned_badges, all_badges)
-        return 0 if all_badges.count.zero?
-        
+        return 0 if all_badges.none?
+
         (earned_badges.count.to_f / all_badges.count * 100).round(1)
       end
 

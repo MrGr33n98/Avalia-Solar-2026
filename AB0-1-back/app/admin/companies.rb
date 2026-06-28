@@ -47,7 +47,7 @@ ActiveAdmin.register Company do
 
   action_item :geocodificar, only: :show do
     link_to '📍 Geocodificar', geocodificar_admin_company_path(resource), method: :put,
-            data: { confirm: 'Enfileirar geocodificação para esta empresa?' }
+                                                                         data: { confirm: 'Enfileirar geocodificação para esta empresa?' }
   end
 
   member_action :suspend, method: :put do
@@ -77,7 +77,7 @@ ActiveAdmin.register Company do
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
       :active_admin, :p2p_chat_enabled, :seo_title, :meta_description,
-              { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [],        financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
+      { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [], financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
         company_members_attributes: %i[id user_id role _destroy],
@@ -167,17 +167,18 @@ ActiveAdmin.register Company do
 
     f.inputs 'Basic Information' do
       f.input :name
-      f.input :slug, hint: 'Identificador único na URL (slug). Cuidado ao alterar para não quebrar links externos indexados ou compartilhados.'
+      f.input :slug,
+              hint: 'Identificador único na URL (slug). Cuidado ao alterar para não quebrar links externos indexados ou compartilhados.'
       f.input :description
       f.input :moderation_status, as: :select, collection: Company.moderation_statuses.keys
       f.input :rejected_reason, input_html: { rows: 3 }
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
-              f.input :featured
-              f.input :verified
-              f.input :sponsored, label: 'Patrocinado (Topo do ranking)'
-              f.input :priority_score, label: 'Score de Prioridade', hint: 'Maior score = topo do ranking'
-              f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
-              f.input :p2p_chat_enabled, as: :boolean, label: 'Habilitar Chat com Clientes (estilo OLX)'
+      f.input :featured
+      f.input :verified
+      f.input :sponsored, label: 'Patrocinado (Topo do ranking)'
+      f.input :priority_score, label: 'Score de Prioridade', hint: 'Maior score = topo do ranking'
+      f.input :active_admin, as: :boolean, label: 'Ativar orçamentos (recurso pago)'
+      f.input :p2p_chat_enabled, as: :boolean, label: 'Habilitar Chat com Clientes (estilo OLX)'
       if Company.column_names.include?('effect')
         f.input :effect, as: :boolean, label: 'Ativar efeito elétrico no card', input_html: {
           'data-controller': 'effect',
@@ -189,7 +190,8 @@ ActiveAdmin.register Company do
       if Company.column_names.include?('effect')
         f.inputs 'Visual Effects Preview' do
           li do
-            div class: 'company-card admin-preview', data: { controller: 'effect', 'effect-active-value': f.object.effect } do
+            div class: 'company-card admin-preview',
+                data: { controller: 'effect', 'effect-active-value': f.object.effect } do
               ''
             end
           end
@@ -198,10 +200,10 @@ ActiveAdmin.register Company do
     end
 
     f.inputs 'SEO & Metadados' do
-      f.input :seo_title, 
+      f.input :seo_title,
               label: 'Título SEO (Meta Title)',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Se vazio, usará o nome da empresa."
-      f.input :meta_description, 
+      f.input :meta_description,
               label: 'Meta Descrição',
               as: :text,
               input_html: { rows: 3 },
@@ -230,10 +232,10 @@ ActiveAdmin.register Company do
       f.input :latitude, hint: 'Coordenada geográfica (preenchida automaticamente via geocoding)'
       f.input :longitude, hint: 'Coordenada geográfica (preenchida automaticamente via geocoding)'
       f.input :geocoding_status, as: :select,
-              collection: Company::GEOCODING_STATUSES,
-              hint: 'Status: pending | success | city_fallback | failed'
+                                 collection: Company::GEOCODING_STATUSES,
+                                 hint: 'Status: pending | success | city_fallback | failed'
       f.input :geocoded_at, as: :string, input_html: { disabled: true },
-              hint: 'Data do último geocoding (automático)'
+                            hint: 'Data do último geocoding (automático)'
     end
 
     f.inputs 'Business Details' do
@@ -248,9 +250,12 @@ ActiveAdmin.register Company do
         end
         column do
           f.input :working_hours, input_html: { placeholder: 'ex: Seg a Sex, 08h às 18h', style: 'width: 90%' }
-          f.input :response_time_sla, label: 'SLA de Resposta', input_html: { placeholder: 'ex: 24h', style: 'width: 90%' }
-          f.input :payment_methods, label: 'Formas de Pagamento', input_html: { placeholder: 'ex: Cartão, Pix, Boleto', style: 'width: 90%' }
-          f.input :languages, as: :string, label: 'Idiomas', input_html: { placeholder: 'ex: Português, Inglês', style: 'width: 90%' }
+          f.input :response_time_sla, label: 'SLA de Resposta',
+                                      input_html: { placeholder: 'ex: 24h', style: 'width: 90%' }
+          f.input :payment_methods, label: 'Formas de Pagamento',
+                                    input_html: { placeholder: 'ex: Cartão, Pix, Boleto', style: 'width: 90%' }
+          f.input :languages, as: :string, label: 'Idiomas',
+                              input_html: { placeholder: 'ex: Português, Inglês', style: 'width: 90%' }
           columns do
             column do
               f.input :minimum_ticket, as: :number, label: 'Ticket Mínimo (R$)', input_html: { style: 'width: 80%' }
@@ -540,7 +545,7 @@ ActiveAdmin.register Company do
       stats = resource.reviews.approved.pluck(:metadata).map { |m| m || {} }
       total_reads = stats.sum { |m| m['read_count'].to_i }
       total_clicks = stats.sum { |m| m['cta_clicks'].to_i }
-      
+
       attributes_table_for resource do
         row 'Total de Leituras de Mini Cases' do
           status_tag total_reads, class: 'info'
@@ -549,7 +554,7 @@ ActiveAdmin.register Company do
           status_tag total_clicks, class: 'ok'
         end
         row 'Taxa de Conversão de Social Proof' do
-          total_reads > 0 ? "#{(total_clicks.to_f / total_reads * 100).round(2)}%" : '0%'
+          total_reads.positive? ? "#{(total_clicks.to_f / total_reads * 100).round(2)}%" : '0%'
         end
         row 'Score Médio de Prova Social' do
           resource.reviews.approved.average(:rating).to_f.round(2)
@@ -592,7 +597,8 @@ ActiveAdmin.register Company do
         if services.any?
           div style: 'display: flex; gap: 5px; flex-wrap: wrap;' do
             services.each do |service|
-              span service, class: 'status_tag', style: 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;'
+              span service, class: 'status_tag',
+                            style: 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;'
             end
           end
         else

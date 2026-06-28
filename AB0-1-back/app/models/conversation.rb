@@ -49,14 +49,20 @@ class Conversation < ApplicationRecord
     transaction do
       direct_messages.where(id: message_ids).update_all(read_at: read_at, updated_at: read_at) if message_ids.any?
 
-      attrs = role == 'Company' ? { company_unread_count: 0, company_last_read_at: read_at } : { user_unread_count: 0, user_last_read_at: read_at }
+      attrs = if role == 'Company'
+                { company_unread_count: 0,
+                  company_last_read_at: read_at }
+              else
+                { user_unread_count: 0,
+                  user_last_read_at: read_at }
+              end
       update_columns(attrs.merge(updated_at: read_at))
       if message_ids.any?
         create_event!('message.read', actor: viewer, metadata: {
-          reader_type: role,
-          message_ids: message_ids,
-          read_at: read_at.iso8601
-        })
+                        reader_type: role,
+                        message_ids: message_ids,
+                        read_at: read_at.iso8601
+                      })
       end
     end
 
@@ -84,9 +90,9 @@ class Conversation < ApplicationRecord
     end
 
     create_event!('message.created', actor: actor, metadata: {
-      message_id: message.id,
-      sender_type: message.sender_type
-    })
+                    message_id: message.id,
+                    sender_type: message.sender_type
+                  })
   end
 
   def resolve!(actor:)
@@ -119,9 +125,9 @@ class Conversation < ApplicationRecord
     )
     increment!(:report_count)
     create_event!('conversation.reported', actor: actor, metadata: {
-      report_id: report.id,
-      reason: report.reason
-    })
+                    report_id: report.id,
+                    reason: report.reason
+                  })
     report
   end
 

@@ -12,16 +12,14 @@ module Api
       # Get ranked intent scores for a company
       def index
         company_id = params[:company_id]
-        
-        if company_id.blank?
-          return render json: { error: 'company_id required' }, status: :bad_request
-        end
-        
+
+        return render json: { error: 'company_id required' }, status: :bad_request if company_id.blank?
+
         scores = IntentScore.where(company_id: company_id)
-                           .by_score
-                           .includes(:lead_record, :company)
-                           .limit(100)
-        
+                            .by_score
+                            .includes(:lead_record, :company)
+                            .limit(100)
+
         render json: {
           total: scores.size,
           scores: scores.map { |s| score_json(s) }
@@ -32,9 +30,9 @@ module Api
       # Get breakdown by intent level
       def summary
         company_id = params[:company_id]
-        
+
         scope = company_id.present? ? IntentScore.where(company_id: company_id) : IntentScore.all
-        
+
         breakdown = {
           cold: scope.cold.count,
           warm: scope.warm.count,
@@ -43,9 +41,9 @@ module Api
           immediate: scope.immediate.count,
           declared: scope.declared.count
         }
-        
+
         actionable = scope.actionable.by_score.limit(20)
-        
+
         render json: {
           breakdown: breakdown,
           total: scope.count,
@@ -58,7 +56,7 @@ module Api
       # Get single score with full details
       def show
         score = IntentScore.find(params[:id])
-        
+
         render json: score_json(score, detailed: true)
       end
 
@@ -68,17 +66,15 @@ module Api
         company_id = params[:company_id]
         lead_id = params[:lead_id]
         anonymous_id = params[:anonymous_id]
-        
-        if company_id.blank?
-          return render json: { error: 'company_id required' }, status: :bad_request
-        end
-        
+
+        return render json: { error: 'company_id required' }, status: :bad_request if company_id.blank?
+
         CalculateBuyerIntentJob.perform_later(
           company_id,
           lead_id: lead_id,
           anonymous_id: anonymous_id
         )
-        
+
         render json: { status: 'scheduled' }
       end
 
@@ -125,7 +121,7 @@ module Api
           last_interaction_at: score.last_interaction_at,
           confidence_score: score.confidence_score
         }
-        
+
         if detailed
           base.merge!(
             category_scores: {
@@ -155,7 +151,7 @@ module Api
             end
           )
         end
-        
+
         base
       end
     end

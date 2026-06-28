@@ -8,8 +8,9 @@ module Analytics
     Result = Struct.new(:ok, :event, :error, keyword_init: true)
 
     GLOBAL_EVENTS = %w[page_view search landing_view web_vital].freeze
-    INTERNAL_SYSTEM_EVENTS = %w[page_view search landing_view theme_changed theme_changed_dashboard web_vital performance_metric error_occurred].freeze
-    
+    INTERNAL_SYSTEM_EVENTS = %w[page_view search landing_view theme_changed theme_changed_dashboard web_vital
+                                performance_metric error_occurred].freeze
+
     def self.call(company_id:, event_type:, metadata: {}, user: nil, tracked_at: nil, event_id: nil)
       # FEATURE FLAG & KILL SWITCH GLOBAL
       # Default is enabled. Explicit 'false' disables ingestion.
@@ -17,11 +18,12 @@ module Analytics
       is_enabled = ENV['G4_ANALYTICS_ENABLED'] != 'false' || Rails.env.test?
 
       unless is_enabled
-        Rails.logger.info("[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED=false")
+        Rails.logger.info('[G4-Analytics] Analytics disabled by flag G4_ANALYTICS_ENABLED=false')
         return Result.new(ok: true, error: 'analytics_disabled_by_flag')
       end
 
-      new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at, event_id: event_id).call
+      new(company_id: company_id, event_type: event_type, metadata: metadata, user: user, occurred_at: tracked_at,
+          event_id: event_id).call
     rescue StandardError => e
       # Garantia final: NUNCA quebrar o chamador por erro de Analytics
       Rails.logger.error("[G4-Analytics] Critical Failure in Service: #{e.class} - #{e.message}")
@@ -50,35 +52,32 @@ module Analytics
       validation_result = validate_contract!
       unless validation_result[:ok]
         log_ingest_error(validation_result[:missing_keys])
-        
+
         if strict_mode? && !fatal_strict_mode?
           return Result.new(ok: true, event: nil, error: 'contract_violation_discarded')
         end
 
         # Staging/test hard mode: expose invalid contracts without affecting production flows.
         if strict_mode?
-          return Result.new(ok: false, error: "contract_violation: missing_keys=#{validation_result[:missing_keys].join(',')}")
+          return Result.new(ok: false,
+                            error: "contract_violation: missing_keys=#{validation_result[:missing_keys].join(',')}")
         end
       end
-      
-      unless ensure_unique_event!
-        return Result.new(ok: true, event: nil, error: 'duplicate_event')
-      end
+
+      return Result.new(ok: true, event: nil, error: 'duplicate_event') unless ensure_unique_event!
 
       persist_platform_event!
       event = persist_analytics_event!
-      
+
       # Forward to PostHog for Product Analytics (Sprint 3)
       forward_to_posthog if ENV['POSTHOG_API_KEY'].present?
 
       # Sync Review Telemetry Cache (Solar Reviews 2.0)
-      if @event_type.start_with?('review_')
-        Reviews::TelemetryAggregator.call(@event_type, @metadata)
-      end
+      Reviews::TelemetryAggregator.call(@event_type, @metadata) if @event_type.start_with?('review_')
 
       Result.new(ok: true, event: event)
     rescue StandardError => e
-      Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")        
+      Rails.logger.error("[G4-Analytics] TrackEventService error: #{e.class} #{e.message}")
       Result.new(ok: false, error: 'analytics_processing_error')
     end
 
@@ -98,19 +97,20 @@ module Analytics
       registry = Analytics::EventRegistry.fetch(@event_type)
       if registry.nil?
         return { ok: false, missing_keys: ['UNKNOWN_EVENT'] } if strict_mode?
+
         return { ok: true }
       end
-      
+
       raw_keys = registry['required_keys']
       required_keys = case raw_keys
                       when String then JSON.parse(raw_keys || '[]')
                       when Array then raw_keys
                       else []
                       end
-      
+
       required_keys = Array(required_keys).map(&:to_s)
       missing_keys = required_keys - @metadata.keys.map(&:to_s)
-      
+
       { ok: missing_keys.empty?, missing_keys: missing_keys }
     rescue JSON::ParserError => e
       Rails.logger.error("[G4-Analytics][Contract] JSON Parse Error for #{@event_type}: #{e.message}")
@@ -122,10 +122,10 @@ module Analytics
 
     def log_ingest_error(missing_keys)
       return unless ActiveRecord::Base.connection.table_exists?('event_ingest_errors')
-      
+
       conn = ActiveRecord::Base.connection
       error_reason = "Missing required keys: #{missing_keys.join(', ')}"
-      
+
       sql = <<~SQL
         INSERT INTO event_ingest_errors (
           event_id, event_type, payload, error_reason, occurred_at, created_at
@@ -144,25 +144,25 @@ module Analytics
 
     def ensure_unique_event!
       return true unless ActiveRecord::Base.connection.table_exists?('analytics_event_dedup')
-      
+
       connection = ActiveRecord::Base.connection
       adapter_name = connection.adapter_name.downcase
-      
+
       if adapter_name.include?('postgresql')
         # PostgreSQL: INSERT ... ON CONFLICT DO NOTHING com verificação de resultado
         result = connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)}) ON CONFLICT (event_id) DO NOTHING")
-        result.cmd_tuples > 0
+        result.cmd_tuples.positive?
       elsif adapter_name.include?('sqlite')
         # SQLite: INSERT OR IGNORE com verificação em raw_connection.changes
         connection.execute("INSERT OR IGNORE INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
-        connection.raw_connection.changes > 0
+        connection.raw_connection.changes.positive?
       else
         # Adapter não configurado - usar exception-based detection
         begin
           connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
-          true  # Inserção bem-sucedida
+          true # Inserção bem-sucedida
         rescue ActiveRecord::RecordNotUnique
-          false  # Duplicate constraint violation
+          false # Duplicate constraint violation
         end
         # Outros StatementInvalid propagam para rescue externo
       end
@@ -250,11 +250,11 @@ module Analytics
 
     def forward_to_posthog
       distinct_id = @user&.posthog_distinct_id || @metadata['distinct_id'] || "company_#{@company_id}"
-      
+
       # Map internal event types to PostHog V2 Taxonomy
       ph_event_name = @event_type
       ph_properties = @metadata.dup
-      
+
       case @event_type
       when 'plan_changed'
         ph_event_name = 'plan_upgraded'
@@ -281,6 +281,7 @@ module Analytics
     def normalize_brand_id(raw)
       return nil if raw.blank?
       return raw if raw.is_a?(Integer)
+
       raw.to_s.match?(/\A\d+\z/) ? raw.to_i : nil
     end
   end

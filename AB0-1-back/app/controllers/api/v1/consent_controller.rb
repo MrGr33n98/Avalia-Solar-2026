@@ -19,7 +19,7 @@ module Api
           metadata: params[:metadata] || {},
           consented_at: Time.current
         )
-        
+
         distinct_id = current_user&.posthog_distinct_id || "anon_#{session_id}"
         Analytics::PostHogService.capture(
           'consent_given',
@@ -37,8 +37,8 @@ module Api
           consented_at: consent_log.consented_at
         }, status: :created
       rescue ActiveRecord::RecordInvalid => e
-        render json: { 
-          status: 'error', 
+        render json: {
+          status: 'error',
           message: e.message,
           errors: e.record.errors.full_messages
         }, status: :unprocessable_entity
@@ -47,7 +47,7 @@ module Api
         Rails.logger.error(e.backtrace.join("\n"))
         render json: { status: 'error', message: 'Internal server error' }, status: :internal_server_error
       end
-      
+
       # POST /api/v1/consent/revoke
       def revoke
         consent_log = ConsentLog.create!(
@@ -59,20 +59,20 @@ module Api
           consent_method: 'settings_page',
           ip_address: request.remote_ip,
           user_agent: request.user_agent,
-          metadata: { 
+          metadata: {
             revoke_reason: params[:revoke_reason],
             revoked_at: Time.current.iso8601
           },
           consented_at: Time.current
         )
-        
+
         # Mark analytics_events for anonymization if user is authenticated
         if current_user
           AnalyticsEvent.where(user_id: current_user.id).update_all(
             metadata: Arel.sql("metadata || '{\"anonymized\": true, \"anonymized_at\": \"#{Time.current.iso8601}\"}'::jsonb")
           )
         end
-        
+
         Analytics::PostHogService.capture(
           'consent_revoked',
           {
@@ -90,14 +90,14 @@ module Api
         Rails.logger.error("[Consent] Failed to revoke: #{e.message}")
         render json: { status: 'error' }, status: :internal_server_error
       end
-      
+
       # GET /api/v1/consent/status
       def status
         consent = ConsentLog.current_consent(
           user_id: current_user&.id,
           session_id: session_id
         )
-        
+
         if consent
           render json: {
             consent_type: consent.consent_type,
@@ -113,14 +113,14 @@ module Api
         Rails.logger.error("[Consent] Failed to get status: #{e.message}")
         render json: { status: 'error' }, status: :internal_server_error
       end
-      
+
       private
-      
+
       def session_id
         cookies.signed[:as_sid] || begin
           new_sid = SecureRandom.uuid
-          cookies.signed[:as_sid] = { 
-            value: new_sid, 
+          cookies.signed[:as_sid] = {
+            value: new_sid,
             expires: 1.year.from_now,
             httponly: true,
             secure: Rails.env.production?

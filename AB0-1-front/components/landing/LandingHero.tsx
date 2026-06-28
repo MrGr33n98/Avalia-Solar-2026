@@ -43,62 +43,23 @@ type LandingHeroProps = {
 
 export default function LandingHero(props: LandingHeroProps) {
   return (
-    <section 
-      className="relative overflow-hidden border-b border-brand-borderSoft pt-12 pb-16 lg:pt-20 lg:pb-28 min-h-[500px] md:min-h-[600px] flex items-center"
-      style={{ background: 'linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 45%, #F8FAFC 100%)' }}
-    >
-      {/* 1. Grid pontilhado técnico quase invisível */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.05] z-0"
+    <section className="relative overflow-hidden border-b border-slate-200 bg-[#f6faff] py-10 sm:py-14 lg:py-16">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 opacity-60"
         style={{
-          backgroundImage: 'radial-gradient(#0F172A 1.2px, transparent 1.2px)',
-          backgroundSize: '32px 32px'
+          backgroundImage:
+            'radial-gradient(circle at 18% 18%, rgba(37,99,235,.10), transparent 30%), radial-gradient(circle at 82% 12%, rgba(245,158,11,.08), transparent 25%)',
         }}
       />
 
-      {/* 2. Elementos Abstratos Técnicos (Linhas finas, circuitos e conexões) */}
-      <svg 
-        viewBox="0 0 1000 1000" 
-        preserveAspectRatio="none" 
-        className="absolute inset-0 w-full h-full pointer-events-none z-0" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Linhas diagonais técnicas */}
-        <line x1="80" y1="150" x2="250" y2="320" stroke="#2563EB" strokeWidth="1" strokeDasharray="3 3" opacity="0.06" />
-        <line x1="850" y1="120" x2="980" y2="350" stroke="#2563EB" strokeWidth="1" opacity="0.05" />
-        
-        {/* Traço conectando com um ponto (circuito sutil) */}
-        <path d="M 520 180 L 580 180 L 620 240" fill="none" stroke="#2563EB" strokeWidth="1" opacity="0.06" />
-        <circle cx="520" cy="180" r="3" fill="#2563EB" opacity="0.08" />
-        <circle cx="620" cy="240" r="3" fill="#2563EB" opacity="0.08" />
-
-        {/* Detalhe verde de apoio sutil */}
-        <path d="M 400 820 L 430 850 L 500 850" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.05" />
-        <circle cx="500" cy="850" r="2.5" fill="#10B981" opacity="0.06" />
-
-        {/* Detalhe geométrico angular (navy técnico) */}
-        <rect x="40" y="550" width="10" height="10" rx="1.5" fill="none" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
-        <line x1="40" y1="600" x2="140" y2="600" stroke="#0F172A" strokeWidth="1" opacity="0.04" />
-      </svg>
-
-      {/* 3. Halo suave de luz e círculo vazado grande ao redor da imagem principal */}
-      <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[550px] h-[550px] pointer-events-none z-0 hidden lg:block">
-        {/* Círculo vazado grande */}
-        <div className="absolute inset-0 rounded-full border border-blue-500/[0.06] scale-95" />
-        <div className="absolute inset-10 rounded-full border border-blue-500/[0.03] scale-90 border-dashed" />
-        {/* Halo de luz suave azul */}
-        <div className="absolute inset-20 rounded-full bg-gradient-to-tr from-blue-400/8 to-indigo-400/4 blur-3xl opacity-50" />
-      </div>
-
-      <div className="container relative mx-auto px-4 md:px-8 lg:px-12 z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Coluna Esquerda: Textos e Busca */}
-          <div className="lg:col-span-7 flex flex-col items-start text-left w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
+          <div className="flex w-full flex-col items-start text-left lg:col-span-7">
             <LandingHeroClient {...props} />
           </div>
 
-          {/* Coluna Direita: Imagem de Casa Sustentável */}
-          <div className="lg:col-span-5 hidden lg:block relative h-[450px] w-full rounded-[8px] overflow-hidden border border-brand-border shadow-soft">
+          <div className="relative hidden h-[460px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,.45)] lg:col-span-5 lg:block">
             <Image
               src="/images/lp-avalia-solar-image.webp"
               alt="Casa inteligente sustentável com carro elétrico e energia solar"
@@ -108,6 +69,14 @@ export default function LandingHero(props: LandingHeroProps) {
               className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
+            <div className="absolute inset-x-5 bottom-5 rounded-xl border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur-md">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">
+                Escolha com evidências
+              </p>
+              <p className="mt-1 text-sm font-semibold leading-snug text-slate-800">
+                Compare reputação, cobertura e qualidade antes de pedir propostas.
+              </p>
+            </div>
           </div>
         </div>
       </div>

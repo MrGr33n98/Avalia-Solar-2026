@@ -6,10 +6,10 @@ module PendingChangeIdempotency
   extend ActiveSupport::Concern
 
   included do
-    before_action :validate_and_set_idempotency_key, only: [
-      :update_info, :add_categories, :remove_category,
-      :update_ctas, :update_logo, :update_banner,
-      :upload_media, :add_video, :remove_video
+    before_action :validate_and_set_idempotency_key, only: %i[
+      update_info add_categories remove_category
+      update_ctas update_logo update_banner
+      upload_media add_video remove_video
     ]
   end
 
@@ -24,29 +24,29 @@ module PendingChangeIdempotency
     # Check header first (recommended by Idempotency-Key standard)
     # Reference: https://tools.ietf.org/html/draft-idempotency-key-header
     return request.headers['Idempotency-Key'] if request.headers['Idempotency-Key'].present?
-    
+
     # Fallback: generate deterministic key based on request signature
     generate_deterministic_idempotency_key
   end
 
   def generate_deterministic_idempotency_key
     require 'digest'
-    
+
     # Components of the key:
     # - user_id: ensures user's own requests only
     # - action: prevents mixing different operations
     # - method: differentiates GET from POST, etc
     # - sanitized params: the actual data (excluding idempotency_key itself)
-    
+
     params_copy = params.to_unsafe_h.except(:idempotency_key, :controller, :action)
-    
+
     data_to_hash = [
       current_user&.id.to_s,
       action_name,
       request.method,
       JSON.generate(params_copy)
     ].join('||')
-    
+
     Digest::SHA256.hexdigest(data_to_hash)
   end
 
@@ -82,9 +82,7 @@ module PendingChangeIdempotency
         idempotency_key: @idempotency_key,
         status: 'pending'
       )
-      if retry_pending
-        retry_pending.define_singleton_method(:previously_persisted?) { true }
-      end
+      retry_pending&.define_singleton_method(:previously_persisted?) { true }
       retry_pending
     end
   end

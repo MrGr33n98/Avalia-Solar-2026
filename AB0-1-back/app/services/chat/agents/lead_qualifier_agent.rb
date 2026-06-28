@@ -6,11 +6,11 @@ module Chat
       def self.process(session:, user_message:, router_state:, context: nil, agent_result: nil)
         # Normalização do texto
         normalized_text = normalize_text(user_message)
-        
+
         # Análise de intenções
         intent = router_state[:intent].to_s
         is_3rd_msg = session.chat_messages.user_messages.count >= 3
-        
+
         # Verificar intenção comercial nas keywords (usando regex seguro com word boundaries)
         has_commercial_intent = detect_commercial_intent(normalized_text)
         has_urgency = detect_urgency(normalized_text)
@@ -42,7 +42,8 @@ module Chat
         base_temperature = get_temperature(base_score)
 
         # Track analytics (NO PII)
-        track_qualification(session, router_state, base_score, base_temperature, reason, has_commercial_intent, should_trigger)
+        track_qualification(session, router_state, base_score, base_temperature, reason, has_commercial_intent,
+                            should_trigger)
 
         {
           should_trigger_lead: should_trigger,
@@ -64,6 +65,7 @@ module Chat
 
         def normalize_text(text)
           return '' if text.blank?
+
           # Transliterate removes accents (e.g. orçamento -> orcamento)
           I18n.transliterate(text).downcase
         end
@@ -74,7 +76,7 @@ module Chat
             'orcamento', 'cotacao', 'instalar', 'contratar',
             'instalacao', 'comparar proposta', 'proposta'
           ]
-          
+
           keywords.any? { |kw| text.match?(/\b#{Regexp.escape(kw)}\b/i) }
         end
 
@@ -97,15 +99,14 @@ module Chat
             elsif companies_empty
               # Busca vazia sem intenção comercial -> NÃO gera lead
               [false, 'empty_search_no_commercial']
-            else
+            elsif is_3rd_msg
               # Tem empresas, mas não tem keyword explícita. Se for 3a msg, trigger.
-              if is_3rd_msg
-                [true, 'engagement_count']
-              else
-                [false, 'company_recommendation_informative']
-              end
+              [true, 'engagement_count']
+            else
+              [false, 'company_recommendation_informative']
             end
-          elsif %w[solar_support solar_assessment financing_question ev_charger_question solar_financing ev_charger_installation].include?(intent)
+          elsif %w[solar_support solar_assessment financing_question ev_charger_question solar_financing
+                   ev_charger_installation].include?(intent)
             if has_commercial_intent
               [true, 'technical_commercial_override']
             else
@@ -113,15 +114,13 @@ module Chat
             end
           elsif %w[greeting fallback general_question].include?(intent)
             [false, 'informative_intent']
-          else
+          elsif has_commercial_intent
             # Outras intents
-            if has_commercial_intent
-              [true, 'commercial_intent_detected']
-            elsif is_3rd_msg
-              [true, 'engagement_count']
-            else
-              [false, 'default']
-            end
+            [true, 'commercial_intent_detected']
+          elsif is_3rd_msg
+            [true, 'engagement_count']
+          else
+            [false, 'default']
           end
         end
 
@@ -131,7 +130,7 @@ module Chat
           score += 20 if has_urgency
           score += 10 if is_3rd_msg
           score += 10 if intent == 'company_recommendation'
-          score += 30 if intent == 'proposal_analysis' || intent == 'compare_companies'
+          score += 30 if %w[proposal_analysis compare_companies].include?(intent)
           score += 10 if has_location
 
           score.clamp(0, 100)
@@ -140,20 +139,18 @@ module Chat
         def get_temperature(score)
           if defined?(Chat::LeadScoringService) && Chat::LeadScoringService.respond_to?(:temperature_for)
             Chat::LeadScoringService.temperature_for(score)
+          elsif score >= 70
+            'hot'
+          elsif score >= 30
+            'warm'
           else
-            if score >= 70
-              'hot'
-            elsif score >= 30
-              'warm'
-            else
-              'cold'
-            end
+            'cold'
           end
         end
 
         def track_qualification(session, router_state, score, temperature, reason, commercial_intent, should_trigger)
           return unless defined?(Chat::PosthogTrackingService)
-          
+
           Chat::PosthogTrackingService.track(
             event: 'mobivolt_lead_qualification_evaluated',
             properties: {
@@ -173,14 +170,14 @@ module Chat
         end
 
         def fallback_response(exception)
-          { 
-            should_trigger_lead: false, 
+          {
+            should_trigger_lead: false,
             lead_score: 0,
             lead_temperature: 'cold',
             lead_reason: 'error',
             commercial_intent: false,
-            fallback_triggered: true, 
-            error: exception.message 
+            fallback_triggered: true,
+            error: exception.message
           }
         end
       end

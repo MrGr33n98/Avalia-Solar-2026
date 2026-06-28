@@ -9,7 +9,7 @@ module Chat
       retry_on StandardError, wait: :exponentially_longer, attempts: 5 do |job, error|
         chat_lead_id = job.arguments.first
         Rails.logger.error("[Chat::Mobivolt::LeadSyncJob] Permanent failure syncing ChatLead ##{chat_lead_id}: #{error.message}")
-        
+
         # Disparar telemetria definitiva de falha
         Chat::PosthogTrackingService.track(
           event: 'mobivolt_lead_sync_failed_permanently',

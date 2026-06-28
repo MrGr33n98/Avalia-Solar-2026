@@ -19,7 +19,7 @@ module Analytics
     def detect_recent_anomalies
       recent_stats = calculate_recent_stats
       baseline_stats = calculate_baseline_stats
-      
+
       return [] if baseline_stats.nil?
 
       anomalies = []
@@ -27,7 +27,7 @@ module Analytics
       # Check for volume spikes
       if recent_stats[:count] > baseline_stats[:mean] + (SPIKE_THRESHOLD * baseline_stats[:stddev])
         percentage_change = ((recent_stats[:count] - baseline_stats[:mean]) / baseline_stats[:mean] * 100).round(1)
-        
+
         anomalies << {
           type: 'spike',
           event_type: @event_type || 'all_events',
@@ -43,7 +43,7 @@ module Analytics
       # Check for volume drops
       if recent_stats[:count] < baseline_stats[:mean] + (DROP_THRESHOLD * baseline_stats[:stddev])
         percentage_change = ((baseline_stats[:mean] - recent_stats[:count]) / baseline_stats[:mean] * 100).round(1)
-        
+
         anomalies << {
           type: 'drop',
           event_type: @event_type || 'all_events',
@@ -141,8 +141,8 @@ module Analytics
 
     def detect_missing_company_ids
       # Only check events that should have company_id
-      relevant_events = ['company_profile_view', 'company_click', 'lead_submitted']
-      
+      relevant_events = %w[company_profile_view company_click lead_submitted]
+
       scope = AnalyticsEvent.where('created_at >= ?', 24.hours.ago)
       scope = scope.where(event_type: relevant_events)
       scope = scope.where(event_type: @event_type) if @event_type && relevant_events.include?(@event_type)
@@ -169,7 +169,7 @@ module Analytics
     def detect_duplicates
       # Check for duplicate events in the last hour (using dedupe table)
       recent_dupes = DedupedEvent.where('created_at >= ?', 1.hour.ago).count
-      
+
       return [] if recent_dupes.zero?
 
       # Calculate duplicate rate

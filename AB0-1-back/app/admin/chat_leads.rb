@@ -25,10 +25,11 @@ ActiveAdmin.register ChatLead do
   member_action :change_status, method: :post do
     new_status = params[:status]
     if ChatLead::SALES_STATUSES.include?(new_status)
-      resource.change_status!(new_status, performed_by: current_admin_user, notes: "Alterado via painel ActiveAdmin por #{current_admin_user.email}")
+      resource.change_status!(new_status, performed_by: current_admin_user,
+                                          notes: "Alterado via painel ActiveAdmin por #{current_admin_user.email}")
       redirect_to admin_chat_lead_path(resource), notice: "Status do lead atualizado para '#{new_status}' com sucesso!"
     else
-      redirect_to admin_chat_lead_path(resource), alert: "Status inválido!"
+      redirect_to admin_chat_lead_path(resource), alert: 'Status inválido!'
     end
   end
 
@@ -56,19 +57,19 @@ ActiveAdmin.register ChatLead do
     end
     column :temperature, sortable: :lead_temperature do |l|
       status_tag "#{l.temperature_emoji} #{l.lead_temperature}", class: case l.lead_temperature
-      when 'muito_quente' then 'ok'
-      when 'quente' then 'ok'
-      when 'morno' then 'warning'
-      else 'error'
-      end
+                                                                        when 'muito_quente' then 'ok'
+                                                                        when 'quente' then 'ok'
+                                                                        when 'morno' then 'warning'
+                                                                        else 'error'
+                                                                        end
     end
     column :status, sortable: :sales_status do |l|
       status_tag l.sales_status, class: case l.sales_status
-      when 'converted' then 'ok'
-      when 'new', 'qualified' then 'warning'
-      when 'spam', 'lost' then 'error'
-      else 'light'
-      end
+                                        when 'converted' then 'ok'
+                                        when 'new', 'qualified' then 'warning'
+                                        when 'spam', 'lost' then 'error'
+                                        else 'light'
+                                        end
     end
     column :created_at
     actions
@@ -126,22 +127,28 @@ ActiveAdmin.register ChatLead do
     panel 'Ações de Vendas' do
       div class: 'action_items' do
         span class: 'action_item' do
-          link_to 'Qualificar Lead', change_status_admin_chat_lead_path(resource, status: 'qualified'), method: :post, class: 'button'
+          link_to 'Qualificar Lead', change_status_admin_chat_lead_path(resource, status: 'qualified'), method: :post,
+                                                                                                        class: 'button'
         end
         span class: 'action_item' do
-          link_to 'Marcar como Contatado', change_status_admin_chat_lead_path(resource, status: 'contacted'), method: :post, class: 'button'
+          link_to 'Marcar como Contatado', change_status_admin_chat_lead_path(resource, status: 'contacted'),
+                  method: :post, class: 'button'
         end
         span class: 'action_item' do
-          link_to 'Proposta Enviada', change_status_admin_chat_lead_path(resource, status: 'proposal_sent'), method: :post, class: 'button'
+          link_to 'Proposta Enviada', change_status_admin_chat_lead_path(resource, status: 'proposal_sent'),
+                  method: :post, class: 'button'
         end
         span class: 'action_item' do
-          link_to 'Converter (Venda)', change_status_admin_chat_lead_path(resource, status: 'converted'), method: :post, class: 'button ok'
+          link_to 'Converter (Venda)', change_status_admin_chat_lead_path(resource, status: 'converted'),
+                  method: :post, class: 'button ok'
         end
         span class: 'action_item' do
-          link_to 'Perdido', change_status_admin_chat_lead_path(resource, status: 'lost'), method: :post, class: 'button error'
+          link_to 'Perdido', change_status_admin_chat_lead_path(resource, status: 'lost'), method: :post,
+                                                                                           class: 'button error'
         end
         span class: 'action_item' do
-          link_to 'Marcar como SPAM', change_status_admin_chat_lead_path(resource, status: 'spam'), method: :post, class: 'button error'
+          link_to 'Marcar como SPAM', change_status_admin_chat_lead_path(resource, status: 'spam'), method: :post,
+                                                                                                    class: 'button error'
         end
       end
     end

@@ -6,9 +6,9 @@ module CompanyDashboard
 
     def self.call
       sql = ActiveRecord::Base.sanitize_sql_array([
-        "SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = ?",
-        PIPELINE
-      ])
+                                                    'SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = ?',
+                                                    PIPELINE
+                                                  ])
       res = ActiveRecord::Base.connection.select_one(sql)
 
       last_aggregated_at = res ? Time.zone.parse(res['last_processed_at'].to_s) : nil

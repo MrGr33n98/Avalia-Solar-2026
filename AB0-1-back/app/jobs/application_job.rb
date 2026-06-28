@@ -11,7 +11,7 @@ class ApplicationJob < ActiveJob::Base
     when 3 then 2.hours          # 2h
     when 4 then 6.hours          # 6h
     else
-      :kill  # Stop trying after 5 attempts
+      :kill # Stop trying after 5 attempts
     end
   end
 
@@ -71,4 +71,3 @@ class ApplicationJob < ActiveJob::Base
     Sentry.capture_exception(exception, tags: { job: self.class.name }) if defined?(Sentry)
   end
 end
-

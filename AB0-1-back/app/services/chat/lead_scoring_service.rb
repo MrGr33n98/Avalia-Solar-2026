@@ -4,42 +4,42 @@ module Chat
   class LeadScoringService
     SCORING_RULES = {
       # Base
-      vertical_selected:     10,
-      location_provided:     15,
-      wants_reviews:         10,
-      wants_comparison:      20,
-      selected_company:      25,
-      wants_quote:           40,
-      whatsapp_click:        40,
-      contact_with_consent:  50,
-      
+      vertical_selected: 10,
+      location_provided: 15,
+      wants_reviews: 10,
+      wants_comparison: 20,
+      selected_company: 25,
+      wants_quote: 40,
+      whatsapp_click: 40,
+      contact_with_consent: 50,
+
       # Solar Specific
-      solar_bill_low:        5,
-      solar_bill_mid:        15,
-      solar_bill_high:       25,
-      solar_bill_very_high:  35,
+      solar_bill_low: 5,
+      solar_bill_mid: 15,
+      solar_bill_high: 25,
+      solar_bill_very_high: 35,
       solar_bill_commercial: 45,
-      solar_financing:       20,
-      solar_has_proposal:    35,
-      solar_urgent:          50,
-      solar_maintenance:     20,
-      solar_b2b_project:     30,
+      solar_financing: 20,
+      solar_has_proposal: 35,
+      solar_urgent: 50,
+      solar_maintenance: 20,
+      solar_b2b_project: 30,
 
       # EV Specific
-      ev_owner:              35,
-      ev_hybrid_owner:       30,
-      ev_buying_soon:        25,
-      ev_b2b_project:        40,
-      ev_public_station:     45,
-      ev_tech_assessment:    25,
-      ev_urgent:             50,
-      ev_ready_30d:          40,
-      ev_has_point:          20,
-      ev_no_point:           15
+      ev_owner: 35,
+      ev_hybrid_owner: 30,
+      ev_buying_soon: 25,
+      ev_b2b_project: 40,
+      ev_public_station: 45,
+      ev_tech_assessment: 25,
+      ev_urgent: 50,
+      ev_ready_30d: 40,
+      ev_has_point: 20,
+      ev_no_point: 15
     }.freeze
 
     TEMPERATURE_THRESHOLDS = {
-      'hot'  => 60,
+      'hot' => 60,
       'warm' => 30,
       'cold' => 0
     }.freeze
@@ -107,8 +107,6 @@ module Chat
       'cold'
     end
 
-    private
-
     def self.calculate_solar_score(p)
       s = 0
       bill_range = if p.respond_to?(:monthly_bill_range)
@@ -141,14 +139,12 @@ module Chat
 
       buying_stage = if p.respond_to?(:buying_stage)
                        p.buying_stage
-                     else
-                       if p.respond_to?(:urgency) && p.urgency.present?
-                         'urgent'
-                       elsif p.respond_to?(:decision_timeline)
-                         case p.decision_timeline
-                         when 'immediate', 'this_week', 'this_month' then 'urgent'
-                         else 'researching'
-                         end
+                     elsif p.respond_to?(:urgency) && p.urgency.present?
+                       'urgent'
+                     elsif p.respond_to?(:decision_timeline)
+                       case p.decision_timeline
+                       when 'immediate', 'this_week', 'this_month' then 'urgent'
+                       else 'researching'
                        end
                      end
       s += SCORING_RULES[:solar_has_proposal] if buying_stage == 'has_proposal'
@@ -166,7 +162,8 @@ module Chat
                  elsif p.respond_to?(:property_type)
                    p.property_type
                  end
-      s += SCORING_RULES[:solar_b2b_project] if %w[commercial_solar rural_solar condominium_solar commercial rural condominium].include?(category)
+      s += SCORING_RULES[:solar_b2b_project] if %w[commercial_solar rural_solar condominium_solar commercial rural
+                                                   condominium].include?(category)
       s
     end
 
@@ -174,20 +171,19 @@ module Chat
       s = 0
       ev_ownership = if p.respond_to?(:ev_ownership)
                        p.ev_ownership
+                     elsif p.respond_to?(:property_type) && %w[company condominium
+                                                               public_site].include?(p.property_type)
+                       'business_condo'
+                     elsif p.respond_to?(:vehicle_count) && p.vehicle_count.to_i > 1
+                       'fleet'
                      else
-                       if p.respond_to?(:property_type) && %w[company condominium public_site].include?(p.property_type)
-                         'business_condo'
-                       elsif p.respond_to?(:vehicle_count) && p.vehicle_count.to_i > 1
-                         'fleet'
-                       else
-                         'owns_ev'
-                       end
+                       'owns_ev'
                      end
 
       case ev_ownership
-      when 'owns_ev'           then s += SCORING_RULES[:ev_owner]
+      when 'owns_ev' then s += SCORING_RULES[:ev_owner]
       when 'owns_plugin_hybrid' then s += SCORING_RULES[:ev_hybrid_owner]
-      when 'buying_soon'       then s += SCORING_RULES[:ev_buying_soon]
+      when 'buying_soon' then s += SCORING_RULES[:ev_buying_soon]
       when 'business_condo', 'fleet' then s += SCORING_RULES[:ev_b2b_project]
       end
 
@@ -207,24 +203,18 @@ module Chat
 
       buying_stage = if p.respond_to?(:buying_stage)
                        p.buying_stage
-                     else
-                       if p.respond_to?(:urgency) && p.urgency.present?
-                         'urgent'
-                       elsif p.respond_to?(:decision_timeline)
-                         case p.decision_timeline
-                         when 'immediate', 'this_week', 'this_month' then 'urgent'
-                         else 'researching'
-                         end
+                     elsif p.respond_to?(:urgency) && p.urgency.present?
+                       'urgent'
+                     elsif p.respond_to?(:decision_timeline)
+                       case p.decision_timeline
+                       when 'immediate', 'this_week', 'this_month' then 'urgent'
+                       else 'researching'
                        end
                      end
       s += SCORING_RULES[:ev_urgent] if buying_stage == 'urgent'
       s += SCORING_RULES[:ev_ready_30d] if buying_stage == 'ready_to_buy'
 
-      has_pt = if p.respond_to?(:has_electrical_point)
-                 p.has_electrical_point
-               else
-                 nil
-               end
+      has_pt = (p.has_electrical_point if p.respond_to?(:has_electrical_point))
       s += SCORING_RULES[:ev_has_point] if has_pt == true
       s += SCORING_RULES[:ev_no_point] if has_pt == false
       s

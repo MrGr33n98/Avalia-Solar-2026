@@ -39,6 +39,7 @@ module Analytics
       when 'brand'
         @brand = Brand.find_by_value(value)
         raise ActiveRecord::RecordNotFound, 'Brand not found' unless brand
+
         @label = brand.slug
       end
     end

@@ -17,7 +17,8 @@ ActiveAdmin.register LeadWizardField do
   filter :created_at
 
   action_item :new_option, only: :show do
-    link_to 'New Option', new_admin_lead_wizard_field_option_path(lead_wizard_field_option: { lead_wizard_field_id: resource.id })
+    link_to 'New Option',
+            new_admin_lead_wizard_field_option_path(lead_wizard_field_option: { lead_wizard_field_id: resource.id })
   end
 
   controller do
@@ -116,9 +117,9 @@ ActiveAdmin.register LeadWizardField do
     def attach_nested_option_error(field, error)
       return if field.blank?
 
-      if error.record.is_a?(LeadWizardFieldOption)
-        field.errors.add(:lead_wizard_field_options, error.record.errors.full_messages.to_sentence)
-      end
+      return unless error.record.is_a?(LeadWizardFieldOption)
+
+      field.errors.add(:lead_wizard_field_options, error.record.errors.full_messages.to_sentence)
     end
   end
 
@@ -148,7 +149,9 @@ ActiveAdmin.register LeadWizardField do
       f.input :key, hint: 'Chave estável do campo. Ex: full_name, project_profile.'
       f.input :label
       f.input :field_type, as: :select, collection: LeadWizardField::FIELD_TYPES.map { |type| [type.humanize, type] }
-      f.input :target, as: :select, collection: LeadWizardField::TARGETS.map { |target| [target.humanize, target] }, hint: 'Se vazio, o sistema infere pelo nome do campo.'
+      f.input :target, as: :select, collection: LeadWizardField::TARGETS.map { |target|
+        [target.humanize, target]
+      }, hint: 'Se vazio, o sistema infere pelo nome do campo.'
       f.input :placeholder
       f.input :help_text, as: :text, input_html: { rows: 3 }
       f.input :required
@@ -169,7 +172,9 @@ ActiveAdmin.register LeadWizardField do
     f.inputs 'Choice Options' do
       choice_options_text =
         params.dig(:lead_wizard_field, :choice_options_text).presence ||
-        resource.lead_wizard_field_options.order(:position, :id).map { |option| "#{option.label}|#{option.value}" }.join("\n")
+        resource.lead_wizard_field_options.order(:position, :id).map do |option|
+          "#{option.label}|#{option.value}"
+        end.join("\n")
 
       f.template.concat(
         f.template.content_tag(:li, class: 'string input') do

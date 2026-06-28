@@ -21,7 +21,7 @@ module Chat
             if dynamic_context.present?
               parts << dynamic_context
               dynamic_success = true
-              
+
               # Salva o payload estruturado para que o OrchestratorService possa anexar à mensagem
               if payload[:empresas_encontradas]&.any?
                 session.update!(
@@ -67,17 +67,13 @@ module Chat
       end
 
       # Add vertical context
-      if session.vertical.present?
-        parts << vertical_context(session.vertical)
-      end
+      parts << vertical_context(session.vertical) if session.vertical.present?
 
       # Add general platform context
       parts << platform_stats_context
 
       parts.compact.join("\n\n")
     end
-
-    private
 
     def self.company_context(company)
       <<~CTX
@@ -98,8 +94,16 @@ module Chat
       niche_tags = Array(company.niche_tags).join(', ')
       project_types = Array(company.project_types).join(', ')
       services = Array(company.services_offered).join(', ')
-      products = company.products.active.limit(10).map(&:name).join(', ') rescue ''
-      faqs = company.company_faqs.limit(5).map { |f| "P: #{f.question} | R: #{f.answer}" }.join("\n") rescue ''
+      products = begin
+        company.products.active.limit(10).map(&:name).join(', ')
+      rescue StandardError
+        ''
+      end
+      faqs = begin
+        company.company_faqs.limit(5).map { |f| "P: #{f.question} | R: #{f.answer}" }.join("\n")
+      rescue StandardError
+        ''
+      end
 
       <<~CTX
         PERFIL COMPLETO DA SUA EMPRESA (LOGADA):
@@ -121,23 +125,27 @@ module Chat
         - Tipos de Projetos que Atende: #{project_types.presence || 'Não configurados'}
         - Serviços Prestados: #{services.presence || 'Não configurados'}
         - Produtos Cadastrados no Catálogo: #{products.presence || 'Nenhum produto cadastrado'}
-        #{"- Perguntas Frequentes (FAQs) Cadastradas:\n" + faqs if faqs.present?}
+        #{"- Perguntas Frequentes (FAQs) Cadastradas:\n#{faqs}" if faqs.present?}
       CTX
     end
 
     def self.vertical_context(vertical)
       case vertical
       when 'solar'
-        "O usuário está interessado em ENERGIA SOLAR. Foque em painéis solares, inversores, instalação, financiamento, manutenção e economia na conta de luz."
+        'O usuário está interessado em ENERGIA SOLAR. Foque em painéis solares, inversores, instalação, financiamento, manutenção e economia na conta de luz.'
       when 'electric_mobility'
-        "O usuário está interessado em MOBILIDADE ELÉTRICA. Foque em carregadores, wallbox, eletropostos, frota elétrica e soluções para condomínios."
+        'O usuário está interessado em MOBILIDADE ELÉTRICA. Foque em carregadores, wallbox, eletropostos, frota elétrica e soluções para condomínios.'
       when 'success'
-        "O usuário atual é uma empresa parceira (cliente) acessando o Dashboard. Ele está na fase de onboarding/configuração. Ajude-o a entender o painel e incentivar o preenchimento de dados como cobertura geográfica e contatos."
+        'O usuário atual é uma empresa parceira (cliente) acessando o Dashboard. Ele está na fase de onboarding/configuração. Ajude-o a entender o painel e incentivar o preenchimento de dados como cobertura geográfica e contatos.'
       end
     end
 
     def self.platform_stats_context
-      company_count = Company.where(status: 'active').count rescue 0
+      company_count = begin
+        Company.where(status: 'active').count
+      rescue StandardError
+        0
+      end
       "A plataforma Avalia Solar possui #{company_count} empresas ativas cadastradas."
     end
   end

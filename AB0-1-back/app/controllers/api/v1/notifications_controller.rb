@@ -33,7 +33,7 @@ module Api
       def mark_as_read
         notification = current_user.notifications.find(params[:id])
         notification.read!
-        
+
         render json: { success: true, notification: notification_json(notification) }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Notification not found' }, status: :not_found

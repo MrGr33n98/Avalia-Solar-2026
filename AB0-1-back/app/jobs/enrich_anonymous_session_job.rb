@@ -29,7 +29,7 @@ class EnrichAnonymousSessionJob < ApplicationJob
     {
       'company_name' => ['SolarEdge Tech', 'Weg', 'Renner S.A.', 'Ambev', 'Fazenda Bela Vista'].sample,
       'company_domain' => 'example.com',
-      'industry' => ['Manufacturing', 'Agriculture', 'Retail', 'Tech'].sample,
+      'industry' => %w[Manufacturing Agriculture Retail Tech].sample,
       'company_size' => ['11-50', '51-200', '201-500', '500+'].sample,
       'city' => 'São Paulo',
       'state' => 'SP'

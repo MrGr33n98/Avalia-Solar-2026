@@ -25,20 +25,15 @@ module Mutations
 
     def resolve(
       company_id:, name:, email:, phone:,
-      message: nil, city: nil, state: nil,
-      service_type: nil, origin: 'graphql',
-      lgpd_consent:
+      lgpd_consent:, message: nil, city: nil, state: nil,
+      service_type: nil, origin: 'graphql'
     )
       # Valida consentimento LGPD
-      unless lgpd_consent
-        return { lead: nil, errors: ['Consentimento LGPD é obrigatório'] }
-      end
+      return { lead: nil, errors: ['Consentimento LGPD é obrigatório'] } unless lgpd_consent
 
       # Valida que a empresa existe e está ativa
       company = Company.active.find_by(id: company_id)
-      unless company
-        return { lead: nil, errors: ['Empresa não encontrada ou inativa'] }
-      end
+      return { lead: nil, errors: ['Empresa não encontrada ou inativa'] } unless company
 
       # Monta o lead com os campos disponíveis
       lead_attrs = {

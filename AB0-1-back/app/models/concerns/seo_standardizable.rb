@@ -12,7 +12,7 @@ module SeoStandardizable
   SEO_TITLE_MAX = 60
   SEO_DESC_MIN = 70
   SEO_DESC_MAX = 160
-  BRAND_SUFFIX = " | Avalia Solar"
+  BRAND_SUFFIX = ' | Avalia Solar'
 
   def display_seo_title
     raw_title = try(:seo_title).presence || try(:meta_title).presence || try(:name).presence || try(:title).presence
@@ -42,7 +42,7 @@ module SeoStandardizable
   end
 
   def standardize_text(text, min, max, is_title)
-    return "" if text.blank?
+    return '' if text.blank?
 
     # Remove tags HTML e espaços extras
     clean_text = ActionView::Base.full_sanitizer.sanitize(text).squish
@@ -53,9 +53,7 @@ module SeoStandardizable
     elsif clean_text.length < min && is_title
       # Expansão de títulos curtos com a marca
       suffix = BRAND_SUFFIX
-      if (clean_text + suffix).length <= max
-        clean_text = "#{clean_text}#{suffix}"
-      end
+      clean_text = "#{clean_text}#{suffix}" if (clean_text + suffix).length <= max
     end
 
     clean_text

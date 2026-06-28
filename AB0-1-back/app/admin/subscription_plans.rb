@@ -7,9 +7,9 @@ ActiveAdmin.register SubscriptionPlan do
   config.sort_order = 'start_at_desc'
 
   scope :all, default: true
-  scope('Ativos') { |scope| scope.currently_active }
-  scope('Trial') { |scope| scope.trial_status }
-  scope('Expirados') { |scope| scope.expired_records }
+  scope('Ativos', &:currently_active)
+  scope('Trial', &:trial_status)
+  scope('Expirados', &:expired_records)
   scope('Encerrando em 30 dias') { |scope| scope.ending_within(30) }
 
   filter :id
@@ -49,15 +49,23 @@ ActiveAdmin.register SubscriptionPlan do
     end
     column('Produto') do |subscription|
       div class: 'aa-entity-stack' do
-        div(class: 'aa-entity-title aa-entity-title--sm') { link_to(subscription.product.name, admin_product_path(subscription.product), class: 'aa-link-strong') } +
+        div(class: 'aa-entity-title aa-entity-title--sm') do
+          link_to(subscription.product.name, admin_product_path(subscription.product), class: 'aa-link-strong')
+        end +
           div(class: 'aa-entity-subtitle') { subscription.product.sku.presence || 'SKU não informado' }
       end
     end
-    column('Categoria') { |subscription| link_to(subscription.category.name, admin_category_path(subscription.category), class: 'aa-link-strong') }
-    column('Plano') { |subscription| link_to(subscription.plan.name, admin_plan_path(subscription.plan), class: 'aa-link-strong') }
+    column('Categoria') do |subscription|
+      link_to(subscription.category.name, admin_category_path(subscription.category), class: 'aa-link-strong')
+    end
+    column('Plano') do |subscription|
+      link_to(subscription.plan.name, admin_plan_path(subscription.plan), class: 'aa-link-strong')
+    end
     column('Valor do plano') do |subscription|
       div class: 'aa-metric-stack' do
-        div(class: 'aa-metric-value') { number_to_currency(subscription.effective_value || 0, unit: 'R$ ', separator: ',', delimiter: '.') } +
+        div(class: 'aa-metric-value') do
+          number_to_currency(subscription.effective_value || 0, unit: 'R$ ', separator: ',', delimiter: '.')
+        end +
           div(class: 'aa-metric-caption') { subscription.status_label }
       end
     end
@@ -81,10 +89,12 @@ ActiveAdmin.register SubscriptionPlan do
   show title: proc { |subscription| "Assinatura ##{subscription.id}" } do
     attributes_table do
       row :id
-      row('Cliente') { |subscription| subscription.member_display_name }
+      row('Cliente', &:member_display_name)
       row('Produto') { |subscription| link_to(subscription.product.name, admin_product_path(subscription.product)) }
       row('Empresa do produto') { |subscription| subscription.company&.name || '-' }
-      row('Categoria') { |subscription| link_to(subscription.category.name, admin_category_path(subscription.category)) }
+      row('Categoria') do |subscription|
+        link_to(subscription.category.name, admin_category_path(subscription.category))
+      end
       row('Plano') { |subscription| link_to(subscription.plan.name, admin_plan_path(subscription.plan)) }
       row('Status') { |subscription| status_tag(subscription.status_label) }
       row('Valor contratado') do |subscription|

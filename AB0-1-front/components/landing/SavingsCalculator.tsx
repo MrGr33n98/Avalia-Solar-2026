@@ -1,26 +1,30 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Calculator, Zap, TrendingDown, ArrowRight, Info } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BadgeCheck, Calculator, Coins, Gauge, ShieldCheck, SunMedium, TrendingUp } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent } from '@/components/ui/card';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 export default function SavingsCalculator() {
   const [bill, setBill] = useState(350);
 
   const stats = useMemo(() => {
-    const monthlySavings = bill * 0.95; // Assuming 95% reduction
+    const monthlySavings = bill * 0.95;
     const yearlySavings = monthlySavings * 12;
-    const savings25Years = yearlySavings * 25;
-    
+    const total = yearlySavings * 25;
+    const investmentMin = bill * 36;
+    const investmentMax = bill * 55;
+
     return {
-      monthly: monthlySavings,
       yearly: yearlySavings,
-      total: savings25Years
+      total,
+      investmentMin,
+      investmentMax,
+      paybackMin: investmentMin / yearlySavings,
+      paybackMax: investmentMax / yearlySavings,
     };
   }, [bill]);
 
@@ -30,110 +34,115 @@ export default function SavingsCalculator() {
   };
 
   return (
-    <section className="dark py-8 md:py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden relative">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
-        <Zap className="absolute -top-10 -right-10 w-48 h-48 text-primary rotate-12" />
-        <TrendingDown className="absolute -bottom-10 -left-10 w-56 h-56 text-primary -rotate-12" />
-      </div>
+    <section className="bg-white pb-14 sm:pb-20" aria-labelledby="solar-diagnostic-title">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 text-white shadow-[0_28px_70px_-46px_rgba(15,23,42,.9)]">
+          <div className="grid grid-cols-1 lg:grid-cols-[.9fr_1.1fr]">
+            <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">
+                <Calculator className="h-4 w-4" aria-hidden="true" />
+                Diagnóstico Solar
+              </div>
+              <h2 id="solar-diagnostic-title" className="max-w-lg text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+                Descubra o potencial econômico do seu projeto
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
+                Ajuste sua conta mensal para visualizar uma estimativa de economia, investimento e retorno.
+              </p>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[10px] font-bold mb-4">
-              <Calculator className="h-3 w-3" />
-              Calculadora de Economia
-            </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold mb-3 leading-tight">
-              Quanto você pode <span className="text-primary">economizar</span> com energia solar?
-            </h2>
-            <p className="text-slate-400 text-sm mb-6 leading-snug">
-              Descubra o potencial de redução na sua conta de luz e o retorno sobre o investimento em poucos segundos.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <label className="text-xs font-bold text-slate-300">Sua conta de luz mensal</label>
-                  <span className="text-xl font-bold text-white">R$ {bill}</span>
+              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.05] p-5">
+                <div className="mb-5 flex items-end justify-between gap-4">
+                  <label htmlFor="energy-bill-slider" className="text-sm font-bold text-slate-200">
+                    Valor da conta de luz
+                  </label>
+                  <span className="text-2xl font-black tabular-nums text-white">
+                    R$ {bill.toLocaleString('pt-BR')}
+                    <span className="text-xs font-semibold text-slate-400">/mês</span>
+                  </span>
                 </div>
-                <div className="clay-input bg-slate-700/50 border border-slate-600 p-2 rounded-clay-md">
-                  <Slider
-                    id="energy-bill-slider"
-                    value={[bill]}
-                    min={100}
-                    max={5000}
-                    step={50}
-                    onValueChange={(val) => setBill(val[0])}
-                    aria-label="Valor da conta de luz mensal"
-                    className="mb-1 [&_[role=slider]]:clay-convex [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-500">
+                <Slider
+                  id="energy-bill-slider"
+                  value={[bill]}
+                  min={100}
+                  max={5000}
+                  step={50}
+                  onValueChange={(value) => setBill(value[0])}
+                  aria-label="Valor da conta de luz mensal"
+                  className="[&_[role=slider]]:border-white [&_[role=slider]]:bg-amber-400"
+                />
+                <div className="mt-3 flex justify-between text-xs font-semibold text-slate-400">
                   <span>R$ 100</span>
                   <span>R$ 5.000+</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl backdrop-blur-sm bg-slate-800/50 border border-slate-700 flex gap-2 items-start">
-                <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-[11px] text-slate-400 leading-tight">
-                  Cálculo baseado na tarifa média nacional e durabilidade média de 25 anos dos equipamentos.
+              <div className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                <p>
+                  Estimativa educativa baseada em tarifa média. Irradiação, consumo e condições do imóvel alteram o resultado final.
                 </p>
               </div>
             </div>
-          </div>
 
-          <div className="relative">
-            <div
-              key={bill}
-              className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
-            >
-              <Card className="clay-panel bg-slate-800/90 border-slate-700 overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-slate-400 text-[10px] mb-0.5 uppercase tracking-wider font-bold">Economia Mensal</p>
-                      <h3 className="text-xl font-bold text-white">R$ {stats.monthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
-                    </div>
-                    <div>
-                      <p className="text-slate-400 text-[10px] mb-0.5 uppercase tracking-wider font-bold">Economia Anual</p>
-                      <h3 className="text-xl font-bold text-brand-cyan-light">R$ {stats.yearly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
-                    </div>
+            <div className="p-6 sm:p-8">
+              <div key={bill} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Metric
+                  icon={SunMedium}
+                  label="Economia anual estimada"
+                  value={`R$ ${stats.yearly.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+                />
+                <Metric
+                  icon={Coins}
+                  label="Economia em 25 anos"
+                  value={`R$ ${stats.total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+                />
+                <Metric
+                  icon={TrendingUp}
+                  label="Investimento estimado"
+                  value={`R$ ${stats.investmentMin.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} – ${stats.investmentMax.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+                />
+                <Metric
+                  icon={Gauge}
+                  label="Retorno estimado"
+                  value={`${stats.paybackMin.toFixed(1)} – ${stats.paybackMax.toFixed(1)} anos`}
+                />
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-300">Raio-X de Confiança Solar</p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      Compare empresas compatíveis com esta faixa de projeto.
+                    </p>
                   </div>
-
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-slate-400 text-[10px] mb-0.5 uppercase tracking-wider font-bold">Economia em 25 anos</p>
-                    <h3 className="text-3xl md:text-4xl font-black text-white">
-                      R$ {stats.total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
-                    </h3>
-                  </div>
-
-                  <div className="mt-6">
-                    <Button 
-                      onClick={handleConsultation}
-                      className="w-full h-11 lg:h-10 text-sm font-bold clay-btn-primary shadow-lg shadow-primary/20 group"
-                    >
-                      Solicitar Estudo Personalizado
-                      <ArrowRight className="ml-1.5 h-4 w-4 smooth-transition group-hover:translate-x-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl backdrop-blur-sm bg-emerald-950/70 border border-emerald-800/50 text-center">
-                  <p className="text-emerald-400 text-[10px] font-bold uppercase mb-0.5">Redução</p>
-                  <p className="text-lg font-black text-emerald-400">Até 95%</p>
-                </div>
-                <div className="p-3 rounded-xl backdrop-blur-sm bg-blue-950/70 border border-blue-800/50 text-center">
-                  <p className="text-blue-400 text-[10px] font-bold uppercase mb-0.5">Payback Médio</p>
-                  <p className="text-lg font-black text-blue-400">3-4 Anos</p>
+                  <BadgeCheck className="h-8 w-8 shrink-0 text-emerald-300" aria-hidden="true" />
                 </div>
               </div>
+
+              <Button
+                type="button"
+                onClick={handleConsultation}
+                className="mt-6 h-12 w-full bg-amber-400 font-extrabold text-slate-950 hover:bg-amber-300"
+              >
+                Comparar empresas para meu projeto
+              </Button>
             </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function Metric({ icon: Icon, label, value }: { icon: typeof SunMedium; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-400">{label}</p>
+        <Icon className="h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
+      </div>
+      <p className="mt-3 text-xl font-black tabular-nums text-white sm:text-2xl">{value}</p>
+    </div>
   );
 }

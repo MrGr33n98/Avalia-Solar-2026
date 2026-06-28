@@ -29,7 +29,8 @@ ActiveAdmin.register LeadWizardVersion do
   end
 
   action_item :new_section, only: :show do
-    link_to 'New Section', new_admin_lead_wizard_section_path(lead_wizard_section: { lead_wizard_version_id: resource.id })
+    link_to 'New Section',
+            new_admin_lead_wizard_section_path(lead_wizard_section: { lead_wizard_version_id: resource.id })
   end
 
   member_action :publish, method: :put do
@@ -89,7 +90,9 @@ ActiveAdmin.register LeadWizardVersion do
       f.input :template_key,
               hint: 'Chave estável para identificar a família do wizard. Ex: solar, financing, generic.'
       f.input :template_version, hint: 'Versionamento semântico do template exposto ao front.'
-      f.input :status, as: :select, collection: LeadWizardVersion.statuses.keys.map { |status| [status.humanize, status] }
+      f.input :status, as: :select, collection: LeadWizardVersion.statuses.keys.map { |status|
+        [status.humanize, status]
+      }
       f.input :ui_theme, as: :select, collection: %w[auto light dark]
       f.input :ui_primary_color
       f.input :ui_logo_url

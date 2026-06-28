@@ -96,6 +96,91 @@ export default function Navbar() {
     return null;
   }
 
+  if (pathname === '/') {
+    return (
+      <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="Home Avalia Solar">
+            <Image src="/avalia_symbol.png" alt="" width={42} height={42} className="h-9 w-9 object-contain" priority />
+            <span className="text-base font-black tracking-tight text-slate-950 sm:text-lg">Avalia Solar</span>
+          </Link>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            <Link href="/companies" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+              Empresas
+            </Link>
+            <div
+              className="static"
+              ref={megaMenuRef}
+              onMouseEnter={openMegaMenu}
+              onMouseLeave={() => setIsMegaMenuOpen(false)}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-10 rounded-lg px-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+                onClick={toggleMegaMenu}
+              >
+                Categorias <ChevronDown className={cn('ml-1 h-4 w-4 transition-transform', isMegaMenuOpen && 'rotate-180')} />
+              </Button>
+              {megaMenuMounted ? <CategoriesMegaMenu isOpen={isMegaMenuOpen} onClose={() => setIsMegaMenuOpen(false)} /> : null}
+            </div>
+            <Link href="/#como-funciona" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+              Como funciona
+            </Link>
+            <Link href="/blog" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+              Conteúdo
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!isAuthenticated ? (
+              <>
+                <Button asChild variant="ghost" className="hidden h-10 rounded-lg px-3 text-sm font-bold text-slate-600 sm:inline-flex">
+                  <Link href="/login"><UserIcon className="mr-1.5 h-4 w-4" /> Entrar</Link>
+                </Button>
+                <Button asChild variant="outline" className="hidden h-10 rounded-lg border-blue-300 bg-white px-4 text-sm font-bold text-blue-700 hover:bg-blue-50 sm:inline-flex">
+                  <Link href="/register">Para empresas</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="hidden h-10 rounded-lg text-sm font-bold text-slate-600 sm:inline-flex">
+                  <Link href={user?.role === 'review' ? '/review-dashboard' : '/profile'} onClick={handleMinhaContaClick}>
+                    <UserIcon className="mr-1.5 h-4 w-4" /> Minha conta
+                  </Link>
+                </Button>
+                {user?.role === 'company' ? (
+                  <Button asChild className="hidden h-10 bg-blue-600 font-bold text-white hover:bg-blue-700 sm:inline-flex">
+                    <Link href="/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" /> Painel</Link>
+                  </Button>
+                ) : null}
+              </>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                if (!mobileDrawerMounted) setMobileDrawerMounted(true);
+                setIsMobileDrawerOpen(true);
+              }}
+              aria-label="Abrir menu"
+              className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {mobileDrawerMounted ? (
+          <MobileCategoriesDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
+        ) : null}
+      </nav>
+    );
+  }
+
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-[#F8FAFC]/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl dark:border-white/10 dark:bg-[#020617]/95">
       <div

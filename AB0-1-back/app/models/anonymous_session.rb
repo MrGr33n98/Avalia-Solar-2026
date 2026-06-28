@@ -21,7 +21,7 @@ class AnonymousSession < ApplicationRecord
   scope :identified, -> { where(status: 'identified') }
   scope :recent, -> { where('last_seen_at >= ?', 1.hour.ago) }
   scope :stale, -> { where('last_seen_at < ?', 1.hour.ago) }
-  scope :by_company, ->(company_id) { where("? = ANY(visited_company_ids)", company_id) }
+  scope :by_company, ->(company_id) { where('? = ANY(visited_company_ids)', company_id) }
 
   # Status Checkers
   def anonymous? = status == 'anonymous'
@@ -45,18 +45,19 @@ class AnonymousSession < ApplicationRecord
   def track_visit(company_id, page_url)
     self.visited_company_ids ||= []
     self.visited_pages ||= []
-    
+
     self.visited_company_ids << company_id unless visited_company_ids.include?(company_id)
     self.visited_pages << { url: page_url, at: Time.current.iso8601 }
     self.pageviews_count += 1
     self.last_seen_at = Time.current
-    
+
     save!
   end
 
   # Duration
   def session_duration
     return 0 unless first_seen_at && last_seen_at
+
     (last_seen_at - first_seen_at).to_i
   end
 

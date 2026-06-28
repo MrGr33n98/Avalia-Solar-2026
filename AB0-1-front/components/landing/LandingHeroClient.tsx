@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Zap } from 'lucide-react';
+import { BadgeCheck, MessageSquareText, Scale } from 'lucide-react';
 
 import type { Category } from '@/lib/api';
 import { LandingHeroSearch } from '@/components/landing/LandingHeroSearch';
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 import type { HomeHeroTrustMetrics, HomeHeroVariant } from '@/lib/experiments/homeHeroExperiment';
 
@@ -41,7 +39,6 @@ export default function LandingHeroClient({
     totalVerifiedCompanies: null,
   },
 }: LandingHeroClientProps) {
-  const isVariant = variant === 'variant';
   const hasActiveCount = typeof trustMetrics.totalActiveCompanies === 'number' && trustMetrics.totalActiveCompanies > 0;
   const hasVerifiedCount =
     typeof trustMetrics.totalVerifiedCompanies === 'number' && trustMetrics.totalVerifiedCompanies > 0;
@@ -57,24 +54,21 @@ export default function LandingHeroClient({
   }, [experimentEnabled, experimentId, variant]);
 
   return (
-    <div className="w-full space-y-6 text-left flex flex-col items-start z-10">
-      {/* Label */}
-      <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-brand-blue dark:text-blue-400">
-        Energia solar e mobilidade elétrica
+    <div className="z-10 flex w-full flex-col items-start space-y-6 text-left">
+      <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.13em] text-blue-700">
+        <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+        Energia solar com mais confiança
       </span>
 
-      {/* Main Title */}
-      <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-tight leading-[1.02] max-w-[620px]">
-        Compare empresas de energia solar e mobilidade elétrica.
+      <h1 className="max-w-[660px] text-4xl font-black leading-[1.03] tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[58px]">
+        Encontre empresas solares confiáveis na sua região
       </h1>
 
-      {/* Subtitle */}
-      <p className="text-base md:text-lg text-slate-600 max-w-[560px]">
-        Avaliações reais, propostas confiáveis e empresas verificadas em um só lugar para o seu projeto.
+      <p className="max-w-[610px] text-base leading-relaxed text-slate-600 sm:text-lg">
+        Compare empresas verificadas, avaliações reais e áreas de atendimento antes de solicitar propostas para o seu projeto.
       </p>
 
-      {/* Search Input Card */}
-      <div className="w-full pt-2">
+      <div className="w-full pt-1">
         <LandingHeroSearch
           categories={categories}
           heroVariant={variant}
@@ -82,27 +76,41 @@ export default function LandingHeroClient({
         />
       </div>
 
-      {/* Checkmarks */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4">
-        <div className="flex items-center gap-1.5 text-brand-green">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-xs font-bold text-slate-600">Empresas verificadas</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-brand-green">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-xs font-bold text-slate-600">Avaliações reais</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-brand-green">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-xs font-bold text-slate-600">Propostas seguras</span>
-        </div>
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-3">
+        <HeroProof
+          icon={BadgeCheck}
+          label="Empresas verificadas"
+          value={hasVerifiedCount ? formatCompactCount(trustMetrics.totalVerifiedCompanies!) : 'Curadoria ativa'}
+        />
+        <HeroProof
+          icon={MessageSquareText}
+          label="Avaliações reais"
+          value={hasActiveCount ? `${formatCompactCount(trustMetrics.totalActiveCompanies!)}+ perfis` : 'Opiniões públicas'}
+        />
+        <HeroProof icon={Scale} label="Comparação gratuita" value="Sem compromisso" />
       </div>
+    </div>
+  );
+}
+
+function HeroProof({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof BadgeCheck;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[11px] font-semibold text-slate-500">{label}</span>
+        <span className="block truncate text-xs font-extrabold text-slate-900">{value}</span>
+      </span>
     </div>
   );
 }

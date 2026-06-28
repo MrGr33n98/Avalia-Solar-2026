@@ -4,12 +4,11 @@ module Chat
   module Agents
     class BaseAgent
       def self.process(session:, user_message:, router_state:, context: nil)
-        raise NotImplementedError, "#{self.name} deve implementar o método .process"
+        raise NotImplementedError, "#{name} deve implementar o método .process"
       end
 
-      protected
-
-      def self.agent_response(content:, metadata:, intent:, next_agent:, should_trigger_lead:, fallback_triggered: false, error: nil)
+      def self.agent_response(content:, metadata:, intent:, next_agent:, should_trigger_lead:,
+                              fallback_triggered: false, error: nil)
         {
           content: content,
           metadata: metadata,

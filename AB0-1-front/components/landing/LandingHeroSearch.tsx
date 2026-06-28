@@ -135,21 +135,21 @@ export function LandingHeroSearch({
   };
 
   return (
-    <Card className="p-1.5 md:p-2 shadow-none border border-brand-border rounded-xl bg-white max-w-2xl w-full mx-0">
-      <div className="flex flex-col md:flex-row items-center gap-2">
-        <div className="flex-1 w-full relative group">
-          <label htmlFor="category-select" className="sr-only">
-            Escolher categoria de serviço
+    <Card className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-2.5 shadow-[0_18px_50px_-34px_rgba(15,23,42,.55)]">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <div className="group relative w-full">
+          <label htmlFor="category-select" className="mb-1.5 block px-1 text-[11px] font-bold text-slate-600">
+            O que você precisa?
           </label>
           <select
             id="category-select"
-            className="w-full h-12 pl-12 pr-10 bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-brand-blue appearance-none text-slate-700 font-medium cursor-pointer transition-colors hover:bg-slate-100"
+            className="h-12 w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-9 text-sm font-semibold text-slate-800 outline-none transition-colors hover:bg-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             value={selectedCategory}
             onChange={handleCategoryChange}
             aria-label="Selecionar categoria de serviço"
           >
             <option value="">
-              {usingStaticFallback ? 'Categorias em contingência' : 'O que você procura?'}
+              {usingStaticFallback ? 'Categorias em contingência' : 'Selecione uma solução'}
             </option>
             {effectiveCategories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -157,33 +157,34 @@ export function LandingHeroSearch({
               </option>
             ))}
           </select>
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-hover:text-brand-blue transition-colors" />
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-transform group-hover:translate-y-[-40%]" />
+          <Search className="absolute bottom-3.5 left-4 h-5 w-5 text-slate-400 transition-colors group-hover:text-blue-600" />
+          <ChevronDown className="pointer-events-none absolute bottom-4 right-4 h-4 w-4 text-slate-400" />
         </div>
 
-        <div className="hidden md:block w-px h-8 bg-slate-200" />
-
-        <div className="flex-1 w-full">
+        <div className="w-full">
+          <label className="mb-1.5 block px-1 text-[11px] font-bold text-slate-600">
+            Cidade ou CEP
+          </label>
           <LocationSearch
-            className="w-full h-12 border-none bg-slate-50 md:bg-transparent rounded-lg focus:ring-2 focus:ring-brand-blue font-medium"
+            className="h-12 w-full rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm font-semibold focus:ring-2 focus:ring-blue-500/20"
             onLocationSelect={setLocation}
           />
         </div>
 
         <button
+          type="button"
           onClick={handleSearch}
-          className="w-full md:w-auto h-12 px-6 rounded-lg bg-brand-navy hover:bg-slate-900 text-white font-bold text-sm uppercase tracking-wider transition-colors shrink-0 flex items-center justify-center gap-2"
+          aria-label="Buscar Empresas"
+          className="flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:w-auto"
         >
+          <Search className="h-4 w-4" aria-hidden="true" />
           <span>Buscar empresas</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
         </button>
       </div>
 
       {usingFallbackCategories ? (
-        <p className="mt-2 px-2 text-xs text-amber-700">
-          Exibindo categorias de contingencia para manter a busca disponivel.
+        <p className="mt-2 px-2 text-xs text-amber-700" role="status">
+          Exibindo categorias de contingência para manter a busca disponível.
         </p>
       ) : null}
     </Card>

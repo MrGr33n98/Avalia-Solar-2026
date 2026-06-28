@@ -60,7 +60,7 @@ module Api
         def execute_decision(action)
           service = Reviews::DecisionService.new
           service.public_send("#{action}!", @review)
-          
+
           render json: serialized_review(@review)
         rescue StandardError => e
           render json: { error: e.message }, status: :unprocessable_entity

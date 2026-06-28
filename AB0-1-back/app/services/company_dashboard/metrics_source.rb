@@ -14,42 +14,42 @@ module CompanyDashboard
       returning_views
     ].freeze
 
-    PROFILE_VIEW_EVENTS = %w[
-      profile_view
-      Company\ Profile\ Viewed
-      company_profile_viewed
+    PROFILE_VIEW_EVENTS = [
+      'profile_view',
+      'Company Profile Viewed',
+      'company_profile_viewed'
     ].freeze
-    CTA_CLICK_EVENTS = %w[
-      cta_click
-      CTA\ Clicked
-      cta_clicked
-      company_cta_clicked
-      company_cta_quote
+    CTA_CLICK_EVENTS = [
+      'cta_click',
+      'CTA Clicked',
+      'cta_clicked',
+      'company_cta_clicked',
+      'company_cta_quote'
     ].freeze
-    WHATSAPP_CLICK_EVENTS = %w[
-      whatsapp_click
-      WhatsApp\ CTA\ Clicked
-      company_cta_whatsapp
+    WHATSAPP_CLICK_EVENTS = [
+      'whatsapp_click',
+      'WhatsApp CTA Clicked',
+      'company_cta_whatsapp'
     ].freeze
-    EMAIL_CLICK_EVENTS = %w[
-      Email\ CTA\ Clicked
-      email_click
-      company_cta_email
+    EMAIL_CLICK_EVENTS = [
+      'Email CTA Clicked',
+      'email_click',
+      'company_cta_email'
     ].freeze
-    PHONE_CLICK_EVENTS = %w[
-      Phone\ CTA\ Clicked
-      phone_click
-      company_cta_phone
+    PHONE_CLICK_EVENTS = [
+      'Phone CTA Clicked',
+      'phone_click',
+      'company_cta_phone'
     ].freeze
-    WEBSITE_CLICK_EVENTS = %w[
-      Website\ CTA\ Clicked
-      website_click
-      company_cta_website
+    WEBSITE_CLICK_EVENTS = [
+      'Website CTA Clicked',
+      'website_click',
+      'company_cta_website'
     ].freeze
-    LEAD_EVENTS = %w[
-      lead_created
-      Lead\ Form\ Submitted
-      Quote\ Request\ CTA\ Clicked
+    LEAD_EVENTS = [
+      'lead_created',
+      'Lead Form Submitted',
+      'Quote Request CTA Clicked'
     ].freeze
     EVENT_TYPE_TO_METRIC = {
       **PROFILE_VIEW_EVENTS.index_with { :profile_views },
@@ -144,7 +144,12 @@ module CompanyDashboard
 
     def realtime_totals(from_day:, to_day:, last_aggregated_at: nil)
       aggregated_available = aggregated_data_available?(from_day: from_day, to_day: to_day)
-      aggregated_totals = aggregated_available ? (totals(from_day: from_day, to_day: to_day) || empty_totals) : empty_totals
+      aggregated_totals = if aggregated_available
+                            totals(from_day: from_day,
+                                   to_day: to_day) || empty_totals
+                          else
+                            empty_totals
+                          end
 
       fallback_totals = analytics_event_totals(
         from_time: analytics_event_start_time(
@@ -156,7 +161,9 @@ module CompanyDashboard
       )
 
       merged = merge_totals(aggregated_totals, fallback_totals)
-      [merged, resolve_data_source(aggregated_available: aggregated_available, fallback_present: totals_present?(fallback_totals))]
+      [merged,
+       resolve_data_source(aggregated_available: aggregated_available,
+                           fallback_present: totals_present?(fallback_totals))]
     end
 
     def realtime_timeseries(days:, last_aggregated_at: nil)
@@ -219,8 +226,8 @@ module CompanyDashboard
       return [] unless analytics_events_available?(from_time: from_time, to_time: to_time)
 
       grouped = analytics_event_scope(from_time: from_time, to_time: to_time)
-        .group(Arel.sql('DATE(tracked_at)'), :event_type)
-        .count
+                .group(Arel.sql('DATE(tracked_at)'), :event_type)
+                .count
 
       rows = Hash.new do |hash, date|
         hash[date] = default_timeseries_row(date)

@@ -3,7 +3,8 @@
 module Chat
   module Agents
     class CRMHandoffAgent < BaseAgent
-      def self.process(session:, user_message:, router_state:, lead_qualification_result:, agent_result: nil, context: nil)
+      def self.process(session:, user_message:, router_state:, lead_qualification_result:, agent_result: nil,
+                       context: nil)
         should_trigger = lead_qualification_result[:should_trigger_lead]
         score = lead_qualification_result[:lead_score]
         temperature = lead_qualification_result[:lead_temperature]
@@ -21,7 +22,8 @@ module Chat
             track_handoff(
               event: 'mobivolt_crm_handoff_duplicate_prevented',
               session_id: session.id,
-              properties: { intent: intent, next_agent: next_agent, lead_score: old_score, lead_temperature: existing_lead.lead_temperature, lead_reason: reason, handoff_triggered: false, duplicate_prevented: true }
+              properties: { intent: intent, next_agent: next_agent, lead_score: old_score,
+                            lead_temperature: existing_lead.lead_temperature, lead_reason: reason, handoff_triggered: false, duplicate_prevented: true }
             )
 
             {
@@ -43,13 +45,14 @@ module Chat
               lead_temperature: temperature,
               intent: intent
             )
-            
+
             track_handoff(
               event: 'mobivolt_crm_handoff_updated',
               session_id: session.id,
-              properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature, lead_reason: reason, handoff_triggered: true, duplicate_prevented: true }
+              properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature,
+                            lead_reason: reason, handoff_triggered: true, duplicate_prevented: true }
             )
-            
+
             {
               success: true,
               handoff_triggered: true,
@@ -67,9 +70,10 @@ module Chat
             track_handoff(
               event: 'mobivolt_crm_handoff_duplicate_prevented',
               session_id: session.id,
-              properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature, lead_reason: reason, handoff_triggered: false, duplicate_prevented: true }
+              properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature,
+                            lead_reason: reason, handoff_triggered: false, duplicate_prevented: true }
             )
-            
+
             {
               success: true,
               handoff_triggered: false,
@@ -83,40 +87,39 @@ module Chat
               error: nil
             }
           end
-        else
+        elsif should_trigger
           # Contato ainda não existe. Deixa a interface abrir o form.
-          if should_trigger
-            track_handoff(
-              event: 'mobivolt_crm_handoff_evaluated',
-              session_id: session.id,
-              properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature, lead_reason: reason, handoff_triggered: false, duplicate_prevented: false }
-            )
-            
-            {
-              success: true,
-              handoff_triggered: false, # Aguardando form do frontend
-              lead_id: nil,
-              lead_status: 'pending_contact_info',
-              lead_score: score,
-              lead_temperature: temperature,
-              lead_reason: reason,
-              duplicate_prevented: false,
-              fallback_triggered: false,
-              error: nil
-            }
-          else
-            {
-              success: true,
-              handoff_triggered: false,
-              lead_status: 'ignored',
-              lead_score: score,
-              lead_temperature: temperature,
-              lead_reason: reason,
-              duplicate_prevented: false,
-              fallback_triggered: false,
-              error: nil
-            }
-          end
+          track_handoff(
+            event: 'mobivolt_crm_handoff_evaluated',
+            session_id: session.id,
+            properties: { intent: intent, next_agent: next_agent, lead_score: score, lead_temperature: temperature,
+                          lead_reason: reason, handoff_triggered: false, duplicate_prevented: false }
+          )
+
+          {
+            success: true,
+            handoff_triggered: false, # Aguardando form do frontend
+            lead_id: nil,
+            lead_status: 'pending_contact_info',
+            lead_score: score,
+            lead_temperature: temperature,
+            lead_reason: reason,
+            duplicate_prevented: false,
+            fallback_triggered: false,
+            error: nil
+          }
+        else
+          {
+            success: true,
+            handoff_triggered: false,
+            lead_status: 'ignored',
+            lead_score: score,
+            lead_temperature: temperature,
+            lead_reason: reason,
+            duplicate_prevented: false,
+            fallback_triggered: false,
+            error: nil
+          }
         end
       rescue StandardError => e
         Rails.logger.error("[Chat::Agents::CRMHandoffAgent] Failed: #{e.message}")
@@ -125,7 +128,7 @@ module Chat
           session_id: session.id,
           properties: { intent: router_state[:intent], fallback_triggered: true, error: e.message }
         )
-        
+
         {
           success: false,
           handoff_triggered: false,
@@ -135,7 +138,7 @@ module Chat
           duplicate_prevented: false
         }
       end
-      
+
       def self.track_handoff(event:, session_id:, properties:)
         Chat::PosthogTrackingService.track(
           event: event,

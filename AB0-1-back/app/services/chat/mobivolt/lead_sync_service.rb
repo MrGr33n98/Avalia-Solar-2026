@@ -24,7 +24,7 @@ module Chat
 
         # 2. Mecanismo Idempotente (Evitar Duplicidade)
         existing_lead = find_duplicate_lead
-        
+
         # 3. Calcular Score Enriquecido Comercial da IA
         score = Chat::Mobivolt::LeadScoreCalculator.calculate(@chat_lead)
         q_level = Chat::Mobivolt::LeadScoreCalculator.qualification_level(score)
@@ -53,7 +53,7 @@ module Chat
           bill_value: @chat_lead.monthly_bill,
           message: @chat_lead.summary,
           wizard_answers: @metadata['qualification_answers'] || {},
-          
+
           # Atributos de Chat RAG
           chat_lead_id: @chat_lead.id,
           chat_session_id: @chat_lead.chat_session_id,
@@ -62,7 +62,7 @@ module Chat
           quote_requested_company_id: @metadata['quote_requested_company_id'],
           whatsapp_clicked_company_id: @metadata['whatsapp_clicked_company_id'],
           comparison_company_ids: Array(@metadata['comparison_company_ids']),
-          
+
           # Inteligência Comercial e Enriquecimento
           intent_type: @chat_lead.intent,
           vertical: @chat_lead.vertical,
@@ -73,7 +73,7 @@ module Chat
           initial_question: initial_question,
           last_user_message: last_user_message,
           source_page_url: @chat_lead.source_page,
-          
+
           # LGPD
           lgpd_consent_version: @metadata['lgpd_consent_version'] || 'v1',
           lgpd_consent_at: @chat_lead.consent_given_at,
@@ -147,22 +147,20 @@ module Chat
                           else
                             'Nenhuma'
                           end
-        
+
         quote_co = @metadata['quote_requested_company_id'].present? ? Company.find_by(id: @metadata['quote_requested_company_id'])&.name : nil
         clicked_co = @metadata['clicked_company_id'].present? ? Company.find_by(id: @metadata['clicked_company_id'])&.name : nil
 
         summary_parts = []
-        summary_parts << "Lead capturado via MobiVolt AI no chatbot do Avalia Solar."
+        summary_parts << 'Lead capturado via MobiVolt AI no chatbot do Avalia Solar.'
         summary_parts << "Vertical: #{@chat_lead.vertical&.humanize || 'Solar'} | Intenção: #{@chat_lead.intent&.humanize || 'Indefinida'}."
         summary_parts << "Empresas Recomendadas no Chat: #{companies_names}."
         summary_parts << "Usuário clicou no perfil da empresa: #{clicked_co}." if clicked_co
         summary_parts << "Usuário solicitou orçamento direto para: #{quote_co}." if quote_co
         summary_parts << "Score de Vendas: #{score}/100 (#{q_level.upcase})."
         summary_parts << "Análise de LGPD: Consentimento obtido em #{@chat_lead.consent_given_at&.strftime('%d/%m/%Y %H:%M') || 'N/A'} (IP/versão: #{@metadata['lgpd_consent_version'] || 'v1'})."
-        
-        if @chat_lead.summary.present?
-          summary_parts << "\n--- Resumo Adicional do Chat ---\n#{@chat_lead.summary}"
-        end
+
+        summary_parts << "\n--- Resumo Adicional do Chat ---\n#{@chat_lead.summary}" if @chat_lead.summary.present?
 
         summary_parts.join("\n")
       end

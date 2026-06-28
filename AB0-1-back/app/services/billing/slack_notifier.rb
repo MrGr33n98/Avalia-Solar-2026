@@ -39,7 +39,7 @@ module Billing
       fields << { title: 'Motivo', value: notes, short: false } if notes.present?
 
       SlackNotificationService.notify(
-        "🏢 *Enterprise Manual Ativado*",
+        '🏢 *Enterprise Manual Ativado*',
         [{
           color: '#f59e0b',
           fields: fields,
@@ -55,7 +55,7 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "✅ *Pagamento Confirmado*",
+        '✅ *Pagamento Confirmado*',
         [{
           color: '#2eb886',
           fields: [
@@ -81,7 +81,7 @@ module Billing
       fields << { title: 'Tentativa', value: "#{attempt_count}/4", short: true } if attempt_count
 
       SlackNotificationService.notify(
-        "🚨 *Falha de Pagamento*",
+        '🚨 *Falha de Pagamento*',
         [{
           color: '#e74c3c',
           fields: fields,
@@ -104,7 +104,7 @@ module Billing
       fields << { title: 'Acesso até', value: period_end&.strftime('%d/%m/%Y'), short: true } if period_end
 
       SlackNotificationService.notify(
-        "📤 *Assinatura Cancelada*",
+        '📤 *Assinatura Cancelada*',
         [{
           color: '#f59e0b',
           fields: fields,
@@ -119,7 +119,7 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "⬇️ *Downgrade para Free*",
+        '⬇️ *Downgrade para Free*',
         [{
           color: '#f59e0b',
           fields: [
@@ -141,13 +141,14 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "⚠️ *Assinatura Past Due*",
+        '⚠️ *Assinatura Past Due*',
         [{
           color: '#e74c3c',
           fields: [
             { title: 'Empresa', value: company.name, short: true },
             { title: 'Plano',   value: plan&.name || 'N/A', short: true },
-            { title: 'Desde',   value: since&.strftime('%d/%m/%Y %H:%M') || Time.current.strftime('%d/%m/%Y %H:%M'), short: true },
+            { title: 'Desde',   value: since&.strftime('%d/%m/%Y %H:%M') || Time.current.strftime('%d/%m/%Y %H:%M'),
+              short: true },
             { title: 'Ação',    value: 'Stripe fará retry automático', short: true }
           ],
           footer: "Company ID: #{company.id} | #{Time.current.strftime('%d/%m/%Y %H:%M')}"
@@ -162,7 +163,7 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "⚠️ *Webhook Stripe Inválido — Billing*",
+        '⚠️ *Webhook Stripe Inválido — Billing*',
         [{
           color: '#ff0000',
           fields: [
@@ -170,7 +171,7 @@ module Billing
             { title: 'Provider', value: 'Stripe (billing)', short: true },
             { title: 'Timestamp', value: Time.current.strftime('%d/%m/%Y %H:%M'), short: true }
           ],
-          footer: "Verificar STRIPE_BILLING_WEBHOOK_SECRET"
+          footer: 'Verificar STRIPE_BILLING_WEBHOOK_SECRET'
         }],
         channel: :alertas,
         synchronous: true
@@ -182,7 +183,7 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "💥 *Erro no Processamento de Webhook Billing*",
+        '💥 *Erro no Processamento de Webhook Billing*',
         [{
           color: '#ff0000',
           fields: [
@@ -203,7 +204,7 @@ module Billing
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "👤 *Ação Admin Executada*",
+        '👤 *Ação Admin Executada*',
         [{
           color: '#f59e0b',
           fields: [
@@ -220,17 +221,20 @@ module Billing
     end
 
     # 11. Divergência Stripe ↔ Banco (Vai para #alertas)
-    def self.notify_reconciliation_divergence(company:, local_status:, local_period_end:, stripe_status:, stripe_period_end:)
+    def self.notify_reconciliation_divergence(company:, local_status:, local_period_end:, stripe_status:,
+                                              stripe_period_end:)
       return unless alerts_enabled?
 
       SlackNotificationService.notify(
-        "🔄 *Divergência Detectada: Stripe vs Banco*",
+        '🔄 *Divergência Detectada: Stripe vs Banco*',
         [{
           color: '#e74c3c',
           fields: [
             { title: 'Empresa',       value: company.name, short: true },
-            { title: 'Banco (local)', value: "status=#{local_status}, period_end=#{local_period_end&.strftime('%d/%m/%Y')}", short: false },
-            { title: 'Stripe (live)', value: "status=#{stripe_status}, period_end=#{stripe_period_end&.strftime('%d/%m/%Y')}", short: false },
+            { title: 'Banco (local)',
+              value: "status=#{local_status}, period_end=#{local_period_end&.strftime('%d/%m/%Y')}", short: false },
+            { title: 'Stripe (live)',
+              value: "status=#{stripe_status}, period_end=#{stripe_period_end&.strftime('%d/%m/%Y')}", short: false },
             { title: 'Ação necessária', value: 'Sincronizar via Admin ou investigar', short: false }
           ],
           footer: "Company ID: #{company.id} | #{Time.current.strftime('%d/%m/%Y %H:%M')}"
@@ -242,19 +246,20 @@ module Billing
 
     # Helper format BRL
     def self.format_brl(cents)
-      return 'R$ 0,00' if cents.nil? || cents.to_i == 0
-      "R$ #{'%.2f' % (cents / 100.0)}".gsub('.', ',')
+      return 'R$ 0,00' if cents.nil? || cents.to_i.zero?
+
+      "R$ #{format('%.2f', cents / 100.0)}".gsub('.', ',')
     end
 
     # Helper decline reasons
     def self.translate_decline_reason(code)
       {
-        'insufficient_funds'    => 'Saldo insuficiente',
-        'card_declined'         => 'Cartão recusado',
-        'expired_card'          => 'Cartão vencido',
-        'incorrect_cvc'         => 'CVC incorreto',
-        'processing_error'      => 'Erro de processamento',
-        'do_not_honor'          => 'Banco recusou sem motivo informado'
+        'insufficient_funds' => 'Saldo insuficiente',
+        'card_declined' => 'Cartão recusado',
+        'expired_card' => 'Cartão vencido',
+        'incorrect_cvc' => 'CVC incorreto',
+        'processing_error' => 'Erro de processamento',
+        'do_not_honor' => 'Banco recusou sem motivo informado'
       }.fetch(code.to_s, code.to_s.humanize)
     end
   end

@@ -61,23 +61,20 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
 
   # POST /api/v1/events/track
   def events_track
-    if request.raw_post.to_s.strip.blank?
-      return head :no_content
-    end
+    return head :no_content if request.raw_post.to_s.strip.blank?
 
     raw_type = Array(params[:event_name] || params[:event_type]).first
     company_id = Array(params[:company_id]).first
     metadata = normalize_hash_param(params[:properties]) || normalize_hash_param(params[:metadata]) || {}
-    
+
     return render json: { error: 'event_type is required' }, status: :bad_request if raw_type.blank?
+
     event_type = map_event_type(raw_type)
 
     # Validate micro-interaction events
     if event_type == 'micro_interaction'
       validator = MicroInteractionValidator.new(params)
-      unless validator.valid?
-        return render json: { errors: validator.errors }, status: :unprocessable_entity
-      end
+      return render json: { errors: validator.errors }, status: :unprocessable_entity unless validator.valid?
     end
 
     # Handle session_id and anonymous_id persistence
@@ -122,7 +119,8 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
       return head :no_content
     end
 
-    raw_type = Array(params[:event_type].presence || params[:event].presence || params.dig(:analytic, :event_type).presence).first
+    raw_type = Array(params[:event_type].presence || params[:event].presence || params.dig(:analytic,
+                                                                                           :event_type).presence).first
     legacy_properties =
       normalize_hash_param(params[:properties]) ||
       normalize_hash_param(params.dig(:analytic, :properties)) ||
@@ -152,13 +150,16 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
 
     unless raw_type.present?
       Rails.logger.warn('[Analytics] Rejecting event: event_type missing')
-      return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request 
+      return render json: { status: 'error', message: 'event_type ausente' }, status: :bad_request
     end
 
     event_type = map_event_type(raw_type)
     metadata['cta_type'] ||= cta_type_from_event(raw_type)
-    log_legacy_alias_usage(raw_type: raw_type, canonical_event_type: event_type, company_id: company_id) if raw_type.to_s != event_type.to_s
-    
+    if raw_type.to_s != event_type.to_s
+      log_legacy_alias_usage(raw_type: raw_type, canonical_event_type: event_type,
+                             company_id: company_id)
+    end
+
     if company_id.blank? && !ALLOW_ANONYMOUS_EVENTS.include?(event_type)
       Rails.logger.warn("[Analytics] Rejecting event: company_id missing for non-anonymous event '#{event_type}'")
       return render json: { status: 'error', message: 'company_id ausente' }, status: :bad_request
@@ -416,7 +417,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
         row[:profile_views].to_i + row[:cta_clicks].to_i + row[:whatsapp_clicks].to_i + row[:leads].to_i
       ]
     end
-    non_core_daily = non_core_scope.group('DATE(tracked_at)').count.transform_keys { |key| key.to_date }
+    non_core_daily = non_core_scope.group('DATE(tracked_at)').count.transform_keys(&:to_date)
     merged_daily = Hash.new(0)
     core_daily.each { |day, total| merged_daily[day] += total.to_i }
     non_core_daily.each { |day, total| merged_daily[day] += total.to_i }
@@ -428,12 +429,12 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     # Redis-based rate limiting: 100 events per minute per IP
     key = "analytics:#{request.ip}"
     count = Rails.cache.read(key) || 0
-    
+
     if count >= 100
       render json: { error: 'Rate limit exceeded' }, status: :too_many_requests
       return
     end
-    
+
     Rails.cache.write(key, count + 1, expires_in: 1.minute)
   end
 

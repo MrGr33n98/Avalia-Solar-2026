@@ -34,8 +34,11 @@ ActiveAdmin.register LeadWizardFieldOption do
 
     f.inputs 'Option Settings' do
       f.input :lead_wizard_field,
-              collection: LeadWizardField.order(:position, :id).includes(lead_wizard_section: :lead_wizard_version).map { |field|
-                ["#{field.lead_wizard_section.lead_wizard_version.scope_label} / #{field.lead_wizard_section.title} / #{field.label}", field.id]
+              collection: LeadWizardField.order(:position,
+                                                :id).includes(lead_wizard_section: :lead_wizard_version).map { |field|
+                [
+                  "#{field.lead_wizard_section.lead_wizard_version.scope_label} / #{field.lead_wizard_section.title} / #{field.label}", field.id
+                ]
               }
       f.input :label
       f.input :value

@@ -26,15 +26,14 @@ module Chat
 
       def match
         state = Locations::CoverageNormalizer.normalize_state(@entities[:state])
-        city = Locations::CoverageNormalizer.normalize_city(@entities[:city], state: state) || @entities[:city].to_s.strip
+        city = Locations::CoverageNormalizer.normalize_city(@entities[:city],
+                                                            state: state) || @entities[:city].to_s.strip
 
         # Broad SQL scope: active installers (or all for non-solar) in the state
         relation = Company.active.installers
 
         # Apply broad SQL pre-filter by state to reduce Ruby-level work
-        if state.present?
-          relation = relation.serving_state(state)
-        end
+        relation = relation.serving_state(state) if state.present?
 
         if @entities[:category_seo_url].present?
           category = Category.find_by(seo_url: @entities[:category_seo_url])
@@ -46,20 +45,17 @@ module Chat
         candidates = relation.ordered_by_priority.to_a
 
         # Ruby-level refinement: filter by location support (city or state match)
-        if city.present? || state.present?
-          candidates = candidates.select { |c| supports_location?(c, city, state) }
-        end
+        candidates = candidates.select { |c| supports_location?(c, city, state) } if city.present? || state.present?
 
         # Score and sort
-        ranked = candidates
-                   .map    { |c| [c, location_score(c, city, state)] }
-                   .sort_by { |_, score| -score }
-                   .first(MAX_RESULTS)
-                   .map(&:first)
+        candidates
+          .map { |c| [c, location_score(c, city, state)] }
+          .sort_by { |_, score| -score }
+          .first(MAX_RESULTS)
+          .map(&:first)
 
         # If fewer than INSTALLER_MIN installers, results are all installers already;
         # no fallback to other segments is needed here (handled upstream if required).
-        ranked
       rescue StandardError => e
         Rails.logger.error("[Chat::Mobivolt::CompanyMatcher] Error matching companies: #{e.message}")
         Company.none
@@ -70,13 +66,9 @@ module Chat
       # ─── Location helpers ───────────────────────────────────────────────────
 
       def supports_location?(company, city, state)
-        if city.present?
-          return true if company.serves_city?(city, state)
-        end
+        return true if city.present? && company.serves_city?(city, state)
 
-        if state.present?
-          return true if company.serves_state?(state)
-        end
+        return true if state.present? && company.serves_state?(state)
 
         false
       end
@@ -87,7 +79,9 @@ module Chat
         if city.present?
           if Locations::CoverageNormalizer.city_slug(company.city) == Locations::CoverageNormalizer.city_slug(city)
             score += 40
-          elsif company.coverage_city_list.any? { |coverage_city| Locations::CoverageNormalizer.city_slug(coverage_city) == Locations::CoverageNormalizer.city_slug(city) }
+          elsif company.coverage_city_list.any? do |coverage_city|
+            Locations::CoverageNormalizer.city_slug(coverage_city) == Locations::CoverageNormalizer.city_slug(city)
+          end
             score += 35
           end
         end

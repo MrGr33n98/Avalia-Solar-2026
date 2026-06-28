@@ -12,11 +12,12 @@ class AnalyticsDailyAggregationJob < ApplicationJob
 
   def perform(day: Date.yesterday)
     range = day.beginning_of_day..day.end_of_day
-    AnalyticsEvent.where(tracked_at: range).group(:company_id, :event_type).count.each do |(company_id, event_type), count|
+    AnalyticsEvent.where(tracked_at: range).group(:company_id,
+                                                  :event_type).count.each do |(company_id, event_type), count|
       next unless company_id
 
       stat = CompanyDailyStat.find_or_initialize_by(company_id: company_id, day: day)
-      
+
       increment_daily_stat(stat, event_type, count)
       stat.save!
     end

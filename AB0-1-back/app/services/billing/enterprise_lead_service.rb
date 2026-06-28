@@ -11,13 +11,13 @@ module Billing
       subscription = Billing::CompanySubscription.find_or_initialize_by(company: @company)
       subscription.plan = @plan
       subscription.status = 'enterprise_lead'
-      
+
       notes = build_notes
       subscription.enterprise_notes = notes
       subscription.save!
 
       notify_slack(subscription)
-      
+
       subscription
     end
 

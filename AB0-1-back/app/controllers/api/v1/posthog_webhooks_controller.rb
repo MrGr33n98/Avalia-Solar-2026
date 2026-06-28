@@ -47,9 +47,9 @@ module Api
           return
         end
 
-        unless ActiveSupport::SecurityUtils.secure_compare(token, expected)
-          render json: { error: 'Unauthorized' }, status: :unauthorized
-        end
+        return if ActiveSupport::SecurityUtils.secure_compare(token, expected)
+
+        render json: { error: 'Unauthorized' }, status: :unauthorized
       end
     end
   end
@@ -159,7 +159,7 @@ class PosthogEventIngestor
       'rio' => 'Rio de Janeiro',
       'rio de janeiro' => 'Rio de Janeiro',
       'balneario camboriu' => 'Balneário Camboriú',
-      'balneario' => 'Balneário Camboriú',
+      'balneario' => 'Balneário Camboriú'
     }
 
     normalized = city.downcase.strip
@@ -175,7 +175,7 @@ class PosthogEventIngestor
       'parana' => 'PR',
       'rio grande do sul' => 'RS',
       'minas gerais' => 'MG',
-      'rio de janeiro' => 'RJ',
+      'rio de janeiro' => 'RJ'
     }
 
     normalized = region.to_s.downcase.strip

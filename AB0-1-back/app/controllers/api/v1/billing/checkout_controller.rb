@@ -32,9 +32,9 @@ module Api
           ).call
 
           render json: { checkout_url: checkout_url }, status: :ok
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound
           render json: { error: 'Empresa ou Plano não encontrado' }, status: :not_found
-        rescue Pundit::NotAuthorizedError => e
+        rescue Pundit::NotAuthorizedError
           render json: { error: 'Você não tem permissão para realizar esta ação' }, status: :forbidden
         rescue ::Billing::Errors::PlanNotConfigured => e
           render json: { error: e.message }, status: :unprocessable_entity

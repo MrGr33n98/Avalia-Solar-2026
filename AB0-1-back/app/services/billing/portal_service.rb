@@ -6,10 +6,11 @@ module Billing
 
     def call
       subscription = Billing::CompanySubscription.find_by(company: @company)
-      
+
       if subscription.nil? || subscription.stripe_customer_id.blank?
         Rails.logger.error("[Billing::PortalService] No Stripe Customer ID found for company_id=#{@company.id}")
-        raise Billing::Errors::CompanySubscriptionMissing, 'Não foi encontrada uma conta de faturamento ativa para esta empresa.'
+        raise Billing::Errors::CompanySubscriptionMissing,
+              'Não foi encontrada uma conta de faturamento ativa para esta empresa.'
       end
 
       session = Stripe::BillingPortal::Session.create(

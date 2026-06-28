@@ -4,14 +4,12 @@ class ConversationListChannel < ApplicationCable::Channel
   def subscribed
     reject unless current_user
 
-    if current_user.review_user?
-      stream_from "conversation_list:user:#{current_user.id}"
-    end
+    stream_from "conversation_list:user:#{current_user.id}" if current_user.review_user?
 
-    if current_user.company_user? || current_user.admin?
-      company_ids.each do |company_id|
-        stream_from "conversation_list:company:#{company_id}"
-      end
+    return unless current_user.company_user? || current_user.admin?
+
+    company_ids.each do |company_id|
+      stream_from "conversation_list:company:#{company_id}"
     end
   end
 

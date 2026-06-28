@@ -19,13 +19,17 @@ class Plan < ApplicationRecord
 
   def normalize_feature_fields
     return unless plan_feature_fields.present? || plan_tier_template.present?
-    
+
     tier = plan_tier_template.presence || inferred_plan_tier || 'free'
     current_features = respond_to?(:features_json) && features_json.present? ? features_json : (features || {})
-    raw = plan_feature_fields.present? ? (plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h) : current_features
-    
+    raw = if plan_feature_fields.present?
+            plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h
+          else
+            current_features
+          end
+
     normalized = PlanFeatureCatalog.normalize(raw, plan_tier: tier)
-    
+
     self.features_json = normalized if respond_to?(:features_json=)
     self.features = normalized.to_json if self.class.column_names.include?('features')
   rescue StandardError => e
@@ -77,11 +81,12 @@ class Plan < ApplicationRecord
   def full_implementation_summary
     is_included = ActiveModel::Type::Boolean.new.cast(feature_flags['setup_included'])
     fee = feature_flags['setup_fee'].to_i
-    
+
     if is_included
       'Implementação completa inclusa (sem custo inicial)'
     elsif fee.positive?
-      "Taxa única de #{ActionController::Base.helpers.number_to_currency(fee, unit: 'R$', separator: ',', delimiter: '.')} para ativação."
+      "Taxa única de #{ActionController::Base.helpers.number_to_currency(fee, unit: 'R$', separator: ',',
+                                                                              delimiter: '.')} para ativação."
     else
       'Sem custos de implementação.'
     end
@@ -92,7 +97,8 @@ class Plan < ApplicationRecord
   # =========================================================================
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[id name description price created_at updated_at stripe_product_id stripe_price_id_monthly stripe_price_id_yearly is_public display_order]
+    %w[id name description price created_at updated_at stripe_product_id stripe_price_id_monthly stripe_price_id_yearly
+       is_public display_order]
   end
 
   def self.ransackable_associations(_auth_object = nil)

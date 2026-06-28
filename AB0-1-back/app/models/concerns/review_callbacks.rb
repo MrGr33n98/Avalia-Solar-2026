@@ -17,7 +17,7 @@ module ReviewCallbacks
 
   def recalculate_company_rating
     company_ids = []
-    company_ids.concat([company_id, company_id_before_last_save]) if destroyed? || saved_change_to_company_id?
+    company_ids.push(company_id, company_id_before_last_save) if destroyed? || saved_change_to_company_id?
     company_ids << company_id if saved_change_to_rating?
 
     return if company_ids.compact.empty?
@@ -34,12 +34,12 @@ module ReviewCallbacks
     # 1. A new review is created
     # 2. A review status changes to approved
     # 3. A review rating changes
-    
+
     return unless saved_change_to_status? || saved_change_to_rating? || new_record?
-    
+
     # Only trigger for approved reviews
     return unless approved? || (new_record? && approved?)
-    
+
     TrustScoreRecalculationWorker.perform_async(company_id, 'review')
   rescue StandardError => e
     Rails.logger.error("Failed to trigger trust score recalculation for company #{company_id}: #{e.message}")

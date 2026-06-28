@@ -144,7 +144,7 @@ services:
     networks:
       - ab0-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1"]
       interval: 30s
       timeout: 20s
       retries: 10
@@ -174,7 +174,7 @@ services:
     ports:
       - "127.0.0.1:9200:9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|key' || curl -s http://localhost:9200 | grep -q 'OpenSearch' || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://127.0.0.1:9200/_cluster/health | grep -q '\"status\":\"green\"\\|key' || curl -s http://127.0.0.1:9200 | grep -q 'OpenSearch' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

@@ -11,7 +11,8 @@ class IntentScore < ApplicationRecord
   has_many :histories, class_name: 'IntentScoreHistory', foreign_key: 'intent_score_id', dependent: :destroy
 
   # Validations
-  validates :total_score, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
+  validates :total_score, presence: true,
+                          numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
   validates :intent_level, presence: true, inclusion: { in: %w[cold warm hot boiling immediate declared] }
   validates :company_id, presence: true
   validate :must_have_lead_or_anonymous_id
@@ -80,9 +81,9 @@ class IntentScore < ApplicationRecord
   private
 
   def must_have_lead_or_anonymous_id
-    if lead_id.blank? && anonymous_id.blank?
-      errors.add(:base, 'Must have either lead_id or anonymous_id')
-    end
+    return unless lead_id.blank? && anonymous_id.blank?
+
+    errors.add(:base, 'Must have either lead_id or anonymous_id')
   end
 
   def calculate_intent_level

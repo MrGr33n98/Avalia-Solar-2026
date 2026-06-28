@@ -17,19 +17,19 @@ module Billing
 
     def call
       event = verify_and_parse!
-      
+
       # 1. Ignorar se não for um dos eventos que nós processamos
       return :skipped unless HANDLED_EVENTS.include?(event.type)
 
       # 2. Idempotência: verificar se já processado
       stripe_event = Billing::StripeEvent.find_by(stripe_event_id: event.id)
       if stripe_event
-        if stripe_event.processing_status == 'success'
-          return :duplicate
-        else
-          # Se falhou antes, vamos tentar processar novamente removendo o anterior ou atualizando ele
-          stripe_event.update!(processing_status: 'processing', error_message: nil)
-        end
+        return :duplicate if stripe_event.processing_status == 'success'
+
+
+        # Se falhou antes, vamos tentar processar novamente removendo o anterior ou atualizando ele
+        stripe_event.update!(processing_status: 'processing', error_message: nil)
+
       else
         stripe_event = record_event!(event)
       end
@@ -56,14 +56,12 @@ module Billing
 
     def verify_and_parse!
       # Em modo de teste, se mockado, aceita diretamente
-      if Rails.env.test? && @signature == 'mock_sig'
-        return JSON.parse(@payload, object_class: OpenStruct)
-      end
+      return JSON.parse(@payload, object_class: OpenStruct) if Rails.env.test? && @signature == 'mock_sig'
 
       Stripe::Webhook.construct_event(
         @payload,
         @signature,
-        ENV.fetch('STRIPE_BILLING_WEBHOOK_SECRET') { 'mock_secret' }
+        ENV.fetch('STRIPE_BILLING_WEBHOOK_SECRET', 'mock_secret')
       )
     rescue Stripe::SignatureVerificationError => e
       Billing::SlackNotifier.notify_invalid_webhook(error: e.message)
@@ -100,7 +98,7 @@ module Billing
       # Encontra a assinatura local via stripe_customer_id ou stripe_subscription_id
       sub = Billing::CompanySubscription.find_by(stripe_subscription_id: invoice.subscription) ||
             Billing::CompanySubscription.find_by(stripe_customer_id: invoice.customer)
-      
+
       return if sub.nil?
 
       # Notifica

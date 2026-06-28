@@ -146,7 +146,8 @@ class User < ApplicationRecord
   end
 
   def owner_of?(company)
-    (company.respond_to?(:owner_id) && company.owner_id == id) || company.company_members.exists?(user_id: id, role: 'owner')
+    (company.respond_to?(:owner_id) && company.owner_id == id) || company.company_members.exists?(user_id: id,
+                                                                                                  role: 'owner')
   end
 
   # PostHog: unique identifier for this user across analytics events and error reports
@@ -194,7 +195,7 @@ class User < ApplicationRecord
   def achievements
     score = calculate_green_score
     count = reviews.count
-    
+
     list = [
       { title: 'Primeira Avaliação', subtitle: 'Parabéns', state: count >= 1 ? 'desbloqueado' : 'bloqueado' },
       { title: '5 Avaliações', subtitle: 'Consistência', state: count >= 5 ? 'raro' : 'bloqueado' },
@@ -204,12 +205,15 @@ class User < ApplicationRecord
     ]
 
     user_leads = Lead.where(email: email)
-    has_ev = user_leads.where("LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?", '%car%', '%ev%', '%mobil%').exists?
-    has_battery = user_leads.where("LOWER(product_vertical) LIKE ?", '%bater%').exists?
+    has_ev = user_leads.where(
+      'LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?', '%car%', '%ev%', '%mobil%'
+    ).exists?
+    has_battery = user_leads.where('LOWER(product_vertical) LIKE ?', '%bater%').exists?
 
     list << { title: 'EV Driver', subtitle: 'Mobilidade', state: has_ev ? 'premium' : 'bloqueado' }
     list << { title: 'Energy Storage', subtitle: 'Armazenamento', state: has_battery ? 'lendário' : 'bloqueado' }
-    list << { title: 'Top Avaliador', subtitle: city.presence || 'Brasil', state: regional_ranking <= 5 ? 'raro' : 'bloqueado' }
+    list << { title: 'Top Avaliador', subtitle: city.presence || 'Brasil',
+              state: regional_ranking <= 5 ? 'raro' : 'bloqueado' }
 
     list
   end
@@ -294,8 +298,8 @@ class User < ApplicationRecord
     if user.new_record?
       user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
       user.status = user.company_user? ? :pending : :active
-    else
-      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+    elsif user.respond_to?(:skip_confirmation!)
+      user.skip_confirmation!
     end
 
     user.save!

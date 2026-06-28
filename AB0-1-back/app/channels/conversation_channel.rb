@@ -3,7 +3,7 @@
 class ConversationChannel < ApplicationCable::Channel
   def subscribed
     reject unless current_user
-    
+
     @conversation = Conversation.find_by(id: params[:conversation_id])
     reject unless @conversation
 

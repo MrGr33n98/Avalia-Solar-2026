@@ -197,7 +197,7 @@ module Api
         )
       end
 
-      def authorization_error(exception)
+      def authorization_error(_exception)
         render_error_response(
           message: 'You are not authorized to access this resource',
           status: :forbidden,

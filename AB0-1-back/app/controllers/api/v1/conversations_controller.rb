@@ -17,11 +17,19 @@ module Api
       end
 
       def create
-        return render json: { error: 'Only buyer users can start direct chats' }, status: :forbidden unless current_user.review_user?
+        unless current_user.review_user?
+          return render json: { error: 'Only buyer users can start direct chats' },
+                        status: :forbidden
+        end
 
         company = ::Company.find_by(id: params[:company_id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
-        return render json: { error: 'Chat is disabled for this company' }, status: :forbidden unless company.p2p_chat_enabled
+
+        unless company.p2p_chat_enabled
+          return render json: { error: 'Chat is disabled for this company' },
+                        status: :forbidden
+        end
+
         enforce_feature_access!(:p2p_chat, company: company)
         return if performed?
 
@@ -49,7 +57,10 @@ module Api
       end
 
       def resolve
-        return render json: { error: 'Only company users can resolve conversations' }, status: :forbidden unless company_actor?
+        unless company_actor?
+          return render json: { error: 'Only company users can resolve conversations' },
+                        status: :forbidden
+        end
 
         @conversation.resolve!(actor: current_user)
         P2pChat::Broadcaster.conversation_updated(@conversation)

@@ -2,7 +2,7 @@
 
 ActiveAdmin.register Lead do
   menu label: 'Leads', priority: 3
-  
+
   permit_params :name, :email, :phone, :company, :message, :project_type, :estimated_budget,
                 :location, :company_id, :product_vertical, :project_profile, :quote_type,
                 :system_size_band, :bill_value, :monthly_kwh, :decision_timeline, :address_full,
@@ -19,8 +19,12 @@ ActiveAdmin.register Lead do
   scope 'MobiVolt AI', ->(leads) { leads.where(source: 'mobivolt_ai') }
   scope 'Leads Quentes', ->(leads) { leads.where('lead_score >= 70') }
   scope 'Orçamento Solicitado', ->(leads) { leads.where.not(quote_requested_company_id: nil) }
-  scope 'Com Patrocinada', ->(leads) {
-    leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%') rescue leads.none
+  scope 'Com Patrocinada', lambda { |leads|
+    begin
+      leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%')
+    rescue StandardError
+      leads.none
+    end
   }
 
   # Filtros na barra lateral
@@ -31,7 +35,8 @@ ActiveAdmin.register Lead do
   filter :lead_score
   filter :qualification_level, as: :select, collection: %w[quente morno frio]
   filter :vertical, as: :select, collection: %w[solar electric_mobility]
-  filter :intent_type, as: :select, collection: %w[solar_quote ev_charger_installation condominium_charging fleet_electrification company_recommendation]
+  filter :intent_type, as: :select,
+                       collection: %w[solar_quote ev_charger_installation condominium_charging fleet_electrification company_recommendation]
   filter :city
   filter :state
   filter :wizard_status, as: :select
@@ -60,7 +65,12 @@ ActiveAdmin.register Lead do
     end
     column :score do |lead|
       if lead.lead_score.present?
-        status_tag "#{lead.lead_score} pts", class: lead.lead_score >= 70 ? 'ok' : (lead.lead_score >= 40 ? 'warning' : 'error')
+        status_tag "#{lead.lead_score} pts",
+                   class: if lead.lead_score >= 70
+                            'ok'
+                          else
+                            (lead.lead_score >= 40 ? 'warning' : 'error')
+                          end
       else
         span class: 'empty-value' do
           'N/A'
@@ -75,10 +85,10 @@ ActiveAdmin.register Lead do
                 else '❄️'
                 end
         status_tag "#{emoji} #{lead.qualification_level.upcase}", class: case lead.qualification_level
-        when 'quente' then 'ok'
-        when 'morno' then 'warning'
-        else 'error'
-        end
+                                                                         when 'quente' then 'ok'
+                                                                         when 'morno' then 'warning'
+                                                                         else 'error'
+                                                                         end
       else
         span class: 'empty-value' do
           'N/A'
@@ -130,7 +140,10 @@ ActiveAdmin.register Lead do
                 link_to l.source_page_url, l.source_page_url, target: '_blank' if l.source_page_url.present?
               end
               row :chat_session do |l|
-                link_to "Sessão ##{l.chat_session_id}", admin_chat_session_path(l.chat_session) if l.chat_session_id.present?
+                if l.chat_session_id.present?
+                  link_to "Sessão ##{l.chat_session_id}",
+                          admin_chat_session_path(l.chat_session)
+                end
               end
               row :chat_lead do |l|
                 link_to "Lead do Chat ##{l.chat_lead_id}", admin_chat_lead_path(l.chat_lead) if l.chat_lead_id.present?
@@ -146,7 +159,12 @@ ActiveAdmin.register Lead do
           panel '🤖 Inteligência de Vendas MobiVolt AI', style: 'border: 2px solid #0284c7; border-radius: 8px;' do
             attributes_table_for resource do
               row :lead_score do |l|
-                status_tag "#{l.lead_score} Pontos", class: l.lead_score >= 70 ? 'ok' : (l.lead_score >= 40 ? 'warning' : 'error')
+                status_tag "#{l.lead_score} Pontos",
+                           class: if l.lead_score >= 70
+                                    'ok'
+                                  else
+                                    (l.lead_score >= 40 ? 'warning' : 'error')
+                                  end
               end
               row :qualification_level do |l|
                 emoji = case l.qualification_level
@@ -155,10 +173,10 @@ ActiveAdmin.register Lead do
                         else '❄️ Frio'
                         end
                 status_tag emoji, class: case l.qualification_level
-                when 'quente' then 'ok'
-                when 'morno' then 'warning'
-                else 'error'
-                end
+                                         when 'quente' then 'ok'
+                                         when 'morno' then 'warning'
+                                         else 'error'
+                                         end
               end
               row :intent_type do |l|
                 status_tag l.intent_type.to_s.humanize, class: 'light'
@@ -187,7 +205,7 @@ ActiveAdmin.register Lead do
                     ids = Array(l.recommended_company_ids)
                     companies = Company.where(id: ids)
                     companies.map { |c| link_to c.name, admin_company_path(c) }.join(', ').html_safe
-                  rescue => e
+                  rescue StandardError
                     l.recommended_company_ids.to_s
                   end
                 else
@@ -223,7 +241,7 @@ ActiveAdmin.register Lead do
 
           panel '⚖️ Conformidade e LGPD' do
             attributes_table_for resource do
-              row :consentimento do |l|
+              row :consentimento do |_l|
                 status_tag 'Aceito e Auditado', class: 'ok'
               end
               row :data_do_consentimento do |l|
@@ -255,11 +273,11 @@ ActiveAdmin.register Lead do
       f.input :message
     end
     f.inputs 'Atribuição MobiVolt AI (Chatbot)' do
-      f.input :source, as: :select, collection: ['portal', 'mobivolt_ai']
+      f.input :source, as: :select, collection: %w[portal mobivolt_ai]
       f.input :lead_score
-      f.input :qualification_level, as: :select, collection: ['quente', 'morno', 'frio']
+      f.input :qualification_level, as: :select, collection: %w[quente morno frio]
       f.input :intent_type
-      f.input :vertical, as: :select, collection: ['solar', 'electric_mobility']
+      f.input :vertical, as: :select, collection: %w[solar electric_mobility]
       f.input :next_best_action
       f.input :ai_summary, as: :text
     end

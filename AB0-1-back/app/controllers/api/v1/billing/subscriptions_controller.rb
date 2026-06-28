@@ -17,9 +17,9 @@ module Api
           else
             render json: { error: 'Nenhuma assinatura configurada para esta empresa' }, status: :not_found
           end
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound
           render json: { error: 'Empresa não encontrada' }, status: :not_found
-        rescue Pundit::NotAuthorizedError => e
+        rescue Pundit::NotAuthorizedError
           render json: { error: 'Você não tem permissão para realizar esta ação' }, status: :forbidden
         rescue StandardError => e
           Rails.logger.error("Subscription show error: #{e.message}")

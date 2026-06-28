@@ -48,10 +48,14 @@ module Analytics
       canonical = metric[:canonical].to_i
       observed = metric[:observed].to_i
       delta_abs = (canonical - observed).abs
-      
+
       # Evita divisão por zero
-      delta_percent = observed.positive? ? (delta_abs.to_f / observed * 100).round(4) : (canonical.positive? ? 100.0 : 0.0)
-      
+      delta_percent = if observed.positive?
+delta_abs.to_f / observed * 100).round(4
+else
+(canonical.positive? ? 100.0 : 0.0)
+end
+
       status = AnalyticsReconciliation.calculate_status(delta_percent)
 
       recon = AnalyticsReconciliation.find_or_initialize_by(
@@ -75,7 +79,7 @@ module Analytics
 
     def log_critical_discrepancy(recon)
       Rails.logger.error(
-        "[AnalyticsReconciliation][CRITICAL] Discrepancy detected! " \
+        '[AnalyticsReconciliation][CRITICAL] Discrepancy detected! ' \
         "Company: #{recon.company_id}, Day: #{recon.day}, Metric: #{recon.metric_name}, " \
         "Canonical: #{recon.canonical_value}, Observed: #{recon.observed_value}, " \
         "Delta: #{recon.delta_percent}%"

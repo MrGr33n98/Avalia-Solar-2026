@@ -10,7 +10,7 @@ module Chat
 
       companies.each do |company|
         reviews = company.reviews.approved
-        
+
         # Sort based on interest
         sorted_reviews = case interest_type
                          when 'see_best_rated'
@@ -32,8 +32,6 @@ module Chat
 
       results
     end
-
-    private
 
     def self.serialize_review(review)
       {

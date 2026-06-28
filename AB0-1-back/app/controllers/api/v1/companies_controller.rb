@@ -16,27 +16,25 @@ module Api
 
       # GET /api/v1/companies
       def index
-        Rails.logger.info("Starting companies#index")
+        Rails.logger.info('Starting companies#index')
 
         # Generate cache key based on filters
         cache_key = generate_cache_key(params)
 
         # Analytics: Assíncrono para não impactar performance do index
         Analytics::EventPublisher.publish(
-          'company_searched', 
+          'company_searched',
           params.permit(:q, :state, :city, :category_id, :status).to_h,
           user_id: current_user&.id
         )
 
-        
+
         # Use Rails.cache with versioned keys
         result = Rails.cache.fetch(cache_key, expires_in: cache_ttl_for_params(params)) do
           fetch_companies_data
         end
 
-        if stale?(etag: result, public: true)
-          render json: result
-        end
+        render json: result if stale?(etag: result, public: true)
       rescue StandardError => e
         Rails.logger.error("Error in companies#index: #{e.message}")
         render json: { error: 'Internal server error' }, status: :internal_server_error
@@ -44,15 +42,15 @@ module Api
 
       # GET /api/v1/companies/featured
       def featured
-        cache_key = "companies_featured_v2"
+        cache_key = 'companies_featured_v2'
         companies_json = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
           companies = ::Company.active.where(featured: true).limit(10).to_a
           companies.map { |company| company_json_attributes(company) }
         end
 
-        if stale?(etag: companies_json, public: true)
-          render json: companies_json
-        end
+        return unless stale?(etag: companies_json, public: true)
+
+        render json: companies_json
       end
 
       # GET /api/v1/companies/mine
@@ -153,7 +151,7 @@ module Api
 
       # POST /api/v1/companies
       def create
-        Rails.logger.info "[Audit] Initing company creation"
+        Rails.logger.info '[Audit] Initing company creation'
         @company = ::Company.new(company_params)
 
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada
@@ -280,7 +278,7 @@ module Api
         end
 
         was_ready = @company.ready_for_activation?
-        
+
         if @company.update(company_params)
           # Track profile completion
           if !was_ready && @company.ready_for_activation? && current_user
@@ -373,17 +371,17 @@ module Api
       def fetch_companies_data
         retries = 0
         begin
-        @companies = ::Company.includes(
-          :categories,
-          :badges,
-          :company_faqs,
-          :company_buttons,
-          :plan,
-          :company_financing_profile,
-          review_aggregates: [:category],
-          company_financing_partners: { logo_attachment: :blob },
-          company_financing_offers: []
-        )
+          @companies = ::Company.includes(
+            :categories,
+            :badges,
+            :company_faqs,
+            :company_buttons,
+            :plan,
+            :company_financing_profile,
+            review_aggregates: [:category],
+            company_financing_partners: { logo_attachment: :blob },
+            company_financing_offers: []
+          )
 
           # Ordenação (Classificação)
           if params[:sort].present?
@@ -442,9 +440,7 @@ module Api
 
           if params[:q].present?
             term = params[:q].to_s.strip
-            if term.present?
-              @companies = @companies.search_by_text(term)
-            end
+            @companies = @companies.search_by_text(term) if term.present?
           end
 
           if params[:featured].present?
@@ -471,18 +467,18 @@ module Api
 
           if params[:latitude].present? && params[:longitude].present? && params[:radius_km].present?
             @companies = Geo::HaversineCalculator.scope_within_radius(
-              @companies, 
-              lat: params[:latitude].to_f, 
-              lng: params[:longitude].to_f, 
+              @companies,
+              lat: params[:latitude].to_f,
+              lng: params[:longitude].to_f,
               radius_km: params[:radius_km].to_f
             )
           end
 
           if params[:serves_state].present?
             states = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
-                                                .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
-                                                .compact
-                                                .uniq
+                                                 .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
+                                                 .compact
+                                                 .uniq
             if states.any?
               state_scope = states.reduce(::Company.none) do |scope, state|
                 scope.or(::Company.serving_state(state))
@@ -497,8 +493,8 @@ module Api
                                                 .reject(&:blank?)
                                                 .uniq
             city_state = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
-                                                .filter_map { |state| ::Locations::CoverageNormalizer.normalize_state(state) }
-                                                .first
+                                                     .filter_map { |state| ::Locations::CoverageNormalizer.normalize_state(state) }
+                                                     .first
             if cities.any?
               city_scope = cities.reduce(::Company.none) do |scope, served_city|
                 scope.or(::Company.serving_city(served_city, city_state))
@@ -539,11 +535,11 @@ module Api
             }
           else
             expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
-            companies_json = @companies.map do |company|
+            @companies.map do |company|
               company_json_attributes(company)
             end
 
-            companies_json
+
           end
         rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotEstablished => e
           if (retries += 1) <= 3
@@ -584,10 +580,10 @@ module Api
       def cache_ttl_for_params(params)
         # Shorter TTL for user-specific queries
         return 5.minutes if params[:mine] || params[:q].present?
-        
+
         # Longer TTL for static lists
         return 1.hour if params[:featured] || params[:verified]
-        
+
         # Default TTL
         15.minutes
       end
@@ -699,15 +695,15 @@ module Api
           local_solar_path: ::Locations::CoverageNormalizer.local_solar_path(company.state, company.city),
           seo_metadata: {
             json_ld: {
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": company.name,
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": company.rating_avg.to_f > 0 ? company.rating_avg.to_f : 5.0,
-                "reviewCount": company.rating_count.to_i > 0 ? company.rating_count.to_i : 1,
-                "bestRating": "5",
-                "worstRating": "1"
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: company.name,
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: company.rating_avg.to_f.positive? ? company.rating_avg.to_f : 5.0,
+                reviewCount: company.rating_count.to_i.positive? ? company.rating_count.to_i : 1,
+                bestRating: '5',
+                worstRating: '1'
               }
             }
           }

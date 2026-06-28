@@ -225,10 +225,10 @@ class Banner < ApplicationRecord
     if self.class.column_names.include?('target_states')
       self.target_states = Array(target_states).map { |s| s.to_s.strip.upcase }.reject(&:blank?).uniq
     end
-    
-    if self.class.column_names.include?('target_cities')
-      self.target_cities = Array(target_cities).map { |c| c.to_s.strip }.reject(&:blank?).uniq
-    end
+
+    return unless self.class.column_names.include?('target_cities')
+
+    self.target_cities = Array(target_cities).map { |c| c.to_s.strip }.reject(&:blank?).uniq
   end
 
   def default_dimensions_for_position(pos)

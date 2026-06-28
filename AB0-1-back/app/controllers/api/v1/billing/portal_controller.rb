@@ -24,9 +24,9 @@ module Api
           portal_url = ::Billing::PortalService.new(company: company).call
 
           render json: { portal_url: portal_url }, status: :ok
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound
           render json: { error: 'Empresa não encontrada' }, status: :not_found
-        rescue Pundit::NotAuthorizedError => e
+        rescue Pundit::NotAuthorizedError
           render json: { error: 'Você não tem permissão para realizar esta ação' }, status: :forbidden
         rescue ::Billing::Errors::CompanySubscriptionMissing => e
           render json: { error: e.message }, status: :unprocessable_entity
@@ -34,7 +34,8 @@ module Api
           render json: { error: e.message }, status: :service_unavailable
         rescue StandardError => e
           Rails.logger.error("Portal session creation error: #{e.message}")
-          render json: { error: 'Erro interno ao iniciar sessão do portal de faturamento' }, status: :internal_server_error
+          render json: { error: 'Erro interno ao iniciar sessão do portal de faturamento' },
+                 status: :internal_server_error
         end
       end
     end

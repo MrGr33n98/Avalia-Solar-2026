@@ -118,6 +118,7 @@ module Types
     def banner_url
       object.try(:banner_url)
     end
+
     def distance_km
       # O search service injeta distance_km via define_singleton_method ou como atributo virtual
       if object.respond_to?(:distance_km)

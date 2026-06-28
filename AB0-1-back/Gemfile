@@ -42,8 +42,8 @@ gem 'redis', '~> 5.0'
 # gem 'hiredis' # Removed: C-based Redis client causes issues on Windows; Redis 5+ uses pure Ruby fallback automatically
 
 # TASK-017: Background job processing
-gem 'sidekiq', '~> 7.0'
 gem 'connection_pool', '~> 2.5' # Locked to 2.x to avoid API break in 3.0 with Sidekiq 7.3.9
+gem 'sidekiq', '~> 7.0'
 gem 'sidekiq-scheduler' # Cron-like job scheduler
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
@@ -64,9 +64,9 @@ gem 'bootsnap', require: false
 gem 'devise'
 gem 'devise-two-factor', '~> 5.0'
 gem 'image_processing', '~> 1.2'
+gem 'omniauth-facebook', '~> 9.0'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-linkedin-oauth2', '~> 1.0'
-gem 'omniauth-facebook', '~> 9.0'
 gem 'omniauth-rails_csrf_protection' # CSRF protection for OmniAuth
 gem 'rqrcode', '~> 2.2'
 
@@ -177,16 +177,16 @@ gem 'activeadmin_addons'
 gem 'cpf_cnpj', '~> 1.0'
 
 # Payment Gateways (Trust as a Service)
-gem 'stripe', '~> 13.0'
 gem 'mercadopago-sdk', '~> 2.3'
+gem 'stripe', '~> 13.0'
 
 # HTTP Client for webhooks and API integrations
 gem 'httparty', '~> 0.22.0'
 
 # GraphQL API (nova camada paralela ao REST — não substitui /api/v1)
 gem 'graphql', '~> 2.3'
-gem 'graphql-batch'  # DataLoader para evitar N+1 queries
+gem 'graphql-batch' # DataLoader para evitar N+1 queries
 
 # OpenSearch Integration (Fase 3+)
-gem 'searchkick', '~> 5.3'
 gem 'elasticsearch', '~> 7.17'
+gem 'searchkick', '~> 5.3'

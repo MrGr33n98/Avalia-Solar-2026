@@ -8,10 +8,10 @@ ActiveAdmin.register Billing::CompanySubscription do
 
   # Scopes operacionais rápidos (abas)
   scope :all, default: true
-  scope('Ativas') { |s| s.active_saas }
+  scope('Ativas', &:active_saas)
   scope('Trial') { |s| s.where(status: 'trialing') }
-  scope('Past Due') { |s| s.past_due }
-  scope('Canceladas') { |s| s.canceled }
+  scope('Past Due', &:past_due)
+  scope('Canceladas', &:canceled)
   scope('Enterprise/Manual') { |s| s.where(status: 'manual') }
   scope('Cancelamento Agendado') { |s| s.where(cancel_at_period_end: true) }
 
@@ -29,19 +29,19 @@ ActiveAdmin.register Billing::CompanySubscription do
     div class: 'billing-metrics-panel' do
       div(class: 'billing-metric-card') do
         span(class: 'metric-title') { 'Assinaturas Ativas SaaS: ' } +
-        strong(class: 'metric-value') { Billing::CompanySubscription.active_saas.count.to_s }
+          strong(class: 'metric-value') { Billing::CompanySubscription.active_saas.count.to_s }
       end
       div(class: 'billing-metric-card', style: 'margin-top: 10px;') do
         span(class: 'metric-title') { 'Em período de Trial: ' } +
-        strong(class: 'metric-value') { Billing::CompanySubscription.where(status: 'trialing').count.to_s }
+          strong(class: 'metric-value') { Billing::CompanySubscription.where(status: 'trialing').count.to_s }
       end
       div(class: 'billing-metric-card', style: 'margin-top: 10px;') do
         span(class: 'metric-title') { 'Past Due: ' } +
-        strong(class: 'metric-value') { Billing::CompanySubscription.past_due.count.to_s }
+          strong(class: 'metric-value') { Billing::CompanySubscription.past_due.count.to_s }
       end
       div(class: 'billing-metric-card', style: 'margin-top: 10px;') do
         span(class: 'metric-title') { 'MRR Estimado: ' } +
-        strong(class: 'metric-value') { "R$ #{'%.2f' % (Billing::CompanySubscription.mrr_estimate / 100.0)}".gsub('.', ',') }
+          strong(class: 'metric-value') { "R$ #{format('%.2f', Billing::CompanySubscription.mrr_estimate / 100.0)}".gsub('.', ',') }
       end
     end
   end
@@ -67,7 +67,7 @@ ActiveAdmin.register Billing::CompanySubscription do
     end
     column('Stripe Customer') do |sub|
       if sub.stripe_customer_id.present?
-        link_to sub.stripe_customer_id.first(12) + '...',
+        link_to "#{sub.stripe_customer_id.first(12)}...",
                 "https://dashboard.stripe.com/customers/#{sub.stripe_customer_id}",
                 target: '_blank', title: 'Abrir no Stripe'
       else
@@ -111,14 +111,16 @@ ActiveAdmin.register Billing::CompanySubscription do
         attributes_table title: 'Integração Stripe' do
           row('Stripe Customer ID') do
             if resource.stripe_customer_id.present?
-              link_to resource.stripe_customer_id, "https://dashboard.stripe.com/customers/#{resource.stripe_customer_id}", target: '_blank'
+              link_to resource.stripe_customer_id,
+                      "https://dashboard.stripe.com/customers/#{resource.stripe_customer_id}", target: '_blank'
             else
               'Sem integração'
             end
           end
           row('Stripe Subscription ID') do
             if resource.stripe_subscription_id.present?
-              link_to resource.stripe_subscription_id, "https://dashboard.stripe.com/subscriptions/#{resource.stripe_subscription_id}", target: '_blank'
+              link_to resource.stripe_subscription_id,
+                      "https://dashboard.stripe.com/subscriptions/#{resource.stripe_subscription_id}", target: '_blank'
             else
               'Sem integração'
             end
@@ -152,20 +154,20 @@ ActiveAdmin.register Billing::CompanySubscription do
             if current_admin_user.billing_finance?
               div style: 'margin-bottom: 15px;' do
                 link_to '🏢 Marcar como Enterprise / Manual', '#', class: 'button warning', style: 'width: 100%; text-align: center; display: block;',
-                        onclick: "var note = prompt('Justificativa obrigatória para ativar Enterprise:'); if(note) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{mark_enterprise_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var notes = prompt('Notas adicionais do Enterprise (opcional):'); if(notes){ var input2 = document.createElement('input'); input2.type = 'hidden'; input2.name = 'enterprise_notes'; input2.value = notes; form.appendChild(input2); } var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } return false;"
+                                                                  onclick: "var note = prompt('Justificativa obrigatória para ativar Enterprise:'); if(note) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{mark_enterprise_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var notes = prompt('Notas adicionais do Enterprise (opcional):'); if(notes){ var input2 = document.createElement('input'); input2.type = 'hidden'; input2.name = 'enterprise_notes'; input2.value = notes; form.appendChild(input2); } var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } return false;"
               end
 
               # 3. Forçar Downgrade para Free (Finance+)
               div style: 'margin-bottom: 15px;' do
                 link_to '⬇️ Forçar Downgrade para Free', '#', class: 'button error', style: 'width: 100%; text-align: center; display: block;',
-                        onclick: "var note = prompt('ATENÇÃO: Isso cancelará a assinatura no Stripe e rebaixará a empresa para Free. Justificativa obrigatória:'); if(note) { if(confirm('Tem certeza absoluta de que deseja rebaixar este cliente para o plano Free?')) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{force_downgrade_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var input2 = document.createElement('input'); input2.type = 'hidden'; input2.name = 'confirmed'; input2.value = 'true'; form.appendChild(input2); var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } } return false;"
+                                                              onclick: "var note = prompt('ATENÇÃO: Isso cancelará a assinatura no Stripe e rebaixará a empresa para Free. Justificativa obrigatória:'); if(note) { if(confirm('Tem certeza absoluta de que deseja rebaixar este cliente para o plano Free?')) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{force_downgrade_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var input2 = document.createElement('input'); input2.type = 'hidden'; input2.name = 'confirmed'; input2.value = 'true'; form.appendChild(input2); var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } } return false;"
               end
 
               # 4. Cancelar ao Fim do Período (Finance+)
               if resource.stripe_subscription_id.present? && !resource.cancel_at_period_end?
                 div style: 'margin-bottom: 15px;' do
                   link_to '📅 Cancelar ao Fim do Período', '#', class: 'button error', style: 'width: 100%; text-align: center; display: block;',
-                          onclick: "var note = prompt('Justificativa obrigatória para agendar cancelamento:'); if(note) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{cancel_at_period_end_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } return false;"
+                                                               onclick: "var note = prompt('Justificativa obrigatória para agendar cancelamento:'); if(note) { var form = document.createElement('form'); form.method = 'POST'; form.action = '#{cancel_at_period_end_admin_billing_company_subscription_path(resource)}'; var input1 = document.createElement('input'); input1.type = 'hidden'; input1.name = 'justification'; input1.value = note; form.appendChild(input1); var csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = 'authenticity_token'; csrf.value = '#{form_authenticity_token}'; form.appendChild(csrf); document.body.appendChild(form); form.submit(); } return false;"
                 end
               end
             end
@@ -193,7 +195,7 @@ ActiveAdmin.register Billing::CompanySubscription do
         column('Data') { |a| a.performed_at&.strftime('%d/%m/%Y %H:%M:%S') || '—' }
         column('Admin') { |a| a.admin_user&.email }
         column('Ação') { |a| status_tag a.action_type }
-        column('Justificativa') { |a| a.justification }
+        column('Justificativa', &:justification)
         column('IP') { |a| a.ip_address || '—' }
       end
     end
@@ -211,8 +213,8 @@ ActiveAdmin.register Billing::CompanySubscription do
     end
 
     justification = params[:justification].presence || 'Sincronização manual solicitada via painel admin'
-    
-    ::Billing::AdminSubscriptionService.new(
+
+    Billing::AdminSubscriptionService.new(
       company: resource.company,
       admin_user: current_admin_user,
       justification: justification,
@@ -236,7 +238,7 @@ ActiveAdmin.register Billing::CompanySubscription do
       return
     end
 
-    ::Billing::AdminSubscriptionService.new(
+    Billing::AdminSubscriptionService.new(
       company: resource.company,
       admin_user: current_admin_user,
       justification: params[:justification],
@@ -260,7 +262,7 @@ ActiveAdmin.register Billing::CompanySubscription do
       return
     end
 
-    ::Billing::AdminSubscriptionService.new(
+    Billing::AdminSubscriptionService.new(
       company: resource.company,
       admin_user: current_admin_user,
       justification: params[:justification],
@@ -284,7 +286,7 @@ ActiveAdmin.register Billing::CompanySubscription do
       return
     end
 
-    ::Billing::AdminSubscriptionService.new(
+    Billing::AdminSubscriptionService.new(
       company: resource.company,
       admin_user: current_admin_user,
       justification: params[:justification],

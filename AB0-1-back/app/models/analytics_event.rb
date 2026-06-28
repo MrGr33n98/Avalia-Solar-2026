@@ -48,10 +48,10 @@ class AnalyticsEvent < ApplicationRecord
       starts: starts,
       completions: completions,
       leads: leads,
-      roi_expand_rate: starts > 0 ? (events.where(event_name: 'roi_expand').count.to_f / starts * 100).round(1) : 0,
-      completion_rate: starts > 0 ? (completions.to_f / starts * 100).round(1) : 0,
-      lead_creation_rate: completions > 0 ? (leads.to_f / completions * 100).round(1) : 0,
-      overall_conversion_rate: starts > 0 ? (leads.to_f / starts * 100).round(2) : 0,
+      roi_expand_rate: starts.positive? ? (events.where(event_name: 'roi_expand').count.to_f / starts * 100).round(1) : 0,
+      completion_rate: starts.positive? ? (completions.to_f / starts * 100).round(1) : 0,
+      lead_creation_rate: completions.positive? ? (leads.to_f / completions * 100).round(1) : 0,
+      overall_conversion_rate: starts.positive? ? (leads.to_f / starts * 100).round(2) : 0
     }
   end
 end

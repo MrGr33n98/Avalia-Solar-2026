@@ -6,9 +6,7 @@ class Api::V1::LeadWizardsController < Api::V1::BaseController
     category_id = params[:category_id].presence
     preferred_company_id = params[:preferred_company_id].presence
 
-    if category_id.blank?
-      return render json: { error: 'category_id is required' }, status: :bad_request
-    end
+    return render json: { error: 'category_id is required' }, status: :bad_request if category_id.blank?
 
     schema = LeadWizard::Resolver.resolve(
       category_id: category_id,

@@ -8,7 +8,9 @@ module Api
         platform = params[:platform].to_s.strip.presence || 'expo'
 
         return render json: { error: 'Token is required' }, status: :unprocessable_entity if token.blank?
-        return render json: { error: 'Invalid platform' }, status: :unprocessable_entity unless PushToken::PLATFORMS.include?(platform)
+        unless PushToken::PLATFORMS.include?(platform)
+          return render json: { error: 'Invalid platform' }, status: :unprocessable_entity
+        end
 
         push_token = PushToken.find_or_initialize_by(token: token)
         push_token.assign_attributes(

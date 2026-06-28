@@ -65,7 +65,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     access_token  = jwt_encode({ user_id: user.id, typ: 'access' },  access_exp)
     refresh_token = jwt_encode({ user_id: user.id, typ: 'refresh' }, refresh_exp)
 
-    set_jwt_cookie(access_token,  expires: access_exp)
+    set_jwt_cookie(access_token, expires: access_exp)
     set_refresh_cookie(refresh_token, expires: refresh_exp)
 
     Analytics::PostHogService.identify(distinct_id: user.posthog_distinct_id, properties: user.posthog_properties)

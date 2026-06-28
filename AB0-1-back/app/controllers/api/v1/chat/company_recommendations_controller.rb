@@ -11,9 +11,7 @@ module Api
           answers = params[:answers] || {}
           session_id = params[:session_id]
 
-          unless valid_vertical?(vertical)
-            return render_json_error('Vertical inválida', :bad_request)
-          end
+          return render_json_error('Vertical inválida', :bad_request) unless valid_vertical?(vertical)
 
           service = Chat::CompanyRecommendationService.new(
             vertical: vertical,
@@ -30,7 +28,7 @@ module Api
             fallback_reason: result[:fallback_reason],
             total: result[:total]
           }, status: :ok
-        rescue => e
+        rescue StandardError => e
           Rails.logger.error("Erro ao buscar recomendações: #{e.message}")
           render_json_error('Erro ao buscar recomendações', :internal_server_error)
         end

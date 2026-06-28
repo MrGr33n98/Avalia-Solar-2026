@@ -54,7 +54,8 @@ module Api
           rescue StandardError => e
             Rails.logger.error("[Chat::Messages] Error: #{e.class} - #{e.message}")
             Sentry.capture_exception(e) if defined?(Sentry)
-            sse.write({ chunk: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.', is_final: true, error: true })
+            sse.write({ chunk: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.', is_final: true,
+                        error: true })
           ensure
             sse.close
           end
@@ -84,7 +85,7 @@ module Api
           if @session.user_id.present? && current_user.present?
             # Only block if a different authenticated user tries to use this session
             if @session.user_id != current_user.id
-              return render_error_response(
+              render_error_response(
                 message: 'Você não tem permissão para acessar esta sessão de chat.',
                 status: :forbidden,
                 code: 'FORBIDDEN_SESSION'
@@ -107,19 +108,19 @@ module Api
 
           count = Rails.cache.increment(cache_key, 1, expires_in: 1.minute, raw: true) || 1
 
-          if count.to_i > rate_limit
-            ::Chat::PosthogTrackingService.track(
-              event: 'chat_rate_limited',
-              properties: { ip: request.remote_ip, session_id: @session.id }
-            )
+          return unless count.to_i > rate_limit
 
-            render_error_response(
-              message: 'Muitas mensagens. Aguarde um momento.',
-              status: :too_many_requests,
-              code: 'RATE_LIMITED',
-              retry_after: 60
-            )
-          end
+          ::Chat::PosthogTrackingService.track(
+            event: 'chat_rate_limited',
+            properties: { ip: request.remote_ip, session_id: @session.id }
+          )
+
+          render_error_response(
+            message: 'Muitas mensagens. Aguarde um momento.',
+            status: :too_many_requests,
+            code: 'RATE_LIMITED',
+            retry_after: 60
+          )
         end
       end
     end

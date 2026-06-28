@@ -8,8 +8,8 @@ module Types
     description 'Resultado do painel de mapa na busca'
 
     field :companies, [Types::MapCompanyType], null: false,
-          description: 'Empresas com coordenadas para renderização de pins no mapa'
+                                               description: 'Empresas com coordenadas para renderização de pins no mapa'
     field :total_count, Integer, null: false,
-          description: 'Total de empresas com coordenadas no resultado'
+                                 description: 'Total de empresas com coordenadas no resultado'
   end
 end

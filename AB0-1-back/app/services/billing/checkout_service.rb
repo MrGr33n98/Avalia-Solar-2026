@@ -14,10 +14,10 @@ module Billing
     def call
       configure_stripe!
       validate_plan_configuration!
-      
+
       subscription = find_or_initialize_subscription
       stripe_customer_id = ensure_stripe_customer!(subscription)
-      
+
       create_checkout_session(stripe_customer_id)
     rescue Stripe::AuthenticationError => e
       Rails.logger.error(stripe_error_log_message(e))
@@ -40,10 +40,10 @@ module Billing
     end
 
     def validate_plan_configuration!
-      if @plan.stripe_price_id_monthly.blank?
-        Rails.logger.error("[Billing::CheckoutService] Plan plan_id=#{@plan.id} has no stripe_price_id_monthly configured.")
-        raise Billing::Errors::PlanNotConfigured, 'Este plano não está configurado para cobrança digital.'
-      end
+      return unless @plan.stripe_price_id_monthly.blank?
+
+      Rails.logger.error("[Billing::CheckoutService] Plan plan_id=#{@plan.id} has no stripe_price_id_monthly configured.")
+      raise Billing::Errors::PlanNotConfigured, 'Este plano não está configurado para cobrança digital.'
     end
 
     def find_or_initialize_subscription
@@ -71,21 +71,21 @@ module Billing
       success_url = checkout_success_url
       cancel_url = checkout_cancel_url
       cache_key = "checkout_session:#{@company.id}:#{@plan.id}:#{Digest::SHA256.hexdigest("#{success_url}|#{cancel_url}")}"
-      
+
       cached_url = Rails.cache.read(cache_key)
       return cached_url if cached_url.present?
-      
+
       items = [{ price: @plan.stripe_price_id_monthly, quantity: 1 }]
-      
+
       # Adiciona a Taxa de Setup dinamicamente no Checkout (Pagamento único)
-      if @plan.respond_to?(:setup_fee) && @plan.setup_fee.to_i > 0 && !@plan.setup_included
+      if @plan.respond_to?(:setup_fee) && @plan.setup_fee.to_i.positive? && !@plan.setup_included
         items << {
           price_data: {
             currency: 'brl',
             unit_amount: (@plan.setup_fee.to_f * 100).to_i, # Stripe cobra em centavos
             product_data: {
               name: "Taxa de Setup - #{@plan.name}",
-              description: "Implementação completa e onboarding assistido"
+              description: 'Implementação completa e onboarding assistido'
             }
           },
           quantity: 1
@@ -96,22 +96,22 @@ module Billing
         customer: stripe_customer_id,
         mode: 'subscription',
         line_items: items,
-        subscription_data: { 
-          metadata: { 
+        subscription_data: {
+          metadata: {
             company_id: @company.id.to_s,
             plan_id: @plan.id.to_s
-          } 
+          }
         },
         success_url: success_url,
         cancel_url: cancel_url,
         client_reference_id: @company.id.to_s,
-        metadata: { 
-          company_id: @company.id.to_s, 
-          plan_id: @plan.id.to_s, 
-          initiated_by: @user.id.to_s 
+        metadata: {
+          company_id: @company.id.to_s,
+          plan_id: @plan.id.to_s,
+          initiated_by: @user.id.to_s
         }
       )
-      
+
       Rails.cache.write(cache_key, session.url, expires_in: 30.minutes)
 
       session.url
@@ -172,7 +172,8 @@ module Billing
     def stripe_key_diagnostic
       key = stripe_secret_key
 
-      "stripe_key_present=#{key.present?} stripe_key_prefix_ok=#{key.start_with?('sk_live_', 'sk_test_')} stripe_key_length=#{key.length}"
+      "stripe_key_present=#{key.present?} stripe_key_prefix_ok=#{key.start_with?('sk_live_',
+                                                                                 'sk_test_')} stripe_key_length=#{key.length}"
     end
 
     def redact_secret(message)

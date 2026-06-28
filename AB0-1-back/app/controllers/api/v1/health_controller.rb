@@ -3,7 +3,7 @@
 module Api
   module V1
     class HealthController < BaseController
-      skip_before_action :authenticate_user!, only: [:live, :ready], raise: false
+      skip_before_action :authenticate_user!, only: %i[live ready], raise: false
 
       # GET /api/v1/health/live (Liveness probe)
       def live
@@ -26,30 +26,24 @@ module Api
       private
 
       def check_database
-        begin
-          ActiveRecord::Base.connection.execute("SELECT 1")
-          { status: 'ready' }
-        rescue => e
-          { status: 'not_ready', error: e.message }
-        end
+        ActiveRecord::Base.connection.execute('SELECT 1')
+        { status: 'ready' }
+      rescue StandardError => e
+        { status: 'not_ready', error: e.message }
       end
 
       def check_redis
-        begin
-          Sidekiq.redis { |c| c.ping }
-          { status: 'ready' }
-        rescue => e
-          { status: 'not_ready', error: e.message }
-        end
+        Sidekiq.redis(&:ping)
+        { status: 'ready' }
+      rescue StandardError => e
+        { status: 'not_ready', error: e.message }
       end
 
       def check_sidekiq
-        begin
-          processes = Sidekiq::ProcessSet.new
-          processes.any? ? { status: 'ready' } : { status: 'not_ready', reason: 'no_workers' }
-        rescue => e
-          { status: 'not_ready', error: e.message }
-        end
+        processes = Sidekiq::ProcessSet.new
+        processes.any? ? { status: 'ready' } : { status: 'not_ready', reason: 'no_workers' }
+      rescue StandardError => e
+        { status: 'not_ready', error: e.message }
       end
     end
   end

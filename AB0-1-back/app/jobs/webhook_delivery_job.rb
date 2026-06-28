@@ -4,7 +4,7 @@ class WebhookDeliveryJob < ApplicationJob
 
   def perform(webhook_id, event_name, payload)
     webhook = CompanyWebhook.find(webhook_id)
-    
+
     return unless webhook.active? && webhook.subscribed_to?(event_name)
 
     payload_json = {

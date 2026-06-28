@@ -29,7 +29,7 @@ module Chat
       intent, score = detect_intent
       urgency = detect_urgency
       location = extract_location
-      
+
       trigger_lead = should_trigger_lead?(intent, urgency)
       next_agent = intent == 'company_recommendation' ? 'company_recommendation' : intent
 
@@ -68,7 +68,7 @@ module Chat
         'proposal_analysis' => /(?:analisar proposta|comparar orçamento|recebi um orçamento|esta proposta)/,
         'company_recommendation' => /(?:recomendar|indic(?:ar|a)|melhor empresa|qual empresa|onde encontro|instalador)/,
         'lead_qualification' => /(?:orçamento|cotação|contratar|quero instalar|preciso instalar|gostaria de instalar|instalação)/,
-        'ev_charger_question' => /(?:carregador|wallbox|tomada.+elétric|carro elétrico|veículo elétrico|condomínio.+carregador|frota|recarga\s+(?:ac|dc)|ac\s*(?:\/|e|vs\.?)\s*dc)/,
+        'ev_charger_question' => %r{(?:carregador|wallbox|tomada.+elétric|carro elétrico|veículo elétrico|condomínio.+carregador|frota|recarga\s+(?:ac|dc)|ac\s*(?:/|e|vs\.?)\s*dc)},
         'financing_question' => /(?:financ|parcela|crédito solar|consórcio|banco|taxa de juros)/,
         'solar_support' => /(?:manutenção|limpeza|garantia|inversor.+problema|quebrou|parou de funcionar|microinversor|energia injetada|créditos? de energia|bateria solar|carport solar)/,
         'solar_assessment' => /(?:vale a pena|gera quanto|simulação|tamanho do sistema|quantas placas|potência)/,
@@ -93,10 +93,10 @@ module Chat
 
     def extract_location
       location = {}
-      
+
       # Heurística extremamente básica de exemplo, expansível por LLM depois
-      if match = @text.match(/em (são paulo|rio de janeiro|belo horizonte|curitiba|brasília|campinas|salvador|fortaleza|recife|porto alegre)/)
-        location[:city] = match[1].split(' ').map(&:capitalize).join(' ')
+      if (match = @text.match(/em (são paulo|rio de janeiro|belo horizonte|curitiba|brasília|campinas|salvador|fortaleza|recife|porto alegre)/))
+        location[:city] = match[1].split.map(&:capitalize).join(' ')
       end
 
       # UF regex
@@ -111,8 +111,6 @@ module Chat
         'electric_mobility'
       elsif intent != 'greeting' && intent != 'feedback' && intent != 'fallback'
         'solar'
-      else
-        nil
       end
     end
 

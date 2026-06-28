@@ -9,17 +9,17 @@ module Api
         analytics_user_id = params[:user_id].to_s
         user_id = analytics_user_id.delete_prefix('user_')
         anonymous_id = params[:anonymous_id]
-        
+
         if user_id.blank? || anonymous_id.blank? || !user_id.match?(/\A\d+\z/)
-          return render json: { 
-            error: 'user_id and anonymous_id required' 
+          return render json: {
+            error: 'user_id and anonymous_id required'
           }, status: :bad_request
         end
-        
+
         # Trigger async stitching
         StitchIdentityJob.perform_later(user_id, anonymous_id)
-        
-        render json: { 
+
+        render json: {
           status: 'stitching_scheduled',
           user_id: "user_#{user_id}",
           anonymous_id: anonymous_id
@@ -32,11 +32,9 @@ module Api
         anonymous_id = params[:anonymous_id]
         company_id = params[:company_id]
         page_url = params[:page_url]
-        
-        if anonymous_id.blank?
-          anonymous_id = SecureRandom.uuid
-        end
-        
+
+        anonymous_id = SecureRandom.uuid if anonymous_id.blank?
+
         session = AnonymousSession.find_or_create_by(anonymous_id: anonymous_id) do |s|
           s.ip_hash = Digest::SHA256.hexdigest(request.ip)
           s.user_agent_hash = Digest::SHA256.hexdigest(request.user_agent || '')
@@ -46,11 +44,9 @@ module Api
           s.utm_campaign = params[:utm_campaign]
           s.referrer_domain = extract_domain(request.referrer)
         end
-        
-        if company_id.present? && page_url.present?
-          session.track_visit(company_id, page_url)
-        end
-        
+
+        session.track_visit(company_id, page_url) if company_id.present? && page_url.present?
+
         render json: {
           anonymous_id: anonymous_id,
           session_id: session.id,
@@ -62,7 +58,7 @@ module Api
 
       def detect_device_type(user_agent)
         return 'unknown' if user_agent.blank?
-        
+
         case user_agent
         when /mobile/i then 'mobile'
         when /tablet/i then 'tablet'
@@ -72,7 +68,7 @@ module Api
 
       def extract_domain(url)
         return nil if url.blank?
-        
+
         URI.parse(url).host
       rescue URI::InvalidURIError
         nil

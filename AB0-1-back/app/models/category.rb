@@ -24,12 +24,12 @@ class Category < ApplicationRecord
 
   has_many :articles, dependent: :nullify
   has_many :rating_criteria, dependent: :destroy
-  
+
   has_one_attached :banner
   has_one_attached :icon
   has_one_attached :home_carousel_banner
   has_and_belongs_to_many :banners, join_table: :banners_categories
-  
+
   has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :category
   has_one :category_lead_wizard, dependent: :destroy, inverse_of: :category
 
@@ -55,7 +55,7 @@ class Category < ApplicationRecord
   scope :featured,  -> { where(featured: true) }
   scope :active,    -> { where(status: 'active') }
   scope :ordered,   -> { order(name: :asc) }
-  
+
   scope :by_region, ->(state) { joins(:companies).where(companies: { state: state }).distinct }
   scope :by_min_rating, ->(rating) { where('average_rating >= ?', rating) }
   scope :by_max_price, ->(price) { where('average_price <= ?', price) }
@@ -99,8 +99,8 @@ class Category < ApplicationRecord
   # Methods
   # =========================
   def clear_query_cache!
-    Rails.cache.delete_matched("categories/*")
-    Rails.cache.delete("categories/tree")
+    Rails.cache.delete_matched('categories/*')
+    Rails.cache.delete('categories/tree')
     true
   end
 
@@ -275,8 +275,8 @@ class Category < ApplicationRecord
       errors.add(:home_carousel_banner, 'deve ser PNG ou JPG')
     end
 
-    if blob.byte_size > 500.kilobytes
-      errors.add(:home_carousel_banner, 'deve ter no máximo 500KB')
-    end
+    return unless blob.byte_size > 500.kilobytes
+
+    errors.add(:home_carousel_banner, 'deve ter no máximo 500KB')
   end
 end

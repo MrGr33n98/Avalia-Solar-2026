@@ -21,7 +21,7 @@ class Analytics::TrackEventJob < ApplicationJob
   def perform(company_id:, event_type:, metadata: {}, user_id: nil, tracked_at: nil, event_id: nil)
     # Use existing TrackEventService - preserves all Bloco 2 behavior
     user = user_id ? User.find_by(id: user_id) : nil
-    
+
     result = Analytics::TrackEventService.call(
       company_id: company_id,
       event_type: event_type,

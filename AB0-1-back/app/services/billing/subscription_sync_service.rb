@@ -11,13 +11,13 @@ module Billing
       company_sub = find_or_initialize_subscription
       return nil if company_sub.nil?
 
-      old_status  = company_sub.status
+      old_status = company_sub.status
 
       update_subscription!(company_sub)
       update_company_plan!(company_sub)
-      
+
       notify_status_change(company_sub, old_status)
-      
+
       company_sub
     end
 
@@ -42,7 +42,7 @@ module Billing
 
       # 4. Tenta achar a empresa
       company = ::Company.find_by(id: company_id) if company_id.present?
-      
+
       # 5. Se não achar empresa por ID, tenta buscar pelo stripe_customer_id que possa estar direto na tabela
       if company.nil?
         company = ::Company.joins(:billing_company_subscription)
@@ -52,16 +52,20 @@ module Billing
       if company.nil?
         Rails.logger.warn("Company not found for Stripe customer: #{@stripe_sub.customer} (Sub ID: #{@stripe_sub.id})")
 
-        Billing::SlackNotifier.notify_unknown_company(
-          stripe_sub_id: @stripe_sub.id,
-          stripe_customer_id: @stripe_sub.customer,
-          error: "Company lookup failed"
-        ) if defined?(Billing::SlackNotifier)
-        
-        Sentry.capture_exception(
-          StandardError.new("SubscriptionSyncService: Company not found for Stripe subscription #{@stripe_sub.id}")
-        ) if defined?(Sentry)
-        
+        if defined?(Billing::SlackNotifier)
+          Billing::SlackNotifier.notify_unknown_company(
+            stripe_sub_id: @stripe_sub.id,
+            stripe_customer_id: @stripe_sub.customer,
+            error: 'Company lookup failed'
+          )
+        end
+
+        if defined?(Sentry)
+          Sentry.capture_exception(
+            StandardError.new("SubscriptionSyncService: Company not found for Stripe subscription #{@stripe_sub.id}")
+          )
+        end
+
         return nil
       end
 
@@ -81,40 +85,38 @@ module Billing
       sub.plan ||= ::Plan.find_by(name: 'Free') || ::Plan.first
 
       sub.update!(
-        stripe_customer_id:    @stripe_sub.customer,
-        stripe_price_id:       price_id,
-        status:                stripe_status,
-        current_period_start:  Time.at(@stripe_sub.current_period_start),
-        current_period_end:    Time.at(@stripe_sub.current_period_end),
-        cancel_at_period_end:  @stripe_sub.cancel_at_period_end || false,
-        trial_start:           @stripe_sub.trial_start&.then { |t| Time.at(t) },
-        trial_end:             @stripe_sub.trial_end&.then { |t| Time.at(t) },
-        canceled_at:           @stripe_sub.canceled_at&.then { |t| Time.at(t) } || (@deleted ? Time.current : nil),
-        last_synced_at:        Time.current
+        stripe_customer_id: @stripe_sub.customer,
+        stripe_price_id: price_id,
+        status: stripe_status,
+        current_period_start: Time.at(@stripe_sub.current_period_start),
+        current_period_end: Time.at(@stripe_sub.current_period_end),
+        cancel_at_period_end: @stripe_sub.cancel_at_period_end || false,
+        trial_start: @stripe_sub.trial_start&.then { |t| Time.at(t) },
+        trial_end: @stripe_sub.trial_end&.then { |t| Time.at(t) },
+        canceled_at: @stripe_sub.canceled_at&.then { |t| Time.at(t) } || (@deleted ? Time.current : nil),
+        last_synced_at: Time.current
       )
     end
 
     def update_company_plan!(sub)
       # Resolução do plano pelo stripe_price_id
       plan = ::Plan.find_by(stripe_price_id_monthly: sub.stripe_price_id) || ::Plan.find_by(stripe_price_id_yearly: sub.stripe_price_id)
-      
+
       # Se for active ou trialing, aplica o plano resolvido (ou mantém o plano da assinatura se não achou por price_id)
-      if sub.active_or_trialing?
-        target_plan = plan || sub.plan || ::Plan.find_by(name: 'Free') || ::Plan.first
-      else
-        # Caso contrário, volta pro Free
-        target_plan = ::Plan.find_by(name: 'Free') || ::Plan.first
-      end
+      target_plan = if sub.active_or_trialing?
+                      plan || sub.plan || ::Plan.find_by(name: 'Free') || ::Plan.first
+                    else
+                      # Caso contrário, volta pro Free
+                      ::Plan.find_by(name: 'Free') || ::Plan.first
+                    end
 
       # Só atualiza o plano da empresa se for diferente, evitando callbacks desnecessários
-      if sub.company.plan_id != target_plan.id
-        sub.company.update!(plan: target_plan)
-      end
+      sub.company.update!(plan: target_plan) if sub.company.plan_id != target_plan.id
 
       # Atualiza a FK de plano na assinatura também
-      if plan && sub.plan_id != plan.id
-        sub.update!(plan: plan)
-      end
+      return unless plan && sub.plan_id != plan.id
+
+      sub.update!(plan: plan)
     end
 
     def notify_status_change(sub, old_status)
@@ -129,14 +131,14 @@ module Billing
       end
 
       # 3. Assinatura Cancelada
-      if sub.status == 'canceled' && old_status != 'canceled'
-        Billing::SlackNotifier.notify_subscription_canceled(
-          company: sub.company,
-          plan: sub.plan,
-          reason: 'Stripe webhook subscription cancellation',
-          period_end: sub.current_period_end
-        )
-      end
+      return unless sub.status == 'canceled' && old_status != 'canceled'
+
+      Billing::SlackNotifier.notify_subscription_canceled(
+        company: sub.company,
+        plan: sub.plan,
+        reason: 'Stripe webhook subscription cancellation',
+        period_end: sub.current_period_end
+      )
     end
   end
 end

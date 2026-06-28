@@ -25,19 +25,19 @@ module Api
         achievements = current_user.achievements
         helpful_votes = current_user.reviews.sum(:helpful_count)
         impacted_people = current_user.reviews.sum(:read_count)
-        
+
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
         recommendations = Company.where(status: 'active', verified: true)
                                  .order(rating_avg: :desc)
                                  .limit(3)
                                  .map do |c|
-          {
-            name: c.name,
-            city: "#{c.city || current_user.city}, #{c.state || current_user.state}",
-            rating: c.rating_avg.to_f,
-            badge: c.featured ? 'Popular' : 'Verificada'
-          }
+                                   {
+                                     name: c.name,
+                                     city: "#{c.city || current_user.city}, #{c.state || current_user.state}",
+                                     rating: c.rating_avg.to_f,
+                                     badge: c.featured ? 'Popular' : 'Verificada'
+                                   }
         end
 
         # Recent activities feed
@@ -51,7 +51,7 @@ module Api
             time: r.replied_at.to_date == Time.zone.today ? 'hoje' : "há #{(Time.zone.today - r.replied_at.to_date).to_i} dias"
           }
         end
-        if helpful_votes > 0
+        if helpful_votes.positive?
           recent_activities << {
             icon: 'ThumbsUp',
             title: "Suas avaliações receberam #{helpful_votes} votos úteis",
@@ -74,9 +74,11 @@ module Api
         completion_percent -= 10 if current_user.state.blank?
 
         # Sustainable Journey
-        has_ev = user_leads.where("LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?", '%car%', '%ev%', '%mobil%').exists?
-        has_battery = user_leads.where("LOWER(product_vertical) LIKE ?", '%bater%').exists?
-        has_reviews = reviews_published > 0
+        has_ev = user_leads.where(
+          'LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?', '%car%', '%ev%', '%mobil%'
+        ).exists?
+        has_battery = user_leads.where('LOWER(product_vertical) LIKE ?', '%bater%').exists?
+        has_reviews = reviews_published.positive?
 
         sustainable_journey = [
           {
@@ -225,10 +227,14 @@ module Api
             missing_fields: %w[avatar city state]
           },
           sustainable_journey: [
-            { id: 'solar', title: 'Energia Solar', state: 'Não iniciado', progress: 0, details: ['Sem avaliações ainda'] },
-            { id: 'mobility', title: 'Mobilidade Elétrica', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
-            { id: 'battery', title: 'Bateria / Armazenamento', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
-            { id: 'consumption', title: 'Consumo Consciente', state: 'Não iniciado', progress: 0, details: ['Perfil 0% preenchido'] }
+            { id: 'solar', title: 'Energia Solar', state: 'Não iniciado', progress: 0,
+              details: ['Sem avaliações ainda'] },
+            { id: 'mobility', title: 'Mobilidade Elétrica', state: 'Não iniciado', progress: 0,
+              details: ['Sem propostas na área'] },
+            { id: 'battery', title: 'Bateria / Armazenamento', state: 'Não iniciado', progress: 0,
+              details: ['Sem propostas na área'] },
+            { id: 'consumption', title: 'Consumo Consciente', state: 'Não iniciado', progress: 0,
+              details: ['Perfil 0% preenchido'] }
           ]
         }
       end

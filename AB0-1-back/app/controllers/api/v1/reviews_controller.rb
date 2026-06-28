@@ -44,7 +44,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def mine
-    @reviews = current_user.reviews.includes(:user, :company, review_criterion_scores: :rating_criterion).order(created_at: :desc)
+    @reviews = current_user.reviews.includes(:user, :company,
+                                             review_criterion_scores: :rating_criterion).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
     }
@@ -54,13 +55,13 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     # Persiste o e-mail no metadata para facilitar auditoria futura e buscas rápidas
     permitted_review_params = review_params
     metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
-    
+
     @review = Review.new(permitted_review_params.merge(
-      user_id: current_user.id, 
-      is_legacy: false,
-      capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
-      metadata: metadata_with_email
-    ))
+                           user_id: current_user.id,
+                           is_legacy: false,
+                           capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
+                           metadata: metadata_with_email
+                         ))
 
     if @review.save
       begin
@@ -86,7 +87,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       # Validação rails já capturou a regra [user_id OR email, company_id, category_id]
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotUnique => e
+  rescue ActiveRecord::RecordNotUnique
     # Caso a validação de aplicação falhe por concorrência, os índices do banco idx_reviews_user_company_category_v2
     # e idx_reviews_legacy_global_uniqueness garantem a unicidade física no DB.
     render json: { errors: ['Você já avaliou esta empresa nesta categoria.'] }, status: :unprocessable_entity
@@ -197,9 +198,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def duplicate_review_constraint_v2?(error)
     msg = error.message.to_s
-    msg.include?('idx_reviews_user_company_category_v2') || 
-    msg.include?('idx_reviews_legacy_global_uniqueness') ||
-    msg.include?('index_reviews_on_company_id_and_user_id')
+    msg.include?('idx_reviews_user_company_category_v2') ||
+      msg.include?('idx_reviews_legacy_global_uniqueness') ||
+      msg.include?('index_reviews_on_company_id_and_user_id')
   end
 
   def ensure_owner

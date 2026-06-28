@@ -23,7 +23,9 @@ module Chat
         entities = enrich_entities_from_lead(entities)
 
         # If still no recommendation intent and no location at all, return empty.
-        return empty_payload(entities) unless entities[:recommendation_intent] || entities[:city].present? || entities[:state].present?
+        unless entities[:recommendation_intent] || entities[:city].present? || entities[:state].present?
+          return empty_payload(entities)
+        end
 
         # 3. Match qualified companies using the enriched entities
         matched_companies = Chat::Mobivolt::CompanyMatcherService.match(entities)
@@ -37,11 +39,11 @@ module Chat
 
         {
           busca_realizada: {
-            cidade:      entities[:city],
-            estado:      entities[:state],
+            cidade: entities[:city],
+            estado: entities[:state],
             termo_chave: entities[:keyword],
-            categoria:   entities[:category_seo_url],
-            source:      @session.page_url
+            categoria: entities[:category_seo_url],
+            source: @session.page_url
           },
           empresas_encontradas: serialized_companies
         }
@@ -63,9 +65,7 @@ module Chat
         enriched[:state] ||= lead.state.presence
 
         # If we now have location data, treat it as a recommendation intent
-        if enriched[:city].present? || enriched[:state].present?
-          enriched[:recommendation_intent] = true
-        end
+        enriched[:recommendation_intent] = true if enriched[:city].present? || enriched[:state].present?
 
         enriched
       rescue StandardError => e
@@ -76,11 +76,11 @@ module Chat
       def empty_payload(entities = nil)
         {
           busca_realizada: {
-            cidade:      entities&.dig(:city),
-            estado:      entities&.dig(:state),
+            cidade: entities&.dig(:city),
+            estado: entities&.dig(:state),
             termo_chave: entities&.dig(:keyword),
-            categoria:   entities&.dig(:category_seo_url),
-            source:      @session.page_url
+            categoria: entities&.dig(:category_seo_url),
+            source: @session.page_url
           },
           empresas_encontradas: []
         }

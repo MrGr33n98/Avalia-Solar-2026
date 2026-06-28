@@ -2,6 +2,7 @@ module Api
   module V1
     class DirectMessagesController < BaseController
       include FeatureGateEnforceable
+
       require 'base64'
       require 'stringio'
 
@@ -10,12 +11,14 @@ module Api
 
       def index
         message_ids = @conversation.mark_read_for!(current_user)
-        P2pChat::Broadcaster.message_read(
-          @conversation,
-          reader: current_user,
-          read_at: Time.current,
-          message_ids: message_ids
-        ) if message_ids.any?
+        if message_ids.any?
+          P2pChat::Broadcaster.message_read(
+            @conversation,
+            reader: current_user,
+            read_at: Time.current,
+            message_ids: message_ids
+          )
+        end
 
         @messages = @conversation.direct_messages.order(created_at: :asc)
         render json: @messages.map { |msg| message_json(msg) }
@@ -65,10 +68,10 @@ module Api
       def set_conversation
         @conversation = ::Conversation.find_by(id: params[:conversation_id])
         return render json: { error: 'Conversation not found' }, status: :not_found unless @conversation
-        
-        unless can_access_conversation?
-          render json: { error: 'Unauthorized' }, status: :forbidden
-        end
+
+        return if can_access_conversation?
+
+        render json: { error: 'Unauthorized' }, status: :forbidden
       end
 
       def can_access_conversation?
@@ -107,8 +110,8 @@ module Api
       def build_attachment(data, filename, content_type)
         return nil if data.blank?
 
-        parsed_content_type = data[%r{\Adata:([^;]+);base64,}, 1]
-        base64 = data.sub(%r{\Adata:[^;]+;base64,}, '')
+        parsed_content_type = data[/\Adata:([^;]+);base64,/, 1]
+        base64 = data.sub(/\Adata:[^;]+;base64,/, '')
         final_content_type = content_type.presence || parsed_content_type || 'application/octet-stream'
         final_filename = filename.presence || "anexo-#{SecureRandom.hex(4)}#{extension_for(final_content_type)}"
 

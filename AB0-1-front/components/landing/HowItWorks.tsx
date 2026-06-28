@@ -1,58 +1,55 @@
-'use client';
-
-import React from 'react';
-import { Search, FileText, CheckCircle2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { ArrowRight, Search, Scale, Send } from 'lucide-react';
 
 const steps = [
   {
     icon: Search,
-    title: '1. Busque e Compare',
-    description: 'Encontre instaladores solares verificados na sua cidade por categoria e avaliações.',
-    color: 'bg-brand-blue/10 text-brand-blue'
+    title: 'Busque',
+    description: 'Informe o que precisa e onde o projeto será instalado.',
   },
   {
-    icon: FileText,
-    title: '2. Peça Orçamentos',
-    description: 'Solicite orçamentos gratuitos para as empresas escolhidas em poucos segundos.',
-    color: 'bg-brand-cyan/10 text-brand-cyan'
+    icon: Scale,
+    title: 'Compare com evidências',
+    description: 'Analise reputação, cobertura, verificação e avaliações.',
   },
   {
-    icon: CheckCircle2,
-    title: '3. Escolha a Melhor',
-    description: 'Analise as propostas, tire suas dúvidas e feche o melhor negócio com segurança.',
-    color: 'bg-brand-green/10 text-brand-green'
-  }
+    icon: Send,
+    title: 'Peça orçamentos',
+    description: 'Selecione as melhores opções e receba propostas para decidir.',
+  },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-8 md:py-10 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">
-            Como o Avalia Solar funciona?
+    <section id="como-funciona" className="bg-white py-14 sm:py-16" aria-labelledby="how-it-works-title">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Jornada simples</p>
+          <h2 id="how-it-works-title" className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+            Como funciona
           </h2>
-          <p className="text-sm text-slate-600">
-            Simplificamos sua jornada para a energia limpa em 3 passos simples.
+          <p className="mt-3 text-base text-slate-600">
+            Da busca à proposta, você entende os critérios usados em cada etapa.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {steps.map((step, index) => (
-            <Card key={index} className="relative p-4 border-none shadow-none text-center group">
-              <div className={`w-12 h-12 rounded-xl ${step.color} flex items-center justify-center mx-auto mb-4 transform group-hover:scale-105 transition-transform duration-300`}>
-                <step.icon className="w-6 h-6" />
+            <div key={step.title} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-blue-700 ring-1 ring-slate-200">
+                  <step.icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-3xl font-black tabular-nums text-slate-200">0{index + 1}</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2 leading-tight">{step.title}</h3>
-              <p className="text-sm text-slate-600 leading-snug">
-                {step.description}
-              </p>
-              
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-1/2 -right-4 translate-y-[-50%] w-8 h-px bg-slate-200" />
-              )}
-            </Card>
+              <h3 className="text-lg font-black text-slate-950">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
+
+              {index < steps.length - 1 ? (
+                <span className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 md:flex">
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              ) : null}
+            </div>
           ))}
         </div>
       </div>

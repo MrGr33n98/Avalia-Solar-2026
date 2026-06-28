@@ -8,8 +8,8 @@ class CompanyUtmAttribution < ApplicationRecord
 
   validates :utm_source, presence: true
   validates :company_id, presence: true
-  validates :company_id, uniqueness: { 
-    scope: [:utm_source, :utm_medium, :utm_campaign],
+  validates :company_id, uniqueness: {
+    scope: %i[utm_source utm_medium utm_campaign],
     message: 'UTM combination already exists for this company'
   }
 
@@ -17,7 +17,7 @@ class CompanyUtmAttribution < ApplicationRecord
   scope :by_leads, -> { order(total_leads: :desc) }
   scope :by_visits, -> { order(total_visits: :desc) }
   scope :by_conversion_rate, -> { where('total_visits > 0').order(conversion_rate: :desc) }
-  
+
   scope :for_campaign, ->(campaign) { where(utm_campaign: campaign) }
   scope :for_source, ->(source) { where(utm_source: source) }
   scope :for_medium, ->(medium) { where(utm_medium: medium) }
@@ -41,7 +41,7 @@ class CompanyUtmAttribution < ApplicationRecord
 
   def increment_cta_click!(cta_type)
     increment!(:total_cta_clicks)
-    
+
     case cta_type.to_s
     when 'whatsapp'
       increment!(:whatsapp_clicks)
@@ -52,7 +52,7 @@ class CompanyUtmAttribution < ApplicationRecord
     when 'website'
       increment!(:website_clicks)
     end
-    
+
     touch(:last_seen_at)
   end
 
@@ -81,6 +81,7 @@ class CompanyUtmAttribution < ApplicationRecord
   # ROI calculation (when revenue tracking is implemented)
   def roi
     return 0.0 if attributed_revenue.zero?
+
     # Placeholder: need to track campaign cost
     # roi = ((revenue - cost) / cost) * 100
     0.0
@@ -89,12 +90,14 @@ class CompanyUtmAttribution < ApplicationRecord
   # CTR (Click-Through Rate)
   def ctr
     return 0.0 if total_visits.zero?
+
     ((total_cta_clicks.to_f / total_visits) * 100).round(2)
   end
 
   # Average CTAs per visitor
   def avg_ctas_per_visitor
     return 0.0 if total_visits.zero?
+
     (total_cta_clicks.to_f / total_visits).round(2)
   end
 end

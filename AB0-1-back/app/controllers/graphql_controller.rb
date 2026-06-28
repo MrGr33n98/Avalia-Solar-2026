@@ -127,7 +127,7 @@ class GraphqlController < ApplicationController
 
     begin
       REDIS.get("apq:#{hash}")
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "[APQ] Erro ao ler hash do Redis: #{e.message}"
       nil
     end
@@ -138,7 +138,7 @@ class GraphqlController < ApplicationController
 
     begin
       REDIS.setex("apq:#{hash}", 24.hours.to_i, query)
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "[APQ] Erro ao gravar hash no Redis: #{e.message}"
     end
   end

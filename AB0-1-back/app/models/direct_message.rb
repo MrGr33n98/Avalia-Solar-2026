@@ -37,9 +37,7 @@ class DirectMessage < ApplicationRecord
 
   def attachments_are_safe
     attachments.each do |attachment|
-      if attachment.blob.byte_size > MAX_ATTACHMENT_SIZE
-        errors.add(:attachments, 'devem ter no máximo 10MB')
-      end
+      errors.add(:attachments, 'devem ter no máximo 10MB') if attachment.blob.byte_size > MAX_ATTACHMENT_SIZE
 
       next if ALLOWED_ATTACHMENT_TYPES.include?(attachment.blob.content_type)
 

@@ -86,6 +86,7 @@ module Chat
 
     def self.get_structured_responses(session)
       return {} unless session
+
       session.metadata&.dig('structured_responses') || {}
     end
 
@@ -109,9 +110,9 @@ module Chat
 
     def self.mark_opened(session)
       current = current_state(session)
-      if %w[idle invite_shown].include?(current)
-        transition_to(session, 'opened')
-      end
+      return unless %w[idle invite_shown].include?(current)
+
+      transition_to(session, 'opened')
     end
 
     def self.mark_terms_accepted(session)
@@ -126,25 +127,20 @@ module Chat
       transition_to(session, 'ev_flow') if current_state(session) == 'discovery_menu'
     end
 
-    private
-
     def self.determine_next_state(current, step_data)
       case current
       when 'solar_flow', 'ev_flow'
         # Sequência padrão dos wizards
-        if step_data[:step] == 'need'
+        case step_data[:step]
+        when 'need'
           'awaiting_location'
-        elsif step_data[:step] == 'profile'
+        when 'profile'
           'awaiting_budget_or_profile'
-        elsif step_data[:step] == 'budget' || step_data[:step] == 'vehicle_count'
+        when 'budget', 'vehicle_count'
           'awaiting_timeline'
-        elsif step_data[:step] == 'timeline'
+        when 'timeline'
           'results_pending'
-        else
-          nil
         end
-      else
-        nil
       end
     end
 
@@ -153,9 +149,7 @@ module Chat
       return value unless value.is_a?(String)
 
       # Não armazenar textos livres longos nesta fase
-      if value.length > 200
-        return value[0..199] + '...'
-      end
+      return "#{value[0..199]}..." if value.length > 200
 
       value
     end
@@ -172,7 +166,7 @@ module Chat
           vertical: session.vertical
         }
       )
-    rescue => e
+    rescue StandardError => e
       Rails.logger.warn "[Chat::SessionStateService] Tracking failed: #{e.message}"
     end
   end

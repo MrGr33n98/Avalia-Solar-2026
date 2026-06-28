@@ -1,5 +1,4 @@
 # app/controllers/api/v1/categories_controller.rb
-require 'set'
 
 module Api
   module V1
@@ -115,16 +114,16 @@ module Api
           end
         end
 
-                  # Filtro de Verificadas
-                  if params[:verified] == 'true' && ::Company.column_names.include?('verified')
-                    companies_scope = companies_scope.where(verified: true)
-                  end
-        
-                  # Filtro de Nicho (Tags) - US13
-                  if params[:niche_tag].present? && ::Company.column_names.include?('niche_tags')
-                    # Busca se o array jsonb contém a tag
-                    companies_scope = companies_scope.where("niche_tags @> ?", [params[:niche_tag]].to_json)
-                  end
+        # Filtro de Verificadas
+        if params[:verified] == 'true' && ::Company.column_names.include?('verified')
+          companies_scope = companies_scope.where(verified: true)
+        end
+
+        # Filtro de Nicho (Tags) - US13
+        if params[:niche_tag].present? && ::Company.column_names.include?('niche_tags')
+          # Busca se o array jsonb contém a tag
+          companies_scope = companies_scope.where('niche_tags @> ?', [params[:niche_tag]].to_json)
+        end
         # Log count before limit/pagination
         total_count = companies_scope.count
         Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit/pagination)")
@@ -287,26 +286,26 @@ module Api
       # GET /categories/tree
       # =========================
       def tree
-        begin
-          # Simplificando: não usar cache se estiver dando problema
-          roots = ::Category.where(status: 'active', parent_id: nil)
-                            .order(:name)
+        # Simplificando: não usar cache se estiver dando problema
+        roots = ::Category.where(status: 'active', parent_id: nil)
+                          .order(:name)
 
-          Rails.logger.info("[CategoriesController#tree] Found #{roots.count} root categories")
-          
-          # Eager load apenas icon para evitar N+1
-          roots = roots.includes(:icon_attachment)
+        Rails.logger.info("[CategoriesController#tree] Found #{roots.count} root categories")
 
-          data = roots.map { |root| category_tree_json(root) }
+        # Eager load apenas icon para evitar N+1
+        roots = roots.includes(:icon_attachment)
 
-          Rails.logger.info("[CategoriesController#tree] Returning #{data.size} categories")
-          render json: data, status: :ok
-        rescue StandardError => e
-          Rails.logger.error("[CategoriesController#tree] Error: #{e.message}\n#{e.backtrace.take(10).join("\n")}")
-          # Fallback: retornar categorias sem hierarquia
-          fallback = ::Category.where(status: 'active').order(:name).limit(20)
-          render json: fallback.map { |c| { id: c.id, name: c.name, slug: c.seo_url, icon_url: c.try(:icon_url), companies_count: c.companies_count || 0, children: [] } }, status: :ok
-        end
+        data = roots.map { |root| category_tree_json(root) }
+
+        Rails.logger.info("[CategoriesController#tree] Returning #{data.size} categories")
+        render json: data, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[CategoriesController#tree] Error: #{e.message}\n#{e.backtrace.take(10).join("\n")}")
+        # Fallback: retornar categorias sem hierarquia
+        fallback = ::Category.where(status: 'active').order(:name).limit(20)
+        render json: fallback.map { |c|
+          { id: c.id, name: c.name, slug: c.seo_url, icon_url: c.try(:icon_url), companies_count: c.companies_count || 0, children: [] }
+        }, status: :ok
       end
 
       public :show_by_slug, :tree
@@ -332,6 +331,7 @@ module Api
 
       def category_tree_json(category, visited = Set.new)
         return nil if visited.include?(category.id)
+
         visited.add(category.id)
 
         # Load children safely with error handling

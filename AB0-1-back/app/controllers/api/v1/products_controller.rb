@@ -336,8 +336,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
       },
       distinct_id: 'products_catalog'
     )
-  rescue StandardError => tracking_error
-    Rails.logger.warn("[Products#track_catalog_error] #{tracking_error.message}")
+  rescue StandardError => e
+    Rails.logger.warn("[Products#track_catalog_error] #{e.message}")
   end
 
   def track_product_event(product, event_type, extra_metadata = {})

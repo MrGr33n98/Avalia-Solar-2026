@@ -1,193 +1,154 @@
 import dynamic from 'next/dynamic';
-import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Info } from 'lucide-react';
+import { Suspense, type ReactNode } from 'react';
+import { ArrowRight, BadgeCheck, Info, ShieldCheck, Sparkles } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 import { cookies } from 'next/headers';
 
-import LandingHero from '@/components/landing/LandingHero';
-import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import FAQSection from '@/components/seo/FAQSection';
-
-const homeFaqs = [
-  {
-    question: 'Como funciona o Avalia Solar?',
-    answer: 'O Avalia Solar é uma plataforma de comparação técnica que ajuda você a encontrar as melhores empresas de energia solar e carregadores veiculares. Reunimos avaliações reais, reputação das empresas e qualificações para conectar você diretamente ao parceiro ideal da sua região de forma gratuita.'
-  },
-  {
-    question: 'Quanto custa instalar energia solar residencial no Brasil em 2026?',
-    answer: 'O investimento médio para um sistema fotovoltaico residencial padrão em 2026 varia entre R$ 12.000 e R$ 18.000, a depender da potência e da região. O retorno do investimento (payback) ocorre em média de 3 a 5 anos devido à redução instantânea de até 95% na fatura de energia.'
-  },
-  {
-    question: 'Qual a diferença técnica entre inversor central e microinversor?',
-    answer: 'O inversor central gerencia a geração das placas em série, reduzindo a produção geral se uma única placa for sombreada. O microinversor gerencia cada painel de forma individual, otimizando o rendimento de cada placa contra sombras e sujeira, além de operar em menor tensão.'
-  },
-  {
-    question: 'Como funcionam os créditos de energia solar?',
-    answer: 'Toda eletricidade excedente gerada pelo seu sistema e não consumida de imediato é injetada na rede da concessionária. Isso gera créditos energéticos válidos por 60 meses, que abatem automaticamente o seu consumo nos períodos em que o sistema não gera eletricidade (como à noite).'
-  },
-  {
-    question: 'O Avalia Solar vende equipamentos ou faz a instalação?',
-    answer: 'Não. O Avalia Solar atua de forma 100% independente como um portal de reputação, comparação e reviews de fornecedores. Nós não vendemos produtos e não garantimos transações, servindo como uma camada de confiança para te ajudar a escolher o melhor fornecedor local.'
-  }
-];
-
-const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'), {
-  ssr: false,
-  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
-});
-const SavingsCalculator = dynamic(() => import('@/components/landing/SavingsCalculator'), {
-  ssr: false,
-  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-xl" />
-});
-
+import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
+import HomeCompanyCard from '@/components/home/HomeCompanyCard';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
-import { HomeCategoryCarousel } from '@/components/home/HomeCategoryCarousel';
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import HomeTrustSignature from '@/components/home/HomeTrustSignature';
+import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
+import HowItWorks from '@/components/landing/HowItWorks';
+import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
+import LandingHero from '@/components/landing/LandingHero';
+import SavingsCalculator from '@/components/landing/SavingsCalculator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { companiesApiSafe } from '@/lib/api-client';
-import type { Banner, Category, Company } from '@/lib/api';
+import type { Category, Company } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import {
-  getCachedActiveCategories,
-  getCachedBanners,
-  getCachedFeaturedCategories,
-} from '@/lib/server/home-fallback-cache';
-import {
-  HOME_HERO_EXPERIMENT_ID,
   HOME_HERO_EXPERIMENT_COOKIE,
+  HOME_HERO_EXPERIMENT_ID,
   isHomeHeroExperimentEnabled,
+  resolveHomeHeroVariant,
   type HomeHeroTrustMetrics,
   type HomeHeroVariant,
-  resolveHomeHeroVariant,
 } from '@/lib/experiments/homeHeroExperiment';
-import { isHomeCategoryCarouselEnabled } from '@/lib/feature-flags/homeCategoryCarousel';
+import {
+  getCachedActiveCategories,
+  getCachedFeaturedCategories,
+} from '@/lib/server/home-fallback-cache';
 
 const HomePageTracking = dynamic(() => import('@/components/home/HomePageTracking'), {
   ssr: false,
   loading: () => null,
-});
-const LandingCategoryChips = dynamic(() => import('@/components/landing/LandingCategoryChips'), {
-  loading: () => <div className="h-12 animate-pulse bg-slate-100 rounded-xl" />,
-});
-const LandingCategoryCard = dynamic(() => import('@/components/landing/LandingCategoryCard'), {
-  loading: () => <div className="h-40 animate-pulse bg-white rounded-xl border border-gray-100" />,
-});
-const CompanyCard = dynamic(() => import('@/components/CompanyCard'), {
-  loading: () => <div className="h-60 animate-pulse bg-white rounded-xl border border-gray-100" />,
-});
-const BannerByLocationLazy = dynamic(() => import('@/components/BannerByLocation'), {
-  loading: () => <div className="h-20 animate-pulse bg-gray-100 rounded-xl" />,
-});
-const TrustRow = dynamic(() => import('@/components/ui/TrustRow').then((m) => m.TrustRow), {
-  ssr: false,
-  loading: () => <div className="h-20 animate-pulse bg-gray-50 rounded-xl" />,
 });
 const HomeIdentityModalTrigger = dynamic(() => import('@/components/home/HomeIdentityModalTrigger'), {
   ssr: false,
   loading: () => null,
 });
 
+const homeFaqs = [
+  {
+    question: 'Como funciona o Avalia Solar?',
+    answer:
+      'O Avalia Solar reúne empresas, avaliações públicas e informações de reputação para ajudar você a comparar opções e solicitar propostas. A plataforma não executa instalações e não substitui a análise técnica do imóvel.',
+  },
+  {
+    question: 'Quanto custa instalar energia solar residencial no Brasil em 2026?',
+    answer:
+      'O valor depende do consumo, da tarifa local, do telhado e dos equipamentos escolhidos. O diagnóstico da página apresenta apenas uma faixa educativa; a proposta técnica de cada empresa confirma o investimento real.',
+  },
+  {
+    question: 'Como uma empresa é verificada?',
+    answer:
+      'A verificação considera dados cadastrais e informações públicas disponíveis. Avaliações, cobertura e outros sinais permanecem visíveis separadamente para que você faça sua própria análise.',
+  },
+  {
+    question: 'Posso comparar mais de uma empresa?',
+    answer:
+      'Sim. Você pode selecionar até três empresas e comparar reputação, avaliações, cobertura e outras informações antes de pedir propostas.',
+  },
+  {
+    question: 'O Avalia Solar vende equipamentos ou faz a instalação?',
+    answer:
+      'Não. O Avalia Solar é uma plataforma independente de descoberta, reputação e comparação. A contratação e a execução do projeto são realizadas diretamente com a empresa escolhida.',
+  },
+];
+
 export const revalidate = 3600;
 const FALLBACK_CATEGORY_MIN_ID = 9000;
 
 function SectionShell({
   children,
-  zebra,
-  className,
+  tone = 'soft',
 }: {
   children: ReactNode;
-  zebra?: boolean;
-  className?: string;
+  tone?: 'soft' | 'white';
 }) {
   return (
-    <section className={['py-16 md:py-24 border-b border-brand-borderSoft', zebra ? 'bg-[#F1F5F9]' : 'bg-[#F8FAFC]'].join(' ')}>
-      <div className={['container mx-auto max-w-[86rem] px-4 md:px-6', className].filter(Boolean).join(' ')}>{children}</div>
+    <section className={tone === 'soft' ? 'bg-slate-50 py-14 sm:py-20' : 'bg-white py-14 sm:py-20'}>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
     </section>
   );
 }
 
-function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: ReactNode }) {
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+  right,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  right?: ReactNode;
+}) {
   return (
-    <div className="mb-10 md:mb-12 border-b border-brand-borderSoft pb-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-3">
-          <h2 className="text-3xl md:text-[40px] font-bold text-slate-900 tracking-tight leading-tight">{title}</h2>
-          {subtitle ? <p className="text-slate-500 max-w-2xl leading-relaxed text-sm md:text-base">{subtitle}</p> : null}
-        </div>
-        {right ? <div className="shrink-0">{right}</div> : null}
+    <div className="mb-8 flex flex-col justify-between gap-4 sm:mb-10 md:flex-row md:items-end">
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">{eyebrow}</p>
+        <h2 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">{title}</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{subtitle}</p>
       </div>
+      {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <Card className="flex items-center gap-3 p-4 clay-panel border-clay-shadow-light">
-      <Info className="h-5 w-5 text-gray-500" />
-      <p className="text-sm text-gray-600">{message}</p>
+    <Card className="flex items-center gap-3 rounded-2xl border-slate-200 bg-white p-5 shadow-none">
+      <Info className="h-5 w-5 text-slate-400" aria-hidden="true" />
+      <p className="text-sm text-slate-600">{message}</p>
     </Card>
   );
 }
 
-async function getHomeData(): Promise<{
-  featuredCategories: Category[];
-  categoriesBanners: Banner[];
-  homeBanners: Banner[];
-}> {
-  const [featuredCategoriesRaw, categoriesBanners, homeBanners] = await Promise.all([
-    getCachedFeaturedCategories(),
-    getCachedBanners('categories_top'),
-    getCachedBanners('home_top'),
-  ]);
-
+async function getHomeData(): Promise<{ featuredCategories: Category[] }> {
+  const featuredCategoriesRaw = await getCachedFeaturedCategories();
   const featuredCategories = Array.isArray(featuredCategoriesRaw) ? featuredCategoriesRaw : [];
   const categoriesForHome =
     featuredCategories.length > 0
       ? featuredCategories
       : (await getCachedActiveCategories()).slice(0, 8);
 
-  return {
-    featuredCategories: categoriesForHome,
-    categoriesBanners: Array.isArray(categoriesBanners) ? categoriesBanners : [],
-    homeBanners: Array.isArray(homeBanners) ? homeBanners : [],
-  };
+  return { featuredCategories: categoriesForHome };
 }
 
-async function getCompaniesData(): Promise<{
-  companies: Company[];
-  companiesBanners: Banner[];
-}> {
-  const [companies, companiesBanners] = await Promise.all([
-    companiesApiSafe.getAll({
-      status: 'active',
-      featured: true,
-      limit: 12,
-      include: 'logo_url,banner_url,average_rating,rating_count',
-    }),
-    getCachedBanners('companies_top'),
-  ]);
+async function getCompaniesData(): Promise<{ companies: Company[] }> {
+  const companies = await companiesApiSafe.getAll({
+    status: 'active',
+    featured: true,
+    limit: 12,
+    include:
+      'logo_url,banner_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,trust_score,active_admin,description',
+  });
 
-  return {
-    companies: Array.isArray(companies) ? companies : [],
-    companiesBanners: Array.isArray(companiesBanners) ? companiesBanners : [],
-  };
+  return { companies: Array.isArray(companies) ? companies : [] };
 }
 
 const getHeroDataCached = unstable_cache(
   async () => {
-    const [allCategories, homeBanners, totalActiveCompanies, totalVerifiedCompanies] = await Promise.all([
+    const [allCategories, totalActiveCompanies, totalVerifiedCompanies] = await Promise.all([
       getCachedActiveCategories(),
-      getCachedBanners('home_top'),
-      companiesApiSafe.getTotalCount({
-        status: 'active',
-      }),
-      companiesApiSafe.getTotalCount({
-        status: 'active',
-        verified: true,
-      }),
+      companiesApiSafe.getTotalCount({ status: 'active' }),
+      companiesApiSafe.getTotalCount({ status: 'active', verified: true }),
     ]);
     const trustMetrics: HomeHeroTrustMetrics = {
       totalActiveCompanies:
@@ -200,25 +161,20 @@ const getHeroDataCached = unstable_cache(
           : null,
     };
 
-    return { 
-      allCategories, 
-      homeBanners: Array.isArray(homeBanners) ? homeBanners : [],
-      trustMetrics,
-    };
+    return { allCategories, trustMetrics };
   },
-  ['home-hero-data-v2'],
+  ['home-hero-data-v3'],
   { revalidate: 600, tags: ['home-data', 'home-hero'] }
 );
 
-const getHomeDataCached = unstable_cache(
-  async () => getHomeData(),
-  ['home-categories-section-v1'],
-  { revalidate: 600, tags: ['home-data', 'home-categories'] }
-);
+const getHomeDataCached = unstable_cache(async () => getHomeData(), ['home-categories-section-v2'], {
+  revalidate: 600,
+  tags: ['home-data', 'home-categories'],
+});
 
 const getCompaniesDataCached = unstable_cache(
   async () => getCompaniesData(),
-  ['home-companies-section-v2'],
+  ['home-companies-section-v3'],
   { revalidate: 600, tags: ['home-data', 'home-companies'] }
 );
 
@@ -241,17 +197,13 @@ export default async function Home() {
   const companiesDataPromise = getCompaniesDataCached();
 
   return (
-    <main className="flex-grow">
-      <BreadcrumbSchema
-        items={[
-          { name: 'Home', item: '/' }
-        ]}
-      />
+    <main className="flex-grow bg-white">
+      <BreadcrumbSchema items={[{ name: 'Home', item: '/' }]} />
       <Suspense fallback={null}>
         <HomePageTracking />
       </Suspense>
 
-      <Suspense fallback={<div className="min-h-[600px] animate-pulse bg-gray-100" />}>
+      <Suspense fallback={<div className="min-h-[620px] animate-pulse bg-slate-100" />}>
         <LandingHeroWrapper
           dataPromise={heroDataPromise}
           variant={heroVariant}
@@ -259,55 +211,47 @@ export default async function Home() {
         />
       </Suspense>
 
-      <Suspense fallback={<div className="h-20 animate-pulse bg-gray-50" />}>
-        <LandingCategoryChipsWrapper dataPromise={categoriesDataPromise} />
-      </Suspense>
-
+      <HomeTrustSignature />
       <HowItWorks />
-
       <SavingsCalculator />
 
-      <Suspense fallback={<div className="h-20 animate-pulse bg-gray-50" />}>
-        <TrustRow />
-      </Suspense>
-
-      <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
+      <Suspense fallback={<div className="h-[520px] animate-pulse bg-slate-50" />}>
         <CategoriesSectionWrapper dataPromise={categoriesDataPromise} />
       </Suspense>
 
-      <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50" />}>
+      <Suspense fallback={<div className="h-[720px] animate-pulse bg-white" />}>
         <CompaniesSectionWrapper dataPromise={companiesDataPromise} />
       </Suspense>
 
-      {/* FAQ Section */}
-      <section className="py-16 md:py-24 bg-white border-t border-slate-100">
-        <div className="container mx-auto max-w-4xl px-4 md:px-6">
-          <FAQSection items={homeFaqs} />
+      <Suspense fallback={<div className="h-96 animate-pulse bg-white" />}>
+        <ComparisonSectionWrapper dataPromise={companiesDataPromise} />
+      </Suspense>
+
+      <section className="border-t border-slate-200 bg-slate-50 py-14 sm:py-20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <FAQSection
+            items={homeFaqs}
+            subtitle="Respostas objetivas para comparar empresas e entender seu projeto antes de contratar."
+          />
         </div>
       </section>
 
-      {/* Conversion Banner */}
-      <section className="dark py-20 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-brand-blue/10 skew-x-12 translate-x-1/2" />
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Pronto para economizar na conta de luz?
+      <section className="bg-slate-950 text-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-8">
+          <div>
+            <div className="flex items-center gap-2 text-amber-300">
+              <Sparkles className="h-5 w-5" aria-hidden="true" />
+              <span className="text-xs font-extrabold uppercase tracking-[0.15em]">Próximo passo seguro</span>
+            </div>
+            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
+              Faça a escolha certa para o seu projeto solar
             </h2>
-            <p className="text-xl text-slate-400 mb-10">
-              Junte-se a milhares de brasileiros que já reduziram seus custos em até 95%. Peça seu orçamento gratuito hoje.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <HomeConversionCTA />
-              <Button 
-                asChild
-                variant="outline"
-                className="h-14 px-10 text-lg rounded-full border-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white smooth-transition"
-              >
-                <Link href="/blog">Ler nosso blog</Link>
-              </Button>
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-300">
+              <span className="inline-flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-emerald-400" /> Empresas verificadas</span>
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Comparação sem compromisso</span>
             </div>
           </div>
+          <HomeConversionCTA />
         </div>
       </section>
 
@@ -315,10 +259,6 @@ export default async function Home() {
     </main>
   );
 }
-
-// ==============================
-// WRAPPERS FOR STREAMING
-// ==============================
 
 async function LandingHeroWrapper({
   dataPromise,
@@ -330,7 +270,7 @@ async function LandingHeroWrapper({
   experimentEnabled: boolean;
 }) {
   try {
-    const { allCategories, homeBanners, trustMetrics } = await dataPromise;
+    const { allCategories, trustMetrics } = await dataPromise;
     const safeCategories =
       Array.isArray(allCategories) && allCategories.length > 0
         ? allCategories
@@ -339,7 +279,7 @@ async function LandingHeroWrapper({
     return (
       <LandingHero
         categories={safeCategories}
-        banners={homeBanners}
+        banners={[]}
         variant={variant}
         experimentEnabled={experimentEnabled}
         experimentId={HOME_HERO_EXPERIMENT_ID}
@@ -355,37 +295,10 @@ async function LandingHeroWrapper({
         variant={variant}
         experimentEnabled={experimentEnabled}
         experimentId={HOME_HERO_EXPERIMENT_ID}
-        trustMetrics={{
-          totalActiveCompanies: null,
-          totalVerifiedCompanies: null,
-        }}
+        trustMetrics={{ totalActiveCompanies: null, totalVerifiedCompanies: null }}
       />
     );
   }
-}
-
-async function LandingCategoryChipsWrapper({
-  dataPromise,
-}: {
-  dataPromise: ReturnType<typeof getHomeDataCached>;
-}) {
-  let featuredCategories: Category[] = [];
-  try {
-    const data = await dataPromise;
-    featuredCategories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
-  } catch (error) {
-    console.error('[Home] LandingCategoryChipsWrapper fallback triggered:', error);
-  }
-
-  if (featuredCategories.length === 0) {
-    featuredCategories = getFallbackCategories(8);
-  }
-
-  return (
-    <div className="py-8 bg-slate-50 border-y border-slate-100">
-      <LandingCategoryChips categories={featuredCategories} />
-    </div>
-  );
 }
 
 async function CategoriesSectionWrapper({
@@ -394,11 +307,9 @@ async function CategoriesSectionWrapper({
   dataPromise: ReturnType<typeof getHomeDataCached>;
 }) {
   let featuredCategories: Category[] = [];
-  let categoriesBanners: Banner[] = [];
   try {
     const data = await dataPromise;
     featuredCategories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
-    categoriesBanners = Array.isArray(data?.categoriesBanners) ? data.categoriesBanners : [];
   } catch (error) {
     console.error('[Home] CategoriesSectionWrapper fallback triggered:', error);
   }
@@ -407,57 +318,39 @@ async function CategoriesSectionWrapper({
   const usingFallbackCategories =
     safeCategories.length > 0 &&
     safeCategories.every((category) => Number(category?.id) >= FALLBACK_CATEGORY_MIN_ID);
-  const homeCategoryCarouselEnabled = isHomeCategoryCarouselEnabled();
 
   return (
-    <SectionShell zebra>
+    <SectionShell tone="soft">
       <SectionHeader
-        title="Soluções por Categoria"
-        subtitle="Encontre o que você precisa, de painéis solares a consultoria especializada."
+        eyebrow="Encontre o especialista certo"
+        title="Soluções por categoria"
+        subtitle="Escolha uma necessidade para ver empresas especializadas, avaliações e áreas de atendimento."
+        right={
+          <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800">
+            <Link href="/categories">
+              Ver todas <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        }
       />
 
       {safeCategories.length > 0 ? (
         <CategoryCardsErrorBoundary>
-          {homeCategoryCarouselEnabled ? (
-            <HomeCategoryCarousel categories={safeCategories} />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              {/* Editorial Banner Integrated in Grid */}
-              {categoriesBanners.length > 0 && (
-                <div className="sm:col-span-2 lg:col-span-4">
-                  <BannerByLocationLazy 
-                    location="categories_top" 
-                    initialBanners={categoriesBanners} 
-                    className="rounded-2xl overflow-hidden border border-slate-100 shadow-lg"
-                  />
-                </div>
-              )}
-              
-              {safeCategories.map((category) => (
-                <LandingCategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {safeCategories.slice(0, 8).map((category) => (
+              <LandingCategoryCard key={category.id} category={category} />
+            ))}
+          </div>
         </CategoryCardsErrorBoundary>
       ) : (
         <EmptyState message="Nenhuma categoria encontrada." />
       )}
 
       {usingFallbackCategories ? (
-        <p className="mt-4 text-sm text-amber-700">
-          Categorias exibidas em modo de contingencia devido a indisponibilidade temporaria da API.
+        <p className="mt-4 text-sm text-amber-700" role="status">
+          Categorias de contingência exibidas devido à indisponibilidade temporária da API.
         </p>
       ) : null}
-
-      {!homeCategoryCarouselEnabled && (
-        <div className="mt-8 md:mt-10 text-center">
-          <Button asChild variant="outline" className="clay-chip rounded-full">
-            <Link href="/categories" className="group">
-              Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
-        </div>
-      )}
     </SectionShell>
   );
 }
@@ -468,59 +361,51 @@ async function CompaniesSectionWrapper({
   dataPromise: ReturnType<typeof getCompaniesDataCached>;
 }) {
   let companies: Company[] = [];
-  let companiesBanners: Banner[] = [];
   try {
     const data = await dataPromise;
     companies = Array.isArray(data?.companies) ? data.companies : [];
-    companiesBanners = Array.isArray(data?.companiesBanners) ? data.companiesBanners : [];
   } catch (error) {
     console.error('[Home] CompaniesSectionWrapper fallback triggered:', error);
   }
 
   return (
-    <SectionShell>
+    <SectionShell tone="white">
       <SectionHeader
-        title="Empresas em Destaque"
-        subtitle="Os instaladores mais bem avaliados e confiáveis da plataforma."
+        eyebrow="Dados reais da plataforma"
+        title="Empresas recomendadas para você"
+        subtitle="Perfis em destaque com sinais de reputação, verificação, localização e atendimento."
         right={
-          <Button asChild variant="ghost" className="text-brand-blue font-bold clay-chip">
-            <Link href="/companies" className="group">
-              Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5 smooth-transition group-hover:translate-x-0.5" />
+          <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800">
+            <Link href="/companies">
+              Ver todas <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         }
       />
 
-      <div className="flex flex-col gap-8">
-        {/* Native Featured Banner linked to Section Header */}
-        {companiesBanners.length > 0 && (
-          <BannerByLocationLazy 
-            location="companies_top" 
-            initialBanners={companiesBanners.slice(0, 1)} 
-            className="clay-panel rounded-clay-xl border border-clay-shadow-light overflow-hidden"
-          />
-        )}
-
-        {companies.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
-            {companies.slice(0, 8).map((company) => (
-              <CompanyCard key={company.id} company={company} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState message="Nenhuma empresa em destaque encontrada." />
-        )}
-      </div>
-
-      <div className="mt-12 text-center">
-        <CTAPrimaryButton 
-          label="Explorar todas as empresas" 
-          href="/companies"
-          ctaType="external"
-          ctaDestination="/companies"
-          className="md:w-auto w-full clay-btn-primary" 
-        />
-      </div>
+      {companies.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {companies.slice(0, 8).map((company) => (
+            <HomeCompanyCard key={company.id} company={company} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="Nenhuma empresa em destaque encontrada." />
+      )}
     </SectionShell>
   );
+}
+
+async function ComparisonSectionWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getCompaniesDataCached>;
+}) {
+  try {
+    const data = await dataPromise;
+    return <HomeComparisonPreview companies={Array.isArray(data?.companies) ? data.companies : []} />;
+  } catch (error) {
+    console.error('[Home] ComparisonSectionWrapper fallback triggered:', error);
+    return null;
+  }
 }

@@ -29,7 +29,8 @@ module Chat
         score += 15 if @lead.city.present? || @lead.state.present?
 
         # 2. Intenção comercial clara (+20)
-        commercial_intents = %w[solar_quote ev_charger_installation condominium_charging fleet_electrification company_recommendation compare_companies]
+        commercial_intents = %w[solar_quote ev_charger_installation condominium_charging fleet_electrification
+                                company_recommendation compare_companies]
         score += 20 if commercial_intents.include?(@lead.intent)
 
         # 3. Empresa recomendada (+10)
@@ -54,9 +55,13 @@ module Chat
 
         # 9. Possui proposta concorrente para análise (+10)
         # Verificamos no project_type ou nos pain_points/objections
-        is_comparing = @lead.project_type.to_s.downcase == 'comparativo' || 
-                       Array(@lead.pain_points).any? { |p| p.to_s.downcase.include?('proposta') || p.to_s.downcase.include?('concorrente') } ||
-                       Array(@lead.objections).any? { |o| o.to_s.downcase.include?('preço') || o.to_s.downcase.include?('proposta') }
+        is_comparing = @lead.project_type.to_s.downcase == 'comparativo' ||
+                       Array(@lead.pain_points).any? do |p|
+                         p.to_s.downcase.include?('proposta') || p.to_s.downcase.include?('concorrente')
+                       end ||
+                       Array(@lead.objections).any? do |o|
+                         o.to_s.downcase.include?('preço') || o.to_s.downcase.include?('proposta')
+                       end
         score += 10 if is_comparing
 
         # Limita de 0 a 100

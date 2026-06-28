@@ -125,7 +125,7 @@ class CompanyDashboardPolicy < ApplicationPolicy
 
   def company_member_active?
     return false unless user.respond_to?(:company_members)
-    
+
     user.company_members.exists?(
       company_id: record.id,
       status: 'active'
@@ -133,8 +133,8 @@ class CompanyDashboardPolicy < ApplicationPolicy
   end
 
   def company_owner?
-    company_member_active? && 
-    user.company_members.find_by(company_id: record.id)&.role == 'owner'
+    company_member_active? &&
+      user.company_members.find_by(company_id: record.id)&.role == 'owner'
   end
 
   def company_has_paid_plan?

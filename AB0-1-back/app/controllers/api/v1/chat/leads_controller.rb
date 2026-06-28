@@ -17,7 +17,7 @@ module Api
           session = ChatSession.find(params[:chat_session_id])
 
           # LGPD: Exigir consentimento
-          unless params[:consent_given] == true || params[:consent_given] == 'true'
+          unless [true, 'true'].include?(params[:consent_given])
             return render_error_response(
               message: 'Consentimento LGPD é obrigatório para salvar dados pessoais.',
               status: :unprocessable_entity,
@@ -34,7 +34,7 @@ module Api
             end
 
             lead.assign_attributes(safe_params)
-            
+
             # Preenche defaults de sessão apenas se não existirem
             lead.consent_given = true
             lead.consent_given_at ||= Time.current
@@ -48,11 +48,11 @@ module Api
             # Race condition detectada! Outra thread acabou de salvar este lead no banco.
             # Capturamos a versão já existente para enriquecer com segurança.
             lead = ChatLead.find_by!(chat_session_id: session.id)
-            
+
             safe_params = lead_params.to_h.reject do |key, value|
               lead.respond_to?(key) && lead.send(key).present? && value.blank?
             end
-            
+
             lead.update!(safe_params)
           end
 
@@ -63,7 +63,7 @@ module Api
           if ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_LEAD_SYNC_ENABLED', 'true'))
             begin
               ::Chat::Mobivolt::LeadSyncJob.perform_later(lead.id)
-              
+
               # Dispara evento analítico PostHog informando que o lead foi salvo localmente
               ::Chat::PosthogTrackingService.track(
                 event: 'mobivolt_lead_saved',

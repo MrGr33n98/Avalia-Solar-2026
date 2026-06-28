@@ -7,7 +7,7 @@ class Company < ApplicationRecord
   include Moderation
 
   # OpenSearch Integration (Searchkick)
-  searchkick word_start: [:name, :city, :city_normalized, :state, :description, :category_names],
+  searchkick word_start: %i[name city city_normalized state description category_names],
              callbacks: :async,
              synonyms: [
                ['painel', 'modulo', 'placa', 'placa solar', 'painel solar'],
@@ -43,9 +43,7 @@ class Company < ApplicationRecord
     }
 
     # Adiciona geo_point para OpenSearch somente quando lat/lng disponíveis
-    if latitude.present? && longitude.present?
-      data[:location] = { lat: latitude.to_f, lon: longitude.to_f }
-    end
+    data[:location] = { lat: latitude.to_f, lon: longitude.to_f } if latitude.present? && longitude.present?
 
     data
   end
@@ -123,8 +121,8 @@ class Company < ApplicationRecord
   # Associations
   # =========================
   has_and_belongs_to_many :categories, join_table: :categories_companies,
-                                      after_add: :update_category_metrics,
-                                      after_remove: :update_category_metrics
+                                       after_add: :update_category_metrics,
+                                       after_remove: :update_category_metrics
 
   def update_category_metrics(category)
     category.update_metrics! if category.respond_to?(:update_metrics!)
@@ -250,7 +248,7 @@ class Company < ApplicationRecord
   scope :by_state, ->(state) { where(state: state) if state.present? }
   scope :by_city, ->(city) { where(city: city) if city.present? }
   scope :ordered, -> { order(featured: :desc, rating_avg: :desc, name: :asc) }
-  scope :serving_state, ->(state) {
+  scope :serving_state, lambda { |state|
     state_code = Locations::CoverageNormalizer.normalize_state(state)
     if state_code.present?
       state_pattern = "(^|[,;|[:space:]])#{state_code}([,;|[:space:]]|$)"
@@ -263,7 +261,7 @@ class Company < ApplicationRecord
       all
     end
   }
-  scope :serving_city_strict, ->(city, state = nil) {
+  scope :serving_city_strict, lambda { |city, state = nil|
     state_code = Locations::CoverageNormalizer.normalize_state(state)
     canonical_city = Locations::CoverageNormalizer.normalize_city(city, state: state_code)
     if canonical_city.present?
@@ -304,7 +302,7 @@ class Company < ApplicationRecord
   scope :serving_city, ->(city, state = nil) { serving_city_strict(city, state) }
 
   # Full Text Search Scope
-  scope :search_by_text, ->(query) {
+  scope :search_by_text, lambda { |query|
     return all if query.blank?
 
     # to_tsvector logic matching the migration index
@@ -320,9 +318,9 @@ class Company < ApplicationRecord
     # plainto_tsquery for safe input handling
     where("#{tsvector} @@ plainto_tsquery('portuguese', ?)", query)
   }
-  
+
   # Sprint 1 Ranking Engine
-  scope :ordered_by_priority, -> {
+  scope :ordered_by_priority, lambda {
     order(Arel.sql("
       CASE WHEN sponsored THEN 1 ELSE 0 END DESC,
       (COALESCE(rating_avg, 0) * 0.6 + COALESCE(rating_count, 0) * 0.0001 + priority_score) DESC,
@@ -433,19 +431,27 @@ class Company < ApplicationRecord
   end
 
   def validate_ready_for_activation
-    errors.add(:name, 'ÃƒÂ© obrigatÃƒÂ³rio para ativaÃƒÂ§ÃƒÂ£o (mÃƒÂ­nimo 2 caracteres)') if name.blank? || name.length < 2
+    if name.blank? || name.length < 2
+      errors.add(:name,
+                 'ÃƒÂ© obrigatÃƒÂ³rio para ativaÃƒÂ§ÃƒÂ£o (mÃƒÂ­nimo 2 caracteres)')
+    end
 
-    errors.add(:email, 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o') if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+    if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
+      errors.add(:email,
+                 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o')
+    end
 
     errors.add(:state, 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_state?(state)
 
-    errors.add(:city, 'invÃƒÂ¡lida ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_city?(state, city)
+    errors.add(:city, 'invÃƒÂ¡lida ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_city?(state,
+                                                                                                              city)
 
     errors.add(:categories, 'pelo menos uma categoria ÃƒÂ© necessÃƒÂ¡ria para ativaÃƒÂ§ÃƒÂ£o') unless categories.any?
 
     return if phone.present? || whatsapp.present? || email_public.present?
 
-    errors.add(:base, 'Pelo menos um contato (Telefone, WhatsApp ou Email PÃƒÂºblico) ÃƒÂ© necessÃƒÂ¡rio para ativaÃƒÂ§ÃƒÂ£o')
+    errors.add(:base,
+               'Pelo menos um contato (Telefone, WhatsApp ou Email PÃƒÂºblico) ÃƒÂ© necessÃƒÂ¡rio para ativaÃƒÂ§ÃƒÂ£o')
   end
 
   def validate_featured_requires_active
@@ -522,8 +528,16 @@ class Company < ApplicationRecord
   def normalize_multiselects
     self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:project_types)
     self.niche_tags = Array(niche_tags).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:niche_tags)
-    self.equipment_brands = Array(equipment_brands).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:equipment_brands)
-    self.post_sales_capacity = Array(post_sales_capacity).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:post_sales_capacity)
+    if respond_to?(:equipment_brands)
+      self.equipment_brands = Array(equipment_brands).map do |v|
+        v.to_s.strip
+      end.reject(&:blank?)
+    end
+    if respond_to?(:post_sales_capacity)
+      self.post_sales_capacity = Array(post_sales_capacity).map do |v|
+        v.to_s.strip
+      end.reject(&:blank?)
+    end
     return unless respond_to?(:services_offered)
 
     self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
@@ -650,8 +664,9 @@ class Company < ApplicationRecord
   ].freeze
 
   def validate_niche_tags
-    return if self.niche_tags.blank?
-    invalid = Array(self.niche_tags) - NICHE_TAGS
+    return if niche_tags.blank?
+
+    invalid = Array(niche_tags) - NICHE_TAGS
     errors.add(:niche_tags, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
@@ -659,16 +674,16 @@ class Company < ApplicationRecord
   def validate_project_types
     # O erro 'undefined local variable' acontece aqui se nÃƒÂ£o usarmos 'self.' ou se o atributo nÃƒÂ£o estiver definido.
     # Usando 'self.project_types' resolve o escopo.
-    return if self.project_types.blank?
+    return if project_types.blank?
 
-    invalid = Array(self.project_types) - PROJECT_TYPES
+    invalid = Array(project_types) - PROJECT_TYPES
     errors.add(:project_types, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
   def validate_services_offered
-    return if self.services_offered.blank?
+    return if services_offered.blank?
 
-    invalid = Array(self.services_offered) - SERVICES_OFFERED
+    invalid = Array(services_offered) - SERVICES_OFFERED
     errors.add(:services_offered, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
@@ -794,12 +809,14 @@ class Company < ApplicationRecord
   end
 
   def media_upload_allowed?
-    explicit_flag = explicit_feature_value_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media)
+    explicit_flag = explicit_feature_value_from_plan?(:media_upload, :media_gallery, :allow_media_uploads,
+                                                      :gallery_uploads, :media)
     return explicit_flag unless explicit_flag.nil?
 
     return true if featured? || verified?
 
-    feature_enabled_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media, include_defaults: true)
+    feature_enabled_from_plan?(:media_upload, :media_gallery, :allow_media_uploads, :gallery_uploads, :media,
+                               include_defaults: true)
   rescue StandardError
     featured? || verified? || has_paid_plan?
   end
@@ -863,20 +880,25 @@ class Company < ApplicationRecord
 
   def explicit_feature_value_from_plan?(*keys)
     value = explicit_feature_value_from_plan(*keys)
-    return nil if value.nil?
+    return false if value.nil?
 
     ActiveModel::Type::Boolean.new.cast(value)
   end
 
   def feature_enabled_from_plan?(*keys, include_defaults: true)
     value = feature_value_from_plan(*keys, include_defaults: include_defaults)
-    return nil if value.nil?
+    return false if value.nil?
 
     ActiveModel::Type::Boolean.new.cast(value)
   end
 
   def feature_value_from_plan(*keys, include_defaults: true)
-    features = include_defaults ? resolved_plan_features : PlanFeatureCatalog.normalize(raw_effective_plan_features, apply_defaults: false)
+    features = if include_defaults
+                 resolved_plan_features
+               else
+                 PlanFeatureCatalog.normalize(raw_effective_plan_features,
+                                              apply_defaults: false)
+               end
     keys.flatten.each do |key|
       value = features[key.to_s]
       return value unless value.nil?
@@ -1155,7 +1177,8 @@ class Company < ApplicationRecord
     return if width.blank? || height.blank?
     return if width >= min_width && height >= min_height
 
-    errors.add(attribute, "dimensÃƒÂµes muito pequenas (#{width}x#{height}px). MÃƒÂ­nimo recomendado: #{recommendation}")
+    errors.add(attribute,
+               "dimensÃƒÂµes muito pequenas (#{width}x#{height}px). MÃƒÂ­nimo recomendado: #{recommendation}")
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar dimensoes atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
   end

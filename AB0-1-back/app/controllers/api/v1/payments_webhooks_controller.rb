@@ -2,10 +2,10 @@ module Api
   module V1
     class PaymentsWebhooksController < ActionController::API
       ALLOWED_PROVIDERS = %w[stripe mercadopago pagarme mock].freeze
-      
+
       before_action :validate_provider
       before_action :verify_webhook_signature, unless: :stripe_provider?
-      
+
       def create
         case params[:provider]
         when 'stripe'
@@ -39,15 +39,15 @@ module Api
         sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
         return render json: { error: 'subscription_not_found' }, status: :not_found if sub.nil?
 
-        if %w[success paid].include?(status)
-          ends_at = Time.current + sub.banner_offer.duration_days.days
-          sub.activate!(starts_at: Time.current, ends_at: ends_at)
-        end
+        return unless %w[success paid].include?(status)
+
+        ends_at = Time.current + sub.banner_offer.duration_days.days
+        sub.activate!(starts_at: Time.current, ends_at: ends_at)
       end
 
       def validate_provider
         return if ALLOWED_PROVIDERS.include?(params[:provider])
-        
+
         Rails.logger.warn({
           event: 'webhook_provider_rejected',
           provider: params[:provider],
@@ -56,7 +56,7 @@ module Api
           timestamp: Time.current.iso8601,
           reason: 'invalid_provider'
         }.to_json)
-        
+
         render json: { error: 'Invalid provider' }, status: :unprocessable_entity
       end
 
@@ -67,7 +67,7 @@ module Api
       def verify_webhook_signature
         signature = request.headers['X-Webhook-Signature']
         timestamp = request.headers['X-Webhook-Timestamp']
-        
+
         if signature.blank?
           log_security_failure('missing_signature')
           return render json: { error: 'Missing signature' }, status: :unauthorized

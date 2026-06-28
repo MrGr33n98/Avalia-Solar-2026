@@ -41,6 +41,8 @@ module FeatureGateEnforceable
       "feature=#{feature_name} reason=#{reason} path=#{request.path}"
     )
 
+    return unless defined?(Analytics::TrackEventService)
+
     Analytics::TrackEventService.call(
       company_id: company.id,
       user: current_user,
@@ -50,6 +52,6 @@ module FeatureGateEnforceable
         reason: reason,
         path: request.path
       }
-    ) if defined?(Analytics::TrackEventService)
+    )
   end
 end

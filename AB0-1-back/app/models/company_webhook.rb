@@ -6,7 +6,7 @@ class CompanyWebhook < ApplicationRecord
   validate :validate_events
 
   scope :active, -> { where(active: true) }
-  scope :for_event, ->(event_name) { where("events @> ?::jsonb", [event_name].to_json) }
+  scope :for_event, ->(event_name) { where('events @> ?::jsonb', [event_name].to_json) }
 
   before_create :generate_secret_key
 

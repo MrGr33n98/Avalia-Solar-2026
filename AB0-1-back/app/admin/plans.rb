@@ -2,7 +2,8 @@ ActiveAdmin.register Plan do
   menu label: 'Planos (Catálogo)', priority: 18
 
   permit_params do
-    permitted = [:name, :description, :price, :plan_tier_template, :stripe_product_id, :stripe_price_id_monthly, :stripe_price_id_yearly, :is_public, :display_order]
+    permitted = %i[name description price plan_tier_template stripe_product_id stripe_price_id_monthly
+                   stripe_price_id_yearly is_public display_order]
     # Allow features_json keys explicitly
     permitted << { features_json: PlanFeatureCatalog.known_keys }
     # Allow dynamic feature fields hash
@@ -95,6 +96,7 @@ ActiveAdmin.register Plan do
     feature_groups =
       FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
         next unless grouped_features[group_key].present?
+
         memo[group_key] = grouped_features[group_key]
       end.merge(grouped_features.except(*FEATURE_GROUP_ORDER))
 
@@ -118,8 +120,8 @@ ActiveAdmin.register Plan do
     panel 'Visualização dos Recursos (Features)' do
       attributes_table_for resource do
         row('Lista de Ativos') do
-          enabled = resource.enabled_feature_keys.map do |key| 
-            PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize 
+          enabled = resource.enabled_feature_keys.map do |key|
+            PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize
           end
           enabled.any? ? enabled.join(', ') : 'Nenhum recurso habilitado'
         end
@@ -131,7 +133,10 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       panel(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
-        para(FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints') if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
+        if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
+          para(FEATURE_GROUP_DESCRIPTIONS[group_key],
+               class: 'inline-hints')
+        end
         table_for feature_keys do
           column('Funcionalidade') { |key| PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize }
           column('Explicação') { |key| PlanFeatureCatalog.feature_definition(key)[:description] }
@@ -170,6 +175,7 @@ ActiveAdmin.register Plan do
     feature_groups =
       FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
         next unless grouped_features[group_key].present?
+
         memo[group_key] = grouped_features[group_key]
       end.merge(grouped_features.except(*FEATURE_GROUP_ORDER))
 
@@ -177,9 +183,15 @@ ActiveAdmin.register Plan do
       PlanFeatureCatalog.feature_definition(key)[:label] || key.to_s.humanize
     end
 
-    render_feature_hint = lambda do |key, definition, default_value|
+    render_feature_hint = lambda do |_key, definition, default_value|
       hints = []
-      hints << "Padrão do Tier: #{default_value == true ? 'Habilitado' : (default_value == false ? 'Bloqueado' : default_value.inspect)}" unless default_value.nil?
+      unless default_value.nil?
+        hints << "Padrão do Tier: #{if default_value == true
+                                      'Habilitado'
+                                    else
+                                      (default_value == false ? 'Bloqueado' : default_value.inspect)
+                                    end}"
+      end
       hints << "Tipo: #{definition[:type]}"
       hints << "Comportamento: #{definition[:access_behavior]}"
       hints.join(' | ')
@@ -267,8 +279,10 @@ ActiveAdmin.register Plan do
 
     f.inputs 'Integração Stripe (Faturamento)' do
       f.input :stripe_product_id, label: 'Stripe Product ID', hint: 'Ex: prod_XXXX'
-      f.input :stripe_price_id_monthly, label: 'Stripe Price ID Principal', hint: 'Use o price_ anual que será usado no checkout.'
-      f.input :stripe_price_id_yearly, label: 'Stripe Price ID Anual Alternativo', hint: 'Opcional; mantenha vazio se o principal já for anual.'
+      f.input :stripe_price_id_monthly, label: 'Stripe Price ID Principal',
+                                        hint: 'Use o price_ anual que será usado no checkout.'
+      f.input :stripe_price_id_yearly, label: 'Stripe Price ID Anual Alternativo',
+                                       hint: 'Opcional; mantenha vazio se o principal já for anual.'
       f.input :is_public, as: :boolean, label: 'Exibir publicamente no site (/pricing)'
       f.input :display_order, label: 'Ordem de exibição', hint: 'Menor número aparece primeiro no carrossel.'
     end
@@ -277,9 +291,9 @@ ActiveAdmin.register Plan do
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
         view_helpers.safe_join(
           [
-            FEATURE_GROUP_DESCRIPTIONS[group_key].present? ?
-              view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints') :
-              nil,
+            if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
+              view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
+            end,
             render_feature_group.call(feature_keys)
           ].compact
         )
@@ -313,13 +327,15 @@ ActiveAdmin.register Plan do
     def update
       super
     rescue StandardError => e
-      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}", status: 500
+      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}",
+             status: 500
     end
 
     def create
       super
     rescue StandardError => e
-      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}", status: 500
+      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}",
+             status: 500
     end
   end
 end

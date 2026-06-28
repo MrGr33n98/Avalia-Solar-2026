@@ -49,12 +49,12 @@ ActiveAdmin.register Category, namespace: :admin do
 
     f.inputs 'Basic Information' do
       f.input :name
-      f.input :short_description, 
-              label: 'Meta Description / Short Description', 
+      f.input :short_description,
+              label: 'Meta Description / Short Description',
               hint: "Ideal: 70-160 caracteres. Atual: #{f.object.short_description&.length || 0}. Usado para SEO e previews."
       f.input :description, as: :text, input_html: { rows: 10 }
       f.input :seo_url, hint: 'URL-friendly slug (deixe em branco para gerar automaticamente)'
-      f.input :seo_title, 
+      f.input :seo_title,
               label: 'SEO Title',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Título para motores de busca."
     end
@@ -71,11 +71,18 @@ ActiveAdmin.register Category, namespace: :admin do
     end
 
     f.inputs 'Assets' do
-      f.input :icon, as: :file, hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
-      f.input :banner, as: :file, hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), size: '200x100') : 'No banner'
-      f.input :home_carousel_banner, 
-              as: :file, 
-              hint: f.object.home_carousel_banner.attached? ? image_tag(url_for(f.object.home_carousel_banner), size: '200x100') : 'Imagem usada no carrossel de categorias da home. Recomendada proporção horizontal/card.'
+      f.input :icon, as: :file,
+                     hint: f.object.icon.attached? ? image_tag(url_for(f.object.icon), size: '50x50') : 'No icon'
+      f.input :banner, as: :file,
+                       hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), size: '200x100') : 'No banner'
+      f.input :home_carousel_banner,
+              as: :file,
+              hint: if f.object.home_carousel_banner.attached?
+                      image_tag(url_for(f.object.home_carousel_banner),
+                                size: '200x100')
+                    else
+                      'Imagem usada no carrossel de categorias da home. Recomendada proporção horizontal/card.'
+                    end
     end
 
     f.inputs 'Associations' do
@@ -84,7 +91,7 @@ ActiveAdmin.register Category, namespace: :admin do
               multiple: true,
               collection: Company.order(:name).map { |company|
                 location = [company.city, company.state].compact.reject(&:blank?).join(' - ')
-                ["#{company.name}#{location.present? ? " (#{location})" : ''}", company.id]
+                ["#{company.name}#{" (#{location})" if location.present?}", company.id]
               },
               input_html: { class: 'select2-input', style: 'width: 100%' },
               hint: 'Busque e selecione uma ou mais empresas relacionadas a esta categoria.'

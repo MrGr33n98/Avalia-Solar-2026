@@ -26,12 +26,16 @@ module Api
         rescue StandardError => e
           Rails.logger.error("[Billing::Webhook] #{e.class}: #{e.message}")
           Sentry.capture_exception(e) if defined?(Sentry)
-          
+
           if defined?(Billing::SlackNotifier)
-            Billing::SlackNotifier.notify_webhook_failure(
-              error: e.message,
-              backtrace: e.backtrace.first(10)
-            ) rescue nil
+            begin
+              Billing::SlackNotifier.notify_webhook_failure(
+                error: e.message,
+                backtrace: e.backtrace.first(10)
+              )
+            rescue StandardError
+              nil
+            end
           end
 
           # Still return 200 to Stripe (don't retry failed webhooks)

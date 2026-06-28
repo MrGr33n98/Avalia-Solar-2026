@@ -404,8 +404,8 @@ module PlanFeatureCatalog
     end
 
     def defaults
-      FEATURE_DEFINITIONS.each_with_object({}) do |(key, definition), memo|
-        memo[key] = definition[:default]
+      FEATURE_DEFINITIONS.transform_values do |definition|
+        definition[:default]
       end
     end
 
@@ -490,9 +490,7 @@ module PlanFeatureCatalog
     def stringify_hash(features)
       case features
       when Hash
-        features.each_with_object({}) do |(key, value), memo|
-          memo[key.to_s] = value
-        end
+        features.transform_keys(&:to_s)
       else
         {}
       end

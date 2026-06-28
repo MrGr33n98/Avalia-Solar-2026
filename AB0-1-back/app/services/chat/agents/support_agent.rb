@@ -63,7 +63,7 @@ module Chat
               }
             )
 
-            return agent_response(
+            agent_response(
               content: content,
               metadata: metadata,
               intent: intent,
@@ -72,7 +72,8 @@ module Chat
             )
           else
             # LlmGateway failed
-            return trigger_fallback(session: session, intent: intent, next_agent: next_agent, error_msg: 'LlmGateway failed or returned empty content')
+            trigger_fallback(session: session, intent: intent, next_agent: next_agent,
+                             error_msg: 'LlmGateway failed or returned empty content')
           end
         else
           # No articles found (Empty/Fallback Honesto)
@@ -96,7 +97,7 @@ module Chat
             }
           )
 
-          return agent_response(
+          agent_response(
             content: content,
             metadata: metadata,
             intent: intent,
@@ -109,8 +110,6 @@ module Chat
         Rails.logger.error("[Chat::Agents::SupportAgent] Error in processing: #{e.message}")
         trigger_fallback(session: session, intent: intent, next_agent: next_agent, error_msg: e.message)
       end
-
-      private
 
       def self.trigger_fallback(session:, intent:, next_agent:, error_msg:)
         content = 'Não encontrei uma resposta confiável na minha base ainda. Posso te ajudar a procurar empresas ou especialistas que atendam esse tema.'

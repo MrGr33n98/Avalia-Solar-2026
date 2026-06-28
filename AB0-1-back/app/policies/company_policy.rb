@@ -101,9 +101,7 @@ class CompanyPolicy < ApplicationPolicy
 
   private
 
-  def admin?
-    super
-  end
+
 
   def company_owner?
     user.owner_of?(record)

@@ -15,7 +15,7 @@ module Chat
   #
   class CompanyRecommendationService
     MAX_RESULTS       = 5
-    INSTALLER_MIN     = 3   # minimum installers before we pad with other segments
+    INSTALLER_MIN     = 3 # minimum installers before we pad with other segments
 
     SCORE_CITY_EXACT    = 40
     SCORE_CITY_COVERAGE = 35
@@ -44,9 +44,9 @@ module Chat
       sanitized       = sanitize_results(recommendations)
 
       {
-        recommendations:  sanitized,
-        fallback_reason:  determine_fallback_reason(recommendations),
-        total:            sanitized.size
+        recommendations: sanitized,
+        fallback_reason: determine_fallback_reason(recommendations),
+        total: sanitized.size
       }
     end
 
@@ -142,7 +142,7 @@ module Chat
 
       # Score and sort
       candidates
-        .map    { |c| [c, calculate_score(c, city, state)] }
+        .map { |c| [c, calculate_score(c, city, state)] }
         .sort_by { |_, score| -score }
         .first(MAX_RESULTS)
         .map(&:first)
@@ -153,11 +153,10 @@ module Chat
 
       if vertical == 'solar'
         # For solar, consider all segments; segment priority is handled in Ruby.
-        scope
       else
         # For mobility and others, keep filtering by category/segment as before.
-        scope
       end
+      scope
     end
 
     # Broad SQL pre-filter: company has seat in state OR coverage_states mentions it.
@@ -215,7 +214,7 @@ module Chat
       score += SCORE_PAID_PLAN if safe_has_paid_plan?(company)
 
       # Profile richness
-      score += SCORE_HAS_FAQS      if company.company_faqs.loaded? ? company.company_faqs.any? : company.company_faqs.exists?
+      score += SCORE_HAS_FAQS if company.company_faqs.loaded? ? company.company_faqs.any? : company.company_faqs.exists?
       score += SCORE_HAS_MEDIA     if company.media_assets.attached?
       score += SCORE_HAS_WHATSAPP  if company.whatsapp.present?
 
@@ -237,25 +236,25 @@ module Chat
     def sanitize_results(companies)
       companies.map do |company|
         {
-          id:              company.id,
-          slug:            company.slug,
-          name:            company.name,
-          logo_url:        company.logo_url,
-          city:            company.city,
-          state:           company.state,
-          categories:      company.categories.map(&:name),
-          vertical:        vertical,
-          segment:         company.segment,
-          average_rating:  company.rating_avg.to_f,
-          reviews_count:   company.reviews_count.to_i,
-          verified:        company.verified?,
-          paid_plan:       safe_has_paid_plan?(company),
-          plan_tier:       safe_plan_tier(company),
-          profile_url:     "/empresas/#{company.slug}",
-          whatsapp_url:    whatsapp_url_for(company),
-          quote_enabled:   true,
+          id: company.id,
+          slug: company.slug,
+          name: company.name,
+          logo_url: company.logo_url,
+          city: company.city,
+          state: company.state,
+          categories: company.categories.map(&:name),
+          vertical: vertical,
+          segment: company.segment,
+          average_rating: company.rating_avg.to_f,
+          reviews_count: company.reviews_count.to_i,
+          verified: company.verified?,
+          paid_plan: safe_has_paid_plan?(company),
+          plan_tier: safe_plan_tier(company),
+          profile_url: "/empresas/#{company.slug}",
+          whatsapp_url: whatsapp_url_for(company),
+          quote_enabled: true,
           comparison_enabled: true,
-          short_reason:    generate_recommendation_reason(company)
+          short_reason: generate_recommendation_reason(company)
         }
       end
     end

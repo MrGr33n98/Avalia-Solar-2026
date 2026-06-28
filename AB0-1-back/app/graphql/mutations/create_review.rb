@@ -25,22 +25,16 @@ module Mutations
       project_type: nil, installation_status: nil
     )
       # Mutation de escrita requer autenticação
-      unless context[:current_user]
-        return { review: nil, errors: ['Autenticação necessária para avaliar uma empresa'] }
-      end
+      return { review: nil, errors: ['Autenticação necessária para avaliar uma empresa'] } unless context[:current_user]
 
       current_user = context[:current_user]
 
       # Valida empresa
       company = Company.active.find_by(id: company_id)
-      unless company
-        return { review: nil, errors: ['Empresa não encontrada ou inativa'] }
-      end
+      return { review: nil, errors: ['Empresa não encontrada ou inativa'] } unless company
 
       # Valida nota
-      unless (1.0..5.0).cover?(rating.to_f)
-        return { review: nil, errors: ['Nota deve estar entre 1 e 5'] }
-      end
+      return { review: nil, errors: ['Nota deve estar entre 1 e 5'] } unless (1.0..5.0).cover?(rating.to_f)
 
       review_attrs = {
         user_id: current_user.id,

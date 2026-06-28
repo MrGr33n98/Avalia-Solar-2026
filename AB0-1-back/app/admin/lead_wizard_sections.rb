@@ -37,7 +37,9 @@ ActiveAdmin.register LeadWizardSection do
 
     f.inputs 'Section Settings' do
       f.input :lead_wizard_version,
-              collection: LeadWizardVersion.latest_first.map { |version| ["#{version.scope_label} v#{version.version_number}", version.id] },
+              collection: LeadWizardVersion.latest_first.map { |version|
+                ["#{version.scope_label} v#{version.version_number}", version.id]
+              },
               include_blank: false
       f.input :key, hint: 'Identificador estável da seção. Ex: contact_info, project_details.'
       f.input :title

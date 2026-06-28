@@ -9,14 +9,14 @@ module Chat
         companies = payload[:empresas_encontradas] || []
 
         if companies.any?
-          content = "Encontrei algumas opções ativas na sua região. Compare abaixo e solicite orçamentos."
+          content = 'Encontrei algumas opções ativas na sua região. Compare abaixo e solicite orçamentos.'
           metadata = {
             'type' => 'company_recommendations',
             'source' => 'mobivolt_ai',
             'companies' => companies
           }
         else
-          content = "Não encontrei instaladores ativos nessa região agora. Posso te ajudar a abrir uma busca personalizada para receber opções próximas ou empresas que atendam sua cidade."
+          content = 'Não encontrei instaladores ativos nessa região agora. Posso te ajudar a abrir uma busca personalizada para receber opções próximas ou empresas que atendam sua cidade.'
           metadata = {
             'type' => 'company_recommendations',
             'source' => 'mobivolt_ai',

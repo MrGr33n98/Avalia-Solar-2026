@@ -53,7 +53,11 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def self.review_aggregates_table_exists?
-    @review_aggregates_table_exists ||= (ActiveRecord::Base.connection.table_exists?(:review_aggregates) rescue false)
+    @review_aggregates_table_exists ||= begin
+      ActiveRecord::Base.connection.table_exists?(:review_aggregates)
+    rescue StandardError
+      false
+    end
   end
 
   def review_aggregates_available?
@@ -80,10 +84,10 @@ class CompanySerializer < ActiveModel::Serializer
   def category_info
     # Use preloaded association if available
     categories_array = if object.association(:categories).loaded?
-                          object.categories.to_a
-                        else
-                          object.categories.limit(1).to_a
-                        end
+                         object.categories.to_a
+                       else
+                         object.categories.limit(1).to_a
+                       end
     category = categories_array.first
     return nil unless category
 
@@ -213,10 +217,10 @@ class CompanySerializer < ActiveModel::Serializer
 
     # Use loaded association to avoid N+1
     faq_list = if object.association(:company_faqs).loaded?
-                object.company_faqs.select(&:published?).sort_by { |f| f.position || 999 }
-              else
-                object.company_faqs.published_only.ordered
-              end
+                 object.company_faqs.select(&:published?).sort_by { |f| f.position || 999 }
+               else
+                 object.company_faqs.published_only.ordered
+               end
 
     faq_list.map do |faq|
       faq.as_json(only: %i[id question answer status position])
@@ -297,16 +301,16 @@ class CompanySerializer < ActiveModel::Serializer
 
     # Use loaded association to avoid N+1
     offers = if object.association(:company_financing_offers).loaded?
-                object.company_financing_offers.select(&:active?).sort_by { |o| o.position || 0 }
-              else
-                object.company_financing_offers.active.ordered
-              end
+               object.company_financing_offers.select(&:active?).sort_by { |o| o.position || 0 }
+             else
+               object.company_financing_offers.active.ordered
+             end
 
     offers.map do |offer|
       offer.as_json(
         only: %i[id name offer_type term_months interest_rate_monthly
-                min_down_payment_percent grace_months amortization_type
-                notes active position]
+                 min_down_payment_percent grace_months amortization_type
+                 notes active position]
       )
     end
   end
@@ -327,7 +331,10 @@ class CompanySerializer < ActiveModel::Serializer
     access_entry = object.respond_to?(:feature_access) ? object.feature_access['faq_block'] : nil
     return access_entry['state'] == 'enabled' && access_entry['value'] != false if access_entry.present?
 
-    return object.feature_enabled_from_plan?(:faq_block, :faq, :faqs, include_defaults: true) if object.respond_to?(:feature_enabled_from_plan?)
+    if object.respond_to?(:feature_enabled_from_plan?)
+      return object.feature_enabled_from_plan?(:faq_block, :faq, :faqs,
+                                               include_defaults: true)
+    end
 
     false
   end

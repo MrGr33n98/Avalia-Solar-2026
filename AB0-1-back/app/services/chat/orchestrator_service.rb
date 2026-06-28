@@ -4,15 +4,15 @@ module Chat
   class OrchestratorService
     MAX_HISTORY_MESSAGES = 20
 
-    def self.process(session:, user_message:, &block)
-      new(session: session).process(user_message, &block)
+    def self.process(session:, user_message:, &)
+      new(session: session).process(user_message, &)
     end
 
     def initialize(session:)
       @session = session
     end
 
-    def process(user_message, &block)
+    def process(user_message, &)
       # 1. Sanitize input
       safe_message = Chat::SafetyService.sanitize(user_message)
       return blocked_response if safe_message.nil?
@@ -36,14 +36,14 @@ module Chat
       # 4.5. Se for o assistente Success do Dashboard, desvia do fluxo de leads
       if @session.vertical == 'success'
         system_prompt = Chat::LlmGateway::SUCCESS_SYSTEM_PROMPT
-        
+
         llm_response = Chat::LlmGateway.call(
           messages: history,
           context: context,
           system_prompt: system_prompt,
-          &block
+          &
         )
-        
+
         assistant_msg = @session.chat_messages.create!(
           role: 'assistant',
           content: llm_response[:content],
@@ -54,19 +54,23 @@ module Chat
           intent_detected: 'success_onboarding',
           metadata: {}
         )
-        
+
         @session.increment_message_count!
-        
-        Chat::PosthogTrackingService.track(
-          event: 'chat_success_response_generated',
-          properties: {
-            session_id: @session.id,
-            message_id: assistant_msg.id,
-            model: llm_response[:model],
-            success: llm_response[:success]
-          }
-        ) rescue nil
-        
+
+        begin
+          Chat::PosthogTrackingService.track(
+            event: 'chat_success_response_generated',
+            properties: {
+              session_id: @session.id,
+              message_id: assistant_msg.id,
+              model: llm_response[:model],
+              success: llm_response[:success]
+            }
+          )
+        rescue StandardError
+          nil
+        end
+
         final_metadata = {
           message: {
             id: user_msg.id,
@@ -88,17 +92,18 @@ module Chat
             message_count: @session.message_count
           }
         }
-        
-        if block_given?
-          yield("", true, final_metadata)
-        else
-          return final_metadata
-        end
+
+        return final_metadata unless block_given?
+
+        yield('', true, final_metadata)
+
+
+
         return
       end
 
       # 5. Intent Router
-      old_intent = detect_intent(safe_message, "") # Mocking llm response
+      old_intent = detect_intent(safe_message, '') # Mocking llm response
       intent_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_ENABLED', 'false'))
       shadow_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_INTENT_ROUTER_SHADOW_ENABLED', 'false'))
       agents_enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch('MOBIVOLT_AGENTS_ENABLED', 'false'))
@@ -138,14 +143,22 @@ module Chat
         }
 
         # PostHog Agent Tracking
-        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked', properties: { session_id: @session.id, agent: 'company_recommendation' })
+        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked',
+                                           properties: {
+                                             session_id: @session.id, agent: 'company_recommendation'
+                                           })
         if agent_result[:fallback_triggered]
-          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback', properties: { session_id: @session.id, agent: 'company_recommendation' })
+          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback',
+                                             properties: {
+                                               session_id: @session.id, agent: 'company_recommendation'
+                                             })
         end
-        if msg_metadata['companies']&.empty?
-          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_empty', properties: { session_id: @session.id })
+        if msg_metadata['companies'] && msg_metadata['companies'].empty?
+          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_empty',
+                                             properties: { session_id: @session.id })
         else
-          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_success', properties: { session_id: @session.id })
+          Chat::PosthogTrackingService.track(event: 'mobivolt_company_recommendation_success',
+                                             properties: { session_id: @session.id })
         end
 
       elsif agents_enabled && support_intents.include?(new_router_state[:next_agent])
@@ -173,26 +186,32 @@ module Chat
         }
 
         # PostHog Agent Tracking
-        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked', properties: { session_id: @session.id, agent: 'support' })
+        Chat::PosthogTrackingService.track(event: 'mobivolt_agent_invoked',
+                                           properties: {
+                                             session_id: @session.id, agent: 'support'
+                                           })
         if agent_result[:fallback_triggered]
-          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback', properties: { session_id: @session.id, agent: 'support' })
+          Chat::PosthogTrackingService.track(event: 'mobivolt_agent_fallback',
+                                             properties: {
+                                               session_id: @session.id, agent: 'support'
+                                             })
         end
 
       else
         # Fluxo Clássico (LlmGateway)
-        llm_response = Chat::LlmGateway.call(messages: history, context: context, &block)
+        llm_response = Chat::LlmGateway.call(messages: history, context: context, &)
         llm_content = llm_response[:content]
         llm_model = llm_response[:model]
         llm_token_count = llm_response[:token_count]
         llm_latency_ms = llm_response[:latency_ms]
-        llm_success = llm_response[:success]
+        llm_response[:success]
         agent_result = nil
 
-        if intent_enabled
-          intent = new_router_state[:intent]
-        else
-          intent = old_intent
-        end
+        intent = if intent_enabled
+                   new_router_state[:intent]
+                 else
+                   old_intent
+                 end
 
         msg_metadata = {}
         if @session.metadata['last_recommendation_payload'].present?
@@ -229,15 +248,16 @@ module Chat
 
         msg_metadata ||= {}
         msg_metadata.merge!({
-          'lead_score' => qualifier_result[:lead_score],
-          'lead_temperature' => qualifier_result[:lead_temperature],
-          'handoff_status' => handoff_result[:lead_status],
-          'handoff_triggered' => handoff_result[:handoff_triggered],
-          'duplicate_prevented' => handoff_result[:duplicate_prevented]
-        })
+                              'lead_score' => qualifier_result[:lead_score],
+                              'lead_temperature' => qualifier_result[:lead_temperature],
+                              'handoff_status' => handoff_result[:lead_status],
+                              'handoff_triggered' => handoff_result[:handoff_triggered],
+                              'duplicate_prevented' => handoff_result[:duplicate_prevented]
+                            })
       else
         # Fallback para Lógica Legada de Qualificação
-        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation condominium_charging fleet_electrification lead_qualification proposal_analysis]
+        commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation
+                                condominium_charging fleet_electrification lead_qualification proposal_analysis]
         technical_intents = %w[solar_support solar_assessment financing_question ev_charger_question solar_maintenance]
         should_trigger = commercial_intents.include?(intent) ||
                          (!technical_intents.include?(intent) && @session.chat_messages.user_messages.count >= 3)
@@ -292,7 +312,7 @@ module Chat
       }
 
       if block_given?
-        yield("", true, final_metadata)
+        yield('', true, final_metadata)
       else
         final_metadata
       end
@@ -356,8 +376,8 @@ module Chat
       )
 
       # 2. Track specialized dynamic recommendation context events
-      if context.to_s.include?("=== DYNAMIC COMPANY CONTEXT ===")
-        if context.to_s.include?("NENHUMA EMPRESA ENCONTRADA")
+      if context.to_s.include?('=== DYNAMIC COMPANY CONTEXT ===')
+        if context.to_s.include?('NENHUMA EMPRESA ENCONTRADA')
           Chat::PosthogTrackingService.track(
             event: 'chat_company_context_empty',
             properties: {

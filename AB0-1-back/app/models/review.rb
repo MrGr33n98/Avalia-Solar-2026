@@ -46,7 +46,7 @@ class Review < ApplicationRecord
   validates :category_id, presence: true, unless: :is_legacy?
   validates :headline, length: { maximum: 120 }, allow_blank: true
   validates :capture_flow_source, presence: true
-  
+
   validate :require_comment_or_criteria
   validate :prevent_self_review
   validate :validate_uniqueness_v2
@@ -63,7 +63,8 @@ class Review < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[comment created_at display_order featured id company_id category_id rating status updated_at user_id verified headline]
+    %w[comment created_at display_order featured id company_id category_id rating status updated_at user_id verified
+       headline]
   end
 
   def self.ransackable_associations(_auth_object = nil)
@@ -88,18 +89,19 @@ class Review < ApplicationRecord
   end
 
   def reviewer_consented_to_full_name?
-    reviewer_user&.display_full_name_consent? && reviewer_user&.lgpd_name_consent?
+    reviewer_user&.display_full_name_consent? && reviewer_user.lgpd_name_consent?
   end
 
   def anonymized_reviewer_name
     if reviewer_user.nil?
-      "Anônimo"
+      'Anônimo'
     elsif reviewer_consented_to_full_name?
       reviewer_user.name
     else
       # Format: "F. L." (first initial, last initial)
-      parts = (reviewer_user.name || "").split(' ')
-      return "Anônimo" if parts.empty?
+      parts = (reviewer_user.name || '').split
+      return 'Anônimo' if parts.empty?
+
       first_initial = parts.first[0]
       last_initial = parts.last[0]
       "#{first_initial}. #{last_initial}."
@@ -122,17 +124,19 @@ class Review < ApplicationRecord
 
   def require_comment_or_criteria
     return if comment.present? || review_criterion_scores.present?
-    errors.add(:base, "Review must have either a comment or criteria scores")
+
+    errors.add(:base, 'Review must have either a comment or criteria scores')
   end
 
   def prevent_self_review
     return if reviewer_user.nil? || company.nil?
-    return if reviewer_user.id != company.user_id if company.respond_to?(:user_id)
-    return if reviewer_user.id != company.owner_id if company.respond_to?(:owner_id)
+
+    return if company.respond_to?(:user_id) && company.respond_to?(:user_id) && (reviewer_user.id != company.user_id)
+    return if company.respond_to?(:owner_id) && company.respond_to?(:owner_id) && (reviewer_user.id != company.owner_id)
     # se não houver user_id na company, vamos usar owner_of? do User que checa members
     return unless reviewer_user.owner_of?(company)
-    
-    errors.add(:base, "Companies cannot review themselves")
+
+    errors.add(:base, 'Companies cannot review themselves')
   end
 
   def persist_granular_scores_snapshot
@@ -143,7 +147,7 @@ class Review < ApplicationRecord
 
     # Se a review já tem critérios (via nested attributes ou DB), geramos o snapshot
     scores_to_snapshot = review_criterion_scores.any? ? review_criterion_scores : []
-    
+
     return if scores_to_snapshot.empty?
 
     self.granular_scores_snapshot = scores_to_snapshot.map do |s|
@@ -176,18 +180,20 @@ class Review < ApplicationRecord
     # Regra Final: [user_id OR email, company_id, category_id]
     # Protege contra duplicidade mesmo se o usuário criar uma nova conta com o mesmo e-mail.
     existing = self.class.joins(:user)
-                         .where(company_id: company_id, category_id: category_id)
-                         .where("reviews.user_id = ? OR users.email = ?", user_id, user.email)
-    
+                   .where(company_id: company_id, category_id: category_id)
+                   .where('reviews.user_id = ? OR users.email = ?', user_id, user.email)
+
     existing = existing.where.not(id: id) if persisted?
-    
+
     return unless existing.exists?
 
-    category_name = category&.name || "esta categoria"
-    msg = category_id.present? ? 
-      "Você já avaliou esta empresa na categoria #{category_name}." : 
-      "Você já possui uma avaliação global para esta empresa."
-    
+    category_name = category&.name || 'esta categoria'
+    msg = if category_id.present?
+            "Você já avaliou esta empresa na categoria #{category_name}."
+          else
+            'Você já possui uma avaliação global para esta empresa.'
+          end
+
     errors.add(:base, "#{msg} Cada usuário (ou e-mail) pode enviar apenas uma avaliação por categoria.")
   end
 
@@ -269,7 +275,7 @@ class Review < ApplicationRecord
       title: 'Empresa respondeu sua avaliação',
       body: "#{company.name} respondeu sua avaliação",
       notifiable: self,
-      delivery_channels: ['in_app', 'email']
+      delivery_channels: %w[in_app email]
     )
 
     ReviewMailer.new_reply(self).deliver_later
