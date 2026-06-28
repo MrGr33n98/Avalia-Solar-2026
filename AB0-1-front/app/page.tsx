@@ -13,6 +13,7 @@ import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import HomeTrustSignature from '@/components/home/HomeTrustSignature';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import HowItWorks from '@/components/landing/HowItWorks';
+import DecisionTransparency from '@/components/landing/DecisionTransparency';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingHero from '@/components/landing/LandingHero';
 import SavingsCalculator from '@/components/landing/SavingsCalculator';
@@ -212,6 +213,7 @@ export default async function Home() {
       </Suspense>
 
       <HomeTrustSignature />
+      <DecisionTransparency />
       <HowItWorks />
       <SavingsCalculator />
 
