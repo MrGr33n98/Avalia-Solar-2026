@@ -130,11 +130,11 @@ export default function ComparisonFloatingBar() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="fixed inset-x-0 bottom-0 z-50"
+          className="fixed inset-x-0 bottom-[68px] md:bottom-0 z-50 pointer-events-none"
         >
-          <div className="border-t border-slate-200 bg-white/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6">
-              <div className="flex items-center justify-between gap-4 py-3">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 pointer-events-auto">
+            <div className="border border-slate-200/80 bg-white/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-2xl md:rounded-none md:border-t md:border-x-0 md:border-b-0 md:shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between gap-4 py-3 px-4 md:px-6">
 
                 {/* Left — companies chips */}
                 <div className="flex items-center gap-2 min-w-0 overflow-x-auto no-scrollbar">

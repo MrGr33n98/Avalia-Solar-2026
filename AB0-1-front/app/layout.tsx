@@ -2,6 +2,7 @@ import './globals.css';
 import '@/lib/env'; // Validate environment variables
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
 import AppContentFrame from '@/components/layout/AppContentFrame';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
@@ -16,6 +17,8 @@ import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import { SITE } from '@/lib/site';
+
+const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'Avalia Solar | Compare Empresas de Energia Solar',
@@ -151,6 +154,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <PwaOfflineController />
               <Navbar />
               <AppContentFrame>{children}</AppContentFrame>
+              <ComparisonFloatingBar />
               <ConditionalFooter />
               <MobileBottomNav />
             </Providers>
