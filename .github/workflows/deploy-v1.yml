@@ -171,8 +171,7 @@ jobs:
           script_stop: true
           envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY
           script: |
-            set -Eeuo pipefail
-            cd ~/Avalia-Solar-2026
+            cd ~/Avalia-Solar-2026 || exit 1
 
             echo "?? Padronizando Git para SSH..."
             CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "none")
@@ -192,6 +191,8 @@ jobs:
             else
               echo "?? Remote ja esta configurado como SSH ou outro formato nao-HTTP."
             fi
+
+            set -Eeuo pipefail
 
             # 2. Garantir known_hosts para github.com
             [ -d ~/.ssh ] || mkdir -p ~/.ssh

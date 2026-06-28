@@ -13,17 +13,17 @@ on:
         default: 'update'
         type: choice
         options:
-          - update (Over-the-Air)
-          - build (APK/AAB/IPA)
+          - 'update'
+          - 'build'
       platform:
         description: 'Platform for Build'
         required: false
         default: 'all'
         type: choice
         options:
-          - all
-          - android
-          - ios
+          - 'all'
+          - 'android'
+          - 'ios'
 
 defaults:
   run:
@@ -54,9 +54,9 @@ jobs:
         run: npm ci
 
       - name: 🚀 EAS Update (Over-The-Air)
-        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'update' }}
+        if: github.event_name == 'push' || github.event.inputs.action == 'update'
         run: eas update --branch production --message "Auto-update from GitHub Actions: ${{ github.sha }}" --non-interactive
 
       - name: 🏗 EAS Build (Binaries)
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build' }}
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build'
         run: eas build --platform ${{ github.event.inputs.platform }} --profile production --non-interactive
