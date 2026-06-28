@@ -210,15 +210,18 @@ jobs:
             set -Eeuo pipefail
 
             # 2. Garantir known_hosts para github.com
-            [ -d ~/.ssh ] || mkdir -p ~/.ssh
-            chmod 700 ~/.ssh
+            [ -d ~/.ssh ] || mkdir -p ~/.ssh || true
+            chmod 700 ~/.ssh || true
+            touch ~/.ssh/known_hosts || true
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
-            sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
-            chmod 600 ~/.ssh/known_hosts
+            sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts || true
+            chmod 600 ~/.ssh/known_hosts || true
 
             # 3. Validar acesso SSH ao GitHub
             echo "?? Validando acesso SSH ao GitHub..."
+            set +o pipefail
             ssh -T git@github.com 2>&1 | grep -q "successfully authenticated" || echo "!! Aviso: Autenticacao SSH pode falhar. Verifique se a Deploy Key foi adicionada corretamente."
+            set -o pipefail
 
             echo "?? Atualizando codigo local..."
             git fetch origin main
