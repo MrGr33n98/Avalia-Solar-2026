@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, Mail, Globe, MapPin, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Company } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,7 +61,7 @@ export default function CompanyContactCard({ company }: CompanyContactCardProps)
   return (
     <Card className="overflow-hidden border border-slate-100 bg-white p-5 shadow-sm rounded-2xl">
       <CardHeader className="p-0 border-b border-slate-100 pb-4 mb-4">
-        <CardTitle className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2">
+        <CardTitle className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
           Informações de Contato
         </CardTitle>
       </CardHeader>
@@ -69,153 +69,133 @@ export default function CompanyContactCard({ company }: CompanyContactCardProps)
         
         {/* TELEFONE */}
         {company.phone && (
-          <div className="flex items-start gap-3 group">
-            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-              <Phone className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Telefone Comercial</p>
-              <a
-                href={!isAuthenticated ? "#" : `tel:${company.phone.replace(/\D/g, "")}`}
-                className="text-sm font-black text-slate-900 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline decoration-blue-700/30 underline-offset-2 w-full truncate"
-                onMouseEnter={phoneHoverIntent.onMouseEnter}
-                onMouseLeave={phoneHoverIntent.onMouseLeave}
-                onCopy={phoneCopyIntent.onCopy}
-                onClick={async (e) => {
-                  if (!authLoading && !isAuthenticated) {
-                    e.preventDefault();
-                    openSignupGate({
-                      source: "contact_reveal",
-                      returnTo: currentReturnTo,
-                      title: "Crie sua conta para ver os contatos",
-                      description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
-                    });
-                    return;
-                  }
-
-                  await trackCTAClick({
-                    ctaType: "phone",
-                    ctaLocation: "sidebar",
-                    companyId: String(company.id),
-                    companyName: company.name,
-                    phoneNumber: company.phone,
+          <div className="group space-y-0.5">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Telefone Comercial</p>
+            <a
+              href={!isAuthenticated ? "#" : `tel:${company.phone.replace(/\D/g, "")}`}
+              className="text-sm font-semibold text-slate-800 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline decoration-blue-700/30 underline-offset-2 w-full truncate"
+              onMouseEnter={phoneHoverIntent.onMouseEnter}
+              onMouseLeave={phoneHoverIntent.onMouseLeave}
+              onCopy={phoneCopyIntent.onCopy}
+              onClick={async (e) => {
+                if (!authLoading && !isAuthenticated) {
+                  e.preventDefault();
+                  openSignupGate({
+                    source: "contact_reveal",
+                    returnTo: currentReturnTo,
+                    title: "Crie sua conta para ver os contatos",
+                    description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
                   });
-                }}
-              >
-                {!isAuthenticated && !authLoading ? (
-                  <>
-                    <span className="opacity-75">{company.phone.substring(0, 6)}****</span>
-                    <span className="text-[9px] bg-blue-100/80 text-blue-700 px-2 py-0.5 rounded-full font-black uppercase tracking-wider border border-blue-200 ml-2">
-                      Ver
-                    </span>
-                  </>
-                ) : (
-                  company.phone
-                )}
-              </a>
-            </div>
+                  return;
+                }
+
+                await trackCTAClick({
+                  ctaType: "phone",
+                  ctaLocation: "sidebar",
+                  companyId: String(company.id),
+                  companyName: company.name,
+                  phoneNumber: company.phone,
+                });
+              }}
+            >
+              {!isAuthenticated && !authLoading ? (
+                <>
+                  <span className="opacity-75">{company.phone.substring(0, 6)}****</span>
+                  <span className="text-[9px] bg-blue-100/80 text-blue-700 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider border border-blue-200 ml-2">
+                    Ver
+                  </span>
+                </>
+              ) : (
+                company.phone
+              )}
+            </a>
           </div>
         )}
 
         {/* E-MAIL */}
         {(company.email || company.email_public) && (
-          <div className="flex items-start gap-3 group">
-            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-              <Mail className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">E-mail Corporativo</p>
-              <a
-                href={!isAuthenticated ? "#" : `mailto:${company.email || company.email_public}`}
-                className="text-sm font-black text-slate-900 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline decoration-blue-700/30 underline-offset-2 w-full truncate"
-                onMouseEnter={emailHoverIntent.onMouseEnter}
-                onMouseLeave={emailHoverIntent.onMouseLeave}
-                onCopy={emailCopyIntent.onCopy}
-                onClick={async (e) => {
-                  if (!authLoading && !isAuthenticated) {
-                    e.preventDefault();
-                    openSignupGate({
-                      source: "contact_reveal",
-                      returnTo: currentReturnTo,
-                      title: "Crie sua conta para ver os contatos",
-                      description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
-                    });
-                    return;
-                  }
-
-                  await trackCTAClick({
-                    ctaType: "email",
-                    ctaLocation: "sidebar",
-                    companyId: String(company.id),
-                    companyName: company.name,
-                    email: company.email || company.email_public,
+          <div className="group space-y-0.5">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">E-mail Corporativo</p>
+            <a
+              href={!isAuthenticated ? "#" : `mailto:${company.email || company.email_public}`}
+              className="text-sm font-semibold text-slate-800 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline decoration-blue-700/30 underline-offset-2 w-full truncate"
+              onMouseEnter={emailHoverIntent.onMouseEnter}
+              onMouseLeave={emailHoverIntent.onMouseLeave}
+              onCopy={emailCopyIntent.onCopy}
+              onClick={async (e) => {
+                if (!authLoading && !isAuthenticated) {
+                  e.preventDefault();
+                  openSignupGate({
+                    source: "contact_reveal",
+                    returnTo: currentReturnTo,
+                    title: "Crie sua conta para ver os contatos",
+                    description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
                   });
-                }}
-              >
-                {!isAuthenticated && !authLoading ? (
-                  <>
-                    <span className="opacity-75 truncate">
-                      {(company.email || company.email_public || "").split("@")[0].substring(0, 3)}****@{(company.email || company.email_public || "").split("@")[1]}
-                    </span>
-                    <span className="text-[9px] bg-blue-100/80 text-blue-700 px-2 py-0.5 rounded-full font-black uppercase tracking-wider border border-blue-200 ml-2 shrink-0">
-                      Ver
-                    </span>
-                  </>
-                ) : (
-                  company.email || company.email_public
-                )}
-              </a>
-            </div>
+                  return;
+                }
+
+                await trackCTAClick({
+                  ctaType: "email",
+                  ctaLocation: "sidebar",
+                  companyId: String(company.id),
+                  companyName: company.name,
+                  email: company.email || company.email_public,
+                });
+              }}
+            >
+              {!isAuthenticated && !authLoading ? (
+                <>
+                  <span className="opacity-75 truncate">
+                    {(company.email || company.email_public || "").split("@")[0].substring(0, 3)}****@{(company.email || company.email_public || "").split("@")[1]}
+                  </span>
+                  <span className="text-[9px] bg-blue-100/80 text-blue-700 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider border border-blue-200 ml-2 shrink-0">
+                    Ver
+                  </span>
+                </>
+              ) : (
+                company.email || company.email_public
+              )}
+            </a>
           </div>
         )}
 
         {/* WEBSITE */}
         {company.website && (
-          <div className="flex items-start gap-3 group">
-            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-              <Globe className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Website Oficial</p>
-              <a
-                href={company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-black text-blue-700 hover:text-blue-800 transition-colors flex items-center gap-1 hover:underline decoration-blue-700/30 truncate w-full"
-                onClick={async () => {
-                  await trackCTAClick({
-                    ctaType: "website",
-                    ctaLocation: "sidebar",
-                    companyId: String(company.id),
-                    companyName: company.name,
-                    destinationUrl: company.website,
-                  });
-                }}
-              >
-                <span className="truncate">{formatUrl(company.website)}</span>
-                <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-55" />
-              </a>
-            </div>
+          <div className="group space-y-0.5">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Website Oficial</p>
+            <a
+              href={company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-blue-700 hover:text-blue-800 transition-colors flex items-center gap-1 hover:underline decoration-blue-700/30 truncate w-full"
+              onClick={async () => {
+                await trackCTAClick({
+                  ctaType: "website",
+                  ctaLocation: "sidebar",
+                  companyId: String(company.id),
+                  companyName: company.name,
+                  destinationUrl: company.website,
+                });
+              }}
+            >
+              <span className="truncate">{formatUrl(company.website)}</span>
+              <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-55" />
+            </a>
           </div>
         )}
 
         {/* LOCALIZAÇÃO */}
         {(company.address || company.city) && (
-          <div className="flex items-start gap-3 group">
-            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-              <MapPin className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Localização</p>
-              <p className="text-sm font-semibold text-slate-800 leading-relaxed mt-0.5">
-                {company.address && <span className="block">{company.address}</span>}
-                {company.city && company.state && (
-                  <span className="block text-slate-600 font-normal">
-                    {company.city}, {company.state}
-                  </span>
-                )}
-              </p>
-            </div>
+          <div className="group space-y-0.5">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Localização</p>
+            <p className="text-sm font-medium text-slate-700 leading-relaxed mt-0.5">
+              {company.address && <span className="block">{company.address}</span>}
+              {company.city && company.state && (
+                <span className="block text-slate-500 font-normal">
+                  {company.city}, {company.state}
+                </span>
+              )}
+            </p>
           </div>
         )}
 

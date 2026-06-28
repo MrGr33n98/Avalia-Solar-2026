@@ -230,7 +230,7 @@ jobs:
 
             docker compose -f "$COMPOSE_FILE" up -d --no-build --wait --wait-timeout 120 db redis
             docker compose -f "$COMPOSE_FILE" stop -t 60 worker || true
-            if ! docker compose -f "$COMPOSE_FILE" run --rm --no-deps --no-build --entrypoint bundle backend exec rails db:migrate; then
+            if ! docker compose -f "$COMPOSE_FILE" run --rm --no-deps --entrypoint bundle backend exec rails db:migrate; then
               docker compose -f "$COMPOSE_FILE" start worker || true
               exit 1
             fi
