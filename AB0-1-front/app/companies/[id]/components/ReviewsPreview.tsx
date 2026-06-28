@@ -40,12 +40,9 @@ export default function ReviewsPreview({
       <div className="flex flex-col gap-6">
         {/* Cabeçalho de Avaliações */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-              <MessageSquare className="h-5 w-5" />
-            </div>
+          <div className="flex items-center">
             <div>
-              <h3 className="text-lg font-black tracking-tight text-slate-950">Mural de Avaliações</h3>
+              <h3 className="text-lg font-black tracking-tight text-slate-950">Avaliações</h3>
               <p className="text-xs text-slate-500">Depoimentos reais de integradores e clientes.</p>
             </div>
           </div>
