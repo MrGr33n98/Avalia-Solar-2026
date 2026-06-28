@@ -195,7 +195,8 @@ jobs:
             fi
 
             cd "$DEPLOY_DIR"
-            git remote set-url origin "$REPOSITORY_URL"
+            git remote remove origin >/dev/null 2>&1 || true
+            git remote add origin "$REPOSITORY_URL" || true
 
             echo "?? Atualizando codigo local..."
             git fetch origin main
