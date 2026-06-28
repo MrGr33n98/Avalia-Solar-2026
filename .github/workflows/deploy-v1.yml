@@ -255,7 +255,10 @@ jobs:
                   fi
                   echo "?? Vhost $DESC implantado."
                 fi
+              else
+                echo "?? Vhost $DESC nao encontrado ou Nginx ausente; pulando."
               fi
+              return 0
             }
 
             deploy_vhost "$APP_VHOST_SRC" "$APP_VHOST_DST" "app"
@@ -263,9 +266,17 @@ jobs:
 
             # Reload Nginx se houver arquivos novos
             if command -v sudo >/dev/null 2>&1; then
-              sudo nginx -t 2>/dev/null && (sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true)
+              if sudo nginx -t; then
+                sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true
+              else
+                echo "!! Aviso: nginx -t falhou; mantendo configuracao atual sem reload."
+              fi
             else
-              nginx -t 2>/dev/null && (systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true)
+              if nginx -t; then
+                systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true
+              else
+                echo "!! Aviso: nginx -t falhou; mantendo configuracao atual sem reload."
+              fi
             fi
 
             echo "?? Login temporario no GitHub Container Registry (ghcr.io)..."
