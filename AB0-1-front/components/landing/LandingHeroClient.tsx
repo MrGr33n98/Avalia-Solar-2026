@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { BadgeCheck, MessageSquareText, Scale } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
 
 import type { Category } from '@/lib/api';
 import { LandingHeroSearch } from '@/components/landing/LandingHeroSearch';
@@ -26,8 +26,6 @@ type LandingHeroClientProps = {
   trustMetrics?: HomeHeroTrustMetrics;
 };
 
-const formatCompactCount = (value: number): string => new Intl.NumberFormat('pt-BR').format(value);
-
 export default function LandingHeroClient({
   categories = [],
   banners = [],
@@ -39,10 +37,6 @@ export default function LandingHeroClient({
     totalVerifiedCompanies: null,
   },
 }: LandingHeroClientProps) {
-  const hasActiveCount = typeof trustMetrics.totalActiveCompanies === 'number' && trustMetrics.totalActiveCompanies > 0;
-  const hasVerifiedCount =
-    typeof trustMetrics.totalVerifiedCompanies === 'number' && trustMetrics.totalVerifiedCompanies > 0;
-
   useEffect(() => {
     if (!experimentEnabled) return;
 
@@ -75,42 +69,6 @@ export default function LandingHeroClient({
           experimentId={experimentId}
         />
       </div>
-
-      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-3">
-        <HeroProof
-          icon={BadgeCheck}
-          label="Empresas verificadas"
-          value={hasVerifiedCount ? formatCompactCount(trustMetrics.totalVerifiedCompanies!) : 'Curadoria ativa'}
-        />
-        <HeroProof
-          icon={MessageSquareText}
-          label="Avaliações reais"
-          value={hasActiveCount ? `${formatCompactCount(trustMetrics.totalActiveCompanies!)}+ perfis` : 'Opiniões públicas'}
-        />
-        <HeroProof icon={Scale} label="Comparação gratuita" value="Sem compromisso" />
-      </div>
-    </div>
-  );
-}
-
-function HeroProof({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof BadgeCheck;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-[11px] font-semibold text-slate-500">{label}</span>
-        <span className="block truncate text-xs font-extrabold text-slate-900">{value}</span>
-      </span>
     </div>
   );
 }
