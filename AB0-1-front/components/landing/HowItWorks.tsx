@@ -1,20 +1,27 @@
-import { ArrowRight, Search, Scale, Send } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, MessageSquare, LayoutGrid, Lightbulb } from 'lucide-react';
 
 const steps = [
   {
-    icon: Search,
-    title: 'Busque',
-    description: 'Informe o que precisa e onde o projeto será instalado.',
+    icon: MessageSquare,
+    title: 'Avaliações verificadas',
+    description: 'Descubra empresas confiáveis de energia solar e mobilidade elétrica com base em reviews reais, reputação e histórico de atendimento.',
+    linkText: 'Encontrar empresa ideal',
+    linkHref: '/companies',
   },
   {
-    icon: Scale,
-    title: 'Compare com evidências',
-    description: 'Analise reputação, cobertura, verificação e avaliações.',
+    icon: LayoutGrid,
+    title: 'Comparações em profundidade',
+    description: 'Compare instaladores lado a lado por reputação, área de cobertura, tempo de resposta e garantia de forma transparente.',
+    linkText: 'Compare empresas agora',
+    linkHref: '/compare',
   },
   {
-    icon: Send,
-    title: 'Peça orçamentos',
-    description: 'Selecione as melhores opções e receba propostas para decidir.',
+    icon: Lightbulb,
+    title: 'Pesquisa especializada',
+    description: 'Calcule seu potencial de economia com nossa calculadora inteligente e receba propostas personalizadas sem compromisso.',
+    linkText: 'Simular economia',
+    linkHref: '/quote-wizard',
   },
 ];
 
@@ -22,7 +29,7 @@ export default function HowItWorks() {
   return (
     <section id="como-funciona" className="bg-white py-14 sm:py-16" aria-labelledby="how-it-works-title">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-10 max-w-2xl text-center">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
           <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">Jornada simples</p>
           <h2 id="how-it-works-title" className="mt-2 text-3xl font-black tracking-tight text-slate-950">
             Como funciona
@@ -32,27 +39,31 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {steps.map((step, index) => (
-            <div key={step.title} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6">
-              <div className="mb-5 flex items-center justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-blue-700 ring-1 ring-slate-200">
-                  <step.icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <span className="text-3xl font-black tabular-nums text-slate-200">0{index + 1}</span>
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
+          {steps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.title} className="text-center flex flex-col items-center">
+                {/* Wrapper do ícone igual a imagem de referência */}
+                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition-transform hover:scale-105">
+                  <Icon className="h-5 w-5 text-slate-800" aria-hidden="true" />
+                </div>
+                
+                <h3 className="mt-5 text-lg font-black text-slate-950">{step.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 max-w-sm">{step.description}</p>
+                
+                <Link 
+                  href={step.linkHref}
+                  className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800 hover:underline"
+                >
+                  {step.linkText} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
               </div>
-              <h3 className="text-lg font-black text-slate-950">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
-
-              {index < steps.length - 1 ? (
-                <span className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 md:flex">
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </span>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
+
