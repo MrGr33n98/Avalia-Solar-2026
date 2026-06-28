@@ -179,19 +179,15 @@ jobs:
             CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || true)
             TARGET_REMOTE="git@github.com:MrGr33n98/Avalia-Solar-2026.git"
 
-            case "$CURRENT_REMOTE" in
-              https://*|http://*)
-                echo "?? Detectado remote HTTP/HTTPS ($CURRENT_REMOTE). Trocando para SSH..."
-                git remote set-url origin "$TARGET_REMOTE"
-                ;;
-              "")
-                echo "!! Remote origin nao encontrado. Configurando para SSH..."
-                git remote add origin "$TARGET_REMOTE"
-                ;;
-              *)
-                echo "?? Remote ja esta configurado como SSH ou outro formato nao-HTTP(S)."
-                ;;
-            esac
+            if echo "$CURRENT_REMOTE" | grep -qE '^https?://'; then
+              echo "?? Detectado remote HTTP/HTTPS ($CURRENT_REMOTE). Trocando para SSH..."
+              git remote set-url origin "$TARGET_REMOTE"
+            elif [ -z "$CURRENT_REMOTE" ]; then
+              echo "!! Remote origin nao encontrado. Configurando para SSH..."
+              git remote add origin "$TARGET_REMOTE"
+            else
+              echo "?? Remote ja esta configurado como SSH ou outro formato nao-HTTP."
+            fi
 
             # 2. Garantir known_hosts para github.com
             [ -d ~/.ssh ] || mkdir -p ~/.ssh
