@@ -202,6 +202,10 @@ jobs:
             git cat-file -e "${GIT_SHA}^{commit}"
             git reset --hard "$GIT_SHA"
 
+            # Desativar temporariamente o modo estrito para que falhas do Nginx (opcional) nao quebrem o deploy
+            set +e
+            set +o pipefail
+
             echo "?? Ajustando limite de upload no Nginx (413 safeguard)..."
             UPLOAD_LIMIT="${NGINX_CLIENT_MAX_BODY_SIZE:-25m}"
             NGINX_LIMIT_FILE="/etc/nginx/conf.d/zz-avalia-upload-limits.conf"
@@ -290,6 +294,10 @@ jobs:
                 echo "!! Aviso: nginx -t falhou; mantendo configuracao atual sem reload."
               fi
             fi
+
+            # Reativar modo estrito para o deploy principal
+            set -e
+            set -o pipefail
 
             echo "?? Login temporario no GitHub Container Registry (ghcr.io)..."
             if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
