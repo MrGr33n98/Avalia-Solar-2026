@@ -137,7 +137,7 @@ async function getCompaniesData(): Promise<{ companies: Company[] }> {
     featured: true,
     limit: 12,
     include:
-      'logo_url,banner_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,trust_score,active_admin,description',
+      'logo_url,banner_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,trust_score,active_admin,description,delivered_projects_score,warranty_years',
   });
 
   return { companies: Array.isArray(companies) ? companies : [] };

@@ -10,5 +10,7 @@ class CompanyListSerializer < ActiveModel::Serializer
              :whatsapp_enabled, :whatsapp_url,
              :active_admin, :p2p_chat_enabled,
              :social_proof_enabled, :can_use_social_proof,
-             :effect, :media_upload_allowed
+             :effect, :media_upload_allowed,
+             :response_time_sla, :delivered_projects_score, :warranty_years,
+             :coverage_cities, :coverage_states
 end

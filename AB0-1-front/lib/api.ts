@@ -248,6 +248,8 @@ export interface Company {
   email_public?: string;
   whatsapp?: string;
   phone_alt?: string;
+  delivered_projects_score?: number;
+  warranty_years?: number;
   email?: string | null;
   facebook_url?: string;
   instagram_url?: string;
