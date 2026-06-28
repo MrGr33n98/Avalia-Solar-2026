@@ -21,7 +21,7 @@ Rails.application.configure do
   # Log exceptions
   config.lograge.custom_payload do |controller|
     {
-      user_id: controller.respond_to?(:current_user, true) ? controller.send(:current_user)&.id : nil,
+      user_id: (controller.respond_to?(:current_user, true) && controller.request.env['warden']) ? controller.send(:current_user)&.id : nil,
       remote_ip: controller.request.remote_ip,
       user_agent: controller.request.user_agent
     }

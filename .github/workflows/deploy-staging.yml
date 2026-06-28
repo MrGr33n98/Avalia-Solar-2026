@@ -200,7 +200,7 @@ jobs:
           envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY
           script: |
             set -Eeuo pipefail
-            STAGING_DIR="${STAGING_DIR:-$HOME/avaliasolar-staging}"
+            STAGING_DIR="${STAGING_DIR:-${HOME:-}/avaliasolar-staging}"
             COMPOSE_FILE="docker-compose.staging.yml"
             if [ ! -d "$STAGING_DIR" ] || [ ! -f "$STAGING_DIR/$COMPOSE_FILE" ]; then
               echo "ERRO: $STAGING_DIR/$COMPOSE_FILE nao esta configurado no servidor"
