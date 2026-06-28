@@ -51,10 +51,10 @@ module Analytics
 
       # Evita divisão por zero
       delta_percent = if observed.positive?
-delta_abs.to_f / observed * 100).round(4
-else
-(canonical.positive? ? 100.0 : 0.0)
-end
+                        (delta_abs.to_f / observed * 100).round(4)
+                      else
+                        canonical.positive? ? 100.0 : 0.0
+                      end
 
       status = AnalyticsReconciliation.calculate_status(delta_percent)
 
