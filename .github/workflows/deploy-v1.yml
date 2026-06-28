@@ -230,11 +230,11 @@ jobs:
             echo "?? Implantando vhosts no Nginx (app e npm)..."
             
             # Subdominio APP -> Rails (3001)
-            APP_VHOST_SRC="$HOME/Avalia-Solar-2026/infra/nginx/app.avaliasolar.com.br.conf"
+            APP_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/app.avaliasolar.com.br.conf"
             APP_VHOST_DST="/etc/nginx/conf.d/app.avaliasolar.com.br.conf"
 
             # Subdominio NPM -> NPM Admin UI (81)
-            NPM_VHOST_SRC="$HOME/Avalia-Solar-2026/infra/nginx/npm.avaliasolar.com.br.conf"
+            NPM_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/npm.avaliasolar.com.br.conf"
             NPM_VHOST_DST="/etc/nginx/conf.d/npm.avaliasolar.com.br.conf"
 
             deploy_vhost() {
@@ -244,13 +244,24 @@ jobs:
               if [ -f "$SRC" ] && [ -d /etc/nginx/conf.d ]; then
                 EXISTING_LINES=0
                 if [ -f "$DST" ]; then
-                  EXISTING_LINES=$(wc -l < "$DST")
+                  if command -v sudo >/dev/null 2>&1; then
+                    EXISTING_LINES=$(sudo wc -l < "$DST" 2>/dev/null || echo "0")
+                  else
+                    EXISTING_LINES=$(wc -l < "$DST" 2>/dev/null || echo "0")
+                  fi
                 fi
+
+                # Se o arquivo existe mas não pôde ser lido (ex: permissao), pulamos por segurança
+                if [ -f "$DST" ] && [ "$EXISTING_LINES" -eq 0 ]; then
+                  echo "?? Vhost $DESC ja existe mas nao pôde ser lido. Pulando por seguranca."
+                  return 0
+                fi
+
                 if [ "$EXISTING_LINES" -gt 30 ]; then
                   echo "?? Vhost $DESC ja possui SSL. Pulando."
                 else
                   if command -v sudo >/dev/null 2>&1; then
-                    sudo cp "$SRC" "$DST"
+                    sudo cp "$SRC" "$DST" || true
                   else
                     cp "$SRC" "$DST" || true
                   fi
