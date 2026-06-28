@@ -1,6 +1,8 @@
 module Api
   module V1
     class PaymentsWebhooksController < ActionController::API
+      serialization_scope nil
+
       ALLOWED_PROVIDERS = %w[stripe mercadopago pagarme mock].freeze
 
       before_action :validate_provider

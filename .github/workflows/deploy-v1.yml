@@ -169,11 +169,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
-          script_stop: true
+          script_stop: false
           envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR
           script: |
             set -Eeuo pipefail
-            set -x
 
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
             REPOSITORY_URL="git@github.com:${GH_REPOSITORY}.git"

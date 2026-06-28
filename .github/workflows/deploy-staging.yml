@@ -196,7 +196,7 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || '22' }}
           command_timeout: 15m
-          script_stop: true
+          script_stop: false
           envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY
           script: |
             set -Eeuo pipefail
