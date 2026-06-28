@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Info, MessageSquare, ShieldCheck, Zap } from "lucide-react";
+import { MessageSquare, ShieldCheck, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company, Review, Product } from "@/lib/api";
@@ -23,7 +23,7 @@ interface OverviewTabProps {
   };
   reviews: Review[];
   reviewsLoading: boolean;
-  onTabChange: (tabId: string) => void;
+  onTabChange: (value: string) => void;
 }
 
 export default function OverviewTab({
@@ -52,10 +52,7 @@ export default function OverviewTab({
       {/* 2. Sobre a Empresa */}
       <Card className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-              <Info className="h-5 w-5" />
-            </div>
+          <div className="flex items-center border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-lg font-black tracking-tight text-slate-950">Sobre a Empresa</h3>
               <p className="text-xs text-slate-500">História, atuação e valores institucionais.</p>
