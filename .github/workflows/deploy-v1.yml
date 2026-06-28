@@ -175,7 +175,8 @@ jobs:
             set -Eeuo pipefail
 
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-$HOME/Avalia-Solar-2026}"
-            REPOSITORY_URL="https://github.com/${GH_REPOSITORY}.git"
+            REPOSITORY_URL="git@github.com:${GH_REPOSITORY}.git"
+            export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
             echo "?? Preparando checkout em $DEPLOY_DIR..."
 
             if ! command -v git >/dev/null 2>&1; then
