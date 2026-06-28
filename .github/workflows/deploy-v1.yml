@@ -175,14 +175,18 @@ jobs:
             cd ~/Avalia-Solar-2026
 
             echo "?? Padronizando Git para SSH..."
-            # 1. Verificar e trocar remote para SSH se necessário (shell POSIX)
-            CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || true)
+            CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "none")
             TARGET_REMOTE="git@github.com:MrGr33n98/Avalia-Solar-2026.git"
 
-            if echo "$CURRENT_REMOTE" | grep -qE '^https?://'; then
+            IS_HTTP=0
+            if [ "${CURRENT_REMOTE#http://}" != "$CURRENT_REMOTE" ] || [ "${CURRENT_REMOTE#https://}" != "$CURRENT_REMOTE" ]; then
+              IS_HTTP=1
+            fi
+
+            if [ "$IS_HTTP" -eq 1 ]; then
               echo "?? Detectado remote HTTP/HTTPS ($CURRENT_REMOTE). Trocando para SSH..."
               git remote set-url origin "$TARGET_REMOTE"
-            elif [ -z "$CURRENT_REMOTE" ]; then
+            elif [ "$CURRENT_REMOTE" = "none" ] || [ -z "$CURRENT_REMOTE" ]; then
               echo "!! Remote origin nao encontrado. Configurando para SSH..."
               git remote add origin "$TARGET_REMOTE"
             else
