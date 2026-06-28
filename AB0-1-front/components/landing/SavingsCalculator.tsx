@@ -40,7 +40,6 @@ export default function SavingsCalculator() {
           <div className="grid grid-cols-1 lg:grid-cols-[.9fr_1.1fr]">
             <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.13em] text-amber-300">
-                <Calculator className="h-4 w-4" aria-hidden="true" />
                 Diagnóstico Solar
               </div>
               <h2 id="solar-diagnostic-title" className="max-w-lg text-3xl font-black leading-tight tracking-tight sm:text-4xl">

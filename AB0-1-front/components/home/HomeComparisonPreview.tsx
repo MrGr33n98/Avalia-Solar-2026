@@ -68,7 +68,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
           <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:p-6">
             <div>
               <div className="flex items-center gap-2 text-blue-700">
-                <Scale className="h-5 w-5" aria-hidden="true" />
                 <span className="text-xs font-extrabold uppercase tracking-[0.14em]">Comparação transparente</span>
               </div>
               <h2 id="comparison-preview-title" className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
@@ -106,74 +105,44 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
               {/* Linhas de Critérios */}
               <div className="flex-1 flex flex-col justify-between">
                 <div className="h-[96px] p-5 border-b border-slate-100 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <Star className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Reputação</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Média de avaliações de clientes</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Reputação</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Média de avaliações de clientes</p>
                   </div>
                 </div>
 
                 <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <BadgeCheck className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Verificação</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Documentos e dados conferidos</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Verificação</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Documentos e dados conferidos</p>
                   </div>
                 </div>
 
                 <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <Clock3 className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Tempo de resposta</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Média para primeiro contato</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Tempo de resposta</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Média para primeiro contato</p>
                   </div>
                 </div>
 
                 <div className="h-[88px] p-5 border-b border-slate-100 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <MapPinned className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Cobertura</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Onde a empresa atua</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Cobertura</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Onde a empresa atua</p>
                   </div>
                 </div>
 
                 <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <BarChart3 className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Projetos realizados</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Projetos concluídos</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Projetos realizados</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Projetos concluídos</p>
                   </div>
                 </div>
 
                 <div className="h-[80px] p-5 flex items-center">
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Garantia oferecida</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Tempo de garantia médio</p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Garantia oferecida</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Tempo de garantia médio</p>
                   </div>
                 </div>
 
@@ -333,9 +302,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                           {coverageCount > 0 ? `+${coverageCount} cidades atendidas` : 'Sob consulta'}
                         </span>
                       </div>
-                      <div className="rounded-lg bg-slate-100 p-1.5 text-slate-400 shrink-0">
-                        <MapPinned className="h-4 w-4" />
-                      </div>
                     </div>
 
                     {/* 5. Projetos Realizados */}
@@ -345,9 +311,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                         <span className="text-sm font-bold text-slate-900">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Projetos concluídos</span>
                       </div>
-                      <div className="rounded-lg bg-slate-100 p-1.5 text-slate-400 shrink-0">
-                        <BarChart3 className="h-4 w-4" />
-                      </div>
                     </div>
 
                     {/* 6. Garantia */}
@@ -356,9 +319,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Garantia oferecida</span>
                         <span className="text-sm font-bold text-slate-900">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Garantia média</span>
-                      </div>
-                      <div className="rounded-lg bg-slate-100 p-1.5 text-slate-400 shrink-0">
-                        <Shield className="h-4 w-4" />
                       </div>
                     </div>
 

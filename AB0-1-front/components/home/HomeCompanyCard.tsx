@@ -116,7 +116,6 @@ export default function HomeCompanyCard({ company }: HomeCompanyCardProps) {
           <div>
             <span className="block font-semibold text-slate-500">Resposta</span>
             <span className="mt-0.5 inline-flex items-center gap-1 font-extrabold text-slate-900">
-              <Clock3 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
               {responseTime}
             </span>
           </div>
