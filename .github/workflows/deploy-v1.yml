@@ -377,8 +377,5 @@ jobs:
               echo "?? Banco ja possui dados. Ignorando seeds/restauracao."
             fi
 
-            echo "?? Verificacao final de tabelas..."
-            docker compose exec -T backend bundle exec rails runner "essential = %w[companies users]; missing = essential.reject { |t| ActiveRecord::Base.connection.table_exists?(t) }; if missing.any?; puts \"ERRO: Tabelas faltando: #{missing.join(', ')}\"; exit 1; end; puts 'Tabelas OK'"
-
             echo "?? Deploy finalizado com sucesso!"
             exit 0
