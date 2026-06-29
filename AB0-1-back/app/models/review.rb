@@ -53,6 +53,8 @@ class Review < ApplicationRecord
   validates :category_id, presence: true, unless: :is_legacy?
   validates :headline, length: { maximum: 120 }, allow_blank: true
   validates :capture_flow_source, presence: true
+  validates :nps_score, inclusion: { in: 0..10 }, allow_nil: true
+  validates :sentiment, inclusion: { in: %w[positive neutral negative unknown] }
 
   validate :require_comment_or_criteria
   validate :prevent_self_review
@@ -127,6 +129,16 @@ class Review < ApplicationRecord
     return raw_name if user_consented_to_full_name? || ActiveModel::Type::Boolean.new.cast(metadata&.[]('lgpd_consent'))
 
     anonymize_name(raw_name)
+  end
+
+  def nps_category
+    return nil if nps_score.nil?
+
+    case nps_score
+    when 9..10 then :promoter
+    when 7..8  then :passive
+    else :detractor
+    end
   end
 
   private
