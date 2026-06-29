@@ -74,7 +74,7 @@ class CompanyPolicy < ApplicationPolicy
   end
 
   def edit_reviews?
-    admin? || company_owner?
+    admin? || company_member?
   end
 
   def upload_media?
