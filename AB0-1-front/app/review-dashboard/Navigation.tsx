@@ -30,7 +30,6 @@ import {
   Network,
   Plus,
   RefreshCcw,
-  Sun,
   Trophy,
   UserRound,
   Award,
@@ -43,6 +42,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -323,11 +323,10 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex h-[72px] items-center gap-2 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-          <Sun className="h-6 w-6 fill-yellow-400" />
-        </div>
-        <span className="text-lg font-semibold uppercase text-slate-950">Avalia Solar</span>
+      <div className="flex h-[72px] items-center px-6">
+        <Link href="/" onClick={onNavigate} aria-label="Página inicial da Avalia Solar">
+          <BrandLogo className="h-10" sizes="174px" priority />
+        </Link>
       </div>
 
       <ScrollArea className="flex-1 px-4">

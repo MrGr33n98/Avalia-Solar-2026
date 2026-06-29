@@ -92,7 +92,7 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
             '@type': schemaType,
             '@id': `https://www.avaliasolar.com.br/companies/${company.slug}`,
             'name': company.name,
-            'image': company.logo_url || 'https://www.avaliasolar.com.br/logo.png',
+            'image': company.logo_url || 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.svg',
             'url': `https://www.avaliasolar.com.br/companies/${company.slug}`,
             'telephone': company.phone || undefined,
             'address': {

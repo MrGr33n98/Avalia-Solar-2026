@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Star, TrendingUp, Search, ShieldCheck, UserCheck } from 'lucide-react';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 interface AuthBenefitsProps {
   tab: 'login' | 'register';
@@ -56,30 +56,8 @@ export default function AuthBenefits({ tab }: AuthBenefitsProps) {
       {/* Header */}
       <div className="relative z-10">
         <div className="mb-8">
-           {/* Logo Placeholder - Usando asset real do projeto se disponível, senão texto */}
            <div className="flex items-center gap-2 mb-6">
-             <Image 
-                src="/images/logo.png" 
-                alt="Avalia Solar Logo" 
-                width={150} 
-                height={40} 
-                className="h-10 w-auto object-contain"
-                onError={(e) => {
-                    // Fallback se a imagem não carregar
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if(parent) {
-                        // Check if fallback already exists to avoid duplication
-                        if (!parent.querySelector('.fallback-text')) {
-                            const textNode = document.createElement('span');
-                            textNode.className = 'text-2xl font-bold text-emerald-600 fallback-text';
-                            textNode.innerText = 'Avalia Solar';
-                            parent.appendChild(textNode);
-                        }
-                    }
-                }}
-             />
+             <BrandLogo className="h-10" sizes="174px" priority />
            </div>
           
           <AnimatePresence mode="wait">

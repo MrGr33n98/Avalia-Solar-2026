@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const menuItems = [
   { 
@@ -64,11 +65,7 @@ export default function DashboardSidebar() {
       <div className="flex flex-col h-full p-4">
         {/* Logo */}
         <div className="flex items-center justify-between mb-8">
-          {!collapsed && (
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Avalia Solar
-            </h1>
-          )}
+          {!collapsed && <BrandLogo className="h-8" sizes="139px" priority />}
           <Button
             variant="ghost"
             size="icon"

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Instagram, Linkedin, Mail, Phone, Clock3, SunMedium } from 'lucide-react';
+import { Instagram, Linkedin, Mail, Phone, Clock3 } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 import {
   CONTACT,
@@ -23,8 +24,8 @@ export default function Footer({ compact = false }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand & Contact Info */}
           <div className="flex flex-col items-start space-y-4">
-            <Link href="/" className="font-extrabold text-2xl tracking-tight mb-2 hover:text-brand-blue transition-colors">
-              Avalia Solar
+            <Link href="/" className="mb-2 inline-flex rounded-lg bg-white px-2 py-1 transition-opacity hover:opacity-90" aria-label="Página inicial da Avalia Solar">
+              <BrandLogo className="h-9" sizes="157px" />
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Compare empresas verificadas, encontre a melhor solução para sua casa ou empresa e fale com os responsáveis certos sem ruído.
@@ -153,11 +154,8 @@ function HomeFooter() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Link href="/" className="inline-flex items-center gap-2 text-xl font-black tracking-tight text-slate-950">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-slate-950">
-                <SunMedium className="h-5 w-5" aria-hidden="true" />
-              </span>
-              Avalia Solar
+            <Link href="/" className="inline-flex items-center" aria-label="Página inicial da Avalia Solar">
+              <BrandLogo className="h-10" sizes="174px" />
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
               Compare empresas de energia solar com informações públicas, critérios claros e mais confiança para decidir.

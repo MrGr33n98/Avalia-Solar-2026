@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 import AuthBenefits from './AuthBenefits';
 import LoginTab from './LoginTab';
@@ -87,7 +88,7 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
 
             {/* Mobile Header (Compact Branding) */}
             <div className="md:hidden p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-                <span className="font-bold text-lg text-slate-900">Avalia Solar</span>
+                <BrandLogo className="h-8" sizes="139px" priority />
             </div>
 
             {/* Right Column - Tabs & Content */}

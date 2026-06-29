@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, ChevronDown, LogOut, LayoutDashboard, Search, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import NavbarSearch from './NavbarSearch';
 import LocationSearch from './LocationSearch';
+import { BrandLogo } from './brand/BrandLogo';
 
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
@@ -100,9 +100,8 @@ export default function Navbar() {
     return (
       <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="Home Avalia Solar">
-            <Image src="/avalia_symbol.png" alt="" width={42} height={42} className="h-9 w-9 object-contain" priority />
-            <span className="text-base font-black tracking-tight text-slate-950 sm:text-lg">Avalia Solar</span>
+          <Link href="/" className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="Home Avalia Solar">
+            <BrandLogo className="h-8 sm:h-9" priority />
           </Link>
 
           <div className="hidden items-center gap-1 lg:flex">
@@ -194,20 +193,14 @@ export default function Navbar() {
           className="group -ml-1 flex shrink-0 items-center gap-1.5 rounded-xl px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
-          <Image
-            src="/avalia_symbol.png"
-            alt="Avalia Solar"
-            width={64}
-            height={64}
+          <BrandLogo
             className={cn(
-              'object-contain transition-transform duration-200 group-hover:scale-[1.04]',
-              isChatRoute ? 'h-8 w-8 sm:h-10 sm:w-10' : 'h-10 w-10 sm:h-11 sm:w-11'
+              'transition-transform duration-200 group-hover:scale-[1.02]',
+              'dark:rounded-md dark:bg-white dark:px-1 dark:py-0.5',
+              isChatRoute ? 'h-6 sm:h-8' : 'h-6 sm:h-9'
             )}
             priority={logoPriority}
           />
-          <span className="hidden text-[11px] font-bold uppercase tracking-[0.12em] text-slate-900 sm:inline dark:text-white/78">
-            Avalia Solar
-          </span>
         </Link>
 
         <div className="hidden xl:flex flex-1 items-center gap-4">

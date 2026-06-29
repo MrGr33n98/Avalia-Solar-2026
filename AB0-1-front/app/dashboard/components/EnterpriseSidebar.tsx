@@ -5,13 +5,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Menu,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import {
   DASHBOARD_NAVIGATION,
   filterNavigationByContext,
@@ -224,15 +224,9 @@ export default function EnterpriseSidebar({
   const sidebarContent = (
     <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950">
       <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm transition-transform hover:scale-105 active:scale-95">
-          <Menu className="h-5 w-5" />
+        <div className={cn('overflow-hidden dark:rounded-md dark:bg-white dark:px-1', isCollapsed ? 'w-9' : 'w-[156px]')}>
+          <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
         </div>
-        {!isCollapsed && (
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold tracking-tight text-slate-900">AvaliaSolar</p>
-            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Painel Enterprise</p>
-          </div>
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">

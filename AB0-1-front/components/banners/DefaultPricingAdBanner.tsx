@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Megaphone, Compass, Sparkles } from 'lucide-react';
+import { Megaphone, Sparkles } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 export function DefaultPricingAdBanner() {
   const [imageError, setImageError] = useState(false);
@@ -66,13 +67,8 @@ export function DefaultPricingAdBanner() {
 
           {/* Footer Branding */}
           <div className="flex items-center justify-between pt-4 border-t border-white/10">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <Compass className="h-3.5 w-3.5 text-white animate-spin-slow" />
-              </div>
-              <span className="text-xs font-black tracking-wider uppercase text-white/90">
-                Avalia <span className="text-brand-blue-light">Solar</span>
-              </span>
+            <div className="rounded-md bg-white px-2 py-1">
+              <BrandLogo className="h-5" sizes="87px" />
             </div>
             <span className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
               Anúncio Local

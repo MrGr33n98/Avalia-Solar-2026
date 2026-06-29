@@ -125,7 +125,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       name: 'Avalia Solar',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://avaliasolar.com.br/logo.png'
+        url: 'https://avaliasolar.com.br/images/avalia-solar-logo-horizontal.svg'
       }
     },
     mainEntityOfPage: {

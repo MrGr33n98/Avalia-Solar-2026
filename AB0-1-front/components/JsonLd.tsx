@@ -7,7 +7,7 @@ export default function JsonLd() {
     '@id': `${SITE.url}/#organization`,
     name: SITE.name,
     url: SITE.url,
-    logo: absoluteUrl('/images/logo.png'),
+    logo: absoluteUrl('/images/avalia-solar-logo-horizontal.svg'),
     description: SITE.description,
     sameAs: SOCIAL_PROFILES.map((profile) => profile.url),
     contactPoint: [

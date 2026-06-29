@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 interface ArticleBannerProps {
   title: string;
@@ -44,9 +45,8 @@ const ArticleBanner: React.FC<ArticleBannerProps> = ({
       <div className="absolute inset-0 flex flex-col justify-end px-6 py-10 sm:px-10 lg:px-16">
         {/* Brand Element - Top Right (Optional) */}
         <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-2 rounded-full border border-white/20">
-            <div className="w-8 h-8 bg-cyan-600 rounded-full" />
-            <span className="text-white font-semibold text-sm sm:text-base tracking-tight">Avalia Solar</span>
+          <div className="rounded-lg border border-white/40 bg-white/95 px-3 py-2 backdrop-blur">
+            <BrandLogo className="h-7 sm:h-8" sizes="139px" />
           </div>
         </div>
 

@@ -46,7 +46,7 @@ export default async function BlogIndexPage({
       name: 'Avalia Solar',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://avaliasolar.com.br/logo.png'
+        url: 'https://avaliasolar.com.br/images/avalia-solar-logo-horizontal.svg'
       }
     }
   };
