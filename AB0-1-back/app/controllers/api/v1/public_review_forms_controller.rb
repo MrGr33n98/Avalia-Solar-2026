@@ -42,7 +42,13 @@ module Api
             real_experience_confirmed: ActiveModel::Type::Boolean.new.cast(params[:real_experience]),
             lgpd_consent: true,
             lgpd_consent_at: Time.current.iso8601,
-            source_token: @review_form.token
+            source_channel: source,
+            source_token: @review_form.token,
+            landing_path: request.path.to_s.first(500),
+            referrer: request.referer.to_s.first(500),
+            user_agent: request.user_agent.to_s.first(500),
+            ip_hash: hashed_ip,
+            submitted_at: Time.current.iso8601
           }
         )
 

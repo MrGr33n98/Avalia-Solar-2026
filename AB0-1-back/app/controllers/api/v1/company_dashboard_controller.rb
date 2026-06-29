@@ -904,7 +904,7 @@ module Api
                             .select(
                               :id, :rating, :comment, :headline, :status, :featured, :display_order,
                               :verified, :verification_status, :created_at, :reply, :replied_at,
-                              :helpful_count, :capture_flow_source, :sentiment, :nps_score,
+                              :reply_deleted_at, :helpful_count, :capture_flow_source, :sentiment, :nps_score,
                               :metadata, :user_id, :company_id
                             )
                             .includes(:user)
@@ -925,8 +925,9 @@ module Api
                 verified: review.verified,
                 verification_status: review.verification_status,
                 created_at: review.created_at,
-                reply: review.reply,
-                replied_at: review.replied_at,
+                reply: review.active_reply,
+                replied_at: review.active_replied_at,
+                reply_status: review.reply_active? ? 'answered' : 'unanswered',
                 helpful_count: review.helpful_count.to_i,
                 capture_flow_source: review.capture_flow_source,
                 sentiment: review.sentiment,
@@ -946,6 +947,69 @@ module Api
             error: 'review_list_unavailable'
           }, status: :ok
         end
+      end
+
+      # GET /api/v1/company_dashboard/social_proof_reviews/:id
+      def social_proof_review
+        authorize @company, :edit_reviews?
+        review = company_review_scope.find(params[:id])
+
+        render json: {
+          review: review_detail_payload(review),
+          permissions: review_operation_permissions,
+          data_status: 'complete'
+        }
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Review not found for this company' }, status: :not_found
+      end
+
+      # POST /api/v1/company_dashboard/social_proof_reviews/:id/reply
+      def create_review_reply
+        mutate_review_reply(:create!)
+      end
+
+      # PATCH /api/v1/company_dashboard/social_proof_reviews/:id/reply
+      def update_review_reply
+        mutate_review_reply(:update!)
+      end
+
+      # DELETE /api/v1/company_dashboard/social_proof_reviews/:id/reply
+      def delete_review_reply
+        mutate_review_reply(:discard!)
+      end
+
+      # PATCH /api/v1/company_dashboard/social_proof_reviews/:id/moderation
+      def update_review_moderation
+        return render json: { error: 'Forbidden' }, status: :forbidden unless current_user&.admin?
+
+        authorize @company, :edit_reviews?
+        review = company_review_scope.find(params[:id])
+        Reviews::WorkflowService.new(review: review, actor: current_user).moderate!(
+          status: params[:status],
+          notes: params[:notes]
+        )
+        render json: { review: review_detail_payload(review.reload) }
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Review not found for this company' }, status: :not_found
+      rescue Reviews::WorkflowService::WorkflowError, ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      # PATCH /api/v1/company_dashboard/social_proof_reviews/:id/verification
+      def update_review_verification
+        return render json: { error: 'Forbidden' }, status: :forbidden unless current_user&.admin?
+
+        authorize @company, :edit_reviews?
+        review = company_review_scope.find(params[:id])
+        Reviews::WorkflowService.new(review: review, actor: current_user).verify!(
+          status: params[:status],
+          notes: params[:notes]
+        )
+        render json: { review: review_detail_payload(review.reload) }
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Review not found for this company' }, status: :not_found
+      rescue Reviews::WorkflowService::WorkflowError, ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # PATCH /api/v1/company_dashboard/social_proof_reviews/:id
@@ -982,7 +1046,7 @@ module Api
         begin
           approved_scope = @company.reviews.approved
           approved_count = approved_scope.count
-          response_count = approved_scope.where.not(reply: [nil, '']).count
+          response_count = approved_scope.where.not(reply: [nil, '']).where(reply_deleted_at: nil).count
           nps_result = nps_for(approved_scope)
 
           render json: {
@@ -1170,6 +1234,149 @@ module Api
         source.to_h.symbolize_keys
       end
 
+      def company_review_scope
+        @company.reviews.includes(
+          :user,
+          :category,
+          :review_form,
+          review_criterion_scores: :rating_criterion,
+          review_audit_events: :actor,
+          review_decision_logs: :admin_user
+        )
+      end
+
+      def mutate_review_reply(action)
+        authorize @company, :edit_reviews?
+        review = company_review_scope.find(params[:id])
+        service = Reviews::ReplyService.new(review: review, actor: current_user)
+
+        action == :discard! ? service.discard! : service.public_send(action, review_reply_body)
+        render json: {
+          review: review_detail_payload(review.reload),
+          permissions: review_operation_permissions
+        }
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Review not found for this company' }, status: :not_found
+      rescue Reviews::ReplyService::ReplyError, ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      def review_reply_body
+        params[:body].presence || params.dig(:reply, :body).presence || params.dig(:review, :reply)
+      end
+
+      def review_detail_payload(review)
+        metadata = review.metadata || {}
+        {
+          id: review.id,
+          rating: review.rating.to_f,
+          headline: review.headline.to_s,
+          comment: review.comment.to_s,
+          pros: review.pros,
+          cons: review.cons,
+          buyer_tip: review.buyer_tip,
+          status: review.status,
+          moderation: {
+            status: review.status,
+            notes: review.moderation_notes,
+            changed_at: review.moderated_at
+          },
+          verification: {
+            status: review.verification_status,
+            verified: review.verified,
+            notes: review.verification_notes,
+            changed_at: review.verified_at
+          },
+          reply: review.active_reply,
+          replied_at: review.active_replied_at,
+          reply_status: review.reply_active? ? 'answered' : 'unanswered',
+          reply_deleted_at: review.reply_deleted_at,
+          reviewer: {
+            name: review.public_reviewer_name,
+            city: metadata['city'],
+            state: metadata['state']
+          },
+          source: {
+            channel: metadata['source_channel'].presence || review.capture_flow_source,
+            token: metadata['source_token'],
+            review_form_id: review.review_form_id,
+            review_form_name: review.review_form&.name,
+            landing_path: metadata['landing_path'],
+            referrer: metadata['referrer'],
+            user_agent: metadata['user_agent'],
+            ip_hash_present: metadata['ip_hash'].present?,
+            submitted_at: metadata['submitted_at'].presence || review.created_at
+          },
+          nps_score: review.nps_score,
+          classification_by_rating: rating_classification(review.rating),
+          criteria: review_criteria_payload(review),
+          form_answers: review.form_answers || {},
+          helpful_count: review.helpful_count.to_i,
+          featured: review.featured,
+          created_at: review.created_at,
+          updated_at: review.updated_at,
+          audit_trail: audit_timeline_for(review)
+        }
+      end
+
+      def review_criteria_payload(review)
+        snapshot = review.granular_scores_snapshot
+        return snapshot if snapshot.is_a?(Array) && snapshot.any?
+
+        review.review_criterion_scores.map do |score|
+          {
+            title: score.title_snapshot || score.rating_criterion&.title,
+            score: score.score.to_f,
+            weight: score.weight_snapshot || score.rating_criterion&.weight
+          }
+        end
+      end
+
+      def audit_timeline_for(review)
+        operational = review.review_audit_events.map do |event|
+          {
+            id: "audit-#{event.id}",
+            event_type: event.event_type,
+            actor_name: event.actor_name,
+            actor_type: event.actor_type.presence || 'System',
+            previous_value: event.previous_value,
+            new_value: event.new_value,
+            metadata: event.metadata,
+            created_at: event.created_at
+          }
+        end
+        legacy = review.review_decision_logs.map do |event|
+          {
+            id: "decision-#{event.id}",
+            event_type: 'moderation_changed',
+            actor_name: event.admin_user&.name.presence || 'Administração Avalia Solar',
+            actor_type: 'AdminUser',
+            previous_value: { status: event.previous_status },
+            new_value: { status: event.new_status, notes: event.notes },
+            metadata: { legacy: true },
+            created_at: event.created_at
+          }
+        end
+
+        (operational + legacy).sort_by { |event| event[:created_at] }.reverse.first(100)
+      end
+
+      def review_operation_permissions
+        {
+          can_reply: true,
+          can_moderate: current_user&.admin? || false,
+          can_verify: current_user&.admin? || false
+        }
+      end
+
+      def rating_classification(rating)
+        score = rating.to_f
+        return 'positive' if score >= 4
+        return 'neutral' if score >= 3
+
+        'negative'
+      end
+
       def company_active?(company)
         return false unless company
         return company.active_status? if company.respond_to?(:active_status?)
@@ -1274,7 +1481,10 @@ module Api
         {
           can_feature_reviews: feature_permission,
           social_proof_enabled: @company.respond_to?(:social_proof_enabled) ? @company.social_proof_enabled : false,
-          featured_limit: Review::MAX_FEATURED_PER_COMPANY
+          featured_limit: Review::MAX_FEATURED_PER_COMPANY,
+          can_reply: true,
+          can_moderate: current_user&.admin? || false,
+          can_verify: current_user&.admin? || false
         }
       end
 

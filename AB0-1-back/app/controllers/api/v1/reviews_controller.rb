@@ -103,17 +103,14 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       end
     elsif current_user.company_user? && current_user.active_membership_for?(@review.company_id)
       # Company replying to a review
-      if @review.update(reply_params.merge(replied_at: Time.current))
-        # Notify review author
-        ReviewNotifier.with(review: @review, type: :reply).deliver(@review.user)
-
-        render json: serialize_review(@review.reload)
-      else
-        render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
-      end
+      service = Reviews::ReplyService.new(review: @review, actor: current_user)
+      @review.reply_active? ? service.update!(reply_params[:reply]) : service.create!(reply_params[:reply])
+      render json: serialize_review(@review.reload)
     else
       render json: { error: 'Forbidden' }, status: :forbidden
     end
+  rescue Reviews::ReplyService::ReplyError => e
+    render json: { errors: [e.message] }, status: :unprocessable_entity
   end
 
   def destroy
@@ -147,8 +144,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       project_context: review.project_context,
       created_at: review.created_at,
       updated_at: review.updated_at,
-      reply: review.reply,
-      replied_at: review.replied_at,
+      reply: review.active_reply,
+      replied_at: review.active_replied_at,
       featured: review.featured,
       display_order: review.display_order,
       verified: review.verified,

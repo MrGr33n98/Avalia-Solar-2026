@@ -13,6 +13,14 @@ class ReviewSerializer < ActiveModel::Serializer
     object.headline.presence || object.comment&.truncate(60)
   end
 
+  def reply
+    object.active_reply
+  end
+
+  def replied_at
+    object.active_replied_at
+  end
+
   def pros
     object.content_metadata['pros'] || []
   end

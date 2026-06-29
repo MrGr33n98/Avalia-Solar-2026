@@ -960,8 +960,8 @@ module Api
           display_order: review.display_order,
           status: review.status,
           created_at: review.created_at,
-          reply: review.reply,
-          replied_at: review.replied_at,
+          reply: review.active_reply,
+          replied_at: review.active_replied_at,
           user: {
             name: review.public_reviewer_name
           }

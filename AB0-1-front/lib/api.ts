@@ -1277,6 +1277,49 @@ export const dashboardApi = {
   },
   getSocialProofReviews: (params?: { company_id?: number | string }) =>
     fetchApi('/company_dashboard/social_proof_reviews', { params }),
+  getSocialProofReview: (id: number | string, companyId?: number | string) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}`, {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  createReviewReply: (id: number | string, body: string, companyId?: number | string) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}/reply`, {
+      method: 'POST',
+      params: companyId ? { company_id: companyId } : undefined,
+      body: JSON.stringify({ body }),
+    }),
+  updateReviewReply: (id: number | string, body: string, companyId?: number | string) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}/reply`, {
+      method: 'PATCH',
+      params: companyId ? { company_id: companyId } : undefined,
+      body: JSON.stringify({ body }),
+    }),
+  deleteReviewReply: (id: number | string, companyId?: number | string) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}/reply`, {
+      method: 'DELETE',
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  updateReviewModeration: (
+    id: number | string,
+    status: string,
+    notes?: string,
+    companyId?: number | string
+  ) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}/moderation`, {
+      method: 'PATCH',
+      params: companyId ? { company_id: companyId } : undefined,
+      body: JSON.stringify({ status, notes }),
+    }),
+  updateReviewVerification: (
+    id: number | string,
+    status: string,
+    notes?: string,
+    companyId?: number | string
+  ) =>
+    fetchApi(`/company_dashboard/social_proof_reviews/${id}/verification`, {
+      method: 'PATCH',
+      params: companyId ? { company_id: companyId } : undefined,
+      body: JSON.stringify({ status, notes }),
+    }),
   updateSocialProofReview: (
     id: number | string,
     review: { featured?: boolean; display_order?: number },

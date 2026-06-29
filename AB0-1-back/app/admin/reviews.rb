@@ -8,12 +8,14 @@ ActiveAdmin.register Review do
   scope :approved
   scope :rejected
   scope :in_analysis
+  scope :contested
 
   filter :company
   filter :user
   filter :review_form
   filter :capture_flow_source, as: :select, collection: -> { Review.capture_flow_sources.keys }
   filter :status, as: :select, collection: -> { Review.statuses.keys }
+  filter :verification_status, as: :select, collection: -> { Review.verification_statuses.keys }
   filter :rating
   filter :featured
   filter :created_at
@@ -45,6 +47,36 @@ ActiveAdmin.register Review do
     redirect_to resource_path, notice: 'Review set to análise.'
   end
 
+  member_action :verify_manual, method: :patch do
+    Reviews::WorkflowService.new(review: resource, actor: current_admin_user).verify!(
+      status: 'manually_verified',
+      notes: params[:notes]
+    )
+    redirect_to resource_path, notice: 'Avaliação verificada manualmente.'
+  rescue Reviews::WorkflowService::WorkflowError, ActiveRecord::RecordInvalid => e
+    redirect_to resource_path, alert: e.message
+  end
+
+  member_action :review_verification, method: :patch do
+    Reviews::WorkflowService.new(review: resource, actor: current_admin_user).verify!(
+      status: 'in_review',
+      notes: params[:notes]
+    )
+    redirect_to resource_path, notice: 'Verificação enviada para análise.'
+  rescue Reviews::WorkflowService::WorkflowError, ActiveRecord::RecordInvalid => e
+    redirect_to resource_path, alert: e.message
+  end
+
+  member_action :reject_verification, method: :patch do
+    Reviews::WorkflowService.new(review: resource, actor: current_admin_user).verify!(
+      status: 'rejected',
+      notes: params[:notes]
+    )
+    redirect_to resource_path, notice: 'Verificação rejeitada.'
+  rescue Reviews::WorkflowService::WorkflowError, ActiveRecord::RecordInvalid => e
+    redirect_to resource_path, alert: e.message
+  end
+
   action_item :approve, only: :show, if: proc { !resource.approved? } do
     link_to 'Aprovar', approve_admin_review_path(resource), method: :patch,
                                                             data: { confirm: 'Confirma a aprovação desta avaliação?' }
@@ -60,6 +92,20 @@ ActiveAdmin.register Review do
                                                                         data: { confirm: 'Mover esta avaliação para análise?' }
   end
 
+  action_item :verify_manual, only: :show, if: proc { !resource.verification_manually_verified? } do
+    link_to 'Verificar manualmente', verify_manual_admin_review_path(resource), method: :patch,
+                                                                             data: { confirm: 'Confirmar verificação manual?' }
+  end
+
+  action_item :review_verification, only: :show, if: proc { !resource.verification_in_review? } do
+    link_to 'Analisar verificação', review_verification_admin_review_path(resource), method: :patch
+  end
+
+  action_item :reject_verification, only: :show, if: proc { !resource.verification_rejected? } do
+    link_to 'Rejeitar verificação', reject_verification_admin_review_path(resource), method: :patch,
+                                                                                     data: { confirm: 'Rejeitar a verificação desta avaliação?' }
+  end
+
   index do
     selectable_column
     id_column
@@ -70,6 +116,9 @@ ActiveAdmin.register Review do
     column :rating
     column :status do |review|
       status_tag review.status
+    end
+    column :verification_status do |review|
+      status_tag review.verification_status
     end
     column :comment do |review|
       truncate(review.comment, length: 120)
@@ -137,11 +186,12 @@ ActiveAdmin.register Review do
       row :rating
       row :comment
       row :status
+      row :verification_status
       row :featured
       row :display_order
       row :verified
-      row :reply
-      row :replied_at
+      row('Resposta ativa') { |review| review.active_reply }
+      row('Respondida em') { |review| review.active_replied_at }
       row :created_at
       row :updated_at
     end
@@ -152,6 +202,15 @@ ActiveAdmin.register Review do
         column :previous_status
         column :new_status
         column :notes
+        column :created_at
+      end
+    end
+    panel 'Trilha operacional' do
+      table_for resource.review_audit_events.order(created_at: :desc) do
+        column(:ator) { |event| event.actor_name }
+        column(:evento) { |event| event.event_type.humanize }
+        column :previous_value
+        column :new_value
         column :created_at
       end
     end

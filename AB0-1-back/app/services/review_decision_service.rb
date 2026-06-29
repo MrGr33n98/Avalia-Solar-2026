@@ -37,6 +37,13 @@ class ReviewDecisionService
         new_status: new_status.to_s,
         notes: notes
       )
+      ReviewAuditEvent.create!(
+        review: review,
+        actor: admin_user,
+        event_type: 'moderation_changed',
+        previous_value: { status: previous_status },
+        new_value: { status: new_status.to_s, notes: notes }
+      )
 
       notify_review_owner(previous_status, new_status)
     end

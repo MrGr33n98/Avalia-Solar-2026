@@ -169,7 +169,7 @@ class User < ApplicationRecord
     base_score = 520
     reviews_count = reviews.count
     helpful_votes = reviews.sum(:helpful_count)
-    replies_count = reviews.where.not(reply: nil).count
+    replies_count = reviews.where.not(reply: nil).where(reply_deleted_at: nil).count
 
     base_score + (reviews_count * 35) + (helpful_votes * 2) + (replies_count * 18)
   end

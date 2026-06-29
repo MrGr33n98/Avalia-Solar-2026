@@ -7,12 +7,13 @@ class Review < ApplicationRecord
   belongs_to :review_form, optional: true
   belongs_to :category, optional: true
   has_many :review_decision_logs, dependent: :destroy
+  has_many :review_audit_events, dependent: :destroy
   has_many :review_criterion_scores, dependent: :destroy
   accepts_nested_attributes_for :review_criterion_scores, allow_destroy: true
 
   MAX_FEATURED_PER_COMPANY = 5
 
-  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4 }
+  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4, contested: 5 }
   enum project_type: { residential: 0, commercial: 1, industrial: 2, rural: 3 }
   enum installation_status: { completed: 0, in_progress: 1, waiting: 2 }
   enum capture_flow_source: {
@@ -22,6 +23,13 @@ class Review < ApplicationRecord
     custom_review_form: 'custom_review_form',
     qr_code_form: 'qr_code_form'
   }
+  enum verification_status: {
+    unverified: 'unverified',
+    pending: 'pending',
+    in_review: 'in_review',
+    manually_verified: 'manually_verified',
+    rejected: 'rejected'
+  }, _prefix: :verification
 
   # Columns: headline (string), pros (jsonb), cons (jsonb), buyer_tip (text), project_context (jsonb)
   # category_id (fk), is_legacy (boolean), granular_scores_snapshot (jsonb)
@@ -45,7 +53,7 @@ class Review < ApplicationRecord
   after_commit :notify_slack, on: :create
   after_commit :invalidate_social_proof_cache
   after_commit :enqueue_aggregation, on: %i[create update], if: :should_recalculate_aggregates?
-  after_update_commit :notify_user_of_reply, if: :saved_change_to_reply?
+  after_update_commit :notify_user_of_reply, if: :should_notify_reply_change?
   after_commit :create_notification_for_company, on: :create
 
   # Validations
@@ -140,6 +148,18 @@ class Review < ApplicationRecord
     when 7..8  then :passive
     else :detractor
     end
+  end
+
+  def reply_active?
+    reply.present? && reply_deleted_at.blank?
+  end
+
+  def active_reply
+    reply_active? ? reply : nil
+  end
+
+  def active_replied_at
+    reply_active? ? replied_at : nil
   end
 
   private
@@ -310,6 +330,10 @@ class Review < ApplicationRecord
     ReviewMailer.new_reply(self).deliver_later
   rescue StandardError => e
     Rails.logger.error("[Review] Failed to notify reply: #{e.message}")
+  end
+
+  def should_notify_reply_change?
+    saved_change_to_reply? && reply_active?
   end
 
   def create_notification_for_company

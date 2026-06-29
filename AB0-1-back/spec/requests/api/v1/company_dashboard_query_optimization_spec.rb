@@ -3,7 +3,9 @@ require 'rails_helper'
 RSpec.describe 'Company Dashboard Query Optimization', type: :request do
   let(:user) { create(:user) }
   let(:company) { create(:company) }
-  let(:token) { user.tokens.create.token }
+  let(:token) do
+    JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256')
+  end
 
   before do
     allow(Analytics::TrackEventService).to receive(:call).and_return(true)
@@ -210,6 +212,70 @@ RSpec.describe 'Company Dashboard Query Optimization', type: :request do
         'average' => 4.5,
         'responses' => 1
       )
+    end
+  end
+
+  describe 'review operations endpoints' do
+    let!(:operational_review) do
+      create(
+        :review,
+        company: company,
+        user: nil,
+        status: :approved,
+        capture_flow_source: 'qr_code_form',
+        metadata: {
+          reviewer_name: 'Cliente Operacional',
+          city: 'Campinas',
+          state: 'SP',
+          source_channel: 'qr_code_form',
+          source_token: 'source-token',
+          ip_hash: 'hashed-value',
+          lgpd_consent: true
+        }
+      )
+    end
+
+    it 'creates, edits and soft deletes a reply while preserving audit history' do
+      post "/api/v1/company_dashboard/social_proof_reviews/#{operational_review.id}/reply",
+           params: { body: 'Obrigado pela avaliação.' },
+           headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      expect(operational_review.reload).to be_reply_active
+
+      patch "/api/v1/company_dashboard/social_proof_reviews/#{operational_review.id}/reply",
+            params: { body: 'Obrigado pela avaliação e pela confiança.' },
+            headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      expect(operational_review.reload.active_reply).to eq('Obrigado pela avaliação e pela confiança.')
+
+      delete "/api/v1/company_dashboard/social_proof_reviews/#{operational_review.id}/reply",
+             headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      operational_review.reload
+      expect(operational_review.active_reply).to be_nil
+      expect(operational_review.reply).to eq('Obrigado pela avaliação e pela confiança.')
+      expect(operational_review.reply_deleted_at).to be_present
+      expect(operational_review.review_audit_events.pluck(:event_type)).to eq(
+        %w[reply_created reply_updated reply_deleted]
+      )
+    end
+
+    it 'returns the operational detail without exposing the IP hash' do
+      get "/api/v1/company_dashboard/social_proof_reviews/#{operational_review.id}",
+          headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      detail = body.fetch('review')
+
+      expect(detail.dig('reviewer', 'city')).to eq('Campinas')
+      expect(detail.dig('source', 'channel')).to eq('qr_code_form')
+      expect(detail.dig('source', 'ip_hash_present')).to eq(true)
+      expect(response.body).not_to include('hashed-value')
+      expect(body.dig('permissions', 'can_reply')).to eq(true)
     end
   end
 end

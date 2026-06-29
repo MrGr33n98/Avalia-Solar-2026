@@ -194,7 +194,13 @@ Rails.application.routes.draw do
         post 'add_video', to: 'company_dashboard#add_video'
         delete 'remove_video', to: 'company_dashboard#remove_video'
         get 'social_proof_reviews', to: 'company_dashboard#social_proof_reviews'
+        get 'social_proof_reviews/:id', to: 'company_dashboard#social_proof_review'
         patch 'social_proof_reviews/:id', to: 'company_dashboard#update_social_proof_review'
+        post 'social_proof_reviews/:id/reply', to: 'company_dashboard#create_review_reply'
+        patch 'social_proof_reviews/:id/reply', to: 'company_dashboard#update_review_reply'
+        delete 'social_proof_reviews/:id/reply', to: 'company_dashboard#delete_review_reply'
+        patch 'social_proof_reviews/:id/moderation', to: 'company_dashboard#update_review_moderation'
+        patch 'social_proof_reviews/:id/verification', to: 'company_dashboard#update_review_verification'
         get 'social_proof_stats', to: 'company_dashboard#social_proof_stats'
         get 'market_insights', to: 'company_dashboard/market_insights#index'
 

@@ -14,8 +14,8 @@ module Types
     field :cons, [String], null: true
     field :buyer_tip, String, null: true
     field :author_name, String, null: true
-    field :company_reply, String, null: true, method: :reply
-    field :replied_at, GraphQL::Types::ISO8601DateTime, null: true
+    field :company_reply, String, null: true, method: :active_reply
+    field :replied_at, GraphQL::Types::ISO8601DateTime, null: true, method: :active_replied_at
     field :status, String, null: true
     field :project_type, String, null: true
     field :installation_status, String, null: true

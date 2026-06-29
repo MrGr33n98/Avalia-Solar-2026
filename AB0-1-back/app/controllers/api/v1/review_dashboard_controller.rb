@@ -42,7 +42,10 @@ module Api
 
         # Recent activities feed
         recent_activities = []
-        recent_replies = Review.where(user_id: current_user.id).where.not(reply: nil).order(replied_at: :desc).limit(2)
+        recent_replies = Review.where(user_id: current_user.id, reply_deleted_at: nil)
+                               .where.not(reply: nil)
+                               .order(replied_at: :desc)
+                               .limit(2)
         recent_replies.each do |r|
           company_name = r.company&.name || 'Empresa'
           recent_activities << {

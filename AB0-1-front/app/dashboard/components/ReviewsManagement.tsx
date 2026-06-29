@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
@@ -9,6 +10,7 @@ import {
   CircleCheck,
   Clock3,
   Database,
+  Eye,
   Link2,
   Mail,
   MessageSquare,
@@ -43,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { dashboardApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import ReviewDetailPanel from './ReviewDetailPanel';
 
 interface ReviewsManagementProps {
   companyId: string;
@@ -276,6 +279,9 @@ function DashboardSkeleton() {
 }
 
 export default function ReviewsManagement({ companyId }: ReviewsManagementProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedReviewId = searchParams.get('review_id');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<SocialProofStats>(EMPTY_STATS);
   const [permissions, setPermissions] = useState<SocialProofPermissions>({
@@ -535,6 +541,31 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       setUpdatingId(null);
     }
   };
+
+  const openReview = (reviewId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', 'reviews');
+    params.set('review_id', reviewId);
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  };
+
+  const closeReview = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('review_id');
+    params.set('tab', 'reviews');
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  };
+
+  if (selectedReviewId) {
+    return (
+      <ReviewDetailPanel
+        companyId={companyId}
+        reviewId={selectedReviewId}
+        onBack={closeReview}
+        onChanged={() => void fetchReviews()}
+      />
+    );
+  }
 
   if (loading) return <DashboardSkeleton />;
 
@@ -947,25 +978,37 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                               </span>
                             </div>
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void handleToggleFeatured(review.id)}
-                            disabled={updatingId === review.id}
-                            className={cn(
-                              'h-8 shrink-0 rounded-lg border-slate-200 px-2.5 text-[11px] shadow-none dark:border-white/10',
-                              review.featured && 'border-amber-200 bg-amber-50 text-amber-700'
-                            )}
-                          >
-                            <Pin
+                          <div className="flex shrink-0 items-center gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openReview(review.id)}
+                              className="h-8 rounded-lg border-slate-200 px-2.5 text-[11px] shadow-none dark:border-white/10"
+                            >
+                              <Eye className="mr-1.5 h-3.5 w-3.5" />
+                              {review.reply ? 'Gerenciar' : 'Responder'}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void handleToggleFeatured(review.id)}
+                              disabled={updatingId === review.id}
                               className={cn(
-                                'mr-1.5 h-3.5 w-3.5',
-                                review.featured && 'fill-current'
+                                'h-8 rounded-lg border-slate-200 px-2.5 text-[11px] shadow-none dark:border-white/10',
+                                review.featured && 'border-amber-200 bg-amber-50 text-amber-700'
                               )}
-                            />
-                            {review.featured ? 'Em destaque' : 'Destacar'}
-                          </Button>
+                            >
+                              <Pin
+                                className={cn(
+                                  'mr-1.5 h-3.5 w-3.5',
+                                  review.featured && 'fill-current'
+                                )}
+                              />
+                              {review.featured ? 'Em destaque' : 'Destacar'}
+                            </Button>
+                          </div>
                         </div>
                         {review.headline && (
                           <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-200">

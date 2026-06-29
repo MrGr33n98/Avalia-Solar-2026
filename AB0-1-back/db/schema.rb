@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_29_131500) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_29_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2247,6 +2247,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_131500) do
     t.index ["company_id"], name: "index_review_aggregates_on_company_id"
   end
 
+  create_table "review_audit_events", force: :cascade do |t|
+    t.bigint "review_id", null: false
+    t.string "actor_type"
+    t.bigint "actor_id"
+    t.string "event_type", null: false
+    t.jsonb "previous_value", default: {}, null: false
+    t.jsonb "new_value", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_type", "actor_id"], name: "index_review_audit_events_on_actor_type_and_actor_id"
+    t.index ["event_type"], name: "index_review_audit_events_on_event_type"
+    t.index ["review_id", "created_at"], name: "index_review_audit_events_on_review_id_and_created_at"
+    t.index ["review_id"], name: "index_review_audit_events_on_review_id"
+  end
+
   create_table "review_criterion_scores", force: :cascade do |t|
     t.bigint "review_id", null: false
     t.bigint "rating_criterion_id", null: false
@@ -2347,6 +2363,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_131500) do
     t.string "verification_status", default: "pending", null: false
     t.integer "nps_score"
     t.string "sentiment", default: "unknown", null: false
+    t.datetime "reply_deleted_at"
+    t.text "moderation_notes"
+    t.datetime "moderated_at"
+    t.string "moderated_by_type"
+    t.bigint "moderated_by_id"
+    t.text "verification_notes"
+    t.datetime "verified_at"
+    t.string "verified_by_type"
+    t.bigint "verified_by_id"
     t.index ["category_id"], name: "index_reviews_on_category_id"
     t.index ["company_id", "created_at"], name: "index_reviews_on_company_id_and_created_at"
     t.index ["company_id", "nps_score"], name: "idx_reviews_analytics_nps", where: "(nps_score IS NOT NULL)"
@@ -2362,13 +2387,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_131500) do
     t.index ["granular_scores_snapshot"], name: "index_reviews_on_granular_scores_snapshot", using: :gin
     t.index ["installation_status"], name: "index_reviews_on_installation_status"
     t.index ["metadata"], name: "index_reviews_on_metadata", using: :gin
+    t.index ["moderated_by_type", "moderated_by_id"], name: "index_reviews_on_moderated_by_type_and_moderated_by_id"
     t.index ["project_context"], name: "index_reviews_on_project_context", using: :gin
     t.index ["project_type"], name: "index_reviews_on_project_type"
+    t.index ["reply_deleted_at"], name: "index_reviews_on_reply_deleted_at"
     t.index ["review_form_id", "created_at"], name: "index_reviews_on_review_form_id_and_created_at"
     t.index ["review_form_id"], name: "index_reviews_on_review_form_id"
     t.index ["reviewable_type", "reviewable_id"], name: "index_reviews_on_reviewable_type_and_reviewable_id"
     t.index ["user_id", "company_id", "category_id"], name: "idx_reviews_user_company_category", unique: true
     t.index ["user_id"], name: "index_reviews_on_user_id"
+    t.index ["verified_by_type", "verified_by_id"], name: "index_reviews_on_verified_by_type_and_verified_by_id"
     t.check_constraint "nps_score >= 0 AND nps_score <= 10", name: "ck_reviews_nps_score_range"
     t.check_constraint "rating >= 0::numeric AND rating <= 5::numeric", name: "chk_reviews_rating_range"
     t.check_constraint "rating >= 1::numeric AND rating <= 5::numeric", name: "ck_reviews_valid_rating"
@@ -2681,6 +2709,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_131500) do
   add_foreign_key "rating_criteria", "categories"
   add_foreign_key "review_aggregates", "categories"
   add_foreign_key "review_aggregates", "companies"
+  add_foreign_key "review_audit_events", "reviews"
   add_foreign_key "review_criterion_scores", "rating_criteria"
   add_foreign_key "review_criterion_scores", "reviews"
   add_foreign_key "review_decision_logs", "admin_users"

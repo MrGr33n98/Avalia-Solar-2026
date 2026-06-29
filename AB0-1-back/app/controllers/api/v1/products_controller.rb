@@ -399,8 +399,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
       installation_status: review.installation_status,
       estimated_power: review.estimated_power.to_f,
       created_at: review.created_at,
-      reply: review.reply,
-      replied_at: review.replied_at,
+      reply: review.active_reply,
+      replied_at: review.active_replied_at,
       project_context: review.project_context,
       granular_scores: review.granular_scores_snapshot.presence || serialize_review_scores(review),
       user: {

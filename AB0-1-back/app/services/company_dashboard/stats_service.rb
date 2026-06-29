@@ -120,7 +120,7 @@ module CompanyDashboard
 
     def pending_reviews_count
       return 0 unless @company.respond_to?(:reviews)
-      @company.reviews.where(reply: nil).count
+      @company.reviews.where(reply: nil).or(@company.reviews.where.not(reply_deleted_at: nil)).count
     end
 
     def pending_approvals_count

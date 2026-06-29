@@ -36,6 +36,14 @@ session_cleanup_job:
   description: 'Remove expired sessions'
   enabled: true
 
+# Remove pseudonymous source traces after the LGPD retention window
+review_source_trace_retention_job:
+  cron: '30 3 * * *'
+  class: ReviewSourceTraceRetentionJob
+  queue: low
+  description: 'Remove review IP hashes older than 90 days'
+  enabled: true
+
 # Database backup (if not using managed service)
 # database_backup_job:
 #   cron: '0 1 * * *'  # Every day at 1:00 AM
