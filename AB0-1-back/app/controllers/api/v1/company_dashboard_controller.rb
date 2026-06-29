@@ -905,7 +905,7 @@ module Api
                               :id, :rating, :comment, :headline, :status, :featured, :display_order,
                               :verified, :verification_status, :created_at, :reply, :replied_at,
                               :helpful_count, :capture_flow_source, :sentiment, :nps_score,
-                              :user_id, :company_id
+                              :metadata, :user_id, :company_id
                             )
                             .includes(:user)
                             .order(created_at: :desc)
@@ -934,13 +934,16 @@ module Api
                 user_name: review.public_reviewer_name
               }
             end,
-            permissions: social_proof_permissions(feature_permission)
+            permissions: social_proof_permissions(feature_permission),
+            data_status: 'complete'
           }, status: :ok
         rescue StandardError => e
           log_analytics_error('social_proof_reviews', e)
           render json: {
             reviews: [],
-            permissions: social_proof_permissions(false)
+            permissions: social_proof_permissions(false),
+            data_status: 'degraded',
+            error: 'review_list_unavailable'
           }, status: :ok
         end
       end
@@ -978,25 +981,42 @@ module Api
 
         begin
           approved_scope = @company.reviews.approved
+          approved_count = approved_scope.count
+          response_count = approved_scope.where.not(reply: [nil, '']).count
+          nps_result = nps_for(approved_scope)
+
           render json: {
             stats: {
               total_reviews: @company.reviews.count,
-              approved_reviews: approved_scope.count,
+              approved_reviews: approved_count,
+              pending_reviews: @company.reviews.pending.count,
+              rejected_reviews: @company.reviews.rejected.count,
+              in_analysis_reviews: @company.reviews.in_analysis.count,
               featured_reviews: @company.reviews.where(featured: true).count,
               verified_reviews: approved_scope.where(verified: true).count,
               average_rating: approved_scope.average(:rating).to_f.round(2),
-              response_rate: percentage(approved_scope.where.not(reply: [nil, '']).count, approved_scope.count),
-              nps_score: nps_for(approved_scope),
+              response_rate: percentage(response_count, approved_count),
+              unanswered_reviews: [approved_count - response_count, 0].max,
+              nps_score: nps_result[:score],
+              nps_responses: nps_result[:responses],
               rating_distribution: rating_distribution_for(approved_scope),
               monthly_evolution: monthly_evolution_for(approved_scope),
               monthly_rating: monthly_rating_for(approved_scope),
               sentiment_distribution: sentiment_distribution_for(approved_scope),
-              source_distribution: source_distribution_for(approved_scope)
-            }
+              source_distribution: source_distribution_for(approved_scope),
+              criteria_averages: criteria_averages_for(approved_scope),
+              first_review_at: @company.reviews.minimum(:created_at),
+              last_review_at: @company.reviews.maximum(:created_at)
+            },
+            data_status: 'complete'
           }, status: :ok
         rescue StandardError => e
           log_analytics_error('social_proof_stats', e)
-          render json: { stats: default_social_proof_stats }, status: :ok
+          render json: {
+            stats: default_social_proof_stats,
+            data_status: 'degraded',
+            error: 'review_stats_unavailable'
+          }, status: :ok
         end
       end
 
@@ -1194,11 +1214,35 @@ module Api
       def nps_for(scope)
         scored = scope.where.not(nps_score: nil)
         total = scored.count
-        return nil if total.zero?
+        return { score: nil, responses: 0 } if total.zero?
 
         promoters = scored.where(nps_score: 9..10).count
         detractors = scored.where(nps_score: 0..6).count
-        (((promoters - detractors).to_f / total) * 100).round
+        {
+          score: (((promoters - detractors).to_f / total) * 100).round,
+          responses: total
+        }
+      end
+
+      def criteria_averages_for(scope)
+        scores = ReviewCriterionScore
+                 .joins(:rating_criterion)
+                 .where(review_id: scope.select(:id), not_applicable: false)
+        title_expression = Arel.sql(
+          'COALESCE(review_criterion_scores.title_snapshot, rating_criteria.title)'
+        )
+        averages = scores.group(title_expression).average(:score)
+        counts = scores.group(title_expression).count
+
+        averages.filter_map do |title, average|
+          next if title.blank?
+
+          {
+            title: title,
+            average: average.to_f.round(2),
+            responses: counts[title].to_i
+          }
+        end.sort_by { |criterion| [-criterion[:responses], -criterion[:average]] }.first(5)
       end
 
       def percentage(part, total)
@@ -1238,16 +1282,24 @@ module Api
         {
           total_reviews: 0,
           approved_reviews: 0,
+          pending_reviews: 0,
+          rejected_reviews: 0,
+          in_analysis_reviews: 0,
           featured_reviews: 0,
           verified_reviews: 0,
           average_rating: 0,
           response_rate: 0,
+          unanswered_reviews: 0,
           nps_score: nil,
+          nps_responses: 0,
           rating_distribution: { 5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0 },
           monthly_evolution: {},
           monthly_rating: {},
           sentiment_distribution: { positive: 0, neutral: 0, negative: 0, unknown: 0 },
-          source_distribution: {}
+          source_distribution: {},
+          criteria_averages: [],
+          first_review_at: nil,
+          last_review_at: nil
         }
       end
 

@@ -143,6 +143,74 @@ RSpec.describe 'Company Dashboard Query Optimization', type: :request do
       expect(permissions).to have_key('social_proof_enabled')
       expect(permissions).to have_key('featured_limit')
     end
+
+    it 'returns reviews whose reviewer name is stored only in metadata' do
+      metadata_review = create(
+        :review,
+        company: company,
+        user: nil,
+        capture_flow_source: 'qr_code_form',
+        metadata: {
+          reviewer_name: 'Cliente Solar',
+          lgpd_consent: true
+        }
+      )
+
+      get "/api/v1/company_dashboard/social_proof_reviews",
+          headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      returned_review = json_response.fetch('reviews').find { |review| review['id'] == metadata_review.id }
+
+      expect(json_response['data_status']).to eq('complete')
+      expect(returned_review).to include(
+        'user_name' => 'Cliente Solar',
+        'capture_flow_source' => 'qr_code_form'
+      )
+    end
+  end
+
+  describe 'social_proof_stats endpoint' do
+    it 'returns diagnostic coverage without inventing unavailable data' do
+      category = create(:category)
+      approved_review = create(
+        :review,
+        company: company,
+        category: category,
+        capture_flow_source: 'qr_code_form',
+        status: :approved,
+        verified: true,
+        sentiment: 'positive',
+        nps_score: 10,
+        reply: 'Obrigado pelo feedback.'
+      )
+      criterion = create(:rating_criterion, category: category)
+      create(:review_criterion_score, review: approved_review, rating_criterion: criterion, score: 4.5)
+
+      get "/api/v1/company_dashboard/social_proof_stats",
+          headers: { 'Authorization' => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      stats = json_response.fetch('stats')
+
+      expect(json_response['data_status']).to eq('complete')
+      expect(stats).to include(
+        'approved_reviews' => 1,
+        'verified_reviews' => 1,
+        'response_rate' => 100,
+        'nps_score' => 100,
+        'nps_responses' => 1
+      )
+      expect(stats.dig('sentiment_distribution', 'positive')).to eq(1)
+      expect(stats.dig('source_distribution', 'qr_code_form')).to eq(1)
+      expect(stats.fetch('criteria_averages').first).to include(
+        'title' => criterion.title,
+        'average' => 4.5,
+        'responses' => 1
+      )
+    end
   end
 end
 

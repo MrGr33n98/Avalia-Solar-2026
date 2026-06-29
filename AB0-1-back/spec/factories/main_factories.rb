@@ -86,6 +86,8 @@ FactoryBot.define do
     status { :pending }
     featured { false }
     verified { false }
+    capture_flow_source { 'profile' }
+    sentiment { 'unknown' }
     display_order { 0 }
   end
 
