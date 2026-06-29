@@ -54,11 +54,11 @@ export default function LandingHeroClient({
         Energia solar com mais confiança
       </span>
 
-      <h1 className="max-w-[660px] text-4xl font-black leading-[1.03] tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[58px]">
+      <h1 className="max-w-[720px] text-4xl sm:text-5xl lg:text-[62px] font-bold leading-[1.05] tracking-[-0.03em] text-slate-900">
         Encontre empresas solares confiáveis na sua região
       </h1>
 
-      <p className="max-w-[610px] text-base leading-relaxed text-slate-600 sm:text-lg">
+      <p className="max-w-[660px] text-base sm:text-lg leading-relaxed text-slate-500 font-medium">
         Compare empresas verificadas, avaliações reais e áreas de atendimento antes de solicitar propostas para o seu projeto.
       </p>
 

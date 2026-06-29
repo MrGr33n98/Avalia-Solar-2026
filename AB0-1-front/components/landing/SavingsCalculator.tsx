@@ -35,7 +35,7 @@ export default function SavingsCalculator() {
 
   return (
     <section className="bg-white pb-14 sm:pb-20" aria-labelledby="solar-diagnostic-title">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">
         <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 text-white shadow-[0_28px_70px_-46px_rgba(15,23,42,.9)]">
           <div className="grid grid-cols-1 lg:grid-cols-[.9fr_1.1fr]">
             <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">

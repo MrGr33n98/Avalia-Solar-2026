@@ -83,7 +83,7 @@ function SectionShell({
 }) {
   return (
     <section className={tone === 'soft' ? 'bg-slate-50 py-14 sm:py-20' : 'bg-white py-14 sm:py-20'}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">{children}</div>
     </section>
   );
 }
@@ -336,7 +336,7 @@ async function CategoriesSectionWrapper({
 
       {safeCategories.length > 0 ? (
         <CategoryCardsErrorBoundary>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {safeCategories.slice(0, 8).map((category) => (
               <LandingCategoryCard key={category.id} category={category} />
             ))}

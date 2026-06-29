@@ -135,7 +135,7 @@ export function LandingHeroSearch({
   };
 
   return (
-    <Card className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-2.5 shadow-[0_18px_50px_-34px_rgba(15,23,42,.55)]">
+    <Card className="w-full max-w-2xl lg:max-w-3xl rounded-2xl border border-slate-200 bg-white p-2.5 shadow-[0_18px_50px_-34px_rgba(15,23,42,.55)]">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
         <div className="group relative w-full">
           <label htmlFor="category-select" className="mb-1.5 block px-1 text-[11px] font-bold text-slate-600">
