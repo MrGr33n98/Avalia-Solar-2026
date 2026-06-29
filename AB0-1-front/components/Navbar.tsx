@@ -44,6 +44,7 @@ export default function Navbar() {
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
   const hideNavbar =
     pathname === '/profile' ||
+    pathname?.startsWith('/f/') ||
     pathname === '/review-dashboard' ||
     pathname?.startsWith('/review-dashboard/');
 
@@ -100,12 +101,19 @@ export default function Navbar() {
     return (
       <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="Home Avalia Solar">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            aria-label="Home Avalia Solar"
+          >
             <BrandLogo className="h-8 sm:h-9" priority />
           </Link>
 
           <div className="hidden items-center gap-1 lg:flex">
-            <Link href="/companies" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+            <Link
+              href="/companies"
+              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+            >
               Empresas
             </Link>
             <div
@@ -120,14 +128,31 @@ export default function Navbar() {
                 className="h-10 rounded-lg px-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
                 onClick={toggleMegaMenu}
               >
-                Categorias <ChevronDown className={cn('ml-1 h-4 w-4 transition-transform', isMegaMenuOpen && 'rotate-180')} />
+                Categorias{' '}
+                <ChevronDown
+                  className={cn(
+                    'ml-1 h-4 w-4 transition-transform',
+                    isMegaMenuOpen && 'rotate-180'
+                  )}
+                />
               </Button>
-              {megaMenuMounted ? <CategoriesMegaMenu isOpen={isMegaMenuOpen} onClose={() => setIsMegaMenuOpen(false)} /> : null}
+              {megaMenuMounted ? (
+                <CategoriesMegaMenu
+                  isOpen={isMegaMenuOpen}
+                  onClose={() => setIsMegaMenuOpen(false)}
+                />
+              ) : null}
             </div>
-            <Link href="/#como-funciona" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+            <Link
+              href="/#como-funciona"
+              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+            >
               Como funciona
             </Link>
-            <Link href="/blog" className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700">
+            <Link
+              href="/blog"
+              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+            >
               Conteúdo
             </Link>
           </div>
@@ -135,23 +160,45 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             {!isAuthenticated ? (
               <>
-                <Button asChild variant="ghost" className="hidden h-10 rounded-lg px-3 text-sm font-bold text-slate-600 sm:inline-flex">
-                  <Link href="/login"><UserIcon className="mr-1.5 h-4 w-4" /> Entrar</Link>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hidden h-10 rounded-lg px-3 text-sm font-bold text-slate-600 sm:inline-flex"
+                >
+                  <Link href="/login">
+                    <UserIcon className="mr-1.5 h-4 w-4" /> Entrar
+                  </Link>
                 </Button>
-                <Button asChild variant="outline" className="hidden h-10 rounded-lg border-blue-300 bg-white px-4 text-sm font-bold text-blue-700 hover:bg-blue-50 sm:inline-flex">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="hidden h-10 rounded-lg border-blue-300 bg-white px-4 text-sm font-bold text-blue-700 hover:bg-blue-50 sm:inline-flex"
+                >
                   <Link href="/register">Para empresas</Link>
                 </Button>
               </>
             ) : (
               <>
-                <Button asChild variant="ghost" className="hidden h-10 rounded-lg text-sm font-bold text-slate-600 sm:inline-flex">
-                  <Link href={user?.role === 'review' ? '/review-dashboard' : '/profile'} onClick={handleMinhaContaClick}>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hidden h-10 rounded-lg text-sm font-bold text-slate-600 sm:inline-flex"
+                >
+                  <Link
+                    href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
+                    onClick={handleMinhaContaClick}
+                  >
                     <UserIcon className="mr-1.5 h-4 w-4" /> Minha conta
                   </Link>
                 </Button>
                 {user?.role === 'company' ? (
-                  <Button asChild className="hidden h-10 bg-blue-600 font-bold text-white hover:bg-blue-700 sm:inline-flex">
-                    <Link href="/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" /> Painel</Link>
+                  <Button
+                    asChild
+                    className="hidden h-10 bg-blue-600 font-bold text-white hover:bg-blue-700 sm:inline-flex"
+                  >
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="mr-1.5 h-4 w-4" /> Painel
+                    </Link>
                   </Button>
                 ) : null}
               </>
@@ -174,7 +221,10 @@ export default function Navbar() {
         </div>
 
         {mobileDrawerMounted ? (
-          <MobileCategoriesDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
+          <MobileCategoriesDrawer
+            isOpen={isMobileDrawerOpen}
+            onClose={() => setIsMobileDrawerOpen(false)}
+          />
         ) : null}
       </nav>
     );
@@ -230,9 +280,7 @@ export default function Navbar() {
                 variant="ghost"
                 className={cn(
                   'h-10 rounded-xl border border-brand-border bg-white px-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/8 dark:hover:text-white',
-                  isMegaMenuOpen
-                    ? 'border-transparent bg-brand-blue text-white shadow-none'
-                    : ''
+                  isMegaMenuOpen ? 'border-transparent bg-brand-blue text-white shadow-none' : ''
                 )}
                 onClick={toggleMegaMenu}
               >

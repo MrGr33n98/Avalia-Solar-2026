@@ -59,10 +59,10 @@ class SlackNotificationService
         color: '#ffcc00',
         fields: [
           { title: 'Empresa',    value: review.company.name,          short: true },
-          { title: 'Usuário',    value: review.user.name,             short: true },
+          { title: 'Usuário',    value: review.user&.name || review.metadata['reviewer_name'] || 'Cliente', short: true },
           { title: 'Nota',       value: "#{stars} (#{review.rating}/5)", short: true },
           { title: 'Status',     value: '⏳ Pendente',                 short: true },
-          { title: 'Comentário', value: review.comment.truncate(300), short: false }
+          { title: 'Comentário', value: review.comment.to_s.truncate(300), short: false }
         ],
         footer: "Review ID: #{review.id} | #{review.created_at.strftime('%d/%m/%Y %H:%M')}"
       }
@@ -76,7 +76,7 @@ class SlackNotificationService
     message = '✅ *Avaliação Aprovada*'
     fields = [
       { title: 'Empresa',   value: review.company.name,             short: true },
-      { title: 'Usuário',   value: review.user.name,                short: true },
+      { title: 'Usuário',   value: review.user&.name || review.metadata['reviewer_name'] || 'Cliente', short: true },
       { title: 'Nota',      value: "#{stars} (#{review.rating}/5)", short: true },
       { title: 'Aprovado por', value: admin_user&.email || 'Sistema', short: true }
     ]
@@ -91,7 +91,7 @@ class SlackNotificationService
     message = '❌ *Avaliação Reprovada*'
     fields = [
       { title: 'Empresa',     value: review.company.name,             short: true },
-      { title: 'Usuário',     value: review.user.name,                short: true },
+      { title: 'Usuário',     value: review.user&.name || review.metadata['reviewer_name'] || 'Cliente', short: true },
       { title: 'Nota',        value: "#{review.rating}/5",            short: true },
       { title: 'Reprovado por', value: admin_user&.email || 'Sistema', short: true }
     ]

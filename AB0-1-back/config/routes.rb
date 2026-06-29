@@ -352,6 +352,13 @@ Rails.application.routes.draw do
       end
 
       namespace :company_admin do
+        resources :review_forms, only: %i[index show create update destroy] do
+          member do
+            post :duplicate
+            post :event
+          end
+        end
+
         resources :faqs, only: %i[index create update destroy] do
           collection do
             post :reorder
@@ -372,6 +379,11 @@ Rails.application.routes.draw do
           end
         end
       end
+
+      get 'review_forms/:token/public', to: 'public_review_forms#show'
+      post 'review_forms/:token/submit', to: 'public_review_forms#submit'
+      post 'review_forms/:token/event', to: 'public_review_forms#event'
+      get 'review_forms/:token/qr_code', to: 'public_review_forms#qr_code'
 
       resources :faqs do
         member do

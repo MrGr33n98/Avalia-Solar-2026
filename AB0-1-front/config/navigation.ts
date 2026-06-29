@@ -14,6 +14,7 @@ import {
   Sparkles,
   TrendingUp,
   MessageCircle,
+  QrCode,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -74,6 +75,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         context: ['operational', 'quick_access'],
         badge: true,
         description: 'Gerenciar avaliações de clientes',
+      },
+      {
+        id: 'review-forms',
+        label: 'Coletar Avaliações',
+        icon: QrCode,
+        context: ['operational', 'quick_access'],
+        description: 'Criar formulários, links e QR Codes de avaliação',
       },
     ],
   },

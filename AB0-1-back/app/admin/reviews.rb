@@ -11,6 +11,8 @@ ActiveAdmin.register Review do
 
   filter :company
   filter :user
+  filter :review_form
+  filter :capture_flow_source, as: :select, collection: -> { Review.capture_flow_sources.keys }
   filter :status, as: :select, collection: -> { Review.statuses.keys }
   filter :rating
   filter :featured
@@ -63,6 +65,8 @@ ActiveAdmin.register Review do
     id_column
     column :company
     column 'Usuário', &:user
+    column :review_form
+    column :capture_flow_source
     column :rating
     column :status do |review|
       status_tag review.status

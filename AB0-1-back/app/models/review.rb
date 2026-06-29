@@ -3,7 +3,8 @@ class Review < ApplicationRecord
 
   belongs_to :reviewable, polymorphic: true, optional: true
   belongs_to :company, counter_cache: true, optional: true
-  belongs_to :user
+  belongs_to :user, optional: true
+  belongs_to :review_form, optional: true
   belongs_to :category, optional: true
   has_many :review_decision_logs, dependent: :destroy
   has_many :review_criterion_scores, dependent: :destroy
@@ -14,7 +15,13 @@ class Review < ApplicationRecord
   enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4 }
   enum project_type: { residential: 0, commercial: 1, industrial: 2, rural: 3 }
   enum installation_status: { completed: 0, in_progress: 1, waiting: 2 }
-  enum capture_flow_source: { profile: 'profile', lead: 'lead', chat: 'chat' }
+  enum capture_flow_source: {
+    profile: 'profile',
+    lead: 'lead',
+    chat: 'chat',
+    custom_review_form: 'custom_review_form',
+    qr_code_form: 'qr_code_form'
+  }
 
   # Columns: headline (string), pros (jsonb), cons (jsonb), buyer_tip (text), project_context (jsonb)
   # category_id (fk), is_legacy (boolean), granular_scores_snapshot (jsonb)
@@ -64,11 +71,11 @@ class Review < ApplicationRecord
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[comment created_at display_order featured id company_id category_id rating status updated_at user_id verified
-       headline]
+       headline capture_flow_source review_form_id verification_status]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company user category]
+    %w[company user category review_form]
   end
 
   def self.social_proof_cache_key(company_id, limit: nil)
@@ -123,7 +130,7 @@ class Review < ApplicationRecord
   private
 
   def require_comment_or_criteria
-    return if comment.present? || review_criterion_scores.present?
+    return if comment.present? || review_criterion_scores.present? || form_answers.present?
 
     errors.add(:base, 'Review must have either a comment or criteria scores')
   end
@@ -291,7 +298,7 @@ class Review < ApplicationRecord
         user: company_user,
         notification_type: 'new_review',
         title: 'Nova avaliação recebida',
-        body: "#{rating} estrelas - #{headline.presence || comment.truncate(50)}",
+        body: "#{rating} estrelas - #{headline.presence || comment.to_s.truncate(50)}",
         notifiable: self,
         delivery_channels: ['in_app']
       )

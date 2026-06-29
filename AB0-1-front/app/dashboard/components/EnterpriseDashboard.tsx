@@ -92,6 +92,9 @@ const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), {
 const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const ReviewFormsManagement = dynamic(() => import('./ReviewFormsManagement'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 
 function DashboardTabSkeleton() {
   return (
@@ -888,6 +891,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ReviewsManagement companyId={companyId} />
                 </div>
+              </TabsContent>
+
+              <TabsContent
+                value="review-forms"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="review-forms"
+              >
+                <ReviewFormsManagement companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="sector-questions" className="mt-0 focus-visible:outline-none">

@@ -142,6 +142,7 @@ class Company < ApplicationRecord
   has_many :financing_options, dependent: :destroy
   accepts_nested_attributes_for :financing_options, allow_destroy: true
   has_many :company_faqs, dependent: :destroy
+  has_many :review_forms, dependent: :destroy
   accepts_nested_attributes_for :company_faqs, allow_destroy: true
   has_one :company_financing_profile, dependent: :destroy
   has_many :company_financing_partners, dependent: :destroy

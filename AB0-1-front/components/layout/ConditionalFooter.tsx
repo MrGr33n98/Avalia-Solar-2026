@@ -19,6 +19,7 @@ export default function ConditionalFooter() {
     '/admin',
     '/painel',
     '/control',
+    '/f',
   ];
 
   const isInternal =
