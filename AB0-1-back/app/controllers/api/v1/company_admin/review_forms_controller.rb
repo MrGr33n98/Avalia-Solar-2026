@@ -69,7 +69,7 @@ module Api
             unless current_user.admin? || current_user.active_membership_for?(requested_id)
               return render json: { error: 'Forbidden' }, status: :forbidden
             end
-            @company = Company.find(requested_id)
+            @company = ::Company.find(requested_id)
           else
             @company = current_user.company
           end
