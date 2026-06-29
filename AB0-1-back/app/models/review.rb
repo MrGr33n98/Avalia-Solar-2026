@@ -95,18 +95,20 @@ class Review < ApplicationRecord
     user
   end
 
+
   def reviewer_consented_to_full_name?
     reviewer_user&.display_full_name_consent? && reviewer_user.lgpd_name_consent?
   end
 
   def anonymized_reviewer_name
-    if reviewer_user.nil?
+    name_source = reviewer_user&.name || metadata&.[]('reviewer_name')
+    if name_source.blank?
       'Anônimo'
-    elsif reviewer_consented_to_full_name?
-      reviewer_user.name
+    elsif reviewer_consented_to_full_name? || ActiveModel::Type::Boolean.new.cast(metadata&.[]('lgpd_consent'))
+      name_source
     else
       # Format: "F. L." (first initial, last initial)
-      parts = (reviewer_user.name || '').split
+      parts = name_source.split
       return 'Anônimo' if parts.empty?
 
       first_initial = parts.first[0]
@@ -120,9 +122,9 @@ class Review < ApplicationRecord
   end
 
   def public_reviewer_name
-    raw_name = user&.name.to_s.strip
+    raw_name = (user&.name.presence || metadata&.[]('reviewer_name')).to_s.strip
     return 'Cliente' if raw_name.blank?
-    return raw_name if user_consented_to_full_name?
+    return raw_name if user_consented_to_full_name? || ActiveModel::Type::Boolean.new.cast(metadata&.[]('lgpd_consent'))
 
     anonymize_name(raw_name)
   end
