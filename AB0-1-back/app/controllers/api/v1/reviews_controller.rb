@@ -149,7 +149,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       featured: review.featured,
       display_order: review.display_order,
       verified: review.verified,
-      user: serialize_user(review.user),
+      user: serialize_user(review),
       company: serialize_company(review.company),
       granular_scores: serialize_granular_scores(review)
     }
