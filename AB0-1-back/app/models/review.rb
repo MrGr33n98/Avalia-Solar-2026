@@ -39,6 +39,7 @@ class Review < ApplicationRecord
   scope :for_social_proof, -> { approved_only.featured_only.order(display_order: :asc, created_at: :desc) }
 
   # Callbacks
+  before_validation :set_default_reviewable, prepend: true
   before_save :persist_granular_scores_snapshot
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
@@ -142,6 +143,13 @@ class Review < ApplicationRecord
   end
 
   private
+
+  def set_default_reviewable
+    return if company_id.blank?
+
+    self.reviewable_type ||= 'Company'
+    self.reviewable_id ||= company_id
+  end
 
   def require_comment_or_criteria
     return if comment.present? || review_criterion_scores.present? || form_answers.present?
