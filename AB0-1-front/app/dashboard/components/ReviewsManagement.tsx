@@ -1,53 +1,67 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Star, 
-  ThumbsUp, 
-  Flag, 
-  Pin, 
-  Eye, 
-  MessageSquare, 
-  User, 
-  CheckCircle2, 
-  ShieldCheck,
-  MoreHorizontal,
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Award,
+  CheckCircle2,
+  Link2,
+  Mail,
+  MessageSquare,
+  Pin,
+  QrCode,
+  RefreshCw,
   Reply,
-  AlertCircle,
-  Command,
-  Activity,
-  Award
+  Search,
+  ShieldCheck,
+  Smartphone,
+  Star,
 } from 'lucide-react';
+import {
+  Bar,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { dashboardApi, reviewsApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { dashboardApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import MetricCard from './MetricCard';
 
 interface ReviewsManagementProps {
   companyId: string;
 }
 
+type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'flagged';
+type ReviewFilter = 'all' | 'approved' | 'pending';
+
 interface Review {
   id: string;
   rating: number;
   comment: string;
-  user_name: string;
-  user_avatar?: string;
-  created_at: Date;
+  headline: string;
+  userName: string;
+  createdAt: string;
   verified: boolean;
   featured: boolean;
-  helpful_count: number;
-  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis';
+  helpfulCount: number;
+  status: ReviewStatus;
   reply?: string;
-  replied_at?: Date;
+  repliedAt?: string;
+  source?: string;
+  sentiment?: string;
+  npsScore?: number;
 }
 
 interface SocialProofPermissions {
@@ -60,310 +74,839 @@ interface SocialProofStats {
   total_reviews: number;
   approved_reviews: number;
   featured_reviews: number;
+  verified_reviews: number;
   average_rating: number;
+  response_rate: number;
+  nps_score: number | null;
   rating_distribution: Record<string, number>;
   monthly_evolution: Record<string, number>;
+  monthly_rating: Record<string, number>;
+  sentiment_distribution: Record<string, number>;
+  source_distribution: Record<string, number>;
+}
+
+const EMPTY_STATS: SocialProofStats = {
+  total_reviews: 0,
+  approved_reviews: 0,
+  featured_reviews: 0,
+  verified_reviews: 0,
+  average_rating: 0,
+  response_rate: 0,
+  nps_score: null,
+  rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+  monthly_evolution: {},
+  monthly_rating: {},
+  sentiment_distribution: { positive: 0, neutral: 0, negative: 0, unknown: 0 },
+  source_distribution: {},
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  custom_review_form: 'Formulário',
+  qr_code_form: 'QR Code',
+  profile: 'Perfil público',
+  lead: 'Lead',
+  chat: 'Chat',
+  whatsapp: 'WhatsApp',
+  email: 'E-mail',
+  unknown: 'Outros',
+};
+
+const SOURCE_COLORS = ['#2563eb', '#0ea5e9', '#10b981', '#f59e0b', '#64748b'];
+const SENTIMENT_COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+
+function asNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, asNumber(entry)])
+  );
+}
+
+function formatMonth(value: string): string {
+  const date = new Date(`${value}-01T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Data indisponível';
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+    .format(date)
+    .replace('.', '');
+}
+
+function sourceLabel(source?: string): string {
+  return SOURCE_LABELS[source || 'unknown'] || source?.replaceAll('_', ' ') || 'Outros';
+}
+
+function StatusBadge({ status }: { status: ReviewStatus }) {
+  const label = {
+    approved: 'Publicada',
+    pending: 'Pendente',
+    rejected: 'Rejeitada',
+    in_analysis: 'Em análise',
+    flagged: 'Sinalizada',
+  }[status];
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        'h-6 rounded-md px-2 text-[10px] font-semibold',
+        status === 'approved' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        status === 'pending' && 'border-amber-200 bg-amber-50 text-amber-700',
+        status === 'rejected' && 'border-red-200 bg-red-50 text-red-700',
+        (status === 'in_analysis' || status === 'flagged') &&
+          'border-slate-200 bg-slate-50 text-slate-600'
+      )}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+function Stars({ rating, compact = false }: { rating: number; compact?: boolean }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrelas`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={cn(
+            compact ? 'h-3.5 w-3.5' : 'h-4 w-4',
+            star <= Math.round(rating)
+              ? 'fill-amber-400 text-amber-400'
+              : 'fill-transparent text-slate-200 dark:text-slate-700'
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: typeof Star;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950">
+      <CardContent className="p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            {label}
+          </p>
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-brand-blue dark:border-white/10 dark:bg-white/5">
+            <Icon className="h-4 w-4" />
+          </span>
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-3xl font-bold tracking-tight text-slate-950 tabular-nums dark:text-white">
+              {value}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{detail}</p>
+          </div>
+          {children}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6" aria-label="Carregando avaliações">
+      <div className="flex justify-between gap-6">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-40" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {[1, 2, 3, 4, 5].map((item) => (
+          <Skeleton key={item} className="h-36 rounded-xl" />
+        ))}
+      </div>
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Skeleton className="h-80 rounded-xl xl:col-span-8" />
+        <Skeleton className="h-80 rounded-xl xl:col-span-4" />
+      </div>
+    </div>
+  );
 }
 
 export default function ReviewsManagement({ companyId }: ReviewsManagementProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState<SocialProofStats | null>(null);
+  const [stats, setStats] = useState<SocialProofStats>(EMPTY_STATS);
   const [permissions, setPermissions] = useState<SocialProofPermissions>({
     can_feature_reviews: false,
     social_proof_enabled: false,
     featured_limit: 5,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<ReviewFilter>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
-      const [reviewsResp, statsResp] = await Promise.all([
+      setError(null);
+      const [reviewsResponse, statsResponse] = await Promise.all([
         dashboardApi.getSocialProofReviews({ company_id: Number(companyId) }),
         dashboardApi.getSocialProofStats({ company_id: Number(companyId) }),
       ]);
 
-      const rawReviews = Array.isArray((reviewsResp as any)?.reviews) ? (reviewsResp as any).reviews : [];
-      const mapped: Review[] = rawReviews.map((r: any) => ({
-        id: String(r.id),
-        rating: Number(r.rating || 0),
-        comment: String(r.comment || ''),
-        user_name: r.user_name || r.user?.name || 'Cliente',
-        user_avatar: undefined,
-        created_at: new Date(r.created_at),
-        verified: !!r.verified,
-        featured: !!r.featured,
-        helpful_count: Number(r.helpful_count || 0),
-        status: r.status,
-        reply: r.reply,
-        replied_at: r.replied_at ? new Date(r.replied_at) : undefined
-      }));
+      const response = reviewsResponse as Record<string, unknown>;
+      const rawReviews = Array.isArray(response.reviews) ? response.reviews : [];
+      const mappedReviews = rawReviews.map((entry) => {
+        const review = entry as Record<string, unknown>;
+        return {
+          id: String(review.id),
+          rating: asNumber(review.rating),
+          comment: String(review.comment || ''),
+          headline: String(review.headline || ''),
+          userName: String(review.user_name || 'Cliente'),
+          createdAt: String(review.created_at || ''),
+          verified: Boolean(review.verified),
+          featured: Boolean(review.featured),
+          helpfulCount: asNumber(review.helpful_count),
+          status: String(review.status || 'pending') as ReviewStatus,
+          reply: review.reply ? String(review.reply) : undefined,
+          repliedAt: review.replied_at ? String(review.replied_at) : undefined,
+          source: review.capture_flow_source ? String(review.capture_flow_source) : undefined,
+          sentiment: review.sentiment ? String(review.sentiment) : undefined,
+          npsScore:
+            review.nps_score === null || review.nps_score === undefined
+              ? undefined
+              : asNumber(review.nps_score),
+        } satisfies Review;
+      });
 
-      setReviews(mapped);
-      if ((reviewsResp as any)?.permissions) {
-        setPermissions((reviewsResp as any).permissions);
+      const permissionPayload = response.permissions as Partial<SocialProofPermissions> | undefined;
+      if (permissionPayload) {
+        setPermissions((current) => ({ ...current, ...permissionPayload }));
       }
-      setStats((statsResp as any)?.stats || null);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
+
+      const statsPayload = ((statsResponse as Record<string, unknown>).stats || {}) as Record<
+        string,
+        unknown
+      >;
+      setStats({
+        total_reviews: asNumber(statsPayload.total_reviews),
+        approved_reviews: asNumber(statsPayload.approved_reviews),
+        featured_reviews: asNumber(statsPayload.featured_reviews),
+        verified_reviews: asNumber(statsPayload.verified_reviews),
+        average_rating: asNumber(statsPayload.average_rating),
+        response_rate: asNumber(statsPayload.response_rate),
+        nps_score:
+          statsPayload.nps_score === null || statsPayload.nps_score === undefined
+            ? null
+            : asNumber(statsPayload.nps_score),
+        rating_distribution: normalizeRecord(statsPayload.rating_distribution),
+        monthly_evolution: normalizeRecord(statsPayload.monthly_evolution),
+        monthly_rating: normalizeRecord(statsPayload.monthly_rating),
+        sentiment_distribution: normalizeRecord(statsPayload.sentiment_distribution),
+        source_distribution: normalizeRecord(statsPayload.source_distribution),
+      });
+      setReviews(mappedReviews);
+    } catch (requestError) {
+      console.error('Failed to load review dashboard:', requestError);
+      setError('Não foi possível carregar os dados de reputação.');
     } finally {
       setLoading(false);
     }
   }, [companyId]);
 
   useEffect(() => {
-    fetchReviews();
-  }, [companyId, fetchReviews]);
+    void fetchReviews();
+  }, [fetchReviews]);
+
+  const monthlyData = useMemo(() => {
+    const months = new Set([
+      ...Object.keys(stats.monthly_evolution),
+      ...Object.keys(stats.monthly_rating),
+    ]);
+    return Array.from(months)
+      .sort()
+      .map((month) => ({
+        month,
+        label: formatMonth(month),
+        reviews: stats.monthly_evolution[month] || 0,
+        rating: stats.monthly_rating[month] || 0,
+      }));
+  }, [stats.monthly_evolution, stats.monthly_rating]);
+
+  const distribution = useMemo(() => {
+    const total = Object.values(stats.rating_distribution).reduce((sum, count) => sum + count, 0);
+    return [5, 4, 3, 2, 1].map((rating) => {
+      const count = stats.rating_distribution[String(rating)] || 0;
+      return { rating, count, percentage: total > 0 ? Math.round((count / total) * 100) : 0 };
+    });
+  }, [stats.rating_distribution]);
+
+  const sentimentData = useMemo(
+    () => [
+      { key: 'positive', name: 'Positivo', value: stats.sentiment_distribution.positive || 0 },
+      { key: 'neutral', name: 'Neutro', value: stats.sentiment_distribution.neutral || 0 },
+      { key: 'negative', name: 'Negativo', value: stats.sentiment_distribution.negative || 0 },
+    ],
+    [stats.sentiment_distribution]
+  );
+  const analyzedSentiments = sentimentData.reduce((sum, item) => sum + item.value, 0);
+  const positiveRate = analyzedSentiments
+    ? Math.round(((stats.sentiment_distribution.positive || 0) / analyzedSentiments) * 100)
+    : 0;
+
+  const sourceData = useMemo(
+    () =>
+      Object.entries(stats.source_distribution)
+        .map(([source, value]) => ({ source, name: sourceLabel(source), value }))
+        .sort((a, b) => b.value - a.value),
+    [stats.source_distribution]
+  );
+  const sourceTotal = sourceData.reduce((sum, item) => sum + item.value, 0);
+
+  const verifiedRate = stats.approved_reviews
+    ? Math.round((stats.verified_reviews / stats.approved_reviews) * 100)
+    : 0;
+
+  const filteredReviews = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase('pt-BR');
+    return reviews.filter((review) => {
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'approved' && review.status === 'approved') ||
+        (filter === 'pending' && review.status !== 'approved');
+      const matchesQuery =
+        !query ||
+        review.userName.toLocaleLowerCase('pt-BR').includes(query) ||
+        review.comment.toLocaleLowerCase('pt-BR').includes(query) ||
+        review.headline.toLocaleLowerCase('pt-BR').includes(query);
+      return matchesFilter && matchesQuery;
+    });
+  }, [filter, reviews, search]);
 
   const handleToggleFeatured = async (reviewId: string) => {
     if (!permissions.can_feature_reviews) {
       toast({
-        title: 'Recurso premium',
-        description: 'Upgrade necessário para destacar prova social.',
-        variant: 'destructive',
+        title: 'Destaque indisponível',
+        description: 'Seu plano atual não inclui avaliações em destaque.',
       });
       return;
     }
 
     const review = reviews.find((item) => item.id === reviewId);
     if (!review) return;
-
     const enabling = !review.featured;
-    if (enabling && reviews.filter(r => r.featured).length >= permissions.featured_limit) {
-      toast({ title: 'Limite atingido', variant: 'destructive' });
+    if (enabling && stats.featured_reviews >= permissions.featured_limit) {
+      toast({
+        title: 'Limite de destaques atingido',
+        description: `Remova um destaque antes de adicionar outro. O limite é ${permissions.featured_limit}.`,
+      });
       return;
     }
 
     try {
+      setUpdatingId(reviewId);
       await dashboardApi.updateSocialProofReview(reviewId, { featured: enabling }, companyId);
-      fetchReviews();
-    } catch (error) {
-       toast({ title: 'Erro ao atualizar', variant: 'destructive' });
+      await fetchReviews();
+      toast({
+        title: enabling ? 'Avaliação destacada' : 'Destaque removido',
+        description: 'A vitrine pública foi atualizada.',
+      });
+    } catch (requestError) {
+      console.error('Failed to update featured review:', requestError);
+      toast({ title: 'Não foi possível atualizar o destaque', variant: 'destructive' });
+    } finally {
+      setUpdatingId(null);
     }
   };
 
-  const metrics = useMemo(() => {
-    const avg = Number(stats?.average_rating || 0).toFixed(1);
-    return [
-      {
-        title: "Rating Consolidado",
-        value: avg,
-        icon: Star,
-        change: "+0.1",
-        changeType: "positive" as const,
-        color: "yellow",
-        trend: [60, 62, 65, 63, 68, 70, 72]
-      },
-      {
-        title: "Total de Feedback",
-        value: (stats?.total_reviews ?? reviews.length).toString(),
-        icon: MessageSquare,
-        change: "+12",
-        changeType: "positive" as const,
-        color: "blue",
-        trend: [20, 35, 30, 45, 50, 42, 60]
-      },
-      {
-        title: "Reviews Premium",
-        value: reviews.filter(r => r.verified).length.toString(),
-        icon: ShieldCheck,
-        change: "85%",
-        changeType: "positive" as const,
-        color: "emerald",
-        trend: [50, 55, 60, 65, 70, 75, 80]
-      },
-      {
-        title: "Em Destaque",
-        value: `${stats?.featured_reviews ?? reviews.filter(r => r.featured).length}/${permissions.featured_limit}`,
-        icon: Award,
-        change: "Full Power",
-        changeType: "positive" as const,
-        color: "purple",
-        trend: [80, 85, 90, 88, 95, 96, 98]
-      }
-    ];
-  }, [stats, reviews, permissions]);
+  if (loading) return <DashboardSkeleton />;
 
-  if (loading) {
+  if (error) {
     return (
-      <div className="space-y-10">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-10 w-64 bg-slate-200 dark:bg-white/5" />
-          <Skeleton className="h-4 w-96 bg-slate-100 dark:bg-white/5" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-             <Skeleton key={i} className="h-32 rounded-xl bg-slate-100 dark:bg-white/5" />
-          ))}
-        </div>
-      </div>
+      <Card className="border-red-200 bg-red-50 shadow-none">
+        <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-red-900">{error}</p>
+            <p className="mt-1 text-sm text-red-700">Verifique sua conexão e tente novamente.</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => void fetchReviews()}
+            className="border-red-200 bg-white text-red-800"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Command className="h-6 w-6 text-brand-blue" />
-            <h2 className="text-3xl font-black tracking-tight uppercase text-foreground dark:text-white">
-              Central de Reputação
-            </h2>
+          <div className="mb-2 flex items-center gap-2 text-brand-blue">
+            <ShieldCheck className="h-5 w-5" />
+            <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+              Central de reputação
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground/60 font-medium">
-            Gerencie sua autoridade digital, aprove reviews e otimize sua prova social
+          <h3 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
+            O que seus clientes estão dizendo
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Acompanhe qualidade, volume e origem das avaliações em um único lugar.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge className="h-8 px-4 bg-brand-blue/5 text-brand-blue border-none font-black text-[10px] uppercase tracking-widest">
-            {permissions.can_feature_reviews ? `Slot de Destaque: ${permissions.featured_limit}` : 'Destaque Bloqueado'}
-          </Badge>
-        </div>
+        <Button
+          asChild
+          className="h-10 rounded-lg bg-brand-blue px-4 text-sm font-semibold text-white hover:bg-brand-blue/90"
+        >
+          <Link href="/dashboard?tab=review-forms">
+            <QrCode className="mr-2 h-4 w-4" /> Coletar avaliações
+          </Link>
+        </Button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, idx) => (
-          <MetricCard key={idx} {...metric} delay={idx * 0.1} />
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <MetricCard
+          label="Rating consolidado"
+          value={stats.average_rating ? stats.average_rating.toFixed(1) : '—'}
+          detail={
+            stats.approved_reviews
+              ? `${stats.approved_reviews} avaliações publicadas`
+              : 'Sem avaliações publicadas'
+          }
+          icon={Star}
+        >
+          <Stars rating={stats.average_rating} compact />
+        </MetricCard>
+        <MetricCard
+          label="Total de avaliações"
+          value={stats.total_reviews.toLocaleString('pt-BR')}
+          detail={`${stats.approved_reviews} publicadas`}
+          icon={MessageSquare}
+        />
+        <MetricCard
+          label="Reviews verificadas"
+          value={`${verifiedRate}%`}
+          detail={`${stats.verified_reviews} com verificação`}
+          icon={CheckCircle2}
+        >
+          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div className="h-full bg-emerald-500" style={{ width: `${verifiedRate}%` }} />
+          </div>
+        </MetricCard>
+        <MetricCard
+          label="Taxa de resposta"
+          value={`${stats.response_rate}%`}
+          detail="Avaliações respondidas"
+          icon={Reply}
+        />
+        <MetricCard
+          label="NPS"
+          value={stats.nps_score === null ? '—' : String(stats.nps_score)}
+          detail={stats.nps_score === null ? 'Aguardando respostas NPS' : 'Índice de recomendação'}
+          icon={Award}
+        />
       </div>
 
-      {/* Reviews List */}
-      <div className="space-y-6">
-        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/40 pl-1">
-          Feedbacks de Clientes
-        </h3>
-        
-        <div className="grid grid-cols-1 gap-6">
-          <AnimatePresence>
-            {reviews.map((review, idx) => (
-              <motion.div
-                key={review.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + (idx * 0.05) }}
-              >
-                <Card className={cn(
-                  "clay-precision rounded-xl bg-card dark:bg-[#0F172A] border-none group transition-all duration-300",
-                  review.featured && "ring-1 ring-brand-yellow/20 bg-brand-yellow/[0.02]"
-                )}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      {/* Customer Info */}
-                      <div className="flex-shrink-0 flex md:flex-col items-center md:items-start gap-4 md:w-48">
-                        <Avatar className="h-16 w-16 ring-4 ring-slate-100 dark:ring-white/5 shadow-xl">
-                          <AvatarImage src={review.user_avatar} />
-                          <AvatarFallback className="bg-brand-blue/10 text-brand-blue font-black text-xl">
-                            {review.user_name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 md:text-left">
-                          <h4 className="font-black text-foreground dark:text-white truncate uppercase tracking-tight leading-tight">
-                            {review.user_name}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-1">
-                             {review.verified && (
-                               <Badge className="h-5 px-2 bg-brand-green/10 text-brand-green border-none font-black text-[8px] uppercase tracking-widest">
-                                 Premium
-                               </Badge>
-                             )}
-                          </div>
-                        </div>
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950 xl:col-span-8">
+          <CardHeader className="flex-row items-start justify-between space-y-0 p-5 pb-2">
+            <div>
+              <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+                Evolução das avaliações
+              </CardTitle>
+              <p className="mt-1 text-xs text-slate-500">Volume recebido e nota média por mês</p>
+            </div>
+            <div className="flex items-center gap-4 text-[11px] text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <i className="h-2 w-2 rounded-sm bg-brand-blue" /> Volume
+              </span>
+              <span className="flex items-center gap-1.5">
+                <i className="h-2 w-2 rounded-full bg-emerald-500" /> Nota
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5 pt-3">
+            {monthlyData.length ? (
+              <div className="h-64 w-full" aria-label="Gráfico de evolução das avaliações">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={monthlyData}
+                    margin={{ top: 12, right: 4, bottom: 0, left: -20 }}
+                  >
+                    <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748b', fontSize: 11 }}
+                    />
+                    <YAxis
+                      yAxisId="reviews"
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748b', fontSize: 11 }}
+                    />
+                    <YAxis
+                      yAxisId="rating"
+                      orientation="right"
+                      domain={[0, 5]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748b', fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 10,
+                        border: '1px solid #e2e8f0',
+                        boxShadow: 'none',
+                      }}
+                      labelStyle={{ color: '#0f172a', fontWeight: 600 }}
+                    />
+                    <Bar
+                      yAxisId="reviews"
+                      dataKey="reviews"
+                      name="Avaliações"
+                      fill="#2563eb"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={32}
+                    />
+                    <Line
+                      yAxisId="rating"
+                      dataKey="rating"
+                      name="Nota média"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                <MessageSquare className="mb-3 h-6 w-6 text-slate-300" />
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  A evolução aparecerá após a primeira avaliação publicada.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950 xl:col-span-4">
+          <CardHeader className="p-5 pb-2">
+            <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+              Distribuição das notas
+            </CardTitle>
+            <p className="mt-1 text-xs text-slate-500">Participação por quantidade de estrelas</p>
+          </CardHeader>
+          <CardContent className="space-y-4 p-5 pt-4">
+            {distribution.map((item) => (
+              <div key={item.rating} className="grid grid-cols-[36px_1fr_74px] items-center gap-3">
+                <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {item.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                </span>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-brand-blue"
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </div>
+                <span className="text-right text-xs tabular-nums text-slate-500">
+                  {item.percentage}% <span className="text-slate-400">({item.count})</span>
+                </span>
+              </div>
+            ))}
+            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-sm dark:border-white/10">
+              <span className="text-slate-500">Nota média</span>
+              <span className="font-semibold tabular-nums text-slate-950 dark:text-white">
+                {stats.average_rating ? stats.average_rating.toFixed(1) : '—'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950 xl:col-span-8">
+          <CardHeader className="gap-4 p-5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+                Avaliações recebidas
+              </CardTitle>
+              <p className="mt-1 text-xs text-slate-500">
+                Feedbacks mais recentes e status de publicação
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="relative">
+                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar feedback"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs text-slate-800 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 dark:border-white/10 dark:bg-white/5 dark:text-white sm:w-44"
+                />
+              </label>
+              <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/10">
+                {(
+                  [
+                    ['all', 'Todas'],
+                    ['approved', 'Publicadas'],
+                    ['pending', 'Pendentes'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFilter(value)}
+                    className={cn(
+                      'h-8 rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                      filter === value
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950'
+                        : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredReviews.length ? (
+              <div className="divide-y divide-slate-100 dark:divide-white/10">
+                {filteredReviews.map((review) => (
+                  <article
+                    key={review.id}
+                    className="p-5 transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.02]"
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-blue/10 text-sm font-bold text-brand-blue">
+                        {review.userName.charAt(0).toUpperCase()}
                       </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-6">
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={cn(
-                                      "h-4 w-4",
-                                      star <= review.rating ? "text-brand-yellow fill-brand-yellow shadow-[0_0_8px_rgba(234,179,8,0.4)]" : "text-muted-foreground/20"
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-[10px] font-black font-mono text-muted-foreground/30 uppercase tracking-widest">
-                                {new Date(review.created_at).toLocaleDateString()}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="text-sm font-semibold text-slate-950 dark:text-white">
+                                {review.userName}
+                              </h4>
+                              {review.verified && (
+                                <span title="Avaliação verificada">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                </span>
+                              )}
+                              <StatusBadge status={review.status} />
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                              <Stars rating={review.rating} compact />
+                              <span className="text-[11px] text-slate-400">
+                                {formatDate(review.createdAt)}
+                              </span>
+                              <span className="text-[11px] text-slate-400">•</span>
+                              <span className="text-[11px] text-slate-500">
+                                {sourceLabel(review.source)}
                               </span>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                              {review.featured && (
-                                <Badge className="bg-brand-yellow/10 text-yellow-600 border-none font-black text-[9px] uppercase tracking-widest px-3 h-6">
-                                  <Pin className="h-3 w-3 mr-1.5" /> Destaque Ativo
-                                </Badge>
-                              )}
-                              <Badge className={cn(
-                                "border-none font-black text-[9px] uppercase tracking-widest px-3 h-6",
-                                review.status === 'approved' ? "bg-brand-green/10 text-brand-green" :
-                                review.status === 'rejected' ? "bg-rose-500/10 text-rose-500" :
-                                "bg-slate-500/10 text-slate-500"
-                              )}>
-                                {review.status || 'Pendente'}
-                              </Badge>
-                            </div>
                           </div>
-                          
-                          <p className="text-sm font-medium text-foreground/80 dark:text-slate-300 leading-relaxed max-w-2xl mb-6">
-                            {review.comment}
-                          </p>
-
-                          {/* Response Section */}
-                          {review.reply && (
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 mb-6 relative overflow-hidden group/reply">
-                               <div className="absolute top-0 left-0 w-1 h-full bg-brand-blue/30" />
-                               <div className="flex items-center gap-2 mb-2">
-                                 <Reply className="h-3.5 w-3.5 text-brand-blue" />
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Resposta Oficial</span>
-                               </div>
-                               <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed italic">
-                                 &quot;{review.reply}&quot;
-                               </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
-                          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
-                             <div className="flex items-center gap-1.5">
-                               <ThumbsUp className="h-4 w-4" />
-                               {review.helpful_count} Úteis
-                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
-                              Responder
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleToggleFeatured(review.id)}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void handleToggleFeatured(review.id)}
+                            disabled={updatingId === review.id}
+                            className={cn(
+                              'h-8 shrink-0 rounded-lg border-slate-200 px-2.5 text-[11px] shadow-none dark:border-white/10',
+                              review.featured && 'border-amber-200 bg-amber-50 text-amber-700'
+                            )}
+                          >
+                            <Pin
                               className={cn(
-                                "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-slate-200 dark:border-white/10 transition-all",
-                                review.featured ? "bg-brand-yellow/10 text-yellow-600 border-brand-yellow/20" : "hover:bg-slate-50 dark:hover:bg-white/5"
+                                'mr-1.5 h-3.5 w-3.5',
+                                review.featured && 'fill-current'
                               )}
-                            >
-                              {review.featured ? 'Remover Destaque' : 'Destacar'}
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground/40 hover:text-rose-500 hover:bg-rose-500/5 transition-all">
-                              <Flag className="h-4 w-4" />
-                            </Button>
-                          </div>
+                            />
+                            {review.featured ? 'Em destaque' : 'Destacar'}
+                          </Button>
                         </div>
+                        {review.headline && (
+                          <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            {review.headline}
+                          </p>
+                        )}
+                        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                          {review.comment || 'Avaliação enviada sem comentário.'}
+                        </p>
+                        {review.reply && (
+                          <div className="mt-3 rounded-lg border-l-2 border-brand-blue bg-slate-50 px-3 py-2.5 dark:bg-white/5">
+                            <p className="text-[11px] font-semibold text-brand-blue">
+                              Resposta da empresa
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                              {review.reply}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center">
+                <MessageSquare className="mb-3 h-7 w-7 text-slate-300" />
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {reviews.length
+                    ? 'Nenhuma avaliação corresponde aos filtros.'
+                    : 'Nenhuma avaliação recebida ainda.'}
+                </p>
+                {!reviews.length && (
+                  <Link
+                    href="/dashboard?tab=review-forms"
+                    className="mt-2 text-sm font-medium text-brand-blue hover:underline"
+                  >
+                    Criar um canal de coleta
+                  </Link>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4 xl:col-span-4">
+          <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950">
+            <CardHeader className="p-5 pb-1">
+              <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+                Análise de sentimento
+              </CardTitle>
+              <p className="mt-1 text-xs text-slate-500">Tom predominante nos comentários</p>
+            </CardHeader>
+            <CardContent className="p-5 pt-2">
+              {analyzedSentiments ? (
+                <div className="grid grid-cols-[150px_1fr] items-center gap-3">
+                  <div className="relative h-36">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={sentimentData}
+                          dataKey="value"
+                          innerRadius={46}
+                          outerRadius={63}
+                          strokeWidth={0}
+                        >
+                          {sentimentData.map((item, index) => (
+                            <Cell key={item.key} fill={SENTIMENT_COLORS[index]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold tabular-nums text-slate-950 dark:text-white">
+                        {positiveRate}%
+                      </span>
+                      <span className="text-[10px] text-slate-500">positivo</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {sentimentData.map((item, index) => (
+                      <div
+                        key={item.key}
+                        className="flex items-center justify-between gap-2 text-xs"
+                      >
+                        <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                          <i
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: SENTIMENT_COLORS[index] }}
+                          />
+                          {item.name}
+                        </span>
+                        <strong className="font-semibold tabular-nums text-slate-900 dark:text-white">
+                          {item.value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-36 items-center justify-center text-center text-xs text-slate-500">
+                  O sentimento será exibido após a análise dos comentários.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+                Fontes das avaliações
+              </CardTitle>
+              <p className="mt-1 text-xs text-slate-500">Canais que mais geram feedback</p>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 pt-1">
+              {sourceData.length ? (
+                sourceData.slice(0, 5).map((item, index) => {
+                  const percentage = sourceTotal ? Math.round((item.value / sourceTotal) * 100) : 0;
+                  const SourceIcon = item.source.includes('qr')
+                    ? QrCode
+                    : item.source.includes('email')
+                      ? Mail
+                      : item.source.includes('chat') || item.source.includes('whatsapp')
+                        ? Smartphone
+                        : Link2;
+                  return (
+                    <div
+                      key={item.source}
+                      className="grid grid-cols-[20px_88px_1fr_42px] items-center gap-2 text-xs"
+                    >
+                      <SourceIcon className="h-4 w-4 text-slate-400" />
+                      <span className="truncate text-slate-600 dark:text-slate-300">
+                        {item.name}
+                      </span>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: SOURCE_COLORS[index % SOURCE_COLORS.length],
+                          }}
+                        />
+                      </div>
+                      <span className="text-right tabular-nums text-slate-500">{percentage}%</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex h-24 items-center justify-center text-center text-xs text-slate-500">
+                  As fontes aparecerão quando houver avaliações publicadas.
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

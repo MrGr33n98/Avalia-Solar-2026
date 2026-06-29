@@ -901,7 +901,12 @@ module Api
         begin
           # ✅ Eager load user para não ter N+1 + select para limitar colunas
           reviews = @company.reviews
-                            .select(:id, :rating, :comment, :status, :featured, :display_order, :verified, :created_at, :reply, :replied_at, :user_id, :company_id)
+                            .select(
+                              :id, :rating, :comment, :headline, :status, :featured, :display_order,
+                              :verified, :verification_status, :created_at, :reply, :replied_at,
+                              :helpful_count, :capture_flow_source, :sentiment, :nps_score,
+                              :user_id, :company_id
+                            )
                             .includes(:user)
                             .order(created_at: :desc)
 
@@ -913,13 +918,19 @@ module Api
                 id: review.id,
                 rating: review.rating.to_f,
                 comment: review.comment.to_s,
+                headline: review.headline.to_s,
                 status: review.status,
                 featured: review.featured,
                 display_order: review.display_order,
                 verified: review.verified,
+                verification_status: review.verification_status,
                 created_at: review.created_at,
                 reply: review.reply,
                 replied_at: review.replied_at,
+                helpful_count: review.helpful_count.to_i,
+                capture_flow_source: review.capture_flow_source,
+                sentiment: review.sentiment,
+                nps_score: review.nps_score,
                 user_name: review.public_reviewer_name
               }
             end,
@@ -972,9 +983,15 @@ module Api
               total_reviews: @company.reviews.count,
               approved_reviews: approved_scope.count,
               featured_reviews: @company.reviews.where(featured: true).count,
+              verified_reviews: approved_scope.where(verified: true).count,
               average_rating: approved_scope.average(:rating).to_f.round(2),
+              response_rate: percentage(approved_scope.where.not(reply: [nil, '']).count, approved_scope.count),
+              nps_score: nps_for(approved_scope),
               rating_distribution: rating_distribution_for(approved_scope),
-              monthly_evolution: monthly_evolution_for(approved_scope)
+              monthly_evolution: monthly_evolution_for(approved_scope),
+              monthly_rating: monthly_rating_for(approved_scope),
+              sentiment_distribution: sentiment_distribution_for(approved_scope),
+              source_distribution: source_distribution_for(approved_scope)
             }
           }, status: :ok
         rescue StandardError => e
@@ -1142,26 +1159,61 @@ module Api
 
       def rating_distribution_for(scope)
         distribution = scope.group(:rating).count
-        {
-          5 => distribution[5.0].to_i + distribution[5].to_i,
-          4 => distribution[4.0].to_i + distribution[4].to_i,
-          3 => distribution[3.0].to_i + distribution[3].to_i,
-          2 => distribution[2.0].to_i + distribution[2].to_i,
-          1 => distribution[1.0].to_i + distribution[1].to_i
-        }
+        (1..5).map do |rating|
+          count = distribution.sum { |score, amount| score.to_i == rating ? amount.to_i : 0 }
+          [rating, count]
+        end.to_h
       end
 
       def monthly_evolution_for(scope)
-        adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
-        expression =
-          if adapter.include?('sqlite')
-            "strftime('%Y-%m', created_at)"
-          else
-            "to_char(created_at, 'YYYY-MM')"
-          end
-
-        grouped = scope.group(Arel.sql(expression)).count
+        grouped = scope.group(Arel.sql(month_expression)).count
         grouped.sort.to_h
+      end
+
+      def monthly_rating_for(scope)
+        grouped = scope.group(Arel.sql(month_expression)).average(:rating)
+        grouped.sort.to_h.transform_values { |value| value.to_f.round(2) }
+      end
+
+      def sentiment_distribution_for(scope)
+        grouped = scope.group(:sentiment).count
+        {
+          positive: grouped['positive'].to_i,
+          neutral: grouped['neutral'].to_i,
+          negative: grouped['negative'].to_i,
+          unknown: grouped['unknown'].to_i
+        }
+      end
+
+      def source_distribution_for(scope)
+        scope.group(:capture_flow_source).count.each_with_object({}) do |(source, count), result|
+          result[source.presence || 'unknown'] = count.to_i
+        end
+      end
+
+      def nps_for(scope)
+        scored = scope.where.not(nps_score: nil)
+        total = scored.count
+        return nil if total.zero?
+
+        promoters = scored.where(nps_score: 9..10).count
+        detractors = scored.where(nps_score: 0..6).count
+        (((promoters - detractors).to_f / total) * 100).round
+      end
+
+      def percentage(part, total)
+        return 0 if total.to_i.zero?
+
+        ((part.to_f / total) * 100).round
+      end
+
+      def month_expression
+        adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
+        if adapter.include?('sqlite')
+          "strftime('%Y-%m', created_at)"
+        else
+          "to_char(created_at, 'YYYY-MM')"
+        end
       end
 
       def default_ranking_payload
@@ -1187,9 +1239,15 @@ module Api
           total_reviews: 0,
           approved_reviews: 0,
           featured_reviews: 0,
+          verified_reviews: 0,
           average_rating: 0,
+          response_rate: 0,
+          nps_score: nil,
           rating_distribution: { 5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0 },
-          monthly_evolution: {}
+          monthly_evolution: {},
+          monthly_rating: {},
+          sentiment_distribution: { positive: 0, neutral: 0, negative: 0, unknown: 0 },
+          source_distribution: {}
         }
       end
 
