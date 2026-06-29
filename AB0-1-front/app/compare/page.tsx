@@ -20,6 +20,8 @@ import {
   CircleDollarSign,
   ChevronDown,
   Plus,
+  Building2,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { getFullImageUrl } from '@/utils/image';
@@ -45,6 +47,29 @@ import {
   getCompanyTrustScore,
   isPremiumCompany,
 } from '@/components/compare/compare-company-utils';
+
+const getCoverageCount = (company: Company) => {
+  const cities = Array.isArray(company.coverage_cities)
+    ? company.coverage_cities
+    : String(company.coverage_cities || '').split(',').filter(Boolean);
+  const states = Array.isArray(company.coverage_states)
+    ? company.coverage_states
+    : String(company.coverage_states || '').split(',').filter(Boolean);
+  return cities.length || states.length * 10 || 0;
+};
+
+const getSpeedBadge = (time?: string) => {
+  if (!time || time === 'Consultar') return null;
+  const lower = time.toLowerCase();
+  if (lower.includes('h')) {
+    const hours = parseInt(lower) || 0;
+    if (hours <= 2) {
+      return { label: 'Rápido', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    }
+  }
+  return { label: 'Médio', color: 'bg-amber-50 text-amber-700 border-amber-200' };
+};
+
 
 export default function ComparePage() {
   const { comparisonList, removeFromComparison, clearComparison } = useComparison();
@@ -99,6 +124,12 @@ export default function ComparePage() {
   const premiumCompany = comparisonList.find(company => 
     company.featured || company.plan_status === 'active' || company.has_paid_plan
   );
+
+  const highestRatedCompanyId = comparisonList.reduce((prev, current) => {
+    const prevRating = Number(prev.average_rating ?? prev.rating_avg ?? 0);
+    const currRating = Number(current.average_rating ?? current.rating_avg ?? 0);
+    return currRating > prevRating ? current : prev;
+  }, comparisonList[0])?.id;
 
   const formatRating = (value: unknown) => {
     const numericValue = Number(value);
@@ -252,19 +283,22 @@ export default function ComparePage() {
 
         {/* Desktop & Tablet: Table Layout */}
         <div className="hidden md:block">
-          <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,249,255,0.94))] shadow-[0_30px_64px_-36px_rgba(15,23,42,0.45)] clay-surface clay-convex">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-150 bg-white shadow-[0_30px_64px_-36px_rgba(15,23,42,0.45)]">
             <ScrollArea className="w-full">
               <div className="min-w-[760px]">
                 
                 {/* Table Header: Sticky Company Info */}
-                <div className="sticky top-0 z-30 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 bg-white shadow-sm">
-                  <div className="flex flex-col justify-end border-r border-slate-100 bg-slate-50/35 p-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Dimensões TaaS</span>
+                <div className="sticky top-0 z-30 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-200 bg-white shadow-sm divide-x divide-slate-200">
+                  <div className="flex flex-col justify-end bg-slate-50/50 p-5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Dimensões</span>
                   </div>
 
                   <AnimatePresence mode="popLayout">
                     {comparisonList.slice(0, 3).map((company, idx) => {
-                      const trustScore = getCompanyTrustScore(company);
+                      const isHighlighted = company.id === highestRatedCompanyId;
+                      const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+                      const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
+                      const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
 
                       return (
                         <motion.div 
@@ -274,50 +308,74 @@ export default function ComparePage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.95 }}
                           className={cn(
-                            "group relative flex flex-col items-center border-r border-slate-100 p-4 text-center last:border-r-0",
-                            idx === 0 && "bg-blue-50/10",
-                            isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/20 to-indigo-50/20"
+                            "group relative flex flex-col p-5 bg-white transition-all",
+                            isHighlighted && "bg-blue-50/10 ring-2 ring-blue-600 ring-inset z-10"
                           )}
                         >
+                          {/* Ribbon Destaque */}
+                          {isHighlighted && (
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+                              <Sparkles className="h-2.5 w-2.5 fill-amber-300 text-amber-300" /> Melhor avaliada
+                            </div>
+                          )}
+
                           <button 
                             onClick={() => removeFromComparison(company.id)} 
                             aria-label={`Remover ${company.name} da comparação`}
-                            className="absolute right-3 top-3 rounded-full bg-slate-50 p-1.5 text-slate-300 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="absolute right-3 top-3 rounded-full bg-slate-50 p-1.5 text-slate-400 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none"
                             title="Remover da comparação"
                           >
                             <X className="h-4 w-4" aria-hidden="true" />
                           </button>
 
-                          <div className="flex flex-col items-center gap-3">
-                            <div className={cn(
-                              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-transform clay-surface clay-convex",
-                              isPremiumCompany(company) ? "border-blue-200" : "border-slate-100"
-                            )}>
-                              <Image 
-                                src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'} 
-                                alt={`Logo da ${company.name}`}
-                                width={42}
-                                height={42}
-                                className="h-full w-full scale-[1.14] object-contain" 
-                              />
+                          <div className="flex items-start justify-between gap-4">
+                            {/* Logo Container */}
+                            <div className="relative flex h-12 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+                              {logoUrl ? (
+                                <img
+                                  src={logoUrl}
+                                  alt={`Logo da ${company.name}`}
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />
+                              )}
                             </div>
-                            
-                            <div className="space-y-1">
-                              <h4 className="line-clamp-2 px-2 text-sm font-black text-slate-900">
-                                {company.name}
-                              </h4>
-                              <div className="flex items-center justify-center gap-1 text-[10px] font-black uppercase text-blue-600">
-                                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
-                                {formatRating(company.rating_avg || company.average_rating)}
-                              </div>
-                            </div>
+
+                            {/* Status Badges */}
+                            {company.verified ? (
+                              <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700">
+                                Verificada
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-700">
+                                Em análise
+                              </span>
+                            )}
                           </div>
 
-                          {isPremiumCompany(company) && (
-                            <div className="mt-3 rounded-full bg-blue-600 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-blue-200">
-                              Parceiro Premium
+                          <div className="mt-4">
+                            <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
+                              <h4 className="text-sm font-black tracking-tight leading-snug line-clamp-1 text-slate-900">{company.name}</h4>
+                            </Link>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex text-amber-400">
+                                {[1, 2, 3, 4, 5].map((i) => {
+                                  const filled = i <= Math.round(rating);
+                                  return (
+                                    <Star 
+                                      key={i} 
+                                      className={`h-3 w-3 ${filled ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
+                                    />
+                                  );
+                                })}
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-700">{rating > 0 ? rating.toFixed(1) : 'Sem nota'}</span>
+                              {reviews > 0 && (
+                                <span className="text-[10px] text-slate-500">({reviews})</span>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </motion.div>
                       );
                     })}
@@ -328,7 +386,7 @@ export default function ComparePage() {
                     <Link 
                       key={`empty-${i}`}
                       href="/companies"
-                      className="group flex flex-col items-center justify-center border-r border-slate-100 bg-slate-50/20 p-4 transition-all hover:bg-white last:border-r-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="group flex flex-col items-center justify-center bg-slate-50/20 p-5 transition-all hover:bg-white focus:outline-none"
                       aria-label="Adicionar mais uma empresa à comparação"
                     >
                       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[1rem] border-2 border-dashed border-slate-200 bg-white text-sm font-bold text-slate-300 transition-all group-hover:border-blue-200 group-hover:text-blue-400">
@@ -339,183 +397,209 @@ export default function ComparePage() {
                   ))}
                 </div>
 
-                {/* Group: Pilares de Confiança (TaaS) */}
-                <CategoryHeader 
-                  id="taas" 
-                  label="Pilares de Confiança (TaaS)" 
-                  icon={<Trophy className="h-4 w-4" />} 
-                  isExpanded={expandedGroups.includes('taas')} 
-                  onToggle={() => toggleGroup('taas')} 
-                />
-                {expandedGroups.includes('taas') && (
-                  <div className="divide-y divide-slate-50">
-                    <ComparisonRow 
-                      label="Trust Score" 
-                      icon={<ShieldCheck className="h-4 w-4 text-primary" />} 
-                      companies={comparisonList} 
-                      value={(c) => {
-                        const trustScore = getCompanyTrustScore(c);
-
-                        return trustScore !== null ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-xl font-black text-slate-900">{trustScore}%</span>
-                            <span className="text-[9px] font-bold uppercase tracking-tighter text-emerald-500">Score atual</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm font-bold text-slate-300">—</span>
-                        );
-                      }} 
-                    />
-                    <ComparisonRow 
-                      label="SLA de Resposta" 
-                      icon={<Clock className="h-4 w-4 text-amber-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        <div className={cn(
-                          "px-4 py-1.5 rounded-full text-[11px] font-black uppercase",
-                          c.response_time_sla === 'Imediato' ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-                        )}>
-                          {c.response_time_sla || '—'}
-                        </div>
-                      )} 
-                    />
-                    <ComparisonRow 
-                      label="Certificações" 
-                      icon={<Award className="h-4 w-4 text-indigo-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        <div className="flex -space-x-2">
-                          {(c.badges || []).slice(0, 3).map((badge, bidx) => (
-                            <div key={bidx} className="h-8 w-8 rounded-full bg-white border-2 border-slate-50 shadow-sm flex items-center justify-center p-1.5" title={badge.name}>
-                              {badge.image_url ? (
-                                <Image src={badge.image_url} alt="" width={24} height={24} className="object-contain" />
-                              ) : (
-                                <ShieldCheck className="h-4 w-4 text-blue-400" />
-                              )}
-                            </div>
-                          ))}
-                          {((c.badges || []).length > 3) && (
-                            <div className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500">
-                              +{(c.badges || []).length - 3}
-                            </div>
-                          )}
-                        </div>
-                      )} 
-                    />
-                  </div>
-                )}
-
-                {/* Group: Performance & Qualidade */}
-                <CategoryHeader 
-                  id="tecnico" 
-                  label="Performance & Qualidade" 
-                  icon={<Zap className="h-4 w-4" />} 
-                  isExpanded={expandedGroups.includes('tecnico')} 
-                  onToggle={() => toggleGroup('tecnico')} 
-                />
-                {expandedGroups.includes('tecnico') && (
-                  <div className="divide-y divide-slate-50">
-                    <ComparisonRow 
-                      label="Tempo de Mercado" 
-                      icon={<Briefcase className="h-4 w-4 text-orange-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => {
-                        const yearsLabel = formatCompanyYears(c);
-                        return (
-                          <span className="text-sm font-bold text-slate-700">
-                            {yearsLabel || '—'}
-                          </span>
-                        );
-                      }} 
-                    />
-                    <ComparisonRow 
-                      label="Ticket Mínimo" 
-                      icon={<CircleDollarSign className="h-4 w-4 text-emerald-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        <span className="text-sm font-black text-slate-900">
-                          {formatCurrencyBRL(c.minimum_ticket) || '—'}
-                        </span>
-                      )} 
-                    />
-                    <ComparisonRow 
-                      label="Financiamento" 
-                      icon={<Zap className="h-4 w-4 text-blue-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        c.financing_enabled ? (
-                          <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700">
-                            Disponível
-                          </span>
-                        ) : (
-                          <span className="text-sm font-bold text-slate-300">—</span>
-                        )
-                      )} 
-                    />
-                  </div>
-                )}
-
-                {/* Group: Localização e Atendimento */}
-                <CategoryHeader 
-                  id="geral" 
-                  label="Localização e Atendimento" 
-                  icon={<MapPin className="h-4 w-4" />} 
-                  isExpanded={expandedGroups.includes('geral')} 
-                  onToggle={() => toggleGroup('geral')} 
-                />
-                {expandedGroups.includes('geral') && (
-                  <div className="divide-y divide-slate-50">
-                    <ComparisonRow 
-                      label="Sede Principal" 
-                      icon={<MapPin className="h-4 w-4 text-blue-500" aria-hidden="true" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        <span className="text-sm font-bold text-slate-600">{c.city}, {c.state}</span>
-                      )} 
-                    />
-                    <ComparisonRow 
-                      label="WhatsApp" 
-                      icon={<Check className="h-4 w-4 text-emerald-500" />} 
-                      companies={comparisonList} 
-                      value={(c) => (
-                        c.whatsapp ? (
-                          <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl text-[10px] font-black">
-                            Disponível
-                          </div>
-                        ) : <X className="h-4 w-4 text-slate-200" />
-                      )} 
-                    />
-                  </div>
-                )}
-
-                {/* Footer Row: Actions */}
-                <div className="sticky bottom-0 z-20 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-t border-slate-100 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-                  <div className="flex items-center justify-center border-r border-slate-100 bg-slate-50/20 p-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Match de Decisão</span>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => (
-                    <div key={`cta-${company.id}`} className={cn(
-                      "border-r border-slate-100 p-4 last:border-r-0",
-                      idx === 0 && "bg-blue-50/20",
-                      isPremiumCompany(company) && "bg-gradient-to-br from-blue-50/30 to-indigo-50/30"
-                    )}>
-                      <Button 
-                        className={cn(
-                          "w-full rounded-[1.25rem] font-black h-12 transition-all hover:scale-[1.02] active:scale-95 shadow-lg",
-                          "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200/50",
-                          isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50"
-                        )}
-                        onClick={() => handleQuoteClick(company.id)}
-                        aria-label={`Solicitar orçamento da ${company.name}`}
-                      >
-                        Cotar com {company.name.split(' ')[0]}
-                      </Button>
+                {/* 1. Reputação Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Reputação</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Média de avaliações de clientes</p>
                     </div>
-                  ))}
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
+                    const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
+                    const isHighlighted = company.id === highestRatedCompanyId;
+
+                    return (
+                      <div key={`rep-${company.id}`} className={cn("p-5 flex flex-col justify-center gap-1.5", isHighlighted && "bg-blue-50/5")}>
+                        {rating > 0 ? (
+                          <>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-base font-black text-slate-900">{rating.toFixed(1)}</span>
+                              <span className="text-xs text-slate-500">de 5</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                              <div 
+                                className={cn("h-1.5 rounded-full", isHighlighted ? 'bg-blue-600' : 'bg-slate-700')}
+                                style={{ width: `${(rating / 5) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] text-slate-500">Baseada em {reviews} avaliações</span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-semibold text-slate-500">Ainda sem avaliações</span>
+                        )}
+                      </div>
+                    );
+                  })}
                   {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-cta-${i}`} className="border-r border-slate-100 p-4 last:border-r-0"></div>
+                    <div key={`empty-rep-${i}`} className="bg-slate-50/5 p-5"></div>
                   ))}
                 </div>
+
+                {/* 2. Verificação Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Verificação</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Documentos e dados conferidos</p>
+                    </div>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`ver-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
+                        <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
+                          {company.verified ? (
+                            <>
+                              <span className="text-emerald-600">Verificada</span>
+                              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                            </>
+                          ) : (
+                            <span className="text-amber-600">Em análise</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 mt-1">
+                          {company.verified ? 'Documentos verificados' : 'Documentos em verificação'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-ver-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
+                {/* 3. Tempo de Resposta Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Tempo de resposta</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Média para primeiro contato</p>
+                    </div>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const speed = getSpeedBadge(company.response_time_sla);
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`time-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900">{company.response_time_sla || 'Consultar'}</span>
+                          {speed && (
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${speed.color}`}>
+                              {speed.label}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 mt-1">Média para 1º contato</span>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-time-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
+                {/* 4. Cobertura Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Cobertura</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Onde a empresa atua</p>
+                    </div>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const coverageCount = getCoverageCount(company);
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`cov-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
+                        <span className="text-sm font-bold text-slate-900 line-clamp-1">
+                          {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 mt-1">
+                          {coverageCount > 0 ? `+${coverageCount} cidades atendidas` : 'Sob consulta'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-cov-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
+                {/* 5. Projetos Realizados Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Projetos realizados</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Projetos concluídos</p>
+                    </div>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const projects = company.delivered_projects_score || 0;
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`proj-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
+                        <span className="text-sm font-bold text-slate-900">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
+                        <span className="text-[10px] text-slate-500 mt-1">Projetos concluídos</span>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-proj-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
+                {/* 6. Garantia Oferecida Row */}
+                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
+                  <div className="bg-slate-50/30 p-5 flex items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Garantia oferecida</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Tempo de garantia médio</p>
+                    </div>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const warranty = company.warranty_years || 0;
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`gar-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
+                        <span className="text-sm font-bold text-slate-900">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
+                        <span className="text-[10px] text-slate-500 mt-1">Garantia média</span>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-gar-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
+                {/* Action Footer Row */}
+                <div className="sticky bottom-0 z-20 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-t border-slate-200 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.02)] divide-x divide-slate-200">
+                  <div className="flex items-center justify-center bg-slate-50/50 p-5">
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Match de Decisão</span>
+                  </div>
+                  {comparisonList.slice(0, 3).map((company, idx) => {
+                    const isHighlighted = company.id === highestRatedCompanyId;
+                    return (
+                      <div key={`cta-${company.id}`} className={cn("p-5", isHighlighted && "bg-blue-50/5")}>
+                        <Button 
+                          className={cn(
+                            "w-full rounded-xl font-black h-12 transition-all hover:scale-[1.02] active:scale-95 shadow-md text-white bg-blue-600 hover:bg-blue-700 shadow-blue-200/50",
+                            isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50"
+                          )}
+                          onClick={() => handleQuoteClick(company.id)}
+                          aria-label={`Solicitar orçamento da ${company.name}`}
+                        >
+                          Cotar com {company.name.split(' ')[0]}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
+                    <div key={`empty-cta-${i}`} className="bg-slate-50/5 p-5"></div>
+                  ))}
+                </div>
+
               </div>
             </ScrollArea>
           </div>

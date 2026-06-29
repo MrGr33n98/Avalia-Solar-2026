@@ -2,6 +2,7 @@
 
 one:
   name: MyString
+  slug: my-string-one
   description: MyText
   website: MyString
   phone: MyString
@@ -9,6 +10,7 @@ one:
 
 two:
   name: MyString
+  slug: my-string-two
   description: MyText
   website: MyString
   phone: MyString

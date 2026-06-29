@@ -12,6 +12,7 @@ class ReviewFormTest < ActiveSupport::TestCase
     )
 
     assert form.token.present?
+    assert_equal 24, form.token.length
     assert_equal '/f/' + form.token, form.public_path
     assert_includes form.settings['criteria'], 'Atendimento'
   end

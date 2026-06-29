@@ -15,14 +15,14 @@ class ReviewForm < ApplicationRecord
   has_many :reviews, dependent: :nullify
   has_many :review_form_events, dependent: :destroy
 
-  has_secure_token :token, length: 10
+  has_secure_token :token, length: 24
 
   enum status: { active: 'active', inactive: 'inactive' }, _default: 'active'
 
   before_validation :set_slug
   before_validation :normalize_settings
 
-  validates :name, :public_title, :form_type, :slug, :token, :status, presence: true
+  validates :name, :public_title, :form_type, :slug, :status, presence: true
   validates :form_type, inclusion: { in: FORM_TYPES }
   validates :slug, uniqueness: { scope: :company_id }
   validates :token, uniqueness: true
