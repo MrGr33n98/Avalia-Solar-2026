@@ -32,6 +32,7 @@ class Banner < ApplicationRecord
     compare_page_inline
     compare_page_sidebar
     compare_page_bottom
+    comparison_floating_bar
   ].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
   DEFAULT_DIMENSIONS_BY_POSITION = {
@@ -51,7 +52,8 @@ class Banner < ApplicationRecord
     'compare_page_top' => [1200, 160],
     'compare_page_inline' => [1200, 160],
     'compare_page_sidebar' => [300, 600],
-    'compare_page_bottom' => [1200, 160]
+    'compare_page_bottom' => [1200, 160],
+    'comparison_floating_bar' => [720, 120]
   }.freeze
 
   # === Validações Básicas ===

@@ -17,7 +17,8 @@ banner_position_options = [
   ['Compare - Topo', 'compare_page_top'],
   ['Compare - Inline (Meio)', 'compare_page_inline'],
   ['Compare - Sidebar', 'compare_page_sidebar'],
-  ['Compare - Bottom (Rodapé)', 'compare_page_bottom']
+  ['Compare - Bottom (Rodapé)', 'compare_page_bottom'],
+  ['Comparação - Barra Flutuante (Patrocínio)', 'comparison_floating_bar']
 ].freeze
 
 ActiveAdmin.register Banner do
@@ -139,6 +140,7 @@ ActiveAdmin.register Banner do
             if (position === 'company_profile_sidebar_sponsored') return { w: 300, h: 600 };
             if (position === 'compare_page_top' || position === 'compare_page_inline' || position === 'compare_page_bottom') return { w: 1200, h: 160 };
             if (position === 'compare_page_sidebar') return { w: 300, h: 600 };
+            if (position === 'comparison_floating_bar') return { w: 720, h: 120 };
             return { w: 600, h: 200 };
           }
 

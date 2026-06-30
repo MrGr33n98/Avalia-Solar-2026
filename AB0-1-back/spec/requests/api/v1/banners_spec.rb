@@ -67,6 +67,23 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         expect(json.all? { |b| b['position'] == 'companies_right_rail' }).to be true
       end
 
+      it 'serves the comparison floating bar sponsorship position' do
+        recommendation = create(
+          :banner,
+          :approved,
+          active: true,
+          position: 'comparison_floating_bar',
+          width: 720,
+          height: 120
+        )
+
+        get '/api/v1/banners', params: { position: 'comparison_floating_bar' }
+
+        json = JSON.parse(response.body)
+        expect(json.map { |banner| banner['id'] }).to include(recommendation.id)
+        expect(json.all? { |banner| banner['position'] == 'comparison_floating_bar' }).to be true
+      end
+
       it 'limits results' do
         create_list(:banner, 5, :approved, active: true)
 

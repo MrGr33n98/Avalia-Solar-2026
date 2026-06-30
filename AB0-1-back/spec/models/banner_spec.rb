@@ -39,7 +39,8 @@ RSpec.describe Banner, type: :model do
           'search_mid',
           'categories_filter_sidebar',
           'categories_right_rail',
-          'companies_right_rail'
+          'companies_right_rail',
+          'comparison_floating_bar'
         )
       end
     end
@@ -270,6 +271,14 @@ RSpec.describe Banner, type: :model do
 
           expect(banner.width).to eq(150)
           expect(banner.height).to eq(125)
+        end
+
+        it 'sets compact dimensions for the comparison floating bar' do
+          banner = build(:banner, position: 'comparison_floating_bar', width: nil, height: nil)
+          banner.valid?
+
+          expect(banner.width).to eq(720)
+          expect(banner.height).to eq(120)
         end
 
         it 'sets default dimensions for other positions' do
