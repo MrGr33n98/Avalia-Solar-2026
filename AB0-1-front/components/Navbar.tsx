@@ -103,11 +103,26 @@ export default function Navbar() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ml-2 md:ml-4"
             aria-label="Home Avalia Solar"
           >
             <BrandLogo className="h-8 sm:h-9" priority />
           </Link>
+
+          <div className="hidden lg:flex flex-1 max-w-[500px] items-center gap-2 mx-4">
+            <NavbarSearch
+              className="min-w-[8rem] flex-1"
+              inputClassName="bg-slate-50 border-slate-200"
+              placeholder="Buscar empresas, produtos..."
+              onSearch={handleSearch}
+            />
+            <div className="w-[140px] shrink-0">
+              <LocationSearch
+                className="w-full bg-slate-50 border-slate-200"
+                onLocationSelect={handleLocationSelect}
+              />
+            </div>
+          </div>
 
           <div className="hidden items-center gap-1 lg:flex">
             <Link
