@@ -8,6 +8,7 @@ import { companiesApiSafe } from "@/lib/api-client";
 import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { CompanyLogo } from "@/components/CompanyLogo";
 
 interface RelatedCompaniesCarouselProps {
   company: Company;
@@ -175,19 +176,12 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
                 {/* Topo do Card: Logo + Infos */}
                 <div className="flex gap-4">
                   {/* Logo do Banco de Dados */}
-                  <div className="h-[60px] w-[60px] rounded-2xl border border-slate-100 bg-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden relative">
-                    {comp.logo_url ? (
-                      <Image 
-                        src={comp.logo_url} 
-                        alt={`Logo ${comp.name}`} 
-                        fill 
-                        className="object-contain p-1"
-                        sizes="60px"
-                      />
-                    ) : (
-                      <Building2 className="h-8 w-8 text-slate-300" />
-                    )}
-                  </div>
+                  <CompanyLogo
+                    logoUrl={comp.logo_url}
+                    name={comp.name}
+                    size="sm"
+                    className="shrink-0 bg-white"
+                  />
                   <div className="flex flex-col justify-center min-w-0">
                     <h4 className="font-bold text-slate-900 text-base truncate" title={comp.name}>{comp.name}</h4>
                     <div className="flex items-center gap-1.5 mt-0.5">

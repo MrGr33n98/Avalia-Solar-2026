@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -543,32 +544,12 @@ export default function CompanyCard({
                   />
                 </div>
               )}
-              <div
-                className="relative rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-white dark:border-[#0F172A] shadow-none"
-                style={{ width: avatarSize, height: avatarSize }}
-              >
-                {logoUrl && !logoError ? (
-                  <div className="relative w-full h-full p-1 bg-white">
-                    <Image
-                      src={logoUrl}
-                      alt=""
-                      fill
-                      sizes="80px"
-                      onError={() => setLogoError(true)}
-                      className="object-contain object-center rounded"
-                      data-testid="company-logo"
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800"
-                    data-testid="logo-placeholder"
-                  >
-                    <Building className="text-slate-300 dark:text-slate-600 w-5 h-5" />
-                  </div>
-                )}
-              </div>
+              <CompanyLogo
+                logoUrl={company.logo_url}
+                name={name}
+                size={compact ? 'sm' : 'md'}
+                className="border-2 border-white dark:border-[#0F172A] shadow-sm bg-white dark:bg-slate-800"
+              />
             </div>
           </div>
         </div>

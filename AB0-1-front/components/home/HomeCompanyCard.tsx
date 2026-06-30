@@ -11,6 +11,7 @@ import { track } from '@/lib/analytics/lazy';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useComparison } from '@/hooks/useComparison';
 import { getFullImageUrl } from '@/utils/image';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 type HomeCompanyCardProps = {
   company: Company;
@@ -62,20 +63,12 @@ export default function HomeCompanyCard({ company }: HomeCompanyCardProps) {
   return (
     <article className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-colors hover:border-blue-300">
       <div className="flex items-start justify-between gap-4">
-        <div className="relative flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-2">
-          {logoUrl && !logoError ? (
-            <Image
-              src={logoUrl}
-              alt={`Logo da ${company.name}`}
-              fill
-              sizes="96px"
-              className="object-contain p-2"
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <Building2 className="h-7 w-7 text-slate-300" aria-hidden="true" />
-          )}
-        </div>
+        <CompanyLogo
+          logoUrl={company.logo_url}
+          name={company.name}
+          size="md"
+          className="shrink-0 bg-white"
+        />
 
         {company.verified ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700">

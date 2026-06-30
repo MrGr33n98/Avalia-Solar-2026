@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, MapPin, Building2, Trophy, Info } from 'lucide-react';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import { RatingStars } from '@/components/RatingStars';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -102,15 +103,12 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
         </AspectRatio>
         
         <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
-          <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white border-2 border-white shadow-md flex-shrink-0">
-            {logoUrl ? (
-              <Image src={logoUrl} alt={`Logo ${name}`} fill className="object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                <Building2 className="text-gray-200 w-6 h-6" />
-              </div>
-            )}
-          </div>
+          <CompanyLogo
+            logoUrl={company.logo_url}
+            name={name}
+            size="sm"
+            className="border-2 border-white dark:border-slate-800 shadow-md flex-shrink-0 bg-white"
+          />
           <div className="mb-0.5">
             <h3 className="text-white font-black text-lg leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors">
               {name}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, MapPin, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,16 +60,15 @@ export default function CompanyComparisonCard({
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-4 pr-8">
-        <div className={cn(
-          "flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border p-1 shadow-md",
-          isPremium ? "bg-gradient-to-br from-orange-50 to-white border-orange-200" : "bg-white border-slate-100"
-        )}>
-          <img
-            src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
-            alt={`Logo da ${company.name}`}
-            className="h-full w-full scale-[1.14] object-contain"
-          />
-        </div>
+        <CompanyLogo
+          logoUrl={company.logo_url}
+          name={company.name}
+          size="md"
+          className={cn(
+            "border-slate-100 bg-white dark:bg-slate-800",
+            isPremium && "border-orange-200 bg-gradient-to-br from-orange-50 to-white dark:from-slate-900 dark:to-slate-800"
+          )}
+        />
         
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-black text-slate-900 line-clamp-1 mb-1">
