@@ -95,9 +95,6 @@ export default function CompanyComparisonModal({
         <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/50 p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 shrink-0">
-                <Scale className="h-5 w-5" />
-              </div>
               <div className="min-w-0">
                 <DialogTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">
                   Análise Comparativa
@@ -154,7 +151,7 @@ export default function CompanyComparisonModal({
                             >
                               {/* Swiss Label Destaque */}
                               {isHighlighted && (
-                                <div className="absolute -top-2.5 left-5 bg-blue-600 text-white text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded shadow-sm">
+                                <div className="absolute top-2 left-5 bg-blue-600 text-white text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded shadow-sm">
                                   Melhor avaliada
                                 </div>
                               )}
