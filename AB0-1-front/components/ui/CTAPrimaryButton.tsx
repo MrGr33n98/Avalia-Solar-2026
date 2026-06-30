@@ -59,7 +59,8 @@ export const CTAPrimaryButton = React.forwardRef<HTMLButtonElement, CTAPrimaryBu
       <Button
         ref={ref}
         className={cn(
-          "bg-brand-blue hover:bg-[#1D4ED8] text-white font-bold rounded-lg shadow-none transition-colors duration-150",
+          "bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold rounded-lg shadow-none transition-colors duration-150",
+          "dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400",
           className
         )}
         onClick={handleClick}

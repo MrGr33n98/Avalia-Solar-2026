@@ -457,8 +457,9 @@ export default function CompanyComparisonModal({
                           <div key={`cta-${company.id}`} className={cn("p-4", isHighlighted && "bg-blue-50/5")}>
                             <Button 
                               className={cn(
-                                "w-full rounded-md font-bold text-[10px] uppercase tracking-widest h-11 transition-all text-white bg-slate-900 hover:bg-slate-800 shadow-sm border border-slate-950",
-                                isPremiumCompany(company) && "bg-blue-600 hover:bg-blue-700 border-blue-700"
+                                "w-full rounded-md font-bold text-[10px] uppercase tracking-widest h-11 transition-all shadow-sm border",
+                                "bg-[#FFF7ED] hover:bg-[#FFEED5] border-[#FDBA74] text-[#C2410C]",
+                                "dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400"
                               )}
                               onClick={() => handleQuoteClick(company.id)}
                               aria-label={`Solicitar orçamento da ${company.name}`}

@@ -134,7 +134,11 @@ export default function HomeCompanyCard({ company }: HomeCompanyCardProps) {
         </Button>
 
         {company.active_admin === true ? (
-          <Button type="button" onClick={handleQuote} className="bg-blue-600 font-bold text-white hover:bg-blue-700">
+          <Button 
+            type="button" 
+            onClick={handleQuote} 
+            className="bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold shadow-none dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400"
+          >
             Pedir orçamento
           </Button>
         ) : (

@@ -194,7 +194,9 @@ export default function CompanyComparisonCard({
       {/* CTA */}
       <Button
         className={cn(
-          "w-full mt-6 rounded-2xl font-black h-12 shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+          "w-full mt-6 rounded-2xl font-black h-12 transition-all hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-none",
+          "bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C]",
+          "dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400"
         )}
         onClick={() => onQuote(company.id)}
       >
