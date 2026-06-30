@@ -211,8 +211,15 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     render json: { error: 'Forbidden' }, status: :forbidden
   end
 
-  def serialize_user(user)
-    return nil unless user
+  def serialize_user(review)
+    user = review.user
+    if user.nil?
+      return {
+        id: nil,
+        name: review.public_reviewer_name,
+        avatar_url: nil
+      }
+    end
 
     {
       id: user.id,
