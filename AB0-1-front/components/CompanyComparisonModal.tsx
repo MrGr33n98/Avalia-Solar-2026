@@ -92,18 +92,59 @@ export default function CompanyComparisonModal({
       <DialogContent className="max-w-[1020px] max-h-[85vh] gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl transition-all duration-300">
         
         {/* Swiss Design Header */}
-        <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/50 p-6 md:p-8">
+        <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/50 px-6 py-4 md:px-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="min-w-0">
-                <DialogTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">
-                  Análise Comparativa
-                </DialogTitle>
-                <DialogDescription className="text-slate-500 font-medium text-[10px] md:text-xs uppercase tracking-[0.2em] mt-1">
-                  {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'} selecionadas
-                </DialogDescription>
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <DialogTitle className="sr-only">Análise Comparativa</DialogTitle>
+              <DialogDescription className="sr-only">Selecione até 3 empresas para comparar</DialogDescription>
+              
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Sua comparação:
+              </span>
+              
+              {companies.map((comp) => {
+                const logoUrl = comp.logo_url ? getFullImageUrl(comp.logo_url) : null;
+                return (
+                  <div 
+                    key={comp.id}
+                    className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-1 pr-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm"
+                  >
+                    <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-100 bg-white flex items-center justify-center shrink-0">
+                      {logoUrl ? (
+                        <Image 
+                          src={logoUrl} 
+                          alt="" 
+                          fill 
+                          className="object-contain p-0.5" 
+                          sizes="20px"
+                        />
+                      ) : (
+                        <Building2 className="w-2.5 h-2.5 text-slate-400" />
+                      )}
+                    </div>
+                    <span className="truncate max-w-[120px]">{comp.name}</span>
+                    <button 
+                      onClick={() => onRemoveCompany(comp.id)}
+                      className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
+                      title="Remover"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {companies.length < 3 && (
+                <button
+                  onClick={onClose}
+                  className="flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+                  title="Adicionar mais empresas"
+                >
+                  <span className="text-base font-semibold leading-none">+</span>
+                </button>
+              )}
             </div>
+            
             <Button 
               variant="ghost" 
               size="sm" 
