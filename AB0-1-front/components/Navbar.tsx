@@ -240,7 +240,7 @@ export default function Navbar() {
       >
         <Link
           href="/"
-          className="group -ml-1 flex shrink-0 items-center gap-1.5 rounded-xl px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group ml-2 md:ml-4 flex shrink-0 items-center gap-1.5 rounded-xl px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
           aria-label="Home Avalia Solar"
         >
           <BrandLogo
@@ -253,7 +253,7 @@ export default function Navbar() {
           />
         </Link>
 
-        <div className="hidden xl:flex flex-1 items-center gap-4">
+        <div className="hidden lg:flex flex-1 items-center gap-4">
           <div className="flex min-w-0 max-w-[900px] flex-[1.4] items-center gap-2.5">
             <NavbarSearch
               className="min-w-[10rem] flex-[1.45]"
