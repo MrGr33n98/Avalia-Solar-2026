@@ -41,6 +41,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
 import { trackEvent } from '@/lib/analytics/events';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from '@/components/BannerContainer';
 import { cn } from '@/lib/utils';
@@ -798,6 +799,10 @@ function SearchContent() {
   const initialCoords = initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null;
   const cityDetectedFromQuery = !initialCity ? detectCitySearch(query) : null;
   const effectiveQuery = cityDetectedFromQuery ? '' : query;
+
+  // Responsividade: desktop = expanded (card completo com reputação), mobile = standard (compacto)
+  const isMobile = useIsMobile();
+  const cardVariant = isMobile ? 'standard' : 'expanded';
   const effectiveCity = initialCity || cityDetectedFromQuery || '';
 
   const [searchTerm, setSearchTerm] = useState(effectiveQuery);
@@ -1607,6 +1612,7 @@ function SearchContent() {
                                     company={company}
                                     rank={i + 1 <= 3 ? i + 1 : undefined}
                                     index={i}
+                                    variant={cardVariant}
                                     onMouseEnter={() => setSelectedCompanyId(company.id.toString())}
                                     onMouseLeave={() => setSelectedCompanyId(undefined)}
                                   />
@@ -1634,6 +1640,7 @@ function SearchContent() {
                                     <CompanyCard
                                       company={company}
                                       index={i + 6}
+                                      variant={cardVariant}
                                       onMouseEnter={() =>
                                         setSelectedCompanyId(company.id.toString())
                                       }

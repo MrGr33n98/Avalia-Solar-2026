@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -75,6 +76,8 @@ export function CompaniesContent({
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const PAGE_SIZE = 12;
+  const isMobile = useIsMobile();            // desktop = expanded, mobile = standard
+  const cardVariant = isMobile ? 'standard' : 'expanded';
 
   const filters = useMemo(
     () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
@@ -611,11 +614,13 @@ export function CompaniesContent({
                           <CompanyCard
                             key={company.id}
                             company={company}
-                            compact={viewMode === 'list'}
+                            variant={cardVariant}
+                            compact={false}
                           />
                         ))}
                       </div>
                     )}
+
 
                     {totalPages > 1 && viewMode !== 'map' && (
                       <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
