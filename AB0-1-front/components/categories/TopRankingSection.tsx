@@ -149,13 +149,33 @@ function RankingCompanyCard({
           </p>
 
           <div className="mt-2 grid max-w-[420px] grid-cols-[minmax(104px,1fr)_minmax(96px,1fr)_64px] gap-1.5 sm:gap-2">
-            <Button
-              size="sm"
-              onClick={() => openQuoteWizard({ source: 'category-ranking' })}
-              className="h-9 rounded-[6px] bg-blue-700 text-[11px] font-bold text-white hover:bg-blue-800 sm:text-xs"
-            >
-              Orçamento
-            </Button>
+            {/* Botão "Orçamento" — feature paga, estilo laranja diferenciado */}
+            {((() => {
+              const fa = (company as any).feature_access ?? {};
+              const hasFa = Object.keys(fa).length > 0;
+              const entry = fa['custom_ctas'];
+              const canQuote = hasFa
+                ? (entry && ['enabled','limited','trial'].includes(entry.state) && entry.value !== false && entry.value !== null)
+                : (company as any).sponsored === true;
+              return canQuote;
+            })()) ? (
+              <Button
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); openQuoteWizard({ source: 'category-ranking' }); }}
+                className="h-9 rounded-[6px] bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] text-[11px] font-bold shadow-none sm:text-xs"
+              >
+                Orçamento
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                asChild
+                className="h-9 rounded-[6px] border-slate-200 text-[11px] font-bold text-slate-700 sm:text-xs"
+              >
+                <Link href={href}>Ver perfil</Link>
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"

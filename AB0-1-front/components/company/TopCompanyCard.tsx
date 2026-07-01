@@ -14,9 +14,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { buildCompanyPath } from '@/lib/slug';
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
+import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
+import { isCardFeatureEnabled } from '@/components/CompanyCard';
 
 interface Props {
   company: Company;
@@ -35,11 +36,17 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
   const sponsored = (company as any).sponsored === true;
   const rating_count = Number((company as any).rating_count ?? (company as any).reviews_count ?? (company as any).total_reviews ?? 0);
   const average_rating = parseFloat((company as any).rating_avg ?? (company as any).average_rating ?? (company as any).rating ?? 0);
+
+  // Feature gate: "Pedir orçamento" é feature paga controlada via ActiveAdmin
+  const featureAccessMap = (company as any).feature_access ?? {};
+  const hasFeatureAccess = Object.keys(featureAccessMap).length > 0;
+  const canRequestQuote  = hasFeatureAccess
+    ? isCardFeatureEnabled(featureAccessMap, 'custom_ctas')
+    : sponsored; // fallback: só patrocinados têm CTA de orçamento
   
   const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || { border: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-400', label: `#${rank}` };
   const companyPath = buildCompanyPath(company.slug || String(id));
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
-  const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
   const handleRankingClick = () => {
     track('ranking_click', {
@@ -130,13 +137,26 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
         </p>
 
         <div className="mt-auto pt-2 flex gap-2">
-          <CTAPrimaryButton
-            label="Orçamento"
-            companyId={id.toString()}
-            companySlug={company.slug}
-            className="flex-1 h-11 rounded-xl bg-[#004791] hover:bg-[#00356b] font-bold text-xs"
-          />
-          <Button variant="outline" className="h-11 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50" asChild>
+          {/* Botão "Pedir orçamento" — feature paga, estilo laranja diferenciado */}
+          {canRequestQuote ? (
+            <Button
+              className="flex-1 h-11 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold text-xs shadow-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' });
+              }}
+            >
+              Pedir orçamento
+            </Button>
+          ) : null}
+          <Button
+            variant="outline"
+            className={cn(
+              "h-11 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50",
+              !canRequestQuote && "flex-1"
+            )}
+            asChild
+          >
             <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
           </Button>
         </div>

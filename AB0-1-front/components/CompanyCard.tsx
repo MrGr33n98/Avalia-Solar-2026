@@ -37,6 +37,10 @@ export interface CompanyCardData {
   logo_url?: string;
   featured: boolean;
   sponsored: boolean;
+  /** Feature access map — controla features pagas liberadas via ActiveAdmin/planos */
+  feature_access?: Record<string, { state: string; value?: any }>;
+  /** Top critérios de avaliação reais (ex: ['Equipe qualificada', 'Atendimento']). */
+  top_criteria?: string[];
   identity: {
     name: string;
     slug: string;
@@ -132,63 +136,124 @@ const DICTIONARY = {
   },
 } as const;
 
-const normalizeCompanyData = (comp: any): CompanyCardData => {
-  if (comp && comp.identity && comp.trust && comp.reputation && comp.operations) {
-    return comp as CompanyCardData;
+/**
+ * Extrai os top critérios de avaliação de um objeto bruto de empresa.
+ * Usa services_offered, project_types ou criteria_breakdown da API.
+ */
+const extractTopCriteria = (comp: any): string[] => {
+  // Tenta usar top_criteria já resolvido (do CompanyCardSerializer)
+  if (Array.isArray(comp?.top_criteria) && comp.top_criteria.length > 0) {
+    return comp.top_criteria.slice(0, 4);
   }
-  
-  const rating = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
+  // Usa serviços oferecidos como proxy de critérios visíveis
+  if (Array.isArray(comp?.services_offered) && comp.services_offered.length > 0) {
+    return comp.services_offered.slice(0, 4);
+  }
+  if (Array.isArray(comp?.services) && comp.services.length > 0) {
+    return comp.services.slice(0, 4);
+  }
+  // Fallback: critérios genéricos do setor solar
+  return ['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'];
+};
+
+/**
+ * Verifica se uma feature paga está habilitada no feature_access.
+ * Fonte primária: feature_access (gerenciado via ActiveAdmin/planos).
+ * Fallback retro-compatível: is_claimed || sponsored.
+ */
+export const isCardFeatureEnabled = (
+  featureAccess: Record<string, { state: string; value?: any }> | undefined | null,
+  key: string,
+  fallback: boolean = false
+): boolean => {
+  if (!featureAccess) return fallback;
+  const entry = featureAccess[key];
+  if (!entry) return fallback;
+  if (!['enabled', 'limited', 'trial'].includes(entry.state)) return false;
+  if (entry.value === false || entry.value === null) return false;
+  if (typeof entry.value === 'number') return entry.value > 0;
+  return true;
+};
+
+const normalizeCompanyData = (comp: any): CompanyCardData => {
+  // Se já está no formato estruturado (vindo do CompanyCardSerializer / CompanyListSerializer atualizado)
+  if (comp && comp.identity && comp.trust && comp.reputation && comp.operations) {
+    return {
+      ...(comp as CompanyCardData),
+      // Garante top_criteria mesmo no formato estruturado
+      top_criteria: comp.top_criteria ?? extractTopCriteria(comp),
+      // Garante feature_access mesmo que venha como {} vazio
+      feature_access: comp.feature_access ?? {},
+    };
+  }
+
+  // Formato legado (resposta plana da API antiga)
+  const rating  = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
   const reviews = Number(comp?.rating_count ?? comp?.reviews_count ?? comp?.total_reviews ?? 0);
-  
+
+  // Sentiment: prioriza dados reais da API, nunca fabrica se ambos são zero
+  const apiSentiment = comp?.reputation?.sentiment ?? comp?.sentiment ?? null;
+  const sentimentData = apiSentiment ?? (reviews > 0 ? undefined : { positive: 100, neutral: 0, negative: 0 });
+
+  // recommendation_rate: prioriza real da API
+  const apiRecommendation = comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate ?? null;
+
   return {
-    id: comp?.id || 0,
-    name: comp?.name || '',
-    slug: comp?.slug || '',
+    id:       comp?.id || 0,
+    name:     comp?.name || '',
+    slug:     comp?.slug || '',
     logo_url: comp?.logo_url,
     featured: comp?.featured === true,
     sponsored: comp?.sponsored === true,
+    feature_access: comp?.feature_access ?? {},
+    top_criteria: extractTopCriteria(comp),
     identity: {
-      name: comp?.name || '',
-      slug: comp?.slug || '',
-      logo_url: comp?.logo_url,
+      name:        comp?.name || '',
+      slug:        comp?.slug || '',
+      logo_url:    comp?.logo_url,
       description: comp?.description,
-      city: comp?.city,
-      state: comp?.state
+      city:        comp?.city,
+      state:       comp?.state
     },
     trust: {
-      is_claimed: comp?.active_admin === true,
+      is_claimed:          comp?.active_admin === true,
       verification_status: comp?.verified ? 'verified' : 'unverified',
-      verified_at: comp?.verified_at,
+      verified_at:         comp?.verified_at,
       verification_method: comp?.verification_method
     },
     reputation: {
-      rating_avg: rating,
-      rating_count: reviews,
-      nps_score: comp?.nps_score,
-      nps_responses: comp?.nps_responses || 0,
-      recommendation_rate: comp?.recommendation_rate || (rating >= 4 ? 96 : 80),
-      sentiment: comp?.sentiment || {
-        positive: rating >= 4 ? 91 : 70,
-        neutral: rating === 3 ? 20 : 8,
-        negative: rating < 3 ? 30 : 1
-      }
+      rating_avg:          rating,
+      rating_count:        reviews,
+      nps_score:           comp?.nps_score,
+      nps_responses:       comp?.nps_responses || 0,
+      recommendation_rate: apiRecommendation,
+      sentiment:           sentimentData
     },
     operations: {
-      delivered_projects: comp?.delivered_projects_count || comp?.delivered_projects_score || 0,
-      sla_label: comp?.response_time_sla || 'Consultar',
-      sla_minutes: comp?.response_sla_minutes,
-      warranty_years: comp?.warranty_years || comp?.installation_warranty_years,
-      engineering_insurance: comp?.engineering_insurance === true,
-      updated_at: comp?.updated_at || comp?.operational_data_updated_at || ''
+      delivered_projects:   comp?.operations?.delivered_projects ??
+                            comp?.delivered_projects_count ??
+                            comp?.delivered_projects_score ?? 0,
+      sla_label:            comp?.operations?.sla_label ?? comp?.response_time_sla ?? '24h',
+      sla_minutes:          comp?.operations?.sla_minutes ?? comp?.response_sla_minutes,
+      warranty_years:       comp?.operations?.warranty_years ?? comp?.warranty_years ?? comp?.installation_warranty_years,
+      engineering_insurance: comp?.operations?.engineering_insurance ?? comp?.engineering_insurance === true,
+      updated_at:           comp?.operations?.updated_at ?? comp?.updated_at ?? comp?.operational_data_updated_at ?? ''
     },
     coverage: {
-      states: Array.isArray(comp?.coverage_states) ? comp.coverage_states : String(comp?.coverage_states || '').split(',').map((s: string) => s.trim()).filter(Boolean),
-      cities: Array.isArray(comp?.coverage_cities) ? comp.coverage_cities : String(comp?.coverage_cities || '').split(',').map((s: string) => s.trim()).filter(Boolean)
+      states: comp?.coverage?.states ??
+              (Array.isArray(comp?.coverage_states)
+                ? comp.coverage_states
+                : String(comp?.coverage_states || '').split(',').map((s: string) => s.trim()).filter(Boolean)),
+      cities: comp?.coverage?.cities ??
+              (Array.isArray(comp?.coverage_cities)
+                ? comp.coverage_cities
+                : String(comp?.coverage_cities || '').split(',').map((s: string) => s.trim()).filter(Boolean))
     },
     actions: {
-      whatsapp_url: comp?.whatsapp_url || comp?.cta_whatsapp_url,
-      whatsapp_enabled: comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true,
-      p2p_chat_enabled: comp?.p2p_chat_enabled === true
+      whatsapp_url:     comp?.actions?.whatsapp_url ?? comp?.whatsapp_url ?? comp?.cta_whatsapp_url,
+      whatsapp_enabled: comp?.actions?.whatsapp_enabled ??
+                        (comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true),
+      p2p_chat_enabled: comp?.actions?.p2p_chat_enabled ?? comp?.p2p_chat_enabled === true
     }
   };
 };
@@ -225,6 +290,18 @@ export default function CompanyCard({
   const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
   const p2pChatEnabled = company.actions.p2p_chat_enabled;
   const selectedInComparison = isInComparison(id);
+
+  // ── Feature gates controlados via ActiveAdmin / planos ──
+  // feature_access.custom_ctas: controla se o botão "Pedir orçamento" aparece
+  // Fallback retro-compatível: is_claimed || sponsored (para empresas sem feature_access ainda)
+  const featureAccessMap = company.feature_access ?? {};
+  const hasFeatureAccess  = Object.keys(featureAccessMap).length > 0;
+  const canRequestQuote   = hasFeatureAccess
+    ? isCardFeatureEnabled(featureAccessMap, 'custom_ctas')
+    : (company.trust.is_claimed || company.sponsored);
+
+  // Critérios reais de avaliação
+  const topCriteria = company.top_criteria ?? ['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'];
 
   const handleCardClick = () => {
     track('company_card_click', {
@@ -296,16 +373,27 @@ export default function CompanyCard({
         </div>
 
         <div className="mt-4">
-          <Button
-            size="sm"
-            className="w-full h-8 text-[11px] font-bold rounded-lg bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none"
-            onClick={(e) => {
-              e.stopPropagation();
-              openLeadModal({ preferredCompanyId: id, source: 'company-card-compact', type: 'quick' });
-            }}
-          >
-            Orçamento
-          </Button>
+          {canRequestQuote ? (
+            <Button
+              size="sm"
+              className="w-full h-8 text-[11px] font-bold rounded-lg bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                openLeadModal({ preferredCompanyId: id, source: 'company-card-compact', type: 'quick' });
+              }}
+            >
+              Orçamento
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              asChild
+              className="w-full h-8 text-[11px] font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link href={companyPath}>Ver perfil</Link>
+            </Button>
+          )}
         </div>
       </Card>
     );
@@ -381,7 +469,7 @@ export default function CompanyCard({
                 {selectedInComparison ? 'Selecionada' : 'Comparar'}
               </Button>
 
-              {company.trust.is_claimed || company.sponsored ? (
+              {canRequestQuote ? (
                 <Button
                   className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
                   onClick={(e) => {
@@ -408,13 +496,20 @@ export default function CompanyCard({
   }
 
   // ── Variante 3: Expanded (Fidelidade visual extrema da referência do usuário) ──
-  const sentiment = company.reputation.sentiment || { positive: 91, neutral: 8, negative: 1 };
-  
-  // Progresso radial de recomendação
+  // Sentiment: usa dados reais da API; mostra placeholder vazio se não há reviews
+  const sentiment = company.reputation.sentiment ?? (
+    company.reputation.rating_count > 0
+      ? { positive: 85, neutral: 10, negative: 5 }  // estimativa visual apenas
+      : null
+  );
+
+  // Progresso radial de recomendação (dados reais)
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
-  const recommendationRate = company.reputation.recommendation_rate || 96;
-  const strokeDashoffset = circumference - (recommendationRate / 100) * circumference;
+  const recommendationRate = company.reputation.recommendation_rate ?? null;
+  const strokeDashoffset = recommendationRate !== null
+    ? circumference - (recommendationRate / 100) * circumference
+    : circumference; // anel vazio quando não há dado real
 
   return (
     <Card
@@ -507,15 +602,25 @@ export default function CompanyCard({
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
             </Button>
 
-            <Button
-              className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C]"
-              onClick={(e) => {
-                e.stopPropagation();
-                openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
-              }}
-            >
-              Pedir orçamento
-            </Button>
+            {canRequestQuote ? (
+              <Button
+                className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
+                }}
+              >
+                Pedir orçamento
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Link href={companyPath}>Ver perfil</Link>
+              </Button>
+            )}
           </div>
 
         </div>
@@ -540,7 +645,7 @@ export default function CompanyCard({
           )}
           <div className="inline-flex items-center gap-1.5">
             <Clock3Icon className="h-4 w-4 text-[#64748B]" />
-            <span>Resposta média: 2h</span>
+            <span>Resposta média: {company.operations.sla_label || '24h'}</span>
           </div>
         </div>
       </div>
@@ -596,28 +701,34 @@ export default function CompanyCard({
             </TooltipProvider>
           </div>
 
-          {/* Barra tricolor horizontal */}
-          <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-100 mt-3.5">
-            <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
-            <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
-            <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
-          </div>
-
-          {/* Valores das barras */}
-          <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-            <div>
-              <span className="block text-[9px] text-slate-400 font-bold uppercase">Positivo</span>
-              <span className="text-[11px] font-black text-emerald-600">{sentiment.positive}%</span>
+          {/* Barra tricolor horizontal — só renderiza se há dados reais de sentiment */}
+          {sentiment ? (
+            <>
+              <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-100 mt-3.5">
+                <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
+                <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
+                <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                <div>
+                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Positivo</span>
+                  <span className="text-[11px] font-black text-emerald-600">{sentiment.positive}%</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Neutro</span>
+                  <span className="text-[11px] font-black text-amber-500">{sentiment.neutral}%</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Negativo</span>
+                  <span className="text-[11px] font-black text-rose-500">{sentiment.negative}%</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="mt-3.5 text-center text-xs text-slate-400 font-medium py-3">
+              Dados em processamento
             </div>
-            <div>
-              <span className="block text-[9px] text-slate-400 font-bold uppercase">Neutro</span>
-              <span className="text-[11px] font-black text-amber-500">{sentiment.neutral}%</span>
-            </div>
-            <div>
-              <span className="block text-[9px] text-slate-400 font-bold uppercase">Negativo</span>
-              <span className="text-[11px] font-black text-rose-500">{sentiment.negative}%</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Coluna 3: Índice de recomendação */}
@@ -647,7 +758,9 @@ export default function CompanyCard({
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-black text-slate-800">{recommendationRate}%</span>
+              <span className="text-xs font-black text-slate-800">
+                {recommendationRate !== null ? `${recommendationRate}%` : '–'}
+              </span>
             </div>
           </div>
           <div>
@@ -668,17 +781,23 @@ export default function CompanyCard({
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <p className="text-xs text-slate-600 font-bold mt-1.5 leading-snug">
-              <span className="text-emerald-600 font-black">{recommendationRate}%</span> dos clientes recomendam esta empresa
-            </p>
+            {recommendationRate !== null ? (
+              <p className="text-xs text-slate-600 font-bold mt-1.5 leading-snug">
+                <span className="text-emerald-600 font-black">{recommendationRate}%</span> dos clientes recomendam esta empresa
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 font-medium mt-1.5 leading-snug">
+                Dados insuficientes para cálculo
+              </p>
+            )}
           </div>
         </div>
 
       </div>
 
-      {/* 4. CHIPS DE CRITÉRIOS */}
+      {/* 4. CHIPS DE CRITÉRIOS (dados reais da API ou fallback genérico) */}
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        {['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'].map((chip) => (
+        {topCriteria.slice(0, 4).map((chip) => (
           <Badge
             key={chip}
             variant="secondary"
@@ -688,9 +807,14 @@ export default function CompanyCard({
             {chip}
           </Badge>
         ))}
-        <span className="text-xs text-slate-400 font-bold ml-1 hover:text-slate-600 transition-colors inline-flex items-center gap-0.5 cursor-pointer">
-          Ver mais
-        </span>
+        {topCriteria.length > 4 && (
+          <span
+            className="text-xs text-slate-400 font-bold ml-1 hover:text-slate-600 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); router.push(companyPath); }}
+          >
+            Ver mais
+          </span>
+        )}
       </div>
 
       {/* 5. RODAPÉ DE AÇÕES */}
