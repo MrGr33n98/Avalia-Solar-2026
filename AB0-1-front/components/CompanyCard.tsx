@@ -378,7 +378,6 @@ export default function CompanyCard({
                     : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 )}
               >
-                <Scale className="h-3.5 w-3.5" />
                 {selectedInComparison ? 'Selecionada' : 'Comparar'}
               </Button>
 
@@ -499,13 +498,12 @@ export default function CompanyCard({
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
               className={cn(
-                "w-full h-10 font-bold text-xs rounded-xl shadow-none inline-flex items-center justify-center gap-2",
+                "w-full h-10 font-bold text-xs rounded-xl shadow-none inline-flex items-center justify-center",
                 selectedInComparison
                   ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
                   : "border-slate-300 text-slate-700 hover:bg-slate-50"
               )}
             >
-              <Scale className="h-4 w-4" />
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
             </Button>
 
