@@ -950,7 +950,7 @@ export default function CategoryClientComponent({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2"
                     >
                       {[...Array(6)].map((_, i) => (
                         <Skeleton key={i} className="h-80 rounded-xl" />
@@ -961,7 +961,7 @@ export default function CategoryClientComponent({
                       key="companies"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr items-stretch"
+                      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 auto-rows-fr items-stretch"
                     >
                       {filteredCompanies.map((company, index) => (
                         <motion.div

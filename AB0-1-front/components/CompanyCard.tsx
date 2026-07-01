@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle, ShieldCheck, Zap, Shield, HelpCircle, Heart, PhoneCall, Scale, BadgeCheck, CheckCircle } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle, ShieldCheck, Zap, Shield, HelpCircle, Heart, PhoneCall, Scale, BadgeCheck, CheckCircle, ChevronRight } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 
@@ -495,108 +495,100 @@ export default function CompanyCard({
     );
   }
 
-  // ── Variante 3: Expanded (Fidelidade visual extrema da referência do usuário) ──
-  // Sentiment: usa dados reais da API; mostra placeholder vazio se não há reviews
+  // ── Variante 3: Expanded (layout horizontal compacto — full-width) ──
+  // Sentiment: dados reais da API; mostra placeholder se sem reviews
   const sentiment = company.reputation.sentiment ?? (
     company.reputation.rating_count > 0
-      ? { positive: 85, neutral: 10, negative: 5 }  // estimativa visual apenas
+      ? { positive: 85, neutral: 10, negative: 5 }
       : null
   );
 
-  // Progresso radial de recomendação (dados reais)
-  const radius = 28;
+  // Anel de recomendação (dados reais)
+  const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation.recommendation_rate ?? null;
   const strokeDashoffset = recommendationRate !== null
     ? circumference - (recommendationRate / 100) * circumference
-    : circumference; // anel vazio quando não há dado real
+    : circumference;
 
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 md:p-6 transition-all duration-300 hover:shadow-2xl cursor-pointer',
+        'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:shadow-xl cursor-pointer',
         className
       )}
       onClick={handleCardClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* 1. CABEÇALHO PRINCIPAL */}
-      <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-        
-        {/* Esquerda: Logo + Identidade principal */}
-        <div className="flex items-start gap-4">
+      {/* 1. CABEÇALHO — sempre horizontal */}
+      <div className="flex justify-between items-start gap-4">
+
+        {/* Esquerda: Logo + Identidade */}
+        <div className="flex items-start gap-3 min-w-0 flex-1">
           <CompanyLogo
             logoUrl={company.logo_url}
             name={name}
-            size="md"
-            className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-2xl"
+            size="sm"
+            className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-xl"
           />
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1.5">
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h3 className="text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1 truncate">
                 {name}
-                <BadgeCheck className="h-5 w-5 fill-blue-600 text-white" />
+                <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
               </h3>
-
               {company.trust.verification_status === 'verified' && (
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-bold py-0.5 px-2 rounded-full inline-flex items-center gap-1">
-                  <Check className="h-3 w-3" /> Verificada
+                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] font-bold py-0 px-1.5 rounded-full inline-flex items-center gap-0.5 h-4">
+                  <Check className="h-2.5 w-2.5" /> Verificada
                 </Badge>
               )}
             </div>
-
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-              <div className="flex items-center gap-1 font-bold text-slate-800">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+              <div className="flex items-center gap-0.5 font-bold text-slate-800">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span>{company.reputation.rating_avg.toFixed(1)}</span>
-                <span className="font-medium text-slate-400">|</span>
-                <span className="font-medium text-slate-500 hover:underline">{company.reputation.rating_count} avaliações</span>
-                <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
+                <span className="font-medium text-slate-300">|</span>
+                <span className="font-medium text-slate-400">{company.reputation.rating_count} aval.</span>
               </div>
               {company.identity.city && (
-                <div className="flex items-center gap-1 font-medium text-slate-500">
-                  <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                <div className="flex items-center gap-0.5 font-medium text-slate-400">
+                  <MapPin className="h-3 w-3 text-blue-500" />
                   <span>{company.identity.city}, {company.identity.state}</span>
                 </div>
               )}
             </div>
-
-            <Badge variant="outline" className="bg-[#EFF6FF] border-[#BFDBFE] text-[#1E40AF] text-[10px] font-bold py-0.5 px-3 rounded-full inline-flex items-center gap-1 shadow-none">
-              <Building className="h-3 w-3" /> Instalação de Energia Solar
-            </Badge>
           </div>
         </div>
 
-        {/* Direita: KPIs rápidos e CTAs */}
-        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-4 w-full lg:w-auto shrink-0">
-          
-          {/* Box de KPIs (Respostas e Cobertura) */}
-          <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50 w-full sm:w-60 lg:w-56 text-center">
-            <div className="border-r border-slate-100 p-2.5">
-              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Respostas</span>
-              <span className="text-sm font-black text-slate-900 mt-0.5 block">{company.operations.sla_label || '24h'}</span>
+        {/* Direita: KPIs + CTAs em linha */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* KPIs mini */}
+          <div className="hidden lg:grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center">
+            <div className="border-r border-slate-100 px-3 py-1.5">
+              <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Respostas</span>
+              <span className="text-[11px] font-black text-slate-900 block">{company.operations.sla_label || '24h'}</span>
             </div>
-            <div className="p-2.5">
-              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Cobertura</span>
-              <span className="text-sm font-black text-slate-900 mt-0.5 block">
+            <div className="px-3 py-1.5">
+              <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Cobertura</span>
+              <span className="text-[11px] font-black text-slate-900 block">
                 {company.coverage.cities.length > 0 ? `${company.coverage.cities.length} regiões` : 'Consulte'}
               </span>
             </div>
           </div>
 
-          {/* Botões de Ação Superiores */}
-          <div className="flex flex-col gap-2 w-full">
+          {/* CTAs */}
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
               className={cn(
-                "w-full h-10 font-bold text-xs rounded-xl shadow-none inline-flex items-center justify-center",
+                "h-8 font-bold text-[11px] rounded-lg shadow-none px-3",
                 selectedInComparison
                   ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
               )}
             >
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
@@ -604,7 +596,7 @@ export default function CompanyCard({
 
             {canRequestQuote ? (
               <Button
-                className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C]"
+                className="h-8 font-bold text-[11px] rounded-lg shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] px-3"
                 onClick={(e) => {
                   e.stopPropagation();
                   openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
@@ -615,201 +607,151 @@ export default function CompanyCard({
             ) : (
               <Button
                 asChild
-                className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-8 font-bold text-[11px] rounded-lg shadow-none bg-blue-600 hover:bg-blue-700 text-white px-3"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Link href={companyPath}>Ver perfil</Link>
               </Button>
             )}
           </div>
-
         </div>
       </div>
 
-      {/* 2. DESCRIÇÃO E MINI CHIPS OPERACIONAIS */}
-      <div className="mt-5 space-y-3">
-        <p className="text-sm text-slate-600 leading-relaxed font-medium">
-          {company.identity.description || `A ${name} oferece soluções completas em energia solar com tecnologia de ponta, qualidade e segurança para seu projeto.`}
+      {/* 2. DESCRIÇÃO + CHIPS OPERACIONAIS — em linha */}
+      <div className="mt-3 flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+        <p className="text-[11px] text-slate-500 leading-relaxed font-medium flex-1 min-w-0">
+          {(() => {
+            const desc = company.identity.description || `A ${name} oferece soluções completas em energia solar com tecnologia de ponta.`;
+            return desc.length > 110 ? desc.slice(0, 110) + '...' : desc;
+          })()}
         </p>
-
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1.5 text-xs font-bold text-[#475569]">
-          <div className="inline-flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-[#64748B]" />
-            <span>Atende todo o Brasil</span>
+        <div className="flex items-center gap-3 shrink-0 text-[10px] font-bold text-slate-500">
+          <div className="inline-flex items-center gap-1">
+            <Shield className="h-3 w-3 text-slate-400" />
+            <span>Todo o Brasil</span>
           </div>
           {company.operations.delivered_projects > 0 && (
-            <div className="inline-flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-[#64748B]" />
-              <span>+{company.operations.delivered_projects} projetos realizados</span>
+            <div className="inline-flex items-center gap-1">
+              <Zap className="h-3 w-3 text-slate-400" />
+              <span>+{company.operations.delivered_projects} projetos</span>
             </div>
           )}
-          <div className="inline-flex items-center gap-1.5">
-            <Clock3Icon className="h-4 w-4 text-[#64748B]" />
-            <span>Resposta média: {company.operations.sla_label || '24h'}</span>
+          <div className="inline-flex items-center gap-1">
+            <Clock3Icon className="h-3 w-3 text-slate-400" />
+            <span>Resp: {company.operations.sla_label || '24h'}</span>
           </div>
         </div>
       </div>
 
-      {/* 3. PAINEL DE REPUTAÇÃO & SENTIMENTO */}
-      <div className="mt-6 border border-slate-100 rounded-2xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 shadow-sm overflow-hidden">
-        
-        {/* Coluna 1: Avaliação Geral */}
-        <div className="p-5 flex flex-col justify-center items-center text-center">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Avaliação geral</span>
-          <span className="text-4xl font-black text-slate-900 mt-2 block">
+      {/* 3. PAINEL DE REPUTAÇÃO — 3 colunas compactas */}
+      <div className="mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
+
+        {/* Col 1: Avaliação Geral */}
+        <div className="p-3 flex items-center gap-3 md:flex-col md:items-center md:text-center">
+          <span className="text-2xl font-black text-slate-900 leading-none">
             {company.reputation.rating_avg.toFixed(1)}
           </span>
-          <div className="flex items-center gap-0.5 mt-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  "h-4 w-4",
-                  i < Math.floor(company.reputation.rating_avg)
-                    ? "fill-amber-400 text-amber-400"
-                    : "text-slate-200 fill-slate-200"
-                )}
-              />
-            ))}
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    "h-3 w-3",
+                    i < Math.floor(company.reputation.rating_avg)
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-slate-200 fill-slate-200"
+                  )}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-slate-400 font-bold">{company.reputation.rating_count} avaliações</span>
           </div>
-          <span className="text-xs text-slate-500 font-bold mt-2">
-            {company.reputation.rating_count} avaliações
-          </span>
         </div>
 
-        {/* Coluna 2: Review Sentiment */}
-        <div className="p-5 flex flex-col justify-center">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
+        {/* Col 2: Review Sentiment */}
+        <div className="p-3 flex flex-col justify-center">
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
-                    <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                  <button type="button" className="p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <Info className="h-3 w-3 text-slate-300 cursor-help" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-slate-900 text-white border-none p-3 rounded-xl max-w-xs shadow-xl text-xs space-y-1.5 leading-relaxed z-50">
-                  <p className="font-bold text-slate-200">Como funciona o Review Sentiment?</p>
-                  <p>Classifica a opinião dos clientes a partir das notas das avaliações:</p>
-                  <ul className="list-disc pl-4 space-y-0.5 text-slate-300">
-                    <li><span className="font-bold text-emerald-400">Positivo:</span> avaliações de 4 e 5 estrelas.</li>
-                    <li><span className="font-bold text-amber-400">Neutro:</span> avaliações de 3 estrelas.</li>
-                    <li><span className="font-bold text-rose-400">Negativo:</span> avaliações de 1 e 2 estrelas.</li>
-                  </ul>
+                <TooltipContent className="bg-slate-900 text-white border-none p-2.5 rounded-lg max-w-xs shadow-xl text-[10px] space-y-1 leading-relaxed z-50">
+                  <p className="font-bold text-slate-200">Review Sentiment</p>
+                  <p>Classificação baseada nas notas: 4-5★ positivo, 3★ neutro, 1-2★ negativo.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-
-          {/* Barra tricolor horizontal — só renderiza se há dados reais de sentiment */}
           {sentiment ? (
             <>
-              <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-100 mt-3.5">
+              <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-slate-100 mt-2">
                 <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
                 <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
                 <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+              <div className="grid grid-cols-3 gap-1 mt-1.5 text-center">
                 <div>
-                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Positivo</span>
-                  <span className="text-[11px] font-black text-emerald-600">{sentiment.positive}%</span>
+                  <span className="text-[10px] font-black text-emerald-600">{sentiment.positive}%</span>
                 </div>
                 <div>
-                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Neutro</span>
-                  <span className="text-[11px] font-black text-amber-500">{sentiment.neutral}%</span>
+                  <span className="text-[10px] font-black text-amber-500">{sentiment.neutral}%</span>
                 </div>
                 <div>
-                  <span className="block text-[9px] text-slate-400 font-bold uppercase">Negativo</span>
-                  <span className="text-[11px] font-black text-rose-500">{sentiment.negative}%</span>
+                  <span className="text-[10px] font-black text-rose-500">{sentiment.negative}%</span>
                 </div>
               </div>
             </>
           ) : (
-            <div className="mt-3.5 text-center text-xs text-slate-400 font-medium py-3">
-              Dados em processamento
-            </div>
+            <div className="mt-2 text-[10px] text-slate-400 font-medium">Dados em processamento</div>
           )}
         </div>
 
-        {/* Coluna 3: Índice de recomendação */}
-        <div className="p-5 flex items-center gap-4">
+        {/* Col 3: Índice de recomendação */}
+        <div className="p-3 flex items-center gap-3">
           <div className="relative shrink-0">
-            <svg className="w-16 h-16 transform -rotate-90">
-              <circle
-                className="text-slate-100"
-                strokeWidth="5"
-                stroke="currentColor"
-                fill="transparent"
-                r={radius}
-                cx="32"
-                cy="32"
-              />
-              <circle
-                className="text-emerald-500 transition-all duration-300"
-                strokeWidth="5"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="transparent"
-                r={radius}
-                cx="32"
-                cy="32"
-              />
+            <svg className="w-11 h-11 transform -rotate-90">
+              <circle className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
+              <circle className="text-emerald-500 transition-all duration-300" strokeWidth="3.5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-black text-slate-800">
+              <span className="text-[10px] font-black text-slate-800">
                 {recommendationRate !== null ? `${recommendationRate}%` : '–'}
               </span>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Índice de recomendação</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
-                      <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-slate-900 text-white border-none p-3 rounded-xl max-w-xs shadow-xl text-xs space-y-1.5 leading-relaxed z-50">
-                    <p className="font-bold text-slate-200">Como funciona o Índice de Recomendação?</p>
-                    <p>Calcula o percentual de clientes que ativamente recomendam esta empresa em seus formulários de avaliação.</p>
-                    <p className="text-slate-300">Valores baseados em avaliações verificadas da plataforma.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+          <div className="min-w-0">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Recomendação</span>
             {recommendationRate !== null ? (
-              <p className="text-xs text-slate-600 font-bold mt-1.5 leading-snug">
-                <span className="text-emerald-600 font-black">{recommendationRate}%</span> dos clientes recomendam esta empresa
+              <p className="text-[10px] text-slate-600 font-bold mt-0.5 leading-snug">
+                <span className="text-emerald-600 font-black">{recommendationRate}%</span> recomendam
               </p>
             ) : (
-              <p className="text-xs text-slate-400 font-medium mt-1.5 leading-snug">
-                Dados insuficientes para cálculo
-              </p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Sem dados</p>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* 4. CHIPS DE CRITÉRIOS (dados reais da API ou fallback genérico) */}
-      <div className="mt-5 flex flex-wrap items-center gap-2">
+      {/* 4. CHIPS DE CRITÉRIOS — Uma única linha com scroll se necessário */}
+      <div className="mt-3 flex flex-row flex-nowrap items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
         {topCriteria.slice(0, 4).map((chip) => (
           <Badge
             key={chip}
             variant="secondary"
-            className="bg-[#F8FAFC] border border-slate-100 text-slate-700 text-[11px] font-bold py-1 px-3 rounded-xl inline-flex items-center gap-1.5 shadow-none"
+            className="bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-bold py-0.5 px-2 rounded-lg inline-flex items-center gap-1 shadow-none shrink-0"
           >
-            <CheckCircle className="h-3.5 w-3.5 text-emerald-500 fill-emerald-50" />
+            <CheckCircle className="h-3 w-3 text-emerald-500 fill-emerald-50" />
             {chip}
           </Badge>
         ))}
         {topCriteria.length > 4 && (
           <span
-            className="text-xs text-slate-400 font-bold ml-1 hover:text-slate-600 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+            className="text-[10px] text-slate-400 font-bold ml-0.5 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
             onClick={(e) => { e.stopPropagation(); router.push(companyPath); }}
           >
             Ver mais
@@ -817,20 +759,15 @@ export default function CompanyCard({
         )}
       </div>
 
-      {/* 5. RODAPÉ DE AÇÕES */}
-      <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-        
-        {/* Ações da Esquerda (Ver Perfil, WhatsApp, Contato) */}
-        <div className="flex flex-wrap items-center gap-2">
+      {/* 5. RODAPÉ — tudo em uma linha */}
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
-            className="rounded-xl border-slate-200 text-slate-700 font-bold text-xs h-10 px-4"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(companyPath);
-            }}
+            className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
+            onClick={(e) => { e.stopPropagation(); router.push(companyPath); }}
           >
-            <Building className="h-4 w-4 mr-2 text-slate-500" />
+            <Building className="h-3 w-3 mr-1 text-slate-400" />
             Ver perfil
           </Button>
 
@@ -839,41 +776,35 @@ export default function CompanyCard({
               href={company.actions.whatsapp_url}
               companyId={id}
               label="WhatsApp"
-              className="rounded-xl border-[#E2E8F0] font-bold text-xs h-10 px-4"
+              className="rounded-lg border-[#E2E8F0] font-bold text-[10px] h-7 px-2.5"
               preset="brandSolid"
             />
           )}
 
           <Button
             variant="outline"
-            className="rounded-xl border-slate-200 text-slate-700 font-bold text-xs h-10 px-4"
+            className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
             onClick={(e) => {
               e.stopPropagation();
               openLeadModal({ preferredCompanyId: id, source: 'company-card-contact', type: 'quick' });
             }}
           >
-            <PhoneCall className="h-4 w-4 mr-2 text-slate-500" />
+            <PhoneCall className="h-3 w-3 mr-1 text-slate-400" />
             Contato
           </Button>
         </div>
 
-        {/* Ação da Direita (Ver avaliações) */}
         <Button
-          className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 px-5 inline-flex items-center gap-1.5 self-stretch sm:self-auto"
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(companyReviewPath);
-          }}
+          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 px-3 inline-flex items-center gap-1"
+          onClick={(e) => { e.stopPropagation(); router.push(companyReviewPath); }}
         >
           Ver avaliações
-          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[10px] font-bold rounded-md px-1.5 shadow-none border-none">
+          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[9px] font-bold rounded px-1 shadow-none border-none">
             {company.reputation.rating_count}
           </Badge>
-          <span className="ml-0.5">›</span>
+          <ChevronRight className="h-3 w-3" />
         </Button>
-
       </div>
-
     </Card>
   );
 }
