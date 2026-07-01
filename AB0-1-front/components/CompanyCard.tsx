@@ -561,31 +561,31 @@ export default function CompanyCard({
           </div>
         </div>
 
-        {/* Direita: KPIs + CTAs em linha */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* KPIs mini */}
-          <div className="hidden lg:grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center">
-            <div className="border-r border-slate-100 px-3 py-1.5">
+        {/* Direita: KPIs + CTAs agrupados verticalmente para evitar sobreposição horizontal */}
+        <div className="flex flex-col items-end gap-2 shrink-0 w-[140px] sm:w-[160px]">
+          {/* Box de KPIs mini */}
+          <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
+            <div className="border-r border-slate-100 py-1">
               <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Respostas</span>
-              <span className="text-[11px] font-black text-slate-900 block">{company.operations.sla_label || '24h'}</span>
+              <span className="text-[10px] font-black text-slate-900 block">{company.operations.sla_label || '24h'}</span>
             </div>
-            <div className="px-3 py-1.5">
+            <div className="py-1">
               <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Cobertura</span>
-              <span className="text-[11px] font-black text-slate-900 block">
-                {company.coverage.cities.length > 0 ? `${company.coverage.cities.length} regiões` : 'Consulte'}
+              <span className="text-[10px] font-black text-slate-900 block truncate px-1">
+                {company.coverage.cities.length > 0 ? `${company.coverage.cities.length} reg.` : 'Consulte'}
               </span>
             </div>
           </div>
 
-          {/* CTAs */}
-          <div className="flex items-center gap-2">
+          {/* CTAs empilhados verticalmente para economizar espaço e evitar quebras */}
+          <div className="flex flex-col gap-1 w-full">
             <Button
               type="button"
               variant="outline"
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
               className={cn(
-                "h-8 font-bold text-[11px] rounded-lg shadow-none px-3",
+                "h-7 font-bold text-[10px] rounded-lg shadow-none w-full justify-center",
                 selectedInComparison
                   ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
                   : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -596,7 +596,7 @@ export default function CompanyCard({
 
             {canRequestQuote ? (
               <Button
-                className="h-8 font-bold text-[11px] rounded-lg shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] px-3"
+                className="h-7 font-bold text-[10px] rounded-lg shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] w-full justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
@@ -607,7 +607,7 @@ export default function CompanyCard({
             ) : (
               <Button
                 asChild
-                className="h-8 font-bold text-[11px] rounded-lg shadow-none bg-blue-600 hover:bg-blue-700 text-white px-3"
+                className="h-7 font-bold text-[10px] rounded-lg shadow-none bg-blue-600 hover:bg-blue-700 text-white w-full justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Link href={companyPath}>Ver perfil</Link>
