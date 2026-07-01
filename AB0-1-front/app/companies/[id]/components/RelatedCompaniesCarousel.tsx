@@ -9,6 +9,7 @@ import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import CompanyCard from "@/components/CompanyCard";
 
 interface RelatedCompaniesCarouselProps {
   company: Company;
@@ -171,50 +172,12 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {relatedCompanies.map((comp) => (
-            <Card key={comp.id} className="w-[280px] snap-start rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-shadow shrink-0 bg-white">
-              <CardContent className="p-5 flex flex-col gap-4 h-full">
-                {/* Topo do Card: Logo + Infos */}
-                <div className="flex gap-4">
-                  {/* Logo do Banco de Dados */}
-                  <CompanyLogo
-                    logoUrl={comp.logo_url}
-                    name={comp.name}
-                    size="sm"
-                    className="shrink-0 bg-white"
-                  />
-                  <div className="flex flex-col justify-center min-w-0">
-                    <h4 className="font-bold text-slate-900 text-base truncate" title={comp.name}>{comp.name}</h4>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-sm font-black text-slate-800">{comp.rating_avg || comp.rating || "5.0"}</span>
-                      <span className="text-xs font-medium text-slate-400">({comp.reviews_count || comp.total_reviews || 0})</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-1 text-slate-500">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="text-xs font-medium truncate">
-                        {comp.city && comp.state ? `${comp.city}, ${comp.state}` : (comp.city || comp.state || "Brasil")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Badge de Categoria centralizado */}
-                <div className="flex justify-center mt-1">
-                  <span className="bg-slate-100 text-slate-600 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider truncate max-w-full">
-                    {comp.category_info?.name || comp.category_name || comp.category || "Energia Solar"}
-                  </span>
-                </div>
-
-                {/* Botão de Ver Perfil no rodapé do card */}
-                <div className="mt-auto pt-2">
-                  <Button variant="outline" className="w-full rounded-xl border-blue-100 text-blue-700 hover:bg-blue-50 hover:border-blue-200 font-bold shadow-sm transition-all h-11" asChild>
-                    <Link href={`/companies/${comp.slug}`}>
-                      Ver Perfil
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <CompanyCard
+              key={comp.id}
+              company={comp}
+              variant="compact"
+              className="w-[280px] snap-start shrink-0"
+            />
           ))}
         </div>
       </div>
