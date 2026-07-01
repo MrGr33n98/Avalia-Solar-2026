@@ -35,6 +35,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   const [started, setStarted] = useState(false);
   const [rating, setRating] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [npsScore, setNpsScore] = useState<number | undefined>(undefined);
   const [comment, setComment] = useState('');
   const [reviewerName, setReviewerName] = useState('');
   const [contact, setContact] = useState('');
@@ -99,6 +100,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           body: JSON.stringify({
             rating,
             comment,
+            nps_score: npsScore,
             reviewer_name: reviewerName,
             contact,
             city,
@@ -255,6 +257,36 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
               aria-hidden="true"
               name="website"
             />
+
+            <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+              <span className="block text-sm font-bold text-slate-900 leading-snug">
+                Em uma escala de 0 a 10, qual a probabilidade de você recomendar esta empresa para um amigo ou colega? (Opcional)
+              </span>
+              <div className="flex flex-wrap justify-between gap-1 mt-2">
+                {Array.from({ length: 11 }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setNpsScore(i)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-black transition-all ${
+                      npsScore === i
+                        ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-600/25"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1 mt-1">
+                <span>Muito improvável</span>
+                <span>Muito provável</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed bg-slate-50 border border-slate-100 rounded-xl p-3">
+              <strong>Como as respostas serão exibidas:</strong> Suas respostas ajudarão a calcular as médias operacionais e o índice de recomendação pública da empresa de forma agregada. Suas informações de contato pessoais (e-mail e WhatsApp) são estritamente confidenciais e <strong>nunca serão exibidas publicamente</strong> no site ou passadas a terceiros.
+            </p>
 
             <div className="space-y-3 rounded-2xl bg-slate-50 p-4">
               <CheckRow

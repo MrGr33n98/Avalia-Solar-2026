@@ -73,10 +73,8 @@ class CompanyAccessRequest < ApplicationRecord
   end
 
   def verify_company
-    return if company.verified?
-
     company.update!(
-      verified: true,
+      active_admin: true,
       moderation_status: 'active',
       approved_at: Time.current,
       approved_by_admin_user_id: reviewed_by_admin_user_id

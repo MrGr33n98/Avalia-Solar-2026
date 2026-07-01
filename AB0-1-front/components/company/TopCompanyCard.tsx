@@ -32,12 +32,12 @@ const RANK_COLORS = {
 
 export default function TopCompanyCard({ company, rank, className }: Props) {
   const { id, name, city, state, description } = company;
-  const sponsored = (company as any).sponsored;
-  const rating_count = Number((company as any).rating_count || 0);
-  const average_rating = parseFloat((company as any).rating_avg || 0);
+  const sponsored = (company as any).sponsored === true;
+  const rating_count = Number((company as any).rating_count ?? (company as any).reviews_count ?? (company as any).total_reviews ?? 0);
+  const average_rating = parseFloat((company as any).rating_avg ?? (company as any).average_rating ?? (company as any).rating ?? 0);
   
   const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || { border: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-400', label: `#${rank}` };
-  const companyPath = buildCompanyPath(company.slug, name, id);
+  const companyPath = buildCompanyPath(company.slug || String(id));
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 

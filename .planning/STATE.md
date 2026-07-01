@@ -20,6 +20,9 @@
 - Requisitos existentes do `REQUIREMENTS.md` foram incorporados, e novos requisitos específicos para Android nativo foram adicionados.
 - A auditoria de código e a comparação de `AB0-1-mobile` com `AB0-1-front` são reconhecidas como atividades preparatórias importantes para refinar os detalhes das fases, mas não foram realizadas pelo gsd-roadmapper.
 
+### Roadmap Evolution
+- Phase 7 added: Implementar Company Card global com dados confiáveis, agregações, formulários e variantes responsivas
+
 ### Todos
 - Aguardar feedback do usuário para aprovação do roadmap.
 - Iniciar a fase de planejamento detalhado da Fase 1 após a aprovação.

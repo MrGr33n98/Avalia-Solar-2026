@@ -30,6 +30,7 @@ module Api
           category: category,
           rating: params[:rating],
           comment: params[:comment],
+          nps_score: params[:nps_score],
           capture_flow_source: source,
           is_legacy: category.nil?,
           form_answers: permitted_answers,
@@ -51,6 +52,32 @@ module Api
             submitted_at: Time.current.iso8601
           }
         )
+
+        scores_hash = nil
+        if params[:criterion_scores].is_a?(Hash)
+          scores_hash = params[:criterion_scores]
+        elsif permitted_answers.is_a?(Hash)
+          scores_hash = permitted_answers[:criterion_scores].is_a?(Hash) ? permitted_answers[:criterion_scores] : permitted_answers
+        end
+
+        if scores_hash.present?
+          scores_hash.each do |slug, score_val|
+            next if score_val.blank?
+            c_slug = slug.to_s.parameterize
+            criterion = RatingCriterion.find_by(category_id: category&.id, slug: c_slug) ||
+                        RatingCriterion.find_by(slug: c_slug) ||
+                        RatingCriterion.find_by(category_id: category&.id, slug: slug.to_s) ||
+                        RatingCriterion.find_by(slug: slug.to_s)
+            if criterion
+              review.review_criterion_scores.build(
+                rating_criterion: criterion,
+                score: score_val.to_f,
+                title_snapshot: criterion.title,
+                weight_snapshot: criterion.weight
+              )
+            end
+          end
+        end
 
         if review.save
           record_event('review_submitted', review_id: review.id)

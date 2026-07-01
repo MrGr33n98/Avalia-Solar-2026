@@ -93,3 +93,13 @@ Este roadmap descreve as fases e objetivos para a transição do aplicativo mobi
 | 4. Engagement & Conversion Features (Part 1) | 0/4 | Not started | - |
 | 5. Real-time Communication (Chat) | 0/3 | Not started | - |
 | 6. Performance, Polish & Release Prep | 0/4 | Not started | - |
+
+### Phase 7: Implementar Company Card global com dados confiáveis, agregações, formulários e variantes responsivas
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 7 to break down)

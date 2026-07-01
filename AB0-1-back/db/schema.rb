@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_29_143000) do
+ActiveRecord::Schema[7.0].define(version: 2026_06_30_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -654,7 +654,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_143000) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id", unique: true
+    t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id", unique: true, where: "(chat_session_id IS NOT NULL)"
     t.index ["city"], name: "index_chat_leads_on_city"
     t.index ["consent_given"], name: "index_chat_leads_on_consent_given"
     t.index ["created_at"], name: "index_chat_leads_on_created_at"
@@ -863,6 +863,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_143000) do
     t.datetime "geocoded_at"
     t.string "geocoding_status", default: "pending"
     t.boolean "p2p_chat_enabled", default: false, null: false
+    t.string "business_verification_status", default: "unverified", null: false
+    t.datetime "business_verified_at"
+    t.string "business_verification_method"
+    t.integer "delivered_projects_count", default: 0, null: false
+    t.integer "response_sla_minutes"
+    t.datetime "operational_data_updated_at"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -2242,6 +2248,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_29_143000) do
     t.jsonb "criteria_breakdown", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "nps_score", precision: 4, scale: 2
+    t.integer "nps_responses", default: 0, null: false
+    t.decimal "recommendation_rate", precision: 4, scale: 2
+    t.jsonb "rating_classification_distribution", default: {}, null: false
     t.index ["category_id"], name: "index_review_aggregates_on_category_id"
     t.index ["company_id", "category_id"], name: "idx_rev_agg_company_category", unique: true
     t.index ["company_id"], name: "index_review_aggregates_on_company_id"

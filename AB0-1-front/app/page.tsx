@@ -8,7 +8,7 @@ import { cookies } from 'next/headers';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import FAQSection from '@/components/seo/FAQSection';
 import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
-import HomeCompanyCard from '@/components/home/HomeCompanyCard';
+import CompanyCard from '@/components/CompanyCard';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import HowItWorks from '@/components/landing/HowItWorks';
@@ -386,7 +386,7 @@ async function CompaniesSectionWrapper({
       {companies.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {companies.slice(0, 8).map((company) => (
-            <HomeCompanyCard key={company.id} company={company} />
+            <CompanyCard key={company.id} company={company} variant="standard" />
           ))}
         </div>
       ) : (

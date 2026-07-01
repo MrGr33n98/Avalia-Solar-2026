@@ -214,7 +214,7 @@ class Review < ApplicationRecord
   end
 
   def should_recalculate_aggregates?
-    approved? && (saved_change_to_status? || saved_change_to_rating? || previously_new_record?)
+    saved_change_to_status? || (approved? && (saved_change_to_rating? || previously_new_record?))
   end
 
   def enqueue_aggregation

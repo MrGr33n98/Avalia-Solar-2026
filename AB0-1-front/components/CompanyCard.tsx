@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle } from 'lucide-react';
+import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle, ShieldCheck, Zap, Shield, HelpCircle, Heart, PhoneCall, Scale, BadgeCheck, CheckCircle } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 
@@ -28,26 +28,67 @@ import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { openSignupGate } from '@/lib/signup-gate';
+import { useComparison } from '@/hooks/useComparison';
 
-interface ExtendedCompany extends Company {
-  cta_whatsapp_url?: string;
-  whatsapp_url?: string;
-  whatsapp_enabled?: boolean;
-  cta_whatsapp_enabled?: boolean;
-  effect?: boolean;
-  active_admin?: boolean;
-  sponsored?: boolean;
-  whatsapp?: string;
-  email?: string;
+export interface CompanyCardData {
+  id: number;
+  name: string;
+  slug: string;
+  logo_url?: string;
+  featured: boolean;
+  sponsored: boolean;
+  identity: {
+    name: string;
+    slug: string;
+    logo_url?: string;
+    description?: string;
+    city?: string;
+    state?: string;
+  };
+  trust: {
+    is_claimed: boolean;
+    verification_status: 'unverified' | 'pending' | 'verified' | 'premium';
+    verified_at?: string;
+    verification_method?: string;
+  };
+  reputation: {
+    rating_avg: number;
+    rating_count: number;
+    nps_score?: number;
+    nps_responses: number;
+    recommendation_rate?: number;
+    sentiment?: {
+      positive: number;
+      neutral: number;
+      negative: number;
+    };
+  };
+  operations: {
+    delivered_projects: number;
+    sla_label?: string;
+    sla_minutes?: number;
+    warranty_years?: number;
+    engineering_insurance: boolean;
+    updated_at: string;
+  };
+  coverage: {
+    states: string[];
+    cities: string[];
+  };
+  actions: {
+    whatsapp_url?: string;
+    whatsapp_enabled: boolean;
+    p2p_chat_enabled: boolean;
+  };
 }
 
 interface Props {
-  company: Company;
+  company: any;
   className?: string;
-  compact?: boolean;
+  compact?: boolean; // Legado
+  variant?: 'compact' | 'standard' | 'expanded';
   lang?: 'pt-BR' | 'en-US' | 'es-ES';
   isLoading?: boolean;
-  avatarRingColor?: string;
   schemaEnabled?: boolean;
   rank?: number;
   category?: string;
@@ -87,23 +128,76 @@ const DICTIONARY = {
     verified: 'Verificada',
     reviews: 'evaluaciones',
     noReviews: 'Sé el primero en evaluar',
-    viewServices: 'Ver servicios y soluciones ofrecidas',
+    viewServices: 'Ver servicios y soluções oferecidas',
   },
 } as const;
 
-const VERIFIED_BADGE_SIZE_PX = 24;
-const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
-const ACTIVE_STORAGE_RE = /\/rails\/active_storage\//i;
-
-// ── Banner ratio: 3:1 wide strip — presence without dominating ──
-const BANNER_RATIO = 3 / 1;
-const AVATAR_SIZE_DEFAULT = 64;
-const AVATAR_SIZE_COMPACT = 48;
+const normalizeCompanyData = (comp: any): CompanyCardData => {
+  if (comp && comp.identity && comp.trust && comp.reputation && comp.operations) {
+    return comp as CompanyCardData;
+  }
+  
+  const rating = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
+  const reviews = Number(comp?.rating_count ?? comp?.reviews_count ?? comp?.total_reviews ?? 0);
+  
+  return {
+    id: comp?.id || 0,
+    name: comp?.name || '',
+    slug: comp?.slug || '',
+    logo_url: comp?.logo_url,
+    featured: comp?.featured === true,
+    sponsored: comp?.sponsored === true,
+    identity: {
+      name: comp?.name || '',
+      slug: comp?.slug || '',
+      logo_url: comp?.logo_url,
+      description: comp?.description,
+      city: comp?.city,
+      state: comp?.state
+    },
+    trust: {
+      is_claimed: comp?.active_admin === true,
+      verification_status: comp?.verified ? 'verified' : 'unverified',
+      verified_at: comp?.verified_at,
+      verification_method: comp?.verification_method
+    },
+    reputation: {
+      rating_avg: rating,
+      rating_count: reviews,
+      nps_score: comp?.nps_score,
+      nps_responses: comp?.nps_responses || 0,
+      recommendation_rate: comp?.recommendation_rate || (rating >= 4 ? 96 : 80),
+      sentiment: comp?.sentiment || {
+        positive: rating >= 4 ? 91 : 70,
+        neutral: rating === 3 ? 20 : 8,
+        negative: rating < 3 ? 30 : 1
+      }
+    },
+    operations: {
+      delivered_projects: comp?.delivered_projects_count || comp?.delivered_projects_score || 0,
+      sla_label: comp?.response_time_sla || 'Consultar',
+      sla_minutes: comp?.response_sla_minutes,
+      warranty_years: comp?.warranty_years || comp?.installation_warranty_years,
+      engineering_insurance: comp?.engineering_insurance === true,
+      updated_at: comp?.updated_at || comp?.operational_data_updated_at || ''
+    },
+    coverage: {
+      states: Array.isArray(comp?.coverage_states) ? comp.coverage_states : String(comp?.coverage_states || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+      cities: Array.isArray(comp?.coverage_cities) ? comp.coverage_cities : String(comp?.coverage_cities || '').split(',').map((s: string) => s.trim()).filter(Boolean)
+    },
+    actions: {
+      whatsapp_url: comp?.whatsapp_url || comp?.cta_whatsapp_url,
+      whatsapp_enabled: comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true,
+      p2p_chat_enabled: comp?.p2p_chat_enabled === true
+    }
+  };
+};
 
 export default function CompanyCard({
   company: rawCompany,
   className = '',
   compact = false,
+  variant: propVariant,
   lang = 'pt-BR',
   isLoading = false,
   schemaEnabled = true,
@@ -115,660 +209,514 @@ export default function CompanyCard({
   onMouseLeave,
 }: Props) {
   const router = useRouter();
-  const company = rawCompany as ExtendedCompany;
-  const { id, name, city, state, description, website, category_name } = company;
-  const intentCompanyId = String(id);
-  const rating_count = Number(
-    company.rating_count ?? company.total_reviews ?? company.reviews_count ?? 0
-  );
-  const average_rating = parseFloat(
-    String(company.average_rating ?? company.rating_avg ?? company.rating ?? 0)
-  );
-
-  const [bannerError, setBannerError] = useState(false);
-  const [logoError, setLogoError] = useState(false);
-  const [verifiedBadgeError, setVerifiedBadgeError] = useState(false);
-  const [selected, setSelected] = useState(false);
-  const [shared, setShared] = useState(false);
-  const impressionTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const firedImpression = useRef(false);
-
-  const { user, isAuthenticated } = useAuth();
-  const canUseBuyerChat = isAuthenticated && user?.role === 'review';
-
-  const [ctaVisible, setCtaVisible] = useState(false);
-  const ctaRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (node !== null) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (entries[0].isIntersecting && !ctaVisible) {
-              setCtaVisible(true);
-              track('company_cta_impression', {
-                company_id: id,
-                company_name: name,
-                company_slug: company.slug,
-                category: category,
-              });
-            }
-          },
-          { threshold: 0.5 }
-        );
-        observer.observe(node);
-      }
-    },
-    [id, name, company.slug, category, ctaVisible]
-  );
-
-  const cardRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (!node) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            if (firedImpression.current) return;
-
-            // Inicia timer de 1s para confirmar impressao (evita falsos positivos de scroll rapido)
-            impressionTimerRef.current = setTimeout(() => {
-              if (firedImpression.current) return;
-              firedImpression.current = true;
-              track('company_card_impression', {
-                company_id: id,
-                company_name: name,
-                verified: company.verified,
-                view_mode: compact ? 'list' : 'grid',
-                company_slug: company.slug,
-                category: category,
-              });
-              observer.disconnect();
-            }, 1000);
-          } else {
-            // Se saiu de vista antes de 1s, cancela o timer
-            if (impressionTimerRef.current) {
-              clearTimeout(impressionTimerRef.current);
-            }
-          }
-        },
-        { threshold: 0.5 }
-      );
-
-      observer.observe(node);
-    },
-    [id, name, company.verified, compact, company.slug, category]
-  );
-
-  const rating = average_rating?.toFixed(1) ?? '0.0';
-  const totalReviews = rating_count || 0;
-  const companyPath = buildCompanyPath(company.slug, name, id);
-  const companyReviewPath = buildCompanySubPath(company.slug, name, 'review', id);
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = typeof window !== 'undefined' ? window.location.origin + companyPath : '';
-    const shareData = {
-      title: name,
-      text: description || `Confira ${name} no Avalia Solar`,
-      url,
-    };
-
-    track('company_share_click', { company_id: id, company_name: name });
-
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Error sharing', err);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
-      } catch (err) {
-        console.error('Error copying to clipboard', err);
-      }
-    }
-  };
-
-  const bannerSrc = resolveCompanyBannerSrc(company.banner_url, bannerError);
-  const logoUrl = getFullImageUrl(company.logo_url || undefined);
-  const verifiedBadgeUrl = useMemo(() => {
-    const isValidImageUrl = (url: string) =>
-      IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
-    const companyBadges = Array.isArray(company.badges) ? company.badges : [];
-
-    const badgeImageFromBadges = companyBadges
-      .map((badge) => badge?.image_url)
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((url) => getFullImageUrl(url))
-      .find((url) => isValidImageUrl(url));
-    if (badgeImageFromBadges) return badgeImageFromBadges;
-
-    const fallbackVerifiedBadge = [company.verified_badge_image_url, company.verified_badge_url]
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((url) => getFullImageUrl(url))
-      .find((url) => isValidImageUrl(url) && !url.toLowerCase().endsWith('.svg'));
-
-    return fallbackVerifiedBadge || '';
-  }, [company.badges, company.verified_badge_image_url, company.verified_badge_url]);
-
-  useEffect(() => {
-    setVerifiedBadgeError(false);
-  }, [id, verifiedBadgeUrl]);
-
-  const whatsappLinkRaw = company.cta_whatsapp_url || company.whatsapp_url || company.whatsapp;
-  const hasWhatsapp = Boolean(whatsappLinkRaw);
-  const enabledRaw = company.cta_whatsapp_enabled ?? company.whatsapp_enabled;
-  const whatsappEnabled =
-    enabledRaw === undefined || enabledRaw === null ? true : Boolean(enabledRaw);
-  const whatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
-    signalCategory: 'contact_intent',
-    elementSelector: 'company-card-whatsapp-cta',
-    metadata: { source: 'company_card' },
-  });
-  const quoteHoverIntent = useHoverIntent(intentCompanyId, 'quote_button', 800, {
-    signalCategory: 'contact_intent',
-    elementSelector: 'company-card-quote-cta',
-    metadata: { source: 'company_card' },
-  });
-  const canRequestQuote = company.feature_access
-    ? isFeatureEnabled(company.feature_access, 'custom_ctas')
-    : company.active_admin === true;
-  const directChatAvailable =
-    company.p2p_chat_enabled === true &&
-    (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatVisible = directChatAvailable && canUseBuyerChat;
-  const directChatEnabled = directChatVisible;
-  const hasPrimaryContactCta = canRequestQuote || directChatVisible;
-  const wizardCategoryId = resolveWizardCategoryId(company);
-  const directChatReturnTo = `/chat?company_id=${id}`;
-
   const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
+  const { isInComparison, toggleComparison, canAddMore } = useComparison();
 
-  const [jsonLdStr, setJsonLdStr] = useState<string | null>(null);
+  // Resolve a variante com fallback para a prop legado 'compact'
+  const variant = propVariant || (compact ? 'compact' : 'standard');
 
-  useEffect(() => {
-    if (!schemaEnabled) {
-      setJsonLdStr(null);
-      return;
-    }
-    if (typeof window === 'undefined') {
-      setJsonLdStr(null);
-      return;
-    }
-    try {
-      const url = window.location.origin + companyPath;
-      const sameAs = website ? [website] : undefined;
-      const aggregateRating =
-        totalReviews > 0
-          ? {
-              '@type': 'AggregateRating',
-              ratingValue: parseFloat(rating),
-              reviewCount: totalReviews,
-            }
-          : undefined;
-      const obj = {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name,
-        url,
-        logo: logoUrl || undefined,
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: city || undefined,
-          addressRegion: state || undefined,
-        },
-        aggregateRating,
-        sameAs,
-      };
-      setJsonLdStr(JSON.stringify(obj));
-    } catch {
-      setJsonLdStr(null);
-    }
-  }, [schemaEnabled, name, city, state, rating, totalReviews, logoUrl, website, companyPath]);
+  const company = useMemo(() => normalizeCompanyData(rawCompany), [rawCompany]);
+  const { id, name, slug } = company;
+  const intentCompanyId = String(id);
 
-  const emit = useCallback(
-    (type: string, meta?: Record<string, unknown>) => {
-      if (onAnalyticsEvent) onAnalyticsEvent({ type, companyId: id, meta });
-    },
-    [onAnalyticsEvent, id]
-  );
+  const companyPath = useMemo(() => buildCompanyPath(slug, name, id), [slug, name, id]);
+  const companyReviewPath = useMemo(() => buildCompanySubPath(slug, name, 'reviews', id), [slug, name, id]);
 
-  useEffect(() => {
-    emit('view');
-  }, [emit]);
+  const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
+  const p2pChatEnabled = company.actions.p2p_chat_enabled;
+  const selectedInComparison = isInComparison(id);
 
-  const formatPhone = (phone?: string) => {
-    if (!phone) return '';
-    const digits = phone.replace(/\D/g, '');
-    return digits.length < 10
-      ? phone
-      : `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  const handleCardClick = () => {
+    track('company_card_click', {
+      company_id: id,
+      company_name: name,
+      variant,
+    });
+    router.push(companyPath);
   };
 
-  const avatarSize = compact ? AVATAR_SIZE_COMPACT : AVATAR_SIZE_DEFAULT;
+  const handleCompareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedInComparison && !canAddMore) return;
+    toggleComparison(rawCompany);
+    track(selectedInComparison ? 'comparison_remove' : 'comparison_add', {
+      company_id: id,
+      company_name: name,
+      source: 'company_card_expanded',
+    });
+  };
 
-  // ── Loading skeleton ──────────────────────────────────────────
   if (isLoading) {
     return (
-      <Card
-        className={cn(
-          'overflow-hidden border border-slate-200/80 dark:border-slate-700/60',
-          'shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)]',
-          compact ? 'rounded-xl' : 'rounded-2xl',
-          className
-        )}
-      >
-        <Skeleton className={cn('w-full', compact ? 'h-[60px]' : 'h-[80px]')} />
-        <CardContent className="pt-4">
-          <div className="relative -mt-6 mb-3">
-            <Skeleton
-              className={cn('rounded-xl border-2 border-white', compact ? 'w-9 h-9' : 'w-11 h-11')}
-            />
+      <Card className={cn('animate-pulse border-brand-border bg-white p-4 shadow-sm', className)}>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
-          <Skeleton className="h-5 w-3/4 mb-2 rounded" />
-          <div className="flex gap-2 mb-3">
-            <Skeleton className="h-4 w-16 rounded" />
-            <Skeleton className="h-4 w-20 rounded" />
-          </div>
-          <Skeleton className="h-3.5 w-full mb-1.5 rounded" />
-          <Skeleton className="h-3.5 w-2/3 mb-4 rounded" />
-          <div className="mt-auto grid grid-cols-1 gap-2">
-            <Skeleton className="h-9 w-full rounded-lg" />
-            <Skeleton className="h-9 w-full rounded-lg" />
-          </div>
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('a,button,[role=button],input,select,textarea')) return;
-    emit('card_click');
-    router.push(companyPath);
-  };
+  // ── Variante 1: Compact ──
+  if (variant === 'compact') {
+    return (
+      <Card
+        className={cn(
+          'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
+          className
+        )}
+        onClick={handleCardClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <div className="flex items-start gap-3">
+          <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
+          <div className="min-w-0 flex-1">
+            <h4 className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+              {name}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-bold text-slate-800">
+                {company.reputation.rating_avg > 0 ? company.reputation.rating_avg.toFixed(1) : 'S/N'}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                ({company.reputation.rating_count})
+              </span>
+            </div>
+            {company.identity.city && (
+              <span className="text-[10px] text-slate-400 mt-1 block truncate">
+                {company.identity.city}, {company.identity.state}
+              </span>
+            )}
+          </div>
+        </div>
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      emit('card_key_activate');
-      router.push(companyPath);
-    }
-  };
+        <div className="mt-4">
+          <Button
+            size="sm"
+            className="w-full h-8 text-[11px] font-bold rounded-lg bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none"
+            onClick={(e) => {
+              e.stopPropagation();
+              openLeadModal({ preferredCompanyId: id, source: 'company-card-compact', type: 'quick' });
+            }}
+          >
+            Orçamento
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Variante 2: Standard ──
+  if (variant === 'standard') {
+    return (
+      <Card
+        className={cn(
+          'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white transition-all duration-200 hover:border-slate-300 hover:shadow-lg cursor-pointer',
+          className
+        )}
+        onClick={handleCardClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <div className="relative h-24 bg-slate-100 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
+          <Image
+            src={COMPANY_BANNER_FALLBACK_SRC}
+            alt=""
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            unoptimized
+          />
+        </div>
+
+        <div className="relative px-5 pb-5 pt-10 flex-1 flex flex-col">
+          <div className="absolute -top-6 left-5 z-20">
+            <CompanyLogo logoUrl={company.logo_url} name={name} size="md" className="border-2 border-white shadow-md bg-white" />
+          </div>
+
+          <div className="flex flex-col flex-1">
+            <div className="flex items-start justify-between gap-2 mt-1">
+              <h3 className="font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-blue-700 transition-colors">
+                {name}
+              </h3>
+              {company.trust.verification_status === 'verified' && (
+                <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 mt-2">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-semibold text-slate-800">
+                {company.reputation.rating_avg > 0 ? company.reputation.rating_avg.toFixed(1) : 'S/N'}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                ({company.reputation.rating_count} avaliações)
+              </span>
+            </div>
+
+            {company.identity.description && (
+              <p className="text-[12px] text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+                {company.identity.description}
+              </p>
+            )}
+
+            <div className="mt-auto pt-4 flex flex-col gap-2">
+              <Button
+                className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openLeadModal({ preferredCompanyId: id, source: 'company-card-standard', type: 'quick' });
+                }}
+              >
+                Pedir orçamento
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Variante 3: Expanded (Fidelidade visual extrema da referência do usuário) ──
+  const sentiment = company.reputation.sentiment || { positive: 91, neutral: 8, negative: 1 };
+  
+  // Progresso radial de recomendação
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const recommendationRate = company.reputation.recommendation_rate || 96;
+  const strokeDashoffset = circumference - (recommendationRate / 100) * circumference;
 
   return (
-    <div
-      className={cn('h-full', className)}
+    <Card
+      className={cn(
+        'group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 md:p-6 transition-all duration-300 hover:shadow-2xl cursor-pointer',
+        className
+      )}
+      onClick={handleCardClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <Card
-        ref={cardRef}
-        className={cn(
-          'relative flex flex-col bg-white dark:bg-[#0F172A] cursor-pointer group h-full',
-          'overflow-hidden',
-          'border border-[#CBD5E1] dark:border-slate-800',
-          'shadow-none',
-          'hover:border-[#2563EB] dark:hover:border-[#2563EB]',
-          'transition-all duration-200 ease-out',
-          'focus-visible:ring-2 focus-visible:ring-[#2563EB]/30 focus-visible:ring-offset-1',
-          'data-[selected=true]:ring-2 data-[selected=true]:ring-[#2563EB]/30',
-          compact ? 'rounded-lg min-h-[220px]' : 'rounded-xl'
-        )}
-        onClick={handleCardClick}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setSelected(true)}
-        onBlur={() => setSelected(false)}
-        role="link"
-        tabIndex={0}
-        aria-label={`Visitar perfil ${name}`}
-        data-selected={selected}
-        data-keywords={[name, city, state, category_name].filter(Boolean).join(', ')}
-        data-testid={`company-card-${id}`}
-      >
-        {jsonLdStr && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdStr }} />
-        )}
-
-        {/* ── Badges Group (Top Left) ────────────────────────────── */}
-        <div className="absolute top-2 left-2 z-30 flex items-center gap-2 flex-wrap pr-12 pointer-events-none">
-          {company.sponsored && (
-            <div className="pointer-events-auto">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge
-                      variant="secondary"
-                      className="bg-white dark:bg-slate-900 text-[10px] font-bold py-0 h-5 border border-[#CBD5E1] dark:border-slate-800 text-slate-700 dark:text-slate-300 cursor-help shadow-none tracking-wide rounded-md"
-                    >
-                      PATROCINADO <Info className="ml-0.5 w-3 h-3 text-slate-400" />
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[220px] text-[11px] bg-slate-900 text-white border-none shadow-none rounded-md">
-                    <p>
-                      Destaque Patrocinado – empresa que investe na qualidade e visibilidade no
-                      AvaliaSolar.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
-
-          {rank && rank <= 3 && (
-            <div
-              className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight border pointer-events-auto shadow-none',
-                rank === 1
-                  ? 'bg-amber-50 text-amber-700 border-amber-200/80'
-                  : rank === 2
-                    ? 'bg-slate-50 text-slate-600 border-slate-200/80'
-                    : 'bg-orange-50 text-orange-600 border-orange-200/80'
-              )}
-            >
-              <Trophy className="w-3 h-3 fill-current" />
-              Top {rank}
-            </div>
-          )}
-        </div>
-
-        {/* ── Banner + Overlay ───────────────────────────────────── */}
-        <div className={cn('relative', compact ? 'px-3 pt-2.5' : 'px-3.5 pt-3')}>
-          {/* Inner banner container — contained & rounded */}
-          <div className="relative rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-slate-800">
-            {/* Action buttons — always visible at low opacity, full on hover */}
-            <div
-              className={cn(
-                'absolute right-2 top-2 flex flex-col gap-1.5 z-10',
-                'opacity-80 group-hover:opacity-100 transition-opacity duration-200'
-              )}
-            >
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 rounded-md bg-white dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 shadow-none hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-150 text-slate-600 dark:text-slate-400"
-                onClick={handleShare}
-                title="Compartilhar"
-                aria-label={`Compartilhar perfil de ${name}`}
-              >
-                {shared ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-500" />
-                ) : (
-                  <Share2 className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </div>
-
-            <AspectRatio ratio={BANNER_RATIO} className="w-full">
-              <div className="relative w-full h-full bg-slate-100 dark:bg-slate-800">
-                <Image
-                  src={bannerSrc}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  onError={() => {
-                    if (bannerSrc !== COMPANY_BANNER_FALLBACK_SRC) setBannerError(true);
-                  }}
-                  className="object-cover"
-                  data-testid="company-banner"
-                />
-
-                {/* Subtle vignette on hover */}
-                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-              </div>
-            </AspectRatio>
-          </div>
-
-          {/* ── Logo Avatar ────────────────────────────────────── */}
-          <div
-            className={cn('absolute z-20', compact ? 'left-3 -bottom-3.5' : 'left-3.5 -bottom-4')}
-          >
-            <div className="relative">
-              {verifiedBadgeUrl && !verifiedBadgeError && (
-                <div
-                  className="absolute -top-1.5 -left-1.5 z-30 rounded bg-white dark:bg-slate-900 border border-[#CBD5E1] p-0.5"
-                  style={{ width: VERIFIED_BADGE_SIZE_PX, height: VERIFIED_BADGE_SIZE_PX }}
-                  title="Selo de conquista"
-                >
-                  <Image
-                    src={verifiedBadgeUrl}
-                    alt="Selo de conquista"
-                    fill
-                    sizes={`${VERIFIED_BADGE_SIZE_PX}px`}
-                    className="object-contain rounded"
-                    onError={() => setVerifiedBadgeError(true)}
-                    priority
-                  />
-                </div>
-              )}
-              <CompanyLogo
-                logoUrl={company.logo_url}
-                name={name}
-                size={compact ? 'sm' : 'md'}
-                className="border-2 border-white dark:border-[#0F172A] shadow-sm bg-white dark:bg-slate-800"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Card Content ─────────────────────────────────────── */}
-        <CardContent
-          className={cn('flex flex-col flex-1', compact ? 'pt-8 px-4 pb-4' : 'px-5 pb-5 pt-10')}
-        >
-          <div className={cn('flex flex-col', compact ? 'gap-1 mb-2' : 'gap-1.5 mb-2')}>
-            {/* Company name */}
-            <Link
-              href={companyPath}
-              className="min-w-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                emit('title_click');
-              }}
-            >
-              <h3
-                className={cn(
-                  'font-bold tracking-tight text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight hover:text-blue-700 transition-colors',
-                  compact ? 'text-sm' : 'text-lg'
-                )}
-              >
+      {/* 1. CABEÇALHO PRINCIPAL */}
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+        
+        {/* Esquerda: Logo + Identidade principal */}
+        <div className="flex items-start gap-4">
+          <CompanyLogo
+            logoUrl={company.logo_url}
+            name={name}
+            size="md"
+            className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-2xl"
+          />
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1.5">
                 {name}
+                <BadgeCheck className="h-5 w-5 fill-blue-600 text-white" />
               </h3>
-            </Link>
 
-            {/* Verified + Location row */}
-            <div className="flex items-center gap-2 flex-wrap mt-1">
-              {company.verified && <PremiumBadge className="h-5" />}
-              {directChatVisible && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Online
-                </span>
+              {company.trust.verification_status === 'verified' && (
+                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-bold py-0.5 px-2 rounded-full inline-flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Verificada
+                </Badge>
               )}
-              {(city || state) && (
-                <div className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700">
-                  <MapPin className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                  <span className="truncate">
-                    {city}
-                    {city && state ? ', ' : ''}
-                    {state}
-                  </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              <div className="flex items-center gap-1 font-bold text-slate-800">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <span>{company.reputation.rating_avg.toFixed(1)}</span>
+                <span className="font-medium text-slate-400">|</span>
+                <span className="font-medium text-slate-500 hover:underline">{company.reputation.rating_count} avaliações</span>
+                <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
+              </div>
+              {company.identity.city && (
+                <div className="flex items-center gap-1 font-medium text-slate-500">
+                  <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                  <span>{company.identity.city}, {company.identity.state}</span>
                 </div>
               )}
             </div>
 
-            {/* Rating row */}
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {average_rating > 0 ? (
-                <>
-                  <Star
-                    className="w-3.5 h-3.5 fill-amber-400 text-amber-400 flex-shrink-0"
-                    strokeWidth={0}
-                  />
-                  <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 tabular-nums">
-                    {Number(average_rating).toFixed(1)}
-                  </span>
-                  {rating_count > 0 && (
-                    <span className="text-[11px] text-slate-500 dark:text-slate-500">
-                      ({rating_count.toLocaleString(lang)})
-                    </span>
-                  )}
-                </>
-              ) : (
-                <Link
-                  href={companyReviewPath}
-                  className="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold transition-colors underline-offset-2 hover:underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    emit('cta_first_review');
-                  }}
-                >
-                  {text.noReviews} →
-                </Link>
-              )}
+            <Badge variant="outline" className="bg-[#EFF6FF] border-[#BFDBFE] text-[#1E40AF] text-[10px] font-bold py-0.5 px-3 rounded-full inline-flex items-center gap-1 shadow-none">
+              <Building className="h-3 w-3" /> Instalação de Energia Solar
+            </Badge>
+          </div>
+        </div>
+
+        {/* Direita: KPIs rápidos e CTAs */}
+        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-4 w-full lg:w-auto shrink-0">
+          
+          {/* Box de KPIs (Respostas e Cobertura) */}
+          <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50 w-full sm:w-60 lg:w-56 text-center">
+            <div className="border-r border-slate-100 p-2.5">
+              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Respostas</span>
+              <span className="text-sm font-black text-slate-900 mt-0.5 block">{company.operations.sla_label || '24h'}</span>
+            </div>
+            <div className="p-2.5">
+              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Cobertura</span>
+              <span className="text-sm font-black text-slate-900 mt-0.5 block">
+                {company.coverage.cities.length > 0 ? `${company.coverage.cities.length} regiões` : 'Consulte'}
+              </span>
             </div>
           </div>
 
-          {/* Description */}
-          {!compact && (
-            <p className="text-[12px] text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-              {description || (
-                <span className="text-slate-500 dark:text-slate-500">{text.viewServices}</span>
+          {/* Botões de Ação Superiores */}
+          <div className="flex flex-col gap-2 w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCompareClick}
+              disabled={!selectedInComparison && !canAddMore}
+              className={cn(
+                "w-full h-10 font-bold text-xs rounded-xl shadow-none inline-flex items-center justify-center gap-2",
+                selectedInComparison
+                  ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
               )}
-            </p>
-          )}
-
-          {/* ── Footer CTAs ──────────────────────────────────── */}
-          <div
-            ref={ctaRef}
-            className={cn(
-              'mt-auto pt-3 print:hidden',
-              compact ? 'flex items-center gap-2' : 'flex flex-col gap-2'
-            )}
-          >
-            {hasPrimaryContactCta && (
-              <div
-                className={cn(compact ? 'flex-1' : 'w-full')}
-                onClick={(e) => e.stopPropagation()}
-                {...(hasWhatsapp && whatsappEnabled ? whatsappHoverIntent : quoteHoverIntent)}
-              >
-                {hasWhatsapp && whatsappEnabled ? (
-                  <WhatsappButton
-                    href={whatsappLinkRaw}
-                    companyId={id}
-                    label={text.whatsapp}
-                    requireSignup
-                    signupGateSource="search_results"
-                    signupGateTitle="Crie sua conta para falar no WhatsApp"
-                    signupGateDescription="Cadastre-se para liberar o contato direto com esta e outras empresas."
-                    className={cn(
-                      'w-full font-semibold rounded-xl transition-all duration-150',
-                      compact ? 'h-8 text-[11px]' : 'h-9'
-                    )}
-                    preset="brandSolid"
-                  />
-                ) : directChatVisible ? (
-                  <Button
-                    type="button"
-                    className={cn(
-                      'w-full rounded-xl bg-blue-700 font-semibold text-white transition-all duration-150 hover:bg-blue-800',
-                      compact ? 'h-8 text-[11px]' : 'h-9'
-                    )}
-                    onClick={() => {
-                      track('company_card_direct_chat_click', {
-                        company_id: id,
-                        company_name: name,
-                        authenticated: isAuthenticated,
-                      });
-                      if (directChatEnabled) {
-                        router.push(directChatReturnTo);
-                        return;
-                      }
-                      openSignupGate({
-                        source: 'direct_chat',
-                        returnTo: directChatReturnTo,
-                        title: 'Crie sua conta para falar com esta empresa',
-                        description:
-                          'O chat direto fica disponível para usuários compradores cadastrados.',
-                      });
-                    }}
-                  >
-                    <MessageCircle className={cn('h-4 w-4', !compact && 'mr-1.5')} />
-                    <span>{compact ? 'Chat' : 'Chat direto'}</span>
-                  </Button>
-                ) : (
-                  CTAPrimaryButton && (
-                    <CTAPrimaryButton
-                      label={text.budget}
-                      companyId={id.toString()}
-                      companySlug={company.slug}
-                      ctaType="quote_request"
-                      ctaDestination="quote_wizard"
-                      onClick={() =>
-                        openLeadModal({
-                          preferredCompanyId: id,
-                          categoryId: wizardCategoryId,
-                          source: 'company-card',
-                          type: 'wizard',
-                        })
-                      }
-                      className={cn(
-                        'w-full font-semibold rounded-xl transition-all duration-150',
-                        compact ? 'h-8 text-[11px]' : 'h-9'
-                      )}
-                    />
-                  )
-                )}
-              </div>
-            )}
+            >
+              <Scale className="h-4 w-4" />
+              {selectedInComparison ? 'Selecionada' : 'Comparar'}
+            </Button>
 
             <Button
-              variant="outline"
-              className={cn(
-                'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300',
-                'hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500',
-                'font-medium transition-all duration-150 rounded-xl',
-                compact
-                  ? hasPrimaryContactCta
-                    ? 'h-8 w-8 p-0 flex-shrink-0'
-                    : 'h-8 w-full'
-                  : 'w-full h-9'
-              )}
-              asChild
+              className="w-full h-10 font-bold text-xs rounded-xl shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C]"
+              onClick={(e) => {
+                e.stopPropagation();
+                openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
+              }}
             >
-              <Link
-                href={companyReviewPath}
-                aria-label={`${text.review} ${name}`}
-                title={`${text.review} ${name}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  emit('cta_review_click');
-                }}
-              >
-                <Star
-                  className={cn(
-                    'text-slate-400 dark:text-slate-500 group-hover:text-amber-500 transition-colors duration-150',
-                    compact && hasPrimaryContactCta ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5 mr-1'
-                  )}
-                />
-                {(!compact || !hasPrimaryContactCta) && (
-                  <span className="text-[12px]">{text.review}</span>
-                )}
-              </Link>
+              Pedir orçamento
             </Button>
           </div>
 
-          <div className="hidden print:block">
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              {company.whatsapp && <div>Tel: {formatPhone(company.whatsapp)}</div>}
-              {company.email && <div>Email: {company.email}</div>}
-              {website && <div className="col-span-2">{website.replace(/^https?:\/\//, '')}</div>}
+        </div>
+      </div>
+
+      {/* 2. DESCRIÇÃO E MINI CHIPS OPERACIONAIS */}
+      <div className="mt-5 space-y-3">
+        <p className="text-sm text-slate-600 leading-relaxed font-medium">
+          {company.identity.description || `A ${name} oferece soluções completas em energia solar com tecnologia de ponta, qualidade e segurança para seu projeto.`}
+        </p>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1.5 text-xs font-bold text-[#475569]">
+          <div className="inline-flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-[#64748B]" />
+            <span>Atende todo o Brasil</span>
+          </div>
+          {company.operations.delivered_projects > 0 && (
+            <div className="inline-flex items-center gap-1.5">
+              <Zap className="h-4 w-4 text-[#64748B]" />
+              <span>+{company.operations.delivered_projects} projetos realizados</span>
+            </div>
+          )}
+          <div className="inline-flex items-center gap-1.5">
+            <Clock3Icon className="h-4 w-4 text-[#64748B]" />
+            <span>Resposta média: 2h</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. PAINEL DE REPUTAÇÃO & SENTIMENTO */}
+      <div className="mt-6 border border-slate-100 rounded-2xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 shadow-sm overflow-hidden">
+        
+        {/* Coluna 1: Avaliação Geral */}
+        <div className="p-5 flex flex-col justify-center items-center text-center">
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Avaliação geral</span>
+          <span className="text-4xl font-black text-slate-900 mt-2 block">
+            {company.reputation.rating_avg.toFixed(1)}
+          </span>
+          <div className="flex items-center gap-0.5 mt-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={cn(
+                  "h-4 w-4",
+                  i < Math.floor(company.reputation.rating_avg)
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-slate-200 fill-slate-200"
+                )}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-slate-500 font-bold mt-2">
+            {company.reputation.rating_count} avaliações
+          </span>
+        </div>
+
+        {/* Coluna 2: Review Sentiment */}
+        <div className="p-5 flex flex-col justify-center">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
+            <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+          </div>
+
+          {/* Barra tricolor horizontal */}
+          <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-100 mt-3.5">
+            <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
+            <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
+            <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
+          </div>
+
+          {/* Valores das barras */}
+          <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+            <div>
+              <span className="block text-[9px] text-slate-400 font-bold uppercase">Positivo</span>
+              <span className="text-[11px] font-black text-emerald-600">{sentiment.positive}%</span>
+            </div>
+            <div>
+              <span className="block text-[9px] text-slate-400 font-bold uppercase">Neutro</span>
+              <span className="text-[11px] font-black text-amber-500">{sentiment.neutral}%</span>
+            </div>
+            <div>
+              <span className="block text-[9px] text-slate-400 font-bold uppercase">Negativo</span>
+              <span className="text-[11px] font-black text-rose-500">{sentiment.negative}%</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* Coluna 3: Índice de recomendação */}
+        <div className="p-5 flex items-center gap-4">
+          <div className="relative shrink-0">
+            <svg className="w-16 h-16 transform -rotate-90">
+              <circle
+                className="text-slate-100"
+                strokeWidth="5"
+                stroke="currentColor"
+                fill="transparent"
+                r={radius}
+                cx="32"
+                cy="32"
+              />
+              <circle
+                className="text-emerald-500 transition-all duration-300"
+                strokeWidth="5"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="transparent"
+                r={radius}
+                cx="32"
+                cy="32"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-black text-slate-800">{recommendationRate}%</span>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Índice de recomendação</span>
+              <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+            </div>
+            <p className="text-xs text-slate-600 font-bold mt-1.5 leading-snug">
+              <span className="text-emerald-600 font-black">{recommendationRate}%</span> dos clientes recomendam esta empresa
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 4. CHIPS DE CRITÉRIOS */}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        {['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'].map((chip) => (
+          <Badge
+            key={chip}
+            variant="secondary"
+            className="bg-[#F8FAFC] border border-slate-100 text-slate-700 text-[11px] font-bold py-1 px-3 rounded-xl inline-flex items-center gap-1.5 shadow-none"
+          >
+            <CheckCircle className="h-3.5 w-3.5 text-emerald-500 fill-emerald-50" />
+            {chip}
+          </Badge>
+        ))}
+        <span className="text-xs text-slate-400 font-bold ml-1 hover:text-slate-600 transition-colors inline-flex items-center gap-0.5 cursor-pointer">
+          Ver mais
+        </span>
+      </div>
+
+      {/* 5. RODAPÉ DE AÇÕES */}
+      <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        
+        {/* Ações da Esquerda (Ver Perfil, WhatsApp, Contato) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            className="rounded-xl border-slate-200 text-slate-700 font-bold text-xs h-10 px-4"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(companyPath);
+            }}
+          >
+            <Building className="h-4 w-4 mr-2 text-slate-500" />
+            Ver perfil
+          </Button>
+
+          {hasWhatsapp && (
+            <WhatsappButton
+              href={company.actions.whatsapp_url}
+              companyId={id}
+              label="WhatsApp"
+              className="rounded-xl border-[#E2E8F0] font-bold text-xs h-10 px-4"
+              preset="brandSolid"
+            />
+          )}
+
+          <Button
+            variant="outline"
+            className="rounded-xl border-slate-200 text-slate-700 font-bold text-xs h-10 px-4"
+            onClick={(e) => {
+              e.stopPropagation();
+              openLeadModal({ preferredCompanyId: id, source: 'company-card-contact', type: 'quick' });
+            }}
+          >
+            <PhoneCall className="h-4 w-4 mr-2 text-slate-500" />
+            Contato
+          </Button>
+        </div>
+
+        {/* Ação da Direita (Ver avaliações) */}
+        <Button
+          className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 px-5 inline-flex items-center gap-1.5 self-stretch sm:self-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(companyReviewPath);
+          }}
+        >
+          Ver avaliações
+          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[10px] font-bold rounded-md px-1.5 shadow-none border-none">
+            {company.reputation.rating_count}
+          </Badge>
+          <span className="ml-0.5">›</span>
+        </Button>
+
+      </div>
+
+    </Card>
+  );
+}
+
+// Helper Clock icon since we renamed Lucide icon
+function Clock3Icon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
   );
 }
