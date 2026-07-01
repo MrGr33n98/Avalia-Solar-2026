@@ -576,7 +576,24 @@ export default function CompanyCard({
         <div className="p-5 flex flex-col justify-center">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
-            <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-900 text-white border-none p-3 rounded-xl max-w-xs shadow-xl text-xs space-y-1.5 leading-relaxed z-50">
+                  <p className="font-bold text-slate-200">Como funciona o Review Sentiment?</p>
+                  <p>Classifica a opinião dos clientes a partir das notas das avaliações:</p>
+                  <ul className="list-disc pl-4 space-y-0.5 text-slate-300">
+                    <li><span className="font-bold text-emerald-400">Positivo:</span> avaliações de 4 e 5 estrelas.</li>
+                    <li><span className="font-bold text-amber-400">Neutro:</span> avaliações de 3 estrelas.</li>
+                    <li><span className="font-bold text-rose-400">Negativo:</span> avaliações de 1 e 2 estrelas.</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {/* Barra tricolor horizontal */}
@@ -636,7 +653,20 @@ export default function CompanyCard({
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Índice de recomendação</span>
-              <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-slate-900 text-white border-none p-3 rounded-xl max-w-xs shadow-xl text-xs space-y-1.5 leading-relaxed z-50">
+                    <p className="font-bold text-slate-200">Como funciona o Índice de Recomendação?</p>
+                    <p>Calcula o percentual de clientes que ativamente recomendam esta empresa em seus formulários de avaliação.</p>
+                    <p className="text-slate-300">Valores baseados em avaliações verificadas da plataforma.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <p className="text-xs text-slate-600 font-bold mt-1.5 leading-snug">
               <span className="text-emerald-600 font-black">{recommendationRate}%</span> dos clientes recomendam esta empresa
