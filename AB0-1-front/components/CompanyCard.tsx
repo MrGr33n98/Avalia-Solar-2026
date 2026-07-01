@@ -643,99 +643,101 @@ export default function CompanyCard({
         </div>
       </div>
 
-      {/* 3. PAINEL DE REPUTAÇÃO — 3 colunas compactas */}
-      <div className="mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
+      {/* 3. PAINEL DE REPUTAÇÃO — 3 colunas compactas (só renderiza se tiver avaliações) */}
+      {company.reputation.rating_count > 0 && (
+        <div className="mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
 
-        {/* Col 1: Avaliação Geral */}
-        <div className="p-3 flex items-center gap-3 md:flex-col md:items-center md:text-center">
-          <span className="text-2xl font-black text-slate-900 leading-none">
-            {company.reputation.rating_avg.toFixed(1)}
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={cn(
-                    "h-3 w-3",
-                    i < Math.floor(company.reputation.rating_avg)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-slate-200 fill-slate-200"
-                  )}
-                />
-              ))}
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">{company.reputation.rating_count} avaliações</span>
-          </div>
-        </div>
-
-        {/* Col 2: Review Sentiment */}
-        <div className="p-3 flex flex-col justify-center">
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" className="p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
-                    <Info className="h-3 w-3 text-slate-300 cursor-help" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-slate-900 text-white border-none p-2.5 rounded-lg max-w-xs shadow-xl text-[10px] space-y-1 leading-relaxed z-50">
-                  <p className="font-bold text-slate-200">Review Sentiment</p>
-                  <p>Classificação baseada nas notas: 4-5★ positivo, 3★ neutro, 1-2★ negativo.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          {sentiment ? (
-            <>
-              <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-slate-100 mt-2">
-                <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
-                <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
-                <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
+          {/* Col 1: Avaliação Geral */}
+          <div className="p-3 flex items-center gap-3 md:flex-col md:items-center md:text-center">
+            <span className="text-2xl font-black text-slate-900 leading-none">
+              {company.reputation.rating_avg.toFixed(1)}
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "h-3 w-3",
+                      i < Math.floor(company.reputation.rating_avg)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-slate-200 fill-slate-200"
+                    )}
+                  />
+                ))}
               </div>
-              <div className="grid grid-cols-3 gap-1 mt-1.5 text-center">
-                <div>
-                  <span className="text-[10px] font-black text-emerald-600">{sentiment.positive}%</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-black text-amber-500">{sentiment.neutral}%</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-black text-rose-500">{sentiment.negative}%</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="mt-2 text-[10px] text-slate-400 font-medium">Dados em processamento</div>
-          )}
-        </div>
-
-        {/* Col 3: Índice de recomendação */}
-        <div className="p-3 flex items-center gap-3">
-          <div className="relative shrink-0">
-            <svg className="w-11 h-11 transform -rotate-90">
-              <circle className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
-              <circle className="text-emerald-500 transition-all duration-300" strokeWidth="3.5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] font-black text-slate-800">
-                {recommendationRate !== null ? `${recommendationRate}%` : '–'}
-              </span>
+              <span className="text-[10px] text-slate-400 font-bold">{company.reputation.rating_count} avaliações</span>
             </div>
           </div>
-          <div className="min-w-0">
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Recomendação</span>
-            {recommendationRate !== null ? (
-              <p className="text-[10px] text-slate-600 font-bold mt-0.5 leading-snug">
-                <span className="text-emerald-600 font-black">{recommendationRate}%</span> recomendam
-              </p>
+
+          {/* Col 2: Review Sentiment */}
+          <div className="p-3 flex flex-col justify-center">
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <Info className="h-3 w-3 text-slate-300 cursor-help" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-slate-900 text-white border-none p-2.5 rounded-lg max-w-xs shadow-xl text-[10px] space-y-1 leading-relaxed z-50">
+                    <p className="font-bold text-slate-200">Review Sentiment</p>
+                    <p>Classificação baseada nas notas: 4-5★ positivo, 3★ neutro, 1-2★ negativo.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            {sentiment ? (
+              <>
+                <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-slate-100 mt-2">
+                  <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
+                  <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
+                  <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
+                </div>
+                <div className="grid grid-cols-3 gap-1 mt-1.5 text-center">
+                  <div>
+                    <span className="text-[10px] font-black text-emerald-600">{sentiment.positive}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-500">{sentiment.neutral}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-rose-500">{sentiment.negative}%</span>
+                  </div>
+                </div>
+              </>
             ) : (
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Sem dados</p>
+              <div className="mt-2 text-[10px] text-slate-400 font-medium">Dados em processamento</div>
             )}
           </div>
+
+          {/* Col 3: Índice de recomendação */}
+          <div className="p-3 flex items-center gap-3">
+            <div className="relative shrink-0">
+              <svg className="w-11 h-11 transform -rotate-90">
+                <circle className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
+                <circle className="text-emerald-500 transition-all duration-300" strokeWidth="3.5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[10px] font-black text-slate-800">
+                  {recommendationRate !== null ? `${recommendationRate}%` : '–'}
+                </span>
+              </div>
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Recomendação</span>
+              {recommendationRate !== null ? (
+                <p className="text-[10px] text-slate-600 font-bold mt-0.5 leading-snug">
+                  <span className="text-emerald-600 font-black">{recommendationRate}%</span> recomendam
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Sem dados</p>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 4. CHIPS DE CRITÉRIOS — Uma única linha com scroll se necessário */}
       <div className="mt-3 flex flex-row flex-nowrap items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
