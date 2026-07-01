@@ -365,16 +365,42 @@ export default function CompanyCard({
               </p>
             )}
 
-            <div className="mt-auto pt-4 flex flex-col gap-2">
+            <div className="mt-auto pt-4 grid grid-cols-2 gap-2">
               <Button
-                className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openLeadModal({ preferredCompanyId: id, source: 'company-card-standard', type: 'quick' });
-                }}
+                type="button"
+                variant="outline"
+                onClick={handleCompareClick}
+                disabled={!selectedInComparison && !canAddMore}
+                className={cn(
+                  "w-full font-semibold rounded-xl shadow-none h-9 text-xs inline-flex items-center justify-center gap-1",
+                  selectedInComparison
+                    ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                )}
               >
-                Pedir orçamento
+                <Scale className="h-3.5 w-3.5" />
+                {selectedInComparison ? 'Selecionada' : 'Comparar'}
               </Button>
+
+              {company.trust.is_claimed || company.sponsored ? (
+                <Button
+                  className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openLeadModal({ preferredCompanyId: id, source: 'company-card-standard', type: 'quick' });
+                  }}
+                >
+                  Pedir orçamento
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  className="w-full font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white h-9 text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Link href={companyPath}>Ver perfil</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
