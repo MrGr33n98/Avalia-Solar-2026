@@ -324,6 +324,9 @@ jobs:
             FRONTEND_ROLLBACK_IMAGE="${FRONTEND_REPO}:rollback"
             export BACKEND_IMAGE FRONTEND_IMAGE
 
+            echo "?? Limpando cache e imagens Docker antigas nao utilizadas para liberar espaco..."
+            docker system prune -a -f || true
+
             PREVIOUS_BACKEND_ID=$(docker inspect --format='{{.Image}}' ab0-backend 2>/dev/null || true)
             PREVIOUS_FRONTEND_ID=$(docker inspect --format='{{.Image}}' ab0-frontend 2>/dev/null || true)
             [ -z "$PREVIOUS_BACKEND_ID" ] || docker image tag "$PREVIOUS_BACKEND_ID" "$BACKEND_ROLLBACK_IMAGE"
