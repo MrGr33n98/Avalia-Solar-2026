@@ -43,6 +43,12 @@ class Rack::Attack
 
   # === Existing Rules ===
 
+  # MCP tool gateway: protects public discovery tools and authenticated GTM flows.
+  # A second per-user/tool guard is applied by the controller.
+  throttle('mcp_tools/ip', limit: 120, period: 1.minute) do |req|
+    req.ip if req.post? && req.path.start_with?('/api/v1/mcp/tools/')
+  end
+
   # Intent signal ingest protection
   throttle('intent_signals/ip', limit: 120, period: 1.minute) do |req|
     if req.path == '/api/v1/intent_signals' && req.post?

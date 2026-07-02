@@ -1,16 +1,25 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import HowItWorks from '@/components/landing/HowItWorks';
 
 describe('HowItWorks', () => {
-  it('shows the three actions without numbered badges and with enlarged icons', () => {
-    const { container } = render(<HowItWorks />);
+  it('shows the testimonial image and comparison CTA', () => {
+    render(<HowItWorks />);
 
-    expect(screen.getByText('Buscar')).toBeInTheDocument();
-    expect(screen.getByText('Comparar')).toBeInTheDocument();
-    expect(screen.getByText('Pedir orçamento')).toBeInTheDocument();
-    expect(screen.queryByText('01')).not.toBeInTheDocument();
-    expect(screen.queryByText('02')).not.toBeInTheDocument();
-    expect(screen.queryByText('03')).not.toBeInTheDocument();
-    expect(container.querySelectorAll('svg.h-7.w-7')).toHaveLength(3);
+    expect(screen.getByAltText(/Depoimentos de usuários/i)).toHaveAttribute(
+      'src',
+      expect.stringContaining('depoimentos-avalia-solar.png')
+    );
+    expect(screen.getByRole('link', { name: /Comparar empresas/i })).toHaveAttribute(
+      'href',
+      '/compare'
+    );
+  });
+
+  it('changes slide using the carousel controls', () => {
+    render(<HowItWorks />);
+
+    expect(screen.getByText('Compare antes de decidir.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo slide' }));
+    expect(screen.getByText('Decida com a ajuda de quem já contratou.')).toBeInTheDocument();
   });
 });

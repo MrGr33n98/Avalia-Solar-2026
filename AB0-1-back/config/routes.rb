@@ -43,6 +43,10 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      namespace :mcp do
+        post 'tools/:tool_name', to: 'tools#create'
+      end
+
       # Growth analytics — PostHog webhook
       post 'posthog_webhook', to: 'posthog_webhooks#create'
       get 'posthog_webhook/health', to: 'posthog_webhooks#health'
