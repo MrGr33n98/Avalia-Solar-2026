@@ -1,0 +1,139 @@
+{
+  "version": "2.0-g2-style",
+  "brand": "Avalia Solar",
+  "style_reference": "G2.com achievement card visual language, adapted and original",
+  "assets": [
+    {
+      "slug": "01_primeira_avaliacao",
+      "title": "1ª Avaliação",
+      "subtitle": "Primeiro review publicado",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/01_primeira_avaliacao.svg",
+      "locked_icon": "icons_locked/01_primeira_avaliacao_locked.svg",
+      "card": "cards/01_primeira_avaliacao_card.svg",
+      "locked_card": "cards_locked/01_primeira_avaliacao_card_locked.svg",
+      "selected_card": "cards_selected/01_primeira_avaliacao_card_selected.svg"
+    },
+    {
+      "slug": "02_perfil_completo",
+      "title": "Perfil Completo",
+      "subtitle": "Dados essenciais preenchidos",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/02_perfil_completo.svg",
+      "locked_icon": "icons_locked/02_perfil_completo_locked.svg",
+      "card": "cards/02_perfil_completo_card.svg",
+      "locked_card": "cards_locked/02_perfil_completo_card_locked.svg",
+      "selected_card": "cards_selected/02_perfil_completo_card_selected.svg"
+    },
+    {
+      "slug": "03_cliente_verificado",
+      "title": "Cliente Verificado",
+      "subtitle": "Identidade/projeto validado",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/03_cliente_verificado.svg",
+      "locked_icon": "icons_locked/03_cliente_verificado_locked.svg",
+      "card": "cards/03_cliente_verificado_card.svg",
+      "locked_card": "cards_locked/03_cliente_verificado_card_locked.svg",
+      "selected_card": "cards_selected/03_cliente_verificado_card_selected.svg"
+    },
+    {
+      "slug": "04_projeto_solar_validado",
+      "title": "Projeto Solar Validado",
+      "subtitle": "Instalação solar confirmada",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/04_projeto_solar_validado.svg",
+      "locked_icon": "icons_locked/04_projeto_solar_validado_locked.svg",
+      "card": "cards/04_projeto_solar_validado_card.svg",
+      "locked_card": "cards_locked/04_projeto_solar_validado_card_locked.svg",
+      "selected_card": "cards_selected/04_projeto_solar_validado_card_selected.svg"
+    },
+    {
+      "slug": "05_mobilidade_ativada",
+      "title": "Mobilidade Ativada",
+      "subtitle": "EV ou wallbox cadastrado",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/05_mobilidade_ativada.svg",
+      "locked_icon": "icons_locked/05_mobilidade_ativada_locked.svg",
+      "card": "cards/05_mobilidade_ativada_card.svg",
+      "locked_card": "cards_locked/05_mobilidade_ativada_card_locked.svg",
+      "selected_card": "cards_selected/05_mobilidade_ativada_card_selected.svg"
+    },
+    {
+      "slug": "06_review_util",
+      "title": "Review Útil",
+      "subtitle": "Recebeu voto da comunidade",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/06_review_util.svg",
+      "locked_icon": "icons_locked/06_review_util_locked.svg",
+      "card": "cards/06_review_util_card.svg",
+      "locked_card": "cards_locked/06_review_util_card_locked.svg",
+      "selected_card": "cards_selected/06_review_util_card_selected.svg"
+    },
+    {
+      "slug": "07_influenciador_local",
+      "title": "Influenciador Local",
+      "subtitle": "Ajudou pessoas da região",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/07_influenciador_local.svg",
+      "locked_icon": "icons_locked/07_influenciador_local_locked.svg",
+      "card": "cards/07_influenciador_local_card.svg",
+      "locked_card": "cards_locked/07_influenciador_local_card_locked.svg",
+      "selected_card": "cards_selected/07_influenciador_local_card_selected.svg"
+    },
+    {
+      "slug": "08_especialista_solar",
+      "title": "Especialista Solar",
+      "subtitle": "3+ experiências solares",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/08_especialista_solar.svg",
+      "locked_icon": "icons_locked/08_especialista_solar_locked.svg",
+      "card": "cards/08_especialista_solar_card.svg",
+      "locked_card": "cards_locked/08_especialista_solar_card_locked.svg",
+      "selected_card": "cards_selected/08_especialista_solar_card_selected.svg"
+    },
+    {
+      "slug": "09_guardiao_sustentavel",
+      "title": "Guardião Sustentável",
+      "subtitle": "Jornada sustentável completa",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/09_guardiao_sustentavel.svg",
+      "locked_icon": "icons_locked/09_guardiao_sustentavel_locked.svg",
+      "card": "cards/09_guardiao_sustentavel_card.svg",
+      "locked_card": "cards_locked/09_guardiao_sustentavel_card_locked.svg",
+      "selected_card": "cards_selected/09_guardiao_sustentavel_card_selected.svg"
+    },
+    {
+      "slug": "10_bateria_armazenamento",
+      "title": "Bateria & Armazenamento",
+      "subtitle": "Conhecimento em storage",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/10_bateria_armazenamento.svg",
+      "locked_icon": "icons_locked/10_bateria_armazenamento_locked.svg",
+      "card": "cards/10_bateria_armazenamento_card.svg",
+      "locked_card": "cards_locked/10_bateria_armazenamento_card_locked.svg",
+      "selected_card": "cards_selected/10_bateria_armazenamento_card_selected.svg"
+    },
+    {
+      "slug": "11_carregador_verificado",
+      "title": "Carregador Verificado",
+      "subtitle": "Wallbox ou carregador EV",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/11_carregador_verificado.svg",
+      "locked_icon": "icons_locked/11_carregador_verificado_locked.svg",
+      "card": "cards/11_carregador_verificado_card.svg",
+      "locked_card": "cards_locked/11_carregador_verificado_card_locked.svg",
+      "selected_card": "cards_selected/11_carregador_verificado_card_selected.svg"
+    },
+    {
+      "slug": "12_top_avaliador",
+      "title": "Top Avaliador",
+      "subtitle": "Ranking mensal da comunidade",
+      "category": "Energia Solar / Mobilidade Elétrica",
+      "unlocked_icon": "icons/12_top_avaliador.svg",
+      "locked_icon": "icons_locked/12_top_avaliador_locked.svg",
+      "card": "cards/12_top_avaliador_card.svg",
+      "locked_card": "cards_locked/12_top_avaliador_card_locked.svg",
+      "selected_card": "cards_selected/12_top_avaliador_card_selected.svg"
+    }
+  ]
+}

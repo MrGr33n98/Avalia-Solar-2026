@@ -1,6 +1,8 @@
 'use client';
 
 import { ReactNode, useMemo, useState } from 'react';
+import { AchievementsStrip } from '@/components/achievements/AchievementsStrip';
+import { deriveAchievementStatuses } from '@/config/achievements';
 import Link from 'next/link';
 import {
   Accordion,
@@ -362,6 +364,26 @@ export function ReputationDashboard({
   const profileCompletion = summary?.profile?.completion_percent || 0;
   const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
 
+  // Conquistas sustentáveis — derivadas dos dados existentes (fallback até API estar disponível)
+  const hasSolarReview = reviews.some((r) =>
+    (r.category_name || '').toLowerCase().includes('solar')
+  );
+  const hasMobilityReview = reviews.some(
+    (r) =>
+      (r.category_name || '').toLowerCase().includes('mobilidade') ||
+      (r.category_name || '').toLowerCase().includes('elétric')
+  );
+  const achievementStatuses = deriveAchievementStatuses({
+    reviewsCount: reviews.length,
+    profileCompletionPercent: profileCompletion,
+    helpfulVotes,
+    greenScore,
+    hasSolarReview,
+    hasMobilityReview,
+    hasEVSolution: false,
+    isLinkedInVerified: false,
+  });
+
   const kpis = [
     {
       label: 'Green Score',
@@ -504,7 +526,7 @@ export function ReputationDashboard({
     <div className="space-y-4 md:space-y-6">
       <GreenScoreCompact greenScore={greenScore} rankingPosition={rankingPosition} />
       <SustainableJourney items={sustainableItems} />
-      <Achievements achievements={achievements} />
+      <AchievementsStrip statuses={achievementStatuses} />
       <ActivityFeed events={activityEvents} />
       <GreenHouseCertification greenScore={greenScore} />
     </div>
@@ -582,6 +604,52 @@ export function ReputationDashboard({
       <div className="min-w-0 md:hidden">{renderMobileTabContent()}</div>
 
       <div className="hidden md:block">
+        {/* Banner de incentivo de conquista */}
+        {reviews.length === 0 && (
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🏆</span>
+              <div>
+                <p className="text-sm font-semibold text-emerald-800">
+                  Você está a 1 avaliação de desbloquear{' '}
+                  <span className="font-bold text-emerald-700">1ª Avaliação</span>!
+                </p>
+                <p className="text-xs text-emerald-600">
+                  Publique sua primeira avaliação e ganhe 50 pontos Green Score.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/companies"
+              className="flex-shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+            >
+              Avaliar empresa
+            </Link>
+          </div>
+        )}
+        {reviews.length > 0 && !hasSolarReview && (
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">☀️</span>
+              <div>
+                <p className="text-sm font-semibold text-emerald-800">
+                  Você está a 1 avaliação de desbloquear{' '}
+                  <span className="font-bold text-emerald-700">Projeto Solar Validado</span>!
+                </p>
+                <p className="text-xs text-emerald-600">
+                  Avalie uma empresa de energia solar para ganhar 150 pts Green Score.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/categories/energia-solar"
+              className="flex-shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+            >
+              Avaliar empresa solar
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
           <div className="space-y-6 xl:col-span-8">
             {renderCompanies()}
@@ -591,7 +659,7 @@ export function ReputationDashboard({
 
           <aside className="space-y-6 xl:col-span-4">
             <SustainableJourney items={sustainableItems} />
-            <Achievements achievements={achievements} />
+            <AchievementsStrip statuses={achievementStatuses} />
             <ActivityFeed events={activityEvents} />
           </aside>
         </div>
@@ -1710,86 +1778,8 @@ function SustainableJourney({
   );
 }
 
-function Achievements({
-  achievements,
-}: {
-  achievements: Array<{
-    title: string;
-    subtitle: string;
-    icon: typeof Trophy;
-    state: string;
-    unlocked: boolean;
-  }>;
-}) {
-  const AchievementCard = ({ achievement }: { achievement: (typeof achievements)[number] }) => {
-    const Icon = achievement.icon;
-    return (
-      <div
-        className={cn(
-          'flex min-h-[104px] flex-col items-center justify-center rounded-2xl border p-3 text-center md:min-h-[128px]',
-          achievement.unlocked
-            ? 'border-slate-200 bg-white'
-            : 'border-slate-100 bg-slate-50 opacity-70'
-        )}
-      >
-        <div
-          className={cn(
-            'mb-2 flex h-10 w-10 items-center justify-center rounded-full md:mb-3 md:h-14 md:w-14',
-            achievement.unlocked ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'
-          )}
-        >
-          {achievement.unlocked ? (
-            <Icon className="h-5 w-5 md:h-7 md:w-7" />
-          ) : (
-            <Lock className="h-5 w-5 md:h-6 md:w-6" />
-          )}
-        </div>
-        <p className="text-xs font-semibold text-slate-950">{achievement.title}</p>
-        <p className="text-[11px] font-normal text-slate-500">{achievement.subtitle}</p>
-        <Badge variant="outline" className="mt-2 rounded-full text-[10px] capitalize">
-          {achievement.state}
-        </Badge>
-      </div>
-    );
-  };
-
-  return (
-    <Card
-      id="achievements"
-      className="rounded-[18px] border-slate-200 bg-white shadow-none md:rounded-[20px] md:shadow-sm"
-    >
-      <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-        <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
-          Conquistas
-        </CardTitle>
-        <Button
-          variant="ghost"
-          className="hidden h-8 rounded-xl text-xs font-medium md:inline-flex"
-        >
-          Ver todas
-        </Button>
-      </CardHeader>
-      <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-        <div className="hidden grid-cols-2 gap-3 md:grid">
-          {achievements.slice(0, 6).map((achievement) => (
-            <AchievementCard key={achievement.title} achievement={achievement} />
-          ))}
-        </div>
-        <div className="md:hidden">
-          <Carousel opts={{ align: 'start' }} className="w-full">
-            <CarouselContent>
-              {achievements.map((achievement) => (
-                <CarouselItem key={achievement.title} className="basis-[68%]">
-                  <AchievementCard achievement={achievement} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// O componente Achievements foi substituído pelo AchievementsStrip com SVGs reais.
+// Ver: components/achievements/AchievementsStrip.tsx
 
 function CommunityImpact({
   views,
