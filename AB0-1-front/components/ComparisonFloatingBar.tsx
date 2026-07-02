@@ -34,8 +34,8 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
   const logoUrl = getFullImageUrl(company.logo_url || undefined);
 
   return (
-    <div className="group flex h-16 min-w-[176px] max-w-[220px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-blue-300">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+    <div className="group flex h-16 min-w-[176px] max-w-[220px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-blue-300">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
@@ -67,7 +67,7 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
         type="button"
         onClick={() => onRemove(company.id)}
         aria-label={`Remover ${company.name} da comparação`}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <X className="h-4 w-4" />
       </button>
@@ -175,12 +175,12 @@ export default function ComparisonFloatingBar() {
             aria-label="Comparação minimizada"
             className="fixed bottom-[76px] right-3 z-50 md:bottom-5 md:right-6"
           >
-            <div className="flex items-center gap-2 rounded-2xl border-2 border-blue-500 bg-white/95 p-2 shadow-[0_14px_40px_rgba(37,99,235,0.2)] backdrop-blur-xl">
+            <div className="flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
               <button
                 type="button"
                 onClick={() => setDockState('expanded')}
                 aria-label={`Expandir comparação com ${count} ${companyLabel}`}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 <Maximize2 className="h-4 w-4" />
                 Comparar {count}
@@ -190,7 +190,7 @@ export default function ComparisonFloatingBar() {
                 onClick={() => setDockState('hidden')}
                 aria-label="Fechar comparador"
                 title="Fechar"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -206,102 +206,83 @@ export default function ComparisonFloatingBar() {
             aria-label="Empresas selecionadas para comparação"
             className="pointer-events-none fixed bottom-[76px] left-3 right-3 z-50 md:bottom-5 md:left-6 md:right-6"
           >
-            <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-[22px] border-2 border-blue-500 bg-white/95 shadow-[0_18px_60px_rgba(37,99,235,0.18)] backdrop-blur-xl">
-              <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-[220px_minmax(0,1fr)_auto] xl:items-center">
-                <div className="flex items-start justify-between gap-4 xl:block">
-                  <div>
-                    <p className="text-base font-bold tracking-tight text-slate-950">
+            <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
+              <div className="border-b border-slate-200 px-4 py-4 md:px-5">
+                <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_auto] xl:items-start">
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold tracking-tight text-slate-950">
                       Comparação transparente
                     </p>
-                    <p className="mt-1 hidden max-w-[220px] text-xs leading-5 text-slate-600 sm:block">
+                    <p className="mt-1 max-w-[220px] text-xs leading-5 text-slate-600">
                       Compare lado a lado com os mesmos critérios para todas.
                     </p>
                     <span
-                      className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
+                      className="mt-2 inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
                       aria-live="polite"
                     >
                       {count} de {maxComparison}{' '}
                       {count === 1 ? 'empresa selecionada' : 'empresas selecionadas'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 xl:hidden">
+
+                  <div
+                    className="flex min-w-0 snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
+                    aria-label="Lista de empresas selecionadas"
+                  >
+                    {comparisonList.map((company) => (
+                      <div key={company.id} className="snap-start">
+                        <CompanyChip company={company} onRemove={removeFromComparison} />
+                      </div>
+                    ))}
+
+                    {canAddMore ? (
+                      <button
+                        type="button"
+                        onClick={handleAddCompany}
+                        className="flex h-16 min-w-[148px] snap-start items-center justify-center gap-2 rounded-md border border-dashed border-blue-300 bg-blue-50/40 px-4 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Adicionar empresa
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-start justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => setDockState('minimized')}
-                      aria-label="Minimizar comparador"
-                      title="Minimizar"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      aria-label="Minimizar comparação"
+                      title="Minimizar comparação"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setDockState('hidden')}
-                      aria-label="Fechar comparador"
-                      title="Fechar"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearComparison}
-                      aria-label="Limpar comparação"
-                      title="Limpar comparação"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  className="flex min-w-0 snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
-                  aria-label="Lista de empresas selecionadas"
-                >
-                  {comparisonList.map((company) => (
-                    <div key={company.id} className="snap-start">
-                      <CompanyChip company={company} onRemove={removeFromComparison} />
-                    </div>
-                  ))}
-
-                  {canAddMore ? (
-                    <button
-                      type="button"
-                      onClick={handleAddCompany}
-                      className="flex h-16 min-w-[148px] snap-start items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-4 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Adicionar empresa
-                    </button>
-                  ) : null}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_1fr] xl:flex xl:items-center">
-                  <div className="hidden items-center gap-1 xl:flex">
-                    <button
-                      type="button"
-                      onClick={() => setDockState('minimized')}
-                      aria-label="Minimizar comparador"
-                      title="Minimizar"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDockState('hidden')}
-                      aria-label="Fechar comparador"
-                      title="Fechar"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      aria-label="Fechar comparação"
+                      title="Fechar comparação"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 px-4 py-4 md:px-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="hidden items-center gap-6 lg:flex">
+                  <TrustItem>Dados verificados</TrustItem>
+                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                  <TrustItem>Sem viés comercial</TrustItem>
+                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                  <TrustItem>Comparação justa e imparcial</TrustItem>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:justify-start">
                   <Button
                     variant="ghost"
                     onClick={clearComparison}
-                    className="hidden h-11 rounded-xl px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 xl:inline-flex"
+                    className="h-10 rounded-md px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Limpar
@@ -309,7 +290,7 @@ export default function ComparisonFloatingBar() {
                   <Button
                     variant="outline"
                     onClick={handleDetailsClick}
-                    className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+                    className="h-10 rounded-md border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
                   >
                     <List className="mr-2 h-4 w-4" />
                     Ver detalhes
@@ -318,7 +299,7 @@ export default function ComparisonFloatingBar() {
                     <Button
                       variant="outline"
                       onClick={handleAddCompany}
-                      className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 sm:hidden"
+                      className="h-10 rounded-md border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 sm:hidden"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar
@@ -327,8 +308,8 @@ export default function ComparisonFloatingBar() {
                   <Button
                     onClick={handleComparisonPageClick}
                     className={cn(
-                      'col-span-2 h-12 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)] hover:bg-blue-700 sm:col-span-1 xl:h-12',
-                      !canAddMore && 'sm:col-span-2 xl:col-span-1'
+                      'h-10 rounded-md bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] hover:bg-blue-700',
+                      !canAddMore && 'sm:ml-0'
                     )}
                   >
                     Comparar {count} {companyLabel}
@@ -337,7 +318,7 @@ export default function ComparisonFloatingBar() {
                 </div>
               </div>
 
-              <div className="grid gap-3 border-t border-blue-100 bg-slate-50/80 px-4 py-3 md:px-5 lg:grid-cols-[1fr_minmax(360px,560px)] lg:items-center">
+              <div className="grid gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 md:px-5 lg:grid-cols-[1fr_minmax(360px,560px)] lg:items-center">
                 <div className="hidden items-center gap-6 lg:flex">
                   <TrustItem>Dados verificados</TrustItem>
                   <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
