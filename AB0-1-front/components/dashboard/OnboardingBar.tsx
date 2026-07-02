@@ -43,20 +43,20 @@ export function OnboardingBar({
   const nextAction = currentStepIndex !== -1 ? steps[currentStepIndex] : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-850 via-emerald-800 to-teal-850 p-6 text-white shadow-md">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-50 via-white to-amber-50 border border-emerald-100 p-6 text-slate-900 shadow-sm">
       {/* Detalhes de Background Decorativos */}
-      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
-      <div className="absolute bottom-0 left-1/3 h-24 w-24 rounded-full bg-teal-500/10 blur-xl" />
+      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-emerald-100/20 blur-2xl" />
+      <div className="absolute bottom-0 left-1/3 h-24 w-24 rounded-full bg-teal-100/20 blur-xl" />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between relative z-10">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-emerald-300 animate-pulse" />
-            <h2 className="text-lg font-bold">
+            <Sparkles className="h-5 w-5 text-emerald-600 animate-pulse" />
+            <h2 className="text-lg font-bold text-slate-900">
               Bem-vindo, {firstName}! Vamos completar o seu onboarding?
             </h2>
           </div>
-          <p className="mt-1 text-sm text-emerald-100/90 max-w-2xl">
+          <p className="mt-1 text-sm text-slate-650 max-w-2xl">
             Complete os passos abaixo para aumentar sua visibilidade, validar suas contribuições de energia solar e subir no ranking regional!
           </p>
 
@@ -65,16 +65,20 @@ export function OnboardingBar({
             {steps.map((step, idx) => (
               <div
                 key={step.label}
-                className="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs backdrop-blur-md"
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs border ${
+                  step.done
+                    ? 'bg-emerald-100/70 border-emerald-200 text-emerald-800 line-through'
+                    : 'bg-white border-emerald-100 text-slate-700 shadow-sm font-medium'
+                }`}
               >
                 {step.done ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-300 fill-emerald-950/20" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">
                     {idx + 1}
                   </span>
                 )}
-                <span className={step.done ? 'text-emerald-200 line-through' : 'font-medium'}>
+                <span>
                   {step.label}
                 </span>
               </div>
@@ -85,7 +89,7 @@ export function OnboardingBar({
         {nextAction && (
           <Link
             href={nextAction.href}
-            className="flex items-center justify-center gap-1.5 self-start rounded-xl bg-white px-5 py-3 text-sm font-bold text-emerald-850 hover:bg-emerald-50 transition-colors shadow md:self-center"
+            className="flex items-center justify-center gap-1.5 self-start rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm md:self-center"
           >
             Próximo passo: {nextAction.label}
             <ChevronRight className="h-4 w-4" />

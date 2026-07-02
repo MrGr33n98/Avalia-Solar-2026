@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
+import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -29,11 +30,13 @@ function initialsFromName(name: string) {
 interface ReviewerProfileCardProps {
   profileCompletion?: number;
   greenScore?: number;
+  unlockedBadgeIds?: string[];
 }
 
 export function ReviewerProfileCard({
   profileCompletion = 75,
   greenScore = 520,
+  unlockedBadgeIds = [],
 }: ReviewerProfileCardProps) {
   const { user } = useAuth();
   const pathname = usePathname();
@@ -80,6 +83,12 @@ export function ReviewerProfileCard({
         <p className="text-[11px] text-gray-400 mt-0.5">
           {location}
         </p>
+
+        {unlockedBadgeIds.length > 0 && (
+          <div className="mt-2.5 flex justify-center">
+            <PublicUserBadges unlockedBadgeIds={unlockedBadgeIds} maxVisible={3} size="sm" />
+          </div>
+        )}
 
         {/* Botão LinkedIn */}
         <button

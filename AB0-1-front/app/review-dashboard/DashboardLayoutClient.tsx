@@ -12,6 +12,7 @@ import { ReviewerProfileCard } from '@/components/dashboard/ReviewerProfileCard'
 import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
+import { deriveAchievementStatuses } from '@/config/achievements';
 
 export interface ReviewDashboardSummary {
   kpis?: {
@@ -127,6 +128,10 @@ interface DashboardContextType {
   refreshing: boolean;
   error: string | null;
   onRefresh: () => void;
+  unlockedBadgeIds?: string[];
+  solutions: any[];
+  addSolution: (sol: any) => void;
+  removeSolution: (id: string) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -275,10 +280,99 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const companyReplies = reviews.filter((r) => r.reply || r.replied_at);
   const activityEvents = summary?.recent_activities || [];
   const firstName = user.name?.split(' ')[0] || 'Usuário';
-  const profileCompletion = summary?.profile?.completion_percent ?? 75;
+
+  const [solutions, setSolutions] = useState<any[]>([]);
+  const [isLinkedInVerified, setIsLinkedInVerified] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const cached = localStorage.getItem(`reviewer_solutions_${user.id}`);
+      if (cached) {
+        try {
+          setSolutions(JSON.parse(cached));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
+      if (cachedPrivacy) {
+        try {
+          const parsed = JSON.parse(cachedPrivacy);
+          setIsLinkedInVerified(parsed.publicProfile);
+        } catch (e) {}
+      }
+    }
+  }, [user]);
+
+  const addSolution = useCallback((newSol: any) => {
+    if (!user) return;
+    setSolutions((prev) => {
+      if (prev.some((s) => s.id === newSol.id)) {
+        toast.error('Esta solução já está cadastrada.');
+        return prev;
+      }
+      const updated = [...prev, newSol];
+      localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+  }, [user]);
+
+  const removeSolution = useCallback((id: string) => {
+    if (!user) return;
+    setSolutions((prev) => {
+      const updated = prev.filter((s) => s.id !== id);
+      localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+  }, [user]);
+
+  const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
+  const hasEVSolution = solutions.some((s) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
+  const solarSolutionsCount = solutions.filter((s) => s.category.toLowerCase().includes('solar')).length;
+
+  const hasSolarReview = reviews.some((r) =>
+    (r.category_name || '').toLowerCase().includes('solar')
+  );
+  const hasMobilityReview = reviews.some(
+    (r) =>
+      (r.category_name || '').toLowerCase().includes('mobilidade') ||
+      (r.category_name || '').toLowerCase().includes('elétric')
+  );
+
+  // Calcula completude do perfil
+  const baseCompletion = user ? ((user.name ? 50 : 0) + (user.email ? 15 : 0) + (user.phone ? 10 : 0)) : 75;
+  const locationCompletion = user?.city && user?.state ? 5 : 0;
+  const avatarCompletion = user?.avatar_url ? 10 : 0;
+  const solutionsCompletion = solutions.length > 0 ? Math.min(solutions.length * 5, 10) : 0;
+  const profileCompletion = Math.min(baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion, 100);
+
+  const achievementStatuses = deriveAchievementStatuses({
+    reviewsCount: Math.max(reviews.length, solarSolutionsCount >= 3 ? 3 : 0),
+    profileCompletionPercent: profileCompletion,
+    helpfulVotes: summary?.impact?.helpful_votes ?? 0,
+    greenScore,
+    hasSolarReview: hasSolarReview || hasSolarSolution,
+    hasMobilityReview: hasMobilityReview || hasEVSolution,
+    hasEVSolution,
+    isLinkedInVerified,
+  });
+
+  const unlockedBadgeIds = achievementStatuses.filter((s) => s.unlocked).map((s) => s.achievementId);
 
   return (
-    <DashboardContext.Provider value={{ summary, reviews, leads, loading, refreshing, error, onRefresh: () => fetchDashboardData(true) }}>
+    <DashboardContext.Provider value={{
+      summary,
+      reviews,
+      leads,
+      loading,
+      refreshing,
+      error,
+      onRefresh: () => fetchDashboardData(true),
+      unlockedBadgeIds,
+      solutions,
+      addSolution,
+      removeSolution,
+    }}>
       <div className="min-h-screen w-full bg-[#f5f5f5] dark:bg-[#020617] overflow-x-hidden">
         {/* Barra de Onboarding com gradiente */}
         <div className="max-w-[1240px] mx-auto px-4 pt-6">
@@ -290,7 +384,11 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           {/* Coluna Esquerda: Profile Card / Menu lateral */}
           <aside className="hidden lg:block">
             <div className="sticky top-[88px]">
-              <ReviewerProfileCard profileCompletion={profileCompletion} greenScore={greenScore} />
+              <ReviewerProfileCard
+                profileCompletion={profileCompletion}
+                greenScore={greenScore}
+                unlockedBadgeIds={unlockedBadgeIds}
+              />
             </div>
           </aside>
 

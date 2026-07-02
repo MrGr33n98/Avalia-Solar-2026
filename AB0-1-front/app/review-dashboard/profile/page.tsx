@@ -27,6 +27,7 @@ import {
   Eye,
   Award,
 } from 'lucide-react';
+import { useDashboardContext } from '../DashboardLayoutClient';
 import { reviewsApi, usersApi, Review } from '@/lib/api';
 import {
   prepareAvatarFileForUpload,
@@ -237,6 +238,7 @@ export default function ProfileDetailsPage() {
 
   if (!user) return null;
 
+  const { solutions } = useDashboardContext();
   const userInitials = initialsFromName(user.name);
   const avatarSource = pendingAvatarPreviewUrl || avatarDisplayUrl || undefined;
 
@@ -246,6 +248,7 @@ export default function ProfileDetailsPage() {
     { label: 'Foto de perfil adicionada', done: !!avatarDisplayUrl },
     { label: 'Localização informada', done: !!(user.city && user.state) },
     { label: 'Social LinkedIn informado', done: !!additionalData.linkedinUrl },
+    { label: 'Soluções sustentáveis informadas', done: solutions.length > 0 },
     { label: 'Publicou a 1ª avaliação', done: userReviews.length > 0 },
   ];
 
@@ -264,6 +267,22 @@ export default function ProfileDetailsPage() {
         <ChevronRight className="h-3 w-3" />
         <span className="text-gray-700">Detalhes do Perfil</span>
       </div>
+
+      {/* Card Superior Opcional: Soluções que você usa */}
+      {solutions.length === 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-amber-50 p-5 shadow-sm">
+          <div className="flex gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">Complete seu perfil: Soluções que você utiliza</h4>
+              <p className="text-xs text-slate-500 mt-0.5">Cadastre as marcas ou tecnologias que você possui (inversores, painéis ou EVs) para ganhar badges e recomendações.</p>
+            </div>
+          </div>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shrink-0" asChild>
+            <Link href="/review-dashboard#solutions">Cadastrar Soluções</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Card Principal: Detalhes do Perfil */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">

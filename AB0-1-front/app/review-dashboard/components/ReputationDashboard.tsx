@@ -86,6 +86,10 @@ import { Lead, Review, User } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { type ReviewDashboardSummary } from '../DashboardLayoutClient';
+import { UserSolutionChip } from '@/components/profile/UserSolutionChip';
+import { AddUserSolutionModal } from '@/components/profile/AddUserSolutionModal';
+import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
+import { useDashboardContext } from '../DashboardLayoutClient';
 
 interface ReputationDashboardProps {
   user: User;
@@ -343,6 +347,8 @@ export function ReputationDashboard({
   const [categoryFilter, setCategoryFilter] = useState('todos');
   const [activeTab, setActiveTab] = useState<ReviewDashboardTab>('overview');
   const profileUser = user as User & { city?: string; state?: string; avatar_url?: string };
+  const { solutions, addSolution, removeSolution, unlockedBadgeIds } = useDashboardContext();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const rows = useMemo(() => buildCompanyRows(reviews, leads), [reviews, leads]);
   const monthlyReviews = reviews.filter((review) => isRecent(review.created_at)).length;
@@ -363,10 +369,10 @@ export function ReputationDashboard({
   const profileViews =
     summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) || 0;
 
-  const profileCompletion = summary?.profile?.completion_percent || 0;
-  const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
+  const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
+  const hasEVSolution = solutions.some((s) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
+  const solarSolutionsCount = solutions.filter((s) => s.category.toLowerCase().includes('solar')).length;
 
-  // Conquistas sustentáveis — derivadas dos dados existentes (fallback até API estar disponível)
   const hasSolarReview = reviews.some((r) =>
     (r.category_name || '').toLowerCase().includes('solar')
   );
@@ -375,16 +381,27 @@ export function ReputationDashboard({
       (r.category_name || '').toLowerCase().includes('mobilidade') ||
       (r.category_name || '').toLowerCase().includes('elétric')
   );
+
+  const baseCompletion = profileUser ? ((profileUser.name ? 50 : 0) + (profileUser.email ? 15 : 0) + (profileUser.phone ? 10 : 0)) : 75;
+  const locationCompletion = profileUser?.city && profileUser?.state ? 5 : 0;
+  const avatarCompletion = profileUser?.avatar_url ? 10 : 0;
+  const solutionsCompletion = solutions.length > 0 ? Math.min(solutions.length * 5, 10) : 0;
+  const profileCompletion = Math.min(baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion, 100);
+
+  const isLinkedInVerified = summary?.gamification?.achievements?.some((a) => a.title === 'Cliente Verificado' && a.state !== 'bloqueado') ?? false;
+
   const achievementStatuses = deriveAchievementStatuses({
-    reviewsCount: reviews.length,
+    reviewsCount: Math.max(reviews.length, solarSolutionsCount >= 3 ? 3 : 0),
     profileCompletionPercent: profileCompletion,
     helpfulVotes,
     greenScore,
-    hasSolarReview,
-    hasMobilityReview,
-    hasEVSolution: false,
-    isLinkedInVerified: false,
+    hasSolarReview: hasSolarReview || hasSolarSolution,
+    hasMobilityReview: hasMobilityReview || hasEVSolution,
+    hasEVSolution,
+    isLinkedInVerified,
   });
+
+  const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
 
   const kpis = [
     {
@@ -600,7 +617,7 @@ export function ReputationDashboard({
             onOpenReplies={() => {
               document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            badges={achievementsList.filter((a) => a.state !== 'bloqueado').map((a) => a.title)}
+            unlockedBadgeIds={unlockedBadgeIds}
           />
         </div>
 
@@ -662,7 +679,11 @@ export function ReputationDashboard({
           <div className="space-y-6 xl:col-span-8">
             {renderCompanies()}
             {renderReviews()}
-            <SolutionsCard />
+            <SolutionsCard
+              solutions={solutions}
+              onAddClick={() => setIsAddModalOpen(true)}
+              onRemove={removeSolution}
+            />
             {renderProposals()}
             {renderImpact()}
           </div>
@@ -685,6 +706,11 @@ export function ReputationDashboard({
         </div>
       </div>
       <ReplyDialog row={replyDialogRow} onOpenChange={(open) => !open && setReplyDialogRow(null)} />
+      <AddUserSolutionModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onAdd={addSolution}
+      />
     </div>
   );
 }
@@ -798,7 +824,7 @@ function HeroProfile({
   impactedPeople,
   repliesCount,
   onOpenReplies,
-  badges = [],
+  unlockedBadgeIds = [],
 }: {
   user: User & { city?: string; state?: string; avatar_url?: string };
   reviewsCount: number;
@@ -807,7 +833,7 @@ function HeroProfile({
   impactedPeople: number;
   repliesCount: number;
   onOpenReplies: () => void;
-  badges?: string[];
+  unlockedBadgeIds?: string[];
 }) {
   const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
 
@@ -838,16 +864,11 @@ function HeroProfile({
                 {location}
               </p>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {badges.map((badge) => (
-                <Badge
-                  key={badge}
-                  className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-white/15 md:text-xs"
-                >
-                  {badge}
-                </Badge>
-              ))}
-            </div>
+            {unlockedBadgeIds.length > 0 && (
+              <div className="pt-1 flex flex-wrap gap-1">
+                <PublicUserBadges unlockedBadgeIds={unlockedBadgeIds} maxVisible={3} size="sm" />
+              </div>
+            )}
             <p className="text-[11px] font-medium text-emerald-100 md:hidden">
               {reviewsCount} avaliação registrada · {impactedPeople.toLocaleString('pt-BR')} pessoas
               impactadas
@@ -2068,7 +2089,15 @@ function ReplyDialog({
   );
 }
 
-function SolutionsCard() {
+function SolutionsCard({
+  solutions,
+  onAddClick,
+  onRemove,
+}: {
+  solutions: any[];
+  onAddClick: () => void;
+  onRemove: (id: string) => void;
+}) {
   return (
     <Card id="solutions" className="rounded-2xl border-slate-200 bg-white shadow-sm p-6">
       <div className="p-0 mb-4 flex flex-row items-center justify-between">
@@ -2078,19 +2107,42 @@ function SolutionsCard() {
             Adicione as tecnologias sustentáveis que você possui instaladas.
           </p>
         </div>
-        <Button size="sm" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
+        <Button size="sm" onClick={onAddClick} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
           + Adicionar
         </Button>
       </div>
-      <div className="p-0 py-6 text-center border border-dashed border-gray-150 rounded-xl bg-slate-50/50">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-          <Laptop className="h-6 w-6" />
+
+      {solutions.length === 0 ? (
+        <div className="p-0 py-6 text-center border border-dashed border-gray-150 rounded-xl bg-slate-50/50">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <Laptop className="h-6 w-6" />
+          </div>
+          <h4 className="text-sm font-bold text-gray-900">Nenhuma solução cadastrada</h4>
+          <p className="max-w-md mx-auto text-xs text-gray-500 mt-1 leading-normal px-4">
+            Cadastre empresas, produtos ou tecnologias que você utiliza para receber recomendações melhores, desbloquear conquistas e fortalecer sua reputação.
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <Button size="sm" onClick={onAddClick} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
+              + Adicionar solução
+            </Button>
+            <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs font-semibold" asChild>
+              <Link href="/companies">Buscar empresa</Link>
+            </Button>
+          </div>
         </div>
-        <h4 className="text-sm font-bold text-gray-900">Nenhuma solução cadastrada</h4>
-        <p className="max-w-md mx-auto text-xs text-gray-500 mt-1 leading-normal px-4">
-          Cadastre seu inversor, painel solar ou carregador elétrico para receber recomendações e subir de nível mais rápido!
-        </p>
-      </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {solutions.map((sol) => (
+            <UserSolutionChip key={sol.id} solution={sol} onRemove={onRemove} />
+          ))}
+          <button
+            onClick={onAddClick}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/20 px-3.5 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors"
+          >
+            + Adicionar
+          </button>
+        </div>
+      )}
     </Card>
   );
 }

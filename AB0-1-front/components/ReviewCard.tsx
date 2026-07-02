@@ -5,7 +5,9 @@ import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, Th
 import { Review, fetchApi } from '@/lib/api';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 
 interface ReviewCardProps {
   review: Review;
@@ -18,9 +20,45 @@ const TRACKED_REVIEWS_KEY = 'avalia_tracked_reviews_v1';
 
 export default function ReviewCard({ review, className = "", variant = 'user', onReply }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   const [hasTrackedRead, setHasTrackedRead] = useState(false);
   const [hasTrackedClick, setHasTrackedClick] = useState(false);
   const dwellTimerRef = useRef<any>(null);
+
+  // Derivação de badges públicas para exibição de reputação
+  const unlockedBadgeIds = useMemo(() => {
+    if (!review.user || variant === 'company') return [];
+    
+    // Se for o próprio usuário logado, buscar dados dinâmicos do localStorage
+    const isCurrentUser = user && user.id === review.user.id;
+    if (isCurrentUser) {
+      const cached = localStorage.getItem(`reviewer_solutions_${user.id}`);
+      let hasEVSolution = false;
+      let hasSolarSolution = false;
+      if (cached) {
+        try {
+          const sols = JSON.parse(cached);
+          hasEVSolution = sols.some((s: any) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
+          hasSolarSolution = sols.some((s: any) => s.category.toLowerCase().includes('solar'));
+        } catch (e) {}
+      }
+      
+      const list = ['verified_customer', 'solar_project_validated'];
+      if (hasEVSolution) list.push('mobility_activated');
+      if (hasSolarSolution) list.push('solar_specialist');
+      return list;
+    }
+    
+    // Para outros usuários, fornecer um conjunto padrão baseado no tipo de projeto do review
+    const list = ['verified_customer'];
+    if (review.project_type === 'residential' || review.project_type === 'commercial') {
+      list.push('solar_project_validated');
+    }
+    if (review.rating >= 4) {
+      list.push('helpful_review');
+    }
+    return list;
+  }, [review.user, review.project_type, review.rating, user, variant]);
 
   // Safe access for pros/cons
   const prosList = Array.isArray(review.pros) ? review.pros : [];
@@ -160,8 +198,11 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
                   displayName
                 )}
               </h4>
-              <div className="flex items-center">
+              <div className="flex items-center gap-1.5">
                 {/* Verification badge logic could go here */}
+                {!isCompany && review.user && (
+                  <PublicUserBadges unlockedBadgeIds={unlockedBadgeIds} maxVisible={3} size="sm" />
+                )}
               </div>
             </div>
             <span className="text-sm text-gray-500">
