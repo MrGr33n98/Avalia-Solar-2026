@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,21 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import {
-  Camera,
-  CheckCircle2,
-  ChevronRight,
-  Sparkles,
-  Info,
-  Linkedin,
-  Twitter,
-  User as UserIcon,
-  Mail,
-  Phone,
-  MapPin,
-  Eye,
-  Award,
-} from 'lucide-react';
+import { Camera, ChevronRight, Sparkles, Linkedin, Twitter } from 'lucide-react';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { reviewsApi, usersApi, Review } from '@/lib/api';
 import {
@@ -35,6 +21,30 @@ import {
   AvatarUploadClientError,
 } from '@/lib/avatar-upload';
 import { getApiErrorMessage } from '@/lib/api-error';
+
+const createEmptyAdditionalData = () => ({
+  pronouns: '',
+  headline: '',
+  aboutMe: '',
+  industry: '',
+  jobTitle: '',
+  companyName: '',
+  companySize: '',
+  linkedinUrl: '',
+  twitterUrl: '',
+  consumerType: 'residencial',
+  mainInterest: 'energia_solar',
+});
+
+const createDefaultPrivacySettings = () => ({
+  publicProfile: true,
+  showOnRanking: true,
+  allowMessages: true,
+  showCity: true,
+});
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 function initialsFromName(name?: string | null) {
   const safeName = name?.trim() || 'Usuário';
@@ -48,6 +58,7 @@ function initialsFromName(name?: string | null) {
 
 export default function ProfileDetailsPage() {
   const { user, refreshAuth } = useAuth();
+  const { solutions } = useDashboardContext();
   const router = useRouter();
 
   // Estados dos dados reais (via API)
@@ -60,32 +71,14 @@ export default function ProfileDetailsPage() {
   });
 
   // Estados dos dados adicionais (via localStorage com fallback G2)
-  const [additionalData, setAdditionalData] = useState({
-    pronouns: '',
-    headline: '',
-    aboutMe: '',
-    industry: '',
-    jobTitle: '',
-    companyName: '',
-    companySize: '',
-    linkedinUrl: '',
-    twitterUrl: '',
-    consumerType: 'residencial',
-    mainInterest: 'energia_solar',
-  });
+  const [additionalData, setAdditionalData] = useState(createEmptyAdditionalData);
 
   // Estados de privacidade
-  const [privacySettings, setPrivacySettings] = useState({
-    publicProfile: true,
-    showOnRanking: true,
-    allowMessages: true,
-    showCity: true,
-  });
+  const [privacySettings, setPrivacySettings] = useState(createDefaultPrivacySettings);
 
   // Estados de upload de avatar
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
   const [pendingAvatarPreviewUrl, setPendingAvatarPreviewUrl] = useState<string | null>(null);
-  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarUploadProgress, setAvatarUploadProgress] = useState(0);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -95,50 +88,60 @@ export default function ProfileDetailsPage() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const pendingPreviewObjectUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      setPersonalData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        city: user.city || '',
-        state: user.state || '',
-      });
-      setAvatarDisplayUrl(user.avatar_url || null);
-      fetchUserReviews();
-
-      // Carregar dados adicionais do localStorage
-      const cached = localStorage.getItem(`reviewer_extra_${user.id}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setAdditionalData((prev) => ({ ...prev, ...parsed }));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      // Carregar preferências de privacidade do localStorage
-      const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
-      if (cachedPrivacy) {
-        try {
-          const parsed = JSON.parse(cachedPrivacy);
-          setPrivacySettings((prev) => ({ ...prev, ...parsed }));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, [user]);
-
-  const fetchUserReviews = async () => {
+  const fetchUserReviews = useCallback(async () => {
     try {
       const reviews = await reviewsApi.getAll({ mine: true, limit: 10 });
       setUserReviews(Array.isArray(reviews) ? reviews : []);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setPersonalData({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      city: user.city || '',
+      state: user.state || '',
+    });
+    setAvatarDisplayUrl(user.avatar_url || null);
+    void fetchUserReviews();
+
+    const cached = localStorage.getItem(`reviewer_extra_${user.id}`);
+    if (cached) {
+      try {
+        const parsed: unknown = JSON.parse(cached);
+        setAdditionalData({
+          ...createEmptyAdditionalData(),
+          ...(isRecord(parsed) ? parsed : {}),
+        });
+      } catch (error) {
+        console.error('[Profile] Invalid cached profile details', error);
+        setAdditionalData(createEmptyAdditionalData());
+      }
+    } else {
+      setAdditionalData(createEmptyAdditionalData());
+    }
+
+    const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
+    if (cachedPrivacy) {
+      try {
+        const parsed: unknown = JSON.parse(cachedPrivacy);
+        setPrivacySettings({
+          ...createDefaultPrivacySettings(),
+          ...(isRecord(parsed) ? parsed : {}),
+        });
+      } catch (error) {
+        console.error('[Profile] Invalid cached privacy settings', error);
+        setPrivacySettings(createDefaultPrivacySettings());
+      }
+    } else {
+      setPrivacySettings(createDefaultPrivacySettings());
+    }
+  }, [user, fetchUserReviews]);
 
   const handleAvatarFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -155,12 +158,11 @@ export default function ProfileDetailsPage() {
       const previewUrl = URL.createObjectURL(preparedFile);
       pendingPreviewObjectUrlRef.current = previewUrl;
       setPendingAvatarPreviewUrl(previewUrl);
-      setPendingAvatarFile(preparedFile);
-
       // Auto upload ao selecionar
       await handleAvatarUpload(preparedFile);
-    } catch (err: any) {
-      const message = err instanceof AvatarUploadClientError ? err.message : 'Falha ao processar arquivo.';
+    } catch (err: unknown) {
+      const message =
+        err instanceof AvatarUploadClientError ? err.message : 'Falha ao processar arquivo.';
       setAvatarError(message);
     }
   };
@@ -184,7 +186,6 @@ export default function ProfileDetailsPage() {
 
       await refreshAuth();
       setAvatarDisplayUrl(publicUrl);
-      setPendingAvatarFile(null);
       setPendingAvatarPreviewUrl(null);
 
       toast({
@@ -200,7 +201,12 @@ export default function ProfileDetailsPage() {
   };
 
   const handleSaveAll = async () => {
-    if (!user) return;
+    if (!user || saving) return;
+
+    const normalizedAdditionalData = {
+      ...additionalData,
+      aboutMe: additionalData.aboutMe.trim(),
+    };
     setSaving(true);
 
     try {
@@ -214,12 +220,18 @@ export default function ProfileDetailsPage() {
       });
 
       // 2. Salvar dados adicionais no localStorage
-      localStorage.setItem(`reviewer_extra_${user.id}`, JSON.stringify(additionalData));
+      localStorage.setItem(`reviewer_extra_${user.id}`, JSON.stringify(normalizedAdditionalData));
 
       // 3. Salvar privacidade no localStorage
       localStorage.setItem(`reviewer_privacy_${user.id}`, JSON.stringify(privacySettings));
 
-      await refreshAuth();
+      setAdditionalData(normalizedAdditionalData);
+
+      try {
+        await refreshAuth();
+      } catch (refreshError) {
+        console.error('[Profile] Profile saved, but auth refresh failed', refreshError);
+      }
 
       toast({
         title: 'Perfil Atualizado',
@@ -237,8 +249,6 @@ export default function ProfileDetailsPage() {
   };
 
   if (!user) return null;
-
-  const { solutions } = useDashboardContext();
   const userInitials = initialsFromName(user.name);
   const avatarSource = pendingAvatarPreviewUrl || avatarDisplayUrl || undefined;
 
@@ -274,11 +284,20 @@ export default function ProfileDetailsPage() {
           <div className="flex gap-3">
             <span className="text-2xl">💡</span>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Complete seu perfil: Soluções que você utiliza</h4>
-              <p className="text-xs text-slate-500 mt-0.5">Cadastre as marcas ou tecnologias que você possui (inversores, painéis ou EVs) para ganhar badges e recomendações.</p>
+              <h4 className="text-sm font-bold text-slate-900">
+                Complete seu perfil: Soluções que você utiliza
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Cadastre as marcas ou tecnologias que você possui (inversores, painéis ou EVs) para
+                ganhar badges e recomendações.
+              </p>
             </div>
           </div>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shrink-0" asChild>
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shrink-0"
+            asChild
+          >
             <Link href="/review-dashboard#solutions">Cadastrar Soluções</Link>
           </Button>
         </div>
@@ -292,7 +311,8 @@ export default function ProfileDetailsPage() {
             <CardHeader className="border-b border-gray-100 p-6">
               <CardTitle className="text-lg font-bold text-gray-900">Detalhes do Perfil</CardTitle>
               <CardDescription className="text-xs text-gray-400">
-                Gerencie suas informações pessoais, profissionais e links sociais para sua reputação.
+                Gerencie suas informações pessoais, profissionais e links sociais para sua
+                reputação.
               </CardDescription>
             </CardHeader>
 
@@ -323,7 +343,9 @@ export default function ProfileDetailsPage() {
                 </div>
                 <div className="text-center sm:text-left">
                   <p className="text-sm font-bold text-gray-900">Sua Foto de Perfil</p>
-                  <p className="text-xs text-gray-400 mt-0.5">JPG ou PNG de até 5MB. Fotos nítidas aumentam a confiabilidade da sua avaliação.</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    JPG ou PNG de até 5MB. Fotos nítidas aumentam a confiabilidade da sua avaliação.
+                  </p>
                 </div>
                 {avatarUploading && (
                   <div className="ml-auto flex items-center gap-2 text-xs font-semibold text-emerald-600">
@@ -341,10 +363,14 @@ export default function ProfileDetailsPage() {
 
               {/* Seção 1: Dados Pessoais */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Dados Pessoais</h3>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                  Dados Pessoais
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="profile-name" className="text-xs font-semibold text-gray-500">Nome Completo</Label>
+                    <Label htmlFor="profile-name" className="text-xs font-semibold text-gray-500">
+                      Nome Completo
+                    </Label>
                     <Input
                       id="profile-name"
                       placeholder="Felipe Henrique"
@@ -354,7 +380,9 @@ export default function ProfileDetailsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-email" className="text-xs font-semibold text-gray-500">E-mail</Label>
+                    <Label htmlFor="profile-email" className="text-xs font-semibold text-gray-500">
+                      E-mail
+                    </Label>
                     <Input
                       id="profile-email"
                       type="email"
@@ -365,7 +393,9 @@ export default function ProfileDetailsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-phone" className="text-xs font-semibold text-gray-500">Telefone</Label>
+                    <Label htmlFor="profile-phone" className="text-xs font-semibold text-gray-500">
+                      Telefone
+                    </Label>
                     <Input
                       id="profile-phone"
                       placeholder="(11) 99999-9999"
@@ -376,7 +406,9 @@ export default function ProfileDetailsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label htmlFor="profile-city" className="text-xs font-semibold text-gray-500">Cidade</Label>
+                      <Label htmlFor="profile-city" className="text-xs font-semibold text-gray-500">
+                        Cidade
+                      </Label>
                       <Input
                         id="profile-city"
                         placeholder="São Paulo"
@@ -386,12 +418,19 @@ export default function ProfileDetailsPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="profile-state" className="text-xs font-semibold text-gray-500">Estado (UF)</Label>
+                      <Label
+                        htmlFor="profile-state"
+                        className="text-xs font-semibold text-gray-500"
+                      >
+                        Estado (UF)
+                      </Label>
                       <Input
                         id="profile-state"
                         placeholder="SP"
                         value={personalData.state}
-                        onChange={(e) => setPersonalData({ ...personalData, state: e.target.value })}
+                        onChange={(e) =>
+                          setPersonalData({ ...personalData, state: e.target.value })
+                        }
                         className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
                       />
                     </div>
@@ -400,35 +439,53 @@ export default function ProfileDetailsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="profile-pronouns" className="text-xs font-semibold text-gray-500">Pronomes (Opcional)</Label>
+                    <Label
+                      htmlFor="profile-pronouns"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Pronomes (Opcional)
+                    </Label>
                     <Input
                       id="profile-pronouns"
                       placeholder="Ele/Dele"
                       value={additionalData.pronouns}
-                      onChange={(e) => setAdditionalData({ ...additionalData, pronouns: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, pronouns: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-headline" className="text-xs font-semibold text-gray-500">Título / Headline</Label>
+                    <Label
+                      htmlFor="profile-headline"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Título / Headline
+                    </Label>
                     <Input
                       id="profile-headline"
                       placeholder="Especialista em Engenharia Solar"
                       value={additionalData.headline}
-                      onChange={(e) => setAdditionalData({ ...additionalData, headline: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, headline: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="profile-aboutme" className="text-xs font-semibold text-gray-500">Biografia / Sobre você</Label>
+                  <Label htmlFor="profile-aboutme" className="text-xs font-semibold text-gray-500">
+                    Biografia / Sobre você
+                  </Label>
                   <textarea
                     id="profile-aboutme"
                     placeholder="Escreva um breve resumo sobre sua jornada profissional com energia limpa e sustentabilidade..."
                     rows={4}
                     value={additionalData.aboutMe}
-                    onChange={(e) => setAdditionalData({ ...additionalData, aboutMe: e.target.value })}
+                    onChange={(e) =>
+                      setAdditionalData({ ...additionalData, aboutMe: e.target.value })
+                    }
                     className="w-full text-sm p-3 rounded-lg border border-gray-200 focus-visible:ring-emerald-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -438,14 +495,23 @@ export default function ProfileDetailsPage() {
 
               {/* Seção 2: Informações de Consumo e Profissional */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Interesses e Atuação</h3>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                  Interesses e Atuação
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="profile-consumertype" className="text-xs font-semibold text-gray-500">Tipo de Consumidor</Label>
+                    <Label
+                      htmlFor="profile-consumertype"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Tipo de Consumidor
+                    </Label>
                     <select
                       id="profile-consumertype"
                       value={additionalData.consumerType}
-                      onChange={(e) => setAdditionalData({ ...additionalData, consumerType: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, consumerType: e.target.value })
+                      }
                       className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     >
                       <option value="residencial">Residencial</option>
@@ -455,11 +521,18 @@ export default function ProfileDetailsPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-interest" className="text-xs font-semibold text-gray-500">Interesse Principal</Label>
+                    <Label
+                      htmlFor="profile-interest"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Interesse Principal
+                    </Label>
                     <select
                       id="profile-interest"
                       value={additionalData.mainInterest}
-                      onChange={(e) => setAdditionalData({ ...additionalData, mainInterest: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, mainInterest: e.target.value })
+                      }
                       className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     >
                       <option value="energia_solar">Energia Solar Fotovoltaica</option>
@@ -472,31 +545,49 @@ export default function ProfileDetailsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="profile-job" className="text-xs font-semibold text-gray-500">Cargo / Função</Label>
+                    <Label htmlFor="profile-job" className="text-xs font-semibold text-gray-500">
+                      Cargo / Função
+                    </Label>
                     <Input
                       id="profile-job"
                       placeholder="Diretor Técnico"
                       value={additionalData.jobTitle}
-                      onChange={(e) => setAdditionalData({ ...additionalData, jobTitle: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, jobTitle: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-companyname" className="text-xs font-semibold text-gray-500">Empresa atual</Label>
+                    <Label
+                      htmlFor="profile-companyname"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Empresa atual
+                    </Label>
                     <Input
                       id="profile-companyname"
                       placeholder="GreenTech Solar"
                       value={additionalData.companyName}
-                      onChange={(e) => setAdditionalData({ ...additionalData, companyName: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, companyName: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-companysize" className="text-xs font-semibold text-gray-500">Tamanho da empresa</Label>
+                    <Label
+                      htmlFor="profile-companysize"
+                      className="text-xs font-semibold text-gray-500"
+                    >
+                      Tamanho da empresa
+                    </Label>
                     <select
                       id="profile-companysize"
                       value={additionalData.companySize}
-                      onChange={(e) => setAdditionalData({ ...additionalData, companySize: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, companySize: e.target.value })
+                      }
                       className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     >
                       <option value="">Selecione...</option>
@@ -514,29 +605,41 @@ export default function ProfileDetailsPage() {
 
               {/* Seção 3: Social & Links */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Redes Sociais</h3>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                  Redes Sociais
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="profile-linkedin" className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                    <Label
+                      htmlFor="profile-linkedin"
+                      className="text-xs font-semibold text-gray-500 flex items-center gap-1.5"
+                    >
                       <Linkedin className="h-3.5 w-3.5 text-blue-600" /> LinkedIn Profile URL
                     </Label>
                     <Input
                       id="profile-linkedin"
                       placeholder="https://linkedin.com/in/usuario"
                       value={additionalData.linkedinUrl}
-                      onChange={(e) => setAdditionalData({ ...additionalData, linkedinUrl: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, linkedinUrl: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="profile-twitter" className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                    <Label
+                      htmlFor="profile-twitter"
+                      className="text-xs font-semibold text-gray-500 flex items-center gap-1.5"
+                    >
                       <Twitter className="h-3.5 w-3.5 text-sky-500" /> Twitter Profile URL
                     </Label>
                     <Input
                       id="profile-twitter"
                       placeholder="https://twitter.com/usuario"
                       value={additionalData.twitterUrl}
-                      onChange={(e) => setAdditionalData({ ...additionalData, twitterUrl: e.target.value })}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, twitterUrl: e.target.value })
+                      }
                       className="h-10 rounded-lg border-gray-200"
                     />
                   </div>
@@ -548,7 +651,9 @@ export default function ProfileDetailsPage() {
           {/* Card: Privacidade e Visibilidade */}
           <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden">
             <CardHeader className="border-b border-gray-100 p-6">
-              <CardTitle className="text-lg font-bold text-gray-900">Privacidade & Visibilidade</CardTitle>
+              <CardTitle className="text-lg font-bold text-gray-900">
+                Privacidade & Visibilidade
+              </CardTitle>
               <CardDescription className="text-xs text-gray-400">
                 Gerencie como suas informações de reputação são expostas na comunidade.
               </CardDescription>
@@ -576,16 +681,23 @@ export default function ProfileDetailsPage() {
                   desc: 'Exibe sua localização regional no seu card público.',
                 },
               ].map((opt) => (
-                <div key={opt.key} className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div
+                  key={opt.key}
+                  className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        privacySettings[opt.key as keyof typeof privacySettings]
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {privacySettings[opt.key as keyof typeof privacySettings] ? 'Ativo' : 'Inativo'}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          privacySettings[opt.key as keyof typeof privacySettings]
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {privacySettings[opt.key as keyof typeof privacySettings]
+                          ? 'Ativo'
+                          : 'Inativo'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 leading-normal">{opt.desc}</p>
@@ -642,7 +754,9 @@ export default function ProfileDetailsPage() {
           <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden sticky top-[88px]">
             <CardHeader className="border-b border-gray-100 p-6 bg-slate-50/50">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-bold text-gray-800 uppercase tracking-wider">Complete seu perfil</CardTitle>
+                <CardTitle className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                  Complete seu perfil
+                </CardTitle>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
                   {profileCompletion}%
                 </span>
@@ -652,7 +766,8 @@ export default function ProfileDetailsPage() {
               <div className="space-y-2">
                 <Progress value={profileCompletion} className="h-2.5 bg-slate-100" />
                 <p className="text-xs text-gray-400">
-                  Perfil completo garante selo verificado e melhora o seu engajamento no Avalia Solar.
+                  Perfil completo garante selo verificado e melhora o seu engajamento no Avalia
+                  Solar.
                 </p>
               </div>
 
@@ -664,9 +779,7 @@ export default function ProfileDetailsPage() {
                   <div key={idx} className="flex items-center gap-3">
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        item.done
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-gray-100 text-gray-400'
+                        item.done ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-400'
                       }`}
                     >
                       {item.done ? '✓' : idx + 1}
@@ -690,7 +803,8 @@ export default function ProfileDetailsPage() {
                     <div>
                       <p className="font-bold">Dica da Comunidade</p>
                       <p className="mt-0.5 text-emerald-700 leading-normal">
-                        Perfis com o LinkedIn verificado recebem <strong>votos úteis</strong> 4.2x mais rápido de outros consumidores!
+                        Perfis com o LinkedIn verificado recebem <strong>votos úteis</strong> 4.2x
+                        mais rápido de outros consumidores!
                       </p>
                     </div>
                   </div>

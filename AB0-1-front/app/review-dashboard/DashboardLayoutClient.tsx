@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { reviewsApi, leadsApi, reviewDashboardApi, Review, Lead, User } from '@/lib/api';
+import { reviewsApi, leadsApi, reviewDashboardApi, Review, Lead } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
@@ -10,9 +10,17 @@ import { toast } from 'sonner';
 import { MobileDashboardNav } from './Navigation';
 import { ReviewerProfileCard } from '@/components/dashboard/ReviewerProfileCard';
 import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
-import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/components/ui/command';
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
 import { deriveAchievementStatuses } from '@/config/achievements';
+import type { UserSolution } from '@/components/profile/UserSolutionChip';
 
 export interface ReviewDashboardSummary {
   kpis?: {
@@ -91,26 +99,50 @@ export function emptySummary(): ReviewDashboardSummary {
     gamification: {
       green_score: 520,
       regional_ranking: 1,
-      achievements: []
+      achievements: [],
     },
     impact: {
       helpful_votes: 0,
-      impacted_people: 0
+      impacted_people: 0,
     },
     recommendations: [],
     recent_activities: [],
     profile: {
-      completion_percent: 45
+      completion_percent: 45,
     },
     charts: {
-      activity_30d: activity
+      activity_30d: activity,
     },
     sustainable_journey: [
-      { id: 'solar', title: 'Energia Solar', state: 'Não iniciado', progress: 0, details: ['Sem avaliações ainda'] },
-      { id: 'mobility', title: 'Mobilidade Elétrica', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
-      { id: 'battery', title: 'Bateria / Armazenamento', state: 'Não iniciado', progress: 0, details: ['Sem propostas na área'] },
-      { id: 'consumption', title: 'Consumo Consciente', state: 'Não iniciado', progress: 0, details: ['Perfil 0% preenchido'] }
-    ]
+      {
+        id: 'solar',
+        title: 'Energia Solar',
+        state: 'Não iniciado',
+        progress: 0,
+        details: ['Sem avaliações ainda'],
+      },
+      {
+        id: 'mobility',
+        title: 'Mobilidade Elétrica',
+        state: 'Não iniciado',
+        progress: 0,
+        details: ['Sem propostas na área'],
+      },
+      {
+        id: 'battery',
+        title: 'Bateria / Armazenamento',
+        state: 'Não iniciado',
+        progress: 0,
+        details: ['Sem propostas na área'],
+      },
+      {
+        id: 'consumption',
+        title: 'Consumo Consciente',
+        state: 'Não iniciado',
+        progress: 0,
+        details: ['Perfil 0% preenchido'],
+      },
+    ],
   };
 }
 
@@ -129,8 +161,8 @@ interface DashboardContextType {
   error: string | null;
   onRefresh: () => void;
   unlockedBadgeIds?: string[];
-  solutions: any[];
-  addSolution: (sol: any) => void;
+  solutions: UserSolution[];
+  addSolution: (sol: UserSolution) => void;
   removeSolution: (id: string) => void;
 }
 
@@ -146,7 +178,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [summary, setSummary] = useState<ReviewDashboardSummary | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -154,9 +186,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   const [commandOpen, setCommandOpen] = useState(false);
+  const [solutions, setSolutions] = useState<UserSolution[]>([]);
+  const [isLinkedInVerified, setIsLinkedInVerified] = useState(false);
 
   const fetchDashboardData = useCallback(
     async (isRefresh = false) => {
@@ -249,6 +282,68 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     fetchDashboardData();
   }, [user, authLoading, isRedirecting, fetchDashboardData]);
 
+  useEffect(() => {
+    if (!user) {
+      setSolutions([]);
+      setIsLinkedInVerified(false);
+      return;
+    }
+
+    const cachedSolutions = localStorage.getItem(`reviewer_solutions_${user.id}`);
+    if (cachedSolutions) {
+      try {
+        const parsedSolutions: unknown = JSON.parse(cachedSolutions);
+        setSolutions(Array.isArray(parsedSolutions) ? parsedSolutions : []);
+      } catch (error) {
+        console.error('[ReviewDashboard] Invalid cached solutions', error);
+        setSolutions([]);
+      }
+    } else {
+      setSolutions([]);
+    }
+
+    const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
+    if (cachedPrivacy) {
+      try {
+        const parsedPrivacy = JSON.parse(cachedPrivacy) as { publicProfile?: boolean };
+        setIsLinkedInVerified(Boolean(parsedPrivacy.publicProfile));
+      } catch (error) {
+        console.error('[ReviewDashboard] Invalid cached privacy settings', error);
+        setIsLinkedInVerified(false);
+      }
+    } else {
+      setIsLinkedInVerified(false);
+    }
+  }, [user]);
+
+  const addSolution = useCallback(
+    (newSolution: UserSolution) => {
+      if (!user) return;
+      setSolutions((previousSolutions) => {
+        if (previousSolutions.some((solution) => solution.id === newSolution.id)) {
+          toast.error('Esta solução já está cadastrada.');
+          return previousSolutions;
+        }
+        const updatedSolutions = [...previousSolutions, newSolution];
+        localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updatedSolutions));
+        return updatedSolutions;
+      });
+    },
+    [user]
+  );
+
+  const removeSolution = useCallback(
+    (id: string) => {
+      if (!user) return;
+      setSolutions((previousSolutions) => {
+        const updatedSolutions = previousSolutions.filter((solution) => solution.id !== id);
+        localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updatedSolutions));
+        return updatedSolutions;
+      });
+    },
+    [user]
+  );
+
   if (authLoading || isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -263,7 +358,8 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         <div className="max-w-md text-center">
           <h2 className="mb-2 text-2xl font-bold text-slate-900">Acesso Restrito</h2>
           <p className="mb-6 text-slate-600">
-            Você não tem acesso à Central de Reputação. Faça login com uma conta de Especialista Solar.
+            Você não tem acesso à Central de Reputação. Faça login com uma conta de Especialista
+            Solar.
           </p>
           <button
             onClick={() => router.push('/login')}
@@ -278,57 +374,16 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
 
   const greenScore = summary?.gamification?.green_score ?? 0;
   const companyReplies = reviews.filter((r) => r.reply || r.replied_at);
-  const activityEvents = summary?.recent_activities || [];
-  const firstName = user.name?.split(' ')[0] || 'Usuário';
-
-  const [solutions, setSolutions] = useState<any[]>([]);
-  const [isLinkedInVerified, setIsLinkedInVerified] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      const cached = localStorage.getItem(`reviewer_solutions_${user.id}`);
-      if (cached) {
-        try {
-          setSolutions(JSON.parse(cached));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
-      if (cachedPrivacy) {
-        try {
-          const parsed = JSON.parse(cachedPrivacy);
-          setIsLinkedInVerified(parsed.publicProfile);
-        } catch (e) {}
-      }
-    }
-  }, [user]);
-
-  const addSolution = useCallback((newSol: any) => {
-    if (!user) return;
-    setSolutions((prev) => {
-      if (prev.some((s) => s.id === newSol.id)) {
-        toast.error('Esta solução já está cadastrada.');
-        return prev;
-      }
-      const updated = [...prev, newSol];
-      localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updated));
-      return updated;
-    });
-  }, [user]);
-
-  const removeSolution = useCallback((id: string) => {
-    if (!user) return;
-    setSolutions((prev) => {
-      const updated = prev.filter((s) => s.id !== id);
-      localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updated));
-      return updated;
-    });
-  }, [user]);
 
   const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
-  const hasEVSolution = solutions.some((s) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
-  const solarSolutionsCount = solutions.filter((s) => s.category.toLowerCase().includes('solar')).length;
+  const hasEVSolution = solutions.some(
+    (s) =>
+      s.category.toLowerCase().includes('mobilidade') ||
+      s.category.toLowerCase().includes('bateria')
+  );
+  const solarSolutionsCount = solutions.filter((s) =>
+    s.category.toLowerCase().includes('solar')
+  ).length;
 
   const hasSolarReview = reviews.some((r) =>
     (r.category_name || '').toLowerCase().includes('solar')
@@ -340,11 +395,16 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   );
 
   // Calcula completude do perfil
-  const baseCompletion = user ? ((user.name ? 50 : 0) + (user.email ? 15 : 0) + (user.phone ? 10 : 0)) : 75;
+  const baseCompletion = user
+    ? (user.name ? 50 : 0) + (user.email ? 15 : 0) + (user.phone ? 10 : 0)
+    : 75;
   const locationCompletion = user?.city && user?.state ? 5 : 0;
   const avatarCompletion = user?.avatar_url ? 10 : 0;
   const solutionsCompletion = solutions.length > 0 ? Math.min(solutions.length * 5, 10) : 0;
-  const profileCompletion = Math.min(baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion, 100);
+  const profileCompletion = Math.min(
+    baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion,
+    100
+  );
 
   const achievementStatuses = deriveAchievementStatuses({
     reviewsCount: Math.max(reviews.length, solarSolutionsCount >= 3 ? 3 : 0),
@@ -357,22 +417,26 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     isLinkedInVerified,
   });
 
-  const unlockedBadgeIds = achievementStatuses.filter((s) => s.unlocked).map((s) => s.achievementId);
+  const unlockedBadgeIds = achievementStatuses
+    .filter((s) => s.unlocked)
+    .map((s) => s.achievementId);
 
   return (
-    <DashboardContext.Provider value={{
-      summary,
-      reviews,
-      leads,
-      loading,
-      refreshing,
-      error,
-      onRefresh: () => fetchDashboardData(true),
-      unlockedBadgeIds,
-      solutions,
-      addSolution,
-      removeSolution,
-    }}>
+    <DashboardContext.Provider
+      value={{
+        summary,
+        reviews,
+        leads,
+        loading,
+        refreshing,
+        error,
+        onRefresh: () => fetchDashboardData(true),
+        unlockedBadgeIds,
+        solutions,
+        addSolution,
+        removeSolution,
+      }}
+    >
       <div className="min-h-screen w-full bg-[#f5f5f5] dark:bg-[#020617] overflow-x-hidden">
         {/* Barra de Onboarding com gradiente */}
         <div className="max-w-[1240px] mx-auto px-4 pt-6">
@@ -393,9 +457,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           </aside>
 
           {/* Coluna Direita: Conteúdo Principal */}
-          <main className="min-w-0 flex flex-col gap-6">
-            {children}
-          </main>
+          <main className="min-w-0 flex flex-col gap-6">{children}</main>
         </div>
 
         <MobileDashboardNav repliesCount={companyReplies.length} />
@@ -407,7 +469,11 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             <CommandGroup heading="Ações rápidas">
               {[
                 { label: 'Avaliar empresa', href: '/companies', icon: Plus },
-                { label: 'Ver respostas das empresas', href: '/review-dashboard#company-replies', icon: MessageCircle },
+                {
+                  label: 'Ver respostas das empresas',
+                  href: '/review-dashboard#company-replies',
+                  icon: MessageCircle,
+                },
                 { label: 'Abrir conquistas', href: '/review-dashboard#achievements', icon: Trophy },
                 { label: 'Completar perfil', href: '/review-dashboard/profile', icon: UserRound },
               ].map((item) => {

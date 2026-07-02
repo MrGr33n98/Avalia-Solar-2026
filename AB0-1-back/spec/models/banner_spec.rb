@@ -40,6 +40,7 @@ RSpec.describe Banner, type: :model do
           'categories_filter_sidebar',
           'categories_right_rail',
           'companies_right_rail',
+          'compare_hero',
           'comparison_floating_bar'
         )
       end
@@ -217,6 +218,7 @@ RSpec.describe Banner, type: :model do
       expect(described_class.default_dimensions_for_position('companies_right_rail')).to eq([300, 600])
       expect(described_class.default_dimensions_for_position('search_top')).to eq([1200, 180])
       expect(described_class.default_dimensions_for_position('search_mid')).to eq([1200, 160])
+      expect(described_class.default_dimensions_for_position('compare_hero')).to eq([1200, 300])
     end
   end
 

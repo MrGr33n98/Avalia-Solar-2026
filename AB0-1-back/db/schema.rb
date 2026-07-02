@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_06_30_160000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -319,6 +319,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_06_30_160000) do
 
   create_table "banners", force: :cascade do |t|
     t.string "title"
+    t.string "alt_text"
     t.string "image_url"
     t.string "link"
     t.boolean "active", default: false

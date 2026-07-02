@@ -7,7 +7,7 @@ module Api
       skip_before_action :verify_authenticity_token, raise: false
 
       ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_term utm_content gclid fbclid msclkid].freeze
-      ALLOWED_METADATA_KEYS = %w[slot_key position page_path category_id banner_id title link].freeze
+      ALLOWED_METADATA_KEYS = %w[slot_key position page page_path category_id banner_id title link sponsored].freeze
 
       def create
         event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {},

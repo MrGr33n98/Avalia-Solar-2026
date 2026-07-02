@@ -24,11 +24,9 @@ export function BannerSlot({
   companyId,
   blockCompetitors = false
 }: BannerSlotProps) {
-  // Consome a rota do admin /banners passando a position correspondente ao placement
-  // Hack: limit * 2 + 1 força um cache miss no backend Redis gerando uma nova chave hash!
   const { data: banners, isLoading, error } = useBannersQuery({
     position: placement,
-    limit: (limit * 2) + 7, // Valor fixo diferente para dar bypass no cache do backend
+    limit,
   });
 
   // Renderiza um skeleton suave de carregamento
@@ -50,29 +48,21 @@ export function BannerSlot({
 
   let finalBanners = banners || [];
 
-  // DEBUG LOGS (Temporary)
-  console.log(`[BannerSlot DEBUG] Placement: ${placement}`);
-  console.log(`[BannerSlot DEBUG] Raw API banners:`, banners);
-  console.log(`[BannerSlot DEBUG] blockCompetitors: ${blockCompetitors}, companyId: ${companyId}`);
-
   if (blockCompetitors && companyId) {
     finalBanners = finalBanners.filter(b => b.company_id === null || b.company_id === undefined || b.company_id === companyId);
-    console.log(`[BannerSlot DEBUG] After blocking competitors:`, finalBanners);
   }
 
   // Slice to the actual limit
   finalBanners = finalBanners.slice(0, limit);
-  console.log(`[BannerSlot DEBUG] Final Banners to render:`, finalBanners);
-
   // Se houver erros na API ou não houver banners ativos retornados
   if (error || finalBanners.length === 0) {
-    if (error) console.error(`[BannerSlot ERROR] API Error:`, error);
     return fallback ? <>{fallback}</> : null;
   }
 
   // Adapter seguro para mapear as chaves opcionais e evitar erros TypeScript no build de produção
   const formattedBanners = finalBanners.map(b => ({
     id: b.id,
+    alt_text: b.alt_text ?? null,
     banner_type: b.banner_type,
     position: b.position,
     image_url: b.image_url ?? null, // Mapeamento seguro de undefined para null
@@ -89,6 +79,8 @@ export function BannerSlot({
     <BannerContainer
       banners={formattedBanners}
       position={placement}
+      priority={priority}
+      page={placement.startsWith('compare_') ? 'compare' : undefined}
       className={className}
     />
   );

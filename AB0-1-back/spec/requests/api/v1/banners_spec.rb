@@ -84,6 +84,29 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         expect(json.all? { |banner| banner['position'] == 'comparison_floating_bar' }).to be true
       end
 
+      it 'serves the compare hero with accessible metadata' do
+        hero = create(
+          :banner,
+          :approved,
+          active: true,
+          position: 'compare_hero',
+          width: 1200,
+          height: 300,
+          alt_text: 'Casa com painéis solares, carro elétrico e wallbox'
+        )
+
+        get '/api/v1/banners', params: { position: 'compare_hero' }
+
+        json = JSON.parse(response.body)
+        payload = json.find { |banner| banner['id'] == hero.id }
+        expect(payload).to include(
+          'position' => 'compare_hero',
+          'alt_text' => 'Casa com painéis solares, carro elétrico e wallbox',
+          'width' => 1200,
+          'height' => 300
+        )
+      end
+
       it 'limits results' do
         create_list(:banner, 5, :approved, active: true)
 

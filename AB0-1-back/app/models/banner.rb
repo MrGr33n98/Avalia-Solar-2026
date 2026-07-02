@@ -28,6 +28,7 @@ class Banner < ApplicationRecord
     company_profile_about_inline
     company_profile_related_carousel
     company_profile_sidebar_sponsored
+    compare_hero
     compare_page_top
     compare_page_inline
     compare_page_sidebar
@@ -49,6 +50,7 @@ class Banner < ApplicationRecord
     'company_profile_about_inline' => [1200, 160],
     'company_profile_related_carousel' => [1200, 160],
     'company_profile_sidebar_sponsored' => [300, 600],
+    'compare_hero' => [1200, 300],
     'compare_page_top' => [1200, 160],
     'compare_page_inline' => [1200, 160],
     'compare_page_sidebar' => [300, 600],
@@ -131,7 +133,7 @@ class Banner < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[category_id company_id created_at id image_url title updated_at link active sponsored width height
+    %w[alt_text category_id company_id created_at id image_url title updated_at link active sponsored width height
        banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
   end
 

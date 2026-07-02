@@ -113,7 +113,7 @@ class Api::V1::BannersController < Api::V1::BaseController
   # Reduz payload da resposta em ~40%
   def serialize_banners(banners)
     banners.as_json(
-      only: %i[id title link active position sponsored banner_type category_id company_id start_date end_date
+      only: %i[id title alt_text link active position sponsored banner_type category_id company_id start_date end_date
                created_at width height],
       methods: %i[image_url link_url category_ids]
     )

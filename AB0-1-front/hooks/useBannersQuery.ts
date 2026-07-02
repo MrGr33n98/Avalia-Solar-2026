@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 export interface Banner {
   id: number;
   title: string;
+  alt_text?: string | null;
   image_url?: string | null;
   link?: string | null;
   link_url?: string | null;
@@ -70,8 +71,9 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     initialData,
     staleTime: 5 * 60 * 1000, 
     gcTime: 15 * 60 * 1000, 
-    retry: (failureCount, error: any) => {
-      const status = error?.status ?? error?.context?.status;
+    retry: (failureCount, error: unknown) => {
+      const requestError = error as { status?: number; context?: { status?: number } };
+      const status = requestError.status ?? requestError.context?.status;
       if (status === 429) return false;
       return failureCount < 1;
     },

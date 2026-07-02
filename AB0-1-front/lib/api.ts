@@ -205,6 +205,8 @@ export interface Company {
   payment_methods?: string[];
   category_name?: string;
   category_id?: number;
+  category_ids?: number[];
+  primary_category?: string | null;
   review_criterion_scores_attributes?: Array<{
     id?: number;
     rating_criterion_id: number;
@@ -244,12 +246,21 @@ export interface Company {
   financing_options?: string;
   services?: string[];
   response_time_sla?: string;
+  response_sla_minutes?: number | null;
   languages?: string;
   email_public?: string;
   whatsapp?: string;
   phone_alt?: string;
   delivered_projects_score?: number;
+  delivered_projects_count?: number;
   warranty_years?: number;
+  installation_warranty_years?: number;
+  post_sales_support?: boolean | null;
+  business_verification_status?: string | null;
+  business_verified_at?: string | null;
+  business_verification_method?: string | null;
+  sponsored?: boolean;
+  recommendation_rate?: number | null;
   email?: string | null;
   facebook_url?: string;
   instagram_url?: string;
@@ -289,6 +300,32 @@ export interface Company {
   videos?: string[];
   project_types?: string[];
   services_offered?: string[];
+  trust?: {
+    is_claimed?: boolean;
+    verification_status?: string | null;
+    verified_at?: string | null;
+    verification_method?: string | null;
+  };
+  reputation?: {
+    rating_avg?: number | null;
+    rating_count?: number | null;
+    recommendation_rate?: number | null;
+  };
+  operations?: {
+    delivered_projects?: number | null;
+    sla_label?: string | null;
+    sla_minutes?: number | null;
+    warranty_years?: number | null;
+  };
+  coverage?: {
+    states?: string[];
+    cities?: string[];
+  };
+  actions?: {
+    whatsapp_url?: string | null;
+    whatsapp_enabled?: boolean;
+    p2p_chat_enabled?: boolean;
+  };
   social_links?: {
     facebook?: string;
     instagram?: string;

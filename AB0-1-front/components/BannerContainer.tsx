@@ -10,6 +10,7 @@ import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 
 interface BannerData {
   id: number | string;
+  alt_text?: string | null;
   banner_type?: string;
   position?: string;
   image_url: string | null;
@@ -26,6 +27,8 @@ interface BannerContainerProps {
   banners: BannerData[];
   position?: string;
   className?: string;
+  priority?: boolean;
+  page?: string;
 }
 
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
@@ -49,7 +52,7 @@ function BannerImage({
   return (
     <Image
       src={src}
-      alt={banner.title}
+      alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
       fill
       priority={priority}
       sizes={sizes}
@@ -64,7 +67,13 @@ function BannerImage({
   );
 }
 
-export function BannerContainer({ banners, position, className }: BannerContainerProps) {
+export function BannerContainer({
+  banners,
+  position,
+  className,
+  priority = false,
+  page,
+}: BannerContainerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewedBannerIdsRef = React.useRef<Set<string>>(new Set());
   const displayBanners = React.useMemo(() => (
@@ -84,9 +93,11 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       company_id: banner.company_id || undefined,
       event_type: 'view',
       metadata: {
-        banner_title: banner.title,
-        banner_position: position || banner.position,
-        destination_url: banner.link_url || banner.link || null,
+        title: banner.title,
+        position: position || banner.position,
+        link: banner.link_url || banner.link || null,
+        page,
+        sponsored: Boolean(banner.sponsored),
       },
       tracked_at: new Date().toISOString(),
     });
@@ -97,8 +108,10 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       banner_position: position || banner.position,
       element_type: 'banner',
       action_type: 'view',
+      page,
+      sponsored: Boolean(banner.sponsored),
     });
-  }, [position]);
+  }, [page, position]);
 
   const trackBannerClick = React.useCallback((banner: BannerData) => {
     const bannerId = Number(banner.id);
@@ -111,9 +124,11 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       company_id: banner.company_id || undefined,
       event_type: 'click',
       metadata: {
-        banner_title: banner.title,
-        banner_position: position || banner.position,
-        destination_url: destinationUrl,
+        title: banner.title,
+        position: position || banner.position,
+        link: destinationUrl,
+        page,
+        sponsored: Boolean(banner.sponsored),
       },
       tracked_at: new Date().toISOString(),
     });
@@ -125,8 +140,10 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       element_type: 'banner',
       action_type: 'click',
       destination_url: destinationUrl,
+      page,
+      sponsored: Boolean(banner.sponsored),
     });
-  }, [position]);
+  }, [page, position]);
 
   React.useEffect(() => {
     const node = containerRef.current;
@@ -162,6 +179,12 @@ export function BannerContainer({ banners, position, className }: BannerContaine
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
         case 'categories_top': return 'aspect-[3/1] sm:aspect-[21/5]';
+        case 'compare_hero': return 'aspect-[16/9] md:aspect-[4/1]';
+        case 'compare_page_sidebar': return 'aspect-[1/2]';
+        case 'compare_page_top':
+        case 'compare_page_inline':
+        case 'compare_page_bottom':
+          return 'aspect-[3/1] sm:aspect-[15/2]';
         case 'search_top': return 'aspect-[20/3]';
         case 'search_mid': return 'aspect-[15/2]';
         case 'categories_filter_sidebar': return 'aspect-[6/5]';
@@ -181,6 +204,7 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       switch (pos) {
         case 'companies_right_rail':
         case 'categories_right_rail':
+        case 'compare_page_sidebar':
           // Sidebar fixa de 300px. Retina = 600px. Nunca maior que isso.
           return '(max-width: 1279px) 0px, 300px';
         case 'categories_filter_sidebar':
@@ -189,6 +213,8 @@ export function BannerContainer({ banners, position, className }: BannerContaine
           return '(max-width: 1023px) 100vw, 300px';
         case 'navbar':
           return '(max-width: 640px) 100vw, 200px';
+        case 'compare_hero':
+          return '(max-width: 767px) 100vw, 600px';
         case 'search_mid':
         case 'search_top':
         case 'categories_top':
@@ -200,15 +226,8 @@ export function BannerContainer({ banners, position, className }: BannerContaine
       }
     };
 
-    const renderBannerItem = (banner: BannerData, isPriority = false) => (
-      <div className="relative w-full h-full bg-muted/20">
-        <Link 
-          href={banner.link_url || banner.link || '#'} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="block w-full h-full"
-          onClick={() => trackBannerClick(banner)}
-        >
+    const renderBannerContent = (banner: BannerData, isPriority = false) => (
+      <>
           <BannerImage
             banner={banner}
             priority={isPriority}
@@ -219,11 +238,31 @@ export function BannerContainer({ banners, position, className }: BannerContaine
               Patrocinado
             </span>
           )}
-        </Link>
+      </>
+    );
+
+    const renderBannerItem = (banner: BannerData, isPriority = false) => (
+      <div className="relative w-full h-full bg-muted/20">
+        {banner.link_url || banner.link ? (
+          <Link
+            href={banner.link_url || banner.link || '/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-full"
+            aria-label={banner.alt_text?.trim() || banner.title || 'Abrir anúncio'}
+            onClick={() => trackBannerClick(banner)}
+          >
+            {renderBannerContent(banner, isPriority)}
+          </Link>
+        ) : (
+          renderBannerContent(banner, isPriority)
+        )}
       </div>
     );
 
-    const items = displayBanners.map((banner, idx) => renderBannerItem(banner, idx === 0));
+    const items = displayBanners.map((banner, idx) =>
+      renderBannerItem(banner, priority && idx === 0)
+    );
 
     return (
       <div ref={containerRef} className={cn("w-full py-2", className)}>
