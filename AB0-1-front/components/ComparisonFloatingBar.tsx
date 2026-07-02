@@ -3,8 +3,18 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, List, Plus, ShieldCheck, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  List,
+  Maximize2,
+  Minus,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ComparisonSponsoredRecommendation } from '@/components/compare/ComparisonSponsoredRecommendation';
 import { Button } from '@/components/ui/button';
@@ -87,8 +97,22 @@ export default function ComparisonFloatingBar() {
     isLoading: comparisonLoading,
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('expanded');
+  const selectionKey = comparisonList.map((company) => company.id).join(',');
+  const previousSelectionKeyRef = useRef(selectionKey);
+
+  useEffect(() => {
+    const selectionChanged = previousSelectionKeyRef.current !== selectionKey;
+    previousSelectionKeyRef.current = selectionKey;
+
+    if (selectionChanged && dockState === 'hidden') {
+      setDockState('expanded');
+    }
+  }, [dockState, selectionKey]);
 
   if (count === 0) return null;
+
+  if (dockState === 'hidden') return null;
 
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
   const shouldGateHighIntent = !authLoading && !comparisonLoading && !isAuthenticated && count >= 2;
@@ -141,125 +165,202 @@ export default function ComparisonFloatingBar() {
   return (
     <>
       <AnimatePresence>
-        <motion.aside
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
-          transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-          aria-label="Empresas selecionadas para comparação"
-          className="pointer-events-none fixed bottom-[76px] left-3 right-3 z-50 md:bottom-5 md:left-6 md:right-6"
-        >
-          <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-[22px] border-2 border-blue-500 bg-white/95 shadow-[0_18px_60px_rgba(37,99,235,0.18)] backdrop-blur-xl">
-            <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-[220px_minmax(0,1fr)_auto] xl:items-center">
-              <div className="flex items-start justify-between gap-4 xl:block">
-                <div>
-                  <p className="text-base font-bold tracking-tight text-slate-950">
-                    Comparação transparente
-                  </p>
-                  <p className="mt-1 hidden max-w-[220px] text-xs leading-5 text-slate-600 sm:block">
-                    Compare lado a lado com os mesmos critérios para todas.
-                  </p>
-                  <span
-                    className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
-                    aria-live="polite"
-                  >
-                    {count} de {maxComparison}{' '}
-                    {count === 1 ? 'empresa selecionada' : 'empresas selecionadas'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearComparison}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 xl:hidden"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Limpar
-                </button>
-              </div>
-
-              <div
-                className="flex min-w-0 snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
-                aria-label="Lista de empresas selecionadas"
+        {dockState === 'minimized' ? (
+          <motion.aside
+            key="comparison-dock-minimized"
+            initial={{ y: 32, opacity: 0, scale: 0.96 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 32, opacity: 0, scale: 0.96 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+            aria-label="Comparação minimizada"
+            className="fixed bottom-[76px] right-3 z-50 md:bottom-5 md:right-6"
+          >
+            <div className="flex items-center gap-2 rounded-2xl border-2 border-blue-500 bg-white/95 p-2 shadow-[0_14px_40px_rgba(37,99,235,0.2)] backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => setDockState('expanded')}
+                aria-label={`Expandir comparação com ${count} ${companyLabel}`}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
-                {comparisonList.map((company) => (
-                  <div key={company.id} className="snap-start">
-                    <CompanyChip company={company} onRemove={removeFromComparison} />
+                <Maximize2 className="h-4 w-4" />
+                Comparar {count}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDockState('hidden')}
+                aria-label="Fechar comparador"
+                title="Fechar"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </motion.aside>
+        ) : (
+          <motion.aside
+            key="comparison-dock-expanded"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+            aria-label="Empresas selecionadas para comparação"
+            className="pointer-events-none fixed bottom-[76px] left-3 right-3 z-50 md:bottom-5 md:left-6 md:right-6"
+          >
+            <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-[22px] border-2 border-blue-500 bg-white/95 shadow-[0_18px_60px_rgba(37,99,235,0.18)] backdrop-blur-xl">
+              <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-[220px_minmax(0,1fr)_auto] xl:items-center">
+                <div className="flex items-start justify-between gap-4 xl:block">
+                  <div>
+                    <p className="text-base font-bold tracking-tight text-slate-950">
+                      Comparação transparente
+                    </p>
+                    <p className="mt-1 hidden max-w-[220px] text-xs leading-5 text-slate-600 sm:block">
+                      Compare lado a lado com os mesmos critérios para todas.
+                    </p>
+                    <span
+                      className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
+                      aria-live="polite"
+                    >
+                      {count} de {maxComparison}{' '}
+                      {count === 1 ? 'empresa selecionada' : 'empresas selecionadas'}
+                    </span>
                   </div>
-                ))}
+                  <div className="flex items-center gap-1 xl:hidden">
+                    <button
+                      type="button"
+                      onClick={() => setDockState('minimized')}
+                      aria-label="Minimizar comparador"
+                      title="Minimizar"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDockState('hidden')}
+                      aria-label="Fechar comparador"
+                      title="Fechar"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearComparison}
+                      aria-label="Limpar comparação"
+                      title="Limpar comparação"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
 
-                {canAddMore ? (
-                  <button
-                    type="button"
-                    onClick={handleAddCompany}
-                    className="flex h-16 min-w-[148px] snap-start items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-4 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                <div
+                  className="flex min-w-0 snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
+                  aria-label="Lista de empresas selecionadas"
+                >
+                  {comparisonList.map((company) => (
+                    <div key={company.id} className="snap-start">
+                      <CompanyChip company={company} onRemove={removeFromComparison} />
+                    </div>
+                  ))}
+
+                  {canAddMore ? (
+                    <button
+                      type="button"
+                      onClick={handleAddCompany}
+                      className="flex h-16 min-w-[148px] snap-start items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-4 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar empresa
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_1fr] xl:flex xl:items-center">
+                  <div className="hidden items-center gap-1 xl:flex">
+                    <button
+                      type="button"
+                      onClick={() => setDockState('minimized')}
+                      aria-label="Minimizar comparador"
+                      title="Minimizar"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDockState('hidden')}
+                      aria-label="Fechar comparador"
+                      title="Fechar"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={clearComparison}
+                    className="hidden h-11 rounded-xl px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 xl:inline-flex"
                   >
-                    <Plus className="h-4 w-4" />
-                    Adicionar empresa
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_1fr] xl:flex xl:items-center">
-                <Button
-                  variant="ghost"
-                  onClick={clearComparison}
-                  className="hidden h-11 rounded-xl px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 xl:inline-flex"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Limpar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleDetailsClick}
-                  className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  <List className="mr-2 h-4 w-4" />
-                  Ver detalhes
-                </Button>
-                {canAddMore ? (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Limpar
+                  </Button>
                   <Button
                     variant="outline"
-                    onClick={handleAddCompany}
-                    className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 sm:hidden"
+                    onClick={handleDetailsClick}
+                    className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
                   >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar
+                    <List className="mr-2 h-4 w-4" />
+                    Ver detalhes
                   </Button>
-                ) : null}
-                <Button
-                  onClick={handleComparisonPageClick}
-                  className={cn(
-                    'col-span-2 h-12 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)] hover:bg-blue-700 sm:col-span-1 xl:h-12',
-                    !canAddMore && 'sm:col-span-2 xl:col-span-1'
-                  )}
-                >
-                  Comparar {count} {companyLabel}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                  {canAddMore ? (
+                    <Button
+                      variant="outline"
+                      onClick={handleAddCompany}
+                      className="h-11 rounded-xl border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 sm:hidden"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Adicionar
+                    </Button>
+                  ) : null}
+                  <Button
+                    onClick={handleComparisonPageClick}
+                    className={cn(
+                      'col-span-2 h-12 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)] hover:bg-blue-700 sm:col-span-1 xl:h-12',
+                      !canAddMore && 'sm:col-span-2 xl:col-span-1'
+                    )}
+                  >
+                    Comparar {count} {companyLabel}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="grid gap-3 border-t border-blue-100 bg-slate-50/80 px-4 py-3 md:px-5 lg:grid-cols-[1fr_minmax(360px,560px)] lg:items-center">
-              <div className="hidden items-center gap-6 lg:flex">
-                <TrustItem>Dados verificados</TrustItem>
-                <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
-                <TrustItem>Sem viés comercial</TrustItem>
-                <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
-                <TrustItem>Comparação justa e imparcial</TrustItem>
+              <div className="grid gap-3 border-t border-blue-100 bg-slate-50/80 px-4 py-3 md:px-5 lg:grid-cols-[1fr_minmax(360px,560px)] lg:items-center">
+                <div className="hidden items-center gap-6 lg:flex">
+                  <TrustItem>Dados verificados</TrustItem>
+                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                  <TrustItem>Sem viés comercial</TrustItem>
+                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                  <TrustItem>Comparação justa e imparcial</TrustItem>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 lg:hidden">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Patrocínios não alteram sua comparação.
+                </div>
+                <ComparisonSponsoredRecommendation
+                  excludedCompanyIds={comparisonList.map((company) => company.id)}
+                />
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 lg:hidden">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                Patrocínios não alteram sua comparação.
-              </div>
-              <ComparisonSponsoredRecommendation
-                excludedCompanyIds={comparisonList.map((company) => company.id)}
-              />
-            </div>
-          </section>
-        </motion.aside>
+            </section>
+          </motion.aside>
+        )}
       </AnimatePresence>
 
-      <div aria-hidden="true" className="h-[310px] md:h-[220px]" />
+      {dockState === 'expanded' ? (
+        <div aria-hidden="true" className="h-[310px] md:h-[220px]" />
+      ) : null}
 
       <CompanyComparisonModal
         isOpen={isModalOpen}
