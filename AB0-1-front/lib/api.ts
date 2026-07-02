@@ -753,12 +753,44 @@ export interface SearchAllResponse {
   products: Product[];
   categories: Category[];
   articles: Article[];
+  reviews?: Array<{
+    id: number;
+    company_id?: number | null;
+    category_id?: number | null;
+    rating?: number | null;
+    comment?: string | null;
+    headline?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    display_reviewer_name?: string;
+    anonymized_reviewer_name?: string;
+  }>;
   meta?: {
     total_count?: number | Record<string, number>;
     page?: number;
     per_page?: number;
     total_pages?: number;
     error_stage?: string;
+  };
+  counts?: {
+    all?: number;
+    companies?: number;
+    products?: number;
+    categories?: number;
+    articles?: number;
+    reviews?: number;
+  };
+  results?: {
+    companies?: Company[];
+    products?: Product[];
+    categories?: Category[];
+    articles?: Article[];
+    reviews?: SearchAllResponse['reviews'];
+  };
+  pagination?: {
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
   };
 }
 

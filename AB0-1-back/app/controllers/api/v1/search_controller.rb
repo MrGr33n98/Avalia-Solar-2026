@@ -18,10 +18,11 @@ module Api
         longitude = params[:longitude].presence
         radius_km = params[:radius_km].presence
 
-        legacy_results = safe_legacy_results(query, state: state, city: city, category_id: category_id)
+      legacy_results = safe_legacy_results(query, state: state, city: city, category_id: category_id)
+      reviews_results = Array(legacy_results[:reviews])
 
-        company_results = safe_company_results(
-          query: query,
+      company_results = safe_company_results(
+        query: query,
           state: state,
           city: city,
           category_id: category_id,
@@ -38,7 +39,11 @@ module Api
           state: state,
           city: city,
           category_id: category_id,
-          results_count: safe_company_total_count(company_results) + safe_count(legacy_results[:products])
+          results_count:
+            safe_company_total_count(company_results) +
+            safe_count(legacy_results[:products]) +
+            safe_count(legacy_results[:categories]) +
+            safe_count(reviews_results)
         )
 
         # ordenação simples sem quebrar nada
@@ -55,18 +60,21 @@ module Api
         products   = paginate_legacy_collection(legacy_results[:products], page: page, per: per)
         categories = paginate_legacy_collection(legacy_results[:categories], page: page, per: per)
         articles   = paginate_legacy_collection(legacy_results[:articles], page: page, per: per)
+        reviews    = paginate_legacy_collection(reviews_results, page: page, per: per)
 
         companies_json = company_results[:nodes].filter_map { |company| serialize_company_result(company) }
         products_json = serialize_products(products)
         categories_json = serialize_categories(categories)
         articles_json = serialize_articles(articles)
+        reviews_json = serialize_reviews(reviews)
 
         meta = {
           total_count: {
             companies: safe_company_total_count(company_results),
             products: safe_count(legacy_results[:products]),
             categories: safe_count(legacy_results[:categories]),
-            articles: safe_count(legacy_results[:articles])
+            articles: safe_count(legacy_results[:articles]),
+            reviews: safe_count(reviews_results)
           },
           page: page,
           per_page: per
@@ -78,6 +86,30 @@ module Api
           products: products_json,
           categories: categories_json,
           articles: articles_json,
+          reviews: reviews_json,
+          counts: {
+            all: safe_company_total_count(company_results) +
+                safe_count(legacy_results[:products]) +
+                safe_count(legacy_results[:categories]) +
+                safe_count(reviews_results),
+            companies: safe_company_total_count(company_results),
+            products: safe_count(legacy_results[:products]),
+            categories: safe_count(legacy_results[:categories]),
+            articles: safe_count(legacy_results[:articles]),
+            reviews: safe_count(reviews_results)
+          },
+          results: {
+            companies: companies_json,
+            products: products_json,
+            categories: categories_json,
+            articles: articles_json,
+            reviews: reviews_json
+          },
+          pagination: {
+            page: page,
+            per_page: per,
+            total_pages: [company_results.dig(:page_info, :total_pages).to_i, 1].max
+          },
           meta: meta
         }
       end
@@ -169,7 +201,13 @@ module Api
           city: city,
           category_id: category_id
         )
-        { companies: Company.none, products: Product.none, categories: Category.none, articles: Article.none }
+        {
+          companies: Company.none,
+          products: Product.none,
+          categories: Category.none,
+          articles: Article.none,
+          reviews: Review.none
+        }
       end
 
       def safe_company_results(
@@ -309,6 +347,16 @@ module Api
         articles.as_json(only: %i[id title slug published_at])
       rescue StandardError => e
         record_search_error('article_serialization', e)
+        []
+      end
+
+      def serialize_reviews(reviews)
+        reviews.as_json(
+          only: %i[id company_id category_id rating comment headline created_at updated_at],
+          methods: %i[display_reviewer_name anonymized_reviewer_name]
+        )
+      rescue StandardError => e
+        record_search_error('review_serialization', e)
         []
       end
 

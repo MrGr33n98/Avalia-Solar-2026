@@ -99,6 +99,7 @@ export default function ChatWidget() {
   const [showReengagementPrompt, setShowReengagementPrompt] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [canShowInvite, setCanShowInvite] = useState(false);
 
   const allCompanies = messages
     .filter(msg => msg.metadata?.type === 'company_recommendations')
@@ -112,7 +113,19 @@ export default function ChatWidget() {
   }, [messages, isLoading, showLeadForm]);
 
   useEffect(() => {
-    if (isOpen || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
+    setCanShowInvite(Boolean(localStorage.getItem('avaliasolar_consent')));
+
+    const syncConsent = () => {
+      setCanShowInvite(Boolean(localStorage.getItem('avaliasolar_consent')));
+    };
+
+    window.addEventListener('consent-changed', syncConsent);
+    return () => window.removeEventListener('consent-changed', syncConsent);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen || typeof window === 'undefined' || !canShowInvite) return;
     if (window.sessionStorage.getItem(CHAT_INVITE_DISMISSED_KEY) === 'true') return;
 
     const timer = window.setTimeout(() => {
@@ -120,7 +133,7 @@ export default function ChatWidget() {
     }, CHAT_INVITE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [isOpen]);
+  }, [canShowInvite, isOpen]);
 
   const dismissInviteBubble = useCallback(() => {
     setShowInviteBubble(false);
@@ -418,10 +431,10 @@ export default function ChatWidget() {
   ];
 
   return (
-    <div className="fixed bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 font-sans flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-[9000] font-sans flex flex-col items-end pointer-events-none">
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[400px] sm:h-[650px] max-h-[58vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-[24px] sm:rounded-[28px] shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
+        <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[400px] sm:h-[650px] max-h-[58vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
@@ -876,8 +889,8 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {!isOpen && showInviteBubble && (
-        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-[22px] border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
+      {!isOpen && canShowInvite && showInviteBubble && (
+        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-lg border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
@@ -915,7 +928,7 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-14 w-14 sm:h-[72px] sm:w-[72px] rounded-full shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
+          className="pointer-events-auto h-14 w-14 sm:h-[72px] sm:w-[72px] rounded-lg shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}

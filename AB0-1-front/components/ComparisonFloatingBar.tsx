@@ -204,7 +204,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-[76px] left-3 right-3 z-50 md:bottom-5 md:left-6 md:right-6"
+            className="pointer-events-none fixed bottom-[76px] left-3 right-[5.75rem] z-50 md:bottom-5 md:left-6 md:right-6"
           >
             <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
               <div className="border-b border-slate-200 px-4 py-4 md:px-5">
@@ -270,15 +270,8 @@ export default function ComparisonFloatingBar() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 px-4 py-4 md:px-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="hidden items-center gap-6 lg:flex">
-                  <TrustItem>Dados verificados</TrustItem>
-                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
-                  <TrustItem>Sem viés comercial</TrustItem>
-                  <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
-                  <TrustItem>Comparação justa e imparcial</TrustItem>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:justify-start">
+              <div className="flex flex-col gap-3 px-4 py-4 md:px-5 lg:flex-row lg:items-center lg:justify-end">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     variant="ghost"
                     onClick={clearComparison}

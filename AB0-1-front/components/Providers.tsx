@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
@@ -34,6 +34,7 @@ import { trackUserReturned } from '@/lib/analytics/consolidated';
 import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { getConsent, onConsentChange } from '@/lib/analytics/consent';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const apolloClient = getApolloClient();
@@ -41,6 +42,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const isAppSurface = Boolean(
     pathname?.startsWith('/chat') || pathname?.startsWith('/review-dashboard')
   );
+  const [hasCookieDecision, setHasCookieDecision] = useState(false);
   const analyticsLoadedRef = useRef(false);
 
   const loadAnalytics = useCallback((reason: string) => {
@@ -51,6 +53,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     }
     initializeAnalytics();
     page();
+  }, []);
+
+  useEffect(() => {
+    setHasCookieDecision(Boolean(getConsent()));
+    const cleanup = onConsentChange(() => setHasCookieDecision(true));
+    return cleanup;
   }, []);
 
   useEffect(() => {
@@ -167,6 +175,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 {!isAppSurface && <CookieConsent />}
                 {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' &&
                   !isAppSurface &&
+                  hasCookieDecision &&
                   (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
               </CompanyProvider>
             </AuthProvider>

@@ -88,8 +88,8 @@ function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState(query);
   const [locationTerm, setLocationTerm] = useState(urlCity);
   const [results, setResults] = useState<
-    Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>
-  >({ companies: [], products: [], categories: [], articles: [] });
+    Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles' | 'reviews'>
+  >({ companies: [], products: [], categories: [], articles: [], reviews: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SearchTab>(isSearchTab(tabParam) ? tabParam : 'all');
@@ -140,6 +140,7 @@ function SearchPageContent() {
         products: response.products || [],
         categories: response.categories || [],
         articles: response.articles || [],
+        reviews: response.reviews || [],
       });
       track('search_results_loaded', {
         search_term: query,
@@ -239,7 +240,7 @@ function SearchPageContent() {
     all: filteredProducts.length + filteredCompanies.length,
     products: filteredProducts.length,
     companies: filteredCompanies.length,
-    reviews: 0,
+    reviews: results.reviews?.length || 0,
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -381,7 +382,7 @@ function SearchPageContent() {
               query={query}
               productsCount={filteredProducts.length}
               companiesCount={filteredCompanies.length}
-              reviewsCount={0}
+              reviewsCount={results.reviews?.length || 0}
               sort={sort}
               onSortChange={setSort}
             />
