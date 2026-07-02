@@ -559,7 +559,16 @@ export default function ProfileDetailsPage() {
               ].map((opt) => (
                 <div key={opt.key} className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        privacySettings[opt.key as keyof typeof privacySettings]
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {privacySettings[opt.key as keyof typeof privacySettings] ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-400 leading-normal">{opt.desc}</p>
                   </div>
                   <button
