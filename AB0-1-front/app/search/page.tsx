@@ -1,1846 +1,671 @@
 'use client';
 
-import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { searchApi } from '@/lib/api';
-import type { SearchAllResponse } from '@/lib/api';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useAuth } from '@/contexts/AuthContext';
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Search,
-  X,
-  SlidersHorizontal,
   Building2,
-  Package,
-  Tag,
-  FileText,
-  BadgeCheck,
-  Star,
-  TrendingUp,
-  Zap,
-  MessageCircle,
   ChevronRight,
-  ArrowUpDown,
-  Sparkles,
-  RotateCcw,
-  Diamond,
-  Map as MapIcon,
+  FileText,
   MapPin,
+  Package,
+  Search,
+  SlidersHorizontal,
+  Tag,
+  X,
 } from 'lucide-react';
-import CompanyCard from '@/components/CompanyCard';
-import ProductCard from '@/components/ProductCard';
-import BannerByLocation from '@/components/BannerByLocation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { buildCategoryPath } from '@/lib/slug';
+import { BannerSlot } from '@/components/banners/BannerSlot';
+import { CompanyCardEnhanced } from '@/components/search/CompanyCardEnhanced';
+import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
+import {
+  defaultSearchFilters,
+  SearchFilters,
+  type PriceRange,
+  type SearchFilterState,
+} from '@/components/search/SearchFilters';
+import { SearchEmptyState } from '@/components/search/SearchEmptyState';
+import { SearchResultsHeader, type SearchSort } from '@/components/search/SearchResultsHeader';
+import { SearchTabs, type SearchTab } from '@/components/search/SearchTabs';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Company, Product, SearchAllResponse } from '@/lib/api';
+import { searchApi } from '@/lib/api';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
-import { trackEvent } from '@/lib/analytics/events';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import { useBannersQuery } from '@/hooks/useBannersQuery';
-import { BannerContainer } from '@/components/BannerContainer';
-import { cn } from '@/lib/utils';
-// === GEO ===
-import SearchRadiusFilter from '@/components/search/SearchRadiusFilter';
-import dynamic from 'next/dynamic';
-const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), { ssr: false });
-import { SearchExploreView } from '@/components/search/SearchExploreView';
+import { CONTACT } from '@/lib/site';
+import { buildCategoryPath } from '@/lib/slug';
 
-// ─── Sort options ─────────────────────────────────────────────────────────────
-const SORT_OPTIONS = [
-  { value: 'recommended', label: 'Recomendados', icon: Sparkles },
-  { value: 'rating', label: 'Melhor avaliados', icon: Star },
-  { value: 'reviews', label: 'Mais avaliações', icon: TrendingUp },
-  { value: 'verified', label: 'Premium primeiro', icon: Sparkles },
-  { value: 'name', label: 'A–Z', icon: ArrowUpDown },
-] as const;
-
-type SortValue = (typeof SORT_OPTIONS)[number]['value'];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const KNOWN_CITY_TERMS: Record<string, string> = {
-  aracaju: 'Aracaju',
-  belem: 'Belém',
-  'belo horizonte': 'Belo Horizonte',
-  'boa vista': 'Boa Vista',
-  brasilia: 'Brasília',
-  campinas: 'Campinas',
-  'campo grande': 'Campo Grande',
-  cuiaba: 'Cuiabá',
-  curitiba: 'Curitiba',
-  florianopolis: 'Florianópolis',
-  fortaleza: 'Fortaleza',
-  goiania: 'Goiânia',
-  maceio: 'Maceió',
-  manaus: 'Manaus',
-  natal: 'Natal',
-  palmas: 'Palmas',
-  'porto alegre': 'Porto Alegre',
-  recife: 'Recife',
-  'rio branco': 'Rio Branco',
-  'rio de janeiro': 'Rio de Janeiro',
-  salvador: 'Salvador',
-  'sao luis': 'São Luís',
-  'sao paulo': 'São Paulo',
-  teresina: 'Teresina',
-  vitoria: 'Vitória',
-};
-
-function normalizeSearchText(value: string): string {
-  return value
-    .trim()
+const normalize = (value: unknown) =>
+  String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
-}
+    .toLowerCase()
+    .trim();
 
-function detectCitySearch(value: string): string | null {
-  const normalized = normalizeSearchText(value);
-  if (!normalized) return null;
+const getProductCategory = (product: Product) =>
+  product.categories?.[0]?.name || product.category?.name || '';
 
-  const withoutUf = normalized.replace(/\s*(?:[,/-]|\s)\s*[a-z]{2}$/i, '');
-  return KNOWN_CITY_TERMS[normalized] || KNOWN_CITY_TERMS[withoutUf] || null;
-}
+const getProductBrand = (product: Product) => product.brand?.name || product.company?.name || '';
 
-function getNumericField(obj: any, ...keys: string[]): number {
-  for (const k of keys) {
-    const v = parseFloat(obj?.[k]);
-    if (!isNaN(v)) return v;
-  }
-  return 0;
-}
-
-// ─── Skeletons ────────────────────────────────────────────────────────────────
-function CompanyCardSkeleton() {
-  return (
-    <div className="rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900/95 shadow-sm">
-      <Skeleton className="h-[80px] w-full" />
-      <div className="px-3.5 pt-5 pb-3 space-y-3">
-        <div className="flex items-center gap-2">
-          <Skeleton className="w-11 h-11 rounded-xl" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-        </div>
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-2/3" />
-        <Skeleton className="h-9 w-full rounded-xl mt-2" />
-        <Skeleton className="h-9 w-full rounded-xl" />
-      </div>
-    </div>
+const getCompanyRating = (company: Company) =>
+  Number(
+    company.reputation?.rating_avg ||
+      company.average_rating ||
+      company.rating_avg ||
+      company.rating ||
+      0
   );
-}
 
-function ProductCardSkeleton() {
-  return (
-    <div className="rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm">
-      <Skeleton className="h-40 w-full" />
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-8 w-full rounded-lg mt-3" />
-      </div>
-    </div>
+const getProductRating = (product: Product) => Number(product.company?.rating_avg || 0);
+
+const isCompanyVerified = (company: Company) =>
+  Boolean(
+    company.verified || ['verified', 'premium'].includes(company.trust?.verification_status || '')
   );
-}
 
-// ─── SearchSidebar (desktop) ──────────────────────────────────────────────────
-const MAP_ENABLED = true; // Forçado para melhoria da experiência de busca
+const isProductVerified = (product: Product) => Boolean(product.company?.verified);
 
-interface SidebarProps {
-  sort: SortValue;
-  onSortChange: (v: SortValue) => void;
-  verifiedOnly: boolean;
-  onVerifiedChange: (v: boolean) => void;
-  whatsappOnly: boolean;
-  onWhatsappChange: (v: boolean) => void;
-  onReset: () => void;
-  hasActiveFilters: boolean;
-  // GEO
-  radiusKm: number | null;
-  onRadiusChange: (radius: number | null) => void;
-  onCoordsChange: (coords: { lat: number; lng: number } | null) => void;
-  cityName?: string;
-  showMap?: boolean;
-  onToggleMap?: () => void;
-}
+const matchesPrice = (price: number, range: PriceRange) => {
+  if (range === 'all') return true;
+  if (!Number.isFinite(price) || price <= 0) return false;
+  if (range === 'under_1000') return price < 1000;
+  if (range === '1000_3000') return price >= 1000 && price <= 3000;
+  if (range === '3000_5000') return price > 3000 && price <= 5000;
+  return price > 5000;
+};
 
-function SearchSidebar({
-  sort,
-  onSortChange,
-  verifiedOnly,
-  onVerifiedChange,
-  whatsappOnly,
-  onWhatsappChange,
-  onReset,
-  hasActiveFilters,
-  radiusKm,
-  onRadiusChange,
-  onCoordsChange,
-  cityName,
-  showMap,
-  onToggleMap,
-}: SidebarProps) {
-  return (
-    <aside className="w-[264px] flex-shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))] h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-100 hidden lg:block">
-      <div className="clay-panel bg-white dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)]">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Filtros
-            </span>
-          </div>
-          {hasActiveFilters && (
-            <button
-              onClick={onReset}
-              className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-red-500 transition-colors"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Limpar
-            </button>
-          )}
-        </div>
+const isSearchTab = (value: string | null): value is SearchTab =>
+  value === 'all' || value === 'products' || value === 'companies' || value === 'reviews';
 
-        {/* Sort */}
-        <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
-            Ordenar
-          </p>
-          <div className="space-y-0.5">
-            {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                onClick={() => onSortChange(value)}
-                className={cn(
-                  'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-150 text-sm',
-                  sort === value
-                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'
-                )}
-              >
-                <Icon
-                  className={cn(
-                    'w-3.5 h-3.5 flex-shrink-0',
-                    sort === value ? 'text-blue-500' : 'text-slate-400'
-                  )}
-                />
-                {label}
-                {sort === value && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-slate-100 dark:bg-slate-800 mb-5" />
-
-        {/* Quick filters */}
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2.5">
-            Refinamentos
-          </p>
-          <div className="space-y-2">
-            <ToggleRow
-              icon={Diamond}
-              iconClass="text-blue-500"
-              label="Somente Premium"
-              checked={verifiedOnly}
-              onChange={onVerifiedChange}
-            />
-            <ToggleRow
-              icon={MessageCircle}
-              iconClass="text-emerald-500"
-              label="Com WhatsApp"
-              checked={whatsappOnly}
-              onChange={onWhatsappChange}
-            />
-          </div>
-        </div>
-
-        {/* GEO: Filtro de raio */}
-        {MAP_ENABLED && (
-          <>
-            <div className="h-px bg-slate-100 dark:bg-slate-800 mb-5" />
-            <SearchRadiusFilter
-              radiusKm={radiusKm}
-              onRadiusChange={onRadiusChange}
-              onCoordsChange={onCoordsChange}
-              cityName={cityName}
-            />
-            {/* Toggle mapa */}
-            <button
-              id="sidebar-toggle-map-btn"
-              onClick={onToggleMap}
-              className={cn(
-                'mt-3 w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border',
-                showMap
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600'
-              )}
-            >
-              <MapIcon className="w-3.5 h-3.5" />
-              {showMap ? 'Ocultar mapa' : 'Ver no mapa'}
-            </button>
-          </>
-        )}
-
-        {/* Status indicator */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-              {hasActiveFilters ? 'Filtros aplicados' : 'Sem restrições'}
-            </span>
-            <span
-              className={cn(
-                'w-2 h-2 rounded-full',
-                hasActiveFilters
-                  ? 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]'
-                  : 'bg-slate-200 dark:bg-slate-700'
-              )}
-            />
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function ToggleRow({
-  icon: Icon,
-  iconClass,
-  label,
-  checked,
-  onChange,
-}: {
-  icon: React.ElementType;
-  iconClass?: string;
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-150',
-        checked
-          ? 'bg-blue-50 dark:bg-blue-950/40 ring-1 ring-blue-200/60 dark:ring-blue-800/40'
-          : 'hover:bg-slate-50 dark:hover:bg-slate-800'
-      )}
-    >
-      <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', checked ? iconClass : 'text-slate-400')} />
-      <span
-        className={cn(
-          'text-sm flex-1',
-          checked
-            ? 'text-blue-700 dark:text-blue-300 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 font-medium'
-        )}
-      >
-        {label}
-      </span>
-      <span
-        className={cn(
-          'w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all',
-          checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'
-        )}
-      >
-        {checked && (
-          <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />
-        )}
-      </span>
-    </button>
-  );
-}
-
-// ─── Mobile filters sheet ─────────────────────────────────────────────────────
-function MobileFilterSheet({
-  sort,
-  onSortChange,
-  verifiedOnly,
-  onVerifiedChange,
-  whatsappOnly,
-  onWhatsappChange,
-  onReset,
-  hasActiveFilters,
-  radiusKm,
-  onRadiusChange,
-  onCoordsChange,
-  cityName,
-}: SidebarProps) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      {/* FAB trigger */}
-      <div className="lg:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button className="clay-btn-primary rounded-full shadow-2xl px-7 h-13 gap-2.5 border-none text-sm font-bold">
-              <SlidersHorizontal className="w-4 h-4" />
-              Ordenar & Filtrar
-              {hasActiveFilters && (
-                <span className="ml-1 bg-white/20 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border border-white/30">
-                  !
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="h-[88vh] rounded-t-[28px] border-none p-0 shadow-2xl overflow-hidden"
-          >
-            <SheetHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <SheetTitle className="text-xl font-black tracking-tight">
-                  Ordenar & Filtrar
-                </SheetTitle>
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      onReset();
-                      setOpen(false);
-                    }}
-                    className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    Limpar tudo
-                  </button>
-                )}
-              </div>
-            </SheetHeader>
-
-            <div className="overflow-y-auto px-6 py-5 pb-40 h-full">
-              <div className="mb-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                  Ordenar por
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      onClick={() => onSortChange(value)}
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-3 rounded-xl border text-left transition-all duration-150 text-sm font-medium',
-                        sort === value
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:border-slate-300'
-                      )}
-                    >
-                      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="text-xs leading-tight">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {MAP_ENABLED && (
-                <>
-                  <div className="h-px bg-slate-100 dark:bg-slate-800 mb-6" />
-                  <div className="mb-6">
-                    <SearchRadiusFilter
-                      radiusKm={radiusKm}
-                      onRadiusChange={onRadiusChange}
-                      onCoordsChange={onCoordsChange}
-                      cityName={cityName}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="h-px bg-slate-100 dark:bg-slate-800 mb-6" />
-
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                  Refinamentos
-                </p>
-                <div className="space-y-2.5">
-                  <MobileToggleRow
-                    icon={Diamond}
-                    iconClass="text-blue-500"
-                    label="Somente Premium"
-                    sublabel="Empresas com selo Diamond de confiança"
-                    checked={verifiedOnly}
-                    onChange={onVerifiedChange}
-                  />
-                  <MobileToggleRow
-                    icon={MessageCircle}
-                    iconClass="text-emerald-500"
-                    label="Com WhatsApp"
-                    sublabel="Contato direto disponível"
-                    checked={whatsappOnly}
-                    onChange={onWhatsappChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sticky footer */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white dark:from-slate-950 dark:via-slate-950 to-transparent px-6 pt-8 pb-[max(1.5rem,var(--safe-area-inset-bottom))]">
-              <Button
-                className="w-full h-13 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-xl"
-                onClick={() => setOpen(false)}
-              >
-                Ver resultados
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
-  );
-}
-
-function MobileToggleRow({
-  icon: Icon,
-  iconClass,
-  label,
-  sublabel,
-  checked,
-  onChange,
-}: {
-  icon: React.ElementType;
-  iconClass?: string;
-  label: string;
-  sublabel?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all duration-150',
-        checked
-          ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/40'
-          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-      )}
-    >
-      <div
-        className={cn(
-          'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
-          checked ? 'bg-white dark:bg-slate-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700'
-        )}
-      >
-        <Icon className={cn('w-4.5 h-4.5', checked ? iconClass : 'text-slate-400')} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            'text-sm font-semibold leading-tight',
-            checked ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'
-          )}
-        >
-          {label}
-        </p>
-        {sublabel && <p className="text-[11px] text-slate-400 mt-0.5">{sublabel}</p>}
-      </div>
-      <div
-        className={cn(
-          'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all',
-          checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'
-        )}
-      >
-        {checked && (
-          <span className="block w-2 h-1 border-b-2 border-l-2 border-white transform -rotate-45 -mt-0.5" />
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ─── Section header ───────────────────────────────────────────────────────────
-function SectionHeader({
-  icon: Icon,
-  label,
-  count,
-  colorClass,
-}: {
-  icon: React.ElementType;
-  label: string;
-  count: number;
-  colorClass: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 mb-5">
-      <div
-        className={cn(
-          'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-          colorClass
-        )}
-      >
-        <Icon className="w-4 h-4" />
-      </div>
-      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-        {label}
-      </h2>
-      <span className="text-sm font-medium text-slate-400 dark:text-slate-500 tabular-nums">
-        ({count})
-      </span>
-    </div>
-  );
-}
-
-// ─── Sort bar inline (mobile / above results) ─────────────────────────────────
-function SortChips({
-  sort,
-  onSortChange,
-}: {
-  sort: SortValue;
-  onSortChange: (v: SortValue) => void;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  return (
-    <div
-      ref={scrollRef}
-      className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1"
-    >
-      {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
-        <button
-          key={value}
-          onClick={() => onSortChange(value)}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all duration-150 flex-shrink-0',
-            sort === value
-              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-          )}
-        >
-          <Icon className="w-3 h-3" />
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─── Active filter chips ──────────────────────────────────────────────────────
-function ActiveFilterChips({
-  verifiedOnly,
-  whatsappOnly,
-  onVerifiedChange,
-  onWhatsappChange,
-}: {
-  verifiedOnly: boolean;
-  whatsappOnly: boolean;
-  onVerifiedChange: (v: boolean) => void;
-  onWhatsappChange: (v: boolean) => void;
-}) {
-  if (!verifiedOnly && !whatsappOnly) return null;
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {verifiedOnly && (
-        <button
-          onClick={() => onVerifiedChange(false)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/40 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-950/60 transition-colors"
-        >
-          Premium
-          <X className="w-3 h-3 ml-0.5 opacity-70" />
-        </button>
-      )}
-      {whatsappOnly && (
-        <button
-          onClick={() => onWhatsappChange(false)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/40 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors"
-        >
-          <MessageCircle className="w-3 h-3" />
-          Com WhatsApp
-          <X className="w-3 h-3 ml-0.5 opacity-70" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-const SEARCH_SUGGESTIONS = [
-  'Inversores solares',
-  'Painel fotovoltaico',
-  'Energia solar residencial',
-  'Instalação solar',
-  'Financiamento solar',
-  'WEG',
-  'Fronius',
-  'SMA',
-];
-
-function EmptyState({ query, onSearch }: { query: string; onSearch: (term: string) => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center mb-5 shadow-sm">
-        <Search className="w-7 h-7 text-amber-500" />
-      </div>
-      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
-        {query ? (
-          <>
-            Nenhum resultado para{' '}
-            <span className="text-blue-600 dark:text-blue-400">&ldquo;{query}&rdquo;</span>
-          </>
-        ) : (
-          <>Nenhuma empresa ou produto encontrado</>
-        )}
-      </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
-        Tente um termo diferente, ajuste seus filtros ou explore sugestões abaixo.
-      </p>
-      <div className="flex flex-wrap gap-2 justify-center max-w-md">
-        {SEARCH_SUGGESTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => onSearch(s)}
-            className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-150 shadow-sm"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Mid-results banner ───────────────────────────────────────────────────────
-function MidBanner({ banners }: { banners: any[] }) {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
-  if (!banners?.length) return null;
-  return (
-    <div className="my-6">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300 dark:text-slate-600">
-          Patrocinado
-        </span>
-        <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-      </div>
-      <BannerContainer banners={banners} position="search_mid" />
-    </div>
-  );
-}
-
-// ─── Category pill ────────────────────────────────────────────────────────────
-function CategoryPill({ category, onClick }: { category: any; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-150 text-left group"
-    >
-      <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center flex-shrink-0">
-        <Tag className="w-3.5 h-3.5 text-amber-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          {category.name}
-        </p>
-        {(category.short_description || category.description) && (
-          <p className="text-[11px] text-slate-400 truncate mt-0.5">
-            {category.short_description || category.description}
-          </p>
-        )}
-      </div>
-      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-blue-400 transition-colors flex-shrink-0" />
-    </button>
-  );
-}
-
-// ─── Article row ──────────────────────────────────────────────────────────────
-function ArticleRow({ article, onClick }: { article: any; onClick: () => void }) {
-  const content = article.content
-    ? article.content
-        .toString()
-        .replace(/<[^>]+>/g, '')
-        .slice(0, 120)
-    : '';
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-150 text-left group w-full"
-    >
-      <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-        <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug">
-          {article.title}
-        </p>
-        {content && (
-          <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{content}</p>
-        )}
-      </div>
-      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-0.5" />
-    </button>
-  );
-}
-
-// ─── Main search content ──────────────────────────────────────────────────────
-function SearchContent() {
-  const searchParams = useSearchParams();
+function SearchPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  const urlCity = searchParams.get('city') || '';
+  const urlVerified = searchParams.get('verified') === 'true';
+  const tabParam = searchParams.get('tab');
 
-  // Read initial filter state from URL params
-  const initialSort = (searchParams.get('sort') as SortValue) || 'recommended';
-  const initialVerified = searchParams.get('verified') === 'true';
-  const initialWhatsapp = searchParams.get('whatsapp') === 'true';
-  const initialTab = searchParams.get('tab') || 'companies';
-  const initialCity = searchParams.get('city') || '';
-  const initialRadius = searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : null;
-  const initialLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
-  const initialLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
-  const initialCoords = initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null;
-  const cityDetectedFromQuery = !initialCity ? detectCitySearch(query) : null;
-  const effectiveQuery = cityDetectedFromQuery ? '' : query;
-
-  // Responsividade: desktop = expanded (card completo com reputação), mobile = standard (compacto)
-  const isMobile = useIsMobile();
-  const cardVariant = isMobile ? 'standard' : 'expanded';
-  const effectiveCity = initialCity || cityDetectedFromQuery || '';
-
-  const [searchTerm, setSearchTerm] = useState(effectiveQuery);
-  const [locationTerm, setLocationTerm] = useState(effectiveCity);
+  const [searchTerm, setSearchTerm] = useState(query);
+  const [locationTerm, setLocationTerm] = useState(urlCity);
   const [results, setResults] = useState<
     Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles'>
-  >({
-    companies: [],
-    products: [],
-    categories: [],
-    articles: [],
-  });
-  const [loading, setLoading] = useState(false);
+  >({ companies: [], products: [], categories: [], articles: [] });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState<SearchTab>(isSearchTab(tabParam) ? tabParam : 'all');
+  const [sort, setSort] = useState<SearchSort>('relevance');
+  const [filters, setFilters] = useState<SearchFilterState>({
+    ...defaultSearchFilters,
+    city: urlCity,
+    verifiedOnly: urlVerified,
+  });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
+  const [companyFavorites, setCompanyFavorites] = useState<Set<number>>(new Set());
 
-  // Sidebar / filter state — initialised from URL
-  const [sort, setSort] = useState<SortValue>(initialSort);
-  const [verifiedOnly, setVerifiedOnly] = useState(initialVerified);
-  const [whatsappOnly, setWhatsappOnly] = useState(initialWhatsapp);
+  useEffect(() => {
+    setSearchTerm(query);
+    setLocationTerm(urlCity);
+    setFilters((current) => ({ ...current, city: urlCity, verifiedOnly: urlVerified }));
+  }, [query, urlCity, urlVerified]);
 
-  // === GEO state ===
-  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(initialCoords);
-  const [radiusKm, setRadiusKm] = useState<number | null>(initialRadius);
-  const [showMap, setShowMap] = useState(true);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>();
+  useEffect(() => {
+    setActiveTab(isSearchTab(tabParam) ? tabParam : 'all');
+  }, [tabParam]);
 
-  const handleSearchInArea = useCallback(
-    (bounds: { north: number; south: number; east: number; west: number }) => {
-      // Para o map bounds: por ora salva como estado e re-busca
-      // Implementação futura: passa map_bounds para a API GraphQL
-      track('map_area_searched', { bounds });
-    },
-    []
-  );
-
-  const handleMapCompanySelect = useCallback((company: { id: string }) => {
-    setSelectedCompanyId(company.id);
-    track('map_pin_clicked', { company_id: company.id });
+  useEffect(() => {
+    try {
+      setProductFavorites(
+        new Set<number>(JSON.parse(localStorage.getItem('search-product-favorites') || '[]'))
+      );
+      setCompanyFavorites(
+        new Set<number>(JSON.parse(localStorage.getItem('search-company-favorites') || '[]'))
+      );
+    } catch {
+      // Storage indisponível ou valor antigo inválido: favoritos começam vazios.
+    }
   }, []);
 
-  // Helper: push filter changes to URL without losing ?q=
-  const pushFilterParams = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || value === '' || value === 'false' || value === 'recommended') {
-          params.delete(key);
-        } else {
-          params.set(key, value);
-        }
-      });
-      router.replace(`/search?${params.toString()}`, { scroll: false });
-    },
-    [searchParams, router]
-  );
-
-  // Banner queries
-  const { data: topBanners = [] } = useBannersQuery({
-    position: 'search_top',
-    limit: 3,
-    enabled: true,
-  });
-  const { data: midBanners = [] } = useBannersQuery({
-    position: 'search_mid',
-    limit: 2,
-    enabled: true,
-  });
-  // Fallback to home_top banners if no search-specific ones
-  const { data: fallbackBanners = [] } = useBannersQuery({
-    position: 'home_top',
-    limit: 2,
-    enabled: topBanners.length === 0,
-  });
-  const effectiveTopBanners = topBanners.length > 0 ? topBanners : fallbackBanners;
-
-  const hasActiveFilters =
-    sort !== 'recommended' ||
-    verifiedOnly ||
-    whatsappOnly ||
-    radiusKm !== null ||
-    geoCoords !== null;
-
   useEffect(() => {
-    setSearchTerm(effectiveQuery);
-    setLocationTerm(effectiveCity);
-  }, [effectiveQuery, effectiveCity]);
+    trackPage('search', { search_term: query || undefined, city: urlCity || undefined });
+  }, [query, urlCity]);
 
-  useEffect(() => {
-    if (!cityDetectedFromQuery) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('q');
-    params.set('city', cityDetectedFromQuery);
-    params.set('page', '1');
-    router.replace(`/search?${params.toString()}`, { scroll: false });
-  }, [cityDetectedFromQuery, router, searchParams]);
-
-  // Track page view on mount
-  useEffect(() => {
-    trackPage('search', {
-      search_term: effectiveQuery || undefined,
-      city: effectiveCity || undefined,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    track('search_filters_cleared', {
-      search_term: effectiveQuery,
-      city: effectiveCity || undefined,
-    });
-    setSort('recommended');
-    setVerifiedOnly(false);
-    setWhatsappOnly(false);
-    setRadiusKm(null);
-    setGeoCoords(null);
-    pushFilterParams({
-      sort: undefined,
-      verified: undefined,
-      whatsapp: undefined,
-      radius: undefined,
-      lat: undefined,
-      lng: undefined,
-    });
-  }, [effectiveQuery, effectiveCity, pushFilterParams]);
-
-  // Typed sort change handler with tracking + URL sync
-  const handleSortChange = useCallback(
-    (value: SortValue) => {
-      setSort(value);
-      pushFilterParams({ sort: value });
-      trackEvent('sort_change', {
-        sort_by: value as any,
-        category: `search:${effectiveQuery || effectiveCity}`,
+  const performSearch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await searchApi.all(query, urlCity ? { city: urlCity } : undefined);
+      setResults({
+        companies: response.companies || [],
+        products: response.products || [],
+        categories: response.categories || [],
+        articles: response.articles || [],
       });
-      track('search_sort_changed', {
-        search_term: effectiveQuery,
-        city: effectiveCity || undefined,
-        sort_value: value,
-      });
-    },
-    [effectiveQuery, effectiveCity, pushFilterParams]
-  );
-
-  // Filter toggle handlers with tracking + URL sync
-  const handleVerifiedChange = useCallback(
-    (value: boolean) => {
-      setVerifiedOnly(value);
-      pushFilterParams({ verified: value ? 'true' : undefined });
-      track('search_filter_applied', {
-        search_term: effectiveQuery,
-        city: effectiveCity || undefined,
-        filter_key: 'verified_only',
-        filter_value: value,
-      });
-    },
-    [effectiveQuery, effectiveCity, pushFilterParams]
-  );
-
-  const handleWhatsappChange = useCallback(
-    (value: boolean) => {
-      setWhatsappOnly(value);
-      pushFilterParams({ whatsapp: value ? 'true' : undefined });
-      track('search_filter_applied', {
-        search_term: effectiveQuery,
-        city: effectiveCity || undefined,
-        filter_key: 'whatsapp_only',
-        filter_value: value,
-      });
-    },
-    [effectiveQuery, effectiveCity, pushFilterParams]
-  );
-
-  const handleRadiusChange = useCallback(
-    (value: number | null) => {
-      setRadiusKm(value);
-      pushFilterParams({ radius: value ? value.toString() : undefined });
-      track('search_filter_applied', {
-        search_term: effectiveQuery,
-        city: effectiveCity || undefined,
-        filter_key: 'radius_km',
-        filter_value: value,
-      });
-    },
-    [effectiveQuery, effectiveCity, pushFilterParams]
-  );
-
-  const handleCoordsChange = useCallback(
-    (coords: { lat: number; lng: number } | null) => {
-      setGeoCoords(coords);
-      pushFilterParams({
-        lat: coords ? coords.lat.toString() : undefined,
-        lng: coords ? coords.lng.toString() : undefined,
-      });
-      track('search_filter_applied', {
-        search_term: effectiveQuery,
-        city: effectiveCity || undefined,
-        filter_key: 'coords',
-        filter_value: coords ? `${coords.lat},${coords.lng}` : null,
-      });
-    },
-    [effectiveQuery, effectiveCity, pushFilterParams]
-  );
-
-  // Perform search
-  const performSearch = useCallback(
-    async (term: string) => {
-      const searchStartedAt = Date.now();
-      setLoading(true);
-      setError(null);
-      try {
-        const filters: any = {};
-        if (geoCoords?.lat && geoCoords?.lng && radiusKm) {
-          filters.latitude = geoCoords.lat;
-          filters.longitude = geoCoords.lng;
-          filters.radius_km = radiusKm;
-        }
-
-        if (effectiveCity) {
-          filters.city = effectiveCity;
-        }
-
-        const res = await searchApi.all(term, filters);
-        const final = {
-          companies: res.companies ?? [],
-          products: res.products ?? [],
-          categories: res.categories ?? [],
-          articles: res.articles ?? [],
-        };
-        setResults(final);
-
-        const total = Object.values(final).reduce((acc, arr) => acc + arr.length, 0);
-        const latencyMs = Date.now() - searchStartedAt;
-
-        if (total === 0) {
-          // Typed event for search_no_results
-          trackEvent('search_no_results', { search_term: term, search_category: 'all' });
-          track('search_no_results', {
-            search_term: term,
-            search_category: 'all',
-            results_count: 0,
-          });
-        } else {
-          track('search_results_loaded', {
-            search_term: term,
-            total_results: total,
-            companies_count: final.companies.length,
-            products_count: final.products.length,
-            categories_count: final.categories.length,
-            articles_count: final.articles.length,
-            latency_ms: latencyMs,
-          });
-        }
-      } catch (err: any) {
-        track('search_error', {
-          search_term: term,
-          error_message: err?.message || 'unknown',
-        });
-        setError(err?.message || 'Erro ao realizar a busca');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [geoCoords, radiusKm, effectiveCity]
-  );
-
-  useEffect(() => {
-    if (cityDetectedFromQuery) return;
-    performSearch(effectiveQuery);
-  }, [cityDetectedFromQuery, effectiveQuery, performSearch]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim() || locationTerm.trim()) {
-      track('search_submitted', {
-        search_term: searchTerm,
-        location_term: locationTerm,
-        source: 'search_bar',
-      });
-      const params = new URLSearchParams(searchParams.toString());
-      if (searchTerm.trim()) {
-        params.set('q', searchTerm.trim());
-      } else {
-        params.delete('q');
-      }
-      if (locationTerm.trim()) {
-        params.set('city', locationTerm.trim());
-      } else {
-        params.delete('city');
-      }
-      router.push(`/search?${params.toString()}`);
-    }
-  };
-
-  const handleSuggestionSearch = (term: string) => {
-    track('search_suggestion_clicked', {
-      suggestion: term,
-      origin_query: query || '',
-    });
-    setSearchTerm(term);
-    router.push(`/search?q=${encodeURIComponent(term)}`);
-  };
-
-  const clearSearch = () => {
-    track('search_cleared', { previous_term: effectiveQuery, previous_location: effectiveCity });
-    setSearchTerm('');
-    setLocationTerm('');
-    router.push('/search');
-    setResults({ companies: [], products: [], categories: [], articles: [] });
-  };
-
-  const handleLocationBlur = async () => {
-    const cepStr = locationTerm.replace(/\D/g, '');
-    if (cepStr.length === 8) {
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cepStr}/json/`);
-        const data = await res.json();
-        if (data.localidade && data.uf) {
-          const newLoc = `${data.localidade}, ${data.uf}`;
-          setLocationTerm(newLoc);
-        }
-      } catch (err) {
-        console.warn('ViaCEP lookup failed:', err);
-      }
-    }
-  };
-
-  // Processed companies (sorted + filtered)
-  const processedCompanies = useMemo(() => {
-    let list = [...results.companies];
-    if (verifiedOnly) list = list.filter((c: any) => c.verified);
-    if (whatsappOnly)
-      list = list.filter((c: any) => c.whatsapp_enabled || c.whatsapp_url || c.whatsapp);
-
-    switch (sort) {
-      case 'rating':
-        list.sort(
-          (a, b) =>
-            getNumericField(b, 'average_rating', 'rating_avg', 'rating') -
-            getNumericField(a, 'average_rating', 'rating_avg', 'rating')
-        );
-        break;
-      case 'reviews':
-        list.sort(
-          (a, b) =>
-            getNumericField(b, 'rating_count', 'total_reviews', 'reviews_count') -
-            getNumericField(a, 'rating_count', 'total_reviews', 'reviews_count')
-        );
-        break;
-      case 'verified':
-        list.sort((a: any, b: any) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));
-        break;
-      case 'name':
-        list.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-        break;
-    }
-    return list;
-  }, [results.companies, sort, verifiedOnly, whatsappOnly]);
-
-  // Tab counts
-  const counts = {
-    companies: processedCompanies.length,
-    products: results.products.length,
-    categories: results.categories.length,
-    articles: results.articles.length,
-  };
-  const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
-  const hasResults = totalCount > 0;
-
-  // Tab change with tracking + URL sync
-  const handleTabChange = useCallback(
-    (tab: string) => {
-      setActiveTab(tab);
-      pushFilterParams({ tab: tab === 'companies' ? undefined : tab });
-      track('search_tab_changed', {
+      track('search_results_loaded', {
         search_term: query,
-        tab,
-        counts,
+        city: urlCity || undefined,
+        products_count: response.products?.length || 0,
+        companies_count: response.companies?.length || 0,
       });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [query, pushFilterParams]
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : 'Não foi possível realizar a busca.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [query, urlCity]);
+
+  useEffect(() => {
+    void performSearch();
+  }, [performSearch]);
+
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...results.products.map(getProductCategory),
+          ...results.companies.flatMap((company) => [
+            company.category_name || company.primary_category || company.category || '',
+            ...(company.categories || []).map((category) => category.name),
+          ]),
+          ...results.categories.map((category) => category.name),
+        ])
+      )
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [results]
   );
 
-  // Auto-select tab with results
-  useEffect(() => {
-    if (!loading && hasResults) {
-      if (counts.companies > 0) {
-        setActiveTab('companies');
-        return;
-      }
-      if (counts.products > 0) {
-        setActiveTab('products');
-        return;
-      }
-      if (counts.categories > 0) {
-        setActiveTab('categories');
-        return;
-      }
-      if (counts.articles > 0) {
-        setActiveTab('articles');
-        return;
-      }
-    }
-  }, [loading, hasResults, counts.companies, counts.products, counts.categories, counts.articles]);
+  const brands = useMemo(
+    () =>
+      Array.from(new Set(results.products.map(getProductBrand)))
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [results.products]
+  );
 
-  // Companies split for mid-banner
-  const companiesAboveFold = processedCompanies.slice(0, 6);
-  const companiesBelowFold = processedCompanies.slice(6);
+  const filteredProducts = useMemo(() => {
+    if (!filters.includeProducts) return [];
+    const list = results.products.filter((product) => {
+      if (
+        filters.category &&
+        normalize(getProductCategory(product)) !== normalize(filters.category)
+      ) {
+        return false;
+      }
+      if (filters.brand && normalize(getProductBrand(product)) !== normalize(filters.brand))
+        return false;
+      if (filters.verifiedOnly && !isProductVerified(product)) return false;
+      return matchesPrice(Number(product.price), filters.priceRange);
+    });
+
+    if (sort === 'price_asc') return [...list].sort((a, b) => Number(a.price) - Number(b.price));
+    if (sort === 'price_desc') return [...list].sort((a, b) => Number(b.price) - Number(a.price));
+    if (sort === 'rating')
+      return [...list].sort((a, b) => getProductRating(b) - getProductRating(a));
+    return list;
+  }, [filters, results.products, sort]);
+
+  const filteredCompanies = useMemo(() => {
+    if (!filters.includeCompanies) return [];
+    const cityFilter = normalize(filters.city);
+    const list = results.companies.filter((company) => {
+      if (filters.verifiedOnly && !isCompanyVerified(company)) return false;
+      if (
+        cityFilter &&
+        !normalize(`${company.city} ${company.state}`).includes(cityFilter.replace(',', ' '))
+      ) {
+        return false;
+      }
+      if (filters.category) {
+        const companyCategories = [
+          company.category_name,
+          company.primary_category,
+          company.category,
+          ...(company.categories || []).map((category) => category.name),
+        ].map(normalize);
+        if (!companyCategories.includes(normalize(filters.category))) return false;
+      }
+      return true;
+    });
+
+    if (sort === 'rating')
+      return [...list].sort((a, b) => getCompanyRating(b) - getCompanyRating(a));
+    return list;
+  }, [filters, results.companies, sort]);
+
+  const counts: Record<SearchTab, number> = {
+    all: filteredProducts.length + filteredCompanies.length,
+    products: filteredProducts.length,
+    companies: filteredCompanies.length,
+    reviews: 0,
+  };
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    else params.delete('q');
+    if (locationTerm.trim()) params.set('city', locationTerm.trim());
+    else params.delete('city');
+    params.delete('page');
+    track('search_submitted', {
+      search_term: searchTerm.trim(),
+      location_term: locationTerm.trim(),
+      source: 'search_page_hero',
+    });
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const handleTabChange = (tab: SearchTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'all') params.delete('tab');
+    else params.set('tab', tab);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
+
+  const handleApplyFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (filters.city.trim()) params.set('city', filters.city.trim());
+    else params.delete('city');
+    if (filters.verifiedOnly) params.set('verified', 'true');
+    else params.delete('verified');
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+    setMobileFiltersOpen(false);
+  };
+
+  const resetFilters = () => {
+    setFilters(defaultSearchFilters);
+    setLocationTerm('');
+    const params = new URLSearchParams(searchParams.toString());
+    ['city', 'verified', 'category', 'brand', 'price'].forEach((key) => params.delete(key));
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
+
+  const toggleFavorite = (
+    kind: 'product' | 'company',
+    id: number,
+    current: Set<number>,
+    setter: (value: Set<number>) => void
+  ) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setter(next);
+    localStorage.setItem(`search-${kind}-favorites`, JSON.stringify(Array.from(next)));
+  };
+
+  const showProducts = activeTab === 'all' || activeTab === 'products';
+  const showCompanies = activeTab === 'all' || activeTab === 'companies';
+  const visibleCount =
+    (showProducts ? filteredProducts.length : 0) + (showCompanies ? filteredCompanies.length : 0);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
-      {/* ── Search Hero Header ──────────────────────────────────────────── */}
-      <div
-        className="text-white relative overflow-hidden shadow-md z-40 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/banner-landing-page-avalia-solar.jpg')" }}
-      >
-        <div className="absolute inset-0 bg-blue-900/80 dark:bg-slate-900/90 mix-blend-multiply pointer-events-none"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none"></div>
-        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
-        <div className="container mx-auto px-4 py-8 sm:py-10 relative z-10 flex flex-col items-center text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 tracking-tight text-white drop-shadow-sm font-sans">
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#071e4a] via-[#082b69] to-[#041638] text-white">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.25),transparent_65%)]" />
+        <div className="relative mx-auto max-w-[1240px] px-4 py-9 sm:px-6 sm:py-12">
+          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
             Encontre a empresa certa para você.
           </h1>
-          <p className="text-blue-100/90 mb-6 max-w-2xl text-sm sm:text-base md:text-lg font-medium">
-            Busque instaladores, produtos ou avaliações na maior plataforma solar do Brasil.
+          <p className="mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
+            Busque empresas, produtos e avaliações verificadas de energia solar e mobilidade
+            elétrica.
           </p>
 
-          {/* Search bar */}
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-4xl flex flex-col md:flex-row gap-0 md:gap-2 mb-4 relative bg-white md:bg-white md:p-2 md:rounded-3xl shadow-2xl rounded-2xl p-0 overflow-hidden md:overflow-visible"
+            className="mt-7 grid max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl sm:grid-cols-[1fr_0.8fr_auto]"
           >
-            {/* Input 1: O que? */}
-            <div className="relative flex-1 group bg-white border-b md:border-b-0 md:border-r border-slate-200 p-2 md:p-0">
-              <Search
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
-                size={22}
-              />
-              <label htmlFor="search-input" className="sr-only">
-                Buscar empresas, produtos ou serviços
-              </label>
-              <Input
-                id="search-input"
-                name="q"
-                type="text"
-                placeholder="Ex: Inversores, WEG..."
+            <label className="relative border-b border-slate-200 sm:border-b-0 sm:border-r">
+              <span className="sr-only">Buscar empresa, produto ou serviço</span>
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-14 pr-12 h-14 text-base sm:text-lg bg-transparent text-slate-900 border-0 focus-visible:ring-0 rounded-none shadow-none"
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar empresa, produto ou serviço..."
+                className="h-14 w-full bg-transparent pl-12 pr-10 text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
-              {searchTerm && (
+              {searchTerm ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Limpar termo da busca"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                 >
-                  <X size={16} />
+                  <X className="h-4 w-4" />
                 </button>
-              )}
-            </div>
-
-            {/* Input 2: Onde? */}
-            <div className="relative flex-1 group bg-white p-2 md:p-0">
-              <MapPin
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
-                size={22}
-              />
-              <label htmlFor="location-input" className="sr-only">
-                Onde?
-              </label>
-              <Input
-                id="location-input"
-                name="city"
-                type="text"
-                placeholder="CEP ou Cidade..."
-                value={locationTerm}
-                onChange={(e) => setLocationTerm(e.target.value)}
-                onBlur={handleLocationBlur}
-                className="pl-14 pr-12 h-14 text-base sm:text-lg bg-transparent text-slate-900 border-0 focus-visible:ring-0 rounded-none shadow-none"
-              />
-              {locationTerm && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLocationTerm('');
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-
-            <div className="bg-white p-2 md:p-0 md:w-auto w-full">
-              <Button
-                type="submit"
-                className="w-full h-14 md:px-10 rounded-xl md:rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-lg shadow-md shrink-0 transition-transform md:hover:-translate-y-0.5"
-              >
-                Buscar
-              </Button>
-            </div>
-          </form>
-
-          {/* Result context */}
-          {query && !loading && (
-            <div className="flex items-center gap-2 flex-wrap justify-center bg-white/10 backdrop-blur-md py-2 px-4 rounded-full border border-white/20 shadow-inner">
-              {hasResults ? (
-                <>
-                  <span className="text-sm font-medium text-white">
-                    <span className="font-bold tabular-nums">{totalCount}</span> resultado
-                    {totalCount !== 1 ? 's' : ''} para{' '}
-                    <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
-                  </span>
-                  {counts.companies > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] bg-white/20 text-white border-white/30 px-2.5 py-0.5 h-6 font-bold shadow-sm"
-                    >
-                      {counts.companies} empresa{counts.companies !== 1 ? 's' : ''}
-                    </Badge>
-                  )}
-                </>
-              ) : !error ? (
-                <span className="text-sm font-medium text-white">
-                  Nenhum resultado para{' '}
-                  <span className="font-bold text-amber-300">&ldquo;{query}&rdquo;</span>
-                </span>
               ) : null}
-            </div>
-          )}
+            </label>
+            <label className="relative border-b border-slate-200 sm:border-b-0">
+              <span className="sr-only">CEP ou cidade</span>
+              <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                value={locationTerm}
+                onChange={(event) => setLocationTerm(event.target.value)}
+                placeholder="CEP ou cidade..."
+                className="h-14 w-full bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              />
+            </label>
+            <Button
+              type="submit"
+              className="m-1.5 h-11 rounded-lg bg-blue-600 px-8 font-bold hover:bg-blue-700"
+            >
+              Buscar
+            </Button>
+          </form>
         </div>
-      </div>
+      </section>
 
-      {/* ── Top banner ──────────────────────────────────────────────── */}
-      {effectiveTopBanners.length > 0 && (
-        <div className="border-b border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900/80">
-          <div className="container mx-auto px-4 py-3">
-            <BannerContainer banners={effectiveTopBanners as any[]} position="search_top" />
+      <BannerSlot placement="search_top" className="mx-auto my-4 max-w-[1240px]" limit={2} />
+
+      <section className="mx-auto max-w-[1240px] px-4 py-7 sm:px-6">
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => void performSearch()}
+              className="mt-3 font-bold underline"
+            >
+              Tentar novamente
+            </button>
           </div>
-        </div>
-      )}
+        ) : loading ? (
+          <SearchLoadingState />
+        ) : (
+          <>
+            <SearchResultsHeader
+              query={query}
+              productsCount={filteredProducts.length}
+              companiesCount={filteredCompanies.length}
+              reviewsCount={0}
+              sort={sort}
+              onSortChange={setSort}
+            />
 
-      {/* ── Error ───────────────────────────────────────────────────── */}
-      {error && (
-        <div className="container mx-auto px-4 py-4">
-          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400 p-4 rounded-xl text-sm">
-            {error}
-          </div>
-        </div>
-      )}
+            <SearchTabs value={activeTab} counts={counts} onChange={handleTabChange} />
 
-      {/* ── Loading skeletons ────────────────────────────────────────── */}
-      {loading && (
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex gap-6">
-            {/* Sidebar skeleton */}
-            <div className="w-[264px] flex-shrink-0 hidden lg:block">
-              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-4 space-y-3">
-                <Skeleton className="h-5 w-1/2" />
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full rounded-lg" />
-                ))}
-              </div>
+            <div className="mt-6 flex items-center justify-between lg:hidden">
+              <p className="text-sm font-semibold text-slate-600">Refine sua busca</p>
+              <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filtros
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[92vw] overflow-y-auto p-0 sm:max-w-sm">
+                  <SheetHeader className="border-b border-slate-200 p-5 text-left">
+                    <SheetTitle>Filtrar resultados</SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4">
+                    <SearchFilters
+                      value={filters}
+                      counts={counts}
+                      categories={categories}
+                      brands={brands}
+                      onChange={setFilters}
+                      onReset={resetFilters}
+                      onApply={handleApplyFilters}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            {/* Results skeleton */}
-            <div className="flex-1 min-w-0">
-              <Skeleton className="h-10 w-full rounded-xl mb-4" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <CompanyCardSkeleton key={i} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ── Results ─────────────────────────────────────────────────── */}
-      <AnimatePresence mode="wait">
-        {!loading && !error && (
-          <motion.div
-            key={query || 'all'}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="container mx-auto px-4 py-6 pb-24 lg:pb-6"
-          >
-            {!hasResults ? (
-              !query && !hasActiveFilters ? (
-                <SearchExploreView onSuggestionClick={handleSuggestionSearch} />
-              ) : (
-                <EmptyState query={query} onSearch={handleSuggestionSearch} />
-              )
-            ) : (
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                {/* Tab bar */}
-                <div className="mb-5 overflow-x-auto scrollbar-none -mx-1 px-1">
-                  <TabsList className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/60 rounded-xl p-1 gap-0.5 h-auto shadow-sm w-auto inline-flex">
-                    {counts.companies > 0 && (
-                      <TabsTrigger
-                        value="companies"
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        Empresas
-                        <span className="ml-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 py-0 text-[10px] font-bold tabular-nums">
-                          {counts.companies}
-                        </span>
-                      </TabsTrigger>
-                    )}
-                    {counts.products > 0 && (
-                      <TabsTrigger
-                        value="products"
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
-                      >
-                        <Package className="w-3.5 h-3.5" />
-                        Produtos
-                        <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
-                          {counts.products}
-                        </span>
-                      </TabsTrigger>
-                    )}
-                    {counts.categories > 0 && (
-                      <TabsTrigger
-                        value="categories"
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
-                      >
-                        <Tag className="w-3.5 h-3.5" />
-                        Categorias
-                        <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
-                          {counts.categories}
-                        </span>
-                      </TabsTrigger>
-                    )}
-                    {counts.articles > 0 && (
-                      <TabsTrigger
-                        value="articles"
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-600 dark:text-slate-400 transition-all duration-150"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        Artigos
-                        <span className="ml-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-full px-1.5 text-[10px] font-bold tabular-nums">
-                          {counts.articles}
-                        </span>
-                      </TabsTrigger>
-                    )}
-                  </TabsList>
-                </div>
-
-                {/* ── Companies tab ────────────────────────────────── */}
-                {counts.companies > 0 && (
-                  <TabsContent value="companies" className="mt-0">
-                    <div className="flex flex-col lg:flex-row gap-6 w-full mx-auto">
-                      {/* Left Column (Results 60%) */}
-                      <div className="flex-1 lg:w-[60%] flex flex-col min-w-0 pb-12">
-                        {/* Horizontal Filter Bar (Desktop) */}
-                        <div className="hidden lg:flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
-                          <div className="flex items-center gap-2">
-                            <SlidersHorizontal className="w-4 h-4 text-slate-400" />
-                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                              Filtros:
-                            </span>
-                          </div>
-
-                          <SearchRadiusFilter
-                            radiusKm={radiusKm}
-                            onRadiusChange={handleRadiusChange}
-                            onCoordsChange={handleCoordsChange}
-                            cityName={searchParams.get('city') || undefined}
-                          />
-
-                          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-                          <SortChips sort={sort} onSortChange={handleSortChange} />
-
-                          <div className="ml-auto flex items-center gap-2">
-                            <ActiveFilterChips
-                              verifiedOnly={verifiedOnly}
-                              whatsappOnly={whatsappOnly}
-                              onVerifiedChange={handleVerifiedChange}
-                              onWhatsappChange={handleWhatsappChange}
-                            />
-                            {hasActiveFilters && (
-                              <button
-                                onClick={resetFilters}
-                                className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors ml-2"
-                              >
-                                Limpar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Mobile sort chips (hidden on desktop) */}
-                        <div className="lg:hidden mb-4">
-                          <SortChips sort={sort} onSortChange={handleSortChange} />
-                        </div>
-
-                        {/* GEO: Botão "Ver no mapa" mobile */}
-                        {MAP_ENABLED && (
-                          <div className="lg:hidden flex justify-end mb-3">
+            <div className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="min-w-0">
+                {activeTab === 'reviews' ? (
+                  <SearchEmptyState
+                    title="Nenhuma avaliação encontrada"
+                    description="A busca atual não retornou avaliações publicadas. Explore empresas para consultar suas avaliações verificadas."
+                  />
+                ) : visibleCount === 0 ? (
+                  <SearchEmptyState onReset={resetFilters} />
+                ) : (
+                  <div className="space-y-10">
+                    {showProducts && filteredProducts.length > 0 ? (
+                      <ResultSection
+                        icon={<Package className="h-5 w-5 text-blue-600" />}
+                        title="Produtos"
+                        count={filteredProducts.length}
+                        action={
+                          activeTab === 'all' ? (
                             <button
-                              id="mobile-show-map-btn"
-                              onClick={() => {
-                                setShowMap(!showMap);
-                                track('map_opened', { source: 'mobile_btn' });
-                              }}
-                              className={cn(
-                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
-                                showMap
-                                  ? 'bg-blue-600 text-white border-blue-600'
-                                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                              )}
+                              onClick={() => handleTabChange('products')}
+                              className="text-sm font-bold text-blue-700"
                             >
-                              <MapIcon className="w-3 h-3" />
-                              {showMap ? 'Ocultar mapa' : 'Ver no mapa'}
+                              Ver todos os produtos
                             </button>
-                          </div>
-                        )}
-
-                        {/* Active filter chips */}
-                        <ActiveFilterChips
-                          verifiedOnly={verifiedOnly}
-                          whatsappOnly={whatsappOnly}
-                          onVerifiedChange={handleVerifiedChange}
-                          onWhatsappChange={handleWhatsappChange}
-                        />
-
-                        {/* GEO: Mapa mobile (fullscreen quando ativo) */}
-                        {MAP_ENABLED && showMap && (
-                          <div className="lg:hidden w-full h-[55vh] mb-4 rounded-2xl overflow-hidden">
-                            <SearchMapPanel
-                              companies={(processedCompanies as any[]).map((c: any) => ({
-                                id: c.id,
-                                name: c.name,
-                                slug: c.slug,
-                                latitude: c.latitude,
-                                longitude: c.longitude,
-                                ratingAvg: c.ratingAvg ?? c.rating_avg,
-                                isSponsored: c.isSponsored ?? c.sponsored,
-                                logo_url: c.logo_url,
-                                city: c.city,
-                                state: c.state,
-                              }))}
-                              center={geoCoords ?? undefined}
-                              radiusKm={radiusKm ?? undefined}
-                              selectedCompanyId={selectedCompanyId}
-                              onCompanySelect={handleMapCompanySelect}
-                              onSearchInArea={handleSearchInArea}
-                              onClose={() => setShowMap(false)}
+                          ) : undefined
+                        }
+                      >
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                          {filteredProducts.map((product) => (
+                            <ProductCardEnhanced
+                              key={product.id}
+                              product={product}
+                              favorite={productFavorites.has(product.id)}
+                              onToggleFavorite={() =>
+                                toggleFavorite(
+                                  'product',
+                                  product.id,
+                                  productFavorites,
+                                  setProductFavorites
+                                )
+                              }
                             />
-                          </div>
-                        )}
-
-                        {/* Result count bar */}
-                        <div
-                          className={cn(
-                            'flex items-center justify-between mb-4',
-                            verifiedOnly || whatsappOnly ? 'mt-3' : ''
-                          )}
-                        >
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
-                              {processedCompanies.length}
-                            </span>{' '}
-                            empresa{processedCompanies.length !== 1 ? 's' : ''}
-                            {hasActiveFilters && (
-                              <span className="text-slate-400"> (filtradas)</span>
-                            )}
-                          </p>
-                          {/* Desktop sort label */}
-                          <span className="hidden lg:flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                            <ArrowUpDown className="w-3 h-3" />
-                            {SORT_OPTIONS.find((o) => o.value === sort)?.label}
-                          </span>
+                          ))}
                         </div>
+                      </ResultSection>
+                    ) : null}
 
-                        {processedCompanies.length === 0 ? (
-                          <div className="py-12 text-center">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                              Nenhuma empresa encontrada com os filtros aplicados.{' '}
-                              <button
-                                onClick={resetFilters}
-                                className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
-                              >
-                                Limpar filtros
-                              </button>
-                            </p>
-                          </div>
-                        ) : (
-                          <>
-                            {/* Above-fold results */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
-                              {companiesAboveFold.map((company, i) => (
-                                <motion.div
-                                  key={company.id}
-                                  initial={{ opacity: 0, y: 12 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: i * 0.04, duration: 0.2, ease: 'easeOut' }}
-                                >
-                                  <CompanyCard
-                                    company={company}
-                                    rank={i + 1 <= 3 ? i + 1 : undefined}
-                                    index={i}
-                                    variant={cardVariant}
-                                    onMouseEnter={() => setSelectedCompanyId(company.id.toString())}
-                                    onMouseLeave={() => setSelectedCompanyId(undefined)}
-                                  />
-                                </motion.div>
-                              ))}
-                            </div>
-
-                            {/* Mid-banner after 6th result */}
-                            {companiesBelowFold.length > 0 && <MidBanner banners={midBanners} />}
-
-                            {/* Below-fold results */}
-                            {companiesBelowFold.length > 0 && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4 mt-4">
-                                {companiesBelowFold.map((company, i) => (
-                                  <motion.div
-                                    key={company.id}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                      delay: (i + 6) * 0.03,
-                                      duration: 0.2,
-                                      ease: 'easeOut',
-                                    }}
-                                  >
-                                    <CompanyCard
-                                      company={company}
-                                      index={i + 6}
-                                      variant={cardVariant}
-                                      onMouseEnter={() =>
-                                        setSelectedCompanyId(company.id.toString())
-                                      }
-                                      onMouseLeave={() => setSelectedCompanyId(undefined)}
-                                    />
-                                  </motion.div>
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-
-                      {/* Right Column (Map 40%) */}
-                      {MAP_ENABLED && showMap ? (
-                        <aside className="hidden lg:flex flex-col gap-4 lg:w-[40%] shrink-0 sticky top-4 h-[calc(100vh-2rem)] pb-4">
-                          <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-2xl border border-blue-500/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-900 relative">
-                            <SearchMapPanel
-                              companies={(processedCompanies as any[]).map((c: any) => ({
-                                id: c.id,
-                                name: c.name,
-                                slug: c.slug,
-                                latitude: c.latitude,
-                                longitude: c.longitude,
-                                ratingAvg: c.ratingAvg ?? c.rating_avg,
-                                isSponsored: c.isSponsored ?? c.sponsored,
-                                logo_url: c.logo_url,
-                                city: c.city,
-                                state: c.state,
-                              }))}
-                              center={geoCoords ?? undefined}
-                              radiusKm={radiusKm ?? undefined}
-                              selectedCompanyId={selectedCompanyId}
-                              onCompanySelect={handleMapCompanySelect}
-                              onSearchInArea={handleSearchInArea}
-                              onClose={() => setShowMap(false)}
-                              className="absolute inset-0 w-full h-full"
+                    {showCompanies && filteredCompanies.length > 0 ? (
+                      <ResultSection
+                        icon={<Building2 className="h-5 w-5 text-blue-600" />}
+                        title="Empresas"
+                        count={filteredCompanies.length}
+                        action={
+                          activeTab === 'all' ? (
+                            <button
+                              onClick={() => handleTabChange('companies')}
+                              className="text-sm font-bold text-blue-700"
+                            >
+                              Ver todas as empresas
+                            </button>
+                          ) : undefined
+                        }
+                      >
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                          {filteredCompanies.map((company) => (
+                            <CompanyCardEnhanced
+                              key={company.id}
+                              company={company}
+                              favorite={companyFavorites.has(company.id)}
+                              onToggleFavorite={() =>
+                                toggleFavorite(
+                                  'company',
+                                  company.id,
+                                  companyFavorites,
+                                  setCompanyFavorites
+                                )
+                              }
                             />
-                          </div>
-                          {/* Banner movido para baixo do mapa com tamanho reduzido se houver espaço */}
-                          <div className="shrink-0 max-h-[150px] overflow-hidden rounded-2xl">
-                            <BannerByLocation location="sidebar" />
-                          </div>
-                        </aside>
-                      ) : (
-                        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-4">
-                          <BannerByLocation location="sidebar" />
-                        </aside>
-                      )}
-                    </div>
-                  </TabsContent>
-                )}
+                          ))}
+                        </div>
+                      </ResultSection>
+                    ) : null}
 
-                {/* ── Products tab ─────────────────────────────────── */}
-                {counts.products > 0 && (
-                  <TabsContent value="products" className="mt-0">
-                    <SectionHeader
-                      icon={Package}
-                      label="Produtos"
-                      count={counts.products}
-                      colorClass="bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {results.products.map((product, i) => (
-                        <motion.div
-                          key={product.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.04, duration: 0.2 }}
-                        >
-                          <ProductCard product={product} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                )}
+                    {activeTab === 'all' &&
+                    (results.categories.length > 0 || results.articles.length > 0) ? (
+                      <RelatedResults categories={results.categories} articles={results.articles} />
+                    ) : null}
 
-                {/* ── Categories tab ───────────────────────────────── */}
-                {counts.categories > 0 && (
-                  <TabsContent value="categories" className="mt-0">
-                    <SectionHeader
-                      icon={Tag}
-                      label="Categorias"
-                      count={counts.categories}
-                      colorClass="bg-amber-50 dark:bg-amber-950/40 text-amber-500 dark:text-amber-400"
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {results.categories.map((cat, i) => (
-                        <motion.div
-                          key={cat.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.04, duration: 0.2 }}
-                        >
-                          <CategoryPill
-                            category={cat}
-                            onClick={() => {
-                              track('search_category_clicked', {
-                                search_term: query,
-                                category_id: cat.id,
-                                category_name: cat.name,
-                                position: i,
-                              });
-                              router.push(buildCategoryPath(cat.seo_url, cat.id));
-                            }}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </TabsContent>
+                    <BannerSlot placement="search_mid" limit={1} />
+                    <SearchCallToAction />
+                  </div>
                 )}
+              </div>
 
-                {/* ── Articles tab ─────────────────────────────────── */}
-                {counts.articles > 0 && (
-                  <TabsContent value="articles" className="mt-0">
-                    <SectionHeader
-                      icon={FileText}
-                      label="Artigos"
-                      count={counts.articles}
-                      colorClass="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                    />
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      {results.articles.map((article, i) => (
-                        <motion.div
-                          key={article.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.04, duration: 0.2 }}
-                        >
-                          <ArticleRow
-                            article={article}
-                            onClick={() => {
-                              track('search_article_clicked', {
-                                search_term: query,
-                                article_id: article.id,
-                                article_title: article.title,
-                                position: i,
-                              });
-                              router.push(`/articles/${article.id}`);
-                            }}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                )}
-              </Tabs>
-            )}
-          </motion.div>
+              <aside className="hidden space-y-4 lg:block">
+                <div className="sticky top-24 space-y-4">
+                  <SearchFilters
+                    value={filters}
+                    counts={counts}
+                    categories={categories}
+                    brands={brands}
+                    onChange={setFilters}
+                    onReset={resetFilters}
+                    onApply={handleApplyFilters}
+                  />
+                  <PopularList title="Marcas populares" items={brands.slice(0, 6)} />
+                  <PopularList title="Categorias populares" items={categories.slice(0, 6)} />
+                </div>
+              </aside>
+            </div>
+          </>
         )}
-      </AnimatePresence>
+      </section>
+    </main>
+  );
+}
 
-      {/* ── Mobile filter FAB ────────────────────────────────────────── */}
-      {hasResults && activeTab === 'companies' && (
-        <MobileFilterSheet
-          sort={sort}
-          onSortChange={handleSortChange}
-          verifiedOnly={verifiedOnly}
-          onVerifiedChange={handleVerifiedChange}
-          whatsappOnly={whatsappOnly}
-          onWhatsappChange={handleWhatsappChange}
-          onReset={resetFilters}
-          hasActiveFilters={hasActiveFilters}
-          radiusKm={radiusKm}
-          onRadiusChange={handleRadiusChange}
-          onCoordsChange={handleCoordsChange}
-          cityName={searchParams.get('city') || undefined}
-        />
-      )}
+function ResultSection({
+  icon,
+  title,
+  count,
+  action,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count: number;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 className="flex items-center gap-2 text-xl font-bold text-slate-950">
+          {icon}
+          {title} <span className="text-sm font-medium text-slate-400">({count})</span>
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function PopularList({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="text-sm font-bold text-slate-950">{title}</h3>
+      <ul className="mt-4 space-y-3">
+        {items.map((item) => (
+          <li key={item} className="text-sm text-slate-600">
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-// ─── Page export ──────────────────────────────────────────────────────────────
-export default function Page() {
+function RelatedResults({
+  categories,
+  articles,
+}: {
+  categories: SearchAllResponse['categories'];
+  articles: SearchAllResponse['articles'];
+}) {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[hsl(var(--background))]">
-          <div className="bg-white dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 px-4 py-5">
-            <Skeleton className="h-11 w-full rounded-xl mb-3" />
-            <Skeleton className="h-4 w-48" />
-          </div>
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex gap-6">
-              <Skeleton className="hidden lg:block w-[264px] h-80 rounded-2xl flex-shrink-0" />
-              <div className="flex-1 space-y-4">
-                <Skeleton className="h-10 w-64 rounded-xl" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <CompanyCardSkeleton key={i} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+    <section>
+      <h2 className="text-lg font-bold text-slate-950">Categorias e conteúdos relacionados</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {categories.slice(0, 4).map((category) => (
+          <Link
+            key={`category-${category.id}`}
+            href={buildCategoryPath(category.seo_url, category.id)}
+            className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 hover:border-blue-300 hover:text-blue-700"
+          >
+            <Tag className="h-4 w-4 text-blue-600" />
+            <span className="min-w-0 flex-1 truncate">{category.name}</span>
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </Link>
+        ))}
+        {articles.slice(0, 4).map((article) => (
+          <Link
+            key={`article-${article.id}`}
+            href={`/articles/${article.id}`}
+            className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 hover:border-blue-300 hover:text-blue-700"
+          >
+            <FileText className="h-4 w-4 text-blue-600" />
+            <span className="min-w-0 flex-1 truncate">{article.title}</span>
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SearchCallToAction() {
+  return (
+    <section className="flex flex-col gap-5 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-white p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+          <Search className="h-6 w-6" />
+        </span>
+        <div>
+          <h2 className="font-bold text-slate-950">Não encontrou o que procura?</h2>
+          <p className="mt-1 max-w-lg text-sm text-slate-600">
+            Explore empresas verificadas ou solicite uma indicação para sua necessidade.
+          </p>
         </div>
-      }
-    >
-      <SearchContent />
+      </div>
+      <div className="grid shrink-0 gap-2 sm:w-48">
+        <Link
+          href="/companies"
+          className="rounded-lg bg-blue-600 px-4 py-2.5 text-center text-xs font-bold text-white hover:bg-blue-700"
+        >
+          Explorar empresas
+        </Link>
+        <a
+          href={`mailto:${CONTACT.team.email}?subject=${encodeURIComponent('Solicitação de indicação de empresa')}`}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-center text-xs font-bold text-slate-800 hover:border-blue-500 hover:text-blue-700"
+        >
+          Solicitar indicação
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function SearchLoadingState() {
+  return (
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div>
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <Skeleton key={index} className="h-[390px] rounded-xl" />
+          ))}
+        </div>
+      </div>
+      <Skeleton className="hidden h-[560px] rounded-2xl lg:block" />
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoadingState />}>
+      <SearchPageContent />
     </Suspense>
   );
 }
