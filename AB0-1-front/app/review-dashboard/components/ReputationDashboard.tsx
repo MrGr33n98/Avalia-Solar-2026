@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import {
   Dialog,
@@ -76,6 +76,8 @@ import {
   Trash2,
   Trophy,
   Users,
+  Laptop,
+  Gift,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -508,6 +510,19 @@ export function ReputationDashboard({
     />
   );
 
+  const renderReviews = () => (
+    <ReviewsPanel
+      rows={rows}
+      reviews={reviews}
+      loading={loading}
+      helpfulVotes={helpfulVotes}
+      commentsCount={commentsCount}
+      onOpenReply={setReplyDialogRow}
+      onEdit={onEditReview}
+      onDelete={onDeleteReview}
+    />
+  );
+
   const renderProposals = () => (
     <ProposalTracking leads={leads} replies={companyReplies} onOpenReply={setReplyDialogRow} />
   );
@@ -534,20 +549,7 @@ export function ReputationDashboard({
 
   const renderMobileTabContent = () => {
     if (activeTab === 'companies') return renderCompanies();
-    if (activeTab === 'reviews') {
-      return (
-        <ReviewsPanel
-          rows={rows}
-          reviews={reviews}
-          loading={loading}
-          helpfulVotes={helpfulVotes}
-          commentsCount={commentsCount}
-          onOpenReply={setReplyDialogRow}
-          onEdit={onEditReview}
-          onDelete={onDeleteReview}
-        />
-      );
-    }
+    if (activeTab === 'reviews') return renderReviews();
     if (activeTab === 'proposals') return renderProposals();
     if (activeTab === 'reputation') return renderReputation();
     if (activeTab === 'profile') {
@@ -572,7 +574,7 @@ export function ReputationDashboard({
   };
 
   return (
-    <div className="mx-auto flex min-w-0 w-full max-w-[1600px] flex-col gap-4 overflow-x-hidden px-4 pb-[calc(88px+var(--safe-area-inset-bottom))] pt-3 md:gap-6 md:px-6 md:pb-8 lg:px-8">
+    <div className="flex w-full flex-col gap-4 md:gap-6 pb-20 pt-3">
       {error && (
         <Card className="rounded-2xl border-red-100 bg-red-50 shadow-none">
           <CardContent className="flex items-center gap-3 p-3 text-red-800 md:p-4">
@@ -582,24 +584,30 @@ export function ReputationDashboard({
         </Card>
       )}
 
-      <section id="overview" className="min-w-0 max-w-full">
-        <ReviewMobileStatsStrip kpis={kpis} loading={loading} />
-      </section>
+      <div className="lg:hidden">
+        <section id="overview" className="min-w-0 max-w-full">
+          <ReviewMobileStatsStrip kpis={kpis} loading={loading} />
+        </section>
 
-      <HeroProfile
-        user={profileUser}
-        reviewsCount={reviews.length}
-        companiesCount={rows.length}
-        helpfulVotes={helpfulVotes}
-        impactedPeople={impactedPeople}
-        repliesCount={companyReplies.length}
-        onOpenReplies={() => {
-          document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
-        }}
-        badges={achievementsList.filter((a) => a.state !== 'bloqueado').map((a) => a.title)}
-      />
+        <div className="mt-4">
+          <HeroProfile
+            user={profileUser}
+            reviewsCount={reviews.length}
+            companiesCount={rows.length}
+            helpfulVotes={helpfulVotes}
+            impactedPeople={impactedPeople}
+            repliesCount={companyReplies.length}
+            onOpenReplies={() => {
+              document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            badges={achievementsList.filter((a) => a.state !== 'bloqueado').map((a) => a.title)}
+          />
+        </div>
 
-      <ReviewTabsCompact activeTab={activeTab} onChange={setActiveTab} />
+        <div className="mt-4">
+          <ReviewTabsCompact activeTab={activeTab} onChange={setActiveTab} />
+        </div>
+      </div>
 
       <div className="min-w-0 md:hidden">{renderMobileTabContent()}</div>
 
@@ -653,6 +661,8 @@ export function ReputationDashboard({
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
           <div className="space-y-6 xl:col-span-8">
             {renderCompanies()}
+            {renderReviews()}
+            <SolutionsCard />
             {renderProposals()}
             {renderImpact()}
           </div>
@@ -660,6 +670,7 @@ export function ReputationDashboard({
           <aside className="space-y-6 xl:col-span-4">
             <SustainableJourney items={sustainableItems} />
             <AchievementsStrip statuses={achievementStatuses} />
+            <RewardsCard />
             <ActivityFeed events={activityEvents} />
           </aside>
         </div>
@@ -2054,5 +2065,51 @@ function ReplyDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SolutionsCard() {
+  return (
+    <Card id="solutions" className="rounded-2xl border-slate-200 bg-white shadow-sm p-6">
+      <div className="p-0 mb-4 flex flex-row items-center justify-between">
+        <div>
+          <h3 className="text-base font-bold text-gray-900">Soluções que você utiliza</h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Adicione as tecnologias sustentáveis que você possui instaladas.
+          </p>
+        </div>
+        <Button size="sm" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
+          + Adicionar
+        </Button>
+      </div>
+      <div className="p-0 py-6 text-center border border-dashed border-gray-150 rounded-xl bg-slate-50/50">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+          <Laptop className="h-6 w-6" />
+        </div>
+        <h4 className="text-sm font-bold text-gray-900">Nenhuma solução cadastrada</h4>
+        <p className="max-w-md mx-auto text-xs text-gray-500 mt-1 leading-normal px-4">
+          Cadastre seu inversor, painel solar ou carregador elétrico para receber recomendações e subir de nível mais rápido!
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function RewardsCard() {
+  return (
+    <Card id="rewards" className="rounded-2xl border-slate-200 bg-white shadow-sm p-5">
+      <div className="p-0 mb-3">
+        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Minhas Recompensas</h3>
+      </div>
+      <div className="p-0 py-6 text-center border border-dashed border-gray-150 rounded-xl bg-slate-50/50">
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+          <Gift className="h-5 w-5" />
+        </div>
+        <h4 className="text-xs font-bold text-gray-900">Nenhuma recompensa ativa</h4>
+        <p className="text-[11px] text-gray-500 mt-1 px-4 leading-normal">
+          Acompanhe cupons, pontos extras e benefícios exclusivos aqui assim que publicar avaliações úteis.
+        </p>
+      </div>
+    </Card>
   );
 }

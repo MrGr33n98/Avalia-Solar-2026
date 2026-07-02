@@ -29,7 +29,7 @@ export function AchievementsStrip({ statuses, visibleCount = 4 }: AchievementsSt
   const unlockedCount = statuses.filter((s) => s.unlocked).length;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div id="achievements" className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">

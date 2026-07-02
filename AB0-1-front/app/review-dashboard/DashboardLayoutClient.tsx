@@ -7,7 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
-import { DesktopSidebar, MobileDrawer, MobileDashboardNav, Header } from './Navigation';
+import { MobileDashboardNav } from './Navigation';
+import { ReviewerProfileCard } from '@/components/dashboard/ReviewerProfileCard';
+import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
 
@@ -273,31 +275,32 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const companyReplies = reviews.filter((r) => r.reply || r.replied_at);
   const activityEvents = summary?.recent_activities || [];
   const firstName = user.name?.split(' ')[0] || 'Usuário';
+  const profileCompletion = summary?.profile?.completion_percent ?? 75;
 
   return (
     <DashboardContext.Provider value={{ summary, reviews, leads, loading, refreshing, error, onRefresh: () => fetchDashboardData(true) }}>
-      <div className="flex min-h-screen w-full bg-slate-50 overflow-x-hidden">
-        <DesktopSidebar repliesCount={companyReplies.length} notificationsCount={activityEvents.length} />
+      <div className="min-h-screen w-full bg-[#f5f5f5] dark:bg-[#020617] overflow-x-hidden">
+        {/* Barra de Onboarding com gradiente */}
+        <div className="max-w-[1240px] mx-auto px-4 pt-6">
+          <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviews.length} />
+        </div>
 
-        <div className="flex flex-1 flex-col min-w-0 lg:pl-[280px]">
-          <Header
-            firstName={firstName}
-            user={user as User & { avatar_url?: string }}
-            greenScore={greenScore}
-            notificationsCount={activityEvents.length}
-            refreshing={refreshing}
-            onRefresh={() => fetchDashboardData(true)}
-            onOpenCommand={() => setCommandOpen(true)}
-            onOpenMobileNav={() => setMobileNavOpen(true)}
-          />
+        {/* Shell Principal do Dashboard em Duas Colunas */}
+        <div className="max-w-[1240px] mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+          {/* Coluna Esquerda: Profile Card / Menu lateral */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-[88px]">
+              <ReviewerProfileCard profileCompletion={profileCompletion} greenScore={greenScore} />
+            </div>
+          </aside>
 
-          <main className="flex-1 min-w-0">
+          {/* Coluna Direita: Conteúdo Principal */}
+          <main className="min-w-0 flex flex-col gap-6">
             {children}
           </main>
         </div>
 
         <MobileDashboardNav repliesCount={companyReplies.length} />
-        <MobileDrawer open={mobileNavOpen} onOpenChange={setMobileNavOpen} repliesCount={companyReplies.length} notificationsCount={activityEvents.length} />
 
         <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
           <CommandInput placeholder="Buscar ações, empresas e seções..." />

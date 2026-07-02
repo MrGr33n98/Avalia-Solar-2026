@@ -1,48 +1,37 @@
 'use client';
 
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import {
   Camera,
   CheckCircle2,
+  ChevronRight,
+  Sparkles,
+  Info,
+  Linkedin,
+  Twitter,
   User as UserIcon,
   Mail,
   Phone,
-  Calendar,
-  Edit,
-  Save,
-  X,
-  Star,
-  MessageCircle,
-  Building,
-  Scale,
-  Trash2,
-  Leaf,
   MapPin,
-  ShieldCheck,
-  Trophy,
-  Users,
+  Eye,
+  Award,
 } from 'lucide-react';
-import { companiesApi, reviewsApi, usersApi, Company, Review } from '@/lib/api';
-import CompanyCard from '@/components/CompanyCard';
-import ReviewCard from '@/components/ReviewCard';
-import { useComparison } from '@/hooks/useComparison';
+import { reviewsApi, usersApi, Review } from '@/lib/api';
 import {
-  AvatarUploadClientError,
   prepareAvatarFileForUpload,
   uploadUserAvatar,
+  AvatarUploadClientError,
 } from '@/lib/avatar-upload';
 import { getApiErrorMessage } from '@/lib/api-error';
 
@@ -56,863 +45,633 @@ function initialsFromName(name?: string | null) {
     .toUpperCase();
 }
 
-function formatProfileDate(value?: string) {
-  if (!value) return 'Hoje';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Hoje';
-  return date.toLocaleDateString('pt-BR');
-}
+export default function ProfileDetailsPage() {
+  const { user, refreshAuth } = useAuth();
+  const router = useRouter();
 
-export default function ProfilePage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState({ name: '', email: '', phone: '' });
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
-  const [userReviews, setUserReviews] = useState<Review[]>([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [loadingReviews, setLoadingReviews] = useState(true);
+  // Estados dos dados reais (via API)
+  const [personalData, setPersonalData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    city: '',
+    state: '',
+  });
+
+  // Estados dos dados adicionais (via localStorage com fallback G2)
+  const [additionalData, setAdditionalData] = useState({
+    pronouns: '',
+    headline: '',
+    aboutMe: '',
+    industry: '',
+    jobTitle: '',
+    companyName: '',
+    companySize: '',
+    linkedinUrl: '',
+    twitterUrl: '',
+    consumerType: 'residencial',
+    mainInterest: 'energia_solar',
+  });
+
+  // Estados de privacidade
+  const [privacySettings, setPrivacySettings] = useState({
+    publicProfile: true,
+    showOnRanking: true,
+    allowMessages: true,
+    showCity: true,
+  });
+
+  // Estados de upload de avatar
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
   const [pendingAvatarPreviewUrl, setPendingAvatarPreviewUrl] = useState<string | null>(null);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarUploadProgress, setAvatarUploadProgress] = useState(0);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
 
-  const { user, loading, error, refreshAuth } = useAuth();
-  const { comparisonList, removeFromComparison, clearComparison } = useComparison();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const requestedTab = searchParams.get('tab');
-  const defaultTab = ['profile', 'compare', 'companies', 'reviews'].includes(requestedTab || '')
-    ? requestedTab || 'profile'
-    : 'profile';
+  const [saving, setSaving] = useState(false);
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const pendingPreviewObjectUrlRef = useRef<string | null>(null);
 
-  const resetPendingAvatarState = () => {
-    setPendingAvatarFile(null);
-    setAvatarUploadProgress(0);
-    setAvatarError(null);
-    if (pendingPreviewObjectUrlRef.current) {
-      URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
-      pendingPreviewObjectUrlRef.current = null;
-    }
-    setPendingAvatarPreviewUrl(null);
-  };
-
   useEffect(() => {
     if (user) {
-      setEditedUser({
+      setPersonalData({
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
+        city: user.city || '',
+        state: user.state || '',
       });
-
-      // Fetch user's companies and reviews
-      fetchUserCompanies();
+      setAvatarDisplayUrl(user.avatar_url || null);
       fetchUserReviews();
+
+      // Carregar dados adicionais do localStorage
+      const cached = localStorage.getItem(`reviewer_extra_${user.id}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setAdditionalData((prev) => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // Carregar preferências de privacidade do localStorage
+      const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
+      if (cachedPrivacy) {
+        try {
+          const parsed = JSON.parse(cachedPrivacy);
+          setPrivacySettings((prev) => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, [user]);
 
-  useEffect(() => {
-    setAvatarDisplayUrl(user?.avatar_url || null);
-  }, [user?.avatar_url]);
-
-  useEffect(() => {
-    return () => {
-      if (pendingPreviewObjectUrlRef.current) {
-        URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
-      }
-    };
-  }, []);
-
-  const fetchUserCompanies = async () => {
-    try {
-      setLoadingCompanies(true);
-      const companies = await companiesApi.getAll({ mine: true, limit: 50 });
-      setUserCompanies(Array.isArray(companies) ? companies : []);
-    } catch (err) {
-      console.error('Error fetching user companies:', err);
-      toast({
-        title: 'Erro ao carregar',
-        description: 'Não foi possível carregar suas empresas.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingCompanies(false);
-    }
-  };
-
   const fetchUserReviews = async () => {
     try {
-      setLoadingReviews(true);
-      const reviews = await reviewsApi.getAll({ mine: true, limit: 50 });
+      const reviews = await reviewsApi.getAll({ mine: true, limit: 10 });
       setUserReviews(Array.isArray(reviews) ? reviews : []);
     } catch (err) {
-      console.error('Error fetching user reviews:', err);
-      toast({
-        title: 'Erro ao carregar',
-        description: 'Não foi possível carregar suas avaliações.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingReviews(false);
+      console.error(err);
     }
-  };
-
-  const handleSave = async () => {
-    if (!user || savingProfile) return;
-
-    setSavingProfile(true);
-    try {
-      await usersApi.update(user.id, {
-        name: editedUser.name,
-        email: editedUser.email,
-        phone: editedUser.phone,
-      });
-      await refreshAuth();
-      setIsEditing(false);
-      toast({
-        title: 'Perfil atualizado',
-        description: 'Suas informações foram salvas com sucesso.',
-      });
-    } catch (saveError) {
-      toast({
-        title: 'Erro ao salvar perfil',
-        description: getApiErrorMessage(saveError, 'Não foi possível atualizar seus dados.'),
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditedUser({
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-    });
-    setIsEditing(false);
   };
 
   const handleAvatarFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    event.currentTarget.value = '';
-    if (!selectedFile) return;
-
-    setAvatarError(null);
-    setAvatarUploadProgress(0);
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     try {
-      const preparedFile = await prepareAvatarFileForUpload(selectedFile);
+      setAvatarError(null);
+      const preparedFile = await prepareAvatarFileForUpload(file);
 
       if (pendingPreviewObjectUrlRef.current) {
         URL.revokeObjectURL(pendingPreviewObjectUrlRef.current);
       }
 
-      const objectUrl = URL.createObjectURL(preparedFile);
-      pendingPreviewObjectUrlRef.current = objectUrl;
-      setPendingAvatarPreviewUrl(objectUrl);
+      const previewUrl = URL.createObjectURL(preparedFile);
+      pendingPreviewObjectUrlRef.current = previewUrl;
+      setPendingAvatarPreviewUrl(previewUrl);
       setPendingAvatarFile(preparedFile);
-    } catch (uploadError) {
-      const message =
-        uploadError instanceof AvatarUploadClientError
-          ? uploadError.message
-          : getApiErrorMessage(uploadError, 'Falha ao preparar a imagem.');
+
+      // Auto upload ao selecionar
+      await handleAvatarUpload(preparedFile);
+    } catch (err: any) {
+      const message = err instanceof AvatarUploadClientError ? err.message : 'Falha ao processar arquivo.';
       setAvatarError(message);
-      toast({
-        title: 'Falha ao selecionar foto',
-        description: message,
-        variant: 'destructive',
-      });
     }
   };
 
-  const handleAvatarUpload = async () => {
-    if (!user || !pendingAvatarFile || avatarUploading) return;
-
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
     setAvatarUploading(true);
-    setAvatarUploadProgress(0);
-    setAvatarError(null);
+    setAvatarUploadProgress(10);
 
     try {
-      const uploadResult = await uploadUserAvatar(user.id, pendingAvatarFile, {
-        retries: 2,
-        timeoutMs: 60_000,
+      setAvatarUploadProgress(30);
+      const uploadResult = await uploadUserAvatar(user.id, file, {
         onProgress: (progress) => setAvatarUploadProgress(progress.percent),
       });
+      const publicUrl = uploadResult.avatarUrl;
+      setAvatarUploadProgress(80);
 
-      if (uploadResult.avatarUrl) {
-        setAvatarDisplayUrl(uploadResult.avatarUrl);
-        setUploadedAvatarUrl(uploadResult.avatarUrl);
-      }
+      // Atualizar no banco
+      await usersApi.update(user.id, { avatar_url: publicUrl });
+      setAvatarUploadProgress(100);
 
       await refreshAuth();
-      resetPendingAvatarState();
+      setAvatarDisplayUrl(publicUrl);
+      setPendingAvatarFile(null);
+      setPendingAvatarPreviewUrl(null);
+
       toast({
-        title: 'Foto atualizada com sucesso',
-        description: uploadResult.avatarUrl
-          ? 'A nova foto de perfil já está disponível.'
-          : 'Upload concluído.',
+        title: 'Sucesso',
+        description: 'Foto de perfil atualizada com sucesso!',
       });
-    } catch (uploadError: unknown) {
-      const networkFailure =
-        typeof uploadError === 'object' &&
-        uploadError !== null &&
-        'isNetworkError' in uploadError &&
-        Boolean(uploadError.isNetworkError);
-      const detailedMessage = networkFailure
-        ? 'Falha de rede durante o upload. Verifique sua conexão e tente novamente.'
-        : getApiErrorMessage(uploadError, 'Não foi possível enviar a foto de perfil.');
-      setAvatarError(detailedMessage);
-      toast({
-        title: 'Erro no upload da foto',
-        description: detailedMessage,
-        variant: 'destructive',
-      });
+    } catch (err) {
+      console.error(err);
+      setAvatarError('Erro no upload da imagem.');
     } finally {
       setAvatarUploading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f4faf7]">
-        <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-          <Skeleton className="h-16 w-full rounded-[20px]" />
-          <Skeleton className="h-48 w-full rounded-[24px]" />
-          <div className="grid gap-4 md:grid-cols-4">
-            <Skeleton className="h-28 rounded-[20px]" />
-            <Skeleton className="h-28 rounded-[20px]" />
-            <Skeleton className="h-28 rounded-[20px]" />
-            <Skeleton className="h-28 rounded-[20px]" />
-          </div>
-          <Skeleton className="h-96 w-full rounded-[20px]" />
-        </div>
-      </div>
-    );
-  }
+  const handleSaveAll = async () => {
+    if (!user) return;
+    setSaving(true);
 
-  if (error || !user) {
-    return (
-      <div className="min-h-screen bg-[#f4faf7] px-4 py-8">
-        <div className="mx-auto max-w-2xl">
-          <Card className="rounded-[20px] border-red-100 bg-white shadow-sm">
-            <CardContent className="p-8 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <UserIcon className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold text-slate-950">Erro ao carregar perfil</h3>
-              <p className="mb-4 text-slate-600">
-                Não foi possível carregar as informações do seu perfil. Por favor, tente novamente.
-              </p>
-              <Button
-                className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                onClick={() => router.push('/')}
-              >
-                Voltar para página inicial
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+    try {
+      // 1. Salvar dados principais na API
+      await usersApi.update(user.id, {
+        name: personalData.name,
+        email: personalData.email,
+        phone: personalData.phone,
+        city: personalData.city,
+        state: personalData.state,
+      });
 
-  const avatarSource = pendingAvatarPreviewUrl || avatarDisplayUrl || undefined;
+      // 2. Salvar dados adicionais no localStorage
+      localStorage.setItem(`reviewer_extra_${user.id}`, JSON.stringify(additionalData));
+
+      // 3. Salvar privacidade no localStorage
+      localStorage.setItem(`reviewer_privacy_${user.id}`, JSON.stringify(privacySettings));
+
+      await refreshAuth();
+
+      toast({
+        title: 'Perfil Atualizado',
+        description: 'Todas as alterações foram salvas com sucesso.',
+      });
+    } catch (err) {
+      toast({
+        title: 'Erro ao salvar',
+        description: getApiErrorMessage(err, 'Falha ao atualizar dados principais.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!user) return null;
+
   const userInitials = initialsFromName(user.name);
-  const memberSince = formatProfileDate(user.created_at);
-  const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
-  const reviewsCount = userReviews.length;
-  const companiesCount = userCompanies.length;
-  const commentsCount = userReviews.filter((review) => review.comment || review.body).length;
-  const helpfulVotes = userReviews.reduce(
-    (total, review) => total + Number(review.helpful_count || 0),
-    0
-  );
-  const greenScore = Math.min(999, 520 + reviewsCount * 35 + helpfulVotes * 2);
-  const impactedPeople = Math.max(0, reviewsCount * 82 + companiesCount * 24);
-  const profileCompletion = Math.min(
-    100,
-    42 +
-      (user.name ? 14 : 0) +
-      (user.email ? 14 : 0) +
-      (user.phone ? 10 : 0) +
-      (avatarDisplayUrl ? 10 : 0) +
-      (user.city || user.state ? 10 : 0)
-  );
-  const reputationLevel =
-    greenScore >= 760 ? 'Eco Expert' : greenScore >= 650 ? 'Green Pro' : 'Em evolução';
-  const statCards = [
-    {
-      label: 'Green Score',
-      value: greenScore,
-      helper: reputationLevel,
-      icon: Leaf,
-      className: 'bg-emerald-50 text-emerald-700',
-    },
-    {
-      label: 'Avaliações',
-      value: reviewsCount,
-      helper: 'registradas',
-      icon: Star,
-      className: 'bg-amber-50 text-amber-700',
-    },
-    {
-      label: 'Votos úteis',
-      value: helpfulVotes,
-      helper: 'recebidos',
-      icon: Trophy,
-      className: 'bg-blue-50 text-blue-700',
-    },
-    {
-      label: 'Impactados',
-      value: impactedPeople,
-      helper: 'pessoas',
-      icon: Users,
-      className: 'bg-rose-50 text-rose-700',
-    },
-    {
-      label: 'Comentários',
-      value: commentsCount,
-      helper: 'feitos',
-      icon: MessageCircle,
-      className: 'bg-violet-50 text-violet-700',
-    },
+  const avatarSource = pendingAvatarPreviewUrl || avatarDisplayUrl || undefined;
+
+  // Checklist de Completude do Perfil
+  const checklist = [
+    { label: 'Dados pessoais completos', done: !!(user.name && user.email && user.phone) },
+    { label: 'Foto de perfil adicionada', done: !!avatarDisplayUrl },
+    { label: 'Localização informada', done: !!(user.city && user.state) },
+    { label: 'Social LinkedIn informado', done: !!additionalData.linkedinUrl },
+    { label: 'Publicou a 1ª avaliação', done: userReviews.length > 0 },
   ];
 
+  const doneCount = checklist.filter((item) => item.done).length;
+  const profileCompletion = Math.round((doneCount / checklist.length) * 100);
+
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 p-4 md:p-6 lg:p-8 pb-28">
-      <section className="overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#0A2C33,#0F5B53_56%,#114D43)] p-5 text-white shadow-sm md:p-6">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-center">
-            <div className="relative w-fit shrink-0">
-              <Avatar className="h-28 w-28 border-4 border-white/25 bg-white/10">
-                <AvatarImage src={avatarSource} alt={user.name} />
-                <AvatarFallback className="bg-white text-3xl font-black text-emerald-900">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="icon"
-                className="absolute -bottom-1 -right-1 h-10 w-10 rounded-full border-2 border-[#0f5b53] bg-amber-400 text-slate-950 shadow-sm hover:bg-amber-300"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={avatarUploading}
-                aria-label="Alterar foto de perfil"
-              >
-                <Camera className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="min-w-0 space-y-3">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-3xl font-black">{user.name}</h2>
-                  <CheckCircle2 className="h-5 w-5 fill-emerald-400 text-emerald-400" />
-                </div>
-                <p className="mt-1 text-sm font-semibold text-white/78">
-                  {user.role === 'review' ? 'Especialista Solar' : 'Perfil Avalia Solar'} · Membro
-                  desde {memberSince}
-                </p>
-                <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-white/78">
-                  <MapPin className="h-4 w-4" />
-                  {location}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {['Solar Expert', 'Green House', reputationLevel, 'Top Avaliador'].map((badge) => (
-                  <Badge
-                    key={badge}
-                    className="rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/15"
-                  >
-                    {badge}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-5 xl:min-w-[640px]">
-            {statCards.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-white/10 bg-white/10 p-4"
-                >
-                  <Icon className="mb-3 h-5 w-5 text-amber-200" />
-                  <p className="text-2xl font-black">{stat.value}</p>
-                  <p className="text-xs font-bold text-white/72">{stat.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-4 md:grid-cols-5">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card
-              key={stat.label}
-              className="h-[116px] rounded-[20px] border-slate-200 bg-white shadow-sm"
-            >
-              <CardContent className="flex h-full items-center gap-4 p-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${stat.className}`}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">
-                    {stat.label}
-                  </p>
-                  <span className="text-3xl font-black text-slate-950">{stat.value}</span>
-                  <p className="truncate text-xs font-bold text-emerald-700">{stat.helper}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+    <div className="flex flex-col gap-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <Link href="/review-dashboard" className="hover:text-emerald-600 transition-colors">
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-gray-400">Meu Perfil</span>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-gray-700">Detalhes do Perfil</span>
       </div>
 
-      <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-[20px] border border-emerald-100 bg-white p-2 shadow-sm md:grid-cols-4">
-          <TabsTrigger
-            value="profile"
-            className="rounded-2xl py-3 text-sm font-bold data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
-          >
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger
-            value="compare"
-            className="rounded-2xl py-3 text-sm font-bold data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
-          >
-            Comparar
-          </TabsTrigger>
-          <TabsTrigger
-            value="companies"
-            className="rounded-2xl py-3 text-sm font-bold data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
-          >
-            Minhas Empresas
-          </TabsTrigger>
-          <TabsTrigger
-            value="reviews"
-            className="rounded-2xl py-3 text-sm font-bold data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
-          >
-            Minhas Avaliações
-          </TabsTrigger>
-        </TabsList>
+      {/* Card Principal: Detalhes do Perfil */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* Coluna do Formulário (2/3 de largura) */}
+        <div className="xl:col-span-8 space-y-6">
+          <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden">
+            <CardHeader className="border-b border-gray-100 p-6">
+              <CardTitle className="text-lg font-bold text-gray-900">Detalhes do Perfil</CardTitle>
+              <CardDescription className="text-xs text-gray-400">
+                Gerencie suas informações pessoais, profissionais e links sociais para sua reputação.
+              </CardDescription>
+            </CardHeader>
 
-        <TabsContent value="profile" className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-12">
-            <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm xl:col-span-8">
-              <CardHeader className="flex flex-col gap-3 border-b border-slate-100 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <CardTitle className="text-xl font-black text-slate-950">
-                    Informações pessoais
-                  </CardTitle>
-                  <CardDescription className="font-semibold text-slate-500">
-                    Dados usados para sua reputação, login e contato.
-                  </CardDescription>
-                </div>
-                {!isEditing && (
-                  <Button
-                    className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar Perfil
-                  </Button>
-                )}
-              </CardHeader>
-
-              <CardContent className="space-y-6 p-5">
-                {isEditing ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="font-bold text-slate-700">
-                        Nome
-                      </Label>
-                      <Input
-                        id="name"
-                        value={editedUser.name}
-                        onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-                        className="h-11 rounded-xl border-slate-200"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="font-bold text-slate-700">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={editedUser.email}
-                        onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
-                        className="h-11 rounded-xl border-slate-200"
-                      />
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="phone" className="font-bold text-slate-700">
-                        Telefone
-                      </Label>
-                      <Input
-                        id="phone"
-                        value={editedUser.phone}
-                        onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
-                        className="h-11 rounded-xl border-slate-200"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap justify-end gap-3 md:col-span-2">
-                      <Button
-                        variant="outline"
-                        className="rounded-xl border-slate-200 font-bold"
-                        onClick={handleCancel}
-                        disabled={savingProfile}
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        Cancelar
-                      </Button>
-                      <Button
-                        className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                        onClick={handleSave}
-                        disabled={savingProfile}
-                      >
-                        <Save className="mr-2 h-4 w-4" />
-                        {savingProfile ? 'Salvando...' : 'Salvar'}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {[
-                      { icon: UserIcon, label: 'Nome', value: user.name },
-                      { icon: Mail, label: 'Email', value: user.email },
-                      { icon: Phone, label: 'Telefone', value: user.phone || 'Não informado' },
-                      { icon: Calendar, label: 'Membro desde', value: memberSince },
-                      { icon: MapPin, label: 'Localização', value: location },
-                      { icon: ShieldCheck, label: 'Nível', value: reputationLevel },
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <div
-                          key={item.label}
-                          className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-                        >
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">
-                              {item.label}
-                            </p>
-                            <p className="truncate text-sm font-bold text-slate-950">
-                              {item.value}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-[20px] border-emerald-100 bg-white shadow-sm xl:col-span-4">
-              <CardHeader>
-                <CardTitle className="text-xl font-black text-slate-950">
-                  Foto e reputação
-                </CardTitle>
-                <CardDescription className="font-semibold text-slate-500">
-                  Uma foto real aumenta confiança nas avaliações.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <input
-                  id="avatar-upload-input"
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  className="hidden"
-                  onChange={handleAvatarFileSelect}
-                  aria-label="Selecionar imagem de perfil"
-                />
-
-                <div className="flex flex-col items-center gap-3 rounded-[20px] border border-dashed border-emerald-200 bg-emerald-50/50 p-5 text-center">
-                  <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
+            <CardContent className="p-6 space-y-6">
+              {/* Foto do Perfil (Upload Compacto) */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-gray-100">
+                <div className="relative">
+                  <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
                     <AvatarImage src={avatarSource} alt={user.name} />
-                    <AvatarFallback className="bg-white text-2xl font-black text-emerald-900">
+                    <AvatarFallback className="bg-emerald-50 text-emerald-950 font-bold text-lg">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="text-sm font-black text-slate-950">Imagem do perfil</p>
-                    <p className="text-xs font-semibold text-slate-500">JPG ou PNG até 5MB.</p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-xl border-emerald-200 bg-white font-bold text-emerald-800 hover:bg-emerald-50"
-                      onClick={() => avatarInputRef.current?.click()}
-                      disabled={avatarUploading}
-                    >
-                      <Camera className="mr-2 h-4 w-4" />
-                      Alterar Foto
-                    </Button>
-                    {pendingAvatarFile && (
-                      <>
-                        <Button
-                          size="sm"
-                          className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                          onClick={handleAvatarUpload}
-                          disabled={avatarUploading}
-                        >
-                          {avatarUploading ? 'Enviando...' : 'Salvar Foto'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-xl font-bold"
-                          onClick={resetPendingAvatarState}
-                          disabled={avatarUploading}
-                        >
-                          Cancelar
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white border-2 border-white hover:bg-emerald-700 transition-colors shadow"
+                  >
+                    <Camera className="h-3 w-3" />
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="hidden"
+                    onChange={handleAvatarFileSelect}
+                  />
                 </div>
-
+                <div className="text-center sm:text-left">
+                  <p className="text-sm font-bold text-gray-900">Sua Foto de Perfil</p>
+                  <p className="text-xs text-gray-400 mt-0.5">JPG ou PNG de até 5MB. Fotos nítidas aumentam a confiabilidade da sua avaliação.</p>
+                </div>
                 {avatarUploading && (
-                  <div className="space-y-2">
-                    <Progress value={avatarUploadProgress} className="h-2 bg-slate-100" />
-                    <p className="text-center text-xs font-semibold text-slate-500">
-                      Enviando foto... {avatarUploadProgress}%
-                    </p>
+                  <div className="ml-auto flex items-center gap-2 text-xs font-semibold text-emerald-600">
+                    <span className="animate-spin">🔄</span>
+                    Enviando ({avatarUploadProgress}%)
                   </div>
                 )}
-
-                {avatarError && (
-                  <p className="rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                    {avatarError}
-                  </p>
-                )}
-
-                {uploadedAvatarUrl && !pendingAvatarFile && (
-                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-xs">
-                    <span className="font-black text-emerald-900">URL pública: </span>
-                    <a
-                      href={uploadedAvatarUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="break-all font-semibold text-emerald-800 underline"
-                    >
-                      {uploadedAvatarUrl}
-                    </a>
-                  </div>
-                )}
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-black text-slate-950">Perfil completo</p>
-                    <Badge className="rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
-                      {profileCompletion}%
-                    </Badge>
-                  </div>
-                  <Progress value={profileCompletion} className="h-2 bg-slate-100" />
-                  <p className="text-xs font-semibold text-slate-500">
-                    Complete foto, telefone e localização para fortalecer sua reputação.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="compare" className="space-y-6">
-          <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-            <CardHeader className="flex flex-col gap-3 border-b border-slate-100 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-black text-slate-950">
-                  Minhas comparações
-                </CardTitle>
-                <CardDescription className="font-semibold text-slate-500">
-                  Compare empresas salvas para decidir com mais segurança.
-                </CardDescription>
               </div>
-              {comparisonList.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl border-slate-200 font-bold"
-                  onClick={clearComparison}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Limpar
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent className="p-5">
-              {comparisonList.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {comparisonList.map((company) => (
-                      <div
-                        key={company.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-black text-slate-950">
-                            {company.name}
-                          </p>
-                          <p className="text-xs font-semibold text-slate-500">
-                            {[company.city, company.state].filter(Boolean).join(', ') ||
-                              'Localização não informada'}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-xl font-bold"
-                          onClick={() => removeFromComparison(company.id)}
-                        >
-                          Remover
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
 
-                  <Button
-                    className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                    onClick={() => router.push('/compare')}
-                  >
-                    <Scale className="mr-2 h-4 w-4" />
-                    Abrir comparação completa
-                  </Button>
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                    <Scale className="h-8 w-8" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-black text-slate-950">
-                    Nenhuma empresa para comparar
-                  </h3>
-                  <p className="mx-auto mb-6 max-w-sm text-sm font-semibold text-slate-500">
-                    Abra uma empresa e adicione à comparação quando quiser analisar opções lado a
-                    lado.
-                  </p>
-                  <Button
-                    className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                    onClick={() => router.push('/companies')}
-                  >
-                    Ver empresas
-                  </Button>
+              {avatarError && (
+                <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-xs font-semibold text-red-700">
+                  {avatarError}
                 </div>
               )}
+
+              {/* Seção 1: Dados Pessoais */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Dados Pessoais</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-name" className="text-xs font-semibold text-gray-500">Nome Completo</Label>
+                    <Input
+                      id="profile-name"
+                      placeholder="Felipe Henrique"
+                      value={personalData.name}
+                      onChange={(e) => setPersonalData({ ...personalData, name: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-email" className="text-xs font-semibold text-gray-500">E-mail</Label>
+                    <Input
+                      id="profile-email"
+                      type="email"
+                      placeholder="exemplo@email.com"
+                      value={personalData.email}
+                      onChange={(e) => setPersonalData({ ...personalData, email: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-phone" className="text-xs font-semibold text-gray-500">Telefone</Label>
+                    <Input
+                      id="profile-phone"
+                      placeholder="(11) 99999-9999"
+                      value={personalData.phone}
+                      onChange={(e) => setPersonalData({ ...personalData, phone: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="profile-city" className="text-xs font-semibold text-gray-500">Cidade</Label>
+                      <Input
+                        id="profile-city"
+                        placeholder="São Paulo"
+                        value={personalData.city}
+                        onChange={(e) => setPersonalData({ ...personalData, city: e.target.value })}
+                        className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="profile-state" className="text-xs font-semibold text-gray-500">Estado (UF)</Label>
+                      <Input
+                        id="profile-state"
+                        placeholder="SP"
+                        value={personalData.state}
+                        onChange={(e) => setPersonalData({ ...personalData, state: e.target.value })}
+                        className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-pronouns" className="text-xs font-semibold text-gray-500">Pronomes (Opcional)</Label>
+                    <Input
+                      id="profile-pronouns"
+                      placeholder="Ele/Dele"
+                      value={additionalData.pronouns}
+                      onChange={(e) => setAdditionalData({ ...additionalData, pronouns: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-headline" className="text-xs font-semibold text-gray-500">Título / Headline</Label>
+                    <Input
+                      id="profile-headline"
+                      placeholder="Especialista em Engenharia Solar"
+                      value={additionalData.headline}
+                      onChange={(e) => setAdditionalData({ ...additionalData, headline: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="profile-aboutme" className="text-xs font-semibold text-gray-500">Biografia / Sobre você</Label>
+                  <textarea
+                    id="profile-aboutme"
+                    placeholder="Escreva um breve resumo sobre sua jornada profissional com energia limpa e sustentabilidade..."
+                    rows={4}
+                    value={additionalData.aboutMe}
+                    onChange={(e) => setAdditionalData({ ...additionalData, aboutMe: e.target.value })}
+                    className="w-full text-sm p-3 rounded-lg border border-gray-200 focus-visible:ring-emerald-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Seção 2: Informações de Consumo e Profissional */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Interesses e Atuação</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-consumertype" className="text-xs font-semibold text-gray-500">Tipo de Consumidor</Label>
+                    <select
+                      id="profile-consumertype"
+                      value={additionalData.consumerType}
+                      onChange={(e) => setAdditionalData({ ...additionalData, consumerType: e.target.value })}
+                      className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="residencial">Residencial</option>
+                      <option value="comercial">Comercial</option>
+                      <option value="industrial">Industrial</option>
+                      <option value="rural">Rural</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-interest" className="text-xs font-semibold text-gray-500">Interesse Principal</Label>
+                    <select
+                      id="profile-interest"
+                      value={additionalData.mainInterest}
+                      onChange={(e) => setAdditionalData({ ...additionalData, mainInterest: e.target.value })}
+                      className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="energia_solar">Energia Solar Fotovoltaica</option>
+                      <option value="mobilidade_eletrica">Mobilidade Elétrica (EVs)</option>
+                      <option value="bateria_armazenamento">Bateria & Armazenamento</option>
+                      <option value="eficiencia_energetica">Eficiência Energética</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-job" className="text-xs font-semibold text-gray-500">Cargo / Função</Label>
+                    <Input
+                      id="profile-job"
+                      placeholder="Diretor Técnico"
+                      value={additionalData.jobTitle}
+                      onChange={(e) => setAdditionalData({ ...additionalData, jobTitle: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-companyname" className="text-xs font-semibold text-gray-500">Empresa atual</Label>
+                    <Input
+                      id="profile-companyname"
+                      placeholder="GreenTech Solar"
+                      value={additionalData.companyName}
+                      onChange={(e) => setAdditionalData({ ...additionalData, companyName: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-companysize" className="text-xs font-semibold text-gray-500">Tamanho da empresa</Label>
+                    <select
+                      id="profile-companysize"
+                      value={additionalData.companySize}
+                      onChange={(e) => setAdditionalData({ ...additionalData, companySize: e.target.value })}
+                      className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="1-10">1-10 funcionários</option>
+                      <option value="11-50">11-50 funcionários</option>
+                      <option value="51-200">51-200 funcionários</option>
+                      <option value="201-500">201-500 funcionários</option>
+                      <option value="500+">Mais de 500</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Seção 3: Social & Links */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Redes Sociais</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-linkedin" className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                      <Linkedin className="h-3.5 w-3.5 text-blue-600" /> LinkedIn Profile URL
+                    </Label>
+                    <Input
+                      id="profile-linkedin"
+                      placeholder="https://linkedin.com/in/usuario"
+                      value={additionalData.linkedinUrl}
+                      onChange={(e) => setAdditionalData({ ...additionalData, linkedinUrl: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-twitter" className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                      <Twitter className="h-3.5 w-3.5 text-sky-500" /> Twitter Profile URL
+                    </Label>
+                    <Input
+                      id="profile-twitter"
+                      placeholder="https://twitter.com/usuario"
+                      value={additionalData.twitterUrl}
+                      onChange={(e) => setAdditionalData({ ...additionalData, twitterUrl: e.target.value })}
+                      className="h-10 rounded-lg border-gray-200"
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="companies" className="space-y-6">
-          <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-950">Minhas empresas</CardTitle>
-              <CardDescription className="font-semibold text-slate-500">
-                Empresas vinculadas ou cadastradas por você.
+          {/* Card: Privacidade e Visibilidade */}
+          <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden">
+            <CardHeader className="border-b border-gray-100 p-6">
+              <CardTitle className="text-lg font-bold text-gray-900">Privacidade & Visibilidade</CardTitle>
+              <CardDescription className="text-xs text-gray-400">
+                Gerencie como suas informações de reputação são expostas na comunidade.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-5">
-              {loadingCompanies ? (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-80 rounded-2xl" />
-                  ))}
-                </div>
-              ) : userCompanies.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {userCompanies.map((company) => (
-                    <CompanyCard key={company.id} company={company} />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                    <Building className="h-8 w-8" />
+            <CardContent className="p-6 space-y-4">
+              {[
+                {
+                  key: 'publicProfile',
+                  label: 'Perfil público ativo',
+                  desc: 'Permite que outros usuários vejam suas conquistas e avaliações completas.',
+                },
+                {
+                  key: 'showOnRanking',
+                  label: 'Exibir no Ranking Regional',
+                  desc: 'Compartilhe sua pontuação de Green Score no ranking regional do Avalia Solar.',
+                },
+                {
+                  key: 'allowMessages',
+                  label: 'Receber mensagens de empresas',
+                  desc: 'Permite que empresas avaliadas enviem propostas ou mensagens diretas a você.',
+                },
+                {
+                  key: 'showCity',
+                  label: 'Mostrar cidade e estado no perfil público',
+                  desc: 'Exibe sua localização regional no seu card público.',
+                },
+              ].map((opt) => (
+                <div key={opt.key} className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                    <p className="text-xs text-gray-400 leading-normal">{opt.desc}</p>
                   </div>
-                  <h3 className="mb-2 text-lg font-black text-slate-950">
-                    Nenhuma empresa cadastrada
-                  </h3>
-                  <p className="mb-6 text-sm font-semibold text-slate-500">
-                    Você ainda não cadastrou nenhuma empresa na plataforma.
-                  </p>
-                  <Button
-                    className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                    onClick={() => router.push('/companies')}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPrivacySettings({
+                        ...privacySettings,
+                        [opt.key]: !privacySettings[opt.key as keyof typeof privacySettings],
+                      })
+                    }
+                    className={`flex h-6 w-12 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 focus:outline-none ${
+                      privacySettings[opt.key as keyof typeof privacySettings]
+                        ? 'bg-emerald-600'
+                        : 'bg-gray-200'
+                    }`}
                   >
-                    Explorar empresas
-                  </Button>
+                    <span
+                      className={`h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        privacySettings[opt.key as keyof typeof privacySettings]
+                          ? 'translate-x-6'
+                          : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
-              )}
+              ))}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="reviews" className="space-y-6">
-          <Card className="rounded-[20px] border-slate-200 bg-white shadow-sm">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-950">Minhas avaliações</CardTitle>
-              <CardDescription className="font-semibold text-slate-500">
-                Sua contribuição para o ecossistema Avalia Solar.
-              </CardDescription>
+          {/* Botão de Ação de Salvar Tudo */}
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/review-dashboard')}
+              className="rounded-xl border-gray-200 font-bold"
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700 min-w-[140px]"
+              disabled={saving}
+            >
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Coluna Lateral: Checklist / Completude de Perfil (1/3 de largura) */}
+        <div className="xl:col-span-4 space-y-6">
+          <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden sticky top-[88px]">
+            <CardHeader className="border-b border-gray-100 p-6 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-bold text-gray-800 uppercase tracking-wider">Complete seu perfil</CardTitle>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                  {profileCompletion}%
+                </span>
+              </div>
             </CardHeader>
-            <CardContent className="p-5">
-              {loadingReviews ? (
-                <div className="space-y-6">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-48 rounded-2xl" />
-                  ))}
-                </div>
-              ) : userReviews.length > 0 ? (
-                <div className="space-y-6">
-                  {userReviews.map((review) => (
-                    <ReviewCard key={review.id} review={review} variant="company" />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-700">
-                    <Star className="h-8 w-8" />
+            <CardContent className="p-6 space-y-5">
+              <div className="space-y-2">
+                <Progress value={profileCompletion} className="h-2.5 bg-slate-100" />
+                <p className="text-xs text-gray-400">
+                  Perfil completo garante selo verificado e melhora o seu engajamento no Avalia Solar.
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Checklist */}
+              <div className="space-y-3.5">
+                {checklist.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                        item.done
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-100 text-gray-400'
+                      }`}
+                    >
+                      {item.done ? '✓' : idx + 1}
+                    </span>
+                    <span
+                      className={`text-xs font-medium ${
+                        item.done ? 'text-gray-500 line-through' : 'text-gray-700'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
                   </div>
-                  <h3 className="mb-2 text-lg font-black text-slate-950">
-                    Nenhuma avaliação feita
-                  </h3>
-                  <p className="mb-6 text-sm font-semibold text-slate-500">
-                    Você ainda não deixou nenhuma avaliação para empresas.
-                  </p>
-                  <Button
-                    className="rounded-xl bg-emerald-600 font-bold hover:bg-emerald-700"
-                    onClick={() => router.push('/companies')}
-                  >
-                    Ver empresas
-                  </Button>
-                </div>
+                ))}
+              </div>
+
+              {profileCompletion < 100 && (
+                <>
+                  <Separator />
+                  <div className="flex gap-2 rounded-xl bg-emerald-50/50 border border-emerald-100 p-3 text-[11px] text-emerald-850">
+                    <Sparkles className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5 animate-pulse" />
+                    <div>
+                      <p className="font-bold">Dica da Comunidade</p>
+                      <p className="mt-0.5 text-emerald-700 leading-normal">
+                        Perfis com o LinkedIn verificado recebem <strong>votos úteis</strong> 4.2x mais rápido de outros consumidores!
+                      </p>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
