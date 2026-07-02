@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none" role="img" aria-label="Top Avaliador">
+  <defs>
+    <linearGradient id="g12_top_avaliadorlock" x1="27" y1="17" x2="130" y2="146" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3F4F6"/>
+      <stop offset=".48" stop-color="#E5E7EB"/>
+      <stop offset="1" stop-color="#D1D5DB"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#0F172A" flood-opacity=".16"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#0F172A" flood-opacity=".12"/>
+    </filter>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(56 39) rotate(51) scale(104 99)">
+      <stop stop-color="#FFFFFF" stop-opacity=".88"/>
+      <stop offset=".38" stop-color="#FFFFFF" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M80 12L124.5 29.8L144 73.5L132.2 121.3L92.3 148H67.7L27.8 121.3L16 73.5L35.5 29.8L80 12Z" fill="url(#g12_top_avaliadorlock)" stroke="#CBD5E1" stroke-width="3.5"/>
+    <path d="M80 23L117 38L133 75L123 115L90 137H70L37 115L27 75L43 38L80 23Z" fill="url(#shine)" opacity=".9"/>
+    <path d="M80 12L124.5 29.8L144 73.5L132.2 121.3L92.3 148H67.7L27.8 121.3L16 73.5L35.5 29.8L80 12Z" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1.5"/>
+    <g opacity=".18">
+      <circle cx="43" cy="43" r="3" fill="#FFFFFF"/>
+      <circle cx="122" cy="67" r="2.5" fill="#FFFFFF"/>
+      <circle cx="45" cy="117" r="2.2" fill="#FFFFFF"/>
+      <circle cx="116" cy="120" r="2" fill="#FFFFFF"/>
+      <path d="M36 99c22 14 66 14 88 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38 56c18-13 66-14 84 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    
+        <g class="inner-icon" stroke="#9AA3AF" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M55 40h50v35c0 18-11 33-25 33S55 93 55 75V40z" fill="#F3F4F6" stroke-width="5"/>
+          <path d="M55 53H37v13c0 14 11 24 25 25M105 53h18v13c0 14-11 24-25 25" fill="none" stroke-width="5"/>
+          <path d="M80 108v17M61 128h38M52 139h56" stroke-width="5"/>
+          <polygon points="80.0,53.0 84.1,63.3 95.2,64.1 86.7,71.2 89.4,81.9 80.0,76.0 70.6,81.9 73.3,71.2 64.8,64.1 75.9,63.3" fill="rgba(255,255,255,.78)" stroke-width="3"/>
+        </g>
+    
+          <circle cx="119" cy="42" r="20" fill="#FFFFFF" stroke="#D4D8DE" stroke-width="3"/>
+          <text x="119" y="51" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="29" font-weight="800" fill="#AEB6C2">?</text>
+  </g>
+</svg>

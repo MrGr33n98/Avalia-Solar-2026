@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none" role="img" aria-label="Carregador Verificado">
+  <defs>
+    <linearGradient id="g11_carregador_verificado" x1="27" y1="17" x2="130" y2="146" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FCE7F3"/>
+      <stop offset=".48" stop-color="#F472B6"/>
+      <stop offset="1" stop-color="#DB2777"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#0F172A" flood-opacity=".16"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#0F172A" flood-opacity=".12"/>
+    </filter>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(56 39) rotate(51) scale(104 99)">
+      <stop stop-color="#FFFFFF" stop-opacity=".88"/>
+      <stop offset=".38" stop-color="#FFFFFF" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M80 12L124.5 29.8L144 73.5L132.2 121.3L92.3 148H67.7L27.8 121.3L16 73.5L35.5 29.8L80 12Z" fill="url(#g11_carregador_verificado)" stroke="#BE185D" stroke-width="3.5"/>
+    <path d="M80 23L117 38L133 75L123 115L90 137H70L37 115L27 75L43 38L80 23Z" fill="url(#shine)" opacity=".9"/>
+    <path d="M80 12L124.5 29.8L144 73.5L132.2 121.3L92.3 148H67.7L27.8 121.3L16 73.5L35.5 29.8L80 12Z" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1.5"/>
+    <g opacity=".28">
+      <circle cx="43" cy="43" r="3" fill="#FFFFFF"/>
+      <circle cx="122" cy="67" r="2.5" fill="#FFFFFF"/>
+      <circle cx="45" cy="117" r="2.2" fill="#FFFFFF"/>
+      <circle cx="116" cy="120" r="2" fill="#FFFFFF"/>
+      <path d="M36 99c22 14 66 14 88 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38 56c18-13 66-14 84 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    
+        <g class="inner-icon" stroke="#BE185D" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="50" y="35" width="53" height="100" rx="12" fill="rgba(255,255,255,.84)" stroke-width="5"/>
+          <rect x="62" y="50" width="29" height="27" rx="4" fill="rgba(255,255,255,.65)" stroke-width="4"/>
+          <path d="M80 83l-12 19h12l-5 18 16-26H80z" fill="rgba(255,255,255,.84)" stroke-width="4"/>
+          <path d="M103 64h13c8 0 13 5 13 13v24c0 8 4 13 12 13M137 98v22M145 98v22" stroke-width="5"/>
+        </g>
+    
+  </g>
+</svg>
