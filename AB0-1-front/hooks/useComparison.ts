@@ -12,34 +12,30 @@ const comparisonEvents = new EventTarget();
 
 export function useComparison() {
   const [comparisonList, setComparisonList] = useState<Company[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const skipEmitRef = useRef(false); // evita loop de eventos entre instâncias
 
   // Load from localStorage on mount
   useEffect(() => {
-    setIsLoading(true);
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      console.log('[DEBUG] Loading from localStorage:', saved);
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('[DEBUG] Parsed data:', parsed);
         // Validate the data structure - more flexible validation
         if (Array.isArray(parsed)) {
-          const validCompanies = parsed.filter(item => 
-            item && 
-            (typeof item.id === 'number' || typeof item.id === 'string') && 
-            typeof item.name === 'string'
+          const validCompanies = parsed.filter(
+            (item) =>
+              item &&
+              (typeof item.id === 'number' || typeof item.id === 'string') &&
+              typeof item.name === 'string'
           );
-          console.log('[DEBUG] Valid companies found:', validCompanies.length, validCompanies.map(c => c.name));
-          setComparisonList(validCompanies);
+          setComparisonList(validCompanies.slice(0, MAX_COMPARISON));
         } else {
-          console.log('[DEBUG] Data is not an array, clearing storage');
           localStorage.removeItem(STORAGE_KEY);
         }
       }
     } catch (e) {
-      console.error('[DEBUG] Failed to parse comparison list', e);
+      console.error('Failed to parse comparison list', e);
       localStorage.removeItem(STORAGE_KEY); // Clear corrupted data
     } finally {
       setIsLoading(false);
@@ -57,14 +53,14 @@ export function useComparison() {
     }
 
     try {
-      console.log('[DEBUG] Saving to localStorage:', comparisonList.map(c => c.name));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
-      comparisonEvents.dispatchEvent(new CustomEvent('comparison-updated', { 
-        detail: { companies: comparisonList } 
-      }));
-      console.log('[DEBUG] Successfully saved and emitted event');
+      comparisonEvents.dispatchEvent(
+        new CustomEvent('comparison-updated', {
+          detail: { companies: comparisonList },
+        })
+      );
     } catch (e) {
-      console.error('[DEBUG] Failed to save comparison list', e);
+      console.error('Failed to save comparison list', e);
     }
   }, [comparisonList, isLoading]);
 
@@ -94,49 +90,49 @@ export function useComparison() {
       // Check if already exists
       if (prev.find((c) => c.id === company.id)) {
         toast.info(`${company.name} já está na lista de comparação.`, {
-          description: 'Esta empresa já foi adicionada à sua comparação.'
+          description: 'Esta empresa já foi adicionada à sua comparação.',
         });
         return prev;
       }
-      
+
       // Check limit
       if (prev.length >= MAX_COMPARISON) {
         toast.warning(`Você só pode comparar até ${MAX_COMPARISON} empresas.`, {
-          description: 'Remova uma empresa primeiro para adicionar outra.'
+          description: 'Remova uma empresa primeiro para adicionar outra.',
         });
         return prev;
       }
-      
+
       // Add company
       const newList = [...prev, company];
-      
+
       // Success message with action
       toast.success(`${company.name} adicionada à comparação.`, {
         description: `${newList.length}/${MAX_COMPARISON} empresas selecionadas`,
         action: {
-          label: "Ver Comparação",
+          label: 'Ver Comparação',
           onClick: () => {
             // This could trigger the modal or navigate to comparison page
             comparisonEvents.dispatchEvent(new CustomEvent('open-comparison-modal'));
-          }
-        }
+          },
+        },
       });
-      
+
       return newList;
     });
   }, []);
 
   const removeFromComparison = useCallback((companyId: number) => {
     setComparisonList((prev) => {
-      const company = prev.find(c => c.id === companyId);
+      const company = prev.find((c) => c.id === companyId);
       const newList = prev.filter((c) => c.id !== companyId);
-      
+
       if (company) {
         toast.info(`${company.name} removida da comparação.`, {
-          description: `${newList.length}/${MAX_COMPARISON} empresas restantes`
+          description: `${newList.length}/${MAX_COMPARISON} empresas restantes`,
         });
       }
-      
+
       return newList;
     });
   }, []);
@@ -144,33 +140,53 @@ export function useComparison() {
   const clearComparison = useCallback(() => {
     setComparisonList([]);
     toast.success('Lista de comparação limpa.', {
-      description: 'Todas as empresas foram removidas da comparação.'
+      description: 'Todas as empresas foram removidas da comparação.',
     });
   }, []);
 
-  const isInComparison = useCallback((companyId: number) => {
-    return comparisonList.some((c) => c.id === companyId);
-  }, [comparisonList]);
+  const replaceComparison = useCallback((companies: Company[]) => {
+    const uniqueCompanies = companies
+      .filter(
+        (company, index, list) =>
+          company && list.findIndex((item) => item.id === company.id) === index
+      )
+      .slice(0, MAX_COMPARISON);
 
-  const toggleComparison = useCallback((company: Company) => {
-    if (isInComparison(company.id)) {
-      removeFromComparison(company.id);
-    } else {
-      addToComparison(company);
-    }
-  }, [isInComparison, removeFromComparison, addToComparison]);
+    setComparisonList(uniqueCompanies);
+  }, []);
 
-  const getCompanyPosition = useCallback((companyId: number) => {
-    return comparisonList.findIndex(c => c.id === companyId) + 1;
-  }, [comparisonList]);
+  const isInComparison = useCallback(
+    (companyId: number) => {
+      return comparisonList.some((c) => c.id === companyId);
+    },
+    [comparisonList]
+  );
+
+  const toggleComparison = useCallback(
+    (company: Company) => {
+      if (isInComparison(company.id)) {
+        removeFromComparison(company.id);
+      } else {
+        addToComparison(company);
+      }
+    },
+    [isInComparison, removeFromComparison, addToComparison]
+  );
+
+  const getCompanyPosition = useCallback(
+    (companyId: number) => {
+      return comparisonList.findIndex((c) => c.id === companyId) + 1;
+    },
+    [comparisonList]
+  );
 
   const canAddMore = comparisonList.length < MAX_COMPARISON;
   const isEmpty = comparisonList.length === 0;
   const isFull = comparisonList.length >= MAX_COMPARISON;
 
   // Get premium companies count
-  const premiumCount = comparisonList.filter(company => 
-    company.featured || company.plan_status === 'active' || company.has_paid_plan
+  const premiumCount = comparisonList.filter(
+    (company) => company.featured || company.plan_status === 'active' || company.has_paid_plan
   ).length;
 
   return {
@@ -178,6 +194,7 @@ export function useComparison() {
     addToComparison,
     removeFromComparison,
     clearComparison,
+    replaceComparison,
     isInComparison,
     toggleComparison,
     getCompanyPosition,
@@ -190,28 +207,38 @@ export function useComparison() {
     premiumCount,
     // Computed properties for UI
     progressPercentage: (comparisonList.length / MAX_COMPARISON) * 100,
-    remainingSlots: MAX_COMPARISON - comparisonList.length
+    remainingSlots: MAX_COMPARISON - comparisonList.length,
   };
 }
 
 // Hook for listening to comparison events
 export function useComparisonEvents() {
-  const [lastEvent, setLastEvent] = useState<any>(null);
+  type ComparisonEvent =
+    | { type: 'update'; data: { companies?: Company[] } }
+    | { type: 'open-modal'; data: null };
+
+  const [lastEvent, setLastEvent] = useState<ComparisonEvent | null>(null);
 
   useEffect(() => {
-    const handleComparisonUpdate = (e: any) => {
+    const handleComparisonUpdate = (e: CustomEvent<{ companies?: Company[] }>) => {
       setLastEvent({ type: 'update', data: e.detail });
     };
 
-    const handleOpenModal = (e: any) => {
+    const handleOpenModal = () => {
       setLastEvent({ type: 'open-modal', data: null });
     };
 
-    comparisonEvents.addEventListener('comparison-updated', handleComparisonUpdate);
+    comparisonEvents.addEventListener(
+      'comparison-updated',
+      handleComparisonUpdate as EventListener
+    );
     comparisonEvents.addEventListener('open-comparison-modal', handleOpenModal);
 
     return () => {
-      comparisonEvents.removeEventListener('comparison-updated', handleComparisonUpdate);
+      comparisonEvents.removeEventListener(
+        'comparison-updated',
+        handleComparisonUpdate as EventListener
+      );
       comparisonEvents.removeEventListener('open-comparison-modal', handleOpenModal);
     };
   }, []);

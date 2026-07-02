@@ -1,767 +1,677 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
-import { useComparison } from '@/hooks/useComparison';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Star, 
-  MapPin, 
-  Check,
-  X, 
-  Scale, 
-  Trophy,
-  ShieldCheck,
-  Zap,
-  Clock,
-  Briefcase,
-  Award,
-  CircleDollarSign,
-  ChevronDown,
-  Plus,
-  Building2,
-  Sparkles,
-} from 'lucide-react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { getFullImageUrl } from '@/utils/image';
-import { openLeadModal } from '@/lib/lead-engine';
-import { track } from '@/lib/analytics/lazy';
-import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Company } from '@/lib/api';
-
-// New modular components
-import ComparePageHeader from '@/components/compare/ComparePageHeader';
-import ComparisonSummary from '@/components/compare/ComparisonSummary';
-import PremiumBannerSection from '@/components/compare/PremiumBannerSection';
-import CompanyComparisonCard from '@/components/compare/CompanyComparisonCard';
-import ComparisonFooterCTA from '@/components/compare/ComparisonFooterCTA';
-import TrustScoreDial from '@/components/compare/TrustScoreDial';
-import { BannerSlot } from '@/components/banners/BannerSlot';
-import { useScrollDepthMilestone, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  formatCompanyYears,
-  formatCurrencyBRL,
-  getCompanyTrustScore,
-  isPremiumCompany,
-} from '@/components/compare/compare-company-utils';
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Scale,
+  Search,
+  ShieldCheck,
+  Star,
+  X,
+} from 'lucide-react';
 
-const getCoverageCount = (company: Company) => {
-  const cities = Array.isArray(company.coverage_cities)
-    ? company.coverage_cities
-    : String(company.coverage_cities || '').split(',').filter(Boolean);
-  const states = Array.isArray(company.coverage_states)
-    ? company.coverage_states
-    : String(company.coverage_states || '').split(',').filter(Boolean);
-  return cities.length || states.length * 10 || 0;
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CompanyLogo } from '@/components/CompanyLogo';
+import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
+import {
+  CompareCompany,
+  mapCompanyToCompareCompany,
+} from '@/components/compare/mapCompanyToCompareCompany';
+import { useComparison } from '@/hooks/useComparison';
+import { companiesApi, type Company } from '@/lib/api';
+import { openLeadModal } from '@/lib/lead-engine';
+
+const MAX_COMPANIES = 3;
+
+const selectionFromParams = (params: URLSearchParams): string[] => {
+  const value = params.get('companies') || params.get('slugs') || params.get('company') || '';
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, MAX_COMPANIES);
 };
-
-const getSpeedBadge = (time?: string) => {
-  if (!time || time === 'Consultar') return null;
-  const lower = time.toLowerCase();
-  if (lower.includes('h')) {
-    const hours = parseInt(lower) || 0;
-    if (hours <= 2) {
-      return { label: 'Rápido', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    }
-  }
-  return { label: 'Médio', color: 'bg-amber-50 text-amber-700 border-amber-200' };
-};
-
 
 export default function ComparePage() {
-  const { comparisonList, removeFromComparison, clearComparison } = useComparison();
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['geral', 'tecnico', 'comercial', 'diferenciais']);
-  const [shouldReduceMotion, setShouldReduceMotion] = useState(false);
-  const trackedComparisonSnapshotRef = useRef<string>('');
+  return (
+    <Suspense fallback={<CompareLoadingState />}>
+      <ComparePageContent />
+    </Suspense>
+  );
+}
 
-  // Check reduced motion preference
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setShouldReduceMotion(mediaQuery.matches);
+function ComparePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedCompanies = useMemo(
+    () => selectionFromParams(new URLSearchParams(searchParams.toString())),
+    [searchParams]
+  );
+  const requestKey = requestedCompanies.join(',');
+  const {
+    comparisonList,
+    addToComparison,
+    removeFromComparison,
+    replaceComparison,
+    isLoading: isStorageLoading,
+    canAddMore,
+  } = useComparison();
+  const cacheRef = useRef(new Map<string, Company>());
+  const [isResolvingUrl, setIsResolvingUrl] = useState(requestedCompanies.length > 0);
+  const [loadError, setLoadError] = useState(false);
+  const [retryVersion, setRetryVersion] = useState(0);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Company[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-    const handleChange = (e: MediaQueryListEvent) => setShouldReduceMotion(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  useEffect(() => {
-    if (comparisonList.length === 0) return;
-
-    const snapshot = comparisonList.slice(0, 3).map((company) => company.id).join(',');
-    if (snapshot === trackedComparisonSnapshotRef.current) return;
-    trackedComparisonSnapshotRef.current = snapshot;
-
-    comparisonList.slice(0, 3).forEach((company, index) => {
-      sendIntentSignal({
-        company_id: company.id,
-        signal_type: 'comparison_view',
-        signal_category: 'research_intent',
-        element_type: 'comparison_page',
-        element_selector: 'compare-page',
-        metadata: {
-          action: 'view',
-          comparison_count: comparisonList.length,
-          company_position: index + 1,
-        },
-      });
-    });
-  }, [comparisonList]);
-
-  // Track scroll depth for the first company in comparison
-  useScrollDepthMilestone(comparisonList[0]?.id, {
-    metadata: { context: 'comparison_bottom' }
-  });
-
-  // Check if any company is premium
-  const hasPremiumCompanies = comparisonList.some(company => 
-    company.featured || company.plan_status === 'active' || company.has_paid_plan
+  const companies = useMemo(
+    () => comparisonList.slice(0, MAX_COMPANIES).map(mapCompanyToCompareCompany),
+    [comparisonList]
   );
 
-  const premiumCompany = comparisonList.find(company => 
-    company.featured || company.plan_status === 'active' || company.has_paid_plan
-  );
-
-  const highestRatedCompanyId = comparisonList.reduce((prev, current) => {
-    const prevRating = Number(prev.average_rating ?? prev.rating_avg ?? 0);
-    const currRating = Number(current.average_rating ?? current.rating_avg ?? 0);
-    return currRating > prevRating ? current : prev;
-  }, comparisonList[0])?.id;
-
-  const formatRating = (value: unknown) => {
-    const numericValue = Number(value);
-    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
-  };
-
-  const toggleGroup = (groupId: string) => {
-    const isExpanding = !expandedGroups.includes(groupId);
-    
-    // Analytics
-    track('comparison_category_toggle', { 
-      category_id: groupId, 
-      action: isExpanding ? 'expand' : 'collapse' 
-    });
-
-    if (isExpanding && comparisonList[0]) {
-      sendIntentSignal({
-        company_id: comparisonList[0].id,
-        signal_type: 'comparison_usage',
-        signal_category: 'research_intent',
-        element_type: 'category_header',
-        metadata: {
-          category: groupId,
-          action: 'expand_details'
-        }
-      });
+  useEffect(() => {
+    if (!requestKey) {
+      setIsResolvingUrl(false);
+      setLoadError(false);
+      return;
     }
 
-    setExpandedGroups(prev => 
-      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
-    );
-  };
+    let cancelled = false;
+    setIsResolvingUrl(true);
+    setLoadError(false);
 
-  const handleQuoteClick = (companyId: number) => {
-    track('comparison_quote_click', { 
-      company_id: companyId,
-      cta_location: 'comparison_table'
-    });
-    sendIntentSignal({
-      company_id: companyId,
-      signal_type: 'comparison_usage',
-      signal_category: 'research_intent',
-      element_type: 'comparison_quote_button',
-      element_selector: 'compare-quote-cta',
-      metadata: {
-        action: 'quote_click',
-        comparison_count: comparisonList.length,
-      },
-    });
-    openLeadModal({ preferredCompanyId: companyId, source: 'comparison-page', type: 'quick' });
-  };
+    const loadCompanies = async () => {
+      const identifiers = requestKey.split(',').filter(Boolean);
+      const loaded = await Promise.all(
+        identifiers.map(async (identifier) => {
+          const cached = cacheRef.current.get(identifier);
+          if (cached) return cached;
 
-  // Empty State
-  if (comparisonList.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <motion.div 
-            initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: shouldReduceMotion ? 1 : 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
-            className="h-32 w-32 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 text-blue-200 shadow-inner border-4 border-blue-100"
-          >
-            <Scale className="h-16 w-16" aria-hidden="true" />
-          </motion.div>
-          <motion.h1 
-            initial={{ y: shouldReduceMotion ? 0 : 20, opacity: shouldReduceMotion ? 1 : 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: shouldReduceMotion ? 0 : 0.2 }}
-            className="text-4xl font-black text-slate-900 mb-4 tracking-tight"
-          >
-            Sua comparação está vazia
-          </motion.h1>
-          <motion.p 
-            initial={{ y: shouldReduceMotion ? 0 : 20, opacity: shouldReduceMotion ? 1 : 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: shouldReduceMotion ? 0 : 0.3 }}
-            className="text-slate-500 mb-8 text-lg leading-relaxed"
-          >
-            Selecione até 3 empresas para analisar lado a lado e tomar a melhor decisão para seu projeto.
-          </motion.p>
-          <motion.div
-            initial={{ y: shouldReduceMotion ? 0 : 20, opacity: shouldReduceMotion ? 1 : 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: shouldReduceMotion ? 0 : 0.4 }}
-          >
-            <Button 
-              asChild 
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 px-8 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              <Link href="/companies">
-                <Scale className="h-5 w-5 mr-2" aria-hidden="true" />
-                Explorar Empresas
-                <ArrowRight className="h-5 w-5 ml-2" aria-hidden="true" />
-              </Link>
-            </Button>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
+          const company = /^\d+$/.test(identifier)
+            ? await companiesApi.getById(identifier)
+            : await companiesApi.getBySlug(identifier);
+
+          if (company) {
+            cacheRef.current.set(identifier, company);
+            cacheRef.current.set(company.slug || String(company.id), company);
+          }
+          return company;
+        })
+      );
+
+      if (cancelled) return;
+      const validCompanies = loaded.filter((company): company is Company => Boolean(company));
+      if (validCompanies.length === 0) {
+        setLoadError(true);
+      } else {
+        replaceComparison(validCompanies);
+        setLoadError(false);
+      }
+      setIsResolvingUrl(false);
+    };
+
+    loadCompanies().catch(() => {
+      if (!cancelled) {
+        setLoadError(true);
+        setIsResolvingUrl(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, retryVersion, replaceComparison]);
+
+  useEffect(() => {
+    if (isStorageLoading || isResolvingUrl || loadError) return;
+    const slugs = comparisonList
+      .slice(0, MAX_COMPANIES)
+      .map((company) => company.slug || String(company.id))
+      .filter(Boolean);
+    const nextUrl = slugs.length
+      ? `/compare?companies=${slugs.map(encodeURIComponent).join(',')}`
+      : '/compare';
+    const currentUrl = requestKey
+      ? `/compare?companies=${requestKey.split(',').map(encodeURIComponent).join(',')}`
+      : '/compare';
+
+    if (nextUrl !== currentUrl) router.replace(nextUrl, { scroll: false });
+  }, [comparisonList, isResolvingUrl, isStorageLoading, loadError, requestKey, router]);
+
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+    if (normalizedQuery.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearching(true);
+    const timeout = window.setTimeout(async () => {
+      const results = await companiesApi.getAll({ q: normalizedQuery, limit: 8, status: 'active' });
+      if (!cancelled) {
+        setSearchResults(
+          results.filter((result) => !comparisonList.some((selected) => selected.id === result.id))
+        );
+        results.forEach((company) => {
+          cacheRef.current.set(company.slug || String(company.id), company);
+        });
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [query, comparisonList]);
+
+  const handleAdd = useCallback(
+    (company: Company) => {
+      addToComparison(company);
+      setQuery('');
+      setSearchResults([]);
+    },
+    [addToComparison]
+  );
+
+  const handleQuote = useCallback((company: CompareCompany) => {
+    openLeadModal({ preferredCompanyId: company.id, source: 'comparison-page', type: 'quick' });
+  }, []);
+
+  const isLoading = isStorageLoading || isResolvingUrl;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50/50 to-blue-50/20 pb-20">
-      <div className="mx-auto max-w-[1180px] px-4 pt-4">
-        <BannerSlot placement="compare_page_top" />
-      </div>
-
-      {/* Header */}
-      <ComparePageHeader
-        companiesCount={comparisonList.length}
-        hasPremiumCompanies={hasPremiumCompanies}
-        onClearAll={clearComparison}
-      />
-
-      <main className="relative z-10 mx-auto -mt-4 max-w-[1180px] px-4" id="main-content">
-        {/* Summary Section */}
-        <ComparisonSummary
-          companies={comparisonList}
-          maxCompanies={3}
-          onRemove={removeFromComparison}
-          className="mb-8"
-        />
-
-        {/* Premium Banner */}
-        {premiumCompany && (
-          <PremiumBannerSection
-            company={premiumCompany}
-            className="max-w-4xl mx-auto mb-8"
-          />
-        )}
-
-        <div className="mb-8">
-          <BannerSlot placement="compare_page_inline" />
+    <div className="min-h-[calc(100vh-4rem)] overflow-x-clip bg-slate-50 pb-16">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6 lg:py-14">
+          <Link
+            href="/companies"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-800"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
+            Ver empresas
+          </Link>
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">
+              <Scale className="h-4 w-4" aria-hidden="true" /> Comparador de empresas
+            </span>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              Compare antes de decidir.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
+              condições comerciais.
+            </p>
+          </div>
         </div>
+      </header>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 w-full min-w-0">
-            {/* Mobile: Card Layout */}
-        <div className="block md:hidden space-y-6 mb-8">
-          {comparisonList.map((company, idx) => (
-            <CompanyComparisonCard
-              key={company.id}
-              company={company}
-              onRemove={removeFromComparison}
-              onQuote={handleQuoteClick}
-            />
-          ))}
-        </div>
-
-        {/* Desktop & Tablet: Table Layout */}
-        <div className="hidden md:block">
-          <div className="overflow-hidden rounded-[2rem] border border-slate-150 bg-white shadow-[0_30px_64px_-36px_rgba(15,23,42,0.45)]">
-            <ScrollArea className="w-full">
-              <div className="min-w-[760px]">
-                
-                {/* Table Header: Sticky Company Info */}
-                <div className="sticky top-0 z-30 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-200 bg-white shadow-sm divide-x divide-slate-200">
-                  <div className="flex flex-col justify-end bg-slate-50/50 p-5">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Dimensões</span>
-                  </div>
-
-                  <AnimatePresence mode="popLayout">
-                    {comparisonList.slice(0, 3).map((company, idx) => {
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
-                      const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
-                      const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
-
-                      return (
-                        <motion.div 
-                          key={company.id}
-                          layout
-                          initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: shouldReduceMotion ? 1 : 0, scale: shouldReduceMotion ? 1 : 0.95 }}
-                          className={cn(
-                            "group relative flex flex-col p-5 bg-white transition-all",
-                            isHighlighted && "bg-blue-50/10 ring-2 ring-blue-600 ring-inset z-10"
-                          )}
-                        >
-                          {/* Ribbon Destaque */}
-                          {isHighlighted && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-                              <Sparkles className="h-2.5 w-2.5 fill-amber-300 text-amber-300" /> Melhor avaliada
-                            </div>
-                          )}
-
-                          <button 
-                            onClick={() => removeFromComparison(company.id)} 
-                            aria-label={`Remover ${company.name} da comparação`}
-                            className="absolute right-3 top-3 rounded-full bg-slate-50 p-1.5 text-slate-400 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none"
-                            title="Remover da comparação"
-                          >
-                            <X className="h-4 w-4" aria-hidden="true" />
-                          </button>
-
-                          <div className="flex items-start justify-between gap-4">
-                            {/* Logo Container */}
-                            <div className="relative flex h-12 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-                              {logoUrl ? (
-                                <img
-                                  src={logoUrl}
-                                  alt={`Logo da ${company.name}`}
-                                  className="h-full w-full object-contain"
-                                />
-                              ) : (
-                                <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />
-                              )}
-                            </div>
-
-                            {/* Status Badges */}
-                            {company.verified ? (
-                              <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700">
-                                Verificada
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-700">
-                                Em análise
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-4">
-                            <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
-                              <h4 className="text-sm font-black tracking-tight leading-snug line-clamp-1 text-slate-900">{company.name}</h4>
-                            </Link>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <div className="flex text-amber-400">
-                                {[1, 2, 3, 4, 5].map((i) => {
-                                  const filled = i <= Math.round(rating);
-                                  return (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-3 w-3 ${filled ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
-                                    />
-                                  );
-                                })}
-                              </div>
-                              <span className="text-[11px] font-bold text-slate-700">{rating > 0 ? rating.toFixed(1) : 'Sem nota'}</span>
-                              {reviews > 0 && (
-                                <span className="text-[10px] text-slate-500">({reviews})</span>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </AnimatePresence>
-
-                  {/* Empty Slots */}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <Link 
-                      key={`empty-${i}`}
-                      href="/companies"
-                      className="group flex flex-col items-center justify-center bg-slate-50/20 p-5 transition-all hover:bg-white focus:outline-none"
-                      aria-label="Adicionar mais uma empresa à comparação"
-                    >
-                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[1rem] border-2 border-dashed border-slate-200 bg-white text-sm font-bold text-slate-300 transition-all group-hover:border-blue-200 group-hover:text-blue-400">
-                        <Plus className="h-5 w-5" />
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors group-hover:text-blue-600">Adicionar</span>
-                    </Link>
-                  ))}
+      <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:py-10" id="main-content">
+        {isLoading ? (
+          <CompareLoadingState />
+        ) : loadError ? (
+          <CompareErrorState onRetry={() => setRetryVersion((version) => version + 1)} />
+        ) : (
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <section className="min-w-0" aria-labelledby="comparison-title">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 id="comparison-title" className="text-xl font-black text-slate-950">
+                    Comparação lado a lado
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {companies.length} de {MAX_COMPANIES} empresas selecionadas
+                  </p>
                 </div>
-
-                {/* 1. Reputação Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Reputação</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Média de avaliações de clientes</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
-                    const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
-                    const isHighlighted = company.id === highestRatedCompanyId;
-
-                    return (
-                      <div key={`rep-${company.id}`} className={cn("p-5 flex flex-col justify-center gap-1.5", isHighlighted && "bg-blue-50/5")}>
-                        {rating > 0 ? (
-                          <>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-base font-black text-slate-900">{rating.toFixed(1)}</span>
-                              <span className="text-xs text-slate-500">de 5</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                              <div 
-                                className={cn("h-1.5 rounded-full", isHighlighted ? 'bg-blue-600' : 'bg-slate-700')}
-                                style={{ width: `${(rating / 5) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-slate-500">Baseada em {reviews} avaliações</span>
-                          </>
-                        ) : (
-                          <span className="text-xs font-semibold text-slate-500">Ainda sem avaliações</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-rep-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* 2. Verificação Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Verificação</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Documentos e dados conferidos</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`ver-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
-                        <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
-                          {company.verified ? (
-                            <>
-                              <span className="text-emerald-600">Verificada</span>
-                              <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                            </>
-                          ) : (
-                            <span className="text-amber-600">Em análise</span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-500 mt-1">
-                          {company.verified ? 'Documentos verificados' : 'Documentos em verificação'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-ver-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* 3. Tempo de Resposta Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Tempo de resposta</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Média para primeiro contato</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const speed = getSpeedBadge(company.response_time_sla);
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`time-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-slate-900">{company.response_time_sla || 'Consultar'}</span>
-                          {speed && (
-                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${speed.color}`}>
-                              {speed.label}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-500 mt-1">Média para 1º contato</span>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-time-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* 4. Cobertura Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Cobertura</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Onde a empresa atua</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const coverageCount = getCoverageCount(company);
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`cov-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
-                        <span className="text-sm font-bold text-slate-900 line-clamp-1">
-                          {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
-                        </span>
-                        <span className="text-[10px] text-slate-500 mt-1">
-                          {coverageCount > 0 ? `+${coverageCount} cidades atendidas` : 'Sob consulta'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-cov-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* 5. Projetos Realizados Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Projetos realizados</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Projetos concluídos</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const projects = company.delivered_projects_score || 0;
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`proj-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
-                        <span className="text-sm font-bold text-slate-900">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
-                        <span className="text-[10px] text-slate-500 mt-1">Projetos concluídos</span>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-proj-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* 6. Garantia Oferecida Row */}
-                <div className="grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-100 divide-x divide-slate-100">
-                  <div className="bg-slate-50/30 p-5 flex items-center">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Garantia oferecida</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Tempo de garantia médio</p>
-                    </div>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const warranty = company.warranty_years || 0;
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`gar-${company.id}`} className={cn("p-5 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
-                        <span className="text-sm font-bold text-slate-900">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
-                        <span className="text-[10px] text-slate-500 mt-1">Garantia média</span>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-gar-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
-                {/* Action Footer Row */}
-                <div className="sticky bottom-0 z-20 grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-t border-slate-200 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.02)] divide-x divide-slate-200">
-                  <div className="flex items-center justify-center bg-slate-50/50 p-5">
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Match de Decisão</span>
-                  </div>
-                  {comparisonList.slice(0, 3).map((company, idx) => {
-                    const isHighlighted = company.id === highestRatedCompanyId;
-                    return (
-                      <div key={`cta-${company.id}`} className={cn("p-5", isHighlighted && "bg-blue-50/5")}>
-                        <Button 
-                          className={cn(
-                            "w-full rounded-xl font-black h-12 transition-all hover:scale-[1.02] active:scale-95 shadow-md text-white bg-blue-600 hover:bg-blue-700 shadow-blue-200/50",
-                            isPremiumCompany(company) && "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200/50"
-                          )}
-                          onClick={() => handleQuoteClick(company.id)}
-                          aria-label={`Solicitar orçamento da ${company.name}`}
-                        >
-                          Cotar com {company.name.split(' ')[0]}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                  {Array.from({ length: 3 - Math.min(comparisonList.length, 3) }).map((_, i) => (
-                    <div key={`empty-cta-${i}`} className="bg-slate-50/5 p-5"></div>
-                  ))}
-                </div>
-
+                {companies.length > 0 && (
+                  <Link
+                    href="/companies"
+                    className="text-sm font-bold text-blue-700 hover:underline"
+                  >
+                    Explorar mais empresas
+                  </Link>
+                )}
               </div>
-            </ScrollArea>
-          </div>
-        </div>
-          </div>
 
-          {/* Sidebar Area (Banner) */}
-          <div className="hidden lg:block w-[300px] shrink-0">
-            <div className="sticky top-24">
-              <BannerSlot placement="compare_page_sidebar" />
-            </div>
+              {companies.length === 0 ? (
+                <EmptyComparisonState />
+              ) : (
+                <>
+                  <MobileComparison
+                    companies={companies}
+                    onRemove={removeFromComparison}
+                    onQuote={handleQuote}
+                  />
+                  <DesktopComparison
+                    companies={companies}
+                    onRemove={removeFromComparison}
+                    onQuote={handleQuote}
+                  />
+                </>
+              )}
+            </section>
+
+            <CompanySearchPanel
+              query={query}
+              onQueryChange={setQuery}
+              results={searchResults}
+              selectedCount={companies.length}
+              isSearching={isSearching}
+              canAddMore={canAddMore}
+              onAdd={handleAdd}
+            />
           </div>
-        </div>
-
-        {/* Footer CTA */}
-        <ComparisonFooterCTA 
-          hasPremiumCompanies={hasPremiumCompanies}
-          className="mt-12"
-        />
-
-        <div className="mt-12">
-          <BannerSlot placement="compare_page_bottom" />
-        </div>
+        )}
       </main>
     </div>
   );
 }
 
-function CategoryHeader({ 
-  id, 
-  label, 
-  icon, 
-  isExpanded, 
-  onToggle 
-}: { 
-  id: string; 
-  label: string; 
-  icon: React.ReactNode; 
-  isExpanded: boolean; 
-  onToggle: () => void 
-}) {
+function CompareLoadingState() {
   return (
-    <button 
-      onClick={onToggle}
-      aria-expanded={isExpanded}
-      aria-controls={`category-${id}`}
-      className={cn(
-        "group grid w-full grid-cols-[170px_repeat(3,minmax(0,1fr))] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500",
-        isExpanded 
-          ? "bg-white border-y border-slate-100 shadow-sm z-10" 
-          : "bg-slate-50/50 border-y border-transparent hover:bg-white"
-      )}
+    <div
+      className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-[minmax(0,1fr)_320px]"
+      role="status"
+      aria-label="Carregando empresas para comparação"
     >
-      <div className="col-span-4 flex items-center justify-between p-4 px-6">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "p-2.5 rounded-2xl transition-all duration-300",
-            isExpanded 
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
-              : "bg-white text-slate-400 shadow-sm group-hover:text-blue-600"
-          )}>
-            {icon}
-          </div>
-          <div className="flex flex-col items-start">
-            <span className={cn(
-              "text-base font-black uppercase tracking-widest transition-colors",
-              isExpanded ? "text-slate-900" : "text-slate-500 group-hover:text-slate-900"
-            )}>
-              {label}
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              Clique para {isExpanded ? 'recolher' : 'expandir'} detalhes
-            </span>
-          </div>
+      <ComparisonTableSkeleton />
+      <aside
+        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        aria-label="Carregando painel de empresas"
+      >
+        <Skeleton className="h-6 w-44" />
+        <Skeleton className="mt-4 h-11 w-full rounded-xl" />
+        <div className="mt-6 space-y-4">
+          {[1, 2, 3].map((item) => (
+            <Skeleton key={item} className="h-16 w-full rounded-xl" />
+          ))}
         </div>
-        <div className={cn(
-          "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300",
-          isExpanded ? "bg-slate-100 text-slate-900" : "bg-white text-slate-300 group-hover:text-blue-500 shadow-sm"
-        )}>
-          <ChevronDown 
-            className={cn("h-5 w-5 transition-transform duration-500", isExpanded && "rotate-180")} 
-            aria-hidden="true" 
-          />
-        </div>
-      </div>
-    </button>
+      </aside>
+      <span className="sr-only">Carregando...</span>
+    </div>
   );
 }
 
-function ComparisonRow({ 
-  label, 
-  icon, 
-  companies, 
-  value 
-}: { 
-  label: string; 
-  icon: React.ReactNode; 
-  companies: Company[]; 
-  value: (c: Company) => React.ReactNode 
-}) {
-  const mainCompanyId = companies[0]?.id;
-  
-  // Track dwell/hover on the entire row as generalized intent for the primary company
-  const { onMouseEnter, onMouseLeave } = useHoverIntent(
-    mainCompanyId,
-    'comparison_row',
-    1000, // 1s dwell
-    { 
-      elementSelector: `row-${label.toLowerCase().replace(/\s+/g, '-')}`,
-      metadata: { criterion: label }
-    }
-  );
-
+function CompareErrorState({ onRetry }: { onRetry: () => void }) {
   return (
-    <div 
-      className="group grid grid-cols-[170px_repeat(3,minmax(0,1fr))] border-b border-slate-50/50 transition-colors hover:bg-blue-50/5 last:border-b-0"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+    <div
+      className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm"
+      role="alert"
     >
-      <div className="flex items-center gap-3 border-r border-slate-100 bg-slate-50/10 p-4">
-        <div className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md flex-shrink-0">
-          {icon}
-        </div>
-        <span className="text-[11px] font-black text-slate-500 uppercase tracking-wide group-hover:text-slate-900 transition-colors leading-tight">
-          {label}
-        </span>
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+        <RefreshCw className="h-6 w-6" aria-hidden="true" />
       </div>
+      <h2 className="mt-5 text-xl font-black text-slate-950">
+        Não foi possível carregar as empresas para comparação.
+      </h2>
+      <Button onClick={onRetry} className="mt-6" aria-label="Tentar carregar as empresas novamente">
+        Tentar novamente
+      </Button>
+    </div>
+  );
+}
 
-      {companies.slice(0, 3).map((company, idx) => (
-        <div key={`val-${company.id}`} className={cn(
-          "flex items-center justify-center border-r border-slate-100 p-4 text-center transition-colors last:border-r-0",
-          idx === 0 && "bg-blue-50/5"
-        )}>
-          <div className="animate-in fade-in slide-in-from-bottom-1 duration-500">
-            {value(company)}
-          </div>
-        </div>
+function EmptyComparisonState() {
+  return (
+    <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+        <Scale className="h-8 w-8" aria-hidden="true" />
+      </div>
+      <h2 className="mt-5 text-2xl font-black text-slate-950">Escolha empresas para comparar.</h2>
+      <p className="mt-2 max-w-md text-slate-500">
+        Use a busca ao lado para montar sua comparação com dados reais das empresas cadastradas.
+      </p>
+      <Button asChild variant="outline" className="mt-6">
+        <Link href="/companies">Ver empresas cadastradas</Link>
+      </Button>
+    </div>
+  );
+}
+
+type ComparisonProps = {
+  companies: CompareCompany[];
+  onRemove: (id: number) => void;
+  onQuote: (company: CompareCompany) => void;
+};
+
+function DesktopComparison({ companies, onRemove, onQuote }: ComparisonProps) {
+  return (
+    <div className="hidden overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_-38px_rgba(15,23,42,0.45)] md:block">
+      <table className="w-full min-w-[720px] table-fixed border-collapse text-left">
+        <caption className="sr-only">Comparação detalhada entre as empresas selecionadas</caption>
+        <thead>
+          <tr className="border-b border-slate-200 align-top">
+            <th
+              scope="col"
+              className="w-40 bg-slate-50 p-5 text-xs font-extrabold uppercase tracking-wider text-slate-500"
+            >
+              Critério
+            </th>
+            {companies.map((company) => (
+              <th scope="col" key={company.id} className="relative border-l border-slate-200 p-5">
+                <button
+                  onClick={() => onRemove(company.id)}
+                  aria-label={`Remover ${company.name} da comparação`}
+                  className="absolute right-3 top-3 rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="md" />
+                <Link
+                  href={`/companies/${company.slug || company.id}`}
+                  className="mt-4 block pr-8 text-base font-black text-slate-950 hover:text-blue-700"
+                >
+                  {company.name}
+                </Link>
+                <VerificationBadge verified={company.verified} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <ComparisonRow
+            label="Avaliação"
+            companies={companies}
+            render={(company) => (
+              <div>
+                <span className="inline-flex items-center gap-1 font-black text-slate-950">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
+                  {company.rating.toFixed(1)}
+                </span>
+                <span className="ml-2 text-xs text-slate-500">
+                  {company.reviewsCount} avaliações
+                </span>
+              </div>
+            )}
+          />
+          <ComparisonRow
+            label="Localização"
+            companies={companies}
+            render={(company) => (
+              <span>
+                {[company.city, company.state].filter(Boolean).join(', ') || 'Não informado'}
+              </span>
+            )}
+          />
+          <ComparisonRow
+            label="Tempo de resposta"
+            companies={companies}
+            render={(company) => <span>{company.response_time_sla || 'Consultar'}</span>}
+          />
+          <ComparisonRow
+            label="Experiência"
+            companies={companies}
+            render={(company) => (
+              <span>
+                {company.founded_year
+                  ? `${Math.max(0, new Date().getFullYear() - company.founded_year)} anos`
+                  : 'Não informado'}
+              </span>
+            )}
+          />
+          <ComparisonRow
+            label="Financiamento"
+            companies={companies}
+            render={(company) => (
+              <span>{company.financing_enabled ? 'Disponível' : 'Consultar'}</span>
+            )}
+          />
+          <ComparisonRow
+            label="Garantia"
+            companies={companies}
+            render={(company) => (
+              <span>{company.warranty_years ? `${company.warranty_years} anos` : 'Consultar'}</span>
+            )}
+          />
+          <tr className="border-t border-slate-200 bg-slate-50/60 align-top">
+            <th scope="row" className="p-5 text-sm font-bold text-slate-700">
+              Próximo passo
+            </th>
+            {companies.map((company) => (
+              <td key={company.id} className="border-l border-slate-200 p-4">
+                <Button
+                  onClick={() => onQuote(company)}
+                  className="w-full"
+                  aria-label={`Solicitar orçamento da ${company.name}`}
+                >
+                  Solicitar orçamento
+                </Button>
+                <Button asChild variant="ghost" className="mt-2 w-full text-blue-700">
+                  <Link
+                    href={`/companies/${company.slug || company.id}`}
+                    aria-label={`Ver perfil completo da ${company.name}`}
+                  >
+                    Ver perfil completo
+                  </Link>
+                </Button>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ComparisonRow({
+  label,
+  companies,
+  render,
+}: {
+  label: string;
+  companies: CompareCompany[];
+  render: (company: CompareCompany) => React.ReactNode;
+}) {
+  return (
+    <tr className="border-b border-slate-100 last:border-0">
+      <th scope="row" className="bg-slate-50/70 p-5 text-sm font-bold text-slate-700">
+        {label}
+      </th>
+      {companies.map((company) => (
+        <td
+          key={company.id}
+          className="border-l border-slate-100 p-5 text-sm font-semibold text-slate-700"
+        >
+          {render(company)}
+        </td>
       ))}
+    </tr>
+  );
+}
 
-      {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
-        <div key={`empty-val-${i}`} className="border-r border-slate-100 bg-slate-50/5 p-4 last:border-r-0"></div>
+function MobileComparison({ companies, onRemove, onQuote }: ComparisonProps) {
+  return (
+    <div className="space-y-4 md:hidden">
+      {companies.map((company) => (
+        <article
+          key={company.id}
+          className="relative rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <button
+            onClick={() => onRemove(company.id)}
+            aria-label={`Remover ${company.name} da comparação`}
+            className="absolute right-4 top-4 rounded-full bg-slate-50 p-2 text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="md" />
+          <h3 className="mt-4 pr-10 text-xl font-black text-slate-950">{company.name}</h3>
+          <VerificationBadge verified={company.verified} />
+          <dl className="mt-5 grid grid-cols-2 gap-3">
+            <MobileStat
+              label="Avaliação"
+              value={`${company.rating.toFixed(1)} (${company.reviewsCount})`}
+            />
+            <MobileStat
+              label="Localização"
+              value={[company.city, company.state].filter(Boolean).join(', ') || 'Não informado'}
+            />
+            <MobileStat label="Resposta" value={company.response_time_sla || 'Consultar'} />
+            <MobileStat
+              label="Garantia"
+              value={company.warranty_years ? `${company.warranty_years} anos` : 'Consultar'}
+            />
+          </dl>
+          <Button
+            onClick={() => onQuote(company)}
+            className="mt-5 w-full"
+            aria-label={`Solicitar orçamento da ${company.name}`}
+          >
+            Solicitar orçamento
+          </Button>
+          <Button asChild variant="outline" className="mt-2 w-full">
+            <Link
+              href={`/companies/${company.slug || company.id}`}
+              aria-label={`Ver perfil completo da ${company.name}`}
+            >
+              Ver perfil completo
+            </Link>
+          </Button>
+        </article>
       ))}
     </div>
   );
 }
 
-function ArrowRight(props: any) {
+function MobileStat({ label, value }: { label: string; value: string }) {
   return (
-    <svg 
-      {...props} 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
+    <div className="rounded-xl bg-slate-50 p-3">
+      <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</dt>
+      <dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
+function VerificationBadge({ verified }: { verified: boolean }) {
+  return verified ? (
+    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
+      <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Empresa verificada
+    </span>
+  ) : (
+    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+      <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Cadastro em análise
+    </span>
+  );
+}
+
+type SearchPanelProps = {
+  query: string;
+  onQueryChange: (query: string) => void;
+  results: Company[];
+  selectedCount: number;
+  isSearching: boolean;
+  canAddMore: boolean;
+  onAdd: (company: Company) => void;
+};
+
+function CompanySearchPanel({
+  query,
+  onQueryChange,
+  results,
+  selectedCount,
+  isSearching,
+  canAddMore,
+  onAdd,
+}: SearchPanelProps) {
+  const showNoResults = query.trim().length >= 2 && !isSearching && results.length === 0;
+  return (
+    <aside
+      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24"
+      aria-labelledby="company-search-title"
     >
-      <path d="M5 12h14" />
-      <path d="m12 5 7 7-7 7" />
-    </svg>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="company-search-title" className="font-black text-slate-950">
+            Adicionar empresa
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            {selectedCount}/{MAX_COMPANIES} selecionadas
+          </p>
+        </div>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+          <Plus className="h-5 w-5" aria-hidden="true" />
+        </span>
+      </div>
+      <label htmlFor="compare-company-search" className="sr-only">
+        Buscar empresa por nome ou cidade
+      </label>
+      <div className="relative mt-5">
+        <Search
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          aria-hidden="true"
+        />
+        <Input
+          id="compare-company-search"
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Nome ou cidade"
+          className="pl-9"
+          aria-label="Buscar empresa por nome ou cidade"
+          disabled={!canAddMore}
+        />
+        {isSearching && (
+          <Loader2
+            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-600"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+      {!canAddMore && (
+        <p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-semibold text-blue-800">
+          <CheckCircle2 className="mr-1 inline h-4 w-4" aria-hidden="true" />
+          Limite de três empresas atingido.
+        </p>
+      )}
+      <div className="mt-4 space-y-2" aria-live="polite">
+        {results.map((company) => (
+          <button
+            key={company.id}
+            onClick={() => onAdd(company)}
+            className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-blue-300 hover:bg-blue-50/50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            aria-label={`Adicionar ${company.name} à comparação`}
+          >
+            <CompanyLogo logoUrl={company.logo_url} name={company.name} size="sm" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-slate-900">
+                {company.name}
+              </span>
+              <span className="flex items-center gap-1 truncate text-xs text-slate-500">
+                <MapPin className="h-3 w-3" aria-hidden="true" />
+                {[company.city, company.state].filter(Boolean).join(', ') || 'Local não informado'}
+              </span>
+            </span>
+            <Plus className="h-4 w-4 shrink-0 text-blue-700" aria-hidden="true" />
+          </button>
+        ))}
+        {showNoResults && (
+          <div className="rounded-xl bg-slate-50 p-4 text-center">
+            <p className="text-sm font-bold text-slate-800">Nenhuma empresa encontrada.</p>
+            <Link
+              href="/companies"
+              className="mt-2 inline-block text-sm font-bold text-blue-700 hover:underline"
+            >
+              Ver empresas cadastradas
+            </Link>
+          </div>
+        )}
+      </div>
+      {query.trim().length < 2 && canAddMore && (
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          Digite pelo menos dois caracteres para buscar empresas cadastradas.
+        </p>
+      )}
+    </aside>
   );
 }
