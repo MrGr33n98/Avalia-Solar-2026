@@ -12,6 +12,7 @@ import { BrandLogo } from './brand/BrandLogo';
 
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 
 const CompanySwitcher = dynamic(
   () => import('./company/CompanySwitcher').then((mod) => ({ default: mod.CompanySwitcher })),
@@ -202,8 +203,21 @@ export default function Navbar() {
                   <Link
                     href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
                     onClick={handleMinhaContaClick}
+                    className="flex items-center"
                   >
-                    <UserIcon className="mr-1.5 h-4 w-4" /> Minha conta
+                    {user?.avatar_url ? (
+                      <img
+                        src={getFullImageUrl(user.avatar_url)}
+                        alt={user.name || 'Avatar'}
+                        className="mr-1.5 h-5 w-5 rounded-full object-cover border border-slate-200"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <UserIcon className="mr-1.5 h-4 w-4" />
+                    )}
+                    Minha conta
                   </Link>
                 </Button>
                 {user?.role === 'company' ? (
@@ -365,8 +379,20 @@ export default function Navbar() {
                       <Link
                         href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
                         onClick={handleMinhaContaClick}
+                        className="flex items-center"
                       >
-                        <UserIcon className="mr-1.5 h-3.5 w-3.5 opacity-60" />
+                        {user?.avatar_url ? (
+                          <img
+                            src={getFullImageUrl(user.avatar_url)}
+                            alt={user.name || 'Avatar'}
+                            className="mr-1.5 h-5 w-5 rounded-full object-cover border border-slate-200 dark:border-white/10"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <UserIcon className="mr-1.5 h-3.5 w-3.5 opacity-60" />
+                        )}
                         Perfil
                       </Link>
                     </Button>
