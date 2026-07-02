@@ -431,7 +431,11 @@ export default function ChatWidget() {
   ];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[1000] font-sans flex flex-col items-end pointer-events-none">
+    <div
+      className={`fixed bottom-5 right-5 font-sans flex flex-col items-end pointer-events-none ${
+        isOpen ? 'z-[9010]' : 'z-[9000]'
+      }`}
+    >
       {/* Chat Window */}
       {isOpen && (
         <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[400px] sm:h-[650px] max-h-[58vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">

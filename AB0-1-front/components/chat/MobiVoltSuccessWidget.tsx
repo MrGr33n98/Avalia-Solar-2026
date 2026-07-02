@@ -125,7 +125,11 @@ export default function MobiVoltSuccessWidget() {
   ];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[1000] font-sans flex flex-col items-end pointer-events-none">
+    <div
+      className={`fixed bottom-5 right-5 font-sans flex flex-col items-end pointer-events-none ${
+        isOpen ? 'z-[9010]' : 'z-[9000]'
+      }`}
+    >
       
       {/* Chat Window */}
       {isOpen && (

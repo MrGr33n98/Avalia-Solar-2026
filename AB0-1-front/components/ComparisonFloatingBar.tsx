@@ -173,7 +173,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className="fixed bottom-[76px] right-3 z-50 md:bottom-5 md:right-6"
+            className="fixed bottom-24 right-5 z-[8900] md:bottom-28 md:right-6"
           >
             <div className="flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
               <button
@@ -204,11 +204,11 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-5 left-1/2 z-[999] w-[calc(100vw-140px)] max-w-[900px] min-w-0 -translate-x-1/2 md:w-[72vw] md:min-w-[600px]"
+            className="pointer-events-none fixed bottom-24 left-3 right-3 z-[8900] sm:left-4 sm:right-4 lg:bottom-6 lg:left-1/2 lg:right-auto lg:w-[min(1120px,calc(100vw-200px))] lg:-translate-x-1/2"
           >
             <section className="pointer-events-auto overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
-              <div className="border-b border-slate-200 px-4 py-4 md:px-5">
-                <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_auto] xl:items-start">
+              <div className="relative border-b border-slate-200 px-4 py-4 pr-20 md:px-5 md:pr-24">
+                <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
                   <div className="min-w-0">
                     <p className="text-base font-semibold tracking-tight text-slate-950">
                       Comparação transparente
@@ -216,13 +216,6 @@ export default function ComparisonFloatingBar() {
                     <p className="mt-1 max-w-[220px] text-xs leading-5 text-slate-600">
                       Compare lado a lado com os mesmos critérios para todas.
                     </p>
-                    <span
-                      className="mt-2 inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
-                      aria-live="polite"
-                    >
-                      {count} de {maxComparison}{' '}
-                      {count === 1 ? 'empresa selecionada' : 'empresas selecionadas'}
-                    </span>
                   </div>
 
                   <div
@@ -247,7 +240,7 @@ export default function ComparisonFloatingBar() {
                     ) : null}
                   </div>
 
-                  <div className="flex items-start justify-end gap-2">
+                  <div className="absolute right-3 top-3 flex items-center gap-1 md:right-4 md:top-4">
                     <button
                       type="button"
                       onClick={() => setDockState('minimized')}
@@ -270,7 +263,14 @@ export default function ComparisonFloatingBar() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 px-4 py-4 md:px-5 lg:flex-row lg:items-center lg:justify-end">
+              <div className="flex flex-col gap-3 px-4 py-4 md:px-5 lg:flex-row lg:items-center lg:justify-between">
+                <span
+                  className="inline-flex w-fit rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700"
+                  aria-live="polite"
+                >
+                  {count} de {maxComparison}{' '}
+                  {count === 1 ? 'empresa selecionada' : 'empresas selecionadas'}
+                </span>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     variant="ghost"
