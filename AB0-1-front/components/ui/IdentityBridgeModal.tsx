@@ -109,52 +109,51 @@ export default function IdentityBridgeModal({
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className={cn(
-                "clay-card w-full max-w-[21rem] overflow-hidden pointer-events-auto",
-                "p-5 md:p-6 relative flex flex-col items-center text-center"
+                "pointer-events-auto relative flex w-full max-w-[26rem] flex-col items-center overflow-hidden rounded-lg border border-slate-200 bg-white px-6 py-6 text-center shadow-[0_24px_80px_rgba(15,23,42,0.18)] md:px-7 md:py-7"
               )}
             >
               {/* Close Button */}
               {canDismiss && (
                 <button
                   onClick={handleClose}
-                  className="absolute right-3 top-3 rounded-full p-1.5 hover:bg-muted smooth-transition group"
+                  className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   aria-label="Fechar"
                 >
-                  <X className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                  <X className="h-4 w-4" />
                 </button>
               )}
 
               {/* Icon Stack/Visual Element */}
               <div className="relative mb-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 clay-convex">
-                  <ShieldCheck className="h-7 w-7 text-primary" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+                  <ShieldCheck className="h-8 w-8 text-blue-600" />
                 </div>
                 <motion.div 
                   animate={{ y: [0, -5, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                  className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-lg border border-accent/30 bg-accent/20 shadow-lg backdrop-blur-md"
+                  className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100 shadow-sm"
                 >
-                  <Zap className="h-3 w-3 text-accent" />
+                  <Zap className="h-3 w-3 text-emerald-600" />
                 </motion.div>
               </div>
 
               {/* Content */}
-              <h2 className="mb-3 text-xl font-bold tracking-tight text-foreground md:text-2xl">
+              <h2 className="mb-3 max-w-[12ch] text-[1.85rem] font-black tracking-tight text-slate-950 md:text-[2.15rem] md:leading-[1.05]">
                 {title}
               </h2>
               
-              <p className="mb-5 max-w-[24ch] text-sm leading-relaxed text-muted-foreground md:text-[0.95rem]">
+              <p className="mb-5 max-w-[22ch] text-sm leading-7 text-slate-500 md:text-[0.98rem]">
                 {description}
               </p>
 
               {/* Benefits Grid (Subtle) */}
-              <div className="mb-5 grid w-full grid-cols-2 gap-2.5">
-                <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">
-                  <BarChart3 className="h-4 w-4 text-primary" />
+              <div className="mb-5 grid w-full grid-cols-2 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-slate-50">
+                <div className="flex items-center gap-2 px-3 py-3 text-xs text-slate-600">
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
                   <span>Scores Reais</span>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-lg bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">
-                  <Heart className="h-4 w-4 text-destructive" />
+                <div className="flex items-center gap-2 px-3 py-3 text-xs text-slate-600">
+                  <Heart className="h-4 w-4 text-rose-500" />
                   <span>Favoritos</span>
                 </div>
               </div>
@@ -163,7 +162,7 @@ export default function IdentityBridgeModal({
               <div className="flex w-full flex-col gap-3">
                 <button
                   onClick={handleLogin}
-                  className="clay-btn-primary px-4 py-3 text-base tracking-wide smooth-transition active:scale-95"
+                  className="h-12 w-full rounded-md bg-blue-600 px-4 text-[15px] font-bold tracking-wide text-white shadow-[0_10px_30px_rgba(37,99,235,0.32)] transition-colors hover:bg-blue-700 active:scale-[0.99]"
                 >
                   {primaryActionLabel}
                 </button>
@@ -171,7 +170,7 @@ export default function IdentityBridgeModal({
                 {showSecondaryAction && (
                   <button
                     onClick={handleStayLoggedOut}
-                    className="text-xs font-medium text-muted-foreground smooth-transition underline-offset-4 hover:text-foreground hover:underline"
+                    className="text-sm font-medium text-blue-600 underline-offset-4 hover:underline"
                   >
                     {secondaryActionLabel}
                   </button>
@@ -179,7 +178,7 @@ export default function IdentityBridgeModal({
               </div>
 
               {/* Trust Footer */}
-              <p className="mt-5 text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/50">
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
                 PLATAFORMA TRUST AS A SERVICE • 2026
               </p>
             </motion.div>
