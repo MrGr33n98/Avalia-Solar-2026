@@ -157,7 +157,7 @@ export function Header({
 }) {
   return (
     <TooltipProvider>
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2 md:h-auto md:min-h-[72px] md:gap-4 md:p-4 md:px-6 lg:px-8">
+      <header className="sticky top-[72px] z-30 flex h-16 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2 md:h-auto md:min-h-[72px] md:gap-4 md:p-4 md:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2 md:gap-3">
           <Button
             variant="outline"
@@ -274,7 +274,7 @@ export function DesktopSidebar({
   notificationsCount: number;
 }) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[280px] border-r border-slate-200 bg-white lg:flex lg:flex-col">
+    <aside className="fixed top-[72px] bottom-0 left-0 z-30 hidden w-[280px] border-r border-slate-200 bg-white lg:flex lg:flex-col">
       <SidebarContent repliesCount={repliesCount} notificationsCount={notificationsCount} />
     </aside>
   );

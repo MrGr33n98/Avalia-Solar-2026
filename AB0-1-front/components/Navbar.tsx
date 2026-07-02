@@ -3,16 +3,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, ChevronDown, LogOut, LayoutDashboard, Search, User as UserIcon } from 'lucide-react';
+import { Menu, ChevronDown, Search, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import NavbarSearch from './NavbarSearch';
 import LocationSearch from './LocationSearch';
 import { BrandLogo } from './brand/BrandLogo';
+import { UserAvatarDropdown } from './navigation/UserAvatarDropdown';
 
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import { getFullImageUrl } from '@/utils/image';
 
 const CompanySwitcher = dynamic(
   () => import('./company/CompanySwitcher').then((mod) => ({ default: mod.CompanySwitcher })),
@@ -43,11 +43,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const logoPriority = pathname === '/';
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
-  const hideNavbar =
-    pathname === '/profile' ||
-    pathname?.startsWith('/f/') ||
-    pathname === '/review-dashboard' ||
-    pathname?.startsWith('/review-dashboard/');
+  const hideNavbar = pathname?.startsWith('/f/');
 
   const handleMinhaContaClick = (e: React.MouseEvent) => {
     if (user?.role === 'review') {
@@ -194,43 +190,7 @@ export default function Navbar() {
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="hidden h-10 rounded-lg text-sm font-bold text-slate-600 sm:inline-flex"
-                >
-                  <Link
-                    href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
-                    onClick={handleMinhaContaClick}
-                    className="flex items-center"
-                  >
-                    {user?.avatar_url ? (
-                      <img
-                        src={getFullImageUrl(user.avatar_url)}
-                        alt={user.name || 'Avatar'}
-                        className="mr-1.5 h-5 w-5 rounded-full object-cover border border-slate-200"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <UserIcon className="mr-1.5 h-4 w-4" />
-                    )}
-                    Minha conta
-                  </Link>
-                </Button>
-                {user?.role === 'company' ? (
-                  <Button
-                    asChild
-                    className="hidden h-10 bg-blue-600 font-bold text-white hover:bg-blue-700 sm:inline-flex"
-                  >
-                    <Link href="/dashboard">
-                      <LayoutDashboard className="mr-1.5 h-4 w-4" /> Painel
-                    </Link>
-                  </Button>
-                ) : null}
-              </>
+              <UserAvatarDropdown />
             )}
 
             <Button
@@ -368,58 +328,7 @@ export default function Navbar() {
               ) : (
                 <div className="flex items-center gap-2">
                   {user?.role !== 'review' && <CompanySwitcher className="h-10 w-44" />}
-
-                  <div className="flex items-center rounded-xl border border-brand-border bg-white p-1 dark:border-white/10 dark:bg-white/5">
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 rounded-lg px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-transparent hover:text-brand-blue dark:text-white/65 dark:hover:text-white"
-                    >
-                      <Link
-                        href={user?.role === 'review' ? '/review-dashboard' : '/profile'}
-                        onClick={handleMinhaContaClick}
-                        className="flex items-center"
-                      >
-                        {user?.avatar_url ? (
-                          <img
-                            src={getFullImageUrl(user.avatar_url)}
-                            alt={user.name || 'Avatar'}
-                            className="mr-1.5 h-5 w-5 rounded-full object-cover border border-slate-200 dark:border-white/10"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <UserIcon className="mr-1.5 h-3.5 w-3.5 opacity-60" />
-                        )}
-                        Perfil
-                      </Link>
-                    </Button>
-
-                    {user?.role === 'company' && (
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 rounded-lg border border-brand-blue/10 bg-brand-blue/8 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-blue hover:bg-brand-blue/12 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
-                      >
-                        <Link href="/dashboard">
-                          <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
-                          Painel
-                        </Link>
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleLogout}
-                      className="h-8 rounded-lg px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-red-500 hover:bg-red-500/5 hover:text-red-700"
-                    >
-                      <LogOut className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <UserAvatarDropdown />
                 </div>
               )}
             </div>
