@@ -125,7 +125,7 @@ export default function MobiVoltSuccessWidget() {
   ];
 
   return (
-    <div className="fixed bottom-[max(1rem,var(--safe-area-inset-bottom))] right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-[9010] font-sans flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-5 right-5 z-[1000] font-sans flex flex-col items-end pointer-events-none">
       
       {/* Chat Window */}
       {isOpen && (
@@ -358,7 +358,7 @@ export default function MobiVoltSuccessWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-[72px] w-[72px] rounded-lg shadow-2xl shadow-indigo-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-indigo-500 bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-indigo-500/10"
+          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-indigo-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-indigo-500 bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-indigo-500/10"
           aria-label="Abrir MobiVolt Success"
         >
           {/* Notification Badge */}

@@ -204,9 +204,9 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-[76px] left-3 right-[5.75rem] z-50 md:bottom-5 md:left-6 md:right-6"
+            className="pointer-events-none fixed bottom-5 left-1/2 z-[999] w-[calc(100vw-140px)] max-w-[900px] min-w-0 -translate-x-1/2 md:w-[72vw] md:min-w-[600px]"
           >
-            <section className="pointer-events-auto mx-auto max-w-[1480px] overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
+            <section className="pointer-events-auto overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
               <div className="border-b border-slate-200 px-4 py-4 md:px-5">
                 <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_auto] xl:items-start">
                   <div className="min-w-0">
@@ -333,7 +333,7 @@ export default function ComparisonFloatingBar() {
       </AnimatePresence>
 
       {dockState === 'expanded' ? (
-        <div aria-hidden="true" className="h-[310px] md:h-[220px]" />
+        <div aria-hidden="true" className="h-[270px] md:h-[220px]" />
       ) : null}
 
       <CompanyComparisonModal

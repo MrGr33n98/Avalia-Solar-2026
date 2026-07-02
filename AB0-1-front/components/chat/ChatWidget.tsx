@@ -431,7 +431,7 @@ export default function ChatWidget() {
   ];
 
   return (
-    <div className="fixed bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-[9000] font-sans flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-5 right-5 z-[1000] font-sans flex flex-col items-end pointer-events-none">
       {/* Chat Window */}
       {isOpen && (
         <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[400px] sm:h-[650px] max-h-[58vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
@@ -928,7 +928,7 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-14 w-14 sm:h-[72px] sm:w-[72px] rounded-lg shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
+          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
           aria-label="Abrir Chat IA"
         >
           {/* Notification Pulsing Badge */}
