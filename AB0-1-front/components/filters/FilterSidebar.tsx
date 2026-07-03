@@ -19,6 +19,7 @@ import { RatingFilter } from './RatingFilter';
 import { QualityFilters } from './QualityFilters';
 import { SortFilter } from './SortFilter';
 import { ActiveFiltersSummary } from './ActiveFiltersSummary';
+import { FilterIconBox, SearchStatusCard } from './FilterPrimitives';
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
 import { areFiltersEqual, parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
 import {
@@ -91,12 +92,10 @@ export const FilterSidebar: React.FC = () => {
   const FilterContent = () => (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 px-3">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
         <div className="flex items-center gap-2">
-          <div className="bg-slate-100 p-2 rounded-xl text-slate-900">
-            <SlidersHorizontal size={20} strokeWidth={1.75} />
-          </div>
-          <h2 className="font-bold text-slate-900 tracking-tight text-lg">Filtros</h2>
+          <FilterIconBox icon={SlidersHorizontal} />
+          <h2 className="text-lg font-semibold tracking-tight text-slate-950">Filtros</h2>
         </div>
         
         {isFilterActive(filters) && (
@@ -104,7 +103,7 @@ export const FilterSidebar: React.FC = () => {
             variant="ghost" 
             size="sm" 
             onClick={clearFilters}
-            className="text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 px-2 clay-chip gap-1.5 uppercase tracking-wider"
+            className="h-9 gap-1.5 rounded-none border border-transparent px-2 text-xs font-medium text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-red-600"
           >
             <RotateCcw size={14} />
             Limpar
@@ -116,14 +115,12 @@ export const FilterSidebar: React.FC = () => {
       <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
 
       {/* Filters List */}
-      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-100">
-        <Accordion type="multiple" defaultValue={['categories', 'location', 'sort']} className="space-y-1">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+        <Accordion type="multiple" defaultValue={['categories', 'location', 'sort']}>
           <SortFilter 
             selectedSort={filters.sort}
             onChange={(sort) => updateFilters({ sort })}
           />
-
-          <div className="h-px bg-slate-100 my-1 mx-3" />
 
           <LocationFilter 
             selectedStates={filters.state} 
@@ -132,7 +129,7 @@ export const FilterSidebar: React.FC = () => {
             onCitiesChange={(city) => updateFilters({ city })}
           />
           
-          <div className="px-3 mt-3 mb-1">
+          <div className="border-b border-slate-200 px-5 py-4">
             <SearchRadiusFilter 
               radiusKm={filters.radius_km}
               onRadiusChange={(radius) => updateFilters({ radius_km: radius })}
@@ -141,14 +138,10 @@ export const FilterSidebar: React.FC = () => {
             />
           </div>
 
-          <div className="h-px bg-slate-100 my-1 mx-3" />
-
           <CategoryFilter 
             selectedIds={filters.category_ids} 
             onChange={(ids) => updateFilters({ category_ids: ids })} 
           />
-          
-          <div className="h-px bg-slate-100 my-1 mx-3" />
           
           <RatingFilter 
             selectedRating={filters.min_rating} 
@@ -156,7 +149,7 @@ export const FilterSidebar: React.FC = () => {
           />
         </Accordion>
 
-        <div className="mt-4 pb-6">
+        <div>
           <QualityFilters 
             verified={filters.verified}
             featured={filters.featured}
@@ -172,18 +165,8 @@ export const FilterSidebar: React.FC = () => {
       </div>
 
       {/* Footer (SaaS styling) */}
-      <div className="mt-auto pt-4 border-t border-clay-shadow-light px-3">
-        <div className="clay-panel bg-clay-bg rounded-clay-lg p-4 border border-clay-shadow-light">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-            Status da Busca
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">
-              {isFilterActive(filters) ? 'Filtros aplicados' : 'Busca sem restrições'}
-            </span>
-            <div className={`h-2 w-2 rounded-full ${isFilterActive(filters) ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-slate-300'}`} />
-          </div>
-        </div>
+      <div className="mt-auto border-t border-slate-200 p-5">
+        <SearchStatusCard active={isFilterActive(filters)} />
       </div>
     </div>
   );
@@ -191,7 +174,7 @@ export const FilterSidebar: React.FC = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-[300px] sticky top-[calc(88px+var(--safe-area-inset-top))] h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] pb-[var(--safe-area-inset-bottom)] clay-panel bg-clay-surface border border-clay-shadow-light rounded-clay-lg p-3 overflow-hidden flex-col">
+      <aside className="sticky top-[calc(88px+var(--safe-area-inset-top))] hidden h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] w-[300px] flex-col overflow-hidden border border-slate-200 bg-white pb-[var(--safe-area-inset-bottom)] shadow-none rounded-none lg:flex">
         <FilterContent />
       </aside>
 
@@ -201,33 +184,33 @@ export const FilterSidebar: React.FC = () => {
           <SheetTrigger asChild>
             <Button
               data-testid="mobile-filters-trigger"
-              className="clay-btn-primary rounded-full shadow-2xl px-8 h-14 gap-3 border-none text-base font-bold"
+              className="h-12 gap-3 rounded-none border border-blue-700 bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               <SlidersHorizontal size={20} />
               <span>Filtrar</span>
               {isFilterActive(filters) && (
-                <span className="bg-blue-500 text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-primary ml-1">
+                <span className="ml-1 flex h-5 w-5 items-center justify-center bg-white text-[10px] font-semibold text-blue-700 rounded-none">
                   !
                 </span>
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] border-none p-6 pb-[max(1.5rem,var(--safe-area-inset-bottom))] shadow-2xl">
-            <SheetHeader className="mb-6 flex flex-row items-center justify-between space-y-0">
-              <SheetTitle className="text-2xl font-black tracking-tight">Filtros Avançados</SheetTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)} className="rounded-full bg-slate-100">
+          <SheetContent side="bottom" className="h-[92vh] rounded-none border-x-0 border-b-0 border-t border-slate-200 bg-white p-0 pb-[max(1.5rem,var(--safe-area-inset-bottom))] shadow-xl">
+            <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-slate-200 px-5 py-4">
+              <SheetTitle className="text-xl font-semibold tracking-tight">Filtros avançados</SheetTitle>
+              <Button variant="ghost" size="icon" aria-label="Fechar filtros" onClick={() => setIsMobileOpen(false)} className="rounded-none border border-slate-200 bg-white hover:bg-slate-50">
                 <X size={20} />
               </Button>
             </SheetHeader>
-            <div className="h-full overflow-y-auto pb-36">
+            <div className="h-full overflow-y-auto pb-28">
               <FilterContent />
             </div>
             <div
               data-testid="mobile-filters-sheet-footer"
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent px-6 pt-12 pb-[max(1.5rem,var(--safe-area-inset-bottom))]"
+              className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-5 py-4 pb-[max(1rem,var(--safe-area-inset-bottom))]"
             >
               <Button 
-                className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-xl"
+                className="h-12 w-full rounded-none bg-blue-600 text-sm font-semibold text-white shadow-none hover:bg-blue-700"
                 onClick={() => setIsMobileOpen(false)}
               >
                 Ver resultados

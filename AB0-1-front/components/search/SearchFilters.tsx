@@ -48,24 +48,24 @@ export function SearchFilters({
     onChange({ ...value, [key]: next });
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-base font-bold text-slate-950">
-          <SlidersHorizontal className="h-4 w-4 text-blue-600" />
+    <div className="rounded-none border border-slate-200 bg-white shadow-none">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+        <h2 className="flex items-center gap-3 text-base font-semibold text-slate-950">
+          <span className="flex h-10 w-10 items-center justify-center rounded-none border border-slate-200 bg-slate-50"><SlidersHorizontal className="h-5 w-5 text-slate-900" /></span>
           Filtros
         </h2>
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900"
+          className="flex items-center gap-1 rounded-none px-2 py-2 text-xs font-medium text-blue-700 hover:bg-slate-50 hover:text-blue-900"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Limpar filtros
         </button>
       </div>
 
-      <fieldset className="mt-6 space-y-3">
-        <legend className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+      <fieldset className="space-y-3 border-b border-slate-200 px-5 py-5">
+        <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Tipo de resultado
         </legend>
         <FilterCheckbox
@@ -83,7 +83,7 @@ export function SearchFilters({
         <FilterCheckbox label="Avaliações" count={counts.reviews} checked={false} disabled />
       </fieldset>
 
-      <div className="mt-6 space-y-4 border-t border-slate-100 pt-5">
+      <div className="space-y-4 border-b border-slate-200 px-5 py-5">
         <FilterSelect
           label="Categoria"
           value={value.category}
@@ -104,7 +104,7 @@ export function SearchFilters({
             value={value.city}
             onChange={(event) => update('city', event.target.value)}
             placeholder="Digite uma cidade ou UF"
-            className="mt-2 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
         </label>
         <label className="block text-sm font-semibold text-slate-700">
@@ -112,7 +112,7 @@ export function SearchFilters({
           <select
             value={value.priceRange}
             onChange={(event) => update('priceRange', event.target.value as PriceRange)}
-            className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           >
             <option value="all">Todas as faixas</option>
             <option value="under_1000">Até R$ 1.000</option>
@@ -123,20 +123,20 @@ export function SearchFilters({
         </label>
       </div>
 
-      <label className="mt-5 flex cursor-pointer items-center justify-between gap-4 border-t border-slate-100 pt-5 text-sm font-semibold text-slate-700">
+      <label className="flex cursor-pointer items-center justify-between gap-4 border-b border-slate-200 px-5 py-5 text-sm font-medium text-slate-900 hover:bg-slate-50">
         Apenas verificados
         <input
           type="checkbox"
           checked={value.verifiedOnly}
           onChange={(event) => update('verifiedOnly', event.target.checked)}
-          className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          className="h-5 w-5 rounded-none border-slate-300 text-blue-600 focus:ring-blue-500"
         />
       </label>
 
       <button
         type="button"
         onClick={onApply}
-        className="mt-6 h-11 w-full rounded-lg border border-blue-600 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-50"
+        className="m-5 h-11 w-[calc(100%_-_2.5rem)] rounded-none bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
       >
         Aplicar filtros
       </button>
@@ -164,7 +164,7 @@ function FilterCheckbox({
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange?.(event.target.checked)}
-        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+        className="h-4 w-4 rounded-none border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
       />
       <span>{label}</span>
       <span className="text-xs text-slate-400">({count})</span>
@@ -191,7 +191,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-sm font-normal outline-none hover:bg-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (

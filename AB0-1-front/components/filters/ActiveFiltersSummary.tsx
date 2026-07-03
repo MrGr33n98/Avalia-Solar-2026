@@ -48,9 +48,9 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
   if (activeChips.length === 0) return null;
 
   return (
-    <div className="space-y-3 px-3 py-2 border-b border-slate-100">
+    <div className="space-y-3 border-b border-slate-200 px-5 py-4">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Filtros ativos ({activeChips.length})
         </span>
       </div>
@@ -59,12 +59,13 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
           <Badge
             key={`${chip.key}-${idx}`}
             variant="secondary"
-            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100 rounded-lg pl-2 pr-1 py-1 gap-1 flex items-center transition-all animate-in fade-in zoom-in duration-200"
+            className="flex items-center gap-1 rounded-sm border border-blue-200 bg-blue-50 py-1 pl-2 pr-1 text-blue-700 hover:bg-blue-100"
           >
             <span className="text-[11px] font-semibold">{chip.label}</span>
             <button
               onClick={() => onRemove(chip.key, chip.value)}
-              className="hover:bg-blue-200 rounded-md p-0.5 transition-colors"
+              aria-label={`Remover filtro ${chip.label}`}
+              className="rounded-none p-0.5 hover:bg-blue-200"
             >
               <X size={12} strokeWidth={2.5} />
             </button>

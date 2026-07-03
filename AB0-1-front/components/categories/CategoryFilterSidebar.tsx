@@ -38,12 +38,12 @@ export default function CategoryFilterSidebar({
   }, [fetchStates]);
 
   return (
-    <aside className="hidden lg:block w-[300px] sticky top-24 space-y-6 shrink-0">
-      <div className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
+    <aside className="sticky top-24 hidden w-[300px] shrink-0 space-y-6 lg:block">
+      <div className="rounded-none border border-slate-200 bg-white shadow-none">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
           <div className="flex items-center gap-2">
-            <Settings2 className="w-4 h-4 text-blue-600" />
-            <h3 className="font-black text-slate-950 uppercase text-xs tracking-[0.2em]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-none border border-slate-200 bg-slate-50"><Settings2 className="h-5 w-5 text-slate-900" /></span>
+            <h3 className="text-base font-semibold text-slate-950">
               Filtros
             </h3>
           </div>
@@ -52,7 +52,7 @@ export default function CategoryFilterSidebar({
               variant="ghost"
               size="sm"
               onClick={onClearFilters}
-              className="h-7 px-3 text-[10px] font-black uppercase text-red-500 hover:text-red-600 hover:bg-red-50 tracking-tighter rounded-full transition-all"
+              className="h-9 rounded-none px-3 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-600"
             >
               <X className="w-3 h-3 mr-1" />
               Limpar
@@ -60,10 +60,10 @@ export default function CategoryFilterSidebar({
           )}
         </div>
 
-        <div className="space-y-8">
+        <div>
           {/* Grupo: Confiança */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <div className="space-y-4 border-b border-slate-200 px-5 py-5">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               <ShieldCheck className="w-3 h-3" />
               Nível de Confiança
             </p>
@@ -73,11 +73,11 @@ export default function CategoryFilterSidebar({
                   id="verified"
                   checked={filters.verified || false}
                   onCheckedChange={(checked) => onFilterChange('verified', checked)}
-                  className="rounded-md border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  className="rounded-none border-slate-300 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
                 />
                 <Label
                   htmlFor="verified"
-                  className="text-sm font-bold text-slate-600 cursor-pointer group-hover:text-slate-900 transition-colors"
+                  className="cursor-pointer text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950"
                 >
                   Empresas Verificadas
                 </Label>
@@ -85,11 +85,11 @@ export default function CategoryFilterSidebar({
               
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center">
-                  <Label className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                     <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                     Avaliação Mínima
                   </Label>
-                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                  <span className="rounded-sm border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600">
                     {filters.minRating || 0}★
                   </span>
                 </div>
@@ -106,8 +106,8 @@ export default function CategoryFilterSidebar({
           </div>
 
           {/* Grupo: Localização */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <div className="space-y-4 border-b border-slate-200 px-5 py-5">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               <MapPin className="w-3 h-3" />
               Localização
             </p>
@@ -118,7 +118,7 @@ export default function CategoryFilterSidebar({
                 value={filters.state || ''}
                 onChange={(e) => onFilterChange('state', e.target.value || undefined)}
                 aria-label="Selecionar estado"
-                className="w-full px-4 py-3.5 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white appearance-none transition-all outline-none"
+                className="w-full appearance-none rounded-none border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-colors hover:bg-slate-50 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"
               >
                 <option value="">Brasil (Todos)</option>
                 {loadingStates ? (
@@ -136,8 +136,8 @@ export default function CategoryFilterSidebar({
           </div>
 
           {/* Grupo: Tipo de Projeto */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <div className="space-y-4 px-5 py-5">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               <Zap className="w-3 h-3" />
               Tipo de Projeto
             </p>
@@ -147,10 +147,10 @@ export default function CategoryFilterSidebar({
                   key={type}
                   onClick={() => onFilterChange('projectType', filters.projectType === type ? undefined : type)}
                   className={cn(
-                    "w-full text-left px-4 py-3.5 rounded-2xl text-xs font-bold transition-all border",
+                    "w-full rounded-none border px-4 py-3 text-left text-xs font-medium transition-colors",
                     filters.projectType === type 
-                      ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100" 
-                      : "bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:bg-slate-50"
+                      ? "border-blue-600 bg-blue-600 text-white" 
+                      : "border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:bg-slate-50"
                   )}
                 >
                   {type}

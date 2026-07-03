@@ -22,21 +22,21 @@ export const RatingFilter: React.FC<RatingFilterProps> = ({
   const ratings = [5, 4, 3];
 
   return (
-    <AccordionItem value="rating" className="border-none">
-      <AccordionTrigger className="hover:no-underline py-2 px-3 rounded-lg hover:bg-slate-50 transition-all group">
+    <AccordionItem value="rating" className="border-b border-slate-200">
+      <AccordionTrigger className="group rounded-none px-5 py-4 hover:bg-slate-50 hover:no-underline">
         <div className="flex items-center gap-3">
-          <div className="bg-slate-100 p-2 rounded-xl group-data-[state=open]:bg-blue-100 group-data-[state=open]:text-blue-700 transition-colors">
+          <div className="flex h-10 w-10 items-center justify-center border border-slate-200 bg-slate-50 rounded-none group-data-[state=open]:border-blue-200 group-data-[state=open]:text-blue-700">
             <Star size={20} strokeWidth={1.75} />
           </div>
-          <span className="text-sm font-semibold text-slate-700">Avaliações</span>
+          <span className="text-sm font-medium text-slate-950">Avaliações</span>
           {selectedRating && (
-            <Badge variant="secondary" className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50 rounded-full px-2 py-0.5 text-xs">
+            <Badge variant="secondary" className="ml-1 rounded-sm border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
               {selectedRating}+
             </Badge>
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-1 px-3">
+      <AccordionContent className="px-5 pb-4 pt-0">
         <ToggleGroup
           type="single"
           value={selectedRating?.toString() || ''}
@@ -47,7 +47,7 @@ export const RatingFilter: React.FC<RatingFilterProps> = ({
             <ToggleGroupItem
               key={rating}
               value={rating.toString()}
-              className="h-10 border border-slate-200 rounded-lg data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 data-[state=on]:border-blue-200 hover:bg-slate-50 transition-all gap-1.5"
+              className="h-10 gap-1.5 rounded-none border border-slate-200 hover:bg-slate-50 data-[state=on]:border-blue-200 data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700"
             >
               <span className="text-sm font-bold">{rating}+</span>
               <Star size={14} className={selectedRating === rating ? 'fill-blue-700' : 'fill-slate-400 text-slate-400'} />

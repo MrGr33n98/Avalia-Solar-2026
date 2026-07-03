@@ -69,29 +69,29 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
   const totalSelected = selectedStates.length + selectedCities.length;
 
   return (
-    <AccordionItem value="location" className="border-none">
-      <AccordionTrigger className="hover:no-underline py-2 px-3 rounded-lg hover:bg-slate-50 transition-all group">
+    <AccordionItem value="location" className="border-b border-slate-200">
+      <AccordionTrigger className="group rounded-none px-5 py-4 hover:bg-slate-50 hover:no-underline">
         <div className="flex items-center gap-3">
-          <div className="bg-slate-100 p-2 rounded-xl group-data-[state=open]:bg-blue-100 group-data-[state=open]:text-blue-700 transition-colors">
+          <div className="flex h-10 w-10 items-center justify-center border border-slate-200 bg-slate-50 rounded-none group-data-[state=open]:border-blue-200 group-data-[state=open]:text-blue-700">
             <MapPin size={20} strokeWidth={1.75} />
           </div>
-          <span className="text-sm font-semibold text-slate-700">Localização</span>
+          <span className="text-sm font-medium text-slate-950">Localização</span>
           {totalSelected > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-blue-50 text-blue-700 hover:bg-blue-50 rounded-full px-2 py-0.5 text-xs">
+            <Badge variant="secondary" className="ml-1 rounded-sm border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
               {totalSelected}
             </Badge>
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent className="pt-2 pb-1 px-3 space-y-4">
+      <AccordionContent className="space-y-4 px-5 pb-4 pt-0">
         {/* Estados */}
         <div className="space-y-3">
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estados</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Estados</h4>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Buscar estado..."
-              className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 rounded-lg"
+              className="h-10 rounded-none border-slate-300 bg-white pl-9 text-xs focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/20"
               value={stateSearch}
               onChange={(e) => setStateSearch(e.target.value)}
             />
@@ -108,7 +108,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
               {filteredStates.map((item) => (
                 <div
                   key={item.state}
-                  className="flex items-center justify-between group cursor-pointer px-1 py-1 rounded-md hover:bg-slate-50"
+                  className="group flex cursor-pointer items-center justify-between rounded-none px-2 py-1.5 hover:bg-slate-50"
                   onClick={() => handleStateToggle(item.state)}
                 >
                   <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                     </label>
                   </div>
                   {item.count > 0 && (
-                    <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                    <span className="rounded-sm border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
                       {item.count}
                     </span>
                   )}
@@ -139,12 +139,12 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
         {/* Cidades (Apenas se houver estados selecionados) */}
         {selectedStates.length > 0 && (
           <div className="space-y-3 pt-2 border-t border-slate-100">
-            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cidades</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Cidades</h4>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Buscar cidade..."
-                className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-blue-500 bg-slate-50/50 rounded-lg"
+                className="h-10 rounded-none border-slate-300 bg-white pl-9 text-xs focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/20"
                 value={citySearch}
                 onChange={(e) => setCitySearch(e.target.value)}
               />
@@ -162,7 +162,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                   filteredCities.map((item) => (
                     <div
                       key={`${item.state}-${item.city}`}
-                      className="flex items-center justify-between group cursor-pointer px-1 py-1 rounded-md hover:bg-slate-50"
+                      className="group flex cursor-pointer items-center justify-between rounded-none px-2 py-1.5 hover:bg-slate-50"
                       onClick={() => handleCityToggle(item.city)}
                     >
                       <div className="flex items-center gap-2">

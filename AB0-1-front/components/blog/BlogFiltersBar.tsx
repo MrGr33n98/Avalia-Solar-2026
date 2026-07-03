@@ -97,7 +97,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
     Boolean(currentQ);
   return (
     <section className="mb-8 sticky top-[80px] z-20">
-      <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="rounded-none border border-slate-200 bg-white p-4 shadow-none">
         {/* ✅ grid responsivo: tabs / search / sort */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
           {/* Tabs (col 1..7) */}
@@ -113,7 +113,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-white border border-slate-100 shadow-sm text-slate-400 hover:text-primary hover:bg-slate-50"
+                  className="h-8 w-8 rounded-none border border-slate-200 bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
                   onClick={() => scroll('left')}
                   aria-label="Rolar categorias para esquerda"
                 >
@@ -130,7 +130,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                   <TabsList className="inline-flex w-max gap-1 bg-slate-100/60 p-1 h-11 rounded-full">
                     <TabsTrigger
                       value="all"
-                      className="rounded-full px-4 h-9 text-sm data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                      className="h-9 rounded-none border border-transparent px-4 text-sm data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-primary data-[state=active]:shadow-none"
                     >
                       Tudo
                     </TabsTrigger>
@@ -138,7 +138,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                       <TabsTrigger
                         key={cat.id}
                         value={String(cat.id)} // (se você migrar p/ slug, troque aqui)
-                        className="rounded-full px-4 h-9 text-sm whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                        className="h-9 whitespace-nowrap rounded-none border border-transparent px-4 text-sm data-[state=active]:border-blue-200 data-[state=active]:bg-blue-50 data-[state=active]:text-primary data-[state=active]:shadow-none"
                       >
                         {cat.name}{' '}
                         <span className="ml-1 text-slate-500">({cat.articles_count ?? cat.count ?? 0})</span>
@@ -157,7 +157,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-white border border-slate-100 shadow-sm text-slate-400 hover:text-primary hover:bg-slate-50"
+                  className="h-8 w-8 rounded-none border border-slate-200 bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
                   onClick={() => scroll('right')}
                   aria-label="Rolar categorias para direita"
                 >

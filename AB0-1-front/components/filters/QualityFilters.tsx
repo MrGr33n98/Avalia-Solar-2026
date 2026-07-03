@@ -51,8 +51,8 @@ export const QualityFilters: React.FC<QualityFiltersProps> = ({
   ] as const;
 
   return (
-    <div className="space-y-2 pt-2">
-      <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1">
+    <div className="border-b border-slate-200 py-4">
+      <h4 className="mb-2 px-5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
         Qualidade e Facilidades
       </h4>
       {filters.map((filter) => {
@@ -60,26 +60,26 @@ export const QualityFilters: React.FC<QualityFiltersProps> = ({
         return (
           <div 
             key={filter.id}
-            className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all cursor-pointer group ${
+            className={`group flex cursor-pointer items-center justify-between border-y border-transparent px-5 py-3 transition-colors ${
               filter.value 
-                ? 'bg-blue-50 border-blue-100' 
-                : 'border-transparent hover:bg-slate-50'
+                ? 'border-blue-100 bg-blue-50' 
+                : 'hover:border-slate-200 hover:bg-slate-50'
             }`}
             onClick={() => onChange(filter.id, !filter.value)}
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl transition-colors ${
-                filter.value ? 'bg-white text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-500'
+              <div className={`flex h-10 w-10 items-center justify-center border rounded-none transition-colors ${
+                filter.value ? 'border-blue-200 bg-white text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-700'
               }`}>
                 <Icon size={20} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
-                <span className={`text-sm font-semibold transition-colors ${
+                <span className={`text-sm font-medium transition-colors ${
                   filter.value ? 'text-blue-700' : 'text-slate-700'
                 }`}>
                   {filter.label}
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span className="text-xs text-slate-500">
                   {filter.description}
                 </span>
               </div>
@@ -89,7 +89,7 @@ export const QualityFilters: React.FC<QualityFiltersProps> = ({
               aria-label={filter.label}
               checked={filter.value}
               onCheckedChange={(val) => onChange(filter.id, val)}
-              className="data-[state=checked]:bg-blue-600"
+              className="border border-slate-300 shadow-none data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

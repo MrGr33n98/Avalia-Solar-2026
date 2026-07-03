@@ -256,7 +256,7 @@ export function ProductsFilters({
           <div className="space-y-2">
             <Label className="font-bold text-slate-800 text-xs uppercase tracking-wider">Ordenar por</Label>
             <Select value={filters.sort} onValueChange={(val) => onFilterChange('sort', val)}>
-              <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
+              <SelectTrigger className="h-10 rounded-none border-slate-300 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-blue-500/20">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -324,7 +324,7 @@ export function ProductsFilters({
               placeholder="Buscar marca..."
               value={brandSearch}
               onChange={(e) => setBrandSearch(e.target.value)}
-              className="h-9 text-xs border-slate-200/80 rounded-lg placeholder-slate-400 focus-visible:ring-blue-500/20"
+              className="h-9 rounded-none border-slate-300 text-xs placeholder-slate-400 focus-visible:ring-blue-500/20"
             />
 
             <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
@@ -401,7 +401,7 @@ export function ProductsFilters({
                 type="button"
                 onClick={() => onFilterChange('minRating', isSelected ? 'all' : val)}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 h-10 border rounded-xl transition-all",
+                  "flex h-10 items-center justify-center gap-1.5 rounded-none border transition-colors",
                   isSelected
                     ? "border-blue-600 bg-blue-50/20 text-blue-600 ring-1 ring-blue-600"
                     : "border-slate-200/70 hover:bg-slate-50 text-slate-700"
@@ -481,4 +481,3 @@ export function ProductsFilters({
     </div>
   )
 }
-
