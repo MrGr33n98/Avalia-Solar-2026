@@ -1,118 +1,131 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calculator, MessageCircle, Mail } from 'lucide-react';
+import { Calculator, MessageCircle, Mail, ShieldCheck } from 'lucide-react';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { VerifiedCompaniesMiniList } from '@/components/blog/VerifiedCompaniesMiniList';
 import { ChecklistCard } from '@/components/blog/ChecklistCard';
 import BannerByLocation from '@/components/BannerByLocation';
 
 interface BlogSidebarProps {
-  verifiedCompanies?: any[]; // Using any[] to match VerifiedCompaniesMiniListProps loosely or define properly
+  verifiedCompanies?: any[];
 }
 
 export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
   return (
-    <aside className="space-y-8">
-      {/* Monetization: Top Sidebar Banner */}
-      <div className="rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50/50">
+    <aside className="space-y-5">
+      {/* Ad Banner */}
+      <div className="border border-gray-100 overflow-hidden">
         <BannerByLocation location="sidebar" limit={1} />
       </div>
 
-      {/* 1. QuoteCard */}
-      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg text-primary font-extrabold">
-            <Calculator className="w-5 h-5" />
-            Simular Economia
-          </CardTitle>
-          <CardDescription className="text-slate-600 font-medium">
-            Descubra quanto você pode economizar na sua conta de luz.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="state" className="text-xs font-bold uppercase text-slate-500">Onde você mora?</Label>
-            <Select>
-              <SelectTrigger className="bg-white border-slate-200">
-                <SelectValue placeholder="Selecione seu estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sp">São Paulo</SelectItem>
-                <SelectItem value="rj">Rio de Janeiro</SelectItem>
-                <SelectItem value="mg">Minas Gerais</SelectItem>
-                <SelectItem value="rs">Rio Grande do Sul</SelectItem>
-                <SelectItem value="other">Outros</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* 1. Simulador de Economia */}
+      <div className="border border-gray-100 bg-white p-5 space-y-4">
+        <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
+          <Calculator className="w-4 h-4 text-blue-600 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 leading-tight">
+              Simular Economia Solar
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-0.5 font-normal">
+              Descubra o potencial da sua conta de luz.
+            </p>
           </div>
-          
-          <Button 
-            className="w-full font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all text-base py-6"
-            onClick={() => openQuoteWizard({ source: 'blog_sidebar' })}
-          >
-            Receber Orçamento Grátis
-          </Button>
-          
-          <div className="relative text-center">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-transparent px-2 text-slate-400 font-medium">ou fale agora</span>
-            </div>
-          </div>
-
-          <Button 
-            variant="outline" 
-            className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold"
-            onClick={() => window.open('https://wa.me/556593465055', '_blank')}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Chamar no WhatsApp
-          </Button>
-
-          <p className="text-[10px] text-center text-slate-400">
-            Mais de 15.000 orçamentos realizados
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* 2. Verified Companies */}
-      <VerifiedCompaniesMiniList companies={verifiedCompanies} />
-
-      {/* 3. Newsletter */}
-      <Card className="bg-slate-900 text-white border-none shadow-md overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Mail className="w-24 h-24" />
         </div>
-        <CardHeader className="pb-2 relative z-10">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Mail className="w-4 h-4 text-primary" />
-            Newsletter Solar
-          </CardTitle>
-          <p className="text-xs text-slate-300 font-medium">
-            Junte-se a 50.000+ leitores e receba dicas exclusivas.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3 relative z-10">
-          <Input 
-            placeholder="Seu melhor e-mail" 
-            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-primary focus-visible:border-primary" 
-          />
-          <Button variant="secondary" className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold">
-            Receber Guia Gratuito
-          </Button>
-          <p className="text-[10px] text-slate-400 text-center">
-            Zero spam. Cancele quando quiser.
-          </p>
-        </CardContent>
-      </Card>
+
+        <div className="space-y-2">
+          <Label htmlFor="sidebar-state" className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            Onde você mora?
+          </Label>
+          <Select>
+            <SelectTrigger
+              id="sidebar-state"
+              className="rounded-none border-gray-200 text-sm h-9 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <SelectValue placeholder="Selecione seu estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sp">São Paulo</SelectItem>
+              <SelectItem value="rj">Rio de Janeiro</SelectItem>
+              <SelectItem value="mg">Minas Gerais</SelectItem>
+              <SelectItem value="rs">Rio Grande do Sul</SelectItem>
+              <SelectItem value="other">Outros</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          className="w-full rounded-none bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-none h-9 text-sm"
+          onClick={() => openQuoteWizard({ source: 'blog_sidebar' })}
+        >
+          Receber Orçamento Grátis
+        </Button>
+
+        <div className="relative flex items-center gap-2 text-[10px] text-gray-300">
+          <div className="flex-1 h-px bg-gray-100" />
+          <span>ou fale agora</span>
+          <div className="flex-1 h-px bg-gray-100" />
+        </div>
+
+        <Button
+          variant="outline"
+          className="w-full rounded-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 font-medium h-9 text-sm shadow-none"
+          onClick={() => window.open('https://wa.me/556593465055', '_blank')}
+        >
+          <MessageCircle className="w-3.5 h-3.5 mr-2" />
+          Chamar no WhatsApp
+        </Button>
+
+        <p className="text-[10px] text-center text-gray-400">
+          +15.000 orçamentos realizados
+        </p>
+      </div>
+
+      {/* 2. Newsletter */}
+      <div className="border border-gray-100 bg-gray-900 p-5 space-y-3.5">
+        <div className="flex items-center gap-2">
+          <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold text-white leading-tight">
+              Newsletter Solar
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-0.5 font-normal">
+              50.000+ leitores. Dicas exclusivas toda semana.
+            </p>
+          </div>
+        </div>
+
+        <Input
+          type="email"
+          placeholder="Seu melhor e-mail"
+          className="rounded-none bg-white/10 border-white/15 text-white placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-sm h-9"
+        />
+        <Button
+          className="w-full rounded-none bg-white text-gray-900 hover:bg-gray-100 font-medium text-sm h-9 shadow-none"
+        >
+          Receber Guia Gratuito
+        </Button>
+        <p className="text-[10px] text-gray-500 text-center">
+          Zero spam. Cancele quando quiser.
+        </p>
+      </div>
+
+      {/* 3. Verified Companies */}
+      <div className="border border-gray-100 bg-white">
+        <div className="flex items-center gap-2 p-4 border-b border-gray-50">
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            Empresas Verificadas
+          </h3>
+        </div>
+        <div className="p-2">
+          <VerifiedCompaniesMiniList companies={verifiedCompanies} />
+        </div>
+      </div>
 
       {/* 4. Checklist */}
       <ChecklistCard />

@@ -3,129 +3,72 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { openQuoteWizard } from '@/lib/quote-wizard';
-import { ImageOff, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { OptimizedImage } from '@/components/ui/optimized-image';
 
-interface BannerImageProps {
-  src: string;
-  alt: string;
-  className?: string;
-  aspectRatio?: 'video' | 'wide' | 'square';
-}
-
-const BannerImage = ({ src, alt, className, aspectRatio = 'video' }: BannerImageProps) => {
-  const [status, setStatus] = React.useState<'loading' | 'error' | 'success'>('loading');
-  const sizeMap = {
-    video: { width: 1600, height: 900 },
-    wide: { width: 2100, height: 900 },
-    square: { width: 1000, height: 1000 },
-  } as const;
-  const { width, height } = sizeMap[aspectRatio];
-
-  return (
-    <div className={cn(
-      "relative w-full overflow-hidden bg-slate-800/50 rounded-lg",
-      aspectRatio === 'video' && "aspect-video",
-      aspectRatio === 'wide' && "aspect-[21/9]",
-      aspectRatio === 'square' && "aspect-square",
-      className
-    )}>
-      {/* Background fallback */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent opacity-30" />
-      
-      {/* Loading State */}
-      {status === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      )}
-
-      {/* Error State / Fallback */}
-      {status === 'error' ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-4 bg-slate-800">
-          <ImageOff className="w-10 h-10 mb-2 opacity-50" />
-          <span className="text-xs font-medium">Imagem indisponível</span>
-        </div>
-      ) : (
-        <OptimizedImage
-          src={src}
-          alt={alt}
-          width={width}
-          height={height}
-          fill
-          className={cn(
-            "object-contain transition-opacity duration-500",
-            status === 'loading' ? 'opacity-0' : 'opacity-100'
-          )}
-          onLoad={() => setStatus('success')}
-          onError={() => setStatus('error')}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          quality={85}
-          containerClassName="h-full"
-          useAspectRatio={false}
-        />
-      )}
-    </div>
-  );
-};
+const STATS = [
+  { value: '+1.200', label: 'empresas cadastradas' },
+  { value: '+8.000', label: 'avaliações verificadas' },
+  { value: '+50.000', label: 'leitores mensais' },
+];
 
 export function BlogHero() {
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden rounded-2xl mx-4 lg:mx-0 shadow-2xl">
-      <div className="absolute inset-0 bg-[url('/images/hero-pattern.svg')] opacity-10" />
-      <div className="container relative mx-auto px-6 py-8 md:py-12 lg:px-12 flex flex-col md:flex-row items-center gap-6">
-        <div className="flex-1 space-y-4 text-center md:text-left z-10">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-            Bem-vindo ao <br />
-            <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-green-400">
-              Blog Avalia Solar
-            </span>
-          </h1>
-          <p className="text-base md:text-lg text-slate-300 max-w-xl mx-auto md:mx-0 leading-relaxed">
-            Dicas, guias e novidades para você economizar com energia solar e transformar sua casa ou empresa.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-            <Button 
-              size="default" 
-              className="font-bold text-base px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
-              onClick={() => openQuoteWizard({ source: 'blog_hero' })}
-            >
-              Simular Economia
-            </Button>
-            <Button 
-              variant="outline" 
-              size="default" 
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm px-6"
-            >
-              Nossos Guias
-            </Button>
+    <div className="bg-white py-10 md:py-14">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          {/* Left: Title & CTA */}
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[11px] font-semibold text-blue-600 tracking-widest uppercase">
+                Blog
+              </span>
+              <span className="w-1 h-1 rounded-full bg-gray-300" />
+              <span className="text-[11px] text-gray-400 font-medium">
+                Energia Solar &amp; Mobilidade Elétrica
+              </span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 leading-[1.15] tracking-tight">
+              Tudo sobre{' '}
+              <span className="text-blue-600">energia solar</span>{' '}
+              e sustentabilidade
+            </h1>
+
+            <p className="mt-4 text-base text-gray-500 max-w-lg leading-relaxed font-normal">
+              Guias práticos, notícias do setor e comparações para ajudar você
+              a tomar a melhor decisão em energia limpa.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-none px-5 h-9 shadow-none"
+                onClick={() => openQuoteWizard({ source: 'blog_hero' })}
+              >
+                Simular Economia
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-none border-gray-300 text-gray-700 font-medium px-5 h-9 hover:bg-gray-50 shadow-none"
+                asChild
+              >
+                <a href="/blog?category=guias">Ver Guias</a>
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-4 text-xs sm:text-sm text-slate-400 font-medium">
-            <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              +1.200 empresas
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              Guias gratuitos
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              Cidades atendidas
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex-1 relative w-full max-w-md md:max-w-none flex justify-center md:justify-end">
-          <div className="w-full max-w-[500px] max-h-[250px]">
-             <BannerImage 
-               src="/images/banner-avalia-solar.png" 
-               alt="Energia Solar Ilustração"
-               aspectRatio="wide"
-               className="h-full"
-             />
+
+          {/* Right: Stats */}
+          <div className="flex gap-8 border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-10 shrink-0">
+            {STATS.map((stat) => (
+              <div key={stat.label}>
+                <p className="text-2xl font-semibold text-gray-900 tracking-tight">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5 max-w-[90px] leading-snug">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Calendar, ArrowRight } from 'lucide-react';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
@@ -29,7 +28,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
     slugOrId: mainSlugOrId,
     placement: 'featured_main',
     category: mainPost.category?.name,
-    term: mainPost.slug || String(mainPost.id)
+    term: mainPost.slug || String(mainPost.id),
   });
   const mainImage = getFullImageUrl(mainPost.cover_image_url || mainPost.image_url);
   const mainAuthorName = mainPost.author_name || mainPost.author?.name;
@@ -39,17 +38,26 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
     : Math.ceil((mainPost.content || '').replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
 
   return (
-    <section className="mb-16">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <span className="w-1 h-6 bg-primary rounded-full" />
-          Destaques da Semana
-        </h2>
+    <section className="mb-12">
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <span className="block w-0.5 h-5 bg-blue-600" />
+          <h2 className="text-lg font-semibold text-gray-900 tracking-tight">
+            Destaques da Semana
+          </h2>
+        </div>
+        <Link
+          href="/blog"
+          className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+        >
+          Ver todos <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Main Featured Post */}
-        <div className="lg:col-span-8 group relative">
+        <div className="lg:col-span-7 group relative">
           <Link
             href={mainLink.url}
             className="block h-full"
@@ -68,68 +76,75 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
               })
             }
           >
-            <Card className="h-full overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="relative h-64 sm:h-80 lg:h-[320px] w-full">
+            <div className="h-full overflow-hidden border border-gray-100 hover:border-gray-200 transition-colors bg-white">
+              <div className="relative h-64 sm:h-72 lg:h-[280px] w-full overflow-hidden">
                 <Image
-                  src={mainImage}
+                  src={mainImage || '/images/avalia-solar-place-holder.PNG'}
                   alt={mainPost.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                   priority
                 />
-                {/* Overlay escuro em degradê para melhor contraste */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/60 to-slate-900/20" />
-                
-                <div className="absolute bottom-0 left-0 p-5 sm:p-8 w-full">
-                  <div className="max-w-3xl">
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-900/50 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 p-5 sm:p-7 w-full">
+                  <div className="max-w-2xl">
                     {mainPost.category && (
-                      <Badge className="mb-3 bg-primary hover:bg-primary/90 text-white border-none shadow-sm">
+                      <span className="inline-block mb-2.5 text-[11px] font-semibold text-blue-400 tracking-widest uppercase">
                         {mainPost.category.name}
-                      </Badge>
+                      </span>
                     )}
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white mb-3 leading-tight group-hover:text-primary-foreground/90 transition-colors [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)] break-words">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2.5 leading-snug group-hover:text-blue-100 transition-colors">
                       {mainPost.title}
                     </h3>
-                    <p className="text-slate-100 line-clamp-2 mb-4 max-w-2xl text-sm sm:text-base [text-shadow:_0_1px_2px_rgb(0_0_0_/_60%)]">
+                    <p className="text-gray-300 line-clamp-2 mb-4 text-sm leading-relaxed font-normal hidden sm:block">
                       {mainPost.excerpt}
                     </p>
-                    
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-200 font-medium">
+
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-300 font-medium">
                       {mainAuthorName && (
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6 ring-1 ring-white/30 shrink-0 shadow-sm">
-                            <AvatarImage 
-                              src={mainAuthorAvatar ? getFullImageUrl(mainAuthorAvatar) : '/images/felipe-ceo-avalia-solar.png'} 
-                              alt={mainAuthorName} 
-                              className="object-cover object-top scale-110" 
+                          <Avatar className="h-5 w-5 shrink-0">
+                            <AvatarImage
+                              src={
+                                mainAuthorAvatar
+                                  ? getFullImageUrl(mainAuthorAvatar)
+                                  : '/images/felipe-ceo-avalia-solar.png'
+                              }
+                              alt={mainAuthorName}
+                              className="object-cover object-top"
                             />
-                            <AvatarFallback className="bg-white/10 text-[10px] text-white">
-                              <User className="w-3 h-3" />
+                            <AvatarFallback className="bg-white/10 text-[9px] text-white">
+                              <User className="w-2.5 h-2.5" />
                             </AvatarFallback>
                           </Avatar>
-                          <span className="[text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">{mainAuthorName}</span>
+                          <span>{mainAuthorName}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-1 [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">
-                        <Calendar className="w-3.5 h-3.5 opacity-80" />
-                        {format(new Date(mainPost.published_at || mainPost.created_at || new Date()), "d MMM, yyyy", { locale: ptBR })}
-                      </div>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 opacity-70" />
+                        {format(
+                          new Date(mainPost.published_at || mainPost.created_at || new Date()),
+                          'd MMM, yyyy',
+                          { locale: ptBR }
+                        )}
+                      </span>
                       {mainReadingTime ? (
-                        <div className="flex items-center gap-1 [text-shadow:_0_1px_2px_rgb(0_0_0_/_40%)]">
-                          <Clock className="w-3.5 h-3.5 opacity-80" />
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 opacity-70" />
                           {mainReadingTime} min
-                        </div>
+                        </span>
                       ) : null}
                     </div>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </Link>
         </div>
 
         {/* Side Posts */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
+        <div className="lg:col-span-5 flex flex-col gap-4">
           {sidePosts.map((post, index) => {
             const slugOrId = post.slug || String(post.id);
             const link = buildArticleLink({
@@ -137,62 +152,73 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
               placement: 'featured_side',
               category: post.category?.name,
               term: post.slug || String(post.id),
-              content: `featured_side_${index + 1}`
+              content: `featured_side_${index + 1}`,
             });
             return (
-            <Link
-              key={post.id}
-              href={link.url}
-              className="block flex-1 group"
-              onClick={() =>
-                track('blog_article_click', {
-                  post_id: post.id,
-                  post_title: post.title,
-                  post_slug: slugOrId,
-                  category_name: post.category?.name,
-                  element_type: 'featured_side',
-                  action_type: 'click',
-                  placement: 'featured_side',
-                  position: index + 1,
-                  link_url: link.url,
-                  ...link.utm,
-                })
-              }
-            >
-              <Card className="h-full border-none shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden bg-white">
-                <div className="relative h-20 w-full shrink-0 overflow-hidden">
+              <Link
+                key={post.id}
+                href={link.url}
+                className="group flex gap-4 bg-white border border-gray-100 hover:border-gray-200 transition-colors p-4"
+                onClick={() =>
+                  track('blog_article_click', {
+                    post_id: post.id,
+                    post_title: post.title,
+                    post_slug: slugOrId,
+                    category_name: post.category?.name,
+                    element_type: 'featured_side',
+                    action_type: 'click',
+                    placement: 'featured_side',
+                    position: index + 1,
+                    link_url: link.url,
+                    ...link.utm,
+                  })
+                }
+              >
+                {/* Thumbnail */}
+                <div className="relative w-24 h-20 shrink-0 overflow-hidden bg-gray-100">
                   <Image
-                    src={getFullImageUrl(post.cover_image_url || post.image_url) || '/images/avalia-solar-place-holder.PNG'}
+                    src={
+                      getFullImageUrl(post.cover_image_url || post.image_url) ||
+                      '/images/avalia-solar-place-holder.PNG'
+                    }
                     alt={post.title}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
-                  <div className="absolute top-3 left-3">
-                     {post.category && (
-                      <Badge variant="secondary" className="bg-white/90 text-slate-900 hover:bg-white backdrop-blur-sm text-xs font-bold shadow-sm">
-                        {post.category.name}
-                      </Badge>
-                    )}
-                  </div>
                 </div>
-                <CardContent className="p-5 flex flex-col flex-1">
-                  <h4 className="font-bold text-lg text-slate-900 mb-2 leading-snug group-hover:text-primary transition-colors line-clamp-2">
+
+                {/* Content */}
+                <div className="flex flex-col flex-1 min-w-0">
+                  {post.category && (
+                    <span className="text-[10px] font-semibold text-blue-600 tracking-widest uppercase mb-1">
+                      {post.category.name}
+                    </span>
+                  )}
+                  <h4 className="font-medium text-sm text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-700 transition-colors">
                     {post.title}
                   </h4>
-                  <div className="mt-auto pt-3 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100">
+                  <div className="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-400">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {format(new Date(post.published_at || post.created_at || new Date()), "d MMM", { locale: ptBR })}
+                      {format(
+                        new Date(post.published_at || post.created_at || new Date()),
+                        'd MMM',
+                        { locale: ptBR }
+                      )}
                     </span>
-                    <span className="flex items-center gap-1 font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0 duration-300">
-                      Ler artigo <ArrowRight className="w-3 h-3" />
+                    <span className="flex items-center gap-1 font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Ler <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
+                </div>
+              </Link>
             );
           })}
+
+          {/* Promo Slot */}
+          <div className="border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center h-[76px] text-xs text-gray-400 font-medium">
+            Publicidade · Solar
+          </div>
         </div>
       </div>
     </section>

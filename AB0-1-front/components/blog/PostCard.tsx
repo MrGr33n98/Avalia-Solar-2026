@@ -3,9 +3,6 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowRight, Sun, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Article } from '@/types/article';
@@ -22,20 +19,21 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, position, placement = 'blog_list_card' }: PostCardProps) {
-  // Word count estimate (if not provided by API)
-  const wordCount = post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
+  const wordCount = post.content
+    ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length
+    : 0;
   const readTime = post.reading_time_minutes || Math.ceil(wordCount / 200) || 5;
   const slugOrId = post.slug || String(post.id);
   const { url, utm } = buildArticleLink({
     slugOrId,
     placement,
     category: post.category?.name,
-    term: post.slug || String(post.id)
+    term: post.slug || String(post.id),
   });
 
   return (
-    <Link 
-      href={url} 
+    <Link
+      href={url}
       className="group block h-full"
       onClick={() => {
         track('blog_article_click', {
@@ -48,83 +46,99 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
           placement,
           position,
           link_url: url,
-          ...utm
+          ...utm,
         });
       }}
     >
-      <Card className="h-full flex flex-col border-none shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden bg-white ring-1 ring-slate-100 group-hover:ring-primary/20">
-        <div className="relative h-52 w-full overflow-hidden bg-slate-100">
+      <article className="h-full flex flex-col bg-white border border-gray-100 group-hover:border-gray-200 transition-colors">
+        {/* Cover Image */}
+        <div className="relative h-44 w-full overflow-hidden bg-gray-100 shrink-0">
           {post.cover_image_url || post.image_url ? (
             <Image
               src={getFullImageUrl(post.cover_image_url || post.image_url)}
               alt={post.title}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-200 flex flex-col items-center justify-center text-slate-300">
-              <Sun className="w-12 h-12 mb-2 opacity-20" />
-              <span className="text-sm font-bold uppercase tracking-widest opacity-30">Avalia Solar</span>
+            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center text-gray-300">
+              <Sun className="w-8 h-8 mb-1.5 opacity-30" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest opacity-40">
+                Avalia Solar
+              </span>
             </div>
           )}
-          
-          <div className="absolute top-4 left-4">
-             {post.category && (
-              <Badge className="bg-white/95 text-slate-900 hover:bg-white backdrop-blur shadow-sm text-xs font-bold border-none">
+
+          {/* Category label */}
+          {post.category && (
+            <div className="absolute top-3 left-3">
+              <span className="inline-block bg-white/95 text-[10px] font-semibold text-gray-800 px-2 py-0.5 tracking-wide uppercase shadow-sm">
                 {post.category.name}
-              </Badge>
-            )}
-          </div>
+              </span>
+            </div>
+          )}
         </div>
 
-        <CardContent className="flex-1 p-5 flex flex-col">
-          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+        {/* Content */}
+        <div className="flex-1 flex flex-col p-4">
+          {/* Meta */}
+          <div className="flex items-center gap-2.5 text-[11px] text-gray-400 mb-2.5">
             <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-3 h-3" />
               {post.published_date
                 ? post.published_date
                 : post.published_at
-                  ? format(new Date(post.published_at), "d MMM, yyyy", { locale: ptBR })
-                  : 'Recente'}
+                ? format(new Date(post.published_at), 'd MMM, yyyy', { locale: ptBR })
+                : 'Recente'}
             </span>
-            <span>•</span>
+            <span className="text-gray-200">·</span>
             <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {readTime} min leitura
+              <Clock className="w-3 h-3" />
+              {readTime} min
             </span>
           </div>
 
-          <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+          {/* Title */}
+          <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors">
             {post.title}
           </h3>
 
-          <p className="text-slate-600 text-sm line-clamp-3 mb-4 leading-relaxed">
-            {post.excerpt || 'Confira este artigo completo sobre energia solar e economize na sua conta de luz.'}
+          {/* Excerpt */}
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4 font-normal">
+            {post.excerpt ||
+              'Confira este artigo completo sobre energia solar e economize na sua conta de luz.'}
           </p>
-        </CardContent>
 
-        <CardFooter className="p-5 pt-0 mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6 ring-1 ring-slate-100">
-              <AvatarImage 
-                src={post.author_avatar_url ? getFullImageUrl(post.author_avatar_url) : (post.author as any)?.avatar_photo_url ? getFullImageUrl((post.author as any).avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png'} 
-                alt={post.author_name || 'Avalia Solar'} 
-                className="object-cover object-top"
-              />
-              <AvatarFallback className="text-[10px] bg-slate-100">
-                <User className="w-3 h-3 text-slate-400" />
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs font-semibold text-slate-600 truncate max-w-[120px]">
-              {post.author_name || post.author?.name || 'Avalia Solar'}
+          {/* Footer */}
+          <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-50">
+            <div className="flex items-center gap-1.5">
+              <Avatar className="h-5 w-5">
+                <AvatarImage
+                  src={
+                    post.author_avatar_url
+                      ? getFullImageUrl(post.author_avatar_url)
+                      : (post.author as any)?.avatar_photo_url
+                      ? getFullImageUrl((post.author as any).avatar_photo_url)
+                      : '/images/felipe-ceo-avalia-solar.png'
+                  }
+                  alt={post.author_name || 'Avalia Solar'}
+                  className="object-cover object-top"
+                />
+                <AvatarFallback className="text-[8px] bg-gray-100">
+                  <User className="w-2.5 h-2.5 text-gray-400" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] font-medium text-gray-500 truncate max-w-[100px]">
+                {post.author_name || post.author?.name || 'Avalia Solar'}
+              </span>
+            </div>
+
+            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
+              Ler <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-
-          <span className="text-sm font-bold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-            Ler <ArrowRight className="w-4 h-4" />
-          </span>
-        </CardFooter>
-      </Card>
+        </div>
+      </article>
     </Link>
   );
 }
