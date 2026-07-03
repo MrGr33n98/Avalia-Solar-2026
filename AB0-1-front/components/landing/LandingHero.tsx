@@ -54,12 +54,12 @@ export default function LandingHero(props: LandingHeroProps) {
       />
 
       <div className="relative z-10 mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8 xl:px-10">
-        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
-          <div className="flex w-full flex-col items-start text-left lg:col-span-7">
+        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14 xl:gap-16">
+          <div className="flex w-full flex-col items-start text-left lg:col-span-6">
             <LandingHeroClient {...props} />
           </div>
 
-          <div className="relative hidden h-[460px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,.45)] lg:col-span-5 lg:block">
+          <div className="relative hidden h-[500px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_24px_60px_-40px_rgba(15,23,42,.42)] lg:col-span-6 lg:block">
             <Image
               src="/images/lp-avalia-solar-image.webp"
               alt="Casa inteligente sustentável com carro elétrico e energia solar"
@@ -69,11 +69,11 @@ export default function LandingHero(props: LandingHeroProps) {
               className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
-            <div className="absolute inset-x-5 bottom-5 rounded-xl border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur-md">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">
+            <div className="absolute inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 p-5 shadow-none backdrop-blur-md">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
                 Escolha com evidências
               </p>
-              <p className="mt-1 text-sm font-semibold leading-snug text-slate-800">
+              <p className="mt-1 text-sm font-medium leading-snug text-slate-800">
                 Compare reputação, cobertura e qualidade antes de pedir propostas.
               </p>
             </div>

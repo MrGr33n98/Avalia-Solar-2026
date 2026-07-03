@@ -6,7 +6,6 @@ import { Search, ChevronDown } from 'lucide-react';
 
 import LocationSearch from '@/components/LocationSearch';
 import { Card } from '@/components/ui/card';
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
 import { track } from '@/lib/analytics/lazy';
 import type { Category } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
@@ -135,15 +134,15 @@ export function LandingHeroSearch({
   };
 
   return (
-    <Card className="w-full max-w-2xl lg:max-w-3xl rounded-2xl border border-slate-200 bg-white p-2.5 shadow-[0_18px_50px_-34px_rgba(15,23,42,.55)]">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
+    <Card className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_32px_-24px_rgba(15,23,42,.38)] sm:p-5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end md:gap-4 lg:gap-5">
         <div className="group relative w-full">
-          <label htmlFor="category-select" className="mb-1.5 block px-1 text-[11px] font-bold text-slate-600">
+          <label htmlFor="category-select" className="mb-2 block text-xs font-semibold text-slate-700">
             O que você precisa?
           </label>
           <select
             id="category-select"
-            className="h-12 w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-9 text-sm font-semibold text-slate-800 outline-none transition-colors hover:bg-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="h-12 w-full cursor-pointer appearance-none rounded-lg border border-slate-300 bg-white pl-11 pr-9 text-sm font-medium text-slate-900 shadow-sm outline-none transition-colors hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             value={selectedCategory}
             onChange={handleCategoryChange}
             aria-label="Selecionar categoria de serviço"
@@ -162,11 +161,11 @@ export function LandingHeroSearch({
         </div>
 
         <div className="w-full">
-          <label className="mb-1.5 block px-1 text-[11px] font-bold text-slate-600">
+          <label className="mb-2 block text-xs font-semibold text-slate-700">
             Cidade ou CEP
           </label>
           <LocationSearch
-            className="h-12 w-full rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm font-semibold focus:ring-2 focus:ring-blue-500/20"
+            className="h-12 w-full rounded-lg border-slate-300 bg-white pl-10 text-sm font-medium shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             onLocationSelect={setLocation}
           />
         </div>
@@ -175,7 +174,7 @@ export function LandingHeroSearch({
           type="button"
           onClick={handleSearch}
           aria-label="Buscar Empresas"
-          className="flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:w-auto"
+          className="flex h-12 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:min-w-[180px] md:w-auto"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           <span>Buscar empresas</span>
