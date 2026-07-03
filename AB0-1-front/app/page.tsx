@@ -231,22 +231,39 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-slate-950 text-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-8">
-          <div>
-            <div className="flex items-center gap-2 text-amber-300">
-              <Sparkles className="h-5 w-5" aria-hidden="true" />
-              <span className="text-xs font-extrabold uppercase tracking-[0.15em]">Próximo passo seguro</span>
+      <section className="bg-slate-50 py-10 sm:py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative isolate overflow-hidden rounded-none border border-slate-800/80 bg-[#070B16] px-6 py-10 text-white sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-8 lg:px-12 lg:py-12">
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 opacity-55"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 18% 12%, rgba(37,99,235,0.15), transparent 34%), radial-gradient(circle at 90% 82%, rgba(255,200,44,0.07), transparent 28%), radial-gradient(rgba(255,255,255,0.1) 0.65px, transparent 0.65px)',
+                backgroundSize: 'auto, auto, 20px 20px',
+              }}
+            />
+            <div className="pointer-events-none absolute -left-14 -bottom-20 h-40 w-40 rotate-45 border border-blue-400/15" aria-hidden="true" />
+            <div className="pointer-events-none absolute -right-16 -top-24 h-48 w-48 rotate-45 border border-[#FFC82C]/10" aria-hidden="true" />
+
+            <div className="max-w-[690px]">
+              <div className="flex items-center gap-2 text-[#FFC82C]">
+                <Sparkles className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
+                <span className="text-xs font-semibold uppercase tracking-[0.18em]">Próximo passo seguro</span>
+              </div>
+              <h2 className="mt-4 max-w-2xl text-3xl font-medium tracking-tight sm:text-4xl">
+                Faça a escolha certa para o seu <span className="font-semibold text-[#FFC82C]">projeto solar</span>
+              </h2>
+              <div className="mt-6 flex flex-col gap-4 text-sm font-normal text-slate-300 sm:flex-row sm:items-center sm:gap-6">
+                <span className="inline-flex items-center gap-2.5"><BadgeCheck className="h-4 w-4 text-[#22C55E]" strokeWidth={1.6} aria-hidden="true" /> Empresas verificadas</span>
+                <span className="hidden h-6 border-l border-white/15 sm:block" aria-hidden="true" />
+                <span className="inline-flex items-center gap-2.5"><ShieldCheck className="h-4 w-4 text-[#22C55E]" strokeWidth={1.6} aria-hidden="true" /> Comparação sem compromisso</span>
+              </div>
             </div>
-            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
-              Faça a escolha certa para o seu projeto solar
-            </h2>
-            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-300">
-              <span className="inline-flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-emerald-400" /> Empresas verificadas</span>
-              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Comparação sem compromisso</span>
+            <div className="mt-8 shrink-0 lg:mt-0">
+              <HomeConversionCTA />
             </div>
           </div>
-          <HomeConversionCTA />
         </div>
       </section>
 

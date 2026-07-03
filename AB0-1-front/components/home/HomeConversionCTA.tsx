@@ -5,9 +5,9 @@ import { openQuoteWizard } from '@/lib/quote-wizard';
 
 export function HomeConversionCTA() {
   return (
-    <CTAPrimaryButton 
-      label="Pedir orçamento gratuito" 
-      className="h-12 w-full bg-amber-400 px-7 text-base font-extrabold text-slate-950 hover:bg-amber-300 md:w-auto" 
+    <CTAPrimaryButton
+      label="Pedir orçamento gratuito"
+      className="h-auto w-full rounded-none border-[#FFC82C] bg-[#FFC82C] px-8 py-4 text-base font-semibold text-[#070B16] shadow-none hover:border-[#FFD65A] hover:bg-[#FFD65A] lg:w-auto"
       onClick={() => openQuoteWizard({ source: 'home_bottom_banner' })}
     />
   );
