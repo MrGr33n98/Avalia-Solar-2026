@@ -134,6 +134,22 @@ export default function ComparisonFloatingBar() {
 
   return (
     <>
+      <svg aria-hidden="true" className="pointer-events-none absolute h-0 w-0" focusable="false">
+        <defs>
+          <filter id="comparison-electric-distortion" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.018 0.22"
+              numOctaves="2"
+              seed="7"
+              result="electricNoise"
+            >
+              <animate attributeName="seed" values="2;9;4;12;2" dur="1.4s" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="electricNoise" scale="13" xChannelSelector="R" yChannelSelector="B" />
+          </filter>
+        </defs>
+      </svg>
       <AnimatePresence>
         {dockState === 'minimized' ? (
           <motion.aside
@@ -145,7 +161,7 @@ export default function ComparisonFloatingBar() {
             aria-label="Comparação minimizada"
             className="fixed bottom-24 right-5 z-[8900] md:bottom-28 md:right-6"
           >
-            <div className="flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
+            <div className="comparison-modal-led-border flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
               <button
                 type="button"
                 onClick={() => setDockState('expanded')}

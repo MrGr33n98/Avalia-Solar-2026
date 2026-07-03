@@ -681,40 +681,45 @@
   }
 }
 
-/* LED ray used only by the expanded comparison dock border. */
+/* Electric ray used by expanded and minimized comparison docks. */
 .comparison-modal-led-border {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border-color: rgba(59, 130, 246, 0.28);
+  border-color: rgba(37, 99, 235, 0.38);
   background: #ffffff;
-  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.22), 0 18px 45px rgba(37, 99, 235, 0.1);
 }
 
 .comparison-modal-led-border::before {
   content: "";
   position: absolute;
-  inset: -100%;
+  inset: -110%;
   z-index: 0;
   pointer-events: none;
   background: conic-gradient(
     from 0deg,
-    transparent 0deg,
-    transparent 300deg,
-    rgba(56, 189, 248, 0.08) 306deg,
-    transparent 311deg,
-    rgba(56, 189, 248, 0.2) 316deg,
-    transparent 321deg,
-    rgba(56, 189, 248, 0.34) 326deg,
-    transparent 331deg,
-    rgba(56, 189, 248, 0.55) 337deg,
-    rgba(96, 165, 250, 0.22) 342deg,
-    #38bdf8 349deg,
-    #e0f2fe 354deg,
-    #60a5fa 357deg,
-    transparent 360deg
+    #2563eb 0deg,
+    #7dd3fc 16deg,
+    #ffffff 24deg,
+    #38bdf8 32deg,
+    #2563eb 55deg,
+    #e0f2fe 74deg,
+    #0ea5e9 92deg,
+    #ffffff 108deg,
+    #3b82f6 126deg,
+    #38bdf8 166deg,
+    #ffffff 184deg,
+    #2563eb 205deg,
+    #7dd3fc 228deg,
+    #ffffff 246deg,
+    #0ea5e9 270deg,
+    #3b82f6 306deg,
+    #ffffff 336deg,
+    #2563eb 360deg
   );
-  animation: comparisonModalLedRay 2.8s linear infinite;
+  filter: url("#comparison-electric-distortion") drop-shadow(0 0 4px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 10px rgba(37, 99, 235, 0.72));
+  animation: comparisonModalLedRay 3.4s linear infinite, comparisonElectricPulse 0.9s ease-in-out infinite alternate;
   transform-origin: center;
   will-change: transform;
 }
@@ -722,10 +727,10 @@
 .comparison-modal-led-border::after {
   content: "";
   position: absolute;
-  inset: 3px;
+  inset: 5px;
   z-index: 1;
   pointer-events: none;
-  border-radius: 5px;
+  border-radius: 3px;
   background: #ffffff;
 }
 
@@ -735,7 +740,12 @@
 }
 
 .comparison-modal-led-border:hover::before {
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
+  filter: url("#comparison-electric-distortion") drop-shadow(0 0 6px rgba(255, 255, 255, 1)) drop-shadow(0 0 14px rgba(37, 99, 235, 0.95));
+}
+
+@keyframes comparisonElectricPulse {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
 }
 
 @keyframes comparisonModalLedRay {
@@ -747,7 +757,8 @@
 @media (prefers-reduced-motion: reduce) {
   .comparison-modal-led-border::before {
     animation: none;
-    opacity: 0.35;
+    filter: none;
+    opacity: 0.55;
   }
 }
 
