@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, BadgeCheck, BarChart3, Scale } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const slides = [
@@ -11,21 +11,18 @@ const slides = [
     title: 'Compare antes de decidir.',
     description:
       'Coloque empresas lado a lado e avalie reputação, verificação, cobertura e avaliações reais usando os mesmos critérios.',
-    icon: Scale,
   },
   {
     eyebrow: 'Experiências reais',
     title: 'Decida com a ajuda de quem já contratou.',
     description:
       'Consulte avaliações publicadas na plataforma e entenda os sinais disponíveis antes de solicitar uma proposta.',
-    icon: BadgeCheck,
   },
   {
     eyebrow: 'Dados transparentes',
     title: 'Transforme pesquisa em uma shortlist melhor.',
     description:
       'Reúna as empresas que fazem sentido para o seu projeto e veja diferenças importantes em uma única análise.',
-    icon: BarChart3,
   },
 ] as const;
 
@@ -54,7 +51,6 @@ export default function HowItWorks() {
   };
 
   const slide = slides[activeSlide];
-  const Icon = slide.icon;
 
   return (
     <section
@@ -71,15 +67,20 @@ export default function HowItWorks() {
       >
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:gap-16">
           <div className="relative min-w-0 overflow-hidden bg-slate-50">
-            <Image
-              src="/images/depoimentos-avalia-solar.png"
-              alt="Depoimentos de usuários que pesquisaram e compararam empresas no Avalia Solar"
-              width={1536}
-              height={1024}
-              sizes="(max-width: 1023px) 100vw, 58vw"
-              className="h-auto w-full object-contain"
-              priority={false}
-            />
+            <div
+              className="transition-transform duration-700 ease-out motion-reduce:transform-none motion-reduce:transition-none"
+              style={{ transform: `scale(1.04) translateX(${(activeSlide - 1) * -1.5}%)` }}
+            >
+              <Image
+                src="/images/depoimentos-avalia-solar.png"
+                alt="Depoimentos de usuários que pesquisaram e compararam empresas no Avalia Solar"
+                width={1536}
+                height={1024}
+                sizes="(max-width: 1023px) 100vw, 58vw"
+                className="h-auto w-full object-contain"
+                priority={false}
+              />
+            </div>
           </div>
 
           <div
@@ -89,10 +90,6 @@ export default function HowItWorks() {
             aria-label="Como o Avalia Solar ajuda na sua decisão"
           >
             <div key={activeSlide} className="animate-in fade-in slide-in-from-right-2 duration-500">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center border border-blue-200 bg-blue-50 text-blue-700">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-
               <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-700">
                 {slide.eyebrow}
               </p>
