@@ -26,7 +26,7 @@ interface BannerCarouselProps {
 export function BannerCarousel({ banners, loading, className }: BannerCarouselProps) {
   if (loading) {
     return (
-      <div className={cn("w-full h-[180px] md:h-[240px] rounded-xl overflow-hidden", className)}>
+      <div className={cn("h-[126px] w-full overflow-hidden rounded-none md:h-[168px]", className)}>
         <Skeleton className="w-full h-full" />
       </div>
     );
@@ -80,7 +80,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
     <div className={cn("w-full py-2", className)}>
       <PremiumBannerCarousel 
         items={items}
-        aspectRatio="aspect-[16/10] md:aspect-[4/1]"
+        aspectRatio="aspect-[16/7] md:aspect-[40/7]"
         autoplayDelay={5000}
       />
     </div>

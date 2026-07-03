@@ -34,7 +34,7 @@ export function PremiumBannerCarousel({
   const [isPaused, setIsPaused] = React.useState(false);
   
   // FIX: Pre-initialize scrollSnaps based on item count to avoid hydration/first-frame flicker
-  const scrollSnaps = React.useMemo(() => items.map((_, i) => i), [items.length]);
+  const scrollSnaps = React.useMemo(() => items.map((_, i) => i), [items]);
   
   const controls = useAnimation();
   
@@ -67,9 +67,9 @@ export function PremiumBannerCarousel({
     if (!api || items.length <= 1) return;
 
     const startAnimation = async () => {
-      await (controls as any).set({ width: "0%" });
+      controls.set({ width: "0%" });
       if (!isPaused) {
-        await (controls as any).start({
+        await controls.start({
           width: "100%",
           transition: { duration: autoplayDelay / 1000, ease: "linear" },
         });
@@ -79,14 +79,14 @@ export function PremiumBannerCarousel({
     startAnimation();
     
     const handleSelect = () => {
-      (controls as any).stop();
+      controls.stop();
       startAnimation();
     };
 
     api.on('select', handleSelect);
     return () => {
       api.off('select', handleSelect);
-      (controls as any).stop();
+      controls.stop();
     };
   }, [api, controls, autoplayDelay, items.length, isPaused]);
 
@@ -124,7 +124,7 @@ export function PremiumBannerCarousel({
   return (
     <div 
       ref={containerRef}
-      className={cn("group relative w-full overflow-hidden rounded-[8px] shadow-md transition-shadow hover:shadow-lg", className)}
+      className={cn("group relative w-full overflow-hidden !rounded-none shadow-sm transition-shadow hover:shadow-md", className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

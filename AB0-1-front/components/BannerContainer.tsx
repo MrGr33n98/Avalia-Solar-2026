@@ -178,14 +178,17 @@ export function BannerContainer({
       switch (pos) {
         case 'navbar': return 'aspect-[10/1]';
         case 'sidebar': return 'aspect-[1/1]';
-        case 'categories_top': return 'aspect-[3/1] sm:aspect-[21/5]';
-        case 'compare_hero': return 'aspect-[16/9] md:aspect-[4/1]';
+        case 'categories_top': return 'aspect-[12/5] sm:aspect-[6/1]';
+        case 'compare_hero': return 'aspect-[16/7] md:aspect-[40/7]';
         case 'compare_page_sidebar': return 'aspect-[1/2]';
         case 'compare_page_top': return 'h-[88px] sm:h-[104px]';
         case 'compare_page_inline':
         case 'compare_page_bottom':
           return 'aspect-[3/1] sm:aspect-[15/2]';
-        case 'search_top': return 'aspect-[20/3]';
+        case 'search_top': return 'aspect-[200/21]';
+        case 'home_top':
+        case 'companies_top':
+          return 'aspect-[12/5] sm:aspect-[40/7]';
         case 'search_mid': return 'aspect-[15/2]';
         case 'categories_filter_sidebar': return 'aspect-[6/5]';
         case 'categories_right_rail':

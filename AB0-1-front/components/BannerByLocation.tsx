@@ -64,7 +64,7 @@ export function BannerByLocation({
   // Se estamos carregando e não temos dados iniciais, mostra esqueleto
   if (isLoading && !banners) {
     return (
-      <div className={cn("w-full h-24 bg-muted animate-pulse rounded-lg", className)} />
+      <div className={cn("h-[68px] w-full animate-pulse rounded-none bg-muted", className)} />
     );
   }
 
@@ -80,7 +80,7 @@ export function BannerByLocation({
     }));
 
     return (
-      <div ref={containerRef} className={cn("w-full overflow-hidden", className)}>
+      <div ref={containerRef} className={cn("w-full overflow-hidden !rounded-none", className)}>
         <BannerContainer position={location} banners={normalizedBanners} />
       </div>
     );
