@@ -18,11 +18,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ComparisonSponsoredRecommendation } from '@/components/compare/ComparisonSponsoredRecommendation';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 import { useComparison } from '@/hooks/useComparison';
 import type { Company } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
-import { openSignupGate } from '@/lib/signup-gate';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
 
@@ -86,7 +84,6 @@ function TrustItem({ children }: { children: React.ReactNode }) {
 
 export default function ComparisonFloatingBar() {
   const router = useRouter();
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const {
     comparisonList,
     removeFromComparison,
@@ -94,7 +91,6 @@ export default function ComparisonFloatingBar() {
     count,
     canAddMore,
     maxComparison,
-    isLoading: comparisonLoading,
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('expanded');
@@ -115,42 +111,16 @@ export default function ComparisonFloatingBar() {
   if (dockState === 'hidden') return null;
 
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
-  const shouldGateHighIntent = !authLoading && !comparisonLoading && !isAuthenticated && count >= 2;
-
   const handleComparisonPageClick = () => {
     track('comparison_dock_compare_click', {
       comparison_count: count,
       placement: 'comparison_dock',
     });
 
-    if (shouldGateHighIntent) {
-      openSignupGate({
-        source: 'comparison_cta',
-        returnTo: '/compare',
-        comparisonCount: count,
-        title: 'Crie sua conta para continuar comparando',
-        description:
-          'Desbloqueie a análise completa, salve sua shortlist e volte exatamente para onde parou.',
-      });
-      return;
-    }
-
     router.push('/compare');
   };
 
   const handleDetailsClick = () => {
-    if (shouldGateHighIntent) {
-      openSignupGate({
-        source: 'comparison_cta',
-        returnTo: `${window.location.pathname}${window.location.search}`,
-        comparisonCount: count,
-        title: 'Crie sua conta para ver a comparação completa',
-        description:
-          'Libere a visão lado a lado, mantenha suas empresas salvas e siga sua pesquisa sem perder o contexto.',
-      });
-      return;
-    }
-
     setIsModalOpen(true);
   };
 

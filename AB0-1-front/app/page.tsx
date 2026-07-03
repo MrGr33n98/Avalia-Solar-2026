@@ -38,11 +38,6 @@ const HomePageTracking = dynamic(() => import('@/components/home/HomePageTrackin
   ssr: false,
   loading: () => null,
 });
-const HomeIdentityModalTrigger = dynamic(() => import('@/components/home/HomeIdentityModalTrigger'), {
-  ssr: false,
-  loading: () => null,
-});
-
 const homeFaqs = [
   {
     question: 'Como funciona o Avalia Solar?',
@@ -255,7 +250,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <HomeIdentityModalTrigger />
     </main>
   );
 }
