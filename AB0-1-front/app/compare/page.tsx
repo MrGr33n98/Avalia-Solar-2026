@@ -260,48 +260,54 @@ function ComparePageContent() {
     <div className="min-h-[calc(100vh-4rem)] overflow-x-clip bg-slate-50">
       <CompareHero />
 
-      <div className="mx-auto max-w-[1240px] px-4 pt-4 sm:px-6">
-        <BannerSlot placement="compare_page_top" limit={3} />
+      <div className="mx-auto max-w-[1240px] px-4 pt-3 sm:px-6">
+        <BannerSlot
+          placement="compare_page_top"
+          limit={3}
+          className="!min-h-0 py-0 [&>div]:rounded-none [&>div]:border [&>div]:border-slate-200 [&>div]:shadow-none"
+        />
       </div>
 
-      <main className="mx-auto max-w-[1240px] px-4 pb-10 pt-6 sm:px-6" id="main-content">
+      <main className="mx-auto max-w-[1240px] px-4 pb-10 pt-5 sm:px-6" id="main-content">
         {isLoading ? (
           <PageLoadingState />
         ) : loadError ? (
           <PageErrorState onRetry={() => setRetryVersion((version) => version + 1)} />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
+            <SelectedCompaniesPanel
+              companies={companies}
+              onRemove={removeFromComparison}
+              onClear={clearComparison}
+            />
             {companies.length > 0 && <CompareSummary companies={companies} />}
             {companies.length > 1 && (
               <BestMatchCard companies={companies} city={contextCity} onQuote={handleQuote} />
             )}
 
-            <div className="flex items-center justify-between gap-3">
-              <SelectedCompanyChips companies={companies} onRemove={removeFromComparison} />
-              {companies.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleShare}
-                  aria-label="Compartilhar comparação"
-                >
-                  <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> Compartilhar
-                </Button>
-              )}
-            </div>
-
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="min-w-0 space-y-6 lg:order-1">
-                <BannerSlot placement="compare_page_inline" limit={3} />
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="min-w-0 space-y-4 lg:order-1">
                 {companies.length > 0 ? (
-                  <CompareTable
-                    companies={companies}
-                    onRemove={removeFromComparison}
-                    onQuote={handleQuote}
-                  />
+                  <section aria-labelledby="side-by-side-title">
+                    <div className="mb-3 flex items-end justify-between gap-3">
+                      <div>
+                        <h2 id="side-by-side-title" className="text-lg font-semibold text-slate-950">Comparação lado a lado</h2>
+                        <p className="mt-0.5 text-xs text-slate-500">{companies.length} de 3 empresas selecionadas</p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={handleShare} aria-label="Compartilhar comparação" className="rounded-none">
+                        <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> Compartilhar
+                      </Button>
+                    </div>
+                    <CompareTable
+                      companies={companies}
+                      onRemove={removeFromComparison}
+                      onQuote={handleQuote}
+                    />
+                  </section>
                 ) : (
                   <EmptyComparisonState />
                 )}
+                <BannerSlot placement="compare_page_inline" limit={3} />
               </div>
 
               <aside
@@ -352,10 +358,10 @@ function CompareHero() {
           "url('/assets/background-comparacao-empresas-2560x512-500kb.png')",
       }}
     >
-      <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:py-10">
+      <div className="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:py-8">
         <nav
           aria-label="Breadcrumb"
-          className="mb-6 flex items-center gap-2 text-xs text-slate-500"
+          className="mb-4 flex items-center gap-2 text-xs text-slate-500"
         >
           <Link href="/" className="hover:text-blue-700">
             Home
@@ -363,19 +369,20 @@ function CompareHero() {
           <span aria-hidden="true">›</span>
           <span>Comparar empresas</span>
         </nav>
-        <div className="max-w-[760px]">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-700">
+        <div className="grid min-h-[150px] items-center lg:grid-cols-[0.9fr_1.1fr] lg:min-h-[180px]">
+          <div className="max-w-[620px]">
+            <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">
               <Scale className="h-3.5 w-3.5" aria-hidden="true" /> Comparador de empresas
             </span>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.15rem]">
               Compare antes de decidir.
             </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
               Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
               condições comerciais.
             </p>
           </div>
+          <div aria-hidden="true" />
         </div>
       </div>
     </header>
@@ -431,33 +438,42 @@ function EmptyComparisonState() {
   );
 }
 
-function SelectedCompanyChips({
+function SelectedCompaniesPanel({
   companies,
   onRemove,
+  onClear,
 }: {
   companies: CompareCompany[];
   onRemove: (id: number) => void;
+  onClear: () => void;
 }) {
-  if (companies.length === 0) return <span />;
   return (
-    <div className="flex min-w-0 gap-2 overflow-x-auto pb-1" aria-label="Empresas selecionadas">
-      {companies.map((company) => (
-        <span
-          key={company.id}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-2 pr-1 text-xs font-bold text-slate-800"
-        >
-          {company.name}
-          <button
-            type="button"
-            onClick={() => onRemove(company.id)}
-            aria-label={`Remover ${company.name} da comparação`}
-            className="rounded-full p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </span>
-      ))}
-    </div>
+    <section aria-labelledby="selected-companies-title">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 id="selected-companies-title" className="text-base font-semibold text-slate-950">
+          Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de 3)</span>
+        </h2>
+        {companies.length > 0 && <Button variant="outline" size="sm" onClick={onClear} className="rounded-none">Limpar comparação</Button>}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {companies.map((company) => (
+          <article key={company.id} className="flex min-h-[84px] items-center gap-3 border border-slate-200 bg-white p-3">
+            <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-950">{company.name}</p>
+              <p className="mt-1 truncate text-xs text-slate-500">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</p>
+            </div>
+            <button type="button" onClick={() => onRemove(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-8 w-8 items-center justify-center border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"><X className="h-3.5 w-3.5" /></button>
+          </article>
+        ))}
+        {companies.length < MAX_COMPANIES && (
+          <a href="#company-search-title" className="flex min-h-[84px] items-center justify-center gap-2 border border-dashed border-slate-300 bg-white p-3 text-sm font-medium text-blue-700 hover:border-blue-400 hover:bg-blue-50/40">
+            <Plus className="h-4 w-4" /> Adicionar empresa
+          </a>
+        )}
+      </div>
+      {companies.length > 1 && <div className="mt-2 flex h-9 items-center justify-center border border-slate-200 bg-white text-[11px] text-slate-500">Arraste para alterar a posição de exibição</div>}
+    </section>
   );
 }
 
@@ -490,10 +506,10 @@ function CompanySearchPanel({
     query.trim().length >= 2 && !isSearching && !searchError && results.length === 0;
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="rounded-none border border-slate-200 bg-white p-4 shadow-none"
       aria-labelledby="company-search-title"
     >
-      <h2 id="company-search-title" className="text-base font-black text-slate-950">
+      <h2 id="company-search-title" className="text-base font-semibold text-slate-950">
         Adicionar empresa
       </h2>
       <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -525,7 +541,7 @@ function CompanySearchPanel({
         )}
       </div>
       {!canAddMore && (
-        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
+        <div className="mt-3 rounded-none border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
           <strong>Você atingiu o limite de empresas.</strong>
           <br />
           Remova uma empresa ou substitua por uma recomendada.
@@ -553,7 +569,7 @@ function CompanySearchPanel({
               type="button"
               disabled={!canAddMore}
               onClick={() => onAdd(company)}
-              className="flex w-full items-center gap-2 rounded-lg border border-slate-200 p-2 text-left enabled:hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-none border border-slate-200 p-2 text-left enabled:hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={`Adicionar ${company.name} à comparação`}
             >
               <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
@@ -599,8 +615,8 @@ function CompanySearchPanel({
 
 function VerificationTip() {
   return (
-    <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-      <h2 className="flex items-center gap-2 text-sm font-black text-emerald-950">
+    <section className="rounded-none border border-emerald-200 bg-emerald-50 p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-950">
         <ShieldCheck className="h-5 w-5" aria-hidden="true" /> Dica Avalia Solar
       </h2>
       <p className="mt-2 text-xs leading-5 text-emerald-900">

@@ -13,8 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -46,7 +45,6 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Award,
   BatteryCharging,
   Bell,
   Building2,
@@ -61,7 +59,6 @@ import {
   Leaf,
   Lock,
   MapPin,
-  Medal,
   MessageCircle,
   MoreHorizontal,
   Recycle,
@@ -86,7 +83,7 @@ import { Lead, Review, User } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { type ReviewDashboardSummary } from '../DashboardLayoutClient';
-import { UserSolutionChip } from '@/components/profile/UserSolutionChip';
+import { UserSolutionChip, type UserSolution } from '@/components/profile/UserSolutionChip';
 import { AddUserSolutionModal } from '@/components/profile/AddUserSolutionModal';
 import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 import { useDashboardContext } from '../DashboardLayoutClient';
@@ -361,7 +358,6 @@ export function ReputationDashboard({
   const impactedPeople = summary?.impact?.impacted_people || 0;
   const greenScore = summary?.gamification?.green_score || 0;
   const rankingPosition = summary?.gamification?.regional_ranking || 1;
-  const achievementsList = summary?.gamification?.achievements || [];
   const recommendationsList = summary?.recommendations || [];
   const recentActivitiesList = summary?.recent_activities || [];
 
@@ -454,25 +450,6 @@ export function ReputationDashboard({
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const achievements = achievementsList.map((a) => {
-    let icon = Award;
-    if (a.title.includes('Primeira')) icon = Medal;
-    else if (a.title.includes('5')) icon = Trophy;
-    else if (a.title.includes('10')) icon = Sun;
-    else if (a.title.includes('Expert')) icon = ShieldCheck;
-    else if (a.title.includes('Green House')) icon = Leaf;
-    else if (a.title.includes('EV')) icon = Car;
-    else if (a.title.includes('Storage')) icon = BatteryCharging;
-
-    return {
-      title: a.title,
-      subtitle: a.subtitle,
-      icon,
-      state: a.state,
-      unlocked: a.state !== 'bloqueado',
-    };
-  });
-
   const recommendations = recommendationsList;
 
   const activityEvents = recentActivitiesList.map((a) => {
@@ -489,7 +466,7 @@ export function ReputationDashboard({
     };
   });
 
-  const sustainableJourneyIcons: Record<string, { icon: any; tone: string }> = {
+  const sustainableJourneyIcons: Record<string, { icon: LucideIcon; tone: string }> = {
     solar: { icon: Sun, tone: 'bg-yellow-100 text-yellow-700' },
     mobility: { icon: Car, tone: 'bg-green-100 text-green-700' },
     battery: { icon: BatteryCharging, tone: 'bg-orange-100 text-orange-700' },
@@ -591,9 +568,9 @@ export function ReputationDashboard({
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 md:gap-6 pb-20 pt-3">
+    <div className="flex w-full flex-col gap-4 pb-20 pt-3 md:gap-6">
       {error && (
-        <Card className="rounded-2xl border-red-100 bg-red-50 shadow-none">
+        <Card className="rounded-none border-red-200 bg-white shadow-none">
           <CardContent className="flex items-center gap-3 p-3 text-red-800 md:p-4">
             <CircleHelp className="h-5 w-5 shrink-0" />
             <p className="text-sm font-medium">{error}</p>
@@ -631,44 +608,44 @@ export function ReputationDashboard({
       <div className="hidden md:block">
         {/* Banner de incentivo de conquista */}
         {reviews.length === 0 && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4">
+          <div className="mb-6 flex items-center justify-between rounded-none border border-slate-200 bg-white px-5 py-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🏆</span>
               <div>
-                <p className="text-sm font-semibold text-emerald-800">
+                <p className="text-sm font-semibold text-slate-950">
                   Você está a 1 avaliação de desbloquear{' '}
-                  <span className="font-bold text-emerald-700">1ª Avaliação</span>!
+                  <span className="font-semibold text-blue-700">1ª Avaliação</span>!
                 </p>
-                <p className="text-xs text-emerald-600">
+                <p className="text-xs text-slate-500">
                   Publique sua primeira avaliação e ganhe 50 pontos Green Score.
                 </p>
               </div>
             </div>
             <Link
               href="/companies"
-              className="flex-shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              className="flex-shrink-0 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
             >
               Avaliar empresa
             </Link>
           </div>
         )}
         {reviews.length > 0 && !hasSolarReview && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4">
+          <div className="mb-6 flex items-center justify-between rounded-none border border-slate-200 bg-white px-5 py-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">☀️</span>
               <div>
-                <p className="text-sm font-semibold text-emerald-800">
+                <p className="text-sm font-semibold text-slate-950">
                   Você está a 1 avaliação de desbloquear{' '}
-                  <span className="font-bold text-emerald-700">Projeto Solar Validado</span>!
+                  <span className="font-semibold text-blue-700">Projeto Solar Validado</span>!
                 </p>
-                <p className="text-xs text-emerald-600">
+                <p className="text-xs text-slate-500">
                   Avalie uma empresa de energia solar para ganhar 150 pts Green Score.
                 </p>
               </div>
             </div>
             <Link
               href="/categories/energia-solar"
-              className="flex-shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              className="flex-shrink-0 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
             >
               Avaliar empresa solar
             </Link>
@@ -2094,7 +2071,7 @@ function SolutionsCard({
   onAddClick,
   onRemove,
 }: {
-  solutions: any[];
+  solutions: UserSolution[];
   onAddClick: () => void;
   onRemove: (id: string) => void;
 }) {

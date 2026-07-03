@@ -16,18 +16,18 @@ export default function BestMatchCard({ companies, city, onQuote }: BestMatchCar
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-5 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-3 rounded-none border border-blue-100 bg-blue-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       aria-labelledby="best-match-title"
     >
       <div className="max-w-2xl">
         <p
           id="best-match-title"
-          className="flex items-center gap-2 text-sm font-black text-blue-950"
+          className="flex items-center gap-2 text-sm font-semibold text-blue-950"
         >
           <Sparkles className="h-4 w-4 text-blue-700" aria-hidden="true" />
           Melhor match para sua comparação
         </p>
-        <p className="mt-1 text-sm leading-6 text-slate-700">
+        <p className="mt-1 text-xs leading-5 text-slate-700 sm:text-sm">
           <strong>{company.name}</strong> parece ser a opção mais aderente com base nos dados
           disponíveis de nota, verificação, atendimento e cobertura.
         </p>

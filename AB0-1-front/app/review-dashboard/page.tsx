@@ -13,7 +13,7 @@ import { Loader2 } from 'lucide-react';
 const ActivityChart = dynamic(() => import('./components/ActivityChart').then((mod) => mod.ActivityChart), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[300px] items-center justify-center rounded-[20px] bg-slate-50">
+    <div className="flex h-[300px] items-center justify-center rounded-none border border-slate-200 bg-white">
       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
     </div>
   ),

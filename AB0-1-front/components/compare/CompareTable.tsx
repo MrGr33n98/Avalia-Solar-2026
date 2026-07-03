@@ -141,13 +141,8 @@ interface CompareTableProps {
 
 export default function CompareTable({ companies, onRemove, onQuote }: CompareTableProps) {
   return (
-    <section aria-labelledby="comparison-table-title">
-      <h2 id="comparison-table-title" className="text-lg font-black text-slate-950">
-        Comparação lado a lado
-      </h2>
-      <p className="mt-1 text-sm text-slate-500">{companies.length} de 3 empresas selecionadas</p>
-
-      <div className="mt-4 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+    <section aria-label="Tabela de comparação lado a lado">
+      <div className="hidden overflow-x-auto rounded-none border border-slate-200 bg-white shadow-none md:block">
         <table className="w-full min-w-[760px] table-fixed border-collapse text-left">
           <caption className="sr-only">Critérios das empresas selecionadas para comparação</caption>
           <thead>
@@ -228,7 +223,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
       <Accordion
         type="multiple"
         defaultValue={groups.map((group) => group.id)}
-        className="mt-4 rounded-xl border border-slate-200 bg-white px-4 shadow-sm md:hidden"
+        className="rounded-none border border-slate-200 bg-white px-4 shadow-none md:hidden"
       >
         {groups.map((group) => (
           <AccordionItem key={group.id} value={group.id}>
@@ -268,7 +263,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
 
       <div className="mt-4 grid gap-3 md:hidden">
         {companies.map((company) => (
-          <div key={company.id} className="rounded-xl border border-slate-200 bg-white p-3">
+          <div key={company.id} className="rounded-none border border-slate-200 bg-white p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-sm font-black text-slate-900">{company.name}</span>
               <button

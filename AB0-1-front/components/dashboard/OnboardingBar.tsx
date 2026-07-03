@@ -43,16 +43,13 @@ export function OnboardingBar({
   const nextAction = currentStepIndex !== -1 ? steps[currentStepIndex] : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-50 via-white to-amber-50 border border-emerald-100 p-6 text-slate-900 shadow-sm">
-      {/* Detalhes de Background Decorativos */}
-      <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-emerald-100/20 blur-2xl" />
-      <div className="absolute bottom-0 left-1/3 h-24 w-24 rounded-full bg-teal-100/20 blur-xl" />
+    <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white p-5 text-slate-950 shadow-none">
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between relative z-10">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-emerald-600 animate-pulse" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <Sparkles className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-slate-950">
               Bem-vindo, {firstName}! Vamos completar o seu onboarding?
             </h2>
           </div>
@@ -65,16 +62,16 @@ export function OnboardingBar({
             {steps.map((step, idx) => (
               <div
                 key={step.label}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs border ${
+                className={`flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs ${
                   step.done
-                    ? 'bg-emerald-100/70 border-emerald-200 text-emerald-800 line-through'
-                    : 'bg-white border-emerald-100 text-slate-700 shadow-sm font-medium'
+                    ? 'border-emerald-200 bg-emerald-50/40 text-slate-700 line-through'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
                 {step.done ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-600 text-[10px] font-semibold text-white">
                     {idx + 1}
                   </span>
                 )}
@@ -89,7 +86,7 @@ export function OnboardingBar({
         {nextAction && (
           <Link
             href={nextAction.href}
-            className="flex items-center justify-center gap-1.5 self-start rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm md:self-center"
+            className="flex items-center justify-center gap-1.5 self-start rounded-none bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 md:self-center"
           >
             Próximo passo: {nextAction.label}
             <ChevronRight className="h-4 w-4" />

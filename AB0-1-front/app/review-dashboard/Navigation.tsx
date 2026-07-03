@@ -162,7 +162,7 @@ export function Header({
           <Button
             variant="outline"
             size="icon"
-            className="h-9 w-9 rounded-xl border-slate-200 bg-white md:h-11 md:w-11 md:rounded-2xl lg:hidden"
+            className="h-9 w-9 rounded-none border-slate-200 bg-white md:h-11 md:w-11 lg:hidden"
             onClick={onOpenMobileNav}
           >
             <Menu className="h-4 w-4 md:h-5 md:w-5" />
@@ -183,7 +183,7 @@ export function Header({
               <Button
                 variant="outline"
                 size="icon"
-                className="hidden h-11 w-11 rounded-2xl border-slate-200 bg-white md:inline-flex"
+                className="hidden h-11 w-11 rounded-none border-slate-200 bg-white md:inline-flex"
                 onClick={onOpenCommand}
               >
                 <Command className="h-5 w-5 text-slate-600" />
@@ -197,7 +197,7 @@ export function Header({
               <Button
                 variant="outline"
                 size="icon"
-                className="relative h-9 w-9 rounded-xl border-slate-200 bg-white md:h-11 md:w-11 md:rounded-2xl"
+                className="relative h-9 w-9 rounded-none border-slate-200 bg-white md:h-11 md:w-11"
               >
                 <Bell className="h-4 w-4 text-slate-600 md:h-5 md:w-5" />
                 {notificationsCount > 0 && (
@@ -207,7 +207,7 @@ export function Header({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 rounded-2xl border-slate-200 p-0 shadow-xl">
+            <PopoverContent align="end" className="w-80 rounded-none border-slate-200 p-0 shadow-sm">
               <div className="p-4">
                 <p className="text-sm font-semibold text-slate-950">Notificações</p>
                 <p className="text-xs font-medium text-slate-500">
@@ -224,7 +224,7 @@ export function Header({
                   <button
                     key={item}
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-slate-50"
+                    className="flex w-full items-center gap-3 rounded-none p-2 text-left hover:bg-slate-50"
                   >
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                       <Bell className="h-4 w-4" />
@@ -239,7 +239,7 @@ export function Header({
           <Button
             variant="outline"
             size="icon"
-            className="h-9 w-9 rounded-xl border-slate-200 bg-white md:h-11 md:w-11 md:rounded-2xl"
+            className="h-9 w-9 rounded-none border-slate-200 bg-white md:h-11 md:w-11"
             onClick={onRefresh}
             disabled={refreshing}
           >
@@ -248,7 +248,7 @@ export function Header({
             />
           </Button>
 
-          <div className="hidden items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm md:flex border border-slate-200">
+          <div className="hidden items-center gap-3 rounded-none border border-slate-200 bg-white px-3 py-2 shadow-none md:flex">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user.avatar_url || ''} alt={user.name} />
               <AvatarFallback>{initialsFromName(user.name)}</AvatarFallback>
@@ -351,10 +351,10 @@ function SidebarContent({
                       href={item.href}
                       onClick={onNavigate}
                       className={cn(
-                        'group flex h-11 items-center justify-between rounded-xl px-3 text-sm font-medium transition-colors',
+                        'group flex h-11 items-center justify-between rounded-none border-l-2 px-3 text-sm font-medium transition-colors',
                         active
-                          ? 'bg-green-50 text-emerald-800'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
+                          ? 'border-blue-600 bg-slate-100 text-slate-950'
+                          : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950',
                         item.replies &&
                           repliesCount > 0 &&
                           'border border-emerald-300 bg-emerald-50 text-slate-950'
@@ -364,7 +364,7 @@ function SidebarContent({
                         <Icon
                           className={cn(
                              'h-5 w-5 shrink-0',
-                            active ? 'text-emerald-700' : 'text-slate-500'
+                            active ? 'text-blue-600' : 'text-slate-500'
                           )}
                         />
                         <span className="truncate">
@@ -393,7 +393,7 @@ function SidebarContent({
 
       <div className="border-t border-slate-100 p-4 space-y-2">
         <Button
-          className="h-12 w-full rounded-xl bg-emerald-600 font-medium hover:bg-emerald-700"
+          className="h-12 w-full rounded-none bg-blue-600 font-medium hover:bg-blue-700"
           asChild
         >
           <Link href="/companies">
@@ -403,7 +403,7 @@ function SidebarContent({
         </Button>
         <Button
           variant="outline"
-          className="h-11 w-full rounded-xl border-slate-200 text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900"
+          className="h-11 w-full rounded-none border-slate-300 text-slate-700 font-medium hover:bg-slate-50 hover:text-slate-950"
           onClick={async () => {
             if (onNavigate) onNavigate();
             await logout();
@@ -432,8 +432,8 @@ export function MobileDashboardNav({ repliesCount }: { repliesCount: number }) {
               key={item.label}
               href={item.href}
               className={cn(
-                'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] font-medium',
-                active ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-700'
+                'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-none border-t-2 px-1 py-1.5 text-[11px] font-medium',
+                active ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-600 hover:text-blue-700'
               )}
             >
               <span className="relative">

@@ -347,7 +347,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   if (authLoading || isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -363,7 +363,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           </p>
           <button
             onClick={() => router.push('/login')}
-            className="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white hover:bg-emerald-700"
+            className="rounded-none bg-slate-950 px-6 py-3 font-semibold text-white hover:bg-slate-800"
           >
             Fazer login novamente
           </button>
@@ -437,14 +437,14 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         removeSolution,
       }}
     >
-      <div className="min-h-screen w-full bg-[#f5f5f5] dark:bg-[#020617] overflow-x-hidden">
+      <div className="review-dashboard-enterprise min-h-screen w-full overflow-x-hidden bg-[#F6F7F9] text-slate-950 dark:bg-[#020617]">
         {/* Barra de Onboarding com gradiente */}
-        <div className="max-w-[1240px] mx-auto px-4 pt-6">
+        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
           <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviews.length} />
         </div>
 
         {/* Shell Principal do Dashboard em Duas Colunas */}
-        <div className="max-w-[1240px] mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
           {/* Coluna Esquerda: Profile Card / Menu lateral */}
           <aside className="hidden lg:block">
             <div className="sticky top-[88px]">

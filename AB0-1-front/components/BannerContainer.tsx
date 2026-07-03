@@ -181,7 +181,7 @@ export function BannerContainer({
         case 'categories_top': return 'aspect-[3/1] sm:aspect-[21/5]';
         case 'compare_hero': return 'aspect-[16/9] md:aspect-[4/1]';
         case 'compare_page_sidebar': return 'aspect-[1/2]';
-        case 'compare_page_top':
+        case 'compare_page_top': return 'h-[88px] sm:h-[104px]';
         case 'compare_page_inline':
         case 'compare_page_bottom':
           return 'aspect-[3/1] sm:aspect-[15/2]';

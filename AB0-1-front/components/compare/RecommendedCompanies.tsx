@@ -66,7 +66,7 @@ export default function RecommendedCompanies({
 
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="rounded-none border border-slate-200 bg-white p-4 shadow-none"
       aria-labelledby="recommended-companies-title"
     >
       <h2 id="recommended-companies-title" className="text-base font-black text-slate-950">

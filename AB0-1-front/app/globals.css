@@ -755,3 +755,36 @@
 .premium-popup .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: 1rem; border: none; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: transparent; }
 .premium-popup .leaflet-popup-content { margin: 0; width: auto !important; }
 .premium-popup .leaflet-popup-tip { box-shadow: none; }
+
+/* Review dashboard — Swiss / Enterprise visual system */
+.review-dashboard-enterprise :where([class~="rounded-xl"], [class~="rounded-2xl"], [class~="rounded-3xl"], [class~="rounded-[18px]"], [class~="rounded-[20px]"]) {
+  border-radius: 0 !important;
+}
+
+.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-6"],
+.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-7"] {
+  background-color: #2563eb !important;
+  color: #fff !important;
+}
+
+.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-6"]:hover,
+.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-7"]:hover {
+  background-color: #1d4ed8 !important;
+}
+
+.review-dashboard-enterprise :where(input, select, textarea) {
+  border-radius: 0 !important;
+}
+
+.review-dashboard-enterprise :where(button)[class~="rounded-lg"],
+.review-dashboard-enterprise :where(button)[class~="rounded-md"] {
+  border-radius: 0 !important;
+}
+
+.review-dashboard-enterprise :where([class~="font-black"], [class~="font-extrabold"]) {
+  font-weight: 600 !important;
+}
+
+.review-dashboard-enterprise :where([class~="shadow-xl"], [class~="shadow-lg"]) {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}

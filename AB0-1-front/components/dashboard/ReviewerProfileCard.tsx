@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  User as UserIcon,
   Home,
   UserRound,
   ClipboardList,
@@ -12,7 +12,6 @@ import {
   Trophy,
   Award,
   Bell,
-  Settings,
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,18 +55,20 @@ export function ReviewerProfileCard({
   const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
 
   return (
-    <div className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="flex flex-col gap-5 rounded-none border border-slate-200 bg-white p-5 shadow-none">
       {/* Informações Principais */}
       <div className="flex flex-col items-center text-center">
         <div className="relative mb-3">
           {user.avatar_url ? (
-            <img
+            <Image
               src={getFullImageUrl(user.avatar_url)}
               alt={user.name}
+              width={80}
+              height={80}
               className="h-20 w-20 rounded-full object-cover border-2 border-white shadow-md"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold text-xl border-2 border-white shadow-md">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xl font-semibold text-slate-800 shadow-sm">
               {initialsFromName(user.name)}
             </div>
           )}
@@ -76,8 +77,8 @@ export function ReviewerProfileCard({
           </div>
         </div>
 
-        <h3 className="text-base font-bold text-gray-900 leading-snug">{user.name}</h3>
-        <p className="text-xs font-semibold text-emerald-600 mt-1">
+        <h3 className="text-base font-semibold leading-snug text-slate-950">{user.name}</h3>
+        <p className="mt-1 text-xs font-medium text-slate-600">
           Especialista Solar · Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}
         </p>
         <p className="text-[11px] text-gray-400 mt-0.5">
@@ -93,7 +94,7 @@ export function ReviewerProfileCard({
         {/* Botão LinkedIn */}
         <button
           type="button"
-          className="mt-4 flex items-center justify-center gap-1.5 w-full rounded-xl border border-blue-200 bg-blue-50/50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-none border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50"
         >
           <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
             <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
@@ -110,15 +111,15 @@ export function ReviewerProfileCard({
           <span>Perfil Completo</span>
           <span>{profileCompletion}%</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="h-1.5 w-full overflow-hidden rounded-none bg-slate-100">
           <div
-            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            className="h-full rounded-none bg-blue-600 transition-all duration-500"
             style={{ width: `${profileCompletion}%` }}
           />
         </div>
         <Link
           href="/review-dashboard/profile"
-          className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 mt-0.5"
+          className="mt-0.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700"
         >
           Completar detalhes do perfil →
         </Link>
@@ -137,16 +138,16 @@ export function ReviewerProfileCard({
               key={item.label}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                'flex items-center gap-3 border-l-2 px-3 py-2.5 text-sm font-medium transition-colors rounded-none',
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'border-blue-600 bg-slate-100 text-slate-950'
+                  : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950'
               )}
             >
               <Icon
                 className={cn(
                   'h-4.5 w-4.5',
-                  isActive ? 'text-emerald-600' : 'text-gray-400'
+                  isActive ? 'text-blue-600' : 'text-slate-400'
                 )}
               />
               {item.label}
