@@ -8,6 +8,8 @@ import { Slider } from '@/components/ui/slider';
 import { X, ShieldCheck, MapPin, Star, Settings2, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLocationData } from '@/hooks/useLocationData';
+import ConsultantHelpCard from '@/components/ConsultantHelpCard';
+import { openLeadModal } from '@/lib/lead-engine';
 
 interface FilterState {
   verified?: boolean;
@@ -159,14 +161,9 @@ export default function CategoryFilterSidebar({
         </div>
       </div>
 
-      {/* Sugestão / Ajuda */}
-      <div className="bg-blue-600 rounded-[2rem] p-8 text-white space-y-4 shadow-xl shadow-blue-500/10">
-        <p className="text-sm font-black leading-tight">Precisa de ajuda para escolher?</p>
-        <p className="text-xs text-blue-50 leading-relaxed font-medium">Nossos especialistas podem te ajudar a encontrar a melhor empresa gratuitamente.</p>
-        <Button className="w-full bg-white text-blue-600 hover:bg-blue-50 font-black rounded-xl h-12 shadow-lg shadow-blue-900/20 transition-all active:scale-95">
-          Falar com Consultor
-        </Button>
-      </div>
+      <ConsultantHelpCard
+        onAction={() => openLeadModal({ source: 'category-filter-consultant', type: 'quick' })}
+      />
     </aside>
   );
 }

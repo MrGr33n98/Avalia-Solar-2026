@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, MessageSquare, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+import ConsultantHelpCard from '@/components/ConsultantHelpCard';
 import { pricingFaqs } from '@/lib/pricing/catalog';
 
 interface FaqItemProps {
@@ -73,26 +72,12 @@ export function PricingFaq() {
             </div>
           </div>
 
-          {/* Direita: Card de ajuda */}
-          <div className="rounded-[1.5rem] border border-brand-blue/15 bg-gradient-to-br from-brand-blue/5 via-white to-white p-6 shadow-sm flex flex-col gap-5 lg:sticky lg:top-24">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-blue text-white shadow-md shrink-0">
-              <MessageSquare className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-slate-950 leading-tight mb-2">
-                Precisa de ajuda para escolher?
-              </h3>
-              <p className="text-sm leading-relaxed text-slate-600">
-                Fale com nosso time e encontre o plano ideal para seus objetivos comerciais.
-              </p>
-            </div>
-            <Button asChild className="bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-sm h-11 rounded-full font-bold text-sm w-full">
-              <Link href="/contact?subject=commercial">
-                Falar com vendas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
+          <ConsultantHelpCard
+            description="Fale com nosso time e encontre o plano ideal para seus objetivos comerciais."
+            actionLabel="Falar com vendas"
+            href="/contact?subject=commercial"
+            className="lg:sticky lg:top-24"
+          />
 
         </div>
       </div>
