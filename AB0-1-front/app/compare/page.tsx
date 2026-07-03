@@ -13,9 +13,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  ClipboardCheck,
+  BadgeCheck,
+  FileText,
   Loader2,
   Plus,
   RefreshCw,
@@ -23,7 +22,7 @@ import {
   Search,
   Share2,
   ShieldCheck,
-  Star,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,7 +33,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import BestMatchCard from '@/components/compare/BestMatchCard';
-import CompareHeroBanner from '@/components/compare/CompareHeroBanner';
 import CompareSummary from '@/components/compare/CompareSummary';
 import CompareTable from '@/components/compare/CompareTable';
 import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
@@ -52,7 +50,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useComparison } from '@/hooks/useComparison';
 import { companiesApi, type Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
-import { CONTACT } from '@/lib/site';
 
 const MAX_COMPANIES = 3;
 
@@ -348,7 +345,13 @@ function ComparePageContent() {
 
 function CompareHero() {
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header
+      className="border-b border-slate-200 bg-white bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage:
+          "url('/assets/background-comparacao-empresas-2560x512-500kb.png')",
+      }}
+    >
       <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:py-10">
         <nav
           aria-label="Breadcrumb"
@@ -360,7 +363,7 @@ function CompareHero() {
           <span aria-hidden="true">›</span>
           <span>Comparar empresas</span>
         </nav>
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_520px]">
+        <div className="max-w-[760px]">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-700">
               <Scale className="h-3.5 w-3.5" aria-hidden="true" /> Comparador de empresas
@@ -372,28 +375,10 @@ function CompareHero() {
               Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
               condições comerciais.
             </p>
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs font-semibold text-slate-600">
-              <HeroBenefit icon={ClipboardCheck} label="Dados verificados" />
-              <HeroBenefit icon={Star} label="Avaliações reais" />
-              <HeroBenefit icon={BarChart3} label="Comparação imparcial" />
-              <HeroBenefit icon={CheckCircle2} label="100% gratuito" />
-            </div>
           </div>
-          <CompareHeroBanner />
         </div>
       </div>
     </header>
-  );
-}
-
-function HeroBenefit({ icon: Icon, label }: { icon: typeof Star; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      {label}
-    </span>
   );
 }
 
@@ -633,22 +618,60 @@ function VerificationTip() {
 }
 
 function DiscoveryCta() {
-  const suggestionHref = `mailto:${CONTACT.team.email}?subject=${encodeURIComponent('Sugestão de empresa para o comparador')}`;
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h2 className="text-base font-black text-slate-950">Não encontrou o que procura?</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Explore empresas verificadas ou solicite a inclusão de uma empresa para comparar.
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-2">
-        <Button asChild variant="outline">
-          <Link href="/companies">Explorar mais empresas</Link>
-        </Button>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-          <a href={suggestionHref}>Sugerir empresa</a>
-        </Button>
+    <section className="relative isolate overflow-hidden rounded-none border border-slate-800 bg-[#0B0F1A] px-6 py-8 text-white md:px-10 md:py-10">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 opacity-50"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 18% 10%, rgba(37,99,235,0.16), transparent 34%), radial-gradient(circle at 88% 86%, rgba(255,200,44,0.08), transparent 28%), radial-gradient(rgba(255,255,255,0.12) 0.7px, transparent 0.7px)',
+          backgroundSize: 'auto, auto, 18px 18px',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute -left-12 bottom-[-76px] h-36 w-36 rotate-45 border border-blue-400/20"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-10 top-[-88px] h-44 w-44 rotate-45 border border-[#FFC82C]/15"
+        aria-hidden="true"
+      />
+
+      <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-14">
+        <div className="max-w-[690px]">
+          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#FFC82C] sm:text-xs">
+            <Sparkles className="h-4 w-4" strokeWidth={1.7} aria-hidden="true" />
+            Próximo passo seguro
+          </p>
+          <h2 className="mt-4 max-w-[620px] text-2xl font-medium leading-tight tracking-[-0.025em] text-white sm:text-3xl lg:text-[2.15rem]">
+            Faça a escolha certa para o seu{' '}
+            <span className="font-semibold text-[#FFC82C]">projeto solar</span>
+          </h2>
+
+          <div className="mt-7 flex flex-col gap-4 text-sm text-slate-200 sm:flex-row sm:items-center sm:gap-6">
+            <span className="inline-flex items-center gap-2.5">
+              <BadgeCheck className="h-5 w-5 text-[#22C55E]" strokeWidth={1.7} aria-hidden="true" />
+              Empresas verificadas
+            </span>
+            <span className="hidden h-6 w-px bg-slate-600 sm:block" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2.5">
+              <ShieldCheck className="h-5 w-5 text-[#22C55E]" strokeWidth={1.7} aria-hidden="true" />
+              Comparação sem compromisso
+            </span>
+          </div>
+        </div>
+
+        <div className="lg:min-w-[310px]">
+          <button
+            type="button"
+            onClick={() => openLeadModal({ source: 'comparison-bottom-cta', type: 'quick' })}
+            className="inline-flex w-full items-center justify-center gap-3 rounded-none border border-[#FFC82C] bg-[#FFC82C] px-7 py-3.5 text-sm font-semibold text-[#0B0F1A] transition duration-200 hover:-translate-y-0.5 hover:border-[#e8b51e] hover:bg-[#e8b51e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFC82C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F1A] sm:w-auto lg:w-full"
+          >
+            <FileText className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
+            Pedir orçamento gratuito
+          </button>
+        </div>
       </div>
     </section>
   );

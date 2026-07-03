@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception, unless: -> { active_admin_request? }
   before_action :set_notifications, if: :user_signed_in?
   before_action :configure_permitted_parameters, if: :devise_controller?
+  after_action :prevent_backend_indexing
 
   protected
 
@@ -13,6 +14,10 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def prevent_backend_indexing
+    response.set_header('X-Robots-Tag', 'noindex, nofollow, noarchive')
+  end
 
   def active_admin_request?
     request.path.start_with?('/admin')

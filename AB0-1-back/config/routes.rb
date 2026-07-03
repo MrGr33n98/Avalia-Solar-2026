@@ -507,5 +507,5 @@ Rails.application.routes.draw do
     end
   end
 
-  root 'rails/welcome#index'
+  root 'api_root#show'
 end
