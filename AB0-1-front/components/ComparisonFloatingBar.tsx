@@ -176,7 +176,7 @@ export default function ComparisonFloatingBar() {
             aria-label="Empresas selecionadas para comparação"
             className="pointer-events-none fixed bottom-24 left-3 right-3 z-[8900] sm:left-4 sm:right-4 lg:bottom-6 lg:left-[100px] lg:right-[100px] lg:mx-auto lg:max-w-[1120px]"
           >
-            <section className="pointer-events-auto overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
+            <section className="comparison-modal-led-border pointer-events-auto overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
               <div className="relative border-b border-slate-200 px-4 py-4 pr-20 md:px-5 md:pr-24">
                 <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
                   <div className="min-w-0">

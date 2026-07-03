@@ -681,8 +681,70 @@
   }
 }
 
+/* LED ray used only by the expanded comparison dock border. */
+.comparison-modal-led-border {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgba(59, 130, 246, 0.28);
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.08);
+}
+
+.comparison-modal-led-border::before {
+  content: "";
+  position: absolute;
+  inset: -100%;
+  z-index: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 322deg,
+    rgba(56, 189, 248, 0.08) 336deg,
+    rgba(56, 189, 248, 0.72) 347deg,
+    #38bdf8 352deg,
+    #93c5fd 356deg,
+    transparent 360deg
+  );
+  animation: comparisonModalLedRay 2.8s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.comparison-modal-led-border::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.comparison-modal-led-border > * {
+  position: relative;
+  z-index: 2;
+}
+
+.comparison-modal-led-border:hover::before {
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
+}
+
+@keyframes comparisonModalLedRay {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comparison-modal-led-border::before {
+    animation: none;
+    opacity: 0.35;
+  }
+}
+
 /* Premium Map Popup Overrides */
 .premium-popup .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: 1rem; border: none; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: transparent; }
 .premium-popup .leaflet-popup-content { margin: 0; width: auto !important; }
 .premium-popup .leaflet-popup-tip { box-shadow: none; }
-
