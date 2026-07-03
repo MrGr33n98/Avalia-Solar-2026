@@ -199,6 +199,7 @@ export function BannerContainer({
     };
 
     const aspectRatio = getAspectRatio(position);
+    const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
 
     const getSizes = (pos?: string) => {
       switch (pos) {
@@ -234,7 +235,7 @@ export function BannerContainer({
             sizes={getSizes(position)}
           />
           {banner.sponsored && (
-            <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
+            <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
               Patrocinado
             </span>
           )}
@@ -270,6 +271,7 @@ export function BannerContainer({
           items={items}
           aspectRatio={aspectRatio}
           autoplayDelay={4000}
+          className={hasSponsoredBanner ? '!rounded-none' : undefined}
         />
       </div>
     );

@@ -700,11 +700,18 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    transparent 322deg,
-    rgba(56, 189, 248, 0.08) 336deg,
-    rgba(56, 189, 248, 0.72) 347deg,
-    #38bdf8 352deg,
-    #93c5fd 356deg,
+    transparent 300deg,
+    rgba(56, 189, 248, 0.08) 306deg,
+    transparent 311deg,
+    rgba(56, 189, 248, 0.2) 316deg,
+    transparent 321deg,
+    rgba(56, 189, 248, 0.34) 326deg,
+    transparent 331deg,
+    rgba(56, 189, 248, 0.55) 337deg,
+    rgba(96, 165, 250, 0.22) 342deg,
+    #38bdf8 349deg,
+    #e0f2fe 354deg,
+    #60a5fa 357deg,
     transparent 360deg
   );
   animation: comparisonModalLedRay 2.8s linear infinite;
@@ -715,10 +722,10 @@
 .comparison-modal-led-border::after {
   content: "";
   position: absolute;
-  inset: 1px;
+  inset: 3px;
   z-index: 1;
   pointer-events: none;
-  border-radius: 7px;
+  border-radius: 5px;
   background: #ffffff;
 }
 
@@ -728,7 +735,7 @@
 }
 
 .comparison-modal-led-border:hover::before {
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
 @keyframes comparisonModalLedRay {
