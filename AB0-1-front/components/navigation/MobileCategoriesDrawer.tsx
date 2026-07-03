@@ -90,24 +90,22 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeDrawer()}>
       <SheetContent
         side="left"
-        className="bottom-0 top-3 flex h-auto max-h-[calc(100dvh-0.75rem)] w-[92vw] max-w-[430px] flex-col gap-0 rounded-r-[24px] border-r border-slate-200 bg-white p-0 shadow-2xl sm:w-[420px] [&>button]:hidden"
+        className="bottom-0 top-0 flex h-dvh max-h-dvh w-[92vw] max-w-[430px] flex-col gap-0 rounded-none border-r border-slate-200 bg-white p-0 shadow-[8px_0_24px_rgba(15,23,42,0.08)] sm:w-[420px] [&>button]:hidden"
       >
-        <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-slate-300" />
-
-        <header className="shrink-0 px-4 pb-2 pt-4">
+        <header className="shrink-0 border-b border-slate-200 px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               {selectedCategory && (
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-950 transition-colors hover:bg-slate-100"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50"
                   aria-label="Voltar"
                 >
                   <ArrowLeft className="h-[18px] w-[18px]" />
                 </button>
               )}
-              <h2 className="truncate text-xl font-black tracking-tight text-slate-950">
+              <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">
                 {selectedCategory ? selectedCategory.name : 'Categorias'}
               </h2>
             </div>
@@ -115,14 +113,14 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-950 transition-colors hover:bg-slate-200"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 bg-white text-slate-950 transition-colors hover:bg-slate-50"
               aria-label="Fechar categorias"
             >
               <X className="h-[18px] w-[18px]" />
             </button>
           </div>
 
-          <label className="mt-3 flex h-[50px] items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3.5 text-slate-500 shadow-sm">
+          <label className="mt-4 flex h-11 items-center gap-2.5 rounded-none border border-slate-300 bg-white px-3.5 text-slate-500 shadow-none focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20">
             <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" />
             <input
               value={query}
@@ -135,7 +133,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
           </label>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-1">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-4">
           {loading ? (
             <LoadingList />
           ) : error && categories.length === 0 ? (
@@ -155,11 +153,11 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-slate-100 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
+        <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
           <Link
             href="/categories"
             onClick={closeDrawer}
-            className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-2xl bg-blue-700 text-sm font-black text-white shadow-[0_14px_26px_-18px_rgba(29,78,216,0.85)] transition-colors hover:bg-blue-800"
+            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-none bg-blue-700 text-sm font-semibold text-white shadow-none transition-colors hover:bg-blue-800"
           >
             <Grid2X2 className="h-[18px] w-[18px]" />
             Ver todas as categorias
@@ -176,14 +174,14 @@ function LoadingList() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="flex h-[68px] items-center gap-3 rounded-2xl border border-slate-100 bg-white px-3"
+          className="flex h-[68px] items-center gap-3 rounded-none border-b border-slate-200 bg-white px-3"
         >
-          <Skeleton className="h-11 w-11 rounded-2xl" />
+          <Skeleton className="h-11 w-11 rounded-none" />
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-3 w-1/3" />
           </div>
-          <Skeleton className="h-[18px] w-[18px] rounded-full" />
+          <Skeleton className="h-[18px] w-[18px] rounded-none" />
         </div>
       ))}
     </div>
@@ -193,17 +191,17 @@ function LoadingList() {
 function ErrorState() {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-      <div className="mb-4 rounded-3xl bg-amber-50 p-4 text-amber-500 ring-8 ring-amber-50/50">
+      <div className="mb-4 rounded-none border border-amber-200 bg-amber-50 p-4 text-amber-500">
         <Zap className="h-8 w-8" />
       </div>
-      <h3 className="mb-2 text-lg font-black text-slate-950">Menu em manutenção</h3>
+      <h3 className="mb-2 text-lg font-semibold text-slate-950">Menu em manutenção</h3>
       <p className="mb-6 text-sm leading-relaxed text-slate-500">
         Estamos ajustando as categorias. Tente recarregar ou explore todas as opções.
       </p>
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-none border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
       >
         <RefreshCw className="h-4 w-4 text-blue-600" />
         Recarregar menu
@@ -222,7 +220,7 @@ function MainCategoriesView({
   onClose: () => void;
 }) {
   return (
-    <div className="space-y-2.5">
+    <div className="border-t border-slate-200">
       {categories.map((category, index) => {
         const iconSrc = getPreferredCategoryIcon(
           category.slug || category.seo_url,
@@ -236,7 +234,7 @@ function MainCategoriesView({
             key={category.id}
             type="button"
             onClick={() => (hasChildren ? onOpenCategory(category) : undefined)}
-            className={`flex min-h-[68px] w-full items-center gap-3 rounded-[18px] border px-3 text-left transition-colors ${
+            className={`flex min-h-[68px] w-full items-center gap-3 rounded-none border-x-0 border-b border-t-0 px-3 text-left transition-colors ${
               index === 0
                 ? 'border-blue-200 bg-blue-50/40'
                 : 'border-slate-100 bg-white hover:border-blue-100 hover:bg-blue-50/30'
@@ -244,10 +242,10 @@ function MainCategoriesView({
           >
             <CategoryIcon iconSrc={iconSrc} name={category.name} highlighted={index === 0} />
             <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 text-[15px] font-bold leading-tight text-slate-950">
+              <p className="line-clamp-2 text-[15px] font-medium leading-tight text-slate-950">
                 {category.name}
               </p>
-              <p className="mt-0.5 text-[13px] font-semibold text-slate-500">
+              <p className="mt-0.5 text-xs font-normal text-slate-500">
                 {formatCount(category.companies_count || 0)}
               </p>
             </div>
@@ -259,14 +257,14 @@ function MainCategoriesView({
       <Link
         href="/categories"
         onClick={onClose}
-        className="flex min-h-[68px] items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-3 transition-colors hover:bg-blue-50/40"
+        className="flex min-h-[68px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-slate-200 bg-white px-3 transition-colors hover:bg-blue-50/40"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-blue-50 text-blue-700">
           <Grid2X2 className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-bold text-slate-950">Ver todas as categorias</p>
-          <p className="mt-0.5 text-[13px] font-semibold text-slate-500">
+          <p className="text-[15px] font-medium text-slate-950">Ver todas as categorias</p>
+          <p className="mt-0.5 text-xs font-normal text-slate-500">
             Explore todas as opções disponíveis
           </p>
         </div>
@@ -286,16 +284,16 @@ function SubcategoryView({
   onClose: () => void;
 }) {
   return (
-    <div className="space-y-2.5">
+    <div className="border-t border-slate-200">
       <Link
         href={getCategoryHref(category)}
         onClick={onClose}
-        className="flex min-h-[64px] items-center gap-3 rounded-[18px] border border-blue-100 bg-blue-50/60 px-3 text-blue-700 transition-colors hover:bg-blue-50"
+        className="flex min-h-[64px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-blue-100 bg-blue-50/60 px-3 text-blue-700 transition-colors hover:bg-blue-50"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-white text-blue-700 shadow-none">
           <Grid2X2 className="h-[18px] w-[18px]" />
         </span>
-        <p className="min-w-0 flex-1 text-[15px] font-bold leading-tight">
+        <p className="min-w-0 flex-1 text-[15px] font-medium leading-tight">
           Ver tudo em {category.name}
         </p>
         <ChevronRight className="h-5 w-5 shrink-0" />
@@ -312,14 +310,14 @@ function SubcategoryView({
             key={subcategory.id}
             href={getCategoryHref(subcategory)}
             onClick={onClose}
-            className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-2.5 transition-colors hover:bg-slate-50"
+            className="flex min-h-[64px] items-center gap-3 rounded-none border-b border-slate-200 bg-white px-2.5 transition-colors hover:bg-slate-50"
           >
             <CategoryIcon iconSrc={iconSrc} name={subcategory.name} size="sm" />
-            <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-bold leading-snug text-slate-950">
+            <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-slate-950">
               {subcategory.name}
             </p>
             {subcategory.companies_count > 0 && (
-              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-500">
+              <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
                 {subcategory.companies_count}
               </span>
             )}
@@ -348,7 +346,7 @@ function CategoryIcon({
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 shadow-sm ${
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-none border border-slate-200 shadow-none ${
         highlighted ? 'bg-white' : 'bg-slate-50'
       }`}
     >

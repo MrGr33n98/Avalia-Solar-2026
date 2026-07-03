@@ -21,14 +21,14 @@ export const CategorySearch: React.FC<CategorySearchProps> = ({ value, onChange 
           aria-label="Buscar categoria"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-9 pr-9 h-9 bg-slate-50 border-slate-200 focus-visible:ring-blue-500 rounded-lg text-sm transition-all"
+          className="h-10 rounded-none border-slate-300 bg-white pl-9 pr-9 text-sm transition-colors focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/20"
         />
         {value && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onChange('')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-slate-200 rounded-md"
+            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 rounded-none hover:bg-slate-100"
             aria-label="Limpar busca"
           >
             <X className="h-3.5 w-3.5 text-slate-500" />

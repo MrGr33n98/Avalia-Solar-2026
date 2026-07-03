@@ -137,7 +137,7 @@ export default function Navbar() {
               <Button
                 type="button"
                 variant="ghost"
-                className="h-10 rounded-lg px-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+                className="h-10 rounded-none border-b-2 border-transparent px-3 text-sm font-medium text-slate-700 hover:border-blue-600 hover:bg-white hover:text-blue-700"
                 onClick={toggleMegaMenu}
               >
                 Categorias{' '}
@@ -268,8 +268,8 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  'h-10 rounded-xl border border-brand-border bg-white px-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/8 dark:hover:text-white',
-                  isMegaMenuOpen ? 'border-transparent bg-brand-blue text-white shadow-none' : ''
+                  'h-10 rounded-none border-x-0 border-b-2 border-t-0 border-transparent bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:border-blue-600 hover:bg-white hover:text-blue-700 dark:bg-transparent dark:text-white/60',
+                  isMegaMenuOpen ? 'border-blue-600 text-blue-700 shadow-none' : ''
                 )}
                 onClick={toggleMegaMenu}
               >
