@@ -432,7 +432,7 @@ export default function ChatWidget() {
 
   return (
     <div
-      className={`fixed bottom-5 right-5 font-sans flex flex-col items-end pointer-events-none ${
+      className={`fixed bottom-[calc(5.5rem+var(--safe-area-inset-bottom))] right-3 font-sans flex flex-col items-end pointer-events-none sm:bottom-5 sm:right-5 ${
         isOpen ? 'z-[9010]' : 'z-[9000]'
       }`}
     >

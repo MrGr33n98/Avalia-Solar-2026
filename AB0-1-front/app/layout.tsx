@@ -133,7 +133,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-sans antialiased md:pb-0">
+      <body
+        suppressHydrationWarning
+        className="pb-[calc(4.75rem+var(--safe-area-inset-bottom))] font-sans antialiased md:pb-0"
+      >
         {/* Google Tag Manager (noscript) */}
         <GoogleTagManagerNoScript gtmId={GTM_ID} />
 

@@ -43,7 +43,7 @@ type LandingHeroProps = {
 
 export default function LandingHero(props: LandingHeroProps) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[#f8fafc] py-12 sm:py-16 lg:py-20">
+    <section className="relative overflow-hidden border-b border-slate-200 bg-[#f8fafc] pb-8 pt-7 sm:py-16 lg:py-20">
       <div
         aria-hidden="true"
         className="absolute inset-0 opacity-40"
@@ -53,7 +53,7 @@ export default function LandingHero(props: LandingHeroProps) {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-[1440px] px-5 sm:px-6 lg:px-8 xl:px-10">
+      <div className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14 xl:gap-16">
           <div className="flex w-full flex-col items-start text-left lg:col-span-6">
             <LandingHeroClient {...props} />
