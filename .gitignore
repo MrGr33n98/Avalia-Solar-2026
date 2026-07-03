@@ -39,4 +39,9 @@ videos/
 AB0-1-front/.cache/
 AB0-1-front/.next/
 
+# Source archives are local-only; production uses the extracted public assets.
+AB0-1-front/public/assets/**/*.zip
+
 docs/assets/
+
+AB0-1-front/public/**/*.zip
