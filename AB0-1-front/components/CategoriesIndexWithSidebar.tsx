@@ -201,7 +201,7 @@ export default function CategoriesIndexWithSidebar() {
                     Categorias em Destaque
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 lg:gap-6">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                   {featuredCategories.map((category) => (
                     <CategoryCard key={category.id} category={category} />
                   ))}
@@ -220,7 +220,7 @@ export default function CategoriesIndexWithSidebar() {
               {allCategories.length === 0 ? (
                 <EmptyState onClear={clearFilters} />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                   {allCategories.map((category) => (
                     <CategoryCard key={category.id} category={category} />
                   ))}
@@ -325,8 +325,8 @@ function LoadingSkeleton() {
         <Skeleton className="hidden lg:block w-72 h-[600px] rounded-[8px]" />
         <div className="flex-1 space-y-6">
           <Skeleton className="w-full h-16 rounded-[8px]" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[320px] rounded-[8px]" />)}
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-[220px] rounded-2xl" />)}
           </div>
         </div>
       </div>
