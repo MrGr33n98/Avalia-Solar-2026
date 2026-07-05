@@ -89,13 +89,17 @@ export default function CompanyComparisonModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1020px] max-h-[85vh] gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl transition-all duration-300">
+      <DialogContent className="!bottom-0 !left-0 !top-auto max-h-[calc(100dvh-24px)] w-full max-w-none !translate-x-0 !translate-y-0 gap-0 overflow-hidden rounded-none border border-slate-200 bg-white p-0 pb-[env(safe-area-inset-bottom)] shadow-xl transition-all duration-300 sm:!bottom-auto sm:!left-1/2 sm:!top-1/2 sm:max-h-[85vh] sm:max-w-[1020px] sm:!-translate-x-1/2 sm:!-translate-y-1/2">
         
         {/* Swiss Design Header */}
-        <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/50 px-6 py-4 md:px-8">
+        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-slate-200 bg-white px-4 py-4 pr-14 md:px-8">
+          <div className="mb-3 text-left md:hidden">
+            <DialogTitle className="text-lg font-semibold text-slate-950">Comparar empresas</DialogTitle>
+            <DialogDescription className="mt-1 text-xs text-slate-500">{companies.length} de 3 empresas selecionadas</DialogDescription>
+          </div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <DialogTitle className="sr-only">Análise Comparativa</DialogTitle>
+            <div className="hidden flex-wrap items-center gap-3 md:flex">
+              <DialogTitle className="sr-only">Comparar empresas</DialogTitle>
               <DialogDescription className="sr-only">Selecione até 3 empresas para comparar</DialogDescription>
               
               <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -149,7 +153,7 @@ export default function CompanyComparisonModal({
               variant="ghost" 
               size="sm" 
               onClick={onClearAll}
-              className="h-9 w-full rounded-md border border-slate-200 bg-white px-4 text-[10px] font-bold uppercase tracking-widest text-slate-600 transition-all hover:bg-red-50 hover:text-red-600 md:w-auto"
+              className="hidden h-9 w-full rounded-none border border-slate-200 bg-white px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-600 transition-all hover:bg-red-50 hover:text-red-600 md:inline-flex md:w-auto"
             >
               <X className="h-3.5 w-3.5 mr-2" />
               Limpar Análise
@@ -160,13 +164,13 @@ export default function CompanyComparisonModal({
         {/* Comparison Grid */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-6 md:p-8 pb-16">
-              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="overflow-x-auto w-full">
-                  <div className="min-w-[760px] w-full flex flex-col divide-y divide-slate-100">
+            <div className="p-3 pb-24 md:p-8 md:pb-16">
+              <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
+                <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
+                  <div className="mobile-comparison-table flex w-full min-w-[720px] flex-col divide-y divide-slate-100 md:min-w-[760px]">
                     
                     {/* Header Row: Company Logos & Names */}
-                    <div className="sticky top-0 z-30 grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="sticky top-0 z-30 grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="flex flex-col justify-end bg-slate-50/50 p-4">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CRITÉRIOS</span>
                       </div>
@@ -271,7 +275,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 1. Reputação Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Reputação</h5>
@@ -311,7 +315,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 2. Verificação Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Certificações</h5>
@@ -344,7 +348,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 3. Tempo de Resposta Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">SLA de Contato</h5>
@@ -374,7 +378,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 4. Cobertura Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Abrangência</h5>
@@ -401,7 +405,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 5. Projetos Realizados Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Volume</h5>
@@ -424,7 +428,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 6. Garantia Oferecida Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-white divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Garantia</h5>
@@ -447,7 +451,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* Action Row */}
-                    <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] bg-slate-50/30 divide-x divide-slate-100">
+                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
                       <div className="flex items-center p-4">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cotação</span>
                       </div>
@@ -479,6 +483,20 @@ export default function CompanyComparisonModal({
               </div>
             </div>
           </ScrollArea>
+        </div>
+        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden">
+          <Button variant="outline" className="h-11 rounded-none" onClick={onClose}>
+            Adicionar empresa
+          </Button>
+          <Button
+            className="h-11 rounded-none bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => {
+              track('comparison_modal_compare_confirm', { companies_count: companies.length });
+              onClose();
+            }}
+          >
+            Comparar {companies.length} {companies.length === 1 ? 'empresa' : 'empresas'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

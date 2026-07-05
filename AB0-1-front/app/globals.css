@@ -799,3 +799,18 @@
 .review-dashboard-enterprise :where([class~="shadow-xl"], [class~="shadow-lg"]) {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
 }
+
+@media (max-width: 767px) {
+  .mobile-comparison-table > div > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    border-right: 1px solid #e2e8f0;
+    background: #fff;
+  }
+
+  .mobile-comparison-table > div:first-child > :first-child {
+    z-index: 35;
+    background: #f8fafc;
+  }
+}

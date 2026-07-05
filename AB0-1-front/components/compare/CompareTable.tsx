@@ -2,12 +2,6 @@
 
 import Link from 'next/link';
 import { CheckCircle2, MinusCircle, Star, X } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
@@ -142,19 +136,27 @@ interface CompareTableProps {
 export default function CompareTable({ companies, onRemove, onQuote }: CompareTableProps) {
   return (
     <section aria-label="Tabela de comparação lado a lado">
-      <div className="hidden overflow-x-auto rounded-none border border-slate-200 bg-white shadow-none md:block">
-        <table className="w-full min-w-[760px] table-fixed border-collapse text-left">
+      <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth rounded-none border border-slate-200 bg-white shadow-none">
+        <table
+          className="table-fixed border-collapse text-left"
+          style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}
+        >
           <caption className="sr-only">Critérios das empresas selecionadas para comparação</caption>
+          <colgroup>
+            <col className="w-[120px] md:w-40" />
+            {companies.map((company) => <col key={company.id} className="w-[200px] md:w-auto" />)}
+          </colgroup>
           <thead>
             <tr className="border-b border-slate-200 align-top">
               <th
                 scope="col"
-                className="w-40 bg-slate-50 p-4 text-[11px] font-bold uppercase tracking-wider text-slate-500"
+                className="sticky left-0 z-30 w-[120px] border-r border-slate-200 bg-slate-50 p-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:w-40 md:p-4"
               >
                 Critério
               </th>
-              {companies.map((company) => (
-                <th key={company.id} scope="col" className="relative border-l border-slate-200 p-4">
+              {companies.map((company, index) => (
+                <th key={company.id} scope="col" className="relative min-w-[200px] border-r border-slate-200 p-3 md:p-4">
+                  <span className="mb-2 inline-flex bg-blue-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-700">Empresa {index + 1}</span>
                   <button
                     type="button"
                     onClick={() => onRemove(company.id)}
@@ -163,7 +165,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
-                  <div className="flex items-center gap-3 pr-7">
+                  <div className="flex items-center gap-2 pr-7 md:gap-3">
                     <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
                     <div className="min-w-0">
                       <Link
@@ -178,6 +180,9 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                           className="h-3 w-3 fill-amber-400 text-amber-400"
                           aria-hidden="true"
                         />
+                      </span>
+                      <span className="ml-1 text-[10px] font-normal text-slate-500">
+                        ({company.reviewsCount} {company.reviewsCount === 1 ? 'avaliação' : 'avaliações'})
                       </span>
                       {company.verified && (
                         <span className="ml-2 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
@@ -195,7 +200,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               <TableGroup key={group.id} group={group} companies={companies} />
             ))}
             <tr className="border-t border-slate-200 bg-slate-50/70 align-top">
-              <th scope="row" className="p-4 text-xs font-bold text-slate-700">
+              <th scope="row" className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 p-3 text-xs font-semibold text-slate-700 md:p-4">
                 Próximo passo
               </th>
               {companies.map((company) => (
@@ -220,70 +225,6 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
         </table>
       </div>
 
-      <Accordion
-        type="multiple"
-        defaultValue={groups.map((group) => group.id)}
-        className="rounded-none border border-slate-200 bg-white px-4 shadow-none md:hidden"
-      >
-        {groups.map((group) => (
-          <AccordionItem key={group.id} value={group.id}>
-            <AccordionTrigger className="text-sm font-black text-slate-900 hover:no-underline">
-              {group.label}
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                {group.criteria.map((criterion) => (
-                  <div key={criterion.label}>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                      {criterion.label}
-                    </p>
-                    <div className="grid gap-2">
-                      {companies.map((company) => (
-                        <div
-                          key={company.id}
-                          className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm"
-                        >
-                          <span className="truncate font-bold text-slate-800">{company.name}</span>
-                          <span className="text-right text-slate-700">
-                            <DisplayValue
-                              value={criterion.value(company)}
-                              suffix={criterion.suffix}
-                            />
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-
-      <div className="mt-4 grid gap-3 md:hidden">
-        {companies.map((company) => (
-          <div key={company.id} className="rounded-none border border-slate-200 bg-white p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-black text-slate-900">{company.name}</span>
-              <button
-                type="button"
-                onClick={() => onRemove(company.id)}
-                aria-label={`Remover ${company.name} da comparação`}
-                className="p-1.5 text-slate-400"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <Button className="mt-3 w-full" size="sm" onClick={() => onQuote(company)}>
-              Solicitar orçamento
-            </Button>
-            <Button asChild className="mt-1 w-full" size="sm" variant="ghost">
-              <Link href={`/companies/${company.slug || company.id}`}>Ver perfil completo</Link>
-            </Button>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }
@@ -294,20 +235,20 @@ function TableGroup({ group, companies }: { group: Group; companies: CompareComp
       <tr className="border-y border-slate-200 bg-slate-50">
         <th
           colSpan={companies.length + 1}
-          className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-600"
+          className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 md:px-4"
         >
           {group.label}
         </th>
       </tr>
       {group.criteria.map((criterion) => (
         <tr key={criterion.label} className="border-b border-slate-100 last:border-b-0">
-          <th scope="row" className="bg-slate-50/50 px-4 py-2.5 text-xs font-medium text-slate-700">
+          <th scope="row" className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-3 py-3 text-xs font-medium text-slate-700 md:px-4 md:py-2.5">
             {criterion.label}
           </th>
           {companies.map((company) => (
             <td
               key={company.id}
-              className="border-l border-slate-100 px-4 py-2.5 text-center text-xs text-slate-700"
+              className="min-w-[200px] border-r border-slate-100 px-3 py-3 text-left text-xs text-slate-700 md:px-4 md:py-2.5 md:text-center"
             >
               <DisplayValue value={criterion.value(company)} suffix={criterion.suffix} />
             </td>
