@@ -102,8 +102,8 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
               key={category.id} 
               className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
             >
-              <div className="h-full py-1">
-                <LandingCategoryCard category={category} className="h-full shadow-lg border-slate-200" />
+              <div className="py-1">
+                <LandingCategoryCard category={category} className="border-slate-200 shadow-lg" />
               </div>
             </CarouselItem>
           ))}

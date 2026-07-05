@@ -30,6 +30,17 @@ const category = {
 } as Category;
 
 describe('LandingCategoryCard', () => {
+  it('matches the responsive dimensions used by the categories page card', () => {
+    render(<LandingCategoryCard category={category} />);
+
+    const link = screen.getByRole('link', { name: /energia solar/i });
+    expect(link.parentElement).toHaveClass('h-[216px]', 'sm:h-[220px]');
+    expect(screen.getByTestId('next-image').parentElement).toHaveClass(
+      'h-[92px]',
+      'sm:h-[96px]'
+    );
+  });
+
   it('uses the placeholder when the category has no banner or logo', () => {
     render(<LandingCategoryCard category={category} />);
 

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Building2, ArrowRight, Zap, Award } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
 import { projectTypeVisualFor } from "@/lib/company-project-visuals";
@@ -16,7 +16,7 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
   const projectTypes = company.project_types || [];
 
   return (
-    <Card className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm overflow-hidden relative">
+    <Card className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white px-6 py-9 shadow-sm md:py-12">
       <div className="flex flex-col gap-6">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
