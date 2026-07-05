@@ -156,17 +156,23 @@ export default function CompanyComparisonModal({
         </DialogHeader>
 
         {/* Comparison Grid */}
-        <div className="min-h-0 overflow-y-auto overscroll-contain">
+        <div className="min-h-0 overflow-y-auto">
             <div className="p-2 md:p-8 md:pb-16">
               <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
-                Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
+                {companies.length > 2 ? (
+                  <>
+                    Deslize para ver mais empresas <span aria-hidden="true">→</span>
+                  </>
+                ) : (
+                  'Empresas lado a lado'
+                )}
               </p>
               <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
-                <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
-                  <div className="mobile-comparison-table flex w-full min-w-[554px] flex-col divide-y divide-slate-100 md:min-w-[960px]">
+                <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth scrollbar-none">
+                  <div className="mobile-comparison-table flex w-full min-w-[530px] flex-col divide-y divide-slate-100 md:min-w-[960px]">
                     
                     {/* Header Row: Company Logos & Names */}
-                    <div className="sticky top-0 z-30 grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="sticky top-0 z-30 grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex flex-col justify-end bg-slate-50/50 p-2 md:p-4">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CRITÉRIOS</span>
                       </div>
@@ -192,7 +198,7 @@ export default function CompanyComparisonModal({
                             >
                               {/* Swiss Label Destaque */}
                               {isHighlighted && (
-                                <div className="absolute inset-x-2 top-2 inline-flex items-center justify-center whitespace-nowrap rounded bg-blue-600 px-1 py-1 text-[10px] font-bold leading-none tracking-tight text-white shadow-sm md:left-5 md:right-auto md:px-2.5 md:py-0.5 md:uppercase md:tracking-widest">
+                                <div className="absolute inset-x-1.5 top-2 z-20 inline-flex items-center justify-center whitespace-nowrap rounded bg-blue-600 px-1 py-1 text-[9px] font-bold leading-none tracking-tight text-white shadow-sm md:left-5 md:right-auto md:px-2.5 md:py-0.5 md:text-[10px] md:uppercase md:tracking-widest">
                                   Melhor avaliada
                                 </div>
                               )}
@@ -273,7 +279,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 1. Reputação Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Reputação</h5>
@@ -313,7 +319,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 2. Verificação Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Certificações</h5>
@@ -346,7 +352,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 3. Tempo de Resposta Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">SLA de Contato</h5>
@@ -376,7 +382,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 4. Cobertura Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Abrangência</h5>
@@ -403,7 +409,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 5. Projetos Realizados Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Volume</h5>
@@ -426,7 +432,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 6. Garantia Oferecida Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Garantia</h5>
@@ -449,7 +455,7 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* Action Row */}
-                    <div className="grid grid-cols-[82px_repeat(4,118px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center p-2 md:p-4">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cotação</span>
                       </div>
@@ -478,10 +484,14 @@ export default function CompanyComparisonModal({
 
                   </div>
                 </div>
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/65 to-transparent md:hidden"
-                />
+                {companies.length > 2 && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 right-0 flex w-7 items-center justify-end bg-gradient-to-l from-white via-white/70 to-transparent pr-1 text-sm font-bold text-blue-600 md:hidden"
+                  >
+                    →
+                  </div>
+                )}
               </div>
             </div>
         </div>

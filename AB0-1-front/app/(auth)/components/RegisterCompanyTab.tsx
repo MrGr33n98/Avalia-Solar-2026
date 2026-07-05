@@ -1,35 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Loader2, AlertCircle, CheckCircle, ArrowRight, RefreshCcw, Building, Upload, X } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import Image from 'next/image';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { fetchApi } from '@/lib/api';
-import { formatCNPJ, formatPhone, isValidCNPJ, isValidPhone } from '@/app/dashboard/utils';
+import { formatPhone } from '@/app/dashboard/utils';
 import { useRouter } from 'next/navigation';
 import { isCorporateEmail } from '@/lib/utils';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-// Lista de estados brasileiros (UFs)
-const UFS = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
-  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
 
 interface RegisterCompanyFormData {
   name: string;
@@ -40,21 +25,27 @@ interface RegisterCompanyFormData {
   termsAccepted: boolean;
 }
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Nome é obrigatório'),
-  email: z.string().email('E-mail inválido').refine(isCorporateEmail, {
-    message: 'Por favor, use um e-mail corporativo (não @gmail, @hotmail, etc.)'
-  }),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  passwordConfirmation: z.string(),
-  phone: z.string().min(10, 'Telefone inválido'),
-  termsAccepted: z.boolean().refine(v => v === true, {
-    message: 'Você deve aceitar os termos'
+type RegistrationError = {
+  message?: string;
+};
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Nome é obrigatório'),
+    email: z.string().email('E-mail inválido').refine(isCorporateEmail, {
+      message: 'Por favor, use um e-mail corporativo (não @gmail, @hotmail, etc.)',
+    }),
+    password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+    passwordConfirmation: z.string(),
+    phone: z.string().min(10, 'Telefone inválido'),
+    termsAccepted: z.boolean().refine((v) => v === true, {
+      message: 'Você deve aceitar os termos',
+    }),
   })
-}).refine((data) => data.password === data.passwordConfirmation, {
-  message: "Senhas não conferem",
-  path: ["passwordConfirmation"],
-});
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: 'Senhas não conferem',
+    path: ['passwordConfirmation'],
+  });
 
 export default function RegisterCompanyTab() {
   const [isLoading, setIsLoading] = useState(false);
@@ -67,13 +58,12 @@ export default function RegisterCompanyTab() {
     handleSubmit,
     setValue,
     watch,
-    reset,
     formState: { errors },
   } = useForm<RegisterCompanyFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       termsAccepted: false,
-    }
+    },
   });
 
   const password = watch('password');
@@ -83,7 +73,9 @@ export default function RegisterCompanyTab() {
     setSubmitError(null);
 
     if (!isCorporateEmail(data.email)) {
-      setSubmitError('Por favor, utilize um e-mail corporativo. E-mails públicos (Gmail, Hotmail, etc.) não são permitidos para cadastro de empresas.');
+      setSubmitError(
+        'Por favor, utilize um e-mail corporativo. E-mails públicos (Gmail, Hotmail, etc.) não são permitidos para cadastro de empresas.'
+      );
       setIsLoading(false);
       return;
     }
@@ -97,15 +89,15 @@ export default function RegisterCompanyTab() {
       formData.append('user[phone]', data.phone);
       formData.append('user[role]', 'company');
       formData.append('terms_accepted', String(data.termsAccepted));
-      
+
       await fetchApi('/auth/register', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
       setIsSuccess(true);
-    } catch (err: any) {
-      console.error('Registration error:', err);
-      const message = err?.message || 'Ocorreu um erro ao processar o cadastro. Tente novamente.';
+    } catch (error: unknown) {
+      const err = error as RegistrationError;
+      const message = err.message || 'Ocorreu um erro ao processar o cadastro. Tente novamente.';
       setSubmitError(message);
     } finally {
       setIsLoading(false);
@@ -118,18 +110,13 @@ export default function RegisterCompanyTab() {
     setValue('phone', formatted);
   };
 
-  const handleReset = () => {
-    setIsSuccess(false);
-    reset();
-  };
-
   if (isSuccess) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="flex flex-col items-center justify-center h-full text-center p-8 lg:p-12 overflow-y-auto custom-scrollbar"
+        className="flex h-full flex-col items-center justify-center overflow-y-auto px-5 py-8 text-center custom-scrollbar sm:px-10 md:px-12"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -137,7 +124,7 @@ export default function RegisterCompanyTab() {
           transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
           className="mb-6 rounded-full bg-green-100 p-6"
         >
-          <CheckCircle className="h-16 w-16 text-emerald-600" />
+          <CheckCircle className="h-16 w-16 text-blue-600" />
         </motion.div>
 
         <motion.h2
@@ -155,7 +142,8 @@ export default function RegisterCompanyTab() {
           transition={{ delay: 0.5 }}
           className="text-slate-600 mb-8 max-w-md"
         >
-          Sua conta de empresa foi criada e está aguardando aprovação administrativa. Você receberá um e-mail assim que sua conta for ativada.
+          Sua conta de empresa foi criada e está aguardando aprovação administrativa. Você receberá
+          um e-mail assim que sua conta for ativada.
         </motion.p>
 
         <motion.div
@@ -166,7 +154,7 @@ export default function RegisterCompanyTab() {
         >
           <Button
             onClick={() => router.push('/')}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="w-full rounded-md bg-blue-600 text-white hover:bg-blue-700"
           >
             Voltar para Home
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -177,138 +165,164 @@ export default function RegisterCompanyTab() {
   }
 
   return (
-    <div className="h-full flex flex-col justify-center p-8 lg:p-12 overflow-y-auto custom-scrollbar">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900">Cadastro para Empresas</h2>
-        <p className="text-slate-600">Utilize seu e-mail corporativo para gerenciar sua empresa na plataforma.</p>
-      </div>
-
-      <AnimatePresence>
-        {submitError && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-6"
-          >
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>{submitError}</AlertDescription>
-            </Alert>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome Completo <span className="text-red-500">*</span></Label>
-          <Input
-            id="name"
-            placeholder="Seu nome"
-            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.name ? 'border-red-500' : ''}`}
-            {...register('name', { required: 'Nome é obrigatório', minLength: { value: 3, message: 'Mínimo 3 caracteres' } })}
-          />
-          {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
+    <div className="h-full overflow-y-auto px-5 pb-8 pt-4 custom-scrollbar sm:px-10 md:px-12">
+      <div className="mx-auto w-full max-w-[430px]">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+            Cadastro para empresas
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Use seu e-mail corporativo para gerenciar sua empresa.
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">E-mail Corporativo <span className="text-red-500">*</span></Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="voce@suaempresa.com"
-            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.email ? 'border-red-500' : ''}`}
-            {...register('email', { 
-              required: 'E-mail é obrigatório',
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'E-mail inválido'
-              }
-            })}
-          />
-          {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
-        </div>
+        <AnimatePresence>
+          {submitError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6"
+            >
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone">Telefone / WhatsApp <span className="text-red-500">*</span></Label>
-          <Input
-            id="phone"
-            placeholder="(00) 00000-0000"
-            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.phone ? 'border-red-500' : ''}`}
-            {...register('phone', { 
-              required: 'Telefone é obrigatório',
-            })}
-            onChange={handlePhoneChange}
-          />
-          {errors.phone && <span className="text-xs text-red-500">{errors.phone.message}</span>}
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">
+              Nome Completo <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="name"
+              placeholder="Seu nome"
+              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.name ? 'border-red-500' : ''}`}
+              {...register('name', {
+                required: 'Nome é obrigatório',
+                minLength: { value: 3, message: 'Mínimo 3 caracteres' },
+              })}
+            />
+            {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha <span className="text-red-500">*</span></Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="********"
-            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.password ? 'border-red-500' : ''}`}
-            {...register('password', {
-              required: 'Senha é obrigatória',
-              minLength: { value: 8, message: 'Mínimo 8 caracteres' }
-            })}
-          />
-          {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              E-mail Corporativo <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="voce@suaempresa.com"
+              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.email ? 'border-red-500' : ''}`}
+              {...register('email', {
+                required: 'E-mail é obrigatório',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'E-mail inválido',
+                },
+              })}
+            />
+            {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="passwordConfirmation">Confirmar Senha <span className="text-red-500">*</span></Label>
-          <Input
-            id="passwordConfirmation"
-            type="password"
-            placeholder="********"
-            className={`border-slate-200 focus:ring-emerald-500/20 ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
-            {...register('passwordConfirmation', {
-              required: 'Confirmação de senha é obrigatória',
-              validate: (val) => val === password || 'As senhas não conferem'
-            })}
-          />
-          {errors.passwordConfirmation && <span className="text-xs text-red-500">{errors.passwordConfirmation.message}</span>}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">
+              Telefone / WhatsApp <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="phone"
+              placeholder="(00) 00000-0000"
+              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.phone ? 'border-red-500' : ''}`}
+              {...register('phone', {
+                required: 'Telefone é obrigatório',
+              })}
+              onChange={handlePhoneChange}
+            />
+            {errors.phone && <span className="text-xs text-red-500">{errors.phone.message}</span>}
+          </div>
 
-        <div className="space-y-4 pt-2">
-          <div className="flex items-start space-x-2">
-            <Checkbox 
-                id="terms" 
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Senha <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="********"
+              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.password ? 'border-red-500' : ''}`}
+              {...register('password', {
+                required: 'Senha é obrigatória',
+                minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+              })}
+            />
+            {errors.password && (
+              <span className="text-xs text-red-500">{errors.password.message}</span>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="passwordConfirmation">
+              Confirmar Senha <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="passwordConfirmation"
+              type="password"
+              placeholder="********"
+              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
+              {...register('passwordConfirmation', {
+                required: 'Confirmação de senha é obrigatória',
+                validate: (val) => val === password || 'As senhas não conferem',
+              })}
+            />
+            {errors.passwordConfirmation && (
+              <span className="text-xs text-red-500">{errors.passwordConfirmation.message}</span>
+            )}
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="terms"
                 className="mt-1"
                 onCheckedChange={(checked) => setValue('termsAccepted', checked === true)}
                 {...register('termsAccepted', { required: 'Você deve aceitar os termos' })}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Aceito os Termos de Uso e Política de Privacidade <span className="text-red-500">*</span>
-              </Label>
-              {errors.termsAccepted && <span className="text-xs text-red-500">{errors.termsAccepted.message}</span>}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="terms"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Aceito os Termos de Uso e Política de Privacidade{' '}
+                  <span className="text-red-500">*</span>
+                </Label>
+                {errors.termsAccepted && (
+                  <span className="text-xs text-red-500">{errors.termsAccepted.message}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Cadastrando...
-            </>
-          ) : (
-            'Criar Conta de Empresa'
-          )}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="h-11 w-full rounded-md bg-blue-600 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Cadastrando...
+              </>
+            ) : (
+              'Criar Conta de Empresa'
+            )}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

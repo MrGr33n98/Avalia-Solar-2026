@@ -1,7 +1,6 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Star, TrendingUp, Search, ShieldCheck, UserCheck } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 
 interface AuthBenefitsProps {
@@ -14,109 +13,99 @@ export default function AuthBenefits({ tab }: AuthBenefitsProps) {
   const benefits = isLogin
     ? [
         {
-          icon: ShieldCheck,
-          title: 'Acesso Seguro',
-          description: 'Seus dados e avaliações protegidos com segurança de ponta a ponta.'
+          title: 'Perfil comercial centralizado',
+          description: 'Atualize dados, serviços e diferenciais da sua empresa.',
         },
         {
-          icon: Star,
-          title: 'Gerencie suas Avaliações',
-          description: 'Acompanhe o feedback dos seus clientes e melhore sua reputação.'
+          title: 'Reputação em tempo real',
+          description: 'Acompanhe avaliações, respostas e sinais de confiança.',
         },
         {
-          icon: UserCheck,
-          title: 'Perfil Personalizado',
-          description: 'Mantenha suas informações atualizadas e destaque-se no mercado.'
-        }
+          title: 'Oportunidades organizadas',
+          description: 'Centralize contatos, leads e solicitações comerciais.',
+        },
       ]
     : [
         {
-          icon: TrendingUp,
-          title: 'Receba leads qualificados',
-          description: 'Conecte-se com clientes que buscam exatamente o que você oferece.'
+          title: 'Cadastro simples e seguro',
+          description: 'Crie seu acesso com dados protegidos e validação confiável.',
         },
         {
-          icon: Star,
-          title: 'Ganhe avaliações e prova social',
-          description: 'Construa reputação e confiança com reviews autênticos.'
+          title: 'Reputação verificável',
+          description: 'Avalie empresas ou administre a presença do seu negócio.',
         },
         {
-          icon: Search,
-          title: 'Apareça nas buscas',
-          description: 'Melhore sua visibilidade e seja encontrado por novos clientes.'
-        }
+          title: 'Tudo em um só lugar',
+          description: 'Acompanhe perfis, avaliações e oportunidades comerciais.',
+        },
       ];
 
   return (
-    <div className="h-full bg-slate-50 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+    <div className="relative flex h-full flex-col justify-between overflow-hidden bg-[linear-gradient(145deg,#f8fbff_0%,#f4f7fb_58%,#eef5ff_100%)] px-10 py-10 lg:px-12">
+      <div className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(37,99,235,0.06)_8px,rgba(37,99,235,0.06)_9px)]" />
 
       {/* Header */}
       <div className="relative z-10">
         <div className="mb-8">
-           <div className="flex items-center gap-2 mb-6">
-             <BrandLogo className="h-10" sizes="174px" priority />
-           </div>
-          
+          <div className="mb-10 flex items-center gap-2">
+            <BrandLogo className="h-9" sizes="157px" priority />
+          </div>
+
           <AnimatePresence mode="wait">
             <motion.div
-                key={tab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+              key={tab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
             >
-                <h1 className="text-3xl font-bold text-slate-900 leading-tight mb-4">
-                    {isLogin ? (
-                        <>Bem-vindo de volta ao <span className="text-emerald-600">Avalia Solar</span></>
-                    ) : (
-                        <>Cadastre sua empresa no <span className="text-emerald-600">Avalia Solar</span></>
-                    )}
-                </h1>
-                
-                <p className="text-slate-600 text-lg">
-                    {isLogin 
-                        ? 'Acesse sua conta para gerenciar avaliações e configurações.' 
-                        : 'Junte-se à maior plataforma de avaliação de energia solar do Brasil.'
-                    }
-                </p>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                {isLogin ? 'Acesso seguro' : 'Comece agora'}
+              </p>
+              <h1 className="mb-4 max-w-[330px] text-[2.25rem] font-bold leading-[1.12] tracking-tight text-slate-950">
+                {isLogin ? 'Acesse o Avalia Solar' : 'Crie sua conta no Avalia Solar'}
+              </h1>
+
+              <p className="max-w-[330px] text-[15px] leading-6 text-slate-600">
+                {isLogin
+                  ? 'Gerencie sua presença, avaliações e oportunidades comerciais em um ambiente seguro.'
+                  : 'Escolha o tipo de conta e centralize sua experiência na plataforma.'}
+              </p>
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Benefits List */}
-        <div className="space-y-6">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={tab}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                    className="space-y-6"
-                >
-                  {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-emerald-600">
-                        <benefit.icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-900">{benefit.title}</h3>
-                        <p className="text-slate-600 text-sm leading-relaxed">{benefit.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </motion.div>
-            </AnimatePresence>
+        <div className="border-t border-slate-300/80">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="divide-y divide-slate-300/80"
+            >
+              {benefits.map((benefit, index) => (
+                <div key={index} className="grid grid-cols-[48px_1fr] gap-4 py-5">
+                  <span className="text-sm font-bold text-blue-600">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-950">{benefit.title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{benefit.description}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Footer / Trust Indicators */}
-      <div className="relative z-10 pt-8 mt-8 border-t border-slate-200">
-        <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+      <div className="relative z-10 mt-6 border-t border-slate-300/80 pt-7">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-600" aria-hidden="true" />
           <span>{isLogin ? 'Login seguro e criptografado' : 'Cadastro gratuito e seguro'}</span>
         </div>
       </div>
