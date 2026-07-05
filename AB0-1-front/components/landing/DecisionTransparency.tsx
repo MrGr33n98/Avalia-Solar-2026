@@ -1,38 +1,50 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
-import { ShieldCheck, Award, Clock, MapPin, Trophy } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const FEATURES = [
   {
-    icon: ShieldCheck,
-    title: 'Verificação rigorosa',
-    description: 'Documentos e regularidade validados',
+    title: 'Energia limpa e inteligente',
+    description: 'Conectamos você às melhores empresas de energia solar e mobilidade elétrica.',
+    image: '/assets/energia-limpa-inteligente.png',
   },
   {
-    icon: Award,
-    title: 'Avaliações reais',
-    description: 'Reputação baseada na experiência de clientes',
+    title: 'Empresas verificadas',
+    description: 'Compare fornecedores com dados, reputação e área de atendimento validados.',
+    image: '/assets/empresas-verificadas.png',
   },
   {
-    icon: Clock,
-    title: 'Resposta monitorada',
-    description: 'Prazos claros para contato e atendimento',
+    title: 'Mobilidade elétrica na prática',
+    description: 'Encontre empresas para wallbox, carregadores, frotas e infraestrutura de recarga.',
+    image: '/assets/mobilidade-eletrica-na-pratica.png',
   },
   {
-    icon: MapPin,
-    title: 'Cobertura regional',
-    description: 'Empresas que atendem sua cidade e região',
+    title: 'Energia solar para sua casa',
+    description: 'Veja instaladores, avaliações e soluções solares para reduzir sua conta de luz.',
+    image: '/assets/energia-solar-para-sua-casa.png',
   },
   {
-    icon: Trophy,
-    title: 'Qualidade comparável',
-    description: 'Critérios justos para uma escolha inteligente',
+    title: 'Soluções para empresas',
+    description: 'Compare projetos comerciais, industriais, baterias, manutenção e atendimento especializado.',
+    image: '/assets/solucoes-para-empresas.png',
+  },
+  {
+    title: 'Decisão com mais segurança',
+    description: 'Use avaliações reais, critérios claros e comparações para escolher melhor antes de contratar.',
+    image: '/assets/decisao-com-mais-seguranca.png',
   },
 ];
 
 export default function DecisionTransparency() {
+  const [activeFeature, setActiveFeature] = useState(0);
+  const feature = FEATURES[activeFeature];
+
+  const showFeature = (index: number) => {
+    setActiveFeature((index + FEATURES.length) % FEATURES.length);
+  };
+
   return (
     <section className="bg-white py-14 md:py-20 border-b border-slate-100">
       <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">
@@ -67,30 +79,52 @@ export default function DecisionTransparency() {
           </div>
         </div>
 
-        {/* Bottom Section: 5 Features Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5">
-          {FEATURES.map((feature, idx) => {
-            const IconComponent = feature.icon;
-            return (
-              <Card key={idx} className="border border-slate-100/70 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-md hover:border-slate-200 transition-all rounded-2xl flex flex-col h-full justify-between">
-                <CardContent className="p-0 flex flex-col h-full justify-between">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50/70 text-blue-600 border border-blue-100/50 shrink-0">
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <h4 className="text-[13px] font-bold text-slate-800 leading-tight">
-                        {feature.title}
-                      </h4>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                      {feature.description}
-                    </p>
+        <div aria-roledescription="carrossel" aria-label="Benefícios da plataforma">
+          <article className="grid min-h-[190px] overflow-hidden rounded-none border border-slate-200 bg-white shadow-none sm:grid-cols-[46%_1fr] lg:min-h-[300px] lg:grid-cols-[55%_1fr]" aria-live="polite">
+            <div className="relative min-h-[180px] border-b border-slate-200 sm:min-h-full sm:border-b-0 sm:border-r">
+              <Image
+                key={feature.image}
+                src={feature.image}
+                alt={feature.title}
+                fill
+                sizes="(max-width: 640px) 100vw, 55vw"
+                className="object-cover"
+              />
+            </div>
+
+            <div className="flex min-w-0 flex-col justify-between p-5 sm:p-6 lg:p-10">
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600 sm:text-xs">
+                    Benefício {activeFeature + 1} de {FEATURES.length}
+                  </p>
+                  <div className="flex shrink-0 gap-1">
+                    <button type="button" onClick={() => showFeature(activeFeature - 1)} aria-label="Benefício anterior" className="flex h-9 w-9 items-center justify-center rounded-none border border-slate-200 text-slate-600 hover:bg-slate-50">
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => showFeature(activeFeature + 1)} aria-label="Próximo benefício" className="flex h-9 w-9 items-center justify-center rounded-none border border-slate-200 text-slate-600 hover:bg-slate-50">
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+                <h3 className="mt-4 text-lg font-semibold leading-tight tracking-tight text-slate-950 sm:text-xl lg:text-3xl">{feature.title}</h3>
+                <p className="mt-3 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6 lg:text-base">{feature.description}</p>
+              </div>
+
+              <div className="mt-5 flex items-center gap-1.5" aria-label={`Benefício ${activeFeature + 1} de ${FEATURES.length}`}>
+                {FEATURES.map((item, index) => (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={() => showFeature(index)}
+                    aria-label={`Mostrar ${item.title}`}
+                    aria-current={index === activeFeature ? 'true' : undefined}
+                    className={`h-1.5 transition-all ${index === activeFeature ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </article>
         </div>
 
       </div>
