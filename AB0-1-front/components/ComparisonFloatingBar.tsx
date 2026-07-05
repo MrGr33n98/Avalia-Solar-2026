@@ -14,7 +14,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ComparisonSponsoredRecommendation } from '@/components/compare/ComparisonSponsoredRecommendation';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { track } from '@/lib/analytics/lazy';
 import {
   OPEN_ASSISTANT_COMPACT_EVENT,
   OPEN_COMPARISON_DOCK_EVENT,
+  openComparisonDock,
 } from '@/lib/floating-widget-events';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
@@ -137,25 +138,15 @@ export default function ComparisonFloatingBar() {
     maxComparison,
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('expanded');
+  const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('minimized');
   const [isForcedOpen, setIsForcedOpen] = useState(false);
-  const selectionKey = comparisonList.map((company) => company.id).join(',');
-  const previousSelectionKeyRef = useRef(selectionKey);
-
-  useEffect(() => {
-    const selectionChanged = previousSelectionKeyRef.current !== selectionKey;
-    previousSelectionKeyRef.current = selectionKey;
-
-    if (selectionChanged && dockState === 'hidden') {
-      setDockState('expanded');
-    }
-  }, [dockState, selectionKey]);
 
   useEffect(() => {
     const openComparison = () => {
       setIsForcedOpen(true);
       setIsModalOpen(false);
       setDockState('expanded');
+      track('compare_popover_opened', { comparison_count: count });
     };
     const handleAssistantOpen = () => {
       if (window.matchMedia('(max-width: 767px)').matches) {
@@ -169,7 +160,7 @@ export default function ComparisonFloatingBar() {
       window.removeEventListener(OPEN_COMPARISON_DOCK_EVENT, openComparison);
       window.removeEventListener(OPEN_ASSISTANT_COMPACT_EVENT, handleAssistantOpen);
     };
-  }, []);
+  }, [count]);
 
   if (count === 0 && !isForcedOpen) return null;
 
@@ -195,13 +186,29 @@ export default function ComparisonFloatingBar() {
       placement: 'comparison_dock',
     });
     setIsForcedOpen(false);
-    setDockState('hidden');
+    setDockState('minimized');
     router.push('/search?tab=companies');
   };
 
   const closeDock = () => {
     setIsForcedOpen(false);
-    setDockState('hidden');
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      setDockState('minimized');
+    } else {
+      setDockState('hidden');
+    }
+    track('compare_popover_closed', { comparison_count: count });
+  };
+
+  const minimizeDock = () => {
+    setIsForcedOpen(false);
+    setDockState('minimized');
+    track('compare_popover_minimized', { comparison_count: count });
+  };
+
+  const handleOpenDock = () => {
+    track('compare_floating_clicked', { comparison_count: count });
+    openComparisonDock();
   };
 
   return (
@@ -231,24 +238,27 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className="fixed bottom-28 right-6 z-[8900] hidden md:block"
+            className="fixed bottom-[calc(9.5rem+var(--safe-area-inset-bottom))] right-4 z-[8900] md:bottom-28 md:right-6"
           >
-            <div className="comparison-modal-led-border flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
+            <div className="flex items-center gap-1 rounded-xl border border-blue-200 bg-white p-1.5 shadow-lg shadow-blue-500/10 md:gap-2 md:rounded-lg md:border-blue-400 md:p-2">
               <button
                 type="button"
-                onClick={() => setDockState('expanded')}
-                aria-label={`Expandir comparação com ${count} ${companyLabel}`}
-                className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                onClick={handleOpenDock}
+                aria-label="Abrir comparação de empresas"
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:h-10 md:rounded-md md:px-4 md:text-sm md:font-bold"
               >
                 <Maximize2 className="h-4 w-4" />
-                Comparar {count}
+                Comparar
+                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]" aria-hidden="true">
+                  {count}/{maxComparison}
+                </span>
               </button>
               <button
                 type="button"
                 onClick={closeDock}
                 aria-label="Fechar comparador"
                 title="Fechar"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="hidden h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:inline-flex"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -262,9 +272,9 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-[calc(9rem+var(--safe-area-inset-bottom))] right-4 z-[8900] w-[calc(100vw-2rem)] max-w-[360px] md:bottom-6 md:left-[100px] md:right-[100px] md:mx-auto md:w-auto md:max-w-[1120px]"
+            className="pointer-events-none fixed bottom-[calc(9rem+var(--safe-area-inset-bottom))] right-6 z-[8900] w-[calc(100vw-3rem)] max-w-[360px] md:bottom-6 md:left-[100px] md:right-[100px] md:mx-auto md:w-auto md:max-w-[1120px]"
           >
-            <section className="comparison-modal-led-border pointer-events-auto max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
+            <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold tracking-tight text-slate-950">
@@ -277,7 +287,7 @@ export default function ComparisonFloatingBar() {
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setDockState('minimized')}
+                    onClick={minimizeDock}
                     aria-label="Minimizar comparação"
                     className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
                   >
@@ -294,7 +304,7 @@ export default function ComparisonFloatingBar() {
                 </div>
               </div>
 
-              <div className="px-4 py-3.5">
+              <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold text-slate-800">
                     Empresas selecionadas ({count}/{maxComparison})
@@ -311,7 +321,7 @@ export default function ComparisonFloatingBar() {
                 </div>
 
                 {count > 0 ? (
-                  <div className="mt-2.5 max-h-[224px] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+                  <div className="mt-2.5 max-h-[24vh] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
                     {comparisonList.map((company) => (
                       <CompactCompanyRow
                         key={company.id}
@@ -341,6 +351,7 @@ export default function ComparisonFloatingBar() {
                     type="button"
                     onClick={handleComparisonPageClick}
                     disabled={count < 2}
+                    aria-label="Ver comparação completa"
                     className={cn(
                       'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500',
                       !canAddMore && 'min-[380px]:col-span-2'
@@ -395,7 +406,7 @@ export default function ComparisonFloatingBar() {
                   <div className="absolute right-3 top-3 flex items-center gap-1 md:right-4 md:top-4">
                     <button
                       type="button"
-                      onClick={() => setDockState('minimized')}
+                      onClick={minimizeDock}
                       aria-label="Minimizar comparação"
                       title="Minimizar comparação"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"

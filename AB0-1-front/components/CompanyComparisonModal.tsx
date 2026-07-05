@@ -157,7 +157,10 @@ export default function CompanyComparisonModal({
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-3 pb-24 md:p-8 md:pb-16">
-              <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
+              <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
+                Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
+              </p>
+              <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
                 <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
                   <div className="mobile-comparison-table flex w-full min-w-[920px] flex-col divide-y divide-slate-100 md:min-w-[960px]">
                     
@@ -467,13 +470,17 @@ export default function CompanyComparisonModal({
                           </div>
                         );
                       })}
-                      {Array.from({ length: 3 - Math.min(companies.length, 3) }).map((_, i) => (
+                      {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
                         <div key={`empty-cta-${i}`} className="bg-slate-50/5 p-4"></div>
                       ))}
                     </div>
 
                   </div>
                 </div>
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/65 to-transparent md:hidden"
+                />
               </div>
             </div>
           </ScrollArea>

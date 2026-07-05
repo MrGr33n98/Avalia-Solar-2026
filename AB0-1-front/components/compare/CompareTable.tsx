@@ -136,11 +136,15 @@ interface CompareTableProps {
 export default function CompareTable({ companies, onRemove, onQuote }: CompareTableProps) {
   return (
     <section aria-label="Tabela de comparação lado a lado">
-      <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth rounded-none border border-slate-200 bg-white shadow-none">
-        <table
-          className="table-fixed border-collapse text-left"
-          style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}
-        >
+      <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
+        Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
+      </p>
+      <div className="relative overflow-hidden border border-slate-200 bg-white">
+        <div className="w-full touch-pan-x snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth">
+          <table
+            className="table-fixed border-collapse text-left"
+            style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}
+          >
           <caption className="sr-only">Critérios das empresas selecionadas para comparação</caption>
           <colgroup>
             <col className="w-[120px] md:w-40" />
@@ -222,9 +226,13 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               ))}
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/65 to-transparent md:hidden"
+        />
       </div>
-
     </section>
   );
 }

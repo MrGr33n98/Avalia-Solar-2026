@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { FileText, Minus, Scale, ShieldCheck, Star, X } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
-import { notifyAssistantCompactOpen, openComparisonDock } from '@/lib/floating-widget-events';
+import {
+  notifyAssistantCompactOpen,
+  OPEN_COMPARISON_DOCK_EVENT,
+  openComparisonDock,
+} from '@/lib/floating-widget-events';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
 // Feature flags para controle do comportamento dos cards e CTAs
@@ -140,6 +144,17 @@ export default function ChatWidget() {
     return () => window.clearTimeout(timer);
   }, [canShowInvite, isOpen]);
 
+  useEffect(() => {
+    const closeAssistantPanel = () => {
+      if (!window.matchMedia('(max-width: 639px)').matches) return;
+      setShowCompactHelp(false);
+      setIsOpen(false);
+    };
+
+    window.addEventListener(OPEN_COMPARISON_DOCK_EVENT, closeAssistantPanel);
+    return () => window.removeEventListener(OPEN_COMPARISON_DOCK_EVENT, closeAssistantPanel);
+  }, [setIsOpen]);
+
   const dismissInviteBubble = useCallback(() => {
     setShowInviteBubble(false);
     if (typeof window !== 'undefined') {
@@ -220,7 +235,11 @@ export default function ChatWidget() {
       setShowInviteBubble(false);
       setShowCompactHelp(nextOpen);
       if (isOpen) setIsOpen(false);
-      if (nextOpen) notifyAssistantCompactOpen();
+      if (nextOpen) {
+        notifyAssistantCompactOpen();
+        track('ai_fab_clicked', {});
+        track('ai_panel_opened', {});
+      }
       return;
     }
 
@@ -940,7 +959,10 @@ export default function ChatWidget() {
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                onClick={() => setShowCompactHelp(false)}
+                onClick={() => {
+                  setShowCompactHelp(false);
+                  track('ai_panel_minimized', {});
+                }}
                 aria-label="Minimizar ajuda"
                 className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
               >
@@ -948,7 +970,10 @@ export default function ChatWidget() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowCompactHelp(false)}
+                onClick={() => {
+                  setShowCompactHelp(false);
+                  track('ai_panel_closed', {});
+                }}
                 aria-label="Fechar ajuda"
                 className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
               >
@@ -1034,7 +1059,7 @@ export default function ChatWidget() {
         <button
           onClick={handleToggle}
           className="group pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 dark:bg-zinc-900 sm:h-[60px] sm:w-[60px]"
-          aria-label="Abrir Chat IA"
+          aria-label="Abrir assistente de IA"
           aria-expanded={showCompactHelp}
         >
           {/* Notification Pulsing Badge */}
