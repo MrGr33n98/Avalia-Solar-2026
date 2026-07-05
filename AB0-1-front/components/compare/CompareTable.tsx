@@ -140,7 +140,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
         Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
       </p>
       <div className="relative overflow-hidden border border-slate-200 bg-white">
-        <div className="w-full touch-pan-x snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth">
+        <div className="w-full touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth">
           <table
             className="table-fixed border-collapse text-left"
             style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}

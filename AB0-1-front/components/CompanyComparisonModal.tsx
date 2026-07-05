@@ -192,7 +192,7 @@ export default function CompanyComparisonModal({
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.98 }}
                               className={cn(
-                                "group relative flex flex-col bg-white p-2 pt-10 transition-colors md:p-5",
+                                "group relative flex flex-col bg-white p-2 pt-10 transition-colors md:p-5 md:pt-10",
                                 isHighlighted && "bg-blue-50/10 ring-1 ring-blue-500 ring-inset z-10"
                               )}
                             >

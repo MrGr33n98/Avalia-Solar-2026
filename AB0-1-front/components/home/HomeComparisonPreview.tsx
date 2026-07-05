@@ -88,12 +88,12 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
           </div>
 
           {/* Grid de Comparação */}
-          <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
+          <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth">
           <div className={`grid min-w-max ${gridColsClass} divide-x divide-slate-200 md:min-w-full`}>
             {/* Coluna 1: critérios sticky em todas as larguras. */}
             <div className="sticky left-0 z-20 flex flex-col bg-slate-50">
               {/* Espaço do Header da Empresa */}
-              <div className="flex h-[150px] flex-col justify-end border-b border-slate-200 p-3 md:p-5">
+              <div className="flex h-[170px] flex-col justify-end border-b border-slate-200 p-3 md:h-[174px] md:p-5">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:text-xs">Critério</span>
               </div>
               
@@ -168,13 +168,13 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                 >
                   {/* Ribbon Destaque */}
                   {isHighlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+                    <div className="absolute top-2.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm flex items-center gap-1 z-10 md:top-3.5">
                       <Sparkles className="h-2.5 w-2.5 fill-amber-300 text-amber-300" /> Melhor avaliada
                     </div>
                   )}
 
                   {/* Header do Card (Identificação) */}
-                  <div className="flex h-[150px] flex-col justify-between border-b border-slate-200 p-3 md:p-5">
+                  <div className="flex h-[170px] flex-col justify-between border-b border-slate-200 p-3 pt-8 md:h-[174px] md:p-5 md:pt-11">
                     <div className="flex items-start justify-between gap-4">
                       {/* Logo Container */}
                       <div className="relative flex h-12 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
