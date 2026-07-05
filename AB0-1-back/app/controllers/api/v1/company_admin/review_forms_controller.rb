@@ -6,7 +6,15 @@ module Api
 
         def index
           forms = policy_scope(@company.review_forms).recent_first
-          render json: { review_forms: forms.map { |form| serialize_form(form) } }
+          recent_forms_count = @company.review_forms.where(created_at: 7.days.ago..Time.current).count
+          recent_reviews_count = @company.reviews.where(created_at: 7.days.ago..Time.current).count
+          render json: {
+            review_forms: forms.map { |form| serialize_form(form) },
+            summary: {
+              recent_forms_count: recent_forms_count,
+              recent_reviews_count: recent_reviews_count
+            }
+          }
         end
 
         def show
@@ -88,9 +96,15 @@ module Api
         end
 
         def serialize_form(form)
+          last_review = form.reviews.order(created_at: :desc).first
           form.as_json(
             only: %i[id company_id name public_title public_description form_type slug token status is_default settings created_at updated_at]
-          ).merge(public_path: form.public_path, qr_code_path: "/api/v1/review_forms/#{form.token}/qr_code", metrics: form.metrics)
+          ).merge(
+            public_path: form.public_path,
+            qr_code_path: "/api/v1/review_forms/#{form.token}/qr_code",
+            metrics: form.metrics,
+            last_review_at: last_review&.created_at
+          )
         end
 
         def track_posthog(event_name, form)
