@@ -36,13 +36,18 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
    * Defina como `null` para não renderizar fallback.
    */
   fallbackTitle?: string | null;
+  /** Classes opcionais aplicadas somente ao overlay deste diálogo. */
+  overlayClassName?: string;
 };
 
 const hasDialogTitle = (children: React.ReactNode): boolean => {
   return React.Children.toArray(children).some((child) => {
     if (!React.isValidElement(child)) return false;
     // DialogTitle do shadcn mantém o displayName do Radix Title
-    const displayName = (child.type as any)?.displayName;
+    const displayName =
+      typeof child.type === 'string'
+        ? undefined
+        : (child.type as { displayName?: string }).displayName;
     if (displayName === DialogPrimitive.Title.displayName || displayName === 'DialogTitle') {
       return true;
     }
@@ -53,12 +58,12 @@ const hasDialogTitle = (children: React.ReactNode): boolean => {
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, fallbackTitle = 'Dialog', ...props }, ref) => {
+>(({ className, children, fallbackTitle = 'Dialog', overlayClassName, ...props }, ref) => {
   const shouldRenderFallbackTitle = fallbackTitle && !hasDialogTitle(children);
 
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
