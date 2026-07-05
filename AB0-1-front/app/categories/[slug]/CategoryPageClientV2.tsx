@@ -300,7 +300,9 @@ export default function CategoryPageClient({
               });
               openQuoteWizard({ source: 'category-hero' });
             }}
-            onMethodologyClick={() => console.log('Methodology modal')}
+            onMethodologyClick={() =>
+              track('category_methodology_click', { category: slug, placement: 'hero' })
+            }
           />
 
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
@@ -331,7 +333,12 @@ export default function CategoryPageClient({
                   <TopRankingSection
                     companies={filteredCompanies.slice(0, 3)}
                     category={slug}
-                    onMethodologyClick={() => console.log('Methodology')}
+                    onMethodologyClick={() =>
+                      track('category_methodology_click', {
+                        category: slug,
+                        placement: 'sponsored-ranking',
+                      })
+                    }
                   />
                 )}
 
@@ -352,9 +359,9 @@ export default function CategoryPageClient({
                 </div>
 
                 {/* Toolbar & Grid */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {/* Toolbar */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm sticky top-24 z-10">
+                  <div className="sticky top-24 z-10 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                       <div className="relative w-full sm:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -394,13 +401,23 @@ export default function CategoryPageClient({
                   </div>
 
                   {/* Results Header */}
-                  <div className="flex items-center justify-between px-1">
-                    <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight">
-                      {hasActiveFilters ? 'Resultados Filtrados' : 'Todas as Empresas'}
-                      <span className="text-sm font-bold text-slate-400 ml-2 normal-case">
-                        ({filteredCompanies.length})
-                      </span>
-                    </h2>
+                  <div className="flex items-center justify-between gap-3 px-1">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h2 className="truncate text-base font-bold tracking-tight text-slate-950 md:text-xl md:font-black md:uppercase">
+                          {hasActiveFilters ? 'Resultados filtrados' : 'Empresas da categoria'}
+                        </h2>
+                        <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 md:bg-transparent md:p-0 md:text-sm md:text-slate-400">
+                          {filteredCompanies.length} empresas
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500 md:hidden">
+                        Compare avaliações e opções para esta solução.
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[11px] font-semibold text-blue-600 md:hidden">
+                      Arraste →
+                    </span>
                   </div>
 
                   {/* Companies Grid */}
