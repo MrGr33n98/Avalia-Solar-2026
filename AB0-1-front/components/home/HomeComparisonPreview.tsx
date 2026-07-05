@@ -1,18 +1,12 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import Image from 'next/image';
 import {
   ArrowRight,
   BadgeCheck,
   Building2,
-  Clock3,
-  MapPinned,
-  Scale,
   Star,
-  Shield,
-  BarChart3,
   Check,
   Sparkles,
-  HelpCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -56,14 +50,14 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
     return currRating > prevRating ? current : prev;
   }, selected[0])?.id;
 
-  const gridColsClass = selected.length === 2 
-    ? 'grid-cols-1 md:grid-cols-[200px_1fr_1fr]' 
-    : 'grid-cols-1 md:grid-cols-[200px_1fr_1fr_1fr]';
+  const gridColsClass = selected.length === 2
+    ? 'grid-cols-[112px_repeat(2,190px)] md:grid-cols-[200px_repeat(2,minmax(0,1fr))]'
+    : 'grid-cols-[112px_repeat(3,190px)] md:grid-cols-[200px_repeat(3,minmax(0,1fr))]';
 
   return (
     <section className="bg-white pb-16 sm:pb-20" aria-labelledby="comparison-preview-title">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
           {/* Header do Box */}
           <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:p-6">
             <div>
@@ -94,55 +88,56 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
           </div>
 
           {/* Grid de Comparação */}
-          <div className={`grid ${gridColsClass} divide-y divide-slate-100 md:divide-y-0 md:divide-x divide-slate-200`}>
-            {/* Coluna 1: Critérios (Visível apenas em desktop) */}
-            <div className="hidden md:flex flex-col bg-slate-50/50">
+          <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
+          <div className={`grid min-w-max ${gridColsClass} divide-x divide-slate-200 md:min-w-full`}>
+            {/* Coluna 1: critérios sticky em todas as larguras. */}
+            <div className="sticky left-0 z-20 flex flex-col bg-slate-50">
               {/* Espaço do Header da Empresa */}
-              <div className="h-[150px] p-5 border-b border-slate-200 flex flex-col justify-end">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Critério</span>
+              <div className="flex h-[150px] flex-col justify-end border-b border-slate-200 p-3 md:p-5">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:text-xs">Critério</span>
               </div>
               
               {/* Linhas de Critérios */}
               <div className="flex-1 flex flex-col justify-between">
-                <div className="h-[96px] p-5 border-b border-slate-100 flex items-center">
+                <div className="flex h-[96px] items-center border-b border-slate-200 p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Reputação</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Média de avaliações de clientes</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Reputação</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Média de avaliações de clientes</p>
                   </div>
                 </div>
 
-                <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
+                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Verificação</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Documentos e dados conferidos</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Verificação</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Documentos e dados conferidos</p>
                   </div>
                 </div>
 
-                <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
+                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Tempo de resposta</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Média para primeiro contato</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Tempo de resposta</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Média para primeiro contato</p>
                   </div>
                 </div>
 
-                <div className="h-[88px] p-5 border-b border-slate-100 flex items-center">
+                <div className="flex h-[88px] items-center border-b border-slate-200 p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Cobertura</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Onde a empresa atua</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Cobertura</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Onde a empresa atua</p>
                   </div>
                 </div>
 
-                <div className="h-[80px] p-5 border-b border-slate-100 flex items-center">
+                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Projetos realizados</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Projetos concluídos</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Projetos realizados</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Projetos concluídos</p>
                   </div>
                 </div>
 
-                <div className="h-[80px] p-5 flex items-center">
+                <div className="flex h-[80px] items-center p-3 md:p-5">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Garantia oferecida</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Tempo de garantia médio</p>
+                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Garantia oferecida</h4>
+                    <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Tempo de garantia médio</p>
                   </div>
                 </div>
 
@@ -165,9 +160,9 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
               return (
                 <div 
                   key={company.id} 
-                  className={`flex flex-col relative transition-all ${
+                  className={`relative flex min-w-0 flex-col transition-colors ${
                     isHighlighted 
-                      ? 'bg-blue-50/20 ring-2 ring-blue-600 ring-inset z-10' 
+                      ? 'bg-blue-50/20'
                       : 'bg-white'
                   }`}
                 >
@@ -179,16 +174,17 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   )}
 
                   {/* Header do Card (Identificação) */}
-                  <div className="h-[150px] p-5 border-b border-slate-200 flex flex-col justify-between">
+                  <div className="flex h-[150px] flex-col justify-between border-b border-slate-200 p-3 md:p-5">
                     <div className="flex items-start justify-between gap-4">
                       {/* Logo Container */}
                       <div className="relative flex h-12 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
                         {logoUrl ? (
-                          <img
+                          <Image
                             src={logoUrl}
                             alt={`Logo da ${company.name}`}
-                            className="h-full w-full object-contain"
-                            loading="lazy"
+                            fill
+                            sizes="80px"
+                            className="object-contain"
                           />
                         ) : (
                           <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />
@@ -209,7 +205,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
                     <div className="mt-2">
                       <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
-                        <h3 className="text-base font-black tracking-tight leading-snug line-clamp-1 text-slate-900">{company.name}</h3>
+                        <h3 className="line-clamp-2 text-xs font-semibold leading-snug tracking-tight text-slate-900 md:text-base">{company.name}</h3>
                       </Link>
                       <div className="flex items-center gap-1.5 mt-1">
                         <div className="flex text-amber-400">
@@ -235,8 +231,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   <div className="flex-grow flex flex-col justify-between text-slate-800">
                     
                     {/* 1. Reputação */}
-                    <div className="h-[96px] p-5 border-b border-slate-100 flex flex-col justify-center gap-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Reputação</span>
+                    <div className="flex h-[96px] flex-col justify-center gap-1.5 border-b border-slate-100 p-3 md:p-5">
                       {rating > 0 ? (
                         <>
                           <div className="flex items-baseline gap-1">
@@ -258,8 +253,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 2. Verificação */}
-                    <div className="h-[80px] p-5 border-b border-slate-100 flex flex-col justify-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Verificação</span>
+                    <div className="flex h-[80px] flex-col justify-center border-b border-slate-100 p-3 md:p-5">
                       <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
                         {company.verified ? (
                           <>
@@ -278,8 +272,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 3. Tempo de Resposta */}
-                    <div className="h-[80px] p-5 border-b border-slate-100 flex flex-col justify-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Tempo de resposta</span>
+                    <div className="flex h-[80px] flex-col justify-center border-b border-slate-100 p-3 md:p-5">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-900">{company.response_time_sla || 'Consultar'}</span>
                         {speed && (
@@ -292,9 +285,8 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 4. Cobertura */}
-                    <div className="h-[88px] p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+                    <div className="flex h-[88px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Cobertura</span>
                         <span className="text-sm font-bold text-slate-900 line-clamp-1">
                           {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
                         </span>
@@ -305,18 +297,16 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 5. Projetos Realizados */}
-                    <div className="h-[80px] p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+                    <div className="flex h-[80px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Projetos realizados</span>
                         <span className="text-sm font-bold text-slate-900">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Projetos concluídos</span>
                       </div>
                     </div>
 
                     {/* 6. Garantia */}
-                    <div className="h-[80px] p-5 border-b border-slate-100 md:border-b-0 flex items-center justify-between gap-4">
+                    <div className="flex h-[80px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:border-b-0 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 md:hidden">Garantia oferecida</span>
                         <span className="text-sm font-bold text-slate-900">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Garantia média</span>
                       </div>
@@ -342,6 +332,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                 </div>
               );
             })}
+          </div>
           </div>
 
           {/* Dica da plataforma e rodapé */}
@@ -370,4 +361,3 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
     </section>
   );
 }
-
