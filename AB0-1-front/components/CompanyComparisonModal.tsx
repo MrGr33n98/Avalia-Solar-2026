@@ -16,20 +16,14 @@ import { Button } from '@/components/ui/button';
 import { 
   Star, 
   X, 
-  Scale, 
   ShieldCheck,
   Building2,
-  Sparkles
 } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import {
-  isPremiumCompany,
-} from '@/components/compare/compare-company-utils';
 
 const getCoverageCount = (company: Company) => {
   const cities = Array.isArray(company.coverage_cities)
@@ -68,8 +62,6 @@ export default function CompanyComparisonModal({
   onRemoveCompany,
   onClearAll
 }: CompanyComparisonModalProps) {
-  const { isAuthenticated, loading: authLoading } = useAuth();
-  
   const highestRatedCompanyId = companies.reduce((prev, current) => {
     const prevRating = Number(prev.average_rating ?? prev.rating_avg ?? 0);
     const currRating = Number(current.average_rating ?? current.rating_avg ?? 0);
@@ -176,7 +168,7 @@ export default function CompanyComparisonModal({
                       </div>
 
                       <AnimatePresence mode="popLayout">
-                        {companies.slice(0, 3).map((company, idx) => {
+                        {companies.slice(0, 3).map((company) => {
                           const isHighlighted = company.id === highestRatedCompanyId;
                           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
                           const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
@@ -214,10 +206,12 @@ export default function CompanyComparisonModal({
                                 {/* Logo Container */}
                                 <div className="relative flex h-10 w-16 items-center justify-center overflow-hidden rounded border border-slate-100 bg-white p-1">
                                   {logoUrl ? (
-                                    <img
+                                    <Image
                                       src={logoUrl}
                                       alt={`Logo da ${company.name}`}
-                                      className="h-full w-full object-contain"
+                                      fill
+                                      sizes="64px"
+                                      className="object-contain"
                                     />
                                   ) : (
                                     <Building2 className="h-4 w-4 text-slate-300" aria-hidden="true" />
@@ -282,7 +276,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Avaliação geral de clientes</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
                         const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
                         const isHighlighted = company.id === highestRatedCompanyId;
@@ -322,7 +316,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Documentação e verificação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
                           <div key={`ver-${company.id}`} className={cn("p-4 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
@@ -355,7 +349,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Tempo médio de resposta</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const speed = getSpeedBadge(company.response_time_sla);
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -385,7 +379,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Região de atuação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const coverageCount = getCoverageCount(company);
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -412,7 +406,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Projetos entregues</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const projects = company.delivered_projects_score || 0;
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -435,7 +429,7 @@ export default function CompanyComparisonModal({
                           <p className="text-[9px] text-slate-400">Cobertura pós-instalação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const warranty = company.warranty_years || 0;
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -455,7 +449,7 @@ export default function CompanyComparisonModal({
                       <div className="flex items-center p-4">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cotação</span>
                       </div>
-                      {companies.slice(0, 3).map((company, idx) => {
+                      {companies.slice(0, 3).map((company) => {
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
                           <div key={`cta-${company.id}`} className={cn("p-4", isHighlighted && "bg-blue-50/5")}>
