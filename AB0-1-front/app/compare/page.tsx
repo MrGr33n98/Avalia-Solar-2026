@@ -51,7 +51,7 @@ import { useComparison } from '@/hooks/useComparison';
 import { companiesApi, type Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
 
-const MAX_COMPANIES = 3;
+const MAX_COMPANIES = 4;
 
 const selectionFromParams = (params: URLSearchParams): string[] => {
   const value = params.get('companies') || params.get('slugs') || params.get('company') || '';
@@ -214,7 +214,7 @@ function ComparePageContent() {
   const handleAdd = useCallback(
     (company: CompareCompany) => {
       if (!canAddMore) {
-        toast.warning('Você pode comparar até 3 empresas por vez.');
+        toast.warning('Você pode comparar até 4 empresas por vez.');
         return;
       }
       addToComparison(company);
@@ -292,7 +292,7 @@ function ComparePageContent() {
                     <div className="mb-3 flex items-end justify-between gap-3">
                       <div>
                         <h2 id="side-by-side-title" className="text-lg font-semibold text-slate-950">Comparação lado a lado</h2>
-                        <p className="mt-0.5 text-xs text-slate-500">{companies.length} de 3 empresas selecionadas</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{companies.length} de 4 empresas selecionadas</p>
                       </div>
                       <Button size="sm" variant="outline" onClick={handleShare} aria-label="Compartilhar comparação" className="rounded-none">
                         <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> Compartilhar
@@ -453,11 +453,11 @@ function SelectedCompaniesPanel({
     <section aria-labelledby="selected-companies-title">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h2 id="selected-companies-title" className="text-base font-semibold text-slate-950">
-          Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de 3)</span>
+          Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de 4)</span>
         </h2>
         {companies.length > 0 && <Button variant="outline" size="sm" onClick={onClear} className="rounded-none">Limpar comparação</Button>}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {companies.map((company) => (
           <article key={company.id} className="flex min-h-[84px] items-center gap-3 border border-slate-200 bg-white p-3">
             <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
@@ -515,10 +515,10 @@ function CompanySearchPanel({
         Adicionar empresa
       </h2>
       <p className="mt-1 text-xs leading-5 text-slate-500">
-        Busque e selecione até 3 empresas para comparar lado a lado.
+        Busque e selecione até 4 empresas para comparar lado a lado.
       </p>
       <p className="mt-2 text-xs font-bold text-slate-700">
-        {selectedCompanies.length} de 3 selecionadas
+        {selectedCompanies.length} de 4 selecionadas
       </p>
       <label htmlFor="compare-company-search" className="sr-only">
         Buscar empresa ou cidade

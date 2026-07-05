@@ -87,12 +87,12 @@ export default function CompanyComparisonModal({
         <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-slate-200 bg-white px-4 py-4 pr-14 md:px-8">
           <div className="mb-3 text-left md:hidden">
             <DialogTitle className="text-lg font-semibold text-slate-950">Comparar empresas</DialogTitle>
-            <DialogDescription className="mt-1 text-xs text-slate-500">{companies.length} de 3 empresas selecionadas</DialogDescription>
+            <DialogDescription className="mt-1 text-xs text-slate-500">{companies.length} de 4 empresas selecionadas</DialogDescription>
           </div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="hidden flex-wrap items-center gap-3 md:flex">
               <DialogTitle className="sr-only">Comparar empresas</DialogTitle>
-              <DialogDescription className="sr-only">Selecione até 3 empresas para comparar</DialogDescription>
+              <DialogDescription className="sr-only">Selecione até 4 empresas para comparar</DialogDescription>
               
               <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 Sua comparação:
@@ -159,16 +159,16 @@ export default function CompanyComparisonModal({
             <div className="p-3 pb-24 md:p-8 md:pb-16">
               <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
                 <div className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth">
-                  <div className="mobile-comparison-table flex w-full min-w-[720px] flex-col divide-y divide-slate-100 md:min-w-[760px]">
+                  <div className="mobile-comparison-table flex w-full min-w-[920px] flex-col divide-y divide-slate-100 md:min-w-[960px]">
                     
                     {/* Header Row: Company Logos & Names */}
-                    <div className="sticky top-0 z-30 grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="sticky top-0 z-30 grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex flex-col justify-end bg-slate-50/50 p-4">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CRITÉRIOS</span>
                       </div>
 
                       <AnimatePresence mode="popLayout">
-                        {companies.slice(0, 3).map((company) => {
+                        {companies.slice(0, 4).map((company) => {
                           const isHighlighted = company.id === highestRatedCompanyId;
                           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
                           const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
@@ -269,14 +269,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 1. Reputação Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Reputação</h5>
                           <p className="text-[9px] text-slate-400">Avaliação geral de clientes</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
                         const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
                         const isHighlighted = company.id === highestRatedCompanyId;
@@ -309,14 +309,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 2. Verificação Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Certificações</h5>
                           <p className="text-[9px] text-slate-400">Documentação e verificação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
                           <div key={`ver-${company.id}`} className={cn("p-4 flex flex-col justify-center", isHighlighted && "bg-blue-50/5")}>
@@ -342,14 +342,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 3. Tempo de Resposta Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">SLA de Contato</h5>
                           <p className="text-[9px] text-slate-400">Tempo médio de resposta</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const speed = getSpeedBadge(company.response_time_sla);
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -372,14 +372,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 4. Cobertura Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Abrangência</h5>
                           <p className="text-[9px] text-slate-400">Região de atuação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const coverageCount = getCoverageCount(company);
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -399,14 +399,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 5. Projetos Realizados Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Volume</h5>
                           <p className="text-[9px] text-slate-400">Projetos entregues</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const projects = company.delivered_projects_score || 0;
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -422,14 +422,14 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* 6. Garantia Oferecida Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="bg-slate-50/30 p-4 flex items-center">
                         <div>
                           <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Garantia</h5>
                           <p className="text-[9px] text-slate-400">Cobertura pós-instalação</p>
                         </div>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const warranty = company.warranty_years || 0;
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
@@ -445,11 +445,11 @@ export default function CompanyComparisonModal({
                     </div>
 
                     {/* Action Row */}
-                    <div className="grid grid-cols-[120px_repeat(3,200px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(3,minmax(0,1fr))]">
+                    <div className="grid grid-cols-[120px_repeat(4,200px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
                       <div className="flex items-center p-4">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cotação</span>
                       </div>
-                      {companies.slice(0, 3).map((company) => {
+                      {companies.slice(0, 4).map((company) => {
                         const isHighlighted = company.id === highestRatedCompanyId;
                         return (
                           <div key={`cta-${company.id}`} className={cn("p-4", isHighlighted && "bg-blue-50/5")}>

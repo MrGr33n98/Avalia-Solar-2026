@@ -21,6 +21,10 @@ import { Button } from '@/components/ui/button';
 import { useComparison } from '@/hooks/useComparison';
 import type { Company } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
+import {
+  OPEN_ASSISTANT_COMPACT_EVENT,
+  OPEN_COMPARISON_DOCK_EVENT,
+} from '@/lib/floating-widget-events';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
 
@@ -73,6 +77,46 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
   );
 }
 
+function CompactCompanyRow({
+  company,
+  onRemove,
+}: {
+  company: Company;
+  onRemove: (id: number) => void;
+}) {
+  const logoUrl = getFullImageUrl(company.logo_url || undefined);
+  const location = [company.city, company.state].filter(Boolean).join(', ');
+
+  return (
+    <div className="flex h-[52px] items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
+        ) : (
+          <span className="text-xs font-semibold uppercase text-slate-500">
+            {company.name.charAt(0)}
+          </span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-semibold text-slate-950">{company.name}</p>
+        <p className="truncate text-[11px] text-slate-500">
+          {location || 'Localização não informada'}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onRemove(company.id)}
+        aria-label={`Remover ${company.name} da comparação`}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 function TrustItem({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
@@ -94,6 +138,7 @@ export default function ComparisonFloatingBar() {
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('expanded');
+  const [isForcedOpen, setIsForcedOpen] = useState(false);
   const selectionKey = comparisonList.map((company) => company.id).join(',');
   const previousSelectionKeyRef = useRef(selectionKey);
 
@@ -106,7 +151,27 @@ export default function ComparisonFloatingBar() {
     }
   }, [dockState, selectionKey]);
 
-  if (count === 0) return null;
+  useEffect(() => {
+    const openComparison = () => {
+      setIsForcedOpen(true);
+      setIsModalOpen(false);
+      setDockState('expanded');
+    };
+    const handleAssistantOpen = () => {
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        setDockState('minimized');
+      }
+    };
+
+    window.addEventListener(OPEN_COMPARISON_DOCK_EVENT, openComparison);
+    window.addEventListener(OPEN_ASSISTANT_COMPACT_EVENT, handleAssistantOpen);
+    return () => {
+      window.removeEventListener(OPEN_COMPARISON_DOCK_EVENT, openComparison);
+      window.removeEventListener(OPEN_ASSISTANT_COMPACT_EVENT, handleAssistantOpen);
+    };
+  }, []);
+
+  if (count === 0 && !isForcedOpen) return null;
 
   if (dockState === 'hidden') return null;
 
@@ -129,7 +194,14 @@ export default function ComparisonFloatingBar() {
       comparison_count: count,
       placement: 'comparison_dock',
     });
-    router.push('/search');
+    setIsForcedOpen(false);
+    setDockState('hidden');
+    router.push('/search?tab=companies');
+  };
+
+  const closeDock = () => {
+    setIsForcedOpen(false);
+    setDockState('hidden');
   };
 
   return (
@@ -159,7 +231,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className="fixed bottom-24 right-5 z-[8900] md:bottom-28 md:right-6"
+            className="fixed bottom-28 right-6 z-[8900] hidden md:block"
           >
             <div className="comparison-modal-led-border flex items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-[0_12px_28px_rgba(37,99,235,0.14)]">
               <button
@@ -173,7 +245,7 @@ export default function ComparisonFloatingBar() {
               </button>
               <button
                 type="button"
-                onClick={() => setDockState('hidden')}
+                onClick={closeDock}
                 aria-label="Fechar comparador"
                 title="Fechar"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -190,9 +262,103 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-24 left-3 right-3 z-[8900] sm:left-4 sm:right-4 lg:bottom-6 lg:left-[100px] lg:right-[100px] lg:mx-auto lg:max-w-[1120px]"
+            className="pointer-events-none fixed bottom-[calc(9rem+var(--safe-area-inset-bottom))] right-4 z-[8900] w-[calc(100vw-2rem)] max-w-[360px] md:bottom-6 md:left-[100px] md:right-[100px] md:mx-auto md:w-auto md:max-w-[1120px]"
           >
-            <section className="comparison-modal-led-border pointer-events-auto overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
+            <section className="comparison-modal-led-border pointer-events-auto max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold tracking-tight text-slate-950">
+                    Comparação transparente
+                  </p>
+                  <p className="mt-1 text-xs leading-[1.15rem] text-slate-600">
+                    Compare lado a lado com os mesmos critérios para todas.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setDockState('minimized')}
+                    aria-label="Minimizar comparação"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeDock}
+                    aria-label="Fechar comparação"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-4 py-3.5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-slate-800">
+                    Empresas selecionadas ({count}/{maxComparison})
+                  </p>
+                  {count > 0 ? (
+                    <button
+                      type="button"
+                      onClick={clearComparison}
+                      className="text-[11px] font-medium text-slate-500 hover:text-red-600"
+                    >
+                      Limpar
+                    </button>
+                  ) : null}
+                </div>
+
+                {count > 0 ? (
+                  <div className="mt-2.5 max-h-[224px] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+                    {comparisonList.map((company) => (
+                      <CompactCompanyRow
+                        key={company.id}
+                        company={company}
+                        onRemove={removeFromComparison}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs leading-5 text-slate-500">
+                    Adicione empresas para comparar lado a lado.
+                  </p>
+                )}
+
+                <div className="mt-3 grid gap-2 min-[380px]:grid-cols-2">
+                  {canAddMore ? (
+                    <button
+                      type="button"
+                      onClick={handleAddCompany}
+                      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Adicionar empresa
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleComparisonPageClick}
+                    disabled={count < 2}
+                    className={cn(
+                      'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500',
+                      !canAddMore && 'min-[380px]:col-span-2'
+                    )}
+                  >
+                    Ver comparação
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  Patrocínios não alteram sua comparação.
+                </div>
+              </div>
+            </section>
+
+            <section className="comparison-modal-led-border pointer-events-auto hidden overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)] md:block">
               <div className="relative border-b border-slate-200 px-4 py-4 pr-20 md:px-5 md:pr-24">
                 <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
                   <div className="min-w-0">
@@ -238,7 +404,7 @@ export default function ComparisonFloatingBar() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDockState('hidden')}
+                      onClick={closeDock}
                       aria-label="Fechar comparação"
                       title="Fechar comparação"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -319,7 +485,7 @@ export default function ComparisonFloatingBar() {
       </AnimatePresence>
 
       {dockState === 'expanded' ? (
-        <div aria-hidden="true" className="h-[270px] md:h-[220px]" />
+        <div aria-hidden="true" className="hidden h-[220px] md:block" />
       ) : null}
 
       <CompanyComparisonModal

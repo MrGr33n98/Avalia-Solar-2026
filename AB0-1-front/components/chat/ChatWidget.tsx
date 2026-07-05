@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { FileText, Minus, Scale, ShieldCheck, Star, X } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
+import { notifyAssistantCompactOpen, openComparisonDock } from '@/lib/floating-widget-events';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 // Feature flags para controle do comportamento dos cards e CTAs
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
@@ -14,7 +18,6 @@ import ChatLeadQualificationWizard, {
   ChatLeadVertical
 } from './ChatLeadQualificationWizard';
 import MarkdownRenderer from './MarkdownRenderer';
-import MobiVoltInviteBubble, { InviteAction } from './MobiVoltInviteBubble';
 import MobiVoltDiscoveryMenu, { DiscoveryAction } from './MobiVoltDiscoveryMenu';
 import MobiVoltSolarWizard from './MobiVoltSolarWizard';
 import MobiVoltEvWizard from './MobiVoltEvWizard';
@@ -31,6 +34,7 @@ const CHAT_INVITE_DISMISSED_KEY = 'mobivolt_chat_invite_dismissed';
 const CHAT_INVITE_DELAY_MS = 3000;
 
 export default function ChatWidget() {
+  const router = useRouter();
   const {
     isOpen,
     setIsOpen,
@@ -89,6 +93,7 @@ export default function ChatWidget() {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
+  const [showCompactHelp, setShowCompactHelp] = useState(false);
   const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
 
   // Estados para Fase 4A - Discovery Guiado
@@ -210,10 +215,37 @@ export default function ChatWidget() {
 
   // Start session on first open
   const handleToggle = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
+      const nextOpen = !showCompactHelp;
+      setShowInviteBubble(false);
+      setShowCompactHelp(nextOpen);
+      if (isOpen) setIsOpen(false);
+      if (nextOpen) notifyAssistantCompactOpen();
+      return;
+    }
+
     if (!isOpen) {
       setShowInviteBubble(false);
     }
     setIsOpen(!isOpen);
+  };
+
+  const handleCompactComparison = () => {
+    setShowCompactHelp(false);
+    openComparisonDock();
+    track('mobivolt_compact_comparison_opened', { source: 'mobile_help_popup' });
+  };
+
+  const handleCompactReviews = () => {
+    setShowCompactHelp(false);
+    track('mobivolt_compact_reviews_clicked', { source: 'mobile_help_popup' });
+    router.push('/search?tab=reviews&sort=rating');
+  };
+
+  const handleCompactQuote = () => {
+    setShowCompactHelp(false);
+    track('mobivolt_compact_quote_clicked', { source: 'mobile_help_popup' });
+    openQuoteWizard({ source: 'mobivolt-mobile-help' });
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -432,13 +464,13 @@ export default function ChatWidget() {
 
   return (
     <div
-      className={`fixed bottom-[calc(5.5rem+var(--safe-area-inset-bottom))] right-3 font-sans flex flex-col items-end pointer-events-none sm:bottom-5 sm:right-5 ${
-        isOpen ? 'z-[9010]' : 'z-[9000]'
+      className={`fixed bottom-[calc(5.5rem+var(--safe-area-inset-bottom))] right-4 font-sans flex flex-col items-end pointer-events-none sm:bottom-5 sm:right-5 ${
+        isOpen || showCompactHelp ? 'z-[9010]' : 'z-[9000]'
       }`}
     >
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[400px] sm:h-[650px] max-h-[58vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
+        <div className="pointer-events-auto hidden w-full max-w-[360px] flex-col overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 sm:ml-auto sm:flex sm:h-[650px] sm:max-h-[700px] sm:w-[420px] sm:max-w-none">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
@@ -893,8 +925,77 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {!isOpen && showCompactHelp && (
+        <section
+          aria-label="Ajuda rápida do MobiVolt AI"
+          className="pointer-events-auto mb-3 max-h-[45vh] w-[calc(100vw-2rem)] max-w-[360px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 animate-in fade-in slide-in-from-bottom-3 duration-200 sm:hidden"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-semibold text-slate-950">Olá! Precisa de ajuda?</h2>
+              <p className="mt-1 text-[13px] leading-5 text-slate-600">
+                Posso ajudar você a configurar seu perfil, ver métricas e melhorar sua reputação.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowCompactHelp(false)}
+                aria-label="Minimizar ajuda"
+                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCompactHelp(false)}
+                aria-label="Fechar ajuda"
+                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            <button
+              type="button"
+              onClick={handleCompactReviews}
+              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              <Star className="h-4 w-4" />
+              <span className="flex-1">Ver avaliações</span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCompactComparison}
+              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              <Scale className="h-4 w-4" />
+              <span className="flex-1">Comparar empresas</span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCompactQuote}
+              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="flex-1">Pedir orçamento</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <p className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+            Patrocínios não alteram sua comparação.
+          </p>
+        </section>
+      )}
+
       {!isOpen && canShowInvite && showInviteBubble && (
-        <div className="pointer-events-auto mb-3 w-full max-w-[360px] rounded-lg border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
+        <div className="pointer-events-auto mb-3 hidden w-full max-w-[360px] rounded-lg border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300 sm:block">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
@@ -932,20 +1033,24 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-blue-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-brand-blue bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-brand-blue/10 animate-pulse [animation-duration:6s]"
+          className="group pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 dark:bg-zinc-900 sm:h-[60px] sm:w-[60px]"
           aria-label="Abrir Chat IA"
+          aria-expanded={showCompactHelp}
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-brand-blue px-2 py-0.5 text-[10px] font-black text-white border-2 border-white dark:border-zinc-900">
+          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1.5 py-0.5 text-[9px] font-bold text-white dark:border-zinc-900">
             IA
           </span>
 
           {/* Avatar Image as launcher icon */}
-          <img
-            src="/images/mobivolt-ai-avaliasolar.webp"
-            alt="MobiVolt AI Avatar"
-            className="w-full h-full object-cover rounded-full"
-          />
+          <span className="flex h-10 w-10 overflow-hidden rounded-full bg-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/mobivolt-ai-avaliasolar.webp"
+              alt="MobiVolt AI Avatar"
+              className="h-full w-full rounded-full object-cover"
+            />
+          </span>
         </button>
       )}
     </div>

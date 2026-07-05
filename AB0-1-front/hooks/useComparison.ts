@@ -5,7 +5,7 @@ import { Company } from '@/lib/api';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'ab01_comparison_list';
-const MAX_COMPARISON = 3;
+const MAX_COMPARISON = 4;
 
 // Event system for cross-component communication
 const comparisonEvents = new EventTarget();
