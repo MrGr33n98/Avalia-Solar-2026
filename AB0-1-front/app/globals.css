@@ -226,62 +226,52 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     position: relative;
-  }
-  
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -10;
-    background-image: url('/images/texture-avalia-solar-v2.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.035; /* Textura extremamente suave para não competir com textos */
-    pointer-events: none;
-    transform: translateZ(0); /* Aciona aceleração por hardware (GPU) */
+    /* Cor de fundo padrão (desktop e mobile sem imagem) */
+    background-color: hsl(var(--background));
   }
 
+  /* Background mobile com a imagem */
   @media (max-width: 767px) {
+    body {
+      background-image: url('/assets/avalia-solar-beckgroud-mobile.png');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    /* Sobreposição para manter legibilidade do conteúdo */
     body::before {
-      display: none !important;
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-color: hsl(var(--background) / 0.75);
+      pointer-events: none;
     }
   }
 
-  .dark body::before {
-    opacity: 0.02;
-    filter: brightness(0.8);
-  }
-
-  /* === BACKGROUND MOBILE === */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -10;
-    background-image: url('/assets/avalia-solar-beckgroud-mobile.png');
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    opacity: 0.12;
-    pointer-events: none;
-    transform: translateZ(0);
-    /* Exibido apenas em mobile */
-    display: none;
-  }
-
-  @media (max-width: 767px) {
-    body::after {
-      display: block !important;
+  /* Textura sutil no desktop */
+  @media (min-width: 768px) {
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image: url('/images/texture-avalia-solar-v2.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.035;
+      pointer-events: none;
+      transform: translateZ(0);
     }
-  }
-
-  .dark body::after {
-    opacity: 0.07;
-    filter: brightness(0.6) saturate(0.8);
+    .dark body::before {
+      opacity: 0.02;
+      filter: brightness(0.8);
+    }
   }
   
   /* Custom Scrollbar */
