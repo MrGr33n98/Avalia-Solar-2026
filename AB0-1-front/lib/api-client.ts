@@ -534,19 +534,19 @@ export const companiesApiSafe = {
     }
   },
 
-  // ðŸ”¥ Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number | string): Promise<Company | null> => {
     const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
+
     try {
-      console.log(`[companiesApiSafe.getById] Fetching company: ${id}`);
-      const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`);
+      console.log(`[companiesApiSafe.getById] Fetching company by ID: ${id}`);
+      const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`, { retries: 1 });
 
       if (response) {
         console.log('[companiesApiSafe.getById] Raw response:', response);
 
         // Backend retorna: { company: { ... } }
         // Precisamos desembrulhar para pegar apenas o objeto company
-        if (response && response.company) {
+        if (response.company) {
           console.log('[companiesApiSafe.getById] Unwrapped company:', {
             id: response.company.id,
             name: response.company.name,
@@ -556,23 +556,34 @@ export const companiesApiSafe = {
           return response.company;
         }
 
-        // Se jÃ¡ vier desembrulhado (compatibilidade)
-        if (response && response.id) {
+        // Se já vier desembrulhado (compatibilidade)
+        if (response.id) {
           return response;
         }
       }
 
       if (slugCandidate) {
-        console.warn(`[companiesApiSafe.getById] Fallback to slug lookup for: ${id}`);
-        const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`);
+        console.warn(`[companiesApiSafe.getById] Direct lookup returned empty for slug candidate, checking by_slug: ${id}`);
+        const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, { retries: 1 });
         if (bySlug?.company) return bySlug.company;
         if (bySlug?.id) return bySlug;
       }
 
-      console.warn('[companiesApiSafe.getById] Returning null - could not parse company data from:', response);
+      console.warn('[companiesApiSafe.getById] Returning null - could not parse company data');
       return null;
     } catch (error) {
-      console.error(`Error fetching company with ID ${id}:`, error);
+      if (slugCandidate) {
+        console.warn(`[companiesApiSafe.getById] Direct ID lookup failed for slug candidate ${id}, attempting by_slug fallback:`, error);
+        try {
+          const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, { retries: 1 });
+          if (bySlug?.company) return bySlug.company;
+          if (bySlug?.id) return bySlug;
+        } catch (fallbackError) {
+          console.error(`[companiesApiSafe.getById] Fallback to by_slug also failed for ${id}:`, fallbackError);
+        }
+      } else {
+        console.error(`Error fetching company with ID ${id}:`, error);
+      }
       return null;
     }
   },

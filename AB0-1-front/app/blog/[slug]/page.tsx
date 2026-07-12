@@ -68,10 +68,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const ogImage = article.image_url ? getFullImageUrl(article.image_url) : undefined;
   const authorName = article.author_name || article.author?.name || 'Avalia Solar';
+  const articleSlug = article.slug || String(article.id);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
+  const canonicalUrl = `${siteUrl}/blog/${articleSlug}`;
 
   return {
     title: article.meta_title || article.title || undefined,
     description: article.meta_description || article.excerpt || undefined,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: article.meta_title || article.title || undefined,
       description: article.meta_description || article.excerpt || undefined,

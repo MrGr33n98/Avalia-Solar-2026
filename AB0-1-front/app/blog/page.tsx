@@ -16,6 +16,9 @@ import { Separator } from '@/components/ui/separator';
 export const metadata: Metadata = {
   title: 'Blog Avalia Solar - Dicas e Guias de Energia Solar',
   description: 'Confira os melhores artigos, notícias e guias sobre energia solar fotovoltaica. Economize na conta de luz com conhecimento.',
+  alternates: {
+    canonical: 'https://avaliasolar.com.br/blog',
+  },
 };
 
 export default async function BlogIndexPage({ 

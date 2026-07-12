@@ -118,6 +118,21 @@ export default async function CompanyDetailPage({ params }: Props) {
       bestRating: '5',
       worstRating: '1'
     } : undefined,
+    review: (initialReviews && initialReviews.length > 0) ? initialReviews.map((r: any) => ({
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: r.user?.name || 'Cliente Verificado'
+      },
+      datePublished: r.created_at,
+      reviewBody: r.comment || r.body || '',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.rating,
+        bestRating: '5',
+        worstRating: '1'
+      }
+    })) : undefined,
     openingHoursSpecification: company.working_hours ? {
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: [
