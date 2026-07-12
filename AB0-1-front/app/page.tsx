@@ -77,7 +77,7 @@ function SectionShell({
   tone?: 'soft' | 'white';
 }) {
   return (
-    <section className={tone === 'soft' ? 'bg-slate-50 py-14 sm:py-20' : 'bg-white py-14 sm:py-20'}>
+    <section className={tone === 'soft' ? 'bg-slate-50/20 py-14 sm:py-20' : 'bg-transparent py-14 sm:py-20'}>
       <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">{children}</div>
     </section>
   );
@@ -192,7 +192,7 @@ export default async function Home() {
   const companiesDataPromise = getCompaniesDataCached();
 
   return (
-    <main className="flex-grow bg-white">
+    <main className="flex-grow bg-transparent">
       <BreadcrumbSchema items={[{ name: 'Home', item: '/' }]} />
       <Suspense fallback={null}>
         <HomePageTracking />
@@ -222,7 +222,7 @@ export default async function Home() {
         <ComparisonSectionWrapper dataPromise={companiesDataPromise} />
       </Suspense>
 
-      <section className="border-t border-slate-200 bg-slate-50 py-14 sm:py-20">
+      <section className="border-t border-slate-200 bg-slate-50/20 py-14 sm:py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <FAQSection
             items={homeFaqs}
@@ -231,7 +231,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-10 sm:py-12">
+      <section className="bg-slate-50/20 py-10 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative isolate overflow-hidden rounded-none border border-slate-800/80 bg-[#070B16] px-6 py-10 text-white sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-8 lg:px-12 lg:py-12">
             <div

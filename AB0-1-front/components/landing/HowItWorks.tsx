@@ -55,7 +55,7 @@ export default function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="border-b border-slate-100 bg-white py-14 sm:py-20 lg:py-24"
+      className="border-b border-slate-100 bg-transparent py-14 sm:py-20 lg:py-24"
       aria-labelledby="how-it-works-title"
     >
       <div

@@ -46,7 +46,7 @@ export default function DecisionTransparency() {
   };
 
   return (
-    <section className="bg-white py-14 md:py-20 border-b border-slate-100">
+    <section className="bg-transparent py-14 md:py-20 border-b border-slate-100">
       <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">
         
         {/* Top Section: Text & Graphics Grid */}

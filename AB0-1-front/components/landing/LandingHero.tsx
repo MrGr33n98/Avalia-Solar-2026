@@ -43,7 +43,7 @@ type LandingHeroProps = {
 
 export default function LandingHero(props: LandingHeroProps) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[#f8fafc] pb-8 pt-7 sm:py-16 lg:py-20">
+    <section className="relative overflow-hidden border-b border-slate-200 bg-transparent pb-8 pt-7 sm:py-16 lg:py-20">
       <div
         aria-hidden="true"
         className="absolute inset-0 opacity-40"
