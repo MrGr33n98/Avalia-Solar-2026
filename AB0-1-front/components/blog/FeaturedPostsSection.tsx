@@ -121,7 +121,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                           <span>{mainAuthorName}</span>
                         </div>
                       )}
-                      <span className="flex items-center gap-1">
+                      <span suppressHydrationWarning className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 opacity-70" />
                         {format(
                           new Date(mainPost.published_at || mainPost.created_at || new Date()),
@@ -198,7 +198,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                     {post.title}
                   </h4>
                   <div className="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-400">
-                    <span className="flex items-center gap-1">
+                    <span suppressHydrationWarning className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {format(
                         new Date(post.published_at || post.created_at || new Date()),

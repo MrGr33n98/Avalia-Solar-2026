@@ -42,7 +42,6 @@ function resolveCategoryImage(category: Category): string {
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {
   const [imageError, setImageError] = useState(false);
   const href = buildCategoryPath(category?.seo_url, category?.id);
-  const companiesCount = category?.companies_count ?? category?.companies?.length ?? 0;
 
   return (
     <Card
@@ -81,7 +80,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
           <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
               <Building2 className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-              {companiesCount > 0 ? `${companiesCount} empresas` : 'Ver empresas'}
+              Ver empresas
             </span>
             <span className="inline-flex items-center text-xs font-semibold text-blue-700">
               Explorar <ArrowRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />

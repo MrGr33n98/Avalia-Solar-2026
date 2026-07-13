@@ -146,15 +146,19 @@ export const sendIntentSignal = (payload: IntentSignalPayload): void => {
   if (typeof window === 'undefined') return;
 
   const body = buildBasePayload(payload);
+  const isNumericCompanyId = typeof body.company_id === 'number' || 
+    (typeof body.company_id === 'string' && /^\d+$/.test(body.company_id));
 
-  void fetch('/api/v1/intent_signals', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-    keepalive: true,
-  }).catch(() => {});
+  if (isNumericCompanyId) {
+    void fetch('/api/v1/intent_signals', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      keepalive: true,
+    }).catch(() => {});
+  }
 
   track(
     `intent_${body.signal_type}`,

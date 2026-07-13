@@ -99,7 +99,7 @@ export function PostHeader({ article }: PostHeaderProps) {
               <div className="text-sm">
                 <p className="font-semibold text-slate-900 leading-tight">{authorName}</p>
                 <div className="flex items-center text-slate-500 gap-2 mt-0.5">
-                  <span>{publishedDate}</span>
+                  <span suppressHydrationWarning>{publishedDate}</span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />

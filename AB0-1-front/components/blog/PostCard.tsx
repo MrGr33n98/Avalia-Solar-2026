@@ -83,7 +83,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
         <div className="flex-1 flex flex-col p-4">
           {/* Meta */}
           <div className="flex items-center gap-2.5 text-[11px] text-gray-400 mb-2.5">
-            <span className="flex items-center gap-1">
+            <span suppressHydrationWarning className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {post.published_date
                 ? post.published_date
