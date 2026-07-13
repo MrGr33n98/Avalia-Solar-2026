@@ -15,6 +15,7 @@ import {
   TrendingUp,
   MessageCircle,
   QrCode,
+  Grid2X2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -127,7 +128,7 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
       {
         id: 'product-categories',
         label: 'Categorias',
-        icon: FileText,
+        icon: Grid2X2,
         context: ['operational', 'admin'],
       },
       {
