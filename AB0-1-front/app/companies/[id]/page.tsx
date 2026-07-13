@@ -27,19 +27,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
     const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
+    const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
+    const seoTitle = company.seo_title || `${company.name} - Avaliações e Orçamento | Avalia Solar`;
+    const fallbackDescription = [
+      `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
+      company.description,
+    ].filter(Boolean).join(' ');
+    const seoDescription = (company.seo_description || company.meta_description || fallbackDescription).slice(0, 160);
+    const seoKeywords = company.seo_keywords || [
+      'energia solar',
+      company.name,
+      'avaliação solar',
+      'orçamento solar',
+      locationLabel,
+    ].filter(Boolean).join(', ');
+
     return {
-      title: `${company.name} - Avaliações e Orçamento | Avalia Solar`,
-      description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar. ${company.description || ''}`,
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords,
       openGraph: {
-        title: `${company.name} - Avaliações e Orçamento`,
-        description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
+        title: seoTitle,
+        description: seoDescription,
         url: canonicalUrl,
         images: company.banner_url ? [{ url: company.banner_url }] : [],
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${company.name} - Avaliações e Orçamento`,
-        description: `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
+        title: seoTitle,
+        description: seoDescription,
       },
       alternates: {
         canonical: canonicalUrl,

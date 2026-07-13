@@ -44,6 +44,10 @@ export interface Company {
   reviews_count?: number;
   featured?: boolean;
   verified?: boolean;
+  seo_title?: string;
+  seo_description?: string;
+  meta_description?: string;
+  seo_keywords?: string;
   status?: 'active' | 'pending' | 'inactive';
   created_at?: string;
   updated_at?: string;

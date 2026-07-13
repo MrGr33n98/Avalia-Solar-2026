@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -212,6 +212,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
     t.boolean "featured"
     t.integer "views_count"
     t.bigint "author_id"
+    t.string "seo_keywords"
+    t.string "seo_title"
+    t.text "seo_description"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
@@ -319,7 +322,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
 
   create_table "banners", force: :cascade do |t|
     t.string "title"
-    t.string "alt_text"
     t.string "image_url"
     t.string "link"
     t.boolean "active", default: false
@@ -342,6 +344,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
     t.integer "height"
     t.string "target_states", default: [], array: true
     t.string "target_cities", default: [], array: true
+    t.string "alt_text"
     t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "((active = true) AND ((moderation_status)::text = 'approved'::text))"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
@@ -546,6 +549,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
     t.decimal "average_price", precision: 10, scale: 2, default: "0.0"
     t.integer "views_count", default: 0
     t.json "permissions_config"
+    t.string "seo_keywords"
+    t.text "seo_description"
     t.index ["average_price"], name: "index_categories_on_average_price"
     t.index ["average_rating"], name: "index_categories_on_average_rating"
     t.index ["companies_count"], name: "index_categories_on_companies_count"
@@ -870,6 +875,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_02_120000) do
     t.integer "delivered_projects_count", default: 0, null: false
     t.integer "response_sla_minutes"
     t.datetime "operational_data_updated_at"
+    t.string "seo_keywords"
+    t.text "seo_description"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"

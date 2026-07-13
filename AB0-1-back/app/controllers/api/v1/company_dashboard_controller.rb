@@ -522,7 +522,7 @@ module Api
 
         end
 
-        direct_update_keys = %w[project_types services_offered]
+        direct_update_keys = %w[project_types services_offered seo_title seo_description meta_description seo_keywords]
         direct_update_attrs = company_params.slice(*direct_update_keys)
         @company.update(direct_update_attrs) if direct_update_attrs.present?
 
@@ -1209,6 +1209,7 @@ module Api
           :minimum_ticket, :maximum_ticket, :financing_options,
           :response_time_sla, :languages,
           :installation_warranty_years, :engineering_insurance, :delivered_projects_score,
+          :seo_title, :seo_description, :meta_description, :seo_keywords,
           project_types: [], services_offered: [], equipment_brands: [], post_sales_capacity: [],
           coverage_states: [], coverage_cities: [], coverage_state_codes: [], coverage_city_names: []
         )

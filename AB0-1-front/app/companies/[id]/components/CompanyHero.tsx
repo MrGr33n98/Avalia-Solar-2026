@@ -176,6 +176,9 @@ export default function CompanyHero({
               fill
               priority
               quality={90}
+              imageContext="company-banner"
+              entityName={company.name}
+              locationLabel={locationLabel}
               className="object-cover !rounded-none"
               containerClassName="h-full w-full !rounded-none"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
@@ -238,6 +241,9 @@ export default function CompanyHero({
                       alt={company.name}
                       fill
                       priority
+                      imageContext="company-logo"
+                      entityName={company.name}
+                      locationLabel={locationLabel}
                       objectFit="contain"
                       className="p-2"
                       containerClassName="h-full w-full rounded-none bg-white"

@@ -76,7 +76,7 @@ ActiveAdmin.register Company do
       :email_public, :phone_alt, :facebook, :instagram,
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
-      :active_admin, :p2p_chat_enabled, :seo_title, :meta_description,
+      :active_admin, :p2p_chat_enabled, :seo_title, :seo_description, :meta_description, :seo_keywords,
       { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [], financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
@@ -200,14 +200,19 @@ ActiveAdmin.register Company do
     end
 
     f.inputs 'SEO & Metadados' do
+      seo_description_value = f.object.seo_description.presence || f.object.meta_description
+
       f.input :seo_title,
               label: 'Título SEO (Meta Title)',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Se vazio, usará o nome da empresa."
-      f.input :meta_description,
-              label: 'Meta Descrição',
+      f.input :seo_description,
+              label: 'Descrição SEO (Meta Description)',
               as: :text,
-              input_html: { rows: 3 },
-              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.meta_description&.length || 0}. Se vazio, usará a descrição curta."
+              input_html: { rows: 3, value: seo_description_value },
+              hint: "Ideal: 70-160 caracteres. Atual: #{seo_description_value&.length || 0}. Se vazio, o frontend usará a descrição institucional."
+      f.input :seo_keywords,
+              label: 'Palavras-chave (SEO Keywords)',
+              hint: "Separe por vírgulas. Ex: energia solar, instalador, [cidade]"
     end
 
     f.inputs 'Contact & Location' do

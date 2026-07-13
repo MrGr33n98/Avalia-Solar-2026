@@ -2,7 +2,7 @@ class CompanySerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
 
   attributes :id, :name, :description, :website,
-             :slug,
+             :slug, :seo_title, :seo_description, :meta_description, :seo_keywords,
              :state, :city, :address, :phone, :whatsapp,
              :coverage_states, :coverage_cities, :local_solar_path,
              :email_public, :featured, :verified,
@@ -138,6 +138,18 @@ class CompanySerializer < ActiveModel::Serializer
       Rails.logger.error("Error serializing badge #{badge&.id} for company #{object.id}: #{e.message}")
       nil
     end
+  end
+
+  def seo_title
+    object.try(:seo_title).presence
+  end
+
+  def seo_description
+    object.try(:seo_description).presence || object.try(:meta_description).presence
+  end
+
+  def meta_description
+    object.try(:meta_description).presence || object.try(:seo_description).presence
   end
 
   def banner_url

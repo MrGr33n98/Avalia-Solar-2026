@@ -16,6 +16,8 @@ export default function CompanyPremiumHero({
   bannerError,
   setBannerError,
 }: CompanyPremiumHeroProps) {
+  const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
+
   return (
     <div
       id="company-premium-hero"
@@ -30,6 +32,9 @@ export default function CompanyPremiumHero({
           fill
           priority
           quality={95}
+          imageContext="company-banner"
+          entityName={company.name}
+          locationLabel={locationLabel}
           className="object-cover transition-transform duration-700 hover:scale-105"
           containerClassName="h-full w-full"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"

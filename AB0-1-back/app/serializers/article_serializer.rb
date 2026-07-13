@@ -1,6 +1,6 @@
 class ArticleSerializer < ActiveModel::Serializer
   attributes :id, :title, :slug, :content, :excerpt, :status, :published_at, :views_count,
-             :meta_title, :meta_description, :featured, :image_url, :cover_image_url,
+             :seo_title, :seo_description, :meta_title, :meta_description, :seo_keywords, :featured, :image_url, :cover_image_url,
              :reading_time_minutes, :published_date,
              :category_id, :product_id, :sponsored, :sponsored_label,
              :author, :author_name, :author_email, :author_avatar_url, :author_bio,
@@ -9,6 +9,22 @@ class ArticleSerializer < ActiveModel::Serializer
   belongs_to :category
   belongs_to :product, if: -> { object.product_id.present? }
   has_many :companies
+
+  def seo_title
+    object.try(:seo_title).presence || object.try(:meta_title).presence
+  end
+
+  def seo_description
+    object.try(:seo_description).presence || object.try(:meta_description).presence
+  end
+
+  def meta_title
+    object.try(:meta_title).presence || object.try(:seo_title).presence
+  end
+
+  def meta_description
+    object.try(:meta_description).presence || object.try(:seo_description).presence
+  end
 
   def image_url
     return unless object.banner.attached?

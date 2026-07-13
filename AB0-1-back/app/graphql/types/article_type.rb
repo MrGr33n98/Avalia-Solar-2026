@@ -15,8 +15,8 @@ module Types
     field :published_at, GraphQL::Types::ISO8601DateTime, null: true
     field :reading_time, Integer, null: false
     field :author_name, String, null: true
-    field :seo_title, String, null: true, method: :meta_title
-    field :seo_description, String, null: true, method: :meta_description
+    field :seo_title, String, null: true, method: :display_seo_title
+    field :seo_description, String, null: true, method: :display_seo_description
     field :related_articles, [Types::ArticleType], null: false
 
     def cover_url

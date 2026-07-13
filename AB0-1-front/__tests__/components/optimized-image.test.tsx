@@ -9,7 +9,17 @@ import { OptimizedImage, OptimizedAvatar, OptimizedLogo } from '@/components/ui/
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
-    const { fill, priority, blurDataURL, placeholder, sizes, quality, ...rest } = props;
+    const {
+      fill,
+      priority,
+      blurDataURL,
+      placeholder,
+      sizes,
+      quality,
+      fetchPriority,
+      unoptimized,
+      ...rest
+    } = props;
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img {...rest} />;
   },
@@ -88,6 +98,24 @@ describe('OptimizedImage', () => {
 
     const image = screen.getByAltText('Test image');
     expect(image).toBeInTheDocument();
+  });
+
+  it('builds contextual alt text for company logos automatically', () => {
+    render(
+      <OptimizedImage
+        src="/logo.png"
+        alt="Solar Pro"
+        entityName="Solar Pro"
+        locationLabel="Cuiaba, MT"
+        imageContext="company-logo"
+        width={120}
+        height={60}
+      />
+    );
+
+    expect(
+      screen.getByAltText('Logotipo da empresa Solar Pro em Cuiaba, MT - Avalia Solar')
+    ).toBeInTheDocument();
   });
 });
 

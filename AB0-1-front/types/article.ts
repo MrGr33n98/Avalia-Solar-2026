@@ -34,8 +34,11 @@ export interface Article {
   author_email?: string | null;
   author_avatar_url?: string | null;
   author_bio?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
   meta_title?: string | null;
   meta_description?: string | null;
+  seo_keywords?: string | null;
   faqs?: Array<{ question: string; answer: string }>;
   created_at?: string;
   updated_at?: string;

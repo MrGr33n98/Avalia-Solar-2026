@@ -100,6 +100,10 @@ interface CompanyData {
   delivered_projects_score?: number;
   status?: 'active' | 'pending' | 'inactive';
   verified?: boolean;
+  seo_title?: string;
+  seo_description?: string;
+  meta_description?: string;
+  seo_keywords?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -141,6 +145,18 @@ function parseList(value: string) {
     .split(/[,;\n]/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeSeoFields(data: CompanyData | null): CompanyData | null {
+  if (!data) return data;
+
+  const seoDescription = data.seo_description ?? data.meta_description ?? '';
+
+  return {
+    ...data,
+    seo_description: seoDescription,
+    meta_description: seoDescription,
+  };
 }
 
 function formatDateTime(value?: string) {
@@ -391,8 +407,9 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         return;
       }
 
-      setCompany(data.company);
-      setFormData(data.company);
+      const normalizedCompany = normalizeSeoFields(data.company);
+      setCompany(normalizedCompany);
+      setFormData(normalizedCompany);
     } catch {
       setLoadError('Não foi possível carregar as informações da empresa.');
     } finally {
@@ -422,18 +439,18 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   };
 
   const handleStartEditing = () => {
-    setFormData(company);
+    setFormData(normalizeSeoFields(company));
     setIsEditing(true);
   };
 
   const handleCancelEditing = () => {
-    setFormData(company);
+    setFormData(normalizeSeoFields(company));
     setIsEditing(false);
   };
 
   const handleContextEdit = () => {
     if (!isEditing) {
-      setFormData(company);
+      setFormData(normalizeSeoFields(company));
       setIsEditing(true);
     }
   };
@@ -443,7 +460,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
     setSaving(true);
     try {
-      const result = await updateCompany({ ...formData });
+      const normalizedPayload = normalizeSeoFields(formData) || formData;
+      const result = await updateCompany({ ...normalizedPayload });
 
       if (result.success) {
         setPendingApproval(true);
@@ -1266,6 +1284,75 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 Mantenha estas informações atualizadas para aumentar sua conversão e a confiança no ecossistema Avalia Solar.
               </AlertDescription>
             </Alert>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="SEO & Otimização de Busca (Google)"
+        description="Configure títulos e descrições personalizadas para sua empresa se destacar nos buscadores."
+        icon={Globe}
+        actions={
+          <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </Button>
+        }
+      >
+        {isEditing ? (
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-seo-title">Título de SEO (Meta Title)</Label>
+              <Input
+                id="company-seo-title"
+                value={formData?.seo_title || ''}
+                onChange={(event) => handleInputChange('seo_title', event.target.value)}
+                placeholder="Ex.: Voltalia Solar - Engenharia e Instalação Fotovoltaica"
+              />
+              <p className="text-xs text-slate-500">Ideal: 30 a 60 caracteres. Atual: {formData?.seo_title?.length || 0} caracteres.</p>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-seo-keywords">Palavras-chave de SEO (Keywords)</Label>
+              <Input
+                id="company-seo-keywords"
+                value={formData?.seo_keywords || ''}
+                onChange={(event) => handleInputChange('seo_keywords', event.target.value)}
+                placeholder="Ex.: energia solar, instalador solar, Cuiabá, Voltalia"
+              />
+              <p className="text-xs text-slate-500">Separe por vírgulas. Palavras-chave relevantes para o seu negócio.</p>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="company-seo-description">Meta Descrição de SEO (Meta Description)</Label>
+              <Textarea
+                id="company-seo-description"
+                value={formData?.seo_description || ''}
+                onChange={(event) => handleInputChange('seo_description', event.target.value)}
+                placeholder="Ex.: Solicite seu orçamento de energia solar com a Voltalia. Atendimento especializado em Cuiabá e região com garantia de 5 anos."
+                rows={3}
+              />
+              <p className="text-xs text-slate-500">Ideal: 70 a 160 caracteres. Atual: {formData?.seo_description?.length || 0} caracteres.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="min-w-0 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <InfoItem
+                label="Título de SEO"
+                value={currentData.seo_title}
+                fallback="Usará o nome da empresa como título padrão do Google"
+              />
+              <InfoItem
+                label="Palavras-chave de SEO"
+                value={currentData.seo_keywords}
+                fallback="Nenhuma palavra-chave customizada definida"
+              />
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Meta Descrição de SEO</p>
+              <p className="break-words text-sm leading-6 text-slate-700">
+                {currentData.seo_description || "Usará a descrição institucional padrão da empresa como resumo do Google"}
+              </p>
+            </div>
           </div>
         )}
       </SectionCard>

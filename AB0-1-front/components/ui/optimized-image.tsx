@@ -12,9 +12,11 @@ import { cn } from '@/lib/utils';
 const DEFAULT_BLUR_DATA_URL =
   'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
 
+type OptimizedImageContext = 'company-logo' | 'company-banner' | 'profile-image';
+
 interface OptimizedImageProps {
   src: string;
-  alt: string;
+  alt?: string;
   width?: number;
   height?: number;
   fill?: boolean;
@@ -33,6 +35,42 @@ interface OptimizedImageProps {
   fetchPriority?: 'high' | 'low' | 'auto';
   onLoad?: () => void;
   onError?: () => void;
+  imageContext?: OptimizedImageContext;
+  entityName?: string;
+  locationLabel?: string;
+  brandName?: string;
+}
+
+function resolveContextualAlt({
+  alt,
+  imageContext,
+  entityName,
+  locationLabel,
+  brandName = 'Avalia Solar',
+}: Pick<OptimizedImageProps, 'alt' | 'imageContext' | 'entityName' | 'locationLabel' | 'brandName'>) {
+  const normalizedAlt = alt?.trim();
+  const normalizedEntityName = entityName?.trim();
+  const normalizedLocation = locationLabel?.trim();
+  const locationSuffix = normalizedLocation ? ` em ${normalizedLocation}` : '';
+
+  const shouldContextualize =
+    !!imageContext &&
+    !!normalizedEntityName &&
+    (!normalizedAlt || normalizedAlt === normalizedEntityName);
+
+  if (shouldContextualize) {
+    if (imageContext === 'company-logo') {
+      return `Logotipo da empresa ${normalizedEntityName}${locationSuffix} - ${brandName}`;
+    }
+
+    if (imageContext === 'company-banner') {
+      return `Banner da empresa ${normalizedEntityName}${locationSuffix} - ${brandName}`;
+    }
+
+    return `Imagem de perfil de ${normalizedEntityName}${locationSuffix} - ${brandName}`;
+  }
+
+  return normalizedAlt || normalizedEntityName || 'Imagem';
 }
 
 /**
@@ -78,9 +116,14 @@ export function OptimizedImage({
   fetchPriority,
   onLoad,
   onError,
+  imageContext,
+  entityName,
+  locationLabel,
+  brandName,
 }: OptimizedImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [isLoading, setIsLoading] = useState(true);
+  const resolvedAlt = resolveContextualAlt({ alt, imageContext, entityName, locationLabel, brandName });
 
   // Sincroniza o estado interno com a prop src caso ela mude
   useEffect(() => {
@@ -101,7 +144,7 @@ export function OptimizedImage({
 
   const imageProps = {
     src: imgSrc,
-    alt,
+    alt: resolvedAlt,
     quality,
     priority,
     fetchPriority: priority ? 'high' : fetchPriority,
@@ -145,7 +188,7 @@ export function OptimizedImage({
         {placeholderNode}
         <Image
           {...imageProps}
-          alt={alt}
+          alt={resolvedAlt}
           fill
           sizes={
             sizes ||
@@ -164,7 +207,7 @@ export function OptimizedImage({
       {placeholderNode}
       <Image
         {...imageProps}
-        alt={alt}
+        alt={resolvedAlt}
         width={width || 0}
         height={height || 0}
         sizes={sizes}

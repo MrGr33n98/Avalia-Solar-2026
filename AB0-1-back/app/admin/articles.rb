@@ -1,7 +1,7 @@
 ActiveAdmin.register Article do
-  permit_params :title, :slug, :content, :excerpt, :meta_title, :meta_description, :published_at,
+  permit_params :title, :slug, :content, :excerpt, :seo_title, :seo_description, :meta_title, :meta_description, :published_at,
                 :status, :featured, :category_id, :author_id, :product_id, :banner,
-                :sponsored, :sponsored_label, :views_count,
+                :sponsored, :sponsored_label, :views_count, :seo_keywords,
                 company_ids: []
 
   controller do
@@ -55,10 +55,11 @@ ActiveAdmin.register Article do
       row :featured
       row :views_count
       row :excerpt
+      row(:seo_title) { |article| article.seo_title.presence || article.meta_title }
+      row(:seo_description) { |article| article.seo_description.presence || article.meta_description }
       row :content do |article|
         raw article.content
       end
-      row :meta_description
       row :banner do |article|
         if article.banner.attached?
           image_tag article.banner.variant(resize_to_limit: [640, 360])
@@ -113,8 +114,18 @@ ActiveAdmin.register Article do
 
       tab 'SEO' do
         f.inputs 'Otimização para Buscas' do
-          f.input :meta_title, hint: 'Título que aparece na aba do navegador e no Google (máx 60 chars)'
-          f.input :meta_description, input_html: { rows: 3 }, hint: 'Descrição para resultados de busca (máx 160 chars)'
+          seo_title_value = f.object.seo_title.presence || f.object.meta_title
+          seo_description_value = f.object.seo_description.presence || f.object.meta_description
+
+          f.input :seo_title,
+                  label: 'Título SEO (Meta Title)',
+                  input_html: { value: seo_title_value },
+                  hint: 'Título que aparece na aba do navegador e no Google (máx 60 chars)'
+          f.input :seo_description,
+                  label: 'Descrição SEO (Meta Description)',
+                  input_html: { rows: 3, value: seo_description_value },
+                  hint: 'Descrição para resultados de busca (máx 160 chars)'
+          f.input :seo_keywords, label: 'Palavras-chave (SEO Keywords)', hint: 'Separe por vírgulas. Ex: energia solar, blog, [assunto]'
         end
       end
     end

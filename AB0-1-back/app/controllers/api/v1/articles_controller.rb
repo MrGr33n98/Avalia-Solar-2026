@@ -141,7 +141,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
 
   def article_params
     permitted = %i[
-      title slug content excerpt meta_title meta_description published_at
+      title slug content excerpt seo_title seo_description meta_title meta_description seo_keywords published_at
       status featured category_id author_id banner
       product_id sponsored sponsored_label views_count
     ]

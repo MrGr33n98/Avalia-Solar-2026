@@ -51,6 +51,9 @@ export default function CompanyIdentityCard({
                 alt={company.name}
                 fill
                 priority
+                imageContext="company-logo"
+                entityName={company.name}
+                locationLabel={locationLabel}
                 objectFit="contain"
                 className="rounded-none bg-white p-1"
                 containerClassName="h-full w-full rounded-none bg-white"

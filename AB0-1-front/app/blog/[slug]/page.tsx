@@ -71,16 +71,25 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const articleSlug = article.slug || String(article.id);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
   const canonicalUrl = `${siteUrl}/blog/${articleSlug}`;
+  const seoTitle = article.seo_title || article.meta_title || article.title || undefined;
+  const seoDescription = article.seo_description || article.meta_description || article.excerpt || undefined;
+  const seoKeywords = article.seo_keywords || [
+    'energia solar',
+    'blog solar',
+    article.category?.name,
+    'Avalia Solar',
+  ].filter(Boolean).join(', ');
 
   return {
-    title: article.meta_title || article.title || undefined,
-    description: article.meta_description || article.excerpt || undefined,
+    title: seoTitle,
+    description: seoDescription,
+    keywords: seoKeywords,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: article.meta_title || article.title || undefined,
-      description: article.meta_description || article.excerpt || undefined,
+      title: seoTitle,
+      description: seoDescription,
       type: 'article',
       publishedTime: article.published_at || undefined,
       authors: [authorName],
@@ -90,8 +99,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     },
     twitter: {
       card: 'summary_large_image',
-      title: article.meta_title || article.title || undefined,
-      description: article.meta_description || article.excerpt || undefined,
+      title: seoTitle,
+      description: seoDescription,
       images: ogImage ? [ogImage] : [],
     },
   };
@@ -117,7 +126,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: article.title,
-    description: article.excerpt || article.meta_description,
+    description: article.seo_description || article.meta_description || article.excerpt,
     image: article.image_url ? [getFullImageUrl(article.image_url)] : [],
     datePublished: article.published_at,
     dateModified: article.updated_at || article.published_at,

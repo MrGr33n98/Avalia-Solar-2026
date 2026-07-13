@@ -175,6 +175,10 @@ export interface Company {
   verified: boolean;
   category: string;
   description: string; // Corrigido de 'about' para 'description'
+  seo_title?: string | null;
+  seo_description?: string | null;
+  meta_description?: string | null;
+  seo_keywords?: string | null;
   about?: string; // Legacy field - some APIs might still use this
   highlights?: string;
   website: string;
@@ -677,6 +681,8 @@ export interface Category {
   seo_url: string;
   slug?: string;
   seo_title: string;
+  seo_description?: string | null;
+  seo_keywords?: string | null;
   short_description?: string;
   description?: string;
   parent_id?: number | null;

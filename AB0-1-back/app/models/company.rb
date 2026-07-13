@@ -339,7 +339,8 @@ class Company < ApplicationRecord
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[name description status state city featured verified cnpj founded_year
-       employees_count rating_avg created_at updated_at plan_id moderation_status active_admin social_proof_enabled]
+       employees_count rating_avg created_at updated_at plan_id moderation_status active_admin social_proof_enabled
+       seo_title seo_description meta_description seo_keywords]
   end
 
   def self.ransackable_associations(_auth_object = nil)
