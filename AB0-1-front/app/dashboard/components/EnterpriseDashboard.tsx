@@ -687,7 +687,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       Selecione as categorias onde seu produto estará presente.
                     </p>
                   </div>
-                  <CategoriesManagement companyId={companyId} />
+                  <CategoriesManagement companyId={companyId} company={company} />
                 </div>
               </TabsContent>
 
@@ -843,7 +843,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       Selecione as categorias onde sua empresa estará presente
                     </p>
                   </div>
-                  <CategoriesManagement companyId={companyId} />
+                  <CategoriesManagement companyId={companyId} company={company} />
                 </div>
               </TabsContent>
 

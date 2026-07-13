@@ -30,11 +30,17 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { useCategories, type Category } from '../hooks/useCategories';
 
 interface CategoriesManagementProps {
   companyId: string;
+  company?: {
+    id?: string | number | null;
+    slug?: string | null;
+    name?: string | null;
+  } | null;
 }
 
 const ALL_GROUPS = 'all';
@@ -143,7 +149,7 @@ function uniqueCategories(categories: Category[]) {
   return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
-export default function CategoriesManagement({ companyId }: CategoriesManagementProps) {
+export default function CategoriesManagement({ companyId, company }: CategoriesManagementProps) {
   const {
     loading,
     categories,
@@ -164,6 +170,10 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
   const currentIds = useMemo(() => categories.map((category) => String(category.id)), [categories]);
   const currentSet = useMemo(() => new Set(currentIds), [currentIds]);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const publicCompanyPath = useMemo(
+    () => buildCompanyPath(company?.slug, company?.name, company?.id || companyId),
+    [company?.id, company?.name, company?.slug, companyId]
+  );
 
   const allCategories = useMemo(
     () => uniqueCategories([...categories, ...availableCategories, ...catalogCategories]),
@@ -319,7 +329,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           type="button"
           variant="outline"
           className="h-11 w-full justify-center gap-2 rounded-none border-slate-200 bg-white text-blue-700 hover:bg-blue-50 lg:w-auto"
-          onClick={() => window.open(`/companies/${companyId}`, '_blank', 'noopener,noreferrer')}
+          onClick={() => window.open(publicCompanyPath, '_blank', 'noopener,noreferrer')}
         >
           Ver como aparece no site
           <ExternalLink className="h-4 w-4" aria-hidden="true" />
