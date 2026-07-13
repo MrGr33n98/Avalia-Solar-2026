@@ -6,6 +6,8 @@ export interface Category {
   description: string;
   short_description?: string;
   seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string;
   seo_url?: string;
   parent_id?: number;
   kind?: string;

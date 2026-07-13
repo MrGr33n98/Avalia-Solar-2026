@@ -25,7 +25,7 @@ describe('Footer', () => {
     );
     expect(screen.getByRole('link', { name: 'Fale com a equipe' })).toHaveAttribute(
       'href',
-      'mailto:admin@avaliasolar.com.br'
+      'mailto:felipe@avaliasolar.com.br'
     );
     expect(screen.getByRole('link', { name: '+55 65 9346-5055' })).toHaveAttribute(
       'href',

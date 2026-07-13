@@ -52,13 +52,18 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
       locationSuffix = ` em ${state}`;
     }
 
-    const baseTitle = category.name;
+    const baseTitle = category.seo_title || category.name;
     const title = `${baseTitle}${locationSuffix} | Avalia Solar`;
-    const description = `${category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`}${locationSuffix ? ` Atendendo na região de ${locationSuffix.replace(' em ', '')}.` : ''}`;
-    
+    const description = [
+      category.seo_description || category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`,
+      locationSuffix ? `Atendendo na região de ${locationSuffix.replace(' em ', '')}.` : '',
+    ].filter(Boolean).join(' ').slice(0, 160);
+    const keywords = category.seo_keywords || ['energia solar', category.name, 'melhores empresas'].join(', ');
+
     return {
       title,
       description,
+      keywords,
       alternates: {
         canonical: `/categories/${params.slug}`,
       },

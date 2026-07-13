@@ -15,7 +15,7 @@ export const CONTACT = {
     email: 'felipe@avaliasolar.com.br',
   },
   team: {
-    email: 'admin@avaliasolar.com.br',
+    email: 'felipe@avaliasolar.com.br',
   },
   phone: {
     display: '+55 65 9346-5055',

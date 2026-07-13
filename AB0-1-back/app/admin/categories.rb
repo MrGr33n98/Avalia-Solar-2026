@@ -4,7 +4,7 @@ require 'English'
 
 ActiveAdmin.register Category, namespace: :admin do
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :home_carousel_banner, :permissions_config, company_ids: [], product_ids: []
+                :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: []
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
@@ -57,6 +57,14 @@ ActiveAdmin.register Category, namespace: :admin do
       f.input :seo_title,
               label: 'SEO Title',
               hint: "Ideal: 30-60 caracteres. Atual: #{f.object.seo_title&.length || 0}. Título para motores de busca."
+      f.input :seo_description,
+              label: 'SEO Description',
+              as: :text,
+              input_html: { rows: 3 },
+              hint: "Ideal: 70-160 caracteres. Atual: #{f.object.seo_description&.length || 0}. Se vazio, usará a descrição curta."
+      f.input :seo_keywords,
+              label: 'SEO Keywords',
+              hint: "Palavras-chave separadas por vírgula."
     end
 
     f.inputs 'Settings' do

@@ -1,7 +1,7 @@
 class CategorySerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
 
-  attributes :id, :name, :seo_url, :seo_title,
+  attributes :id, :name, :seo_url, :seo_title, :seo_keywords, :seo_description,
              :short_description, :description,
              :parent_id, :kind, :status, :featured,
              :average_rating, :reviews_count, :articles_count,
