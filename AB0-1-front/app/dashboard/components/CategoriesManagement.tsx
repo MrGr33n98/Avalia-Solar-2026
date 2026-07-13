@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 import { useCategories, type Category } from '../hooks/useCategories';
 
 interface CategoriesManagementProps {
@@ -101,12 +103,31 @@ function groupAccent(group: string) {
   };
 }
 
-function CategoryGlyph({ group }: { group: string }) {
+function getCategoryImage(category: Category) {
+  return category.banner_url || category.icon_url || category.logo?.url || null;
+}
+
+function CategoryThumbnail({ category, group }: { category: Category; group: string }) {
+  const imageUrl = getCategoryImage(category);
   const accent = groupAccent(group);
   const Icon = group === GROUP_MOBILITY ? Zap : group === GROUP_SOLAR ? Sun : Grid2X2;
 
+  if (imageUrl) {
+    return (
+      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-slate-100">
+        <Image
+          src={getFullImageUrl(imageUrl)}
+          alt=""
+          fill
+          sizes="96px"
+          className="object-cover"
+        />
+      </span>
+    );
+  }
+
   return (
-    <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-lg', accent.iconBg)}>
+    <span className={cn('flex h-16 w-24 shrink-0 items-center justify-center rounded-md', accent.iconBg)}>
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
   );
@@ -125,6 +146,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
     loading,
     categories,
     availableCategories,
+    allCategories: catalogCategories,
     addCategories,
     removeCategory,
   } = useCategories(companyId);
@@ -141,8 +163,8 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   const allCategories = useMemo(
-    () => uniqueCategories([...categories, ...availableCategories]),
-    [availableCategories, categories]
+    () => uniqueCategories([...categories, ...availableCategories, ...catalogCategories]),
+    [availableCategories, catalogCategories, categories]
   );
 
   const groupedCounts = useMemo(() => {
@@ -400,7 +422,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
                         )}
                         aria-pressed={selected}
                       >
-                        <CategoryGlyph group={resolveGroup(category)} />
+                        <CategoryThumbnail category={category} group={resolveGroup(category)} />
 
                         <span className="min-w-0 flex-1">
                           <span className="line-clamp-2 text-sm font-black leading-5 text-slate-950">

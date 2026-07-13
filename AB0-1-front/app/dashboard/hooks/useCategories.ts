@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { fetchApi, categoriesApi } from '@/lib/api';
+import { fetchApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Category {
@@ -10,6 +10,51 @@ export interface Category {
   status: 'active' | 'pending' | 'rejected';
   featured: boolean;
   seo_url: string;
+  short_description?: string;
+  banner_url?: string | null;
+  icon_url?: string | null;
+  logo?: { url?: string | null } | null;
+}
+
+interface RawCategory {
+  id: string | number;
+  name: string;
+  status?: Category['status'] | string;
+  featured?: boolean;
+  seo_url: string;
+  short_description?: string;
+  description?: string;
+  banner_url?: string | null;
+  icon_url?: string | null;
+  logo?: { url?: string | null } | null;
+}
+
+type CategoriesResponse =
+  | RawCategory[]
+  | {
+      data?: RawCategory[];
+      categories?: RawCategory[];
+    };
+
+function extractCategoryList(response: CategoriesResponse): RawCategory[] {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.categories)) return response.categories;
+  return [];
+}
+
+function normalizeCategory(category: RawCategory): Category {
+  return {
+    id: String(category.id),
+    name: category.name,
+    status: (category.status as Category['status']) || 'active',
+    featured: !!category.featured,
+    seo_url: category.seo_url,
+    short_description: category.short_description || category.description,
+    banner_url: category.banner_url || null,
+    icon_url: category.icon_url || null,
+    logo: category.logo || null,
+  };
 }
 
 export function useCategories(companyId: string) {
@@ -17,19 +62,14 @@ export function useCategories(companyId: string) {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const resp = await fetchApi<{ categories: Category[] }>(`/companies/${companyId}/categories`);
-      setCategories((resp?.categories || []).map(c => ({
-        id: String(c.id),
-        name: c.name,
-        status: (c.status as any) || 'active',
-        featured: !!c.featured,
-        seo_url: c.seo_url
-      })));
-    } catch (e) {
+      const resp = await fetchApi<{ categories: RawCategory[] }>(`/companies/${companyId}/categories`);
+      setCategories((resp?.categories || []).map(normalizeCategory));
+    } catch {
       setCategories([]);
     } finally {
       setLoading(false);
@@ -38,17 +78,16 @@ export function useCategories(companyId: string) {
 
   const fetchAvailableCategories = useCallback(async () => {
     try {
-      const all = await categoriesApi.getAll();
+      const all = await fetchApi<CategoriesResponse>('/categories', {
+        params: { view: 'cards', limit: 200 },
+      });
       const currentIds = new Set(categories.map(c => c.id));
-      setAvailableCategories((all || []).map(c => ({
-        id: String(c.id),
-        name: c.name,
-        status: (c.status as any) || 'active',
-        featured: !!c.featured,
-        seo_url: c.seo_url
-      })).filter(c => !currentIds.has(c.id)));
-    } catch (e) {
+      const normalized = extractCategoryList(all || []).map(normalizeCategory);
+      setAllCategories(normalized);
+      setAvailableCategories(normalized.filter(c => !currentIds.has(c.id)));
+    } catch {
       setAvailableCategories([]);
+      setAllCategories([]);
     }
   }, [categories]);
 
@@ -75,10 +114,10 @@ export function useCategories(companyId: string) {
         description: 'Categorias enviadas para aprovação.'
       });
       await fetchCategories();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao adicionar categorias',
-        description: error.message || 'Não foi possível adicionar as categorias.',
+        description: error instanceof Error ? error.message : 'Não foi possível adicionar as categorias.',
         variant: 'destructive'
       });
       throw error;
@@ -96,10 +135,10 @@ export function useCategories(companyId: string) {
         description: 'Categoria removida.'
       });
       await fetchCategories();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao remover categoria',
-        description: error.message || 'Não foi possível remover a categoria.',
+        description: error instanceof Error ? error.message : 'Não foi possível remover a categoria.',
         variant: 'destructive'
       });
       throw error;
@@ -110,6 +149,7 @@ export function useCategories(companyId: string) {
     loading,
     categories,
     availableCategories,
+    allCategories,
     addCategories,
     removeCategory,
     refresh: fetchCategories
