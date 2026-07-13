@@ -156,6 +156,53 @@ module PlanFeatureCatalog
       group: 'content',
       aliases: %w[product_image_limit images_per_product_limit]
     },
+    'company_categories_limit' => {
+      label: 'Limite de Categorias da Empresa',
+      description: 'Quantidade máxima de categorias publicáveis no perfil da empresa antes de exigir aprovação comercial.',
+      type: :integer,
+      default: 3,
+      access_behavior: :config,
+      group: 'public_profile',
+      aliases: %w[category_limit categories_limit profile_categories_limit company_category_limit]
+    },
+    'service_area_states_limit' => {
+      label: 'Limite de Estados Atendidos',
+      description: 'Quantidade máxima de estados adicionais em que a empresa pode declarar atendimento.',
+      type: :integer,
+      default: 1,
+      access_behavior: :config,
+      group: 'public_profile',
+      aliases: %w[coverage_states_limit states_coverage_limit service_states_limit]
+    },
+    'service_area_cities_limit' => {
+      label: 'Limite de Cidades Atendidas',
+      description: 'Quantidade máxima de cidades adicionais em que a empresa pode declarar atendimento.',
+      type: :integer,
+      default: 3,
+      access_behavior: :config,
+      group: 'public_profile',
+      aliases: %w[coverage_cities_limit cities_coverage_limit service_cities_limit]
+    },
+    'national_coverage' => {
+      label: 'Cobertura Nacional',
+      description: 'Permite declarar atuação nacional sem revisão comercial adicional.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'public_profile',
+      aliases: %w[national_service_area nationwide_coverage]
+    },
+    'local_seo_visibility' => {
+      label: 'Visibilidade em SEO Local Expandido',
+      description: 'Permite usar cidades de abrangência como sinal comercial para páginas locais fora da sede.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'public_profile',
+      aliases: %w[local_pages_visibility service_area_seo local_seo]
+    },
     'company_links_block' => {
       label: 'Bloco de Redes Sociais',
       description: 'Exibe links para Instagram, LinkedIn e site oficial.',
@@ -309,7 +356,12 @@ module PlanFeatureCatalog
   TIER_DEFAULT_OVERRIDES = {
     'free' => {
       'setup_included' => true, # Free plans usually don't have setup
-      'premium_profile' => false
+      'premium_profile' => false,
+      'company_categories_limit' => 3,
+      'service_area_states_limit' => 1,
+      'service_area_cities_limit' => 3,
+      'national_coverage' => false,
+      'local_seo_visibility' => false
     },
     'essential' => {
       'setup_fee' => 0,
@@ -327,6 +379,11 @@ module PlanFeatureCatalog
       'media_gallery' => false,
       'media_upload' => false,
       'p2p_chat' => false,
+      'company_categories_limit' => 6,
+      'service_area_states_limit' => 1,
+      'service_area_cities_limit' => 10,
+      'national_coverage' => false,
+      'local_seo_visibility' => true,
       'product_images_limit' => 3,
       'featured_review' => false,
       'social_proof' => true,
@@ -353,6 +410,11 @@ module PlanFeatureCatalog
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,
+      'company_categories_limit' => 12,
+      'service_area_states_limit' => 3,
+      'service_area_cities_limit' => 30,
+      'national_coverage' => false,
+      'local_seo_visibility' => true,
       'product_images_limit' => 5,
       'featured_review' => true,
       'social_proof' => true,
@@ -379,6 +441,11 @@ module PlanFeatureCatalog
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,
+      'company_categories_limit' => 999,
+      'service_area_states_limit' => 999,
+      'service_area_cities_limit' => 999,
+      'national_coverage' => true,
+      'local_seo_visibility' => true,
       'product_images_limit' => 10,
       'featured_review' => true,
       'social_proof' => true,

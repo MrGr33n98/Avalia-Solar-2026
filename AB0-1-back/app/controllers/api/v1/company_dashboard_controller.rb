@@ -522,23 +522,34 @@ module Api
 
         end
 
+        permitted_company_params = company_params
+        service_area_changed = service_area_change_requested?(permitted_company_params)
+        service_area_limit = service_area_changed ? CompanyServiceAreaLimitService.new(@company).snapshot(attributes: permitted_company_params.to_h) : nil
+        requires_commercial_approval = service_area_limit.present? && service_area_limit[:exceeds_limit]
+
         direct_update_keys = %w[project_types services_offered seo_title seo_description meta_description seo_keywords]
-        direct_update_attrs = company_params.slice(*direct_update_keys)
+        direct_update_attrs = permitted_company_params.slice(*direct_update_keys)
         @company.update(direct_update_attrs) if direct_update_attrs.present?
 
         pending_change = create_idempotent_pending_change(
           change_type: 'company_info',
           data: {
-            attributes: company_params,
-            previous_values: @company.attributes.slice(*company_params.keys)
+            attributes: permitted_company_params,
+            previous_values: @company.attributes.slice(*permitted_company_params.keys),
+            service_area_limit: service_area_limit,
+            requires_commercial_approval: requires_commercial_approval
           }
         )
 
         message = if pending_change.previously_persisted?
                     'Solicitação já enviada'
+                  elsif requires_commercial_approval
+                    'Alterações enviadas para aprovação comercial'
                   else
                     'Alterações enviadas para aprovação'
                   end
+
+        notify_service_area_change_request(pending_change, service_area_limit) if service_area_changed && !pending_change.previously_persisted?
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -546,13 +557,17 @@ module Api
           user: current_user,
           metadata: request_metadata.merge(
             change_type: 'company_info',
+            service_area_limit: service_area_limit,
+            requires_commercial_approval: requires_commercial_approval,
             pending_change_id: pending_change.id
           )
         )
 
         render json: {
           message: message,
-          pending_change: pending_change
+          pending_change: pending_change,
+          service_area_limit: service_area_limit,
+          requires_commercial_approval: requires_commercial_approval
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -560,19 +575,29 @@ module Api
       def add_categories
         authorize @company, :edit_categories?
 
+        category_ids = normalized_category_ids(params[:category_ids])
+        limit_snapshot = CompanyCategoryLimitService.new(@company).snapshot(requested_category_ids: category_ids)
+        requires_commercial_approval = limit_snapshot[:exceeds_limit]
+
         pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
             action: 'add',
-            category_ids: params[:category_ids]
+            category_ids: category_ids,
+            category_limit: limit_snapshot,
+            requires_commercial_approval: requires_commercial_approval
           }
         )
 
         message = if pending_change.previously_persisted?
                     'Solicitação já enviada'
+                  elsif requires_commercial_approval
+                    'Solicitação enviada para aprovação comercial'
                   else
                     'Solicitação de categorias enviada para aprovação'
                   end
+
+        notify_category_change_request(pending_change, limit_snapshot, action: 'add') unless pending_change.previously_persisted?
 
         Analytics::TrackEventService.call(
           company_id: @company.id,
@@ -581,14 +606,18 @@ module Api
           metadata: request_metadata.merge(
             change_type: 'categories',
             action: 'add',
-            category_ids: params[:category_ids],
+            category_ids: category_ids,
+            category_limit: limit_snapshot,
+            requires_commercial_approval: requires_commercial_approval,
             pending_change_id: pending_change.id
           )
         )
 
         render json: {
           message: message,
-          pending_change: pending_change
+          pending_change: pending_change,
+          category_limit: limit_snapshot,
+          requires_commercial_approval: requires_commercial_approval
         }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
@@ -596,11 +625,16 @@ module Api
       def remove_category
         authorize @company, :edit_categories?
 
+        category_ids = normalized_category_ids(params[:category_id])
+        limit_snapshot = CompanyCategoryLimitService.new(@company).snapshot(requested_category_ids: [])
+
         pending_change = create_idempotent_pending_change(
           change_type: 'categories',
           data: {
             action: 'remove',
-            category_ids: [params[:category_id]]
+            category_ids: category_ids,
+            category_limit: limit_snapshot,
+            requires_commercial_approval: false
           }
         )
 
@@ -610,6 +644,8 @@ module Api
                     'Solicitação de remoção enviada para aprovação'
                   end
 
+        notify_category_change_request(pending_change, limit_snapshot, action: 'remove') unless pending_change.previously_persisted?
+
         Analytics::TrackEventService.call(
           company_id: @company.id,
           event_type: 'dashboard_update_requested',
@@ -617,7 +653,8 @@ module Api
           metadata: request_metadata.merge(
             change_type: 'categories',
             action: 'remove',
-            category_id: params[:category_id],
+            category_id: category_ids.first,
+            category_limit: limit_snapshot,
             pending_change_id: pending_change.id
           )
         )
@@ -1538,6 +1575,71 @@ module Api
           abilityToExecute: ranking[:position],
           isCurrentCompany: true
         }]
+      end
+
+      def normalized_category_ids(values)
+        Array(values).flatten.compact.map(&:to_s).reject(&:blank?).uniq
+      end
+
+      def notify_category_change_request(pending_change, limit_snapshot, action:)
+        message = limit_snapshot[:exceeds_limit] ? '*Solicitação comercial de categorias*' : '*Nova alteração de categorias*'
+        color = limit_snapshot[:exceeds_limit] ? '#f59e0b' : '#2563eb'
+
+        SlackNotificationService.notify(
+          message,
+          [{
+            color: color,
+            fields: [
+              { title: 'Empresa', value: @company.name.to_s, short: true },
+              { title: 'Ação', value: action.to_s, short: true },
+              { title: 'Plano', value: limit_snapshot[:plan_tier].to_s, short: true },
+              { title: 'Limite', value: limit_snapshot[:limit].to_s, short: true },
+              { title: 'Projetado', value: limit_snapshot[:projected_count].to_s, short: true },
+              { title: 'Aprovação comercial', value: limit_snapshot[:exceeds_limit] ? 'Sim' : 'Não', short: true }
+            ],
+            footer: "PendingChange ID: #{pending_change.id}"
+          }],
+          channel: :empresas
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[CompanyDashboard#notify_category_change_request] #{e.class}: #{e.message}")
+      end
+
+      def service_area_change_requested?(attributes)
+        attributes.key?(:coverage_states) ||
+          attributes.key?('coverage_states') ||
+          attributes.key?(:coverage_cities) ||
+          attributes.key?('coverage_cities') ||
+          attributes.key?(:coverage_state_codes) ||
+          attributes.key?('coverage_state_codes') ||
+          attributes.key?(:coverage_city_names) ||
+          attributes.key?('coverage_city_names')
+      end
+
+      def notify_service_area_change_request(pending_change, service_area_limit)
+        return unless service_area_limit
+
+        message = service_area_limit[:exceeds_limit] ? '*Solicitação comercial de abrangência*' : '*Alteração de abrangência*'
+        color = service_area_limit[:exceeds_limit] ? '#f59e0b' : '#2563eb'
+
+        SlackNotificationService.notify(
+          message,
+          [{
+            color: color,
+            fields: [
+              { title: 'Empresa', value: @company.name.to_s, short: true },
+              { title: 'Plano', value: service_area_limit[:plan_tier].to_s, short: true },
+              { title: 'Estados', value: "#{service_area_limit[:projected_states_count]}/#{service_area_limit[:states_limit]}", short: true },
+              { title: 'Cidades', value: "#{service_area_limit[:projected_cities_count]}/#{service_area_limit[:cities_limit]}", short: true },
+              { title: 'Cobertura nacional', value: service_area_limit[:national_coverage_requested] ? 'Solicitada' : 'Não', short: true },
+              { title: 'Aprovação comercial', value: service_area_limit[:exceeds_limit] ? 'Sim' : 'Não', short: true }
+            ],
+            footer: "PendingChange ID: #{pending_change.id}"
+          }],
+          channel: :empresas
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[CompanyDashboard#notify_service_area_change_request] #{e.class}: #{e.message}")
       end
 
       def default_overview_payload

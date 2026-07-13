@@ -19,7 +19,29 @@ ActiveAdmin.register PendingChange do
     column :user
     column :change_type
     column :status
-    column('Preview') { |pc| pc.data&.slice('action', 'video_id', 'url', 'thumbnail_url') }
+    column('Preview') do |pc|
+      if pc.change_type == 'categories'
+        limit = pc.data&.dig('category_limit') || {}
+        {
+          action: pc.data&.dig('action'),
+          category_ids: pc.data&.dig('category_ids'),
+          plan_tier: limit['plan_tier'] || limit[:plan_tier],
+          limit: limit['limit'] || limit[:limit],
+          projected_count: limit['projected_count'] || limit[:projected_count],
+          commercial_approval: pc.data&.dig('requires_commercial_approval')
+        }
+      elsif pc.change_type == 'company_info' && pc.data&.dig('service_area_limit').present?
+        limit = pc.data&.dig('service_area_limit') || {}
+        {
+          plan_tier: limit['plan_tier'] || limit[:plan_tier],
+          states: "#{limit['projected_states_count'] || limit[:projected_states_count]}/#{limit['states_limit'] || limit[:states_limit]}",
+          cities: "#{limit['projected_cities_count'] || limit[:projected_cities_count]}/#{limit['cities_limit'] || limit[:cities_limit]}",
+          commercial_approval: pc.data&.dig('requires_commercial_approval')
+        }
+      else
+        pc.data&.slice('action', 'video_id', 'url', 'thumbnail_url')
+      end
+    end
     column :created_at
     actions defaults: true do |pc|
       if pc.status == 'pending'
@@ -35,6 +57,9 @@ ActiveAdmin.register PendingChange do
       row :user
       row :change_type
       row :status
+      row('Aprovação comercial') { |pc| pc.data&.dig('requires_commercial_approval') ? 'Sim' : 'Não' }
+      row('Limite de categorias') { |pc| pc.data&.dig('category_limit') }
+      row('Limite de abrangência') { |pc| pc.data&.dig('service_area_limit') }
       row :data
       row :created_at
       row :updated_at

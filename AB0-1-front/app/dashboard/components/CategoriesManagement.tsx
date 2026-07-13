@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import type { FeatureAccessEntry } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
@@ -40,6 +42,8 @@ interface CategoriesManagementProps {
     id?: string | number | null;
     slug?: string | null;
     name?: string | null;
+    plan_tier?: string | null;
+    feature_access?: Record<string, FeatureAccessEntry> | null;
   } | null;
 }
 
@@ -48,6 +52,18 @@ const GROUP_SOLAR = 'Energia Solar';
 const GROUP_MOBILITY = 'Mobilidade Elétrica';
 const GROUP_OTHER = 'Outras categorias';
 const GROUP_ORDER = [GROUP_SOLAR, GROUP_MOBILITY, GROUP_OTHER];
+const CATEGORY_LIMIT_FEATURE_KEYS = [
+  'company_categories_limit',
+  'category_limit',
+  'categories_limit',
+  'profile_categories_limit',
+];
+const CATEGORY_LIMIT_BY_PLAN: Record<string, number> = {
+  free: 3,
+  essential: 6,
+  pro: 12,
+  enterprise: 999,
+};
 
 function normalizeText(value: string) {
   return value
@@ -149,7 +165,28 @@ function uniqueCategories(categories: Category[]) {
   return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
+function numericLimitFromEntry(entry?: FeatureAccessEntry | null) {
+  if (!entry) return null;
+
+  const rawValue = entry.value ?? entry.limit?.max ?? null;
+  if (typeof rawValue !== 'number' && typeof rawValue !== 'string') return null;
+
+  const parsed = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolveCategoryLimit(company?: CategoriesManagementProps['company']) {
+  for (const key of CATEGORY_LIMIT_FEATURE_KEYS) {
+    const limit = numericLimitFromEntry(company?.feature_access?.[key]);
+    if (limit) return limit;
+  }
+
+  const planTier = (company?.plan_tier || 'free').toLowerCase();
+  return CATEGORY_LIMIT_BY_PLAN[planTier] || CATEGORY_LIMIT_BY_PLAN.free;
+}
+
 export default function CategoriesManagement({ companyId, company }: CategoriesManagementProps) {
+  const { toast } = useToast();
   const {
     loading,
     categories,
@@ -170,6 +207,11 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
   const currentIds = useMemo(() => categories.map((category) => String(category.id)), [categories]);
   const currentSet = useMemo(() => new Set(currentIds), [currentIds]);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const categoryLimit = useMemo(() => resolveCategoryLimit(company), [company]);
+  const exceedsCategoryLimit = selectedIds.length > categoryLimit;
+  const overLimitCount = Math.max(selectedIds.length - categoryLimit, 0);
+  const categoryLimitLabel = categoryLimit >= 999 ? 'ilimitado' : `${categoryLimit} categorias`;
+  const categoryLimitBadgeText = categoryLimit >= 999 ? 'Categorias ilimitadas' : `Até ${categoryLimitLabel}`;
   const publicCompanyPath = useMemo(
     () => buildCompanyPath(company?.slug, company?.name, company?.id || companyId),
     [company?.id, company?.name, company?.slug, companyId]
@@ -241,11 +283,21 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
   }, [currentIds, pendingSelectionKey]);
 
   const toggleCategory = (categoryId: string) => {
-    setSelectedIds((current) =>
-      current.includes(categoryId)
-        ? current.filter((id) => id !== categoryId)
-        : [...current, categoryId]
-    );
+    setSelectedIds((current) => {
+      if (current.includes(categoryId)) {
+        return current.filter((id) => id !== categoryId);
+      }
+
+      const next = [...current, categoryId];
+      if (next.length > categoryLimit) {
+        toast({
+          title: 'Limite do plano excedido',
+          description: `Seu plano inclui ${categoryLimitLabel}. A seleção extra será enviada para aprovação comercial.`,
+        });
+      }
+
+      return next;
+    });
   };
 
   const clearSelection = () => setSelectedIds([]);
@@ -281,6 +333,12 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
 
       setSelectedIds(targetIds);
       setPendingSelectionKey(targetKey);
+      toast({
+        title: exceedsCategoryLimit ? 'Solicitação comercial enviada' : 'Solicitação enviada',
+        description: exceedsCategoryLimit
+          ? 'O admin precisa aprovar a exceção ou ajustar o plano antes da publicação.'
+          : 'As categorias serão publicadas após aprovação do admin.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -347,10 +405,25 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
               <p className="mt-1 text-sm font-semibold text-slate-700">
                 {selectedIds.length} {selectedIds.length === 1 ? 'categoria selecionada' : 'categorias selecionadas'}
               </p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Limite do plano: {categoryLimitLabel}
+              </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Badge
+              className={cn(
+                'h-8 rounded-none px-3',
+                exceedsCategoryLimit
+                  ? 'bg-amber-100 text-amber-800 hover:bg-amber-100'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              {exceedsCategoryLimit
+                ? `${overLimitCount} acima do limite`
+                : categoryLimitBadgeText}
+            </Badge>
             <Badge className="h-8 rounded-none bg-amber-50 px-3 text-amber-700 hover:bg-amber-50">
               <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
               {groupedCounts[GROUP_SOLAR] || 0} Energia Solar
@@ -373,6 +446,14 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
           </Button>
         </div>
       </div>
+
+      {exceedsCategoryLimit ? (
+        <div className="rounded-none border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          Seu plano permite {categoryLimitLabel}. As {overLimitCount}{' '}
+          {overLimitCount === 1 ? 'categoria extra ficará' : 'categorias extras ficarão'} pendente(s)
+          de aprovação comercial no ActiveAdmin.
+        </div>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
         <label className="relative">
@@ -409,8 +490,6 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
             const items = categoriesByGroup[group] || [];
             if (items.length === 0) return null;
 
-            const accent = groupAccent(group);
-            const GroupIcon = group === GROUP_MOBILITY ? Zap : group === GROUP_SOLAR ? Sun : Grid2X2;
             const groupOpen = openGroups.includes(group);
 
             return (
@@ -422,9 +501,6 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
                   aria-expanded={groupOpen}
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-none', accent.iconBg)}>
-                      <GroupIcon className="h-4 w-4" aria-hidden="true" />
-                    </span>
                     <span className="min-w-0">
                       <span className="block text-base font-black text-slate-950">{group}</span>
                       <span className="block text-xs font-semibold text-slate-500">
@@ -542,7 +618,7 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
             ) : selectionChanged ? (
               <Check className="mr-2 h-4 w-4" aria-hidden="true" />
             ) : null}
-            Revisar seleção
+            {exceedsCategoryLimit ? 'Solicitar aprovação comercial' : 'Revisar seleção'}
             <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Button>
         </div>

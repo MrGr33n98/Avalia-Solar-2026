@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   Building2,
   Calendar,
+  ChevronDown,
   CheckCircle2,
   Clock,
   DollarSign,
@@ -44,6 +45,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import type { FeatureAccessEntry } from '@/lib/api';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import {
   BRAZIL_CAPITAL_OPTIONS,
@@ -104,6 +106,8 @@ interface CompanyData {
   seo_description?: string;
   meta_description?: string;
   seo_keywords?: string;
+  plan_tier?: string | null;
+  feature_access?: Record<string, FeatureAccessEntry> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -111,6 +115,12 @@ interface CompanyData {
 const NOT_INFORMED = 'Não informado';
 const TO_DEFINE = 'A definir';
 const NOT_CONFIGURED = 'Não configurado';
+const SERVICE_AREA_LIMIT_BY_PLAN: Record<string, { states: number; cities: number }> = {
+  free: { states: 1, cities: 3 },
+  essential: { states: 1, cities: 10 },
+  pro: { states: 3, cities: 30 },
+  enterprise: { states: 999, cities: 999 },
+};
 
 function isBlank(value: unknown) {
   if (value === null || value === undefined) return true;
@@ -138,6 +148,37 @@ function listFromValue(value?: string[] | string) {
   }
 
   return [];
+}
+
+function numericFeatureValue(entry?: FeatureAccessEntry | null) {
+  if (!entry) return null;
+  const rawValue = entry.value ?? entry.limit?.max ?? null;
+  if (typeof rawValue !== 'number' && typeof rawValue !== 'string') return null;
+
+  const parsed = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolveServiceAreaLimits(company?: CompanyData | null) {
+  const access = company?.feature_access;
+  const statesLimit =
+    numericFeatureValue(access?.service_area_states_limit) ||
+    numericFeatureValue(access?.coverage_states_limit);
+  const citiesLimit =
+    numericFeatureValue(access?.service_area_cities_limit) ||
+    numericFeatureValue(access?.coverage_cities_limit);
+  const planTier = (company?.plan_tier || 'free').toLowerCase();
+  const fallback = SERVICE_AREA_LIMIT_BY_PLAN[planTier] || SERVICE_AREA_LIMIT_BY_PLAN.free;
+
+  return {
+    states: statesLimit || fallback.states,
+    cities: citiesLimit || fallback.cities,
+  };
+}
+
+function formatLimit(value: number, singular: string, plural: string, unlimited: string) {
+  if (value >= 999) return unlimited;
+  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function parseList(value: string) {
@@ -223,11 +264,18 @@ function SectionCard({
   children: ReactNode;
   className?: string;
 }) {
+  const [isOpen, setIsOpen] = useState(true);
+
   return (
-    <Card className={cn('min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm', className)}>
+    <Card
+      className={cn(
+        'min-w-0 overflow-hidden rounded-none border border-slate-200 bg-white shadow-none [&_.rounded-2xl]:rounded-none [&_.rounded-full]:rounded-none [&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none',
+        className
+      )}
+    >
       <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-blue">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-blue-50 text-brand-blue">
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -235,9 +283,21 @@ function SectionCard({
             {description && <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>}
           </div>
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {actions}
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-none border-slate-200 px-3 text-xs font-bold uppercase tracking-wide text-slate-600"
+            onClick={() => setIsOpen((current) => !current)}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? 'Fechar' : 'Abrir'}
+            <ChevronDown className={cn('ml-2 h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="p-4 sm:p-5">{children}</CardContent>
+      {isOpen ? <CardContent className="p-4 sm:p-5">{children}</CardContent> : null}
     </Card>
   );
 }
@@ -421,6 +481,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     fetchCompanyData();
   }, [fetchCompanyData]);
 
+  const activeServiceAreaData = formData || company;
+  const serviceAreaLimits = resolveServiceAreaLimits(activeServiceAreaData);
+  const selectedCoverageStates = listFromValue(activeServiceAreaData?.coverage_states);
+  const selectedCoverageCities = listFromValue(activeServiceAreaData?.coverage_cities);
+  const exceedsServiceAreaStates = selectedCoverageStates.length > serviceAreaLimits.states;
+  const exceedsServiceAreaCities = selectedCoverageCities.length > serviceAreaLimits.cities;
+  const exceedsServiceAreaLimit = exceedsServiceAreaStates || exceedsServiceAreaCities;
+  const serviceAreaLimitDescription = `${formatLimit(serviceAreaLimits.states, 'estado', 'estados', 'estados ilimitados')} e ${formatLimit(serviceAreaLimits.cities, 'cidade', 'cidades', 'cidades ilimitadas')}`;
+
   const handleInputChange = (field: keyof CompanyData, value: CompanyData[keyof CompanyData]) => {
     setFormData((previous) => ({ ...(previous || {}), [field]: value }));
   };
@@ -434,6 +503,28 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     const nextValues = currentValues.includes(value)
       ? currentValues.filter((item) => item !== value)
       : [...currentValues, value];
+
+    if (
+      field === 'coverage_states' &&
+      nextValues.length > serviceAreaLimits.states &&
+      nextValues.length > currentValues.length
+    ) {
+      toast({
+        title: 'Limite de estados excedido',
+        description: 'Esta abrangência extra será enviada para aprovação comercial ou upgrade de plano.',
+      });
+    }
+
+    if (
+      field === 'coverage_cities' &&
+      nextValues.length > serviceAreaLimits.cities &&
+      nextValues.length > currentValues.length
+    ) {
+      toast({
+        title: 'Limite de cidades excedido',
+        description: 'Esta abrangência extra será enviada para aprovação comercial ou upgrade de plano.',
+      });
+    }
 
     handleInputChange(field, nextValues);
   };
@@ -464,11 +555,22 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       const result = await updateCompany({ ...normalizedPayload });
 
       if (result.success) {
+        const responseData = result.data as
+          | { requires_commercial_approval?: boolean; service_area_limit?: { exceeds_limit?: boolean } }
+          | undefined;
+        const requiresCommercialApproval =
+          Boolean(responseData?.requires_commercial_approval) ||
+          Boolean(responseData?.service_area_limit?.exceeds_limit);
+
         setPendingApproval(true);
         setIsEditing(false);
         toast({
-          title: 'Alterações enviadas para aprovação',
-          description: 'Felipe poderá revisar e liberar no Active Admin antes da publicação.',
+          title: requiresCommercialApproval
+            ? 'Solicitação comercial enviada'
+            : 'Alterações enviadas para aprovação',
+          description: requiresCommercialApproval
+            ? 'A abrangência excede o plano atual. O admin pode aprovar a exceção ou recomendar upgrade.'
+            : 'Felipe poderá revisar e liberar no Active Admin antes da publicação.',
         });
         window.setTimeout(() => setPendingApproval(false), 8000);
         await fetchCompanyData();
@@ -1069,6 +1171,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
                 Cidade principal: <strong>{primaryLocation}</strong>. Estes campos não mudam a sede da empresa; eles definem onde ela atende.
               </div>
+              <Alert className={cn('rounded-xl', exceedsServiceAreaLimit ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50')}>
+                <AlertCircle className={cn('h-4 w-4', exceedsServiceAreaLimit ? 'text-amber-600' : 'text-slate-500')} />
+                <AlertDescription className={cn('text-sm', exceedsServiceAreaLimit ? 'text-amber-900' : 'text-slate-700')}>
+                  Seu plano permite {serviceAreaLimitDescription}.{' '}
+                  {exceedsServiceAreaLimit
+                    ? 'A abrangência extra será enviada para aprovação comercial ou upgrade antes de ganhar visibilidade pública.'
+                    : 'A sede principal continua gratuita; apenas a abrangência expandida é controlada por plano.'}
+                </AlertDescription>
+              </Alert>
               <div className="space-y-2">
                 <Label>Estados atendidos</Label>
                 <ChecklistGrid
@@ -1100,11 +1211,21 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 </div>
               </div>
               <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Estados atendidos</p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Estados atendidos</p>
+                  <Badge className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-100">
+                    Limite: {formatLimit(serviceAreaLimits.states, 'estado', 'estados', 'estados ilimitados')}
+                  </Badge>
+                </div>
                 <ListBadges items={coverageStates} empty="Nenhum estado adicional informado." />
               </div>
               <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Capitais atendidas</p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Capitais atendidas</p>
+                  <Badge className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-100">
+                    Limite: {formatLimit(serviceAreaLimits.cities, 'cidade', 'cidades', 'cidades ilimitadas')}
+                  </Badge>
+                </div>
                 {coverageCities.length > 0 ? (
                   <ListBadges items={coverageCities} empty="Nenhuma capital informada." />
                 ) : (
