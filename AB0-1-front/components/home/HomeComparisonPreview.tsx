@@ -93,7 +93,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
               <ArrowRight className="inline h-2.5 w-2.5" aria-hidden="true" />
             </div>
             <div
-              className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth"
+              className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth"
               aria-label="Comparação de empresas com rolagem horizontal no celular"
             >
           <div className={`grid w-full min-w-0 ${gridColsClass} divide-x divide-slate-200 md:min-w-full`}>
