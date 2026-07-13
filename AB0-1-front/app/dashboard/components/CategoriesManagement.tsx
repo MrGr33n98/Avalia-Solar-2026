@@ -5,6 +5,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   ExternalLink,
   Grid2X2,
   Loader2,
@@ -40,6 +41,7 @@ const ALL_GROUPS = 'all';
 const GROUP_SOLAR = 'Energia Solar';
 const GROUP_MOBILITY = 'Mobilidade Elétrica';
 const GROUP_OTHER = 'Outras categorias';
+const GROUP_ORDER = [GROUP_SOLAR, GROUP_MOBILITY, GROUP_OTHER];
 
 function normalizeText(value: string) {
   return value
@@ -114,7 +116,7 @@ function CategoryThumbnail({ category, group }: { category: Category; group: str
 
   if (imageUrl) {
     return (
-      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-slate-100">
+      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-none bg-slate-100">
         <Image
           src={getFullImageUrl(imageUrl)}
           alt=""
@@ -127,7 +129,7 @@ function CategoryThumbnail({ category, group }: { category: Category; group: str
   }
 
   return (
-    <span className={cn('flex h-16 w-24 shrink-0 items-center justify-center rounded-md', accent.iconBg)}>
+    <span className={cn('flex h-16 w-24 shrink-0 items-center justify-center rounded-none', accent.iconBg)}>
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
   );
@@ -156,6 +158,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
   const [groupFilter, setGroupFilter] = useState(ALL_GROUPS);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingSelectionKey, setPendingSelectionKey] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<string[]>(GROUP_ORDER);
   const [submitting, setSubmitting] = useState(false);
 
   const currentIds = useMemo(() => categories.map((category) => String(category.id)), [categories]);
@@ -242,6 +245,12 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
     setSelectedIds(currentIds);
   };
 
+  const toggleGroup = (group: string) => {
+    setOpenGroups((current) =>
+      current.includes(group) ? current.filter((item) => item !== group) : [...current, group]
+    );
+  };
+
   const submitSelection = async () => {
     if (!selectionChanged || submitting) return;
 
@@ -274,11 +283,11 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           <Skeleton className="h-8 w-72" />
           <Skeleton className="h-4 w-[420px]" />
         </div>
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-none" />
+        <Skeleton className="h-12 w-full rounded-none" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
-            <Skeleton key={index} className="h-20 rounded-xl" />
+            <Skeleton key={index} className="h-20 rounded-none" />
           ))}
         </div>
       </div>
@@ -300,7 +309,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
             enviadas para aprovação antes de aparecerem publicamente.
           </p>
           {pendingSelectionKey ? (
-            <p className="mt-2 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+            <p className="mt-2 inline-flex rounded-none bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
               Solicitação enviada para aprovação
             </p>
           ) : null}
@@ -309,7 +318,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         <Button
           type="button"
           variant="outline"
-          className="h-11 w-full justify-center gap-2 rounded-lg border-slate-200 bg-white text-blue-700 hover:bg-blue-50 lg:w-auto"
+          className="h-11 w-full justify-center gap-2 rounded-none border-slate-200 bg-white text-blue-700 hover:bg-blue-50 lg:w-auto"
           onClick={() => window.open(`/companies/${companyId}`, '_blank', 'noopener,noreferrer')}
         >
           Ver como aparece no site
@@ -317,10 +326,10 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         </Button>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-none border border-slate-200 bg-white p-4 shadow-none sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-blue-600 text-white">
               <Grid2X2 className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
@@ -332,11 +341,11 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Badge className="h-8 rounded-full bg-amber-50 px-3 text-amber-700 hover:bg-amber-50">
+            <Badge className="h-8 rounded-none bg-amber-50 px-3 text-amber-700 hover:bg-amber-50">
               <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
               {groupedCounts[GROUP_SOLAR] || 0} Energia Solar
             </Badge>
-            <Badge className="h-8 rounded-full bg-emerald-50 px-3 text-emerald-700 hover:bg-emerald-50">
+            <Badge className="h-8 rounded-none bg-emerald-50 px-3 text-emerald-700 hover:bg-emerald-50">
               <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
               {groupedCounts[GROUP_MOBILITY] || 0} Mobilidade Elétrica
             </Badge>
@@ -345,7 +354,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-lg border-slate-200 bg-white text-blue-700"
+            className="h-11 rounded-none border-slate-200 bg-white text-blue-700"
             onClick={clearSelection}
             disabled={selectedIds.length === 0 || submitting}
           >
@@ -363,12 +372,12 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar categorias..."
-            className="h-12 rounded-lg border-slate-200 bg-white pl-11 text-sm shadow-sm"
+            className="h-12 rounded-none border-slate-200 bg-white pl-11 text-sm shadow-none"
           />
         </label>
 
         <Select value={groupFilter} onValueChange={setGroupFilter}>
-          <SelectTrigger className="h-12 rounded-lg border-slate-200 bg-white shadow-sm">
+          <SelectTrigger className="h-12 rounded-none border-slate-200 bg-white shadow-none">
             <div className="flex min-w-0 items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
               <SelectValue placeholder="Filtrar por grupo" />
@@ -384,81 +393,110 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
         </Select>
       </div>
 
-      <ScrollArea className="h-[520px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="space-y-8 pr-3">
-          {[GROUP_SOLAR, GROUP_MOBILITY, GROUP_OTHER].map((group) => {
+      <ScrollArea className="h-[520px] rounded-none border border-slate-200 bg-white p-4 shadow-none">
+        <div className="space-y-6 pr-3">
+          {GROUP_ORDER.map((group) => {
             const items = categoriesByGroup[group] || [];
             if (items.length === 0) return null;
 
             const accent = groupAccent(group);
             const GroupIcon = group === GROUP_MOBILITY ? Zap : group === GROUP_SOLAR ? Sun : Grid2X2;
+            const groupOpen = openGroups.includes(group);
 
             return (
-              <div key={group} className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className={cn('flex h-8 w-8 items-center justify-center rounded-full', accent.iconBg)}>
-                    <GroupIcon className="h-4 w-4" aria-hidden="true" />
+              <div key={group} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group)}
+                  className="flex w-full items-center justify-between gap-4 border border-slate-200 bg-slate-50 px-3 py-3 text-left transition-colors hover:bg-slate-100"
+                  aria-expanded={groupOpen}
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-none', accent.iconBg)}>
+                      <GroupIcon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-base font-black text-slate-950">{group}</span>
+                      <span className="block text-xs font-semibold text-slate-500">
+                        {items.length} {items.length === 1 ? 'categoria' : 'categorias'}
+                      </span>
+                    </span>
                   </span>
-                  <h3 className="text-lg font-black text-slate-950">{group}</h3>
-                </div>
+                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    {groupOpen ? 'Fechar' : 'Abrir'}
+                    <ChevronDown
+                      className={cn('h-4 w-4 transition-transform', groupOpen && 'rotate-180')}
+                      aria-hidden="true"
+                    />
+                  </span>
+                </button>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {items.map((category) => {
-                    const categoryId = String(category.id);
-                    const selected = selectedSet.has(categoryId);
-                    const alreadyVisible = currentSet.has(categoryId);
-                    const categoryAccent = groupAccent(resolveGroup(category));
+                {groupOpen ? (
+                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {items.map((category) => {
+                      const categoryId = String(category.id);
+                      const selected = selectedSet.has(categoryId);
+                      const alreadyVisible = currentSet.has(categoryId);
+                      const categoryAccent = groupAccent(resolveGroup(category));
 
-                    return (
-                      <button
-                        key={categoryId}
-                        type="button"
-                        onClick={() => toggleCategory(categoryId)}
-                        className={cn(
-                          'flex min-h-20 w-full items-center gap-3 rounded-lg border bg-white p-3 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md',
-                          categoryAccent.border,
-                          selected && categoryAccent.selectedBorder,
-                          selected && categoryAccent.selectedBg
-                        )}
-                        aria-pressed={selected}
-                      >
-                        <CategoryThumbnail category={category} group={resolveGroup(category)} />
+                      return (
+                        <div
+                          key={categoryId}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleCategory(categoryId)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              toggleCategory(categoryId);
+                            }
+                          }}
+                          className={cn(
+                            'flex min-h-20 w-full cursor-pointer items-center gap-3 rounded-none border bg-white p-3 text-left shadow-none transition-colors hover:border-blue-300',
+                            categoryAccent.border,
+                            selected && categoryAccent.selectedBorder,
+                            selected && categoryAccent.selectedBg
+                          )}
+                          aria-pressed={selected}
+                        >
+                          <CategoryThumbnail category={category} group={resolveGroup(category)} />
 
-                        <span className="min-w-0 flex-1">
-                          <span className="line-clamp-2 text-sm font-black leading-5 text-slate-950">
-                            {category.name}
+                          <span className="min-w-0 flex-1">
+                            <span className="line-clamp-2 text-sm font-black leading-5 text-slate-950">
+                              {category.name}
+                            </span>
+                            <span className="mt-1 flex flex-wrap gap-1">
+                              {alreadyVisible ? (
+                                <span className="inline-flex items-center rounded-none bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                  Visível hoje
+                                </span>
+                              ) : null}
+                              {category.featured ? (
+                                <span className="inline-flex items-center rounded-none bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                                  Destaque
+                                </span>
+                              ) : null}
+                            </span>
                           </span>
-                          <span className="mt-1 flex flex-wrap gap-1">
-                            {alreadyVisible ? (
-                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
-                                Visível hoje
-                              </span>
-                            ) : null}
-                            {category.featured ? (
-                              <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                                Destaque
-                              </span>
-                            ) : null}
-                          </span>
-                        </span>
 
-                        <Checkbox
-                          checked={selected}
-                          onCheckedChange={() => toggleCategory(categoryId)}
-                          onClick={(event) => event.stopPropagation()}
-                          aria-label={`Selecionar ${category.name}`}
-                          className={cn('h-5 w-5 rounded-md border-slate-300', categoryAccent.checkbox)}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
+                          <Checkbox
+                            checked={selected}
+                            onCheckedChange={() => toggleCategory(categoryId)}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Selecionar ${category.name}`}
+                            className={cn('h-5 w-5 rounded-none border-slate-300', categoryAccent.checkbox)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             );
           })}
 
           {filteredCategories.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center">
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-none border border-dashed border-slate-200 bg-slate-50 text-center">
               <Search className="h-8 w-8 text-slate-400" aria-hidden="true" />
               <h3 className="mt-3 text-sm font-black text-slate-950">Nenhuma categoria encontrada</h3>
               <p className="mt-1 max-w-md text-sm text-slate-500">
@@ -477,7 +515,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-lg border-slate-200 bg-white px-6"
+            className="h-11 rounded-none border-slate-200 bg-white px-6"
             onClick={resetSelection}
             disabled={!selectionChanged || submitting}
           >
@@ -485,7 +523,7 @@ export default function CategoriesManagement({ companyId }: CategoriesManagement
           </Button>
           <Button
             type="button"
-            className="h-11 rounded-lg bg-blue-600 px-6 font-bold text-white hover:bg-blue-700"
+            className="h-11 rounded-none bg-blue-600 px-6 font-bold text-white hover:bg-blue-700"
             onClick={submitSelection}
             disabled={!selectionChanged || submitting}
           >
