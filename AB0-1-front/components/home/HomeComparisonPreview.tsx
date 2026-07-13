@@ -51,8 +51,8 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
   }, selected[0])?.id;
 
   const gridColsClass = selected.length === 2
-    ? 'grid-cols-[112px_repeat(2,190px)] md:grid-cols-[200px_repeat(2,minmax(0,1fr))]'
-    : 'grid-cols-[112px_repeat(3,190px)] md:grid-cols-[200px_repeat(3,minmax(0,1fr))]';
+    ? 'grid-cols-[76px_repeat(2,118px)] sm:grid-cols-[96px_repeat(2,168px)] md:grid-cols-[200px_repeat(2,minmax(0,1fr))]'
+    : 'grid-cols-[76px_repeat(3,118px)] sm:grid-cols-[96px_repeat(3,168px)] md:grid-cols-[200px_repeat(3,minmax(0,1fr))]';
 
   return (
     <section className="bg-white pb-16 sm:pb-20" aria-labelledby="comparison-preview-title">
@@ -88,55 +88,67 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
           </div>
 
           {/* Grid de Comparação */}
-          <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth">
+          <div className="relative">
+            <div className="pointer-events-none absolute right-0 top-0 z-30 flex h-full w-10 items-center justify-end bg-gradient-to-l from-white via-white/90 to-transparent md:hidden">
+              <div className="mr-1 flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-blue-600 text-white shadow-sm">
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </div>
+            </div>
+            <div className="pointer-events-none absolute right-3 top-3 z-40 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-blue-700 shadow-sm md:hidden">
+              Arraste <ArrowRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
+            </div>
+            <div
+              className="w-full touch-pan-x overflow-x-auto overscroll-x-contain scroll-smooth"
+              aria-label="Comparação de empresas com rolagem horizontal no celular"
+            >
           <div className={`grid min-w-max ${gridColsClass} divide-x divide-slate-200 md:min-w-full`}>
             {/* Coluna 1: critérios sticky em todas as larguras. */}
             <div className="sticky left-0 z-20 flex flex-col bg-slate-50">
               {/* Espaço do Header da Empresa */}
-              <div className="flex h-[170px] flex-col justify-end border-b border-slate-200 p-3 md:h-[174px] md:p-5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:text-xs">Critério</span>
+              <div className="flex h-[158px] flex-col justify-end border-b border-slate-200 p-2 md:h-[174px] md:p-5">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:text-xs">Critério</span>
               </div>
               
               {/* Linhas de Critérios */}
               <div className="flex-1 flex flex-col justify-between">
-                <div className="flex h-[96px] items-center border-b border-slate-200 p-3 md:p-5">
+                <div className="flex h-[92px] items-center border-b border-slate-200 p-2 md:h-[96px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Reputação</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Reputação</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Média de avaliações de clientes</p>
                   </div>
                 </div>
 
-                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
+                <div className="flex h-[76px] items-center border-b border-slate-200 p-2 md:h-[80px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Verificação</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Verificação</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Documentos e dados conferidos</p>
                   </div>
                 </div>
 
-                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
+                <div className="flex h-[76px] items-center border-b border-slate-200 p-2 md:h-[80px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Tempo de resposta</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Tempo de resposta</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Média para primeiro contato</p>
                   </div>
                 </div>
 
-                <div className="flex h-[88px] items-center border-b border-slate-200 p-3 md:p-5">
+                <div className="flex h-[80px] items-center border-b border-slate-200 p-2 md:h-[88px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Cobertura</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Cobertura</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Onde a empresa atua</p>
                   </div>
                 </div>
 
-                <div className="flex h-[80px] items-center border-b border-slate-200 p-3 md:p-5">
+                <div className="flex h-[76px] items-center border-b border-slate-200 p-2 md:h-[80px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Projetos realizados</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Projetos</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Projetos concluídos</p>
                   </div>
                 </div>
 
-                <div className="flex h-[80px] items-center p-3 md:p-5">
+                <div className="flex h-[76px] items-center p-2 md:h-[80px] md:p-5">
                   <div>
-                    <h4 className="text-[11px] font-semibold leading-tight text-slate-900 md:text-sm">Garantia oferecida</h4>
+                    <h4 className="text-[10px] font-semibold leading-tight text-slate-900 md:text-sm">Garantia</h4>
                     <p className="mt-1 hidden text-[10px] text-slate-500 md:block">Tempo de garantia médio</p>
                   </div>
                 </div>
@@ -174,16 +186,16 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   )}
 
                   {/* Header do Card (Identificação) */}
-                  <div className="flex h-[170px] flex-col justify-between border-b border-slate-200 p-3 pt-8 md:h-[174px] md:p-5 md:pt-11">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="flex h-[158px] flex-col justify-between border-b border-slate-200 p-2 pt-9 md:h-[174px] md:p-5 md:pt-11">
+                    <div className="flex items-start justify-between gap-1.5 md:gap-4">
                       {/* Logo Container */}
-                      <div className="relative flex h-12 w-20 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+                      <div className="relative flex h-10 w-14 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:h-12 sm:w-20">
                         {logoUrl ? (
                           <Image
                             src={logoUrl}
                             alt={`Logo da ${company.name}`}
                             fill
-                            sizes="80px"
+                          sizes="(max-width: 640px) 56px, 80px"
                             className="object-contain"
                           />
                         ) : (
@@ -193,11 +205,11 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
                       {/* Status Badges */}
                       {company.verified ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700">
+                        <span className="hidden items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700 sm:inline-flex">
                           Verificada
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-700">
+                        <span className="hidden items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-700 sm:inline-flex">
                           Em análise
                         </span>
                       )}
@@ -205,10 +217,10 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
                     <div className="mt-2">
                       <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
-                        <h3 className="line-clamp-2 text-xs font-semibold leading-snug tracking-tight text-slate-900 md:text-base">{company.name}</h3>
+                        <h3 className="line-clamp-2 text-[10px] font-semibold leading-snug tracking-tight text-slate-900 sm:text-xs md:text-base">{company.name}</h3>
                       </Link>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="flex text-amber-400">
+                      <div className="mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                        <div className="hidden text-amber-400 sm:flex">
                           {[1, 2, 3, 4, 5].map((i) => {
                             const filled = i <= Math.round(rating);
                             return (
@@ -219,9 +231,9 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                             );
                           })}
                         </div>
-                        <span className="text-[11px] font-bold text-slate-700">{rating > 0 ? rating.toFixed(1) : 'Sem nota'}</span>
+                        <span className="text-[10px] font-bold text-slate-700 sm:text-[11px]">{rating > 0 ? rating.toFixed(1) : 'Sem nota'}</span>
                         {reviews > 0 && (
-                          <span className="text-[10px] text-slate-500">({reviews} avaliações)</span>
+                          <span className="hidden text-[10px] text-slate-500 sm:inline">({reviews} avaliações)</span>
                         )}
                       </div>
                     </div>
@@ -231,7 +243,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   <div className="flex-grow flex flex-col justify-between text-slate-800">
                     
                     {/* 1. Reputação */}
-                    <div className="flex h-[96px] flex-col justify-center gap-1.5 border-b border-slate-100 p-3 md:p-5">
+                    <div className="flex h-[92px] flex-col justify-center gap-1.5 border-b border-slate-100 p-2 md:h-[96px] md:p-5">
                       {rating > 0 ? (
                         <>
                           <div className="flex items-baseline gap-1">
@@ -245,7 +257,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                               style={{ width: `${(rating / 5) * 100}%` }}
                             />
                           </div>
-                          <span className="text-[10px] text-slate-500 mt-1">Baseada em {reviews} avaliações</span>
+                          <span className="mt-1 hidden text-[10px] text-slate-500 sm:inline">Baseada em {reviews} avaliações</span>
                         </>
                       ) : (
                         <span className="text-xs font-semibold text-slate-500">Ainda sem avaliações</span>
@@ -253,8 +265,8 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 2. Verificação */}
-                    <div className="flex h-[80px] flex-col justify-center border-b border-slate-100 p-3 md:p-5">
-                      <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
+                    <div className="flex h-[76px] flex-col justify-center border-b border-slate-100 p-2 md:h-[80px] md:p-5">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-900 md:text-sm">
                         {company.verified ? (
                           <>
                             <span className="text-emerald-600">Verificada</span>
@@ -266,15 +278,15 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                           </>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-500 mt-1">
+                      <span className="mt-1 hidden text-[10px] text-slate-500 sm:inline">
                         {company.verified ? 'Documentos verificados' : 'Documentos em verificação'}
                       </span>
                     </div>
 
                     {/* 3. Tempo de Resposta */}
-                    <div className="flex h-[80px] flex-col justify-center border-b border-slate-100 p-3 md:p-5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900">{company.response_time_sla || 'Consultar'}</span>
+                    <div className="flex h-[76px] flex-col justify-center border-b border-slate-100 p-2 md:h-[80px] md:p-5">
+                      <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                        <span className="text-xs font-bold text-slate-900 md:text-sm">{company.response_time_sla || 'Consultar'}</span>
                         {speed && (
                           <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${speed.color}`}>
                             {speed.label}
@@ -285,9 +297,9 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 4. Cobertura */}
-                    <div className="flex h-[88px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:p-5">
+                    <div className="flex h-[80px] items-center justify-between gap-2 border-b border-slate-100 p-2 md:h-[88px] md:gap-4 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-sm font-bold text-slate-900 line-clamp-1">
+                        <span className="line-clamp-1 text-xs font-bold text-slate-900 md:text-sm">
                           {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
                         </span>
                         <span className="text-[10px] text-slate-500 mt-1">
@@ -297,33 +309,34 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     </div>
 
                     {/* 5. Projetos Realizados */}
-                    <div className="flex h-[80px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:p-5">
+                    <div className="flex h-[76px] items-center justify-between gap-2 border-b border-slate-100 p-2 md:h-[80px] md:gap-4 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-sm font-bold text-slate-900">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
+                        <span className="text-xs font-bold text-slate-900 md:text-sm">{projects > 0 ? `+${projects}` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Projetos concluídos</span>
                       </div>
                     </div>
 
                     {/* 6. Garantia */}
-                    <div className="flex h-[80px] items-center justify-between gap-4 border-b border-slate-100 p-3 md:border-b-0 md:p-5">
+                    <div className="flex h-[76px] items-center justify-between gap-2 border-b border-slate-100 p-2 md:h-[80px] md:gap-4 md:border-b-0 md:p-5">
                       <div className="flex flex-col justify-center">
-                        <span className="text-sm font-bold text-slate-900">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
+                        <span className="text-xs font-bold text-slate-900 md:text-sm">{warranty > 0 ? `${warranty} anos` : 'Consultar'}</span>
                         <span className="text-[10px] text-slate-500 mt-1">Garantia média</span>
                       </div>
                     </div>
 
                     {/* Botão de Perfil */}
-                    <div className="p-4 flex justify-center items-center">
+                    <div className="flex items-center justify-center p-2 md:p-4">
                       <Button 
                         asChild 
-                        className={`w-full text-xs font-bold rounded-xl h-10 ${
+                        className={`h-9 w-full rounded-xl text-[10px] font-bold sm:text-xs md:h-10 ${
                           isHighlighted 
                             ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm' 
                             : 'border-blue-600 text-blue-600 bg-white hover:bg-blue-50 border'
                         }`}
                       >
                         <Link href={`/companies/${company.slug || company.id}`}>
-                          Ver perfil da empresa
+                          <span className="sm:hidden">Ver perfil</span>
+                          <span className="hidden sm:inline">Ver perfil da empresa</span>
                         </Link>
                       </Button>
                     </div>
@@ -332,6 +345,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                 </div>
               );
             })}
+            </div>
           </div>
           </div>
 
