@@ -35,9 +35,15 @@ export async function generateMetadata({ params }: LocalRankingPageProps): Promi
       ? `Ranking 2026: Confira as melhores empresas de ${category.name} em ${cityName} (${stateName}). Destaque para ${topNames}. Peça orçamentos grátis.`
       : `Confira o ranking das melhores empresas de ${category.name} em ${cityName} (${stateName}). Veja avaliações reais, peça orçamentos e descubra os especialistas da região.`;
     
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
+    const canonicalUrl = `${siteUrl}/melhores-empresas/${category.seo_url || params.category_slug}/${params.state.toLowerCase()}/${params.city.toLowerCase()}`;
+
     return {
       title,
       description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
         title,
         description,
@@ -133,7 +139,15 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
               </span>
             </h1>
             <p className="text-slate-300 max-w-2xl mx-auto md:text-lg">
-              Analisamos <strong>{paginationMeta?.total || companies.length} fornecedores</strong> em {cityName} - {stateName} e criamos um ranking baseado em avaliações reais, qualidade de instalação e atendimento. Compare e escolha com segurança.
+              {companies.length > 0 ? (
+                <>
+                  Analisamos <strong>{paginationMeta?.total || companies.length} fornecedores</strong> em {cityName} - {stateName} e criamos um ranking baseado em avaliações reais, qualidade de instalação e atendimento. Compare e escolha com segurança.
+                </>
+              ) : (
+                <>
+                  Buscando instaladores locais de <strong>{category.name}</strong> em {cityName} - {stateName}? Solicite um orçamento grátis e nossa equipe conectará você com os melhores profissionais certificados que atendem a sua região.
+                </>
+              )}
             </p>
             {companies.length > 0 && (
               <p className="text-sm text-slate-400 max-w-xl mx-auto italic">
@@ -150,6 +164,7 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
             initialCompanies={companies}
             initialBanners={[]}
             paginationMeta={paginationMeta}
+            titleTag="h2"
           />
         </Suspense>
       </div>

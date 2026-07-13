@@ -68,9 +68,9 @@ export default function CompanyIdentityCard({
         {/* Info Content */}
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <h2 className="max-w-full truncate text-xl font-black tracking-tight text-slate-950 md:text-[1.45rem]">
+            <h1 className="max-w-full truncate text-xl font-black tracking-tight text-slate-950 md:text-[1.45rem]">
               {company.name}
-            </h2>
+            </h1>
             <CompanyVerificationBadge company={company} />
             <PremiumHighlightBadge company={company} />
           </div>

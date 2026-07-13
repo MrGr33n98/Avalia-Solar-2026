@@ -35,12 +35,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (res.ok) {
       const json = await res.json();
       const data = json.data || json;
-      blogRoutes = data.map((post: any) => ({
-        url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: post.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }));
+      
+      // Valida cada post individualmente para garantir que o endpoint de detalhe de fato responde OK (evita 404s no sitemap)
+      const validPosts = await Promise.all(
+        data.map(async (post: any) => {
+          try {
+            const detailRes = await fetch(buildApiUrl(`articles/${post.slug}`), { method: 'GET' });
+            if (detailRes.ok) {
+              return post;
+            }
+          } catch (e) {
+            // Ignora erro
+          }
+          return null;
+        })
+      );
+
+      blogRoutes = validPosts
+        .filter(Boolean)
+        .map((post: any) => ({
+          url: `${baseUrl}/blog/${post.slug}`,
+          lastModified: post.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }));
     }
   } catch (error) {
     console.error('Failed to generate blog sitemap:', error);

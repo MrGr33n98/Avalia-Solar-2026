@@ -49,6 +49,7 @@ interface CategoryClientProps {
     total_pages?: number;
     next_page?: number | null;
   } | null;
+  titleTag?: 'h1' | 'h2' | 'div';
 }
 // ==============================
 // Icon helper
@@ -335,10 +336,12 @@ function CategoryHeader({
   category,
   companiesCount,
   onQuoteClick,
+  titleTag = 'h1',
 }: {
   category: Category;
   companiesCount?: number;
   onQuoteClick: () => void;
+  titleTag?: 'h1' | 'h2' | 'div';
 }) {
   const [imageError, setImageError] = useState(false);
 
@@ -409,9 +412,19 @@ function CategoryHeader({
             </div>
 
             {/* Título Reduzido: text-2xl a text-3xl (antes era até 5xl) */}
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2 drop-shadow-lg">
-              {category.name}
-            </h1>
+            {titleTag === 'h2' ? (
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2 drop-shadow-lg">
+                {category.name}
+              </h2>
+            ) : titleTag === 'div' ? (
+              <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2 drop-shadow-lg">
+                {category.name}
+              </div>
+            ) : (
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight mb-2 drop-shadow-lg">
+                {category.name}
+              </h1>
+            )}
 
             {/* Descrição: Limitada a 1 linha e oculta em mobile muito pequeno */}
             <p className="hidden sm:block text-xs text-gray-300/90 leading-relaxed max-w-xl mb-1 line-clamp-1 drop-shadow-md">
@@ -506,6 +519,7 @@ export default function CategoryClientComponent({
   initialCompanies,
   initialBanners = [],
   paginationMeta,
+  titleTag = 'h1',
 }: CategoryClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -757,6 +771,7 @@ export default function CategoryClientComponent({
             category={category}
             companiesCount={companies.length}
             onQuoteClick={() => openQuoteWizard({ source: 'category-page-mobile' })}
+            titleTag={titleTag}
           />
 
           {banners.length > 0 && (
@@ -834,16 +849,24 @@ export default function CategoryClientComponent({
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-12 text-center bg-white rounded-xl border border-dashed border-gray-200"
+                  className="py-16 px-4 text-center bg-white rounded-2xl border border-slate-100 shadow-[0_10px_30px_rgba(15,23,42,0.04)] my-6 space-y-6"
                 >
-                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-900">Sem resultados</p>
+                  <div className="mx-auto w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                    <Zap className="h-6 w-6 fill-current" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                      {filters.city ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!` : 'Seja o primeiro a solicitar orçamentos!'}
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      Ainda não temos instaladores de {category.name} avaliados em {filters.city || 'sua região'}, mas temos parceiros certificados que atendem em todo o estado de {filters.state || 'sua região'}.
+                    </p>
+                  </div>
                   <Button
-                    onClick={() => handleFilterChange('clearAll', null)}
-                    variant="link"
-                    className="text-xs text-primary h-auto p-0 mt-1"
+                    onClick={() => openQuoteWizard({ source: 'category-page-empty-mobile' })}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold h-11 rounded-lg shadow-lg shadow-emerald-500/20"
                   >
-                    Limpar filtros
+                    Solicitar Orçamento Grátis
                   </Button>
                 </motion.div>
               )}
@@ -884,6 +907,7 @@ export default function CategoryClientComponent({
             category={category}
             companiesCount={companies.length}
             onQuoteClick={() => openQuoteWizard({ source: 'category-page-desktop' })}
+            titleTag={titleTag}
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -981,15 +1005,25 @@ export default function CategoryClientComponent({
                       key="empty"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200"
+                      className="py-20 px-8 text-center bg-white rounded-3xl border border-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.04)] max-w-xl mx-auto my-12 space-y-6"
                     >
-                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
-                        <Search className="h-8 w-8 text-gray-400" />
+                      <div className="mx-auto w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                        <Zap className="h-8 w-8 fill-current" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Nenhuma empresa encontrada</h3>
-                      <p className="text-base text-gray-600 max-w-md mx-auto mb-6">Tente ajustar seus filtros para encontrar o que procura.</p>
-                      <Button onClick={() => handleFilterChange('clearAll', null)} className="h-11 px-8">
-                        Limpar Todos os Filtros
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-slate-900">
+                          {filters.city ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!` : 'Seja o primeiro a solicitar orçamentos!'}
+                        </h3>
+                        <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                          Ainda não temos instaladores de {category.name} avaliados em {filters.city || 'sua região'}, mas temos parceiros certificados que atendem em todo o estado de {filters.state || 'sua região'}.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => openQuoteWizard({ source: 'category-page-empty-desktop' })}
+                        size="lg"
+                        className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-10 h-13 rounded-xl shadow-lg shadow-emerald-500/20"
+                      >
+                        Solicitar Orçamento Grátis
                       </Button>
                     </motion.div>
                   )}
