@@ -242,14 +242,21 @@
       background-repeat: no-repeat;
       background-attachment: fixed;
     }
-    /* Sobreposição para manter legibilidade do conteúdo */
+    /* Sobreposição para manter legibilidade do conteúdo (realce de 45% no background) */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
       z-index: -1;
-      background-color: hsl(var(--background) / 0.75);
+      background-color: hsl(var(--background) / 0.45);
       pointer-events: none;
+    }
+    /* Torna o main e seções principais transparentes no mobile para revelar o background */
+    main,
+    main > section,
+    main > div,
+    .bg-background {
+      background-color: transparent !important;
     }
   }
 
