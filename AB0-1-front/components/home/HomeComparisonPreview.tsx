@@ -56,7 +56,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
   return (
     <section className="bg-white pb-16 sm:pb-20" aria-labelledby="comparison-preview-title">
-      <div className="mx-auto max-w-7xl px-[0.5cm] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-[1cm] sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
           {/* Header do Box */}
           <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:p-6">
@@ -89,18 +89,15 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
           {/* Grid de Comparação */}
           <div className="relative">
-            <div className="pointer-events-none absolute right-1 top-1 z-40 rounded-full border border-blue-200 bg-white px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-blue-700 shadow-sm md:hidden">
-              <ArrowRight className="inline h-2.5 w-2.5" aria-hidden="true" />
-            </div>
             <div
-              className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth"
+              className="w-full touch-auto overflow-visible scroll-smooth md:overflow-x-auto md:overscroll-x-contain"
               aria-label="Comparação de empresas com rolagem horizontal no celular"
             >
           <div className={`grid w-full min-w-0 ${gridColsClass} divide-x divide-slate-200 md:min-w-full`}>
             {/* Coluna 1: critérios sticky em todas as larguras. */}
             <div className="sticky left-0 z-20 flex flex-col bg-slate-50">
               {/* Espaço do Header da Empresa */}
-              <div className="flex h-[136px] flex-col justify-end border-b border-slate-200 p-1 md:h-[174px] md:p-5">
+              <div className="flex h-[112px] flex-col justify-end border-b border-slate-200 p-1 md:h-[174px] md:p-5">
                 <span className="text-[7px] font-semibold uppercase tracking-[0.04em] text-slate-500 sm:text-[8px] md:text-xs">
                   <span>Critério</span>
                 </span>
@@ -186,22 +183,22 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                 >
                   {/* Ribbon Destaque */}
                   {isHighlighted && (
-                    <div className="absolute left-1/2 top-1.5 z-10 flex max-w-[76px] -translate-x-1/2 items-center justify-center gap-0.5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[7px] font-black uppercase leading-[0.9] tracking-[0.04em] text-white shadow-sm sm:max-w-none sm:px-3 sm:py-1 sm:text-[9px] md:top-3.5">
-                      <Sparkles className="h-2 w-2 shrink-0 fill-amber-300 text-amber-300 sm:h-2.5 sm:w-2.5" /> Melhor avaliada
+                    <div className="absolute left-1/2 top-1 z-10 flex max-w-[62px] -translate-x-1/2 items-center justify-center gap-0.5 rounded-full bg-blue-600 px-1 py-0.5 text-center text-[6px] font-black uppercase leading-[0.85] tracking-[0.02em] text-white shadow-sm sm:max-w-none sm:px-3 sm:py-1 sm:text-[9px] md:top-3.5">
+                      <Sparkles className="h-1.5 w-1.5 shrink-0 fill-amber-300 text-amber-300 sm:h-2.5 sm:w-2.5" /> Melhor avaliada
                     </div>
                   )}
 
                   {/* Header do Card (Identificação) */}
-                  <div className="flex h-[136px] flex-col justify-between border-b border-slate-200 p-1.5 pt-6 md:h-[174px] md:p-5 md:pt-11">
+                  <div className="flex h-[112px] flex-col justify-start border-b border-slate-200 p-1.5 pt-4 md:h-[174px] md:justify-between md:p-5 md:pt-11">
                     <div className="flex items-start justify-between gap-1 md:gap-4">
                       {/* Logo Container */}
-                      <div className="relative flex h-8 w-10 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm sm:h-12 sm:w-20">
+                      <div className="relative flex h-7 w-9 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm sm:h-12 sm:w-20">
                         {logoUrl ? (
                           <Image
                             src={logoUrl}
                             alt={`Logo da ${company.name}`}
                             fill
-                            sizes="(max-width: 640px) 40px, 80px"
+                            sizes="(max-width: 640px) 36px, 80px"
                             className="object-contain"
                           />
                         ) : (
@@ -221,7 +218,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                       )}
                     </div>
 
-                    <div className="mt-2">
+                    <div className="mt-1 md:mt-2">
                       <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
                         <h3 className="line-clamp-3 break-normal text-[7px] font-semibold leading-tight tracking-tight text-slate-900 sm:text-xs md:text-base">{company.name}</h3>
                       </Link>
