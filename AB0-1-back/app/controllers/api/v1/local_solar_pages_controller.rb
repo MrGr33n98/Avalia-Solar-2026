@@ -21,21 +21,36 @@ module Api
         paginated = paginate(filtered_scope)
         set_pagination_headers(paginated)
 
+        sidebar_data = cached_sidebar_payload(state, city, params[:vertical])
+
         render json: {
           location: location_payload(state, city),
           seo: seo_payload(state, city, base_scope.exists?),
-          stats: stats_payload(base_scope),
-          categories: categories_payload(base_scope),
-          project_types: project_types_payload(base_scope),
+          stats: sidebar_data[:stats],
+          categories: sidebar_data[:categories],
+          project_types: sidebar_data[:project_types],
           featured_companies: featured_companies_payload(filtered_scope),
           companies: paginated.map { |company| company_card_payload(company) },
-          nearby_locations: nearby_locations_payload(state, city),
+          nearby_locations: sidebar_data[:nearby_locations],
           filters: filters_payload,
           pagination: pagination_metadata(paginated)
         }, status: :ok
       end
 
       private
+
+      def cached_sidebar_payload(state, city, vertical)
+        cache_key = "local_solar_pages/#{vertical.presence || 'energia-solar'}/#{state}/#{city.presence || 'all'}/sidebar_v1"
+        Rails.cache.fetch(cache_key, expires_in: 12.hours) do
+          base_scope = local_base_scope(state, city)
+          {
+            stats: stats_payload(base_scope),
+            categories: categories_payload(base_scope),
+            project_types: project_types_payload(base_scope),
+            nearby_locations: nearby_locations_payload(state, city)
+          }
+        end
+      end
 
       def resolve_city(state)
         return nil if params[:city].blank?
@@ -317,7 +332,8 @@ module Api
       end
 
       def normalize_project_type(value)
-        I18n.transliterate(value.to_s).downcase.gsub(/[^a-z0-9]+/, ' ').squish
+        safe_value = value.to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+        I18n.transliterate(safe_value).downcase.gsub(/[^a-z0-9]+/, ' ').squish
       end
 
       def state_name(state)

@@ -4,7 +4,6 @@ Allow: /
 # Bloquear areas privadas
 Disallow: /dashboard/
 Disallow: /api/
-Disallow: /_next/
 
 # Sitemap
 Sitemap: https://www.avaliasolar.com.br/sitemap.xml
