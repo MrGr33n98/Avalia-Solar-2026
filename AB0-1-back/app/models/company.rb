@@ -16,7 +16,32 @@ class Company < ApplicationRecord
                ['instalacao', 'integracao', 'montagem']
              ]
 
-  GEOCODING_STATUSES = %w[pending success failed city_fallback].freeze
+GEOCODING_STATUSES = %w[pending success failed city_fallback].freeze
+
+after_commit :expire_local_pages_cache, on: %i[create update destroy]
+
+def expire_local_pages_cache
+  begin
+    relevant_fields = %w[state city status active slug verified deleted_at]
+    has_relevant_changes = previous_changes.keys.any? { |k| relevant_fields.include?(k) } || destroyed?
+    
+    return unless has_relevant_changes
+
+    %w[energia-solar].each do |vertical|
+      Rails.cache.delete("local_solar_pages/#{vertical}/#{state}/#{city}/sidebar_v1") if state.present? && city.present?
+      Rails.cache.delete("local_solar_pages/#{vertical}/#{state}/all/sidebar_v1") if state.present?
+
+      if previous_changes[:state] || previous_changes[:city]
+        old_state = previous_changes[:state]&.first || state
+        old_city = previous_changes[:city]&.first || city
+        Rails.cache.delete("local_solar_pages/#{vertical}/#{old_state}/#{old_city}/sidebar_v1") if old_state.present? && old_city.present?
+        Rails.cache.delete("local_solar_pages/#{vertical}/#{old_state}/all/sidebar_v1") if old_state.present?
+      end
+    end
+  rescue StandardError => e
+    Rails.logger.error("[Company Cache Invalidation] Failed to expire local pages cache: #{e.message}")
+  end
+end
 
   def search_data
     data = {
@@ -120,13 +145,23 @@ class Company < ApplicationRecord
   # =========================
   # Associations
   # =========================
-  has_and_belongs_to_many :categories, join_table: :categories_companies,
-                                       after_add: :update_category_metrics,
-                                       after_remove: :update_category_metrics
+has_and_belongs_to_many :categories, join_table: :categories_companies,
+                                     after_add: [:update_category_metrics, :expire_local_pages_cache_from_category],
+                                     after_remove: [:update_category_metrics, :expire_local_pages_cache_from_category]
 
-  def update_category_metrics(category)
-    category.update_metrics! if category.respond_to?(:update_metrics!)
+def update_category_metrics(category)
+  category.update_metrics! if category.respond_to?(:update_metrics!)
+end
+
+def expire_local_pages_cache_from_category(category)
+  begin
+    Rails.cache.delete("local_solar_pages/#{category.seo_url}/#{state}/#{city}/sidebar_v1") if state.present? && city.present?
+    Rails.cache.delete("local_solar_pages/#{category.seo_url}/#{state}/all/sidebar_v1") if state.present?
+  rescue StandardError => e
+    Rails.logger.error("[Company Cache Invalidation] Failed to expire cache for category #{category.seo_url}: #{e.message}")
   end
+end
+
 
   has_many :reviews, as: :reviewable, dependent: :destroy
   has_many :conversations, dependent: :destroy

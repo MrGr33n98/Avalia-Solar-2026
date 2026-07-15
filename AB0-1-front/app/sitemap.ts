@@ -67,7 +67,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic Categories and Local Rankings
   let categoryRoutes: MetadataRoute.Sitemap = [];
   let companyCategoryRoutes: MetadataRoute.Sitemap = [];
-  let localRankingRoutes: MetadataRoute.Sitemap = [];
   try {
     const res = await fetch(buildApiUrl('categories?per_page=100'), { next: { revalidate: 3600 } });
     if (res.ok) {
@@ -92,21 +91,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: 'weekly' as const,
           priority: 0.75,
         }));
-
-      // Generate local ranking page URLs for each active category and city polo
-      localRankingRoutes = data
-        .filter((cat: any) => Number(cat.companies_count || 0) > 0)
-        .flatMap((cat: any) =>
-          SEO_CITIES.map((city) => ({
-            url: `${baseUrl}/melhores-empresas/${cat.seo_url}/${city.state.toLowerCase()}/${city.slug}`,
-            lastModified: cat.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
-            changeFrequency: 'weekly' as const,
-            priority: 0.7,
-          }))
-        );
     }
   } catch (error) {
-    console.error('Failed to generate categories or local rankings sitemap:', error);
+    console.error('Failed to generate categories sitemap:', error);
+  }
+
+  // Dynamic Local Rankings (Filtered by Rule of 3 Companies)
+  let localRankingRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch(buildApiUrl('sitemaps/local_rankings'), {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(10000), // timeout of 10s
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const data = json.data || [];
+      localRankingRoutes = data.map((item: any) => ({
+        url: `${baseUrl}/melhores-empresas/${item.category_slug}/${item.state}/${item.city_slug}`,
+        lastModified: item.updated_at || STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to generate local rankings sitemap:', error);
   }
 
   // Dynamic Companies
