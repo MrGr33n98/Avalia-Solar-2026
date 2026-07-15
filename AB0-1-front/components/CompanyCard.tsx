@@ -350,7 +350,9 @@ export default function CompanyCard({
         onMouseLeave={onMouseLeave}
       >
         <div className="flex items-start gap-3">
-          <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
+          <div data-testid="company-logo">
+            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
+          </div>
           <div className="min-w-0 flex-1">
             <h4 className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
               {name}
@@ -417,13 +419,14 @@ export default function CompanyCard({
             src={COMPANY_BANNER_FALLBACK_SRC}
             alt=""
             fill
+            data-testid="company-banner"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             unoptimized
           />
         </div>
 
         <div className="relative px-5 pb-5 pt-10 flex-1 flex flex-col">
-          <div className="absolute -top-6 left-5 z-20">
+          <div className="absolute -top-6 left-5 z-20" data-testid="company-logo">
             <CompanyLogo logoUrl={company.logo_url} name={name} size="md" className="border-2 border-white shadow-md bg-white" />
           </div>
 
@@ -526,12 +529,14 @@ export default function CompanyCard({
 
         {/* Esquerda: Logo + Identidade */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <CompanyLogo
-            logoUrl={company.logo_url}
-            name={name}
-            size="sm"
-            className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-xl"
-          />
+          <div data-testid="company-logo" className="shrink-0">
+            <CompanyLogo
+              logoUrl={company.logo_url}
+              name={name}
+              size="sm"
+              className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-xl"
+            />
+          </div>
           <div className="min-w-0 space-y-0.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <h3 className="text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1 truncate">

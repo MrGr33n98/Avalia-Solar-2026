@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import CategoryPageClientV2 from './CategoryPageClientV2';
 import { Banner } from '@/lib/api';
 import { publicBannersApi, publicCategoriesApi } from '@/lib/api-public';
+import AnswerBlock from '@/components/seo/AnswerBlock';
 import FAQSection from '@/components/seo/FAQSection';
 
 import { AlertCircle } from 'lucide-react';
@@ -243,6 +244,22 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
             paginationMeta={paginationMeta}
           />
         </Suspense>
+
+        <section className="bg-white py-10">
+          <div className="container mx-auto max-w-5xl px-4 md:px-6">
+            <AnswerBlock
+              question={`Como escolher empresas de ${category.name}?`}
+              answer={`Para escolher empresas de ${category.name}, compare reputacao, cidade atendida, categorias de projeto, documentacao, tempo de resposta e historico de avaliacoes. O Avalia Solar organiza esses sinais para reduzir pesquisa manual e ajudar o usuario a separar fornecedores verificados, especialistas locais e opcoes que realmente atendem ao tipo de projeto buscado.`}
+              facts={[
+                `${companies.length} empresas nesta listagem`,
+                `${category.name}`,
+                'Comparacao por reputacao',
+              ]}
+              href="/help"
+              linkLabel="Entenda como comparar empresas"
+            />
+          </div>
+        </section>
 
         {/* FAQ Section específica da Categoria */}
         <section className="bg-slate-50 border-t border-slate-200/60 py-16 md:py-24">

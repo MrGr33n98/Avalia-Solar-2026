@@ -240,7 +240,7 @@ export function track<K extends AnalyticsEventName>(
       'page_view', 'search_submitted', 'search_results_loaded', 'search_error',
       'search_performance', 'search_no_results', 'whatsapp_click', 'company_card_click', 'wizard_started',
       'wizard_step_completed', 'wizard_success', 'blog_cta_click', 'blog_conversion',
-      'web_vitals', 'cta_click', 'cta_clicked', 'banner_view', 'banner_click',
+      'web_vital', 'web_vitals', 'cta_click', 'cta_clicked', 'banner_view', 'banner_click',
       'comparison_add', 'comparison_remove', 'filter_applied', 'quick_filter_click'
     ];
     if (!knownEvents.includes(eventName as string)) {

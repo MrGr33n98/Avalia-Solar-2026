@@ -43,6 +43,14 @@ AB0-1-front/.next/
 # Source archives are local-only; production uses the extracted public assets.
 AB0-1-front/public/assets/**/*.zip
 
-docs/assets/
-
 AB0-1-front/public/**/*.zip
+
+# Ignorar testes e especificações
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/spec/
+
+# Ignorar documentações de desenvolvimento
+docs/
+

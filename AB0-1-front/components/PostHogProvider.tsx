@@ -3,15 +3,24 @@
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useReportWebVitals } from 'next/web-vitals';
 import { useEffect, useRef, Suspense } from 'react';
 import * as Sentry from '@sentry/nextjs';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
+import { getPageTemplateInfo } from '@/lib/analytics/page-template';
 import { sanitizeAnalyticsProperties } from '@/lib/analytics/sanitize';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+type NetworkInformationLike = {
+  saveData?: boolean;
+  effectiveType?: string;
+};
+
+type NavigatorWithConnection = Navigator & {
+  connection?: NetworkInformationLike;
+};
 
 declare global {
   interface Window {
@@ -39,28 +48,6 @@ function exposeAnalyticsBridge() {
   };
 }
 
-function WebVitals() {
-  useReportWebVitals((metric) => {
-    if (!posthog.__loaded) return;
-
-    // PostHog standard names: LCP, FID (first_input_delay), CLS, FCP, TTFB, INP
-    const cleanName = metric.name === 'FID' ? 'first_input_delay' : metric.name;
-
-    posthog.capture('web_vitals', {
-      category: metric.label === 'web-vital' ? 'Web Vitals' : 'Next.js custom metric',
-      event_label: cleanName,
-      event_value: metric.value,
-      initial_value: metric.value,
-      metric_id: metric.id,
-      metric_name: cleanName,
-      metric_value: metric.value,
-      page_path: window.location.pathname,
-    });
-  });
-
-  return null;
-}
-
 /**
  * Mapeia o pathname do Next.js para um tipo de pagina amigavel para analytics.
  */
@@ -74,6 +61,16 @@ function getPageType(pathname: string): string {
   if (pathname === '/login' || pathname === '/signup') return 'auth';
   if (pathname.startsWith('/checkout') || pathname.startsWith('/quote')) return 'conversion';
   return 'other';
+}
+
+function getPageAnalyticsProperties(pathname: string) {
+  const template = getPageTemplateInfo(pathname);
+
+  return {
+    page_type: getPageType(pathname),
+    page_template: template.template,
+    normalized_path: template.normalizedPath,
+  };
 }
 
 /**
@@ -99,7 +96,7 @@ function PostHogPageView() {
 
     posthog.capture('$pageview', { 
       $current_url: url,
-      page_type: getPageType(pathname)
+      ...getPageAnalyticsProperties(pathname),
     });
 
     if (process.env.NODE_ENV === 'development') {
@@ -140,7 +137,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     // Evita carregar posthog-recorder.js (62 KiB) e dead-clicks-autocapture.js (5 KiB)
     // no critical path — esses scripts causam 195ms+ de long task bloqueando a thread.
     const isMobile = window.innerWidth < 768;
-    const navConn = (navigator as any).connection;
+    const navConn = (navigator as NavigatorWithConnection).connection;
     const isSaveData = navConn?.saveData === true;
     const isSlowConn = ['slow-2g', '2g', '3g'].includes(navConn?.effectiveType ?? '');
     const shouldEnableRecording = hasConsent && !isMobile && !isSaveData && !isSlowConn;
@@ -176,7 +173,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         if (hasConsent) {
           ph.capture('$pageview', {
             $current_url: window.location.origin + window.location.pathname,
-            page_type: getPageType(window.location.pathname)
+            ...getPageAnalyticsProperties(window.location.pathname),
           });
         }
 
@@ -201,7 +198,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
         posthog.capture('$pageview', { 
           $current_url: window.location.origin + window.location.pathname,
-          page_type: getPageType(window.location.pathname)
+          ...getPageAnalyticsProperties(window.location.pathname),
         });
 
         if (process.env.NODE_ENV === 'development') {
@@ -228,7 +225,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       {/* Suspense necessário para useSearchParams no Next.js 14 App Router */}
       <Suspense fallback={null}>
         <PostHogPageView />
-        <WebVitals />
       </Suspense>
       {children}
     </PHProvider>

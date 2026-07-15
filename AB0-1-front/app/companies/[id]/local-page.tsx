@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 
 import BannerByLocation from '@/components/BannerByLocation';
-import CompanyCard from '@/components/CompanyCard';
+import PublicCompanyCard from '@/components/company/PublicCompanyCard';
+import AnswerBlock from '@/components/seo/AnswerBlock';
 import { type Company, type LocalSolarPageResponse } from '@/lib/api-client';
 import { publicLocalSolarPagesApi } from '@/lib/api-public';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
@@ -454,11 +455,10 @@ function CompanyGrid({ companies }: { companies: Company[] }) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
       {companies.map((company, index) => (
-        <CompanyCard
+        <PublicCompanyCard
           key={company.id}
           company={company}
           rank={index + 1}
-          schemaEnabled={false}
         />
       ))}
     </div>
@@ -619,6 +619,19 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
             </div>
 
             {(safeData.project_types || []).length > 0 && <CategoryCarousel data={safeData} searchParams={input.searchParams} />}
+
+            <AnswerBlock
+              tone="emerald"
+              question={`Quanto custa contratar ${verticalNameFor(input.vertical)} em ${locality}?`}
+              answer={`O custo de ${verticalNameFor(input.vertical)} em ${locality} depende do consumo, tipo de imovel, distancia de atendimento, equipamentos, complexidade da instalacao e garantias oferecidas. Use a listagem para comparar empresas locais, verificar reputacao, filtrar categorias e solicitar propostas equivalentes antes de decidir.`}
+              facts={[
+                `${safeData.stats.total_companies} empresas encontradas`,
+                `${safeData.stats.verified_companies} verificadas`,
+                `${safeData.stats.featured_companies} destaques`,
+              ]}
+              href="/help"
+              linkLabel="Ver criterios para comparar propostas"
+            />
 
             <BannerByLocation
               location="companies_top"

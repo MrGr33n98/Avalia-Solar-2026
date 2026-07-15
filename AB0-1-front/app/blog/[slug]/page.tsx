@@ -21,6 +21,7 @@ import { PostTOC } from '@/components/blog/PostTOC';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { List } from 'lucide-react';
 import { fixArticleContent } from '@/lib/content-fixer';
+import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
 
 async function getArticle(slug: string): Promise<Article | null> {
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: 'Artigo não encontrado' };
   }
 
-  const ogImage = article.image_url ? getFullImageUrl(article.image_url) : undefined;
+  const ogImage = article.image_url ? toCrawlableImageUrl(getFullImageUrl(article.image_url)) : undefined;
   const authorName = article.author_name || article.author?.name || 'Avalia Solar';
   const articleSlug = article.slug || String(article.id);
   const canonicalUrl = absoluteUrl(`/blog/${articleSlug}`);
@@ -117,9 +118,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const articleSlug = article.slug || String(article.id);
   const authorName = article.author_name || article.author?.name || 'Felipe Morais';
   const author = article.author as (Article['author'] & { avatar_photo_url?: string | null }) | undefined;
-  const authorAvatarUrl = article.author_avatar_url 
+  const authorAvatarUrl = article.author_avatar_url
     ? getFullImageUrl(article.author_avatar_url) 
     : author?.avatar_photo_url ? getFullImageUrl(author.avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
+  const schemaAuthorAvatarUrl = toCrawlableImageUrl(authorAvatarUrl) || absoluteUrl('/images/felipe-ceo-avalia-solar.png');
+  const schemaArticleImage = article.image_url
+    ? toCrawlableImageUrl(getFullImageUrl(article.image_url))
+    : undefined;
   const authorBio = article.author_bio || article.author?.bio || undefined;
   const categoryName = article.category?.name;
   
@@ -128,13 +133,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     '@type': 'BlogPosting',
     headline: article.title,
     description: article.seo_description || article.meta_description || article.excerpt,
-    image: article.image_url ? [getFullImageUrl(article.image_url)] : [],
+    image: schemaArticleImage ? [schemaArticleImage] : [],
     datePublished: article.published_at,
     dateModified: article.updated_at || article.published_at,
     author: {
       '@type': 'Person',
       name: authorName,
-      image: authorAvatarUrl
+      image: schemaAuthorAvatarUrl
     },
     publisher: {
       '@type': 'Organization',

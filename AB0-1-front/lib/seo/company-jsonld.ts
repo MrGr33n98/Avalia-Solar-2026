@@ -1,4 +1,5 @@
 import type { Company, Review } from '@/lib/api';
+import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { absoluteUrl, SITE } from '@/lib/site';
 
 type ReviewJsonLdSource = Pick<Review, 'created_at' | 'comment' | 'body' | 'rating'> & {
@@ -132,8 +133,8 @@ export function buildCompanyLocalBusinessJsonLd({
     description: cleanString(company.description),
     url: canonicalUrl,
     telephone: cleanString(company.phone),
-    logo: normalizeUrl(company.logo_url),
-    image: normalizeUrl(company.banner_url) || normalizeUrl(company.logo_url),
+    logo: toCrawlableImageUrl(company.logo_url),
+    image: toCrawlableImageUrl(company.banner_url) || toCrawlableImageUrl(company.logo_url),
     priceRange: '$$',
     address,
     geo,

@@ -7,6 +7,9 @@ type WebVitalPayload = {
   id?: string;
   navigationType?: string;
   url?: string;
+  pageTemplate?: string;
+  normalizedPath?: string;
+  deviceClass?: string;
   timestamp?: number;
 };
 
@@ -37,6 +40,9 @@ export async function POST(request: Request) {
           metric_id: payload.id ?? null,
           navigation_type: payload.navigationType ?? null,
           page_url: payload.url ?? null,
+          page_template: payload.pageTemplate ?? null,
+          normalized_path: payload.normalizedPath ?? null,
+          device_class: payload.deviceClass ?? null,
           timestamp: payload.timestamp ?? Date.now(),
         },
       }),

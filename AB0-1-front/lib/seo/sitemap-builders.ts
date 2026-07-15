@@ -7,6 +7,8 @@ import {
 } from '@/lib/locations/local-page-slugs';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
 import { isLocalPageIndexable } from '@/lib/seo/local-page-quality';
+import { CAPITAL_COVERAGE_REPORT } from '@/lib/seo/sector-reports';
+import { TRUST_PAGES } from '@/lib/seo/trust-pages';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED, absoluteUrl } from '@/lib/site';
 
 export const SITEMAP_SECTIONS = [
@@ -64,6 +66,12 @@ export function getStaticSitemapEntries(): MetadataRoute.Sitemap {
     { route: '/about', priority: 0.65, changeFrequency: 'monthly' as const },
     { route: '/contact', priority: 0.7, changeFrequency: 'monthly' as const },
     { route: '/help', priority: 0.65, changeFrequency: 'monthly' as const },
+    ...Object.values(TRUST_PAGES).map((page) => ({
+      route: `/${page.slug}`,
+      priority: 0.65,
+      changeFrequency: 'monthly' as const,
+    })),
+    { route: CAPITAL_COVERAGE_REPORT.path, priority: 0.6, changeFrequency: 'monthly' as const },
     { route: '/press', priority: 0.55, changeFrequency: 'monthly' as const },
     { route: '/careers', priority: 0.55, changeFrequency: 'monthly' as const },
     { route: '/privacy', priority: 0.45, changeFrequency: 'yearly' as const },

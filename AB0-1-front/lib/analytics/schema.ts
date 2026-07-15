@@ -91,8 +91,24 @@ export interface EventPayloadMap {
     metric_name: 'LCP' | 'FID' | 'CLS' | 'TTFB' | 'FCP' | 'INP';
     metric_value: number;
     metric_rating: 'good' | 'needs-improvement' | 'poor';
+    page_template?: string;
+    page_path?: string;
+    normalized_path?: string;
+    device_class?: 'mobile' | 'tablet' | 'desktop' | 'unknown';
     is_slow_session?: boolean;
     [key: string]: any;
+  };
+  web_vital: {
+    metric_name: 'LCP' | 'FID' | 'CLS' | 'TTFB' | 'FCP' | 'INP';
+    metric_value: number;
+    metric_rating: 'good' | 'needs-improvement' | 'poor';
+    metric_id?: string;
+    navigation_type?: string;
+    page_template?: string;
+    page_path?: string;
+    normalized_path?: string;
+    device_class?: 'mobile' | 'tablet' | 'desktop' | 'unknown';
+    [key: string]: unknown;
   };
 
   // --- Interações Genéricas ---

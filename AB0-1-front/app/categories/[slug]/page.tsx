@@ -22,7 +22,7 @@ async function BreadcrumbsWrapper({ slug }: { slug: string }) {
     return (
       <BreadcrumbSchema
         items={[
-          { name: 'Home', item: '/' },
+          { name: 'Início', item: '/' },
           { name: 'Categorias', item: '/categories' },
           { name: category.name, item: `/categories/${category.slug}` }
         ]}

@@ -8,7 +8,6 @@ import { cookies } from 'next/headers';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import FAQSection from '@/components/seo/FAQSection';
 import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
-import CompanyCard from '@/components/CompanyCard';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import HowItWorks from '@/components/landing/HowItWorks';
@@ -16,6 +15,7 @@ import DecisionTransparency from '@/components/landing/DecisionTransparency';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingHero from '@/components/landing/LandingHero';
 import SavingsCalculator from '@/components/landing/SavingsCalculator';
+import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -132,7 +132,7 @@ async function getCompaniesData(): Promise<{ companies: Company[] }> {
     featured: true,
     limit: 12,
     include:
-      'logo_url,banner_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,trust_score,active_admin,description,delivered_projects_score,warranty_years',
+      'logo_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
   });
 
   return { companies: Array.isArray(companies) ? companies : [] };
@@ -397,7 +397,7 @@ async function CompaniesSectionWrapper({
       {companies.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {companies.slice(0, 8).map((company) => (
-            <CompanyCard key={company.id} company={company} variant="standard" />
+            <PublicCompanyCard key={company.id} company={company} />
           ))}
         </div>
       ) : (

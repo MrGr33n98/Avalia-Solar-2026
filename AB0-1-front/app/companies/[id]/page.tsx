@@ -6,6 +6,7 @@ import { publicCompaniesApi, publicReviewsApi } from '@/lib/api-public';
 import { buildCompanyLocalBusinessJsonLd } from '@/lib/seo/company-jsonld';
 import { buildCompanyPath } from '@/lib/slug';
 import { absoluteUrl } from '@/lib/site';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
 interface Props {
   params: { id: string }; // slug da empresa
@@ -107,6 +108,13 @@ export default async function CompanyDetailPage({ params }: Props) {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: 'Início', item: '/' },
+          { name: 'Empresas', item: '/companies' },
+          { name: company.name, item: canonicalPath },
+        ]}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Suspense fallback={
         <div className="min-h-screen bg-slate-50">

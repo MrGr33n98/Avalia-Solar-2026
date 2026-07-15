@@ -3,6 +3,8 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchCategoryBySlug, categoriesApi } from '@/lib/api';
 import CategoryClientComponent from '@/app/categories/[slug]/CategoryClientComponent';
+import { absoluteUrl } from '@/lib/site';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
 interface LocalRankingPageProps {
   params: { category_slug: string; state: string; city: string };
@@ -35,8 +37,7 @@ export async function generateMetadata({ params }: LocalRankingPageProps): Promi
       ? `Ranking 2026: Confira as melhores empresas de ${category.name} em ${cityName} (${stateName}). Destaque para ${topNames}. Peça orçamentos grátis.`
       : `Confira o ranking das melhores empresas de ${category.name} em ${cityName} (${stateName}). Veja avaliações reais, peça orçamentos e descubra os especialistas da região.`;
     
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
-    const canonicalUrl = `${siteUrl}/melhores-empresas/${category.seo_url || params.category_slug}/${params.state.toLowerCase()}/${params.city.toLowerCase()}`;
+    const canonicalUrl = absoluteUrl(`/melhores-empresas/${category.seo_url || params.category_slug}/${params.state.toLowerCase()}/${params.city.toLowerCase()}`);
 
     const totalCount = companiesResponse?.meta?.total_count || companiesResponse?.companies?.length || 0;
 
@@ -130,6 +131,14 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
 
     return (
       <div className="relative">
+        <BreadcrumbSchema
+          items={[
+            { name: 'Início', item: '/' },
+            { name: 'Empresas', item: '/companies' },
+            { name: category.name, item: `/companies/${category.seo_url || params.category_slug}` },
+            { name: `${cityName}/${stateName}`, item: `/melhores-empresas/${category.seo_url || params.category_slug}/${params.state.toLowerCase()}/${params.city.toLowerCase()}` },
+          ]}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

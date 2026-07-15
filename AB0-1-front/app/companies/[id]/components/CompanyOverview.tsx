@@ -2,6 +2,7 @@ import Image from 'next/image';
 import type { ComponentType } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import AnswerBlock from '@/components/seo/AnswerBlock';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company, Review } from '@/lib/api';
 import {
@@ -32,24 +33,41 @@ interface CompanyOverviewProps {
   showCompetitorBanners?: boolean;
 }
 
+type CompanyOverviewSource = Company & {
+  average_rating?: number | string | null;
+  total_reviews?: number | string | null;
+  reviews_count?: number | string | null;
+};
+
+type ReviewOverviewSource = Review & {
+  comment?: string | null;
+  body?: string | null;
+  user?: {
+    name?: string | null;
+    avatar_url?: string | null;
+  } | null;
+};
+
 export default function CompanyOverview({
   company,
   reviews = [],
   reviewsLoading = false,
   showCompetitorBanners = true,
 }: CompanyOverviewProps) {
+  const overviewCompany = company as CompanyOverviewSource;
   const averageRating = Number(
-    (company as any).average_rating ?? (company as any).rating_avg ?? (company as any).rating ?? 0
+    overviewCompany.average_rating ?? overviewCompany.rating_avg ?? overviewCompany.rating ?? 0
   );
   const ratingCount = Number(
-    (company as any).rating_count ??
-      (company as any).total_reviews ??
-      (company as any).reviews_count ??
+    overviewCompany.rating_count ??
+      overviewCompany.total_reviews ??
+      overviewCompany.reviews_count ??
       0
   );
   const recentReviews = reviews
     .filter((review) => {
-      const content = String((review as any)?.comment ?? (review as any)?.body ?? '').trim();
+      const reviewSource = review as ReviewOverviewSource;
+      const content = String(reviewSource.comment ?? reviewSource.body ?? '').trim();
       return content.length > 0;
     })
     .slice(0, 2);
@@ -103,6 +121,19 @@ export default function CompanyOverview({
             )}
           </div>
         </section>
+
+        <AnswerBlock
+          tone="slate"
+          question={`O que avaliar antes de contratar ${company.name}?`}
+          answer={`Antes de contratar ${company.name}, confira se a empresa atende sua cidade, quais tipos de projeto declara executar, como estao as avaliacoes publicadas e se existem informacoes de contato, garantias e documentacao suficientes. O perfil no Avalia Solar ajuda a reunir esses sinais em uma unica pagina de comparacao.`}
+          facts={[
+            company.verified ? 'Perfil verificado' : 'Verifique a documentacao',
+            company.city && company.state ? `${company.city}/${company.state}` : 'Localizacao informada',
+            ratingCount > 0 ? `${ratingCount} avaliacoes` : 'Sem avaliacoes publicadas',
+          ]}
+          href="/help"
+          linkLabel="Veja como avaliar uma empresa"
+        />
 
         {/* Sponsored Inline Banner */}
         {showCompetitorBanners && (
@@ -172,8 +203,9 @@ export default function CompanyOverview({
                 ) : recentReviews.length > 0 ? (
                   <div className="space-y-2">
                     {recentReviews.map((review) => {
-                      const authorName = (review as any)?.user?.name || 'Usuário';
-                      const avatarRaw = (review as any)?.user?.avatar_url;
+                      const reviewSource = review as ReviewOverviewSource;
+                      const authorName = reviewSource.user?.name || 'Usuário';
+                      const avatarRaw = reviewSource.user?.avatar_url;
                       const avatarUrl = avatarRaw ? getFullImageUrl(avatarRaw) : null;
                       const criterionScores = Array.isArray(review.review_criterion_scores)
                         ? review.review_criterion_scores
@@ -184,9 +216,7 @@ export default function CompanyOverview({
                         .slice(0, 2)
                         .map((token: string) => token.charAt(0).toUpperCase())
                         .join('');
-                      const content = String(
-                        (review as any)?.comment ?? (review as any)?.body ?? ''
-                      ).trim();
+                      const content = String(reviewSource.comment ?? reviewSource.body ?? '').trim();
                       return (
                         <div
                           key={review.id}

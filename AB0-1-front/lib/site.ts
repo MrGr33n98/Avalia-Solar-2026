@@ -67,6 +67,10 @@ export const FOOTER_COMPANY_LINKS = [
 export const FOOTER_TRUST_LINKS = [
   { href: '/contact', label: 'Contato oficial' },
   { href: '/help', label: 'Central de ajuda' },
+  { href: '/metodologia', label: 'Metodologia' },
+  { href: '/como-funciona-o-ranking', label: 'Como funciona o ranking' },
+  { href: '/empresas-verificadas', label: 'Empresas verificadas' },
+  { href: '/criterios-de-avaliacao', label: 'Critérios de avaliação' },
   { href: '/press', label: 'Sala de imprensa' },
 ] as const;
 

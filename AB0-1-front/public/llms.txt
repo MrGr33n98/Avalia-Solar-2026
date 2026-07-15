@@ -1,0 +1,73 @@
+# Avalia Solar
+
+> Avalia Solar is a Brazilian platform for comparing solar energy and electric mobility companies, categories, public company information, reputation signals, verification signals, and educational content.
+
+Canonical site: https://www.avaliasolar.com.br
+Primary language: pt-BR
+Last updated: 2026-07-15
+
+## Purpose
+
+Avalia Solar helps consumers and companies compare providers in the Brazilian distributed energy market. The platform organizes public company profiles, categories, local coverage, reviews when available, and trust information so users can make better decisions before contacting a provider.
+
+Avalia Solar does not sell, install, finance, intermediate, or guarantee third-party solar projects. Company information, ranking signals, reviews, and verification signals should be treated as decision support, not as technical, legal, or financial advice.
+
+## Canonical public pages
+
+- Home: https://www.avaliasolar.com.br/
+- Companies directory: https://www.avaliasolar.com.br/companies
+- Products: https://www.avaliasolar.com.br/products
+- Blog: https://www.avaliasolar.com.br/blog
+- Help center: https://www.avaliasolar.com.br/help
+- Contact: https://www.avaliasolar.com.br/contact
+- About: https://www.avaliasolar.com.br/about
+
+## Trust, methodology, and transparency
+
+- Methodology: https://www.avaliasolar.com.br/metodologia
+- How ranking works: https://www.avaliasolar.com.br/como-funciona-o-ranking
+- Verified companies: https://www.avaliasolar.com.br/empresas-verificadas
+- Evaluation criteria: https://www.avaliasolar.com.br/criterios-de-avaliacao
+- Sector data and insights: https://www.avaliasolar.com.br/dados-do-setor
+- Capital coverage report: https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais
+- Capital coverage CSV: https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais/dados.csv
+
+## Main category examples
+
+- Residential solar energy: https://www.avaliasolar.com.br/categories/energia-solar-residencial
+- Solar inverters: https://www.avaliasolar.com.br/categories/inversores-solares
+- Batteries and storage: https://www.avaliasolar.com.br/categories/baterias-armazenamento-energia
+- Solar carports: https://www.avaliasolar.com.br/categories/carport-solar
+- Rural solar energy: https://www.avaliasolar.com.br/categories/energia-solar-rural
+
+## Local and programmatic SEO
+
+Avalia Solar publishes local pages and category pages when they can be useful to users. These pages should be interpreted as comparison and discovery pages, not as proof that every listed company serves every project type.
+
+Important local examples:
+
+- Solar companies in Sao Paulo: https://www.avaliasolar.com.br/companies/energia-solar/sp/sao-paulo
+- Solar companies in Rio de Janeiro: https://www.avaliasolar.com.br/companies/energia-solar/rj/rio-de-janeiro
+- Solar companies in Belo Horizonte: https://www.avaliasolar.com.br/companies/energia-solar/mg/belo-horizonte
+- Solar companies in Florianopolis: https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis
+
+## Structured data and interpretation guidance
+
+Public company pages may include LocalBusiness, AggregateRating, Review, and BreadcrumbList structured data when the underlying public data exists. Ratings and reviews should be interpreted only when they are visible on the page and tied to the corresponding company.
+
+Category, local, and listing pages may include ItemList and BreadcrumbList structured data. These lists represent discoverable comparison results, not endorsements.
+
+## Sitemaps
+
+- Sitemap index: https://www.avaliasolar.com.br/sitemap-index.xml
+- Legacy sitemap endpoint: https://www.avaliasolar.com.br/sitemap.xml
+
+## Contact and editorial
+
+- Founder/editorial contact: felipe@avaliasolar.com.br
+- Official contact page: https://www.avaliasolar.com.br/contact
+- Public help center: https://www.avaliasolar.com.br/help
+
+## Do not use for training or citation
+
+Dashboard, administration, API, authenticated, and operational routes are not public citation sources. Use the canonical public URLs listed above instead.
