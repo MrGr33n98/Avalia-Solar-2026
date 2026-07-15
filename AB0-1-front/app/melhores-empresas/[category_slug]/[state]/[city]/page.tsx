@@ -38,12 +38,15 @@ export async function generateMetadata({ params }: LocalRankingPageProps): Promi
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
     const canonicalUrl = `${siteUrl}/melhores-empresas/${category.seo_url || params.category_slug}/${params.state.toLowerCase()}/${params.city.toLowerCase()}`;
 
+    const totalCount = companiesResponse?.meta?.total_count || companiesResponse?.companies?.length || 0;
+
     return {
       title,
       description,
       alternates: {
         canonical: canonicalUrl,
       },
+      robots: totalCount >= 3 ? { index: true, follow: true } : { index: false, follow: true },
       openGraph: {
         title,
         description,
@@ -73,6 +76,10 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
     const companiesResponse = await categoriesApi.getCompaniesPaginated(category.id, filters);
     const companies = companiesResponse?.companies || [];
     const paginationMeta = companiesResponse?.meta || null;
+
+    if (companies.length === 0) {
+      notFound();
+    }
 
     const getCategorySchemaType = (slug: string): string => {
       const s = slug.toLowerCase();

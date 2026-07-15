@@ -168,10 +168,30 @@ export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Pr
     };
   }
 
+  // Se existirem parâmetros de busca (filtros), não indexar para evitar crawl traps
+  const nonIndexableParams = [
+    'category_ids',
+    'project_types',
+    'rating',
+    'verified',
+    'q',
+    'sort',
+    'page',
+    'distance',
+    'radius',
+    'lat',
+    'lng',
+  ];
+  
+  const hasFilters = Object.keys(input.searchParams || {}).some(param => 
+    nonIndexableParams.includes(param)
+  );
+  const isIndexable = data.seo.indexable && !hasFilters;
+
   return {
     title: data.seo.title,
     description: data.seo.description,
-    robots: data.seo.indexable ? undefined : { index: false, follow: true },
+    robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: data.location.canonical_path,
     },
