@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/carousel';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
 import type { LocalSolarPageResponse } from '@/lib/api-client';
+import { LOCAL_PAGE_FILTER_KEYS } from '@/lib/seo/search-params';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -28,12 +29,10 @@ function allParams(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : [value];
 }
 
-const FILTER_KEYS = ['q', 'category_ids', 'project_types', 'featured', 'verified', 'min_rating', 'sort', 'page'] as const;
-
 function buildQuery(searchParams: SearchParams | undefined, overrides: Record<string, string | number | null>) {
   const params = new URLSearchParams();
 
-  FILTER_KEYS.forEach((key) => {
+  LOCAL_PAGE_FILTER_KEYS.forEach((key) => {
     allParams(searchParams?.[key]).forEach((value) => {
       if (value) params.append(key, value);
     });

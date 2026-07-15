@@ -21,6 +21,7 @@ import { PostTOC } from '@/components/blog/PostTOC';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { List } from 'lucide-react';
 import { fixArticleContent } from '@/lib/content-fixer';
+import { SITE, absoluteUrl } from '@/lib/site';
 
 async function getArticle(slug: string): Promise<Article | null> {
   try {
@@ -54,7 +55,7 @@ async function getRelatedArticles(slug: string): Promise<Article[]> {
     });
     if (!res.ok) return [];
     return res.json();
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -69,8 +70,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const ogImage = article.image_url ? getFullImageUrl(article.image_url) : undefined;
   const authorName = article.author_name || article.author?.name || 'Avalia Solar';
   const articleSlug = article.slug || String(article.id);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br';
-  const canonicalUrl = `${siteUrl}/blog/${articleSlug}`;
+  const canonicalUrl = absoluteUrl(`/blog/${articleSlug}`);
   const seoTitle = article.seo_title || article.meta_title || article.title || undefined;
   const seoDescription = article.seo_description || article.meta_description || article.excerpt || undefined;
   const seoKeywords = article.seo_keywords || [
@@ -116,9 +116,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
   const articleSlug = article.slug || String(article.id);
   const authorName = article.author_name || article.author?.name || 'Felipe Morais';
+  const author = article.author as (Article['author'] & { avatar_photo_url?: string | null }) | undefined;
   const authorAvatarUrl = article.author_avatar_url 
     ? getFullImageUrl(article.author_avatar_url) 
-    : (article.author as any)?.avatar_photo_url ? getFullImageUrl((article.author as any).avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
+    : author?.avatar_photo_url ? getFullImageUrl(author.avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
   const authorBio = article.author_bio || article.author?.bio || undefined;
   const categoryName = article.category?.name;
   
@@ -137,15 +138,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Avalia Solar',
+      name: SITE.name,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://avaliasolar.com.br/images/avalia-solar-logo-horizontal.svg'
+        url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg')
       }
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://avaliasolar.com.br/blog/${articleSlug}`
+      '@id': absoluteUrl(`/blog/${articleSlug}`)
     }
   };
 
@@ -170,19 +171,19 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://avaliasolar.com.br'
+        item: SITE.url
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Blog',
-        item: 'https://avaliasolar.com.br/blog'
+        item: absoluteUrl('/blog')
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: article.title,
-        item: `https://avaliasolar.com.br/blog/${articleSlug}`
+        item: absoluteUrl(`/blog/${articleSlug}`)
       }
     ]
   };

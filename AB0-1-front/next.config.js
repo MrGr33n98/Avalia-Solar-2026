@@ -270,6 +270,36 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/quote-wizard',
+        destination: '/companies',
+        permanent: true,
+      },
+      {
+        source: '/categories/energia-solar-rural-agronegocio',
+        destination: '/categories/energia-solar-rural',
+        permanent: true,
+      },
+      {
+        source: '/categories/monitoramento-om',
+        destination: '/categories/monitoramento-operacao-manutencao',
+        permanent: true,
+      },
+      {
+        source: '/categories/baterias-armazenamento-energia',
+        destination: '/categories/baterias-armazenamento',
+        permanent: true,
+      },
+      {
+        source: '/categories/carport-solar-coberturas-solares',
+        destination: '/categories/carport-solar',
+        permanent: true,
+      },
+      {
+        source: '/categories/inversores',
+        destination: '/categories/inversores-solares',
+        permanent: true,
+      },
+      {
         source: '/dashboard/overview',
         destination: '/dashboard',
         permanent: true,

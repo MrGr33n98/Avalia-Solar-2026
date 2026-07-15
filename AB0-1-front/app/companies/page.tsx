@@ -1,26 +1,28 @@
 import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
 import CompaniesPageClient from './CompaniesPageClient';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import {
   buildCompaniesCategoriesPath,
   COMPANIES_PATH,
   normalizeCategoryIds,
   toSearchParams,
 } from '@/lib/seo/companies-category-url';
+import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
 import { getCompaniesCategorySeoIndex, resolveCategoryNamesFromIds } from '@/lib/server/companies-category-seo';
+import { absoluteUrl } from '@/lib/site';
 
 interface CompaniesPageProps {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-const SITE_URL = 'https://www.avaliasolar.com.br';
 const DEFAULT_TITLE = 'Empresas de Energia Solar no Brasil | Avalia Solar';
 const DEFAULT_DESCRIPTION =
   'Encontre empresas de energia solar avaliadas em todo o Brasil. Compare reputacao, servicos e localizacao para contratar com mais seguranca.';
 
 export const revalidate = 300;
 
-function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string): Metadata {
+function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string, noindex = false): Metadata {
   const hasCategories = categoryNames.length > 0;
   const title = hasCategories
     ? `Empresas de ${categoryNames.join(' e ')} | Avalia Solar`
@@ -30,7 +32,7 @@ function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string):
     ? `Compare empresas especialistas em ${categoryNames.join(', ')} com avaliacoes reais, localizacao e canais de contato Premium.`
     : DEFAULT_DESCRIPTION;
 
-  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
+  const canonicalUrl = absoluteUrl(canonicalPath);
 
   return {
     title,
@@ -41,8 +43,9 @@ function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string):
       ...categoryNames,
       'avaliacoes de empresas solares',
     ],
+    robots: noindex ? { index: false, follow: true } : undefined,
     alternates: {
-      canonical: canonicalPath,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
@@ -61,16 +64,19 @@ function buildCompaniesMetadata(categoryNames: string[], canonicalPath: string):
 export async function generateMetadata({ searchParams }: CompaniesPageProps): Promise<Metadata> {
   const params = toSearchParams(searchParams);
   const categoryIds = normalizeCategoryIds(params.get('category_ids'));
+  const noindex = shouldNoindexSearchParams(searchParams, {
+    allowlistedKeys: ['category_ids'],
+  });
 
   if (categoryIds.length === 0) {
-    return buildCompaniesMetadata([], COMPANIES_PATH);
+    return buildCompaniesMetadata([], COMPANIES_PATH, noindex);
   }
 
   const seoIndex = await getCompaniesCategorySeoIndex();
   const categoryNames = resolveCategoryNamesFromIds(categoryIds, seoIndex);
   const canonicalPath = buildCompaniesCategoriesPath(categoryIds, seoIndex.byId);
 
-  return buildCompaniesMetadata(categoryNames, canonicalPath);
+  return buildCompaniesMetadata(categoryNames, canonicalPath, noindex);
 }
 
 export default async function CompaniesPage({ searchParams }: CompaniesPageProps) {
@@ -88,5 +94,15 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
     permanentRedirect(destination);
   }
 
-  return <CompaniesPageClient canonicalPath={COMPANIES_PATH} />;
+  return (
+    <>
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Empresas', item: COMPANIES_PATH },
+        ]}
+      />
+      <CompaniesPageClient canonicalPath={COMPANIES_PATH} />
+    </>
+  );
 }

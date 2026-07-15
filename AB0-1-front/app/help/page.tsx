@@ -1,23 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageViewTracker from '@/components/PageViewTracker';
-import { CONTACT, SITE } from '@/lib/site';
+import { absoluteUrl, CONTACT, SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Central de ajuda | Avalia Solar',
   description:
     'Encontre respostas sobre cadastro, verificação, avaliação de empresas e como falar com a equipe da Avalia Solar.',
   alternates: {
-    canonical: '/help',
+    canonical: absoluteUrl('/help'),
   },
   openGraph: {
     title: 'Central de ajuda | Avalia Solar',
     description:
       'Encontre respostas sobre cadastro, verificação, avaliação de empresas e contato com a equipe.',
-    url: '/help',
+    url: absoluteUrl('/help'),
     images: [SITE.ogImagePath],
   },
   twitter: {
@@ -50,6 +51,12 @@ const helpTopics = [
 export default function HelpPage() {
   return (
     <div className="bg-slate-50">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Central de ajuda', item: '/help' },
+        ]}
+      />
       <PageViewTracker type="other" title="Central de ajuda - Avalia Solar" />
 
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-16 px-4 py-16 sm:px-6 lg:px-8">

@@ -25,10 +25,11 @@ export function generateStaticParams(): StatePageParams[] {
   }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   return generateLocalSolarMetadata({
     vertical: params.id,
     state: params.state,
+    searchParams,
   });
 }
 

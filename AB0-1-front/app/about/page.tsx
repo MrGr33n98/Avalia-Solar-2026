@@ -2,23 +2,24 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageViewTracker from '@/components/PageViewTracker';
-import { CONTACT, SITE } from '@/lib/site';
+import { absoluteUrl, CONTACT, SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Sobre a Avalia Solar',
   description:
     'Somos uma camada de confiança para energia solar: verificamos empresas, organizamos a demanda e conectamos clientes à operação certa.',
   alternates: {
-    canonical: '/about',
+    canonical: absoluteUrl('/about'),
   },
   openGraph: {
     title: 'Sobre a Avalia Solar',
     description:
       'A Avalia Solar é a trust layer da energia solar: verificamos empresas, filtramos ruído e conectamos clientes à operação certa.',
-    url: '/about',
+    url: absoluteUrl('/about'),
     images: [SITE.ogImagePath],
   },
   twitter: {
@@ -77,6 +78,12 @@ const teamMembers = [
 export default function AboutPage() {
   return (
     <div className="bg-gradient-to-b from-slate-50 via-white to-slate-100">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Sobre', item: '/about' },
+        ]}
+      />
       <PageViewTracker type="other" title="Sobre a Avalia Solar" />
 
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-16 px-4 py-16 sm:px-6 lg:px-8">

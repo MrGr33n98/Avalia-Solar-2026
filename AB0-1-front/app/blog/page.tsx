@@ -11,13 +11,13 @@ import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
 import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import { BlogIntentTracker } from '@/components/blog/BlogIntentTracker';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { SITE, absoluteUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Blog Avalia Solar - Dicas e Guias de Energia Solar',
   description: 'Confira os melhores artigos, notícias e guias sobre energia solar fotovoltaica. Economize na conta de luz com conhecimento.',
   alternates: {
-    canonical: 'https://avaliasolar.com.br/blog',
+    canonical: absoluteUrl('/blog'),
   },
 };
 
@@ -46,10 +46,10 @@ export default async function BlogIndexPage({
     description: 'Confira os melhores artigos, notícias e guias sobre energia solar fotovoltaica.',
     publisher: {
       '@type': 'Organization',
-      name: 'Avalia Solar',
+      name: SITE.name,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://avaliasolar.com.br/images/avalia-solar-logo-horizontal.svg'
+        url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg')
       }
     }
   };
@@ -62,13 +62,13 @@ export default async function BlogIndexPage({
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://avaliasolar.com.br'
+        item: SITE.url
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Blog',
-        item: 'https://avaliasolar.com.br/blog'
+        item: absoluteUrl('/blog')
       }
     ]
   };

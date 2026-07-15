@@ -19,12 +19,12 @@ interface CategoryNichesCarouselProps {
 const FALLBACK_NICHES: CategoryNiche[] = [
   { name: 'Energia Solar Residencial', seo_url: 'energia-solar-residencial' },
   { name: 'Energia Solar Comercial e Industrial', seo_url: 'energia-solar-comercial-industrial' },
-  { name: 'Energia Solar Rural / Agronegócio', seo_url: 'energia-solar-rural-agronegocio' },
-  { name: 'Baterias e Armazenamento de Energia', seo_url: 'baterias-armazenamento-energia' },
-  { name: 'Carport Solar / Coberturas Solares', seo_url: 'carport-solar-coberturas-solares' },
+  { name: 'Energia Solar Rural / Agronegócio', seo_url: 'energia-solar-rural' },
+  { name: 'Baterias e Armazenamento de Energia', seo_url: 'baterias-armazenamento' },
+  { name: 'Carport Solar / Coberturas Solares', seo_url: 'carport-solar' },
   { name: 'Painéis Solares', seo_url: 'paineis-solares' },
-  { name: 'Inversores', seo_url: 'inversores' },
-  { name: 'Monitoramento e O&M', seo_url: 'monitoramento-om' },
+  { name: 'Inversores', seo_url: 'inversores-solares' },
+  { name: 'Monitoramento e O&M', seo_url: 'monitoramento-operacao-manutencao' },
   { name: 'Financiamento de Energia Solar', seo_url: 'financiamento-energia-solar' },
   { name: 'Instaladores de Energia Solar', seo_url: 'instaladores-energia-solar' },
 ];

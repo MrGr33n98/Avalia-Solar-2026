@@ -1,11 +1,14 @@
-import { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import React from 'react';
+import Link from 'next/link';
+
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { RegionalDataTracker } from '@/components/seo-lp/RegionalDataTracker';
 import { SeoPageAnalytics } from '@/components/seo-lp/SeoPageAnalytics';
 import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import { track } from '@/lib/analytics/lazy';
-import Link from 'next/link';
+import { fetchApiPublic } from '@/lib/api-public';
+import { absoluteUrl, SITE } from '@/lib/site';
 
 interface SeoPageData {
   slug: string;
@@ -26,23 +29,16 @@ interface SeoPageData {
 }
 
 async function getSeoPage(slug: string): Promise<SeoPageData | null> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-  try {
-    const res = await fetch(`${apiUrl}/api/v1/seo_pages/${slug}`, {
-      next: { revalidate: 3600, tags: ['seo-pages'] }, // ISR: 1 hour
-    });
-
-    if (!res.ok) return null;
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch SEO page:', error);
-    return null;
-  }
+  return fetchApiPublic<SeoPageData, null>(`seo_pages/${encodeURIComponent(slug)}`, {
+    revalidate: 3600,
+    tags: ['seo-pages'],
+    fallback: null,
+    silent: true,
+  });
 }
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
-  parent: ResolvingMetadata
+  { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const data = await getSeoPage(params.slug);
 
@@ -55,11 +51,12 @@ export async function generateMetadata(
     title,
     description,
     alternates: {
-      canonical: `/solucoes/${data.slug}`,
+      canonical: absoluteUrl(`/solucoes/${data.slug}`),
     },
     openGraph: {
       title,
       description,
+      url: absoluteUrl(`/solucoes/${data.slug}`),
       type: 'website',
     },
   };
@@ -72,17 +69,32 @@ export default async function Page({ params }: { params: { slug: string } }) {
     notFound();
   }
 
-  // JSON-LD Structured Data
+  const canonicalPath = `/solucoes/${data.slug}`;
+
+  // Service schema represents the offering/location page without pretending the page is a local company.
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: `Serviços de ${data.category.name} em ${data.city_name}`,
+    '@type': 'Service',
+    '@id': `${absoluteUrl(canonicalPath)}#service`,
+    name: `${data.category.name} em ${data.city_name} - ${data.state_abbr}`,
     description: data.category.description,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: data.city_name,
-      addressRegion: data.state_abbr,
-      addressCountry: 'BR',
+    serviceType: data.category.name,
+    url: absoluteUrl(canonicalPath),
+    provider: {
+      '@type': 'Organization',
+      '@id': `${SITE.url}/#organization`,
+      name: SITE.name,
+      url: SITE.url,
+    },
+    areaServed: {
+      '@type': 'City',
+      name: data.city_name,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: data.city_name,
+        addressRegion: data.state_abbr,
+        addressCountry: 'BR',
+      },
     },
   };
 
@@ -101,6 +113,16 @@ export default async function Page({ params }: { params: { slug: string } }) {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Soluções', item: '/solucoes' },
+          {
+            name: `${data.category.name} em ${data.city_name}`,
+            item: canonicalPath,
+          },
+        ]}
+      />
       <SeoPageAnalytics 
         slug={data.slug} 
         cityName={data.city_name} 

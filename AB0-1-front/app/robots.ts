@@ -1,4 +1,6 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+
+import { SITE } from '@/lib/site';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/dashboard/', '/admin/', '/api/'],
     },
-    sitemap: 'https://www.avaliasolar.com.br/sitemap.xml',
+    sitemap: [`${SITE.url}/sitemap-index.xml`, `${SITE.url}/sitemap.xml`],
   };
 }

@@ -18,12 +18,14 @@ import {
 
 import BannerByLocation from '@/components/BannerByLocation';
 import CompanyCard from '@/components/CompanyCard';
-import {
-  localSolarPagesApi,
-  type Company,
-  type LocalSolarPageResponse,
-} from '@/lib/api-client';
+import { type Company, type LocalSolarPageResponse } from '@/lib/api-client';
+import { publicLocalSolarPagesApi } from '@/lib/api-public';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
+import {
+  LOCAL_PAGE_FILTER_KEYS,
+  shouldNoindexSearchParams,
+} from '@/lib/seo/search-params';
+import { isLocalPageIndexable } from '@/lib/seo/local-page-quality';
 import { SITE, absoluteUrl } from '@/lib/site';
 import { CategoryCarousel } from './CategoryCarousel';
 
@@ -50,8 +52,6 @@ function verticalNameFor(slug: string): string {
       return slug.replace(/-/g, ' ');
   }
 }
-
-const FILTER_KEYS = ['q', 'category_ids', 'project_types', 'featured', 'verified', 'min_rating', 'sort', 'page'] as const;
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -88,7 +88,7 @@ function buildApiFilters(searchParams?: SearchParams) {
 function buildQuery(searchParams: SearchParams | undefined, overrides: Record<string, string | number | null>) {
   const params = new URLSearchParams();
 
-  FILTER_KEYS.forEach((key) => {
+  LOCAL_PAGE_FILTER_KEYS.forEach((key) => {
     allParams(searchParams?.[key]).forEach((value) => {
       if (value) params.append(key, value);
     });
@@ -117,16 +117,16 @@ async function getLocalData(input: LocalSolarPageInput) {
   const filters = buildApiFilters(input.searchParams);
 
   try {
-    return await localSolarPagesApi.get(input.state, input.city, {
+    return await publicLocalSolarPagesApi.get(input.state, input.city, {
       ...filters,
       vertical: input.vertical,
-    });
+    }, { revalidate: 300 });
   } catch (error) {
     console.error('[LocalSolarDirectoryPage] Failed to fetch vertical local page:', error);
 
     if (input.vertical === 'energia-solar') {
       try {
-        return await localSolarPagesApi.get(input.state, input.city, filters);
+        return await publicLocalSolarPagesApi.get(input.state, input.city, filters, { revalidate: 300 });
       } catch (fallbackError) {
         console.error('[LocalSolarDirectoryPage] Failed to fetch default local page fallback:', fallbackError);
       }
@@ -145,16 +145,16 @@ export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Pr
   let data: LocalSolarPageResponse | null = null;
 
   try {
-    data = await localSolarPagesApi.get(input.state, input.city, {
+    data = await publicLocalSolarPagesApi.get(input.state, input.city, {
       ...metadataFilters,
       vertical: input.vertical,
-    });
+    }, { revalidate: 900 });
   } catch (error) {
     console.error('[generateLocalSolarMetadata] Failed to fetch vertical local metadata:', error);
 
     if (input.vertical === 'energia-solar') {
       try {
-        data = await localSolarPagesApi.get(input.state, input.city, metadataFilters);
+        data = await publicLocalSolarPagesApi.get(input.state, input.city, metadataFilters, { revalidate: 900 });
       } catch (fallbackError) {
         console.error('[generateLocalSolarMetadata] Failed to fetch default local metadata fallback:', fallbackError);
       }
@@ -168,32 +168,15 @@ export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Pr
     };
   }
 
-  // Se existirem parâmetros de busca (filtros), não indexar para evitar crawl traps
-  const nonIndexableParams = [
-    'category_ids',
-    'project_types',
-    'rating',
-    'verified',
-    'q',
-    'sort',
-    'page',
-    'distance',
-    'radius',
-    'lat',
-    'lng',
-  ];
-  
-  const hasFilters = Object.keys(input.searchParams || {}).some(param => 
-    nonIndexableParams.includes(param)
-  );
-  const isIndexable = data.seo.indexable && !hasFilters;
+  const hasFilters = shouldNoindexSearchParams(input.searchParams);
+  const isIndexable = isLocalPageIndexable(data, { hasSearchParams: hasFilters });
 
   return {
     title: data.seo.title,
     description: data.seo.description,
     robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
-      canonical: data.location.canonical_path,
+      canonical: absoluteUrl(data.location.canonical_path),
     },
     openGraph: {
       title: data.seo.title,
@@ -489,16 +472,23 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
     // A API falhou com os filtros atuais. Antes de retornar 404,
     // verificamos se a localização em si existe (sem filtros).
     const hasFilters = input.searchParams && Object.keys(input.searchParams).some(
-      (key) => FILTER_KEYS.includes(key as (typeof FILTER_KEYS)[number])
+      (key) => LOCAL_PAGE_FILTER_KEYS.includes(key as (typeof LOCAL_PAGE_FILTER_KEYS)[number])
     );
 
     if (hasFilters) {
-      // Tenta carregar a página base (sem filtros) para confirmar que a cidade/estado existe
-      const baseData = await localSolarPagesApi.get(input.state, input.city, {
-        page: '1',
-        per_page: '12',
-        vertical: input.vertical,
-      });
+      let baseData: LocalSolarPageResponse | null = null;
+
+      try {
+        // Tenta carregar a página base (sem filtros) para confirmar que a cidade/estado existe
+        baseData = await publicLocalSolarPagesApi.get(input.state, input.city, {
+          page: '1',
+          per_page: '12',
+          vertical: input.vertical,
+        }, { revalidate: 900 });
+      } catch (baseError) {
+        console.error('[LocalSolarDirectoryPage] Failed to fetch base local page fallback:', baseError);
+      }
+
       if (baseData) {
         // A localização existe, mas os filtros causaram o erro.
         // Usar os dados base com companies vazio para não mostrar 404 falso.

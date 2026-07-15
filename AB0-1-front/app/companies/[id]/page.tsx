@@ -1,10 +1,11 @@
-// app/companies/[id]/page.tsx
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
-import { companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
+import { publicCompaniesApi, publicReviewsApi } from '@/lib/api-public';
+import { buildCompanyLocalBusinessJsonLd } from '@/lib/seo/company-jsonld';
 import { buildCompanyPath } from '@/lib/slug';
+import { absoluteUrl } from '@/lib/site';
 
 interface Props {
   params: { id: string }; // slug da empresa
@@ -12,20 +13,19 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    // Log the ID being requested
-    console.log('Fetching company with slug:', params.id);
-    const company = await companiesApiSafe.getById(params.id);
+    const company = await publicCompaniesApi.getById(params.id, {
+      revalidate: 900,
+      tags: ['company-profile', `company-${params.id}`],
+    });
 
     if (!company) {
-      console.log('Company not found for slug:', params.id);
       return {
         title: 'Empresa não encontrada | Avalia Solar',
       };
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
-    const canonicalUrl = `${siteUrl}${canonicalPath}`;
+    const canonicalUrl = absoluteUrl(canonicalPath);
 
     const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
     const seoTitle = company.seo_title || `${company.name} - Avaliações e Orçamento | Avalia Solar`;
@@ -61,8 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         canonical: canonicalUrl,
       },
     };
-  } catch (error) {
-    console.error('Erro no generateMetadata:', error);
+  } catch {
     return {
       title: 'Empresa não encontrada | Avalia Solar',
     };
@@ -73,96 +72,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const revalidate = 60;
 
 export default async function CompanyDetailPage({ params }: Props) {
-  // Log the ID being requested
-  console.log('[CompanyDetailPage] Loading company with slug:', params.id);
-
-  console.log('[CompanyDetailPage] Fetching company from API...');
-  const company = await companiesApiSafe.getById(params.id);
+  const company = await publicCompaniesApi.getById(params.id, {
+    revalidate: 900,
+    tags: ['company-profile', `company-${params.id}`],
+  });
 
   if (!company) {
-    console.log('[CompanyDetailPage] Company not found for slug:', params.id);
     notFound();
   }
 
   const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
+  const canonicalUrl = absoluteUrl(canonicalPath);
   const canonicalSegment = canonicalPath.split('/').pop();
   if (canonicalSegment && params.id !== canonicalSegment) {
     permanentRedirect(canonicalPath);
   }
 
-  console.log('[CompanyDetailPage] Company data loaded:', {
-    id: company.id,
-    name: company.name,
-    banner_url: company.banner_url,
-    logo_url: company.logo_url
-  });
+  const initialReviews = await publicReviewsApi.getAll(
+    {
+      company_id: company.id,
+      limit: 6,
+    },
+    {
+      revalidate: 600,
+      tags: ['company-reviews', `company-${company.id}`],
+    }
+  );
 
-  const initialReviews = await reviewsApiSafe.getAll({
-    company_id: company.id,
-    limit: 6,
+  const jsonLd = buildCompanyLocalBusinessJsonLd({
+    company,
+    reviews: initialReviews,
+    canonicalUrl,
   });
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    '@id': `https://avaliasolar.com.br/companies/${company.slug}`,
-    name: company.name,
-    description: company.description || undefined,
-    url: company.website || `https://avaliasolar.com.br/companies/${company.slug}`,
-    telephone: company.phone || undefined,
-    logo: company.logo_url || undefined,
-    image: company.banner_url || company.logo_url || undefined,
-    priceRange: '$$',
-    address: company.address
-      ? {
-          '@type': 'PostalAddress',
-          streetAddress: company.address,
-          addressLocality: company.city || undefined,
-          addressRegion: company.state || undefined,
-          addressCountry: 'BR',
-        }
-      : undefined,
-    geo: (company.latitude && company.longitude) ? {
-      '@type': 'GeoCoordinates',
-      latitude: company.latitude,
-      longitude: company.longitude
-    } : undefined,
-    aggregateRating: (company.rating_count && company.rating_count > 0) ? {
-      '@type': 'AggregateRating',
-      ratingValue: company.rating_avg,
-      reviewCount: company.rating_count,
-      bestRating: '5',
-      worstRating: '1'
-    } : undefined,
-    review: (initialReviews && initialReviews.length > 0) ? initialReviews.map((r: any) => ({
-      '@type': 'Review',
-      author: {
-        '@type': 'Person',
-        name: r.user?.name || 'Cliente Verificado'
-      },
-      datePublished: r.created_at,
-      reviewBody: r.comment || r.body || '',
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: r.rating,
-        bestRating: '5',
-        worstRating: '1'
-      }
-    })) : undefined,
-    openingHoursSpecification: company.working_hours ? {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: [
-        'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
-      ],
-      opens: '08:00',
-      closes: '18:00'
-    } : undefined,
-    sameAs: [
-      company.instagram_url,
-      company.facebook_url,
-      company.linkedin_url
-    ].filter(Boolean)
-  };
 
   return (
     <>

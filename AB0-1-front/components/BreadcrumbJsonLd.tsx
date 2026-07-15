@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { absoluteUrl } from '@/lib/site';
+
 interface BreadcrumbJsonLdProps {
   items: {
     name: string;
@@ -15,7 +17,7 @@ export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: item.item.startsWith('http') ? item.item : `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br'}${item.item}`,
+      item: absoluteUrl(item.item),
     })),
   };
 

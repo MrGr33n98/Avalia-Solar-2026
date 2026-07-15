@@ -1,3 +1,5 @@
+import { SITE } from '@/lib/site';
+
 const BLOCKED_KEYS = new Set([
   'address', 'address_full', 'author_name', 'cellphone', 'client_name', 'cnpj',
   'company_name', 'contact_email', 'contact_name', 'content', 'cpf', 'description',
@@ -13,7 +15,7 @@ const URL_KEYS = new Set(['page_url', 'referrer', '$current_url']);
 function sanitizeUrl(value: unknown): unknown {
   if (typeof value !== 'string') return value;
   try {
-    const url = new URL(value, typeof window !== 'undefined' ? window.location.origin : 'https://avaliasolar.com.br');
+    const url = new URL(value, typeof window !== 'undefined' ? window.location.origin : SITE.url);
     return `${url.origin}${url.pathname}`;
   } catch {
     return value.split('?')[0].split('#')[0];

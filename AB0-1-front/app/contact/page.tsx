@@ -1,23 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageViewTracker from '@/components/PageViewTracker';
-import { CONTACT, FOOTER_TRUST_LINKS, PUBLIC_CONTACT_CHANNELS, SITE } from '@/lib/site';
+import { absoluteUrl, CONTACT, FOOTER_TRUST_LINKS, PUBLIC_CONTACT_CHANNELS, SITE } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Contato | Avalia Solar',
   description:
     'Fale com Felipe, com a equipe da Avalia Solar ou use nossos canais oficiais para suporte, parcerias, imprensa e dúvidas operacionais.',
   alternates: {
-    canonical: '/contact',
+    canonical: absoluteUrl('/contact'),
   },
   openGraph: {
     title: 'Contato | Avalia Solar',
     description:
       'Fale com Felipe, com a equipe da Avalia Solar ou use nossos canais oficiais para suporte, parcerias e imprensa.',
-    url: '/contact',
+    url: absoluteUrl('/contact'),
     images: [SITE.ogImagePath],
   },
   twitter: {
@@ -32,6 +33,12 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="bg-slate-50">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Contato', item: '/contact' },
+        ]}
+      />
       <PageViewTracker type="other" title="Contato - Avalia Solar" />
 
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-16 px-4 py-16 sm:px-6 lg:px-8">

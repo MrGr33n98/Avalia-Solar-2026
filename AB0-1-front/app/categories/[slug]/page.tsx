@@ -1,9 +1,11 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import CategoryPageServer from './CategoryPageServer';
-import { categoriesApi } from '@/lib/api';
+import { publicCategoriesApi } from '@/lib/api-public';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
+import { absoluteUrl } from '@/lib/site';
+import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
 
 export const revalidate = 3600; // ISR - 1 hora
 
@@ -14,7 +16,7 @@ interface CategorySlugPageProps {
 
 async function BreadcrumbsWrapper({ slug }: { slug: string }) {
   try {
-    const category = await categoriesApi.getBySlug(slug);
+    const category = await publicCategoriesApi.getBySlug(slug, { revalidate: 3600 });
     if (!category) return null;
 
     return (
@@ -33,7 +35,7 @@ async function BreadcrumbsWrapper({ slug }: { slug: string }) {
 
 export async function generateMetadata({ params, searchParams }: CategorySlugPageProps): Promise<Metadata> {
   try {
-    const category = await categoriesApi.getBySlug(params.slug);
+    const category = await publicCategoriesApi.getBySlug(params.slug, { revalidate: 3600 });
     
     if (!category) {
       return {
@@ -59,13 +61,15 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
       locationSuffix ? `Atendendo na região de ${locationSuffix.replace(' em ', '')}.` : '',
     ].filter(Boolean).join(' ').slice(0, 160);
     const keywords = category.seo_keywords || ['energia solar', category.name, 'melhores empresas'].join(', ');
+    const noindex = shouldNoindexSearchParams(searchParams);
 
     return {
       title,
       description,
       keywords,
+      robots: noindex ? { index: false, follow: true } : undefined,
       alternates: {
-        canonical: `/categories/${params.slug}`,
+        canonical: absoluteUrl(`/categories/${params.slug}`),
       },
       openGraph: {
         title,
@@ -80,7 +84,7 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
         images: category.banner_url ? [category.banner_url] : [],
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Avalia Solar',
     };

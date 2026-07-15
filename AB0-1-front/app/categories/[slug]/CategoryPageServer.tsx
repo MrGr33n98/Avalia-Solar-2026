@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import CategoryPageClientV2 from './CategoryPageClientV2';
-import { fetchCategoryBySlug, categoriesApi, api, Banner } from '@/lib/api';
+import { Banner } from '@/lib/api';
+import { publicBannersApi, publicCategoriesApi } from '@/lib/api-public';
 import FAQSection from '@/components/seo/FAQSection';
 
 import { AlertCircle } from 'lucide-react';
@@ -101,18 +102,7 @@ function filterBannersForCategory(raw: Banner[], categoryId: number, now: Date) 
 
 async function fetchFallbackTopBanners(now: Date): Promise<Banner[]> {
   try {
-    const resp = await api.request<Banner[] | { banners: Banner[] }>({
-      url: `/banners?position=categories_top`,
-      method: 'GET',
-    });
-
-    const dataAny = resp as any;
-    const raw: Banner[] = Array.isArray(resp.data)
-      ? (resp.data as Banner[])
-      : Array.isArray(dataAny?.data?.banners)
-      ? (dataAny.data.banners as Banner[])
-      : [];
-
+    const raw = await publicBannersApi.getByPosition('categories_top', { revalidate: 600 });
     return raw.filter((b) => isBannerActiveForNow(b, now));
   } catch {
     return [];
@@ -179,8 +169,12 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
 
   try {
     timeStart(fetchLabel);
-    const category = await fetchCategoryBySlug(params.slug);
+    const category = await publicCategoriesApi.getBySlug(params.slug, { revalidate: 3600 });
     timeEnd(fetchLabel);
+
+    if (!category) {
+      return <CategoryErrorState slug={params.slug} errorMessage="Categoria não encontrada" slugNotFound />;
+    }
 
     timeStart(parallelLabel);
 
@@ -199,8 +193,8 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
     };
 
     const [companiesResponse, rawBanners] = await Promise.all([
-      categoriesApi.getCompaniesPaginated(category.id, filters),
-      categoriesApi.getBanners(category.id, { limit: 10 }).catch(() => []),
+      publicCategoriesApi.getCompaniesPaginated(category.id, filters, { revalidate: 600 }),
+      publicCategoriesApi.getBanners(category.id, { limit: 10 }, { revalidate: 600 }).catch(() => []),
     ]);
 
     const companies = companiesResponse?.companies || [];

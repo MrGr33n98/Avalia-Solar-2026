@@ -1,4 +1,11 @@
 import sitemap from '@/app/sitemap';
+import robots from '@/app/robots';
+import {
+  getSitemapEntriesBySection,
+  getSitemapIndexEntries,
+  serializeSitemapIndex,
+  SITEMAP_SECTIONS,
+} from '@/lib/seo/sitemap-builders';
 import { STATIC_SITEMAP_LAST_MODIFIED } from '@/lib/site';
 
 describe('sitemap', () => {
@@ -54,5 +61,77 @@ describe('sitemap', () => {
 
     expect(new Set(staticEntries.map((entry) => entry.lastModified)).size).toBe(1);
     expect(staticEntries[0].lastModified).toBe(STATIC_SITEMAP_LAST_MODIFIED);
+  });
+
+  it('exposes a sitemap index with every segmented sitemap', () => {
+    const indexEntries = getSitemapIndexEntries();
+    const indexXml = serializeSitemapIndex();
+
+    expect(indexEntries).toHaveLength(SITEMAP_SECTIONS.length);
+    SITEMAP_SECTIONS.forEach((section) => {
+      expect(indexXml).toContain(
+        `https://www.avaliasolar.com.br/sitemaps/${section}/sitemap.xml`
+      );
+    });
+  });
+
+  it('keeps robots pointing to both the sitemap index and legacy sitemap', () => {
+    const robotsConfig = robots();
+
+    expect(robotsConfig.sitemap).toEqual([
+      'https://www.avaliasolar.com.br/sitemap-index.xml',
+      'https://www.avaliasolar.com.br/sitemap.xml',
+    ]);
+  });
+
+  it('generates the static segment without private or utility routes', async () => {
+    const entries = await getSitemapEntriesBySection('static');
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toContain('https://www.avaliasolar.com.br/');
+    expect(urls).toContain('https://www.avaliasolar.com.br/companies');
+    expect(urls).toContain('https://www.avaliasolar.com.br/help');
+    expect(urls).not.toContain('https://www.avaliasolar.com.br/search');
+    expect(urls).not.toContain('https://www.avaliasolar.com.br/compare');
+    expect(urls).not.toContain('https://www.avaliasolar.com.br/dashboard');
+  });
+
+  it('keeps weak local SEO pages out of the local sitemap segment', async () => {
+    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      const isStrongCity = url.includes('local_solar_pages/sc/florianopolis');
+
+      return {
+        ok: true,
+        json: async () => ({
+          location: isStrongCity
+            ? {
+                scope: 'city',
+                city: 'Florianópolis',
+                state: 'SC',
+                canonical_path: '/companies/energia-solar/sc/florianopolis',
+              }
+            : {
+                scope: 'state',
+                state: 'AC',
+                canonical_path: '/companies/energia-solar/ac',
+              },
+          seo: {
+            title: 'Empresas de energia solar em Florianópolis',
+            description: 'Compare empresas locais de energia solar.',
+            indexable: true,
+          },
+          stats: {
+            total_companies: isStrongCity ? 3 : 1,
+          },
+        }),
+      } as Response;
+    });
+
+    const entries = await getSitemapEntriesBySection('local-solar');
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toContain('https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis');
+    expect(urls).not.toContain('https://www.avaliasolar.com.br/companies/energia-solar/ac');
   });
 });

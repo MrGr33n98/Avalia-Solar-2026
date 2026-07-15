@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { Company, reviewsApi } from '@/lib/api';
+import { Company, Review, reviewsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
@@ -31,6 +31,13 @@ interface ReviewFormProps {
   company: Company;
   companyPath: string;
 }
+
+type ReviewCreatePayload = Partial<Review> & {
+  review_criterion_scores_attributes?: Array<{
+    rating_criterion_id: number;
+    score: number;
+  }>;
+};
 
 const formatSubmitErrorMessage = (error: unknown) => {
   const fallback = 'Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.';
@@ -107,7 +114,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         })
       );
 
-      await reviewsApi.create({
+      const reviewPayload: ReviewCreatePayload = {
         company_id: company.id,
         category_id: categoryId,
         rating: rating || 5,
@@ -121,7 +128,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
         capture_flow_source: 'profile',
         review_criterion_scores_attributes,
-      } as any);
+      };
+
+      await reviewsApi.create(reviewPayload);
 
       track('review_created', {
         company_id: String(company.id),

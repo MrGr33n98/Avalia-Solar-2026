@@ -12,11 +12,13 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   industrial: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-comercial-industrial.png`,
 
   'energia-solar-rural-agronegocio': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
+  'energia-solar-rural': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
   'rural-agronegocio': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
   rural: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
   agronegocio: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
 
   'baterias-armazenamento-energia': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-baterias-armazenamento.png`,
+  'armazenamento-energia': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-baterias-armazenamento.png`,
   'baterias-armazenamento': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-baterias-armazenamento.png`,
   baterias: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-baterias-armazenamento.png`,
   armazenamento: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-baterias-armazenamento.png`,
@@ -32,9 +34,11 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   paineis: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-paineis-solares.png`,
 
   inversores: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-inversores.png`,
+  'inversores-solares': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-inversores.png`,
   inversor: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-inversores.png`,
 
   'monitoramento-om': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-monitoramento-om.png`,
+  'monitoramento-operacao-manutencao': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-monitoramento-om.png`,
   monitoramento: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-monitoramento-om.png`,
 
   'financiamento-energia-solar': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-financiamento.png`,

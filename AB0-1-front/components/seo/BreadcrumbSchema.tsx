@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { absoluteUrl } from '@/lib/site';
+
 interface BreadcrumbItem {
   name: string;
   item: string;
@@ -17,7 +19,7 @@ export const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps) => {
       "@type": "ListItem",
       "position": index + 1,
       "name": item.name,
-      "item": item.item.startsWith('http') ? item.item : `${process.env.NEXT_PUBLIC_APP_URL || ''}${item.item}`
+      "item": absoluteUrl(item.item)
     }))
   };
 
