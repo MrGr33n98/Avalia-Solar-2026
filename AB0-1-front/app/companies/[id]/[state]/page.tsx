@@ -6,7 +6,7 @@ import {
   LocalSolarDirectoryPage,
 } from '../local-page';
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 type StatePageParams = {
   id: string;

@@ -7,7 +7,7 @@ import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { absoluteUrl } from '@/lib/site';
 import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
 
-export const revalidate = 3600; // ISR - 1 hora
+export const revalidate = 1800; // ISR - 30 minutos
 
 interface CategorySlugPageProps {
   params: { slug: string };

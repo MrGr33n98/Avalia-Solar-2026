@@ -69,8 +69,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Enable ISR with 60s revalidation
-export const revalidate = 60;
+// Enable ISR with 900s revalidation
+export const revalidate = 900;
 
 export default async function CompanyDetailPage({ params }: Props) {
   const company = await publicCompaniesApi.getById(params.id, {

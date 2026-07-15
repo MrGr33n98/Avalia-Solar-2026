@@ -18,7 +18,7 @@ import SavingsCalculator from '@/components/landing/SavingsCalculator';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { companiesApiSafe } from '@/lib/api-client';
+import { publicCompaniesApi } from '@/lib/api-public';
 import type { Category, Company } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import {
@@ -66,7 +66,7 @@ const homeFaqs = [
   },
 ];
 
-export const revalidate = 3600;
+export const revalidate = 300;
 const FALLBACK_CATEGORY_MIN_ID = 9000;
 
 function SectionShell({
@@ -127,7 +127,7 @@ async function getHomeData(): Promise<{ featuredCategories: Category[] }> {
 }
 
 async function getCompaniesData(): Promise<{ companies: Company[] }> {
-  const companies = await companiesApiSafe.getAll({
+  const companies = await publicCompaniesApi.getAll({
     status: 'active',
     featured: true,
     limit: 12,
@@ -142,8 +142,8 @@ const getHeroDataCached = unstable_cache(
   async () => {
     const [allCategories, totalActiveCompanies, totalVerifiedCompanies] = await Promise.all([
       getCachedActiveCategories(),
-      companiesApiSafe.getTotalCount({ status: 'active' }),
-      companiesApiSafe.getTotalCount({ status: 'active', verified: true }),
+      publicCompaniesApi.getTotalCount({ status: 'active' }),
+      publicCompaniesApi.getTotalCount({ status: 'active', verified: true }),
     ]);
     const trustMetrics: HomeHeroTrustMetrics = {
       totalActiveCompanies:

@@ -24,19 +24,21 @@ import { fixArticleContent } from '@/lib/content-fixer';
 import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
 
+export const revalidate = 3600; // ISR - 1 hora
+
 async function getArticle(slug: string): Promise<Article | null> {
   try {
     const safeSlug = decodeURIComponent(slug || '').trim();
     const res = await fetch(buildApiUrl(`articles/${safeSlug || slug}`), {
       headers: getApiRequestHeaders(),
-      next: { revalidate: 1800 }
+      next: { revalidate: 3600 }
     });
     if (res.ok) return res.json();
 
     if (safeSlug && safeSlug !== slug) {
       const fallbackRes = await fetch(buildApiUrl(`articles/${safeSlug}`), {
         headers: getApiRequestHeaders(),
-        next: { revalidate: 1800 }
+        next: { revalidate: 3600 }
       });
       if (fallbackRes.ok) return fallbackRes.json();
     }
@@ -52,7 +54,7 @@ async function getRelatedArticles(slug: string): Promise<Article[]> {
   try {
     const res = await fetch(buildApiUrl(`articles/${slug}/related`), {
       headers: getApiRequestHeaders(),
-      next: { revalidate: 1800 }
+      next: { revalidate: 3600 }
     });
     if (!res.ok) return [];
     return res.json();
