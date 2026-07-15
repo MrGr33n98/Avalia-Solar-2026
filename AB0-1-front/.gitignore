@@ -11,3 +11,5 @@ coverage/
 # Boilerplate Reference
 codebase/
 .env*
+test-results/
+playwright-report/

@@ -20,7 +20,7 @@ const apiProxyTarget = normalizeApiTarget(
 const stableBuildId =
   process.env.GIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.SOURCE_VERSION;
 // Keep image optimization on by default. Only disable with explicit opt-out.
-const enableImageOptimization = !isProduction;
+const enableImageOptimization = process.env.NEXT_DISABLE_IMAGE_OPTIMIZATION !== 'true';
 const enableOptimizeCss = process.env.NEXT_DISABLE_OPTIMIZE_CSS !== 'true';
 
 const nextConfig = {
