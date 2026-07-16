@@ -97,7 +97,7 @@ export default function Navbar() {
   if (pathname === '/') {
     return (
       <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 lg:h-24 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
             className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ml-2 md:ml-4"
@@ -106,14 +106,14 @@ export default function Navbar() {
             <BrandLogo className="h-8 sm:h-9" priority />
           </Link>
 
-          <div className="hidden lg:flex flex-1 max-w-[500px] items-center gap-2 mx-4">
+          <div className="hidden lg:flex flex-1 max-w-[750px] items-center gap-2 mx-4">
             <NavbarSearch
-              className="min-w-[8rem] flex-1"
+              className="min-w-[12rem] flex-1"
               inputClassName="bg-slate-50 border-slate-200"
               placeholder="Buscar empresas, produtos..."
               onSearch={handleSearch}
             />
-            <div className="w-[140px] shrink-0">
+            <div className="w-[210px] shrink-0">
               <LocationSearch
                 className="w-full bg-slate-50 border-slate-200"
                 onLocationSelect={handleLocationSelect}
@@ -224,7 +224,7 @@ export default function Navbar() {
       <div
         className={cn(
           'mx-auto flex max-w-[86rem] items-center px-2 sm:px-4 lg:px-4 xl:px-5',
-          isChatRoute ? 'h-16 gap-1 md:h-[4.5rem] md:gap-1.5' : 'h-[4.5rem] gap-1.5'
+          isChatRoute ? 'h-16 gap-1 md:h-[4.5rem] md:gap-1.5' : 'h-[4.5rem] lg:h-[6rem] gap-1.5'
         )}
       >
         <Link
@@ -243,14 +243,14 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden lg:flex flex-1 items-center gap-4">
-          <div className="flex min-w-0 max-w-[900px] flex-[1.4] items-center gap-2.5">
+          <div className="flex min-w-0 max-w-[1350px] flex-[1.4] items-center gap-2.5">
             <NavbarSearch
-              className="min-w-[10rem] flex-[1.45]"
+              className="min-w-[15rem] flex-[1.45]"
               inputClassName="bg-white dark:bg-[#081a2e]/82 border-brand-border"
               placeholder="Buscar empresas, produtos e serviços"
               onSearch={handleSearch}
             />
-            <div className="w-[156px] shrink-0">
+            <div className="w-[234px] shrink-0">
               <LocationSearch
                 className="w-full bg-white dark:bg-[#081a2e]/82 border-brand-border"
                 onLocationSelect={handleLocationSelect}
