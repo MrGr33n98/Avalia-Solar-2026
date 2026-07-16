@@ -70,8 +70,8 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
             </Link>
             {company.verified ? (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
-                <BadgeCheck className="h-3 w-3" aria-hidden="true" />
-                OK
+                <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                Verificada
               </span>
             ) : null}
           </div>
