@@ -10,9 +10,10 @@ import Link from 'next/link';
 interface CategoriesMegaMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  id?: string;
 }
 
-export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, onClose }) => {
+export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, onClose, id }) => {
   const { categories, loading, error, filterCategories } = useCategoriesTree();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -47,7 +48,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
       return (
         <div className="flex flex-col items-center justify-center border border-slate-200 bg-white py-12 text-center rounded-none">
           <div className="mb-5 border border-amber-200 bg-amber-50 p-4 text-amber-500 rounded-none">
-            <Zap className="h-8 w-8" />
+            <Zap className="h-8 w-8" aria-hidden="true" />
           </div>
           <h3 className="text-slate-900 text-lg font-bold mb-2">Menu em Manutenção</h3>
           <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
@@ -116,7 +117,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                         onClick={onClose}
                         className="group/child flex items-center gap-2 text-[13px] font-normal text-slate-600 transition-colors hover:text-blue-600"
                       >
-                        <ArrowRight className="h-3 w-3 shrink-0 text-slate-400 transition-transform group-hover/child:translate-x-0.5 group-hover/child:text-blue-600" />
+                        <ArrowRight className="h-3 w-3 shrink-0 text-slate-400 transition-transform group-hover/child:translate-x-0.5 group-hover/child:text-blue-600" aria-hidden="true" />
                         <span className="truncate">{child.name}</span>
                       </Link>
                     );
@@ -153,6 +154,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
 
           {/* Menu Container */}
           <motion.div
+            id={id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -170,12 +172,12 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                 <aside className="border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
                   <h2 className="text-lg font-semibold tracking-tight text-slate-950">Explorar categorias</h2>
                   <p className="mt-3 text-sm font-normal leading-6 text-slate-600">Encontre empresas especializadas no que você precisa.</p>
-                  <Link href="/categories" onClick={onClose} className="mt-5 flex h-11 items-center justify-between rounded-none border border-slate-300 px-4 text-sm font-medium text-slate-950 hover:bg-slate-50">Ver todas as categorias <ArrowRight className="h-4 w-4" /></Link>
+                  <Link href="/categories" onClick={onClose} className="mt-5 flex h-11 items-center justify-between rounded-none border border-slate-300 px-4 text-sm font-medium text-slate-950 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Ver todas as categorias <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
                   <div className="mt-6 border border-blue-100 bg-blue-50/60 p-4">
-                    <Headphones className="h-5 w-5 text-blue-600" />
+                    <Headphones className="h-5 w-5 text-blue-600" aria-hidden="true" />
                     <p className="mt-3 text-sm font-medium text-slate-950">Precisa de ajuda?</p>
                     <p className="mt-1 text-xs leading-5 text-slate-600">Peça orientações e compare propostas verificadas.</p>
-                    <Link href="/compare" onClick={onClose} className="mt-3 flex items-center gap-2 text-xs font-semibold text-blue-600">Comparar gratuitamente <ArrowRight className="h-3 w-3" /></Link>
+                    <Link href="/compare" onClick={onClose} className="mt-3 flex items-center gap-2 text-xs font-semibold text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Comparar gratuitamente <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
                   </div>
                 </aside>
                 <div className="min-w-0">{renderContent()}</div>
@@ -201,7 +203,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                       ))}
                     </div>
                   </div>
-                  <Link href="/categories" onClick={onClose} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-blue-600">Mais de {categories.length} categorias <ArrowRight className="h-3 w-3" /></Link>
+                  <Link href="/categories" onClick={onClose} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Mais de {categories.length} categorias <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
                 </div>
               )}
             </div>

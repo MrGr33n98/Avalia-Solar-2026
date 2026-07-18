@@ -98,90 +98,93 @@ export default function LandingCategoryChips({
             aria-label="Categorias em destaque"
           >
             {includeAllChip ? (
-              <Link
-                href="/categories"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-200 smooth-transition whitespace-nowrap"
-                role="listitem"
-              >
-                <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-[13px] font-semibold text-blue-700 dark:text-blue-300">
-                  Categorias
-                </span>
-              </Link>
+              <div role="listitem">
+                <Link
+                  href="/categories"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-200 smooth-transition whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                  <span className="text-[13px] font-semibold text-blue-700 dark:text-blue-300">
+                    Categorias
+                  </span>
+                </Link>
+              </div>
             ) : null}
 
             {items.map((category) => {
               const href = buildCategoryPath(category?.seo_url, category?.id);
+              const titleId = `landing-category-chip-${category.id}-title`;
               const iconSrc = getPreferredCategoryIcon(
                 category?.seo_url || category?.slug,
                 category?.icon_url,
                 category?.name
               );
               return (
-                <Link
-                  key={category.id}
-                  href={href}
-                  className={cn(
-                    'group/chip relative flex items-center gap-3 rounded-[18px] whitespace-nowrap flex-shrink-0',
-                    'px-4 py-3',
-                    'bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900/40',
-                    'border border-slate-200/80 dark:border-slate-700/50',
-                    'shadow-[0_4px_14px_-6px_rgba(0,0,0,0.10),inset_0_1px_1px_rgba(255,255,255,0.8)]',
-                    'dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.04)]',
-                    'hover:-translate-y-0.5 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-slate-600',
-                    'hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.14),0_0_0_1px_rgba(59,130,246,0.12)]',
-                    'dark:hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(59,130,246,0.2)]',
-                    'transition-all duration-300 ease-out cursor-pointer'
-                  )}
-                  role="listitem"
-                  aria-label={`Ver empresas na categoria ${category.name}`}
-                >
-                  {/* Thumbnail */}
-                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-slate-200/70 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40">
-                    {iconSrc ? (
-                      <>
-                        <Image
-                          src={iconSrc}
-                          alt={`Ícone de ${category.name}`}
-                          width={44}
-                          height={44}
-                          className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover/chip:scale-105"
-                        />
-                        {/* Glossy overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-white/5 pointer-events-none" />
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800">
-                        <LayoutGrid className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 transition-colors duration-200" />
-                      </div>
+                <div key={category.id} role="listitem">
+                  <Link
+                    href={href}
+                    aria-labelledby={titleId}
+                    className={cn(
+                      'group/chip relative flex items-center gap-3 rounded-[18px] whitespace-nowrap flex-shrink-0',
+                      'px-4 py-3',
+                      'bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900/40',
+                      'border border-slate-200/80 dark:border-slate-700/50',
+                      'shadow-[0_4px_14px_-6px_rgba(0,0,0,0.10),inset_0_1px_1px_rgba(255,255,255,0.8)]',
+                      'dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.04)]',
+                      'hover:-translate-y-0.5 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-slate-600',
+                      'hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.14),0_0_0_1px_rgba(59,130,246,0.12)]',
+                      'dark:hover:shadow-[0_10px_28px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(59,130,246,0.2)]',
+                      'transition-all duration-300 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
                     )}
-                  </div>
-
-                  {/* Labels */}
-                  <div className="flex flex-col leading-none">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500 mb-0.5">
-                      Categoria
-                    </span>
-                    <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 group-hover/chip:text-slate-950 dark:group-hover/chip:text-white transition-colors duration-200 tracking-[-0.01em]">
-                      {category.name}
-                    </span>
-                  </div>
-
-                  {/* Chevron */}
-                  <svg
-                    className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover/chip:text-slate-500 dark:group-hover/chip:text-slate-400 transition-colors duration-200 ml-1 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
+                    {/* Thumbnail */}
+                    <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-slate-200/70 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40">
+                      {iconSrc ? (
+                        <>
+                          <Image
+                            src={iconSrc}
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover/chip:scale-105"
+                          />
+                          {/* Glossy overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-white/5 pointer-events-none" aria-hidden="true" />
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800">
+                          <LayoutGrid className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 transition-colors duration-200" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Labels */}
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500 mb-0.5" aria-hidden="true">
+                        Categoria
+                      </span>
+                      <span id={titleId} className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 group-hover/chip:text-slate-950 dark:group-hover/chip:text-white transition-colors duration-200 tracking-[-0.01em]">
+                        {category.name}
+                      </span>
+                    </div>
+
+                    {/* Chevron */}
+                    <svg
+                      className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover/chip:text-slate-500 dark:group-hover/chip:text-slate-400 transition-colors duration-200 ml-1 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               );
             })}
           </div>
@@ -196,7 +199,7 @@ export default function LandingCategoryChips({
               aria-label="Ver mais categorias"
               aria-controls="landing-category-chips-track"
             >
-              <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" aria-hidden="true" />
             </Button>
           </div>
         </div>

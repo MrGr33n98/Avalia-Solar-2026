@@ -1,13 +1,15 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 
 import LandingCategoryChips from '@/components/landing/LandingCategoryChips';
 import type { Category } from '@/lib/api';
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({ children, href, ...props }: ComponentProps<'a'>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -51,6 +53,24 @@ describe('LandingCategoryChips', () => {
 
     expect(screen.getByText('Inversores')).toBeInTheDocument();
     expect(screen.queryByText('Categorias exibidas em modo de contingencia.')).not.toBeInTheDocument();
+  });
+
+  it('uses each visible category name as the chip link accessible name', () => {
+    const categories = [
+      buildCategory({
+        id: 42,
+        name: 'Inversores',
+        seo_url: 'inversores',
+      }),
+    ];
+
+    render(<LandingCategoryChips categories={categories} includeAllChip={false} />);
+
+    const title = screen.getByText('Inversores');
+    const link = screen.getByRole('link', { name: 'Inversores' });
+
+    expect(link).toHaveAttribute('aria-labelledby', title.id);
+    expect(link).not.toHaveAccessibleName(/categoria inversores/i);
   });
 
   it('advances automatically and pauses while the user is interacting with the carousel', () => {

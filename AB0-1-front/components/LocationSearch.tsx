@@ -26,6 +26,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
   const [selectedCity, setSelectedCity] = React.useState('');
   const [searchValue, setSearchValue] = React.useState('');
   const [selectedLabel, setSelectedLabel] = React.useState('Localização');
+  const popoverId = React.useId();
   
   // Use existing hook for data
   const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities, error, citiesError } = useLocationData();
@@ -86,7 +87,8 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-label="Selecionar localização"
+          aria-controls={open ? popoverId : undefined}
+          aria-label={`${selectedLabel}: selecionar localização`}
           className={cn(
             "h-12 lg:h-16 w-full justify-between rounded-[1.25rem] lg:rounded-[1.5rem] border-slate-200/80 bg-white/92 px-4 text-left text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-colors",
             "hover:border-slate-300 hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",
@@ -95,13 +97,13 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           )}
         >
           <div className="flex min-w-0 items-center truncate">
-            <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
             <span className="truncate">{selectedLabel}</span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] rounded-[1.35rem] border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
+      <PopoverContent id={popoverId} className="w-[280px] rounded-[1.35rem] border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
           <Command>
             <CommandInput
               placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."}
@@ -135,7 +137,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                     if (onLocationSelect) onLocationSelect({ state: '' });
                   }}
                 >
-                  <MapPin className="mr-2 h-4 w-4" />
+                  <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
                   Todo Brasil
                 </CommandItem>
                 {states.map((state) => (
@@ -147,12 +149,13 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                       setView('cities');
                     }}
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedState === state ? "opacity-100" : "opacity-0"
-                      )}
-                    />
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedState === state ? "opacity-100" : "opacity-0"
+                        )}
+                        aria-hidden="true"
+                      />
                     {state}
                   </CommandItem>
                 ))}
@@ -189,7 +192,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                         if (onLocationSelect && selectedState) onLocationSelect({ state: selectedState });
                       }}
                     >
-                      <Check className="mr-2 h-4 w-4 opacity-0" />
+                      <Check className="mr-2 h-4 w-4 opacity-0" aria-hidden="true" />
                       Todas em {selectedState}
                     </CommandItem>
                     {cities.map((city) => (
@@ -205,6 +208,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
                             "mr-2 h-4 w-4",
                             selectedCity === city ? "opacity-100" : "opacity-0"
                           )}
+                          aria-hidden="true"
                         />
                         {city}
                       </CommandItem>

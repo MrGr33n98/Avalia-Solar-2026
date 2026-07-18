@@ -6,11 +6,12 @@ import type { Category } from '@/lib/api';
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ onError, src }: ComponentProps<'img'>) => (
-    <button
-      type="button"
+  default: ({ onError, src, alt = '' }: ComponentProps<'img'> & { fill?: boolean }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       data-testid="next-image"
       data-src={src}
+      alt={alt}
       onClick={() => onError?.({} as SyntheticEvent<HTMLImageElement>)}
     />
   ),
@@ -18,7 +19,11 @@ jest.mock('next/image', () => ({
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: ComponentProps<'a'>) => <a href={href}>{children}</a>,
+  default: ({ children, href, ...props }: ComponentProps<'a'>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 const category = {
@@ -33,12 +38,23 @@ describe('LandingCategoryCard', () => {
   it('matches the responsive dimensions used by the categories page card', () => {
     render(<LandingCategoryCard category={category} />);
 
-    const link = screen.getByRole('link', { name: /energia solar/i });
+    const link = screen.getByRole('link', { name: 'Energia Solar' });
     expect(link.parentElement).toHaveClass('h-[216px]', 'sm:h-[220px]');
     expect(screen.getByTestId('next-image').parentElement).toHaveClass(
       'h-[92px]',
       'sm:h-[96px]'
     );
+  });
+
+  it('uses the visible category title as the accessible link name', () => {
+    render(<LandingCategoryCard category={category} />);
+
+    const heading = screen.getByRole('heading', { name: 'Energia Solar' });
+    const link = screen.getByRole('link', { name: 'Energia Solar' });
+
+    expect(link).toHaveAttribute('aria-labelledby', heading.id);
+    expect(link).not.toHaveAccessibleName(/compare empresas/i);
+    expect(screen.getByTestId('next-image')).toHaveAttribute('alt', '');
   });
 
   it('uses the placeholder when the category has no banner or logo', () => {

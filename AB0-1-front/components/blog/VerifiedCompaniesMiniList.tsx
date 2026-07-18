@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, ShieldCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -48,7 +47,7 @@ export function VerifiedCompaniesMiniList({ companies, isLoading }: VerifiedComp
     <Card className="border-slate-100 shadow-sm overflow-hidden">
       <CardHeader className="pb-3 bg-slate-50/50 border-b border-slate-100">
         <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-green-600" />
+          <ShieldCheck className="w-4 h-4 text-green-600" aria-hidden="true" />
           Empresas Verificadas
         </CardTitle>
       </CardHeader>
@@ -59,7 +58,7 @@ export function VerifiedCompaniesMiniList({ companies, isLoading }: VerifiedComp
             href={`/companies/${company.id}`}
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:bg-white group-hover:shadow-sm transition-all border border-slate-200">
+            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 group-hover:bg-white group-hover:shadow-sm transition-all border border-slate-200">
               {company.logo_url ? (
                 <Image
                   src={company.logo_url}
@@ -79,12 +78,12 @@ export function VerifiedCompaniesMiniList({ companies, isLoading }: VerifiedComp
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <div className="flex items-center text-amber-500">
-                  <Star className="w-3 h-3 fill-current" />
+                  <Star className="w-3 h-3 fill-current" aria-hidden="true" />
                   <span className="ml-1 font-medium">{company.rating}</span>
                 </div>
-                <span>•</span>
+                <span aria-hidden="true">•</span>
                 <span className="truncate flex items-center gap-0.5">
-                  <MapPin className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" aria-hidden="true" />
                   {company.city}
                 </span>
               </div>

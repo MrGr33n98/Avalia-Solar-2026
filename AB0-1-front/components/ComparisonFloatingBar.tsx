@@ -70,9 +70,9 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
         type="button"
         onClick={() => onRemove(company.id)}
         aria-label={`Remover ${company.name} da comparação`}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -110,9 +110,9 @@ function CompactCompanyRow({
         type="button"
         onClick={() => onRemove(company.id)}
         aria-label={`Remover ${company.name} da comparação`}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -121,7 +121,7 @@ function CompactCompanyRow({
 function TrustItem({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
-      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+      <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
       {children}
     </span>
   );
@@ -244,12 +244,12 @@ export default function ComparisonFloatingBar() {
               <button
                 type="button"
                 onClick={handleOpenDock}
-                aria-label="Abrir comparação de empresas"
+                aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
                 className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:h-10 md:rounded-md md:px-4 md:text-sm md:font-bold"
               >
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" aria-hidden="true" />
                 Comparar
-                <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]" aria-hidden="true">
+                <span className="rounded-full bg-blue-800 px-1.5 py-0.5 text-[10px] text-white ring-1 ring-white/35" aria-hidden="true">
                   {count}/{maxComparison}
                 </span>
               </button>
@@ -260,7 +260,7 @@ export default function ComparisonFloatingBar() {
                 title="Fechar"
                 className="hidden h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:inline-flex"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </motion.aside>
@@ -289,17 +289,17 @@ export default function ComparisonFloatingBar() {
                     type="button"
                     onClick={minimizeDock}
                     aria-label="Minimizar comparação"
-                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-3 w-3" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={closeDock}
                     aria-label="Fechar comparação"
-                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3 w-3" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function ComparisonFloatingBar() {
                       onClick={handleAddCompany}
                       className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                       Adicionar empresa
                     </button>
                   ) : null}
@@ -358,12 +358,12 @@ export default function ComparisonFloatingBar() {
                     )}
                   >
                     Ver comparação
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </div>
 
                 <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
                   Patrocínios não alteram sua comparação.
                 </div>
               </div>
@@ -397,7 +397,7 @@ export default function ComparisonFloatingBar() {
                         onClick={handleAddCompany}
                         className="flex h-16 min-w-[148px] snap-start items-center justify-center gap-2 rounded-md border border-dashed border-blue-300 bg-blue-50/40 px-4 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4" aria-hidden="true" />
                         Adicionar empresa
                       </button>
                     ) : null}
@@ -411,7 +411,7 @@ export default function ComparisonFloatingBar() {
                       title="Minimizar comparação"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-4 w-4" aria-hidden="true" />
                     </button>
                     <button
                       type="button"
@@ -420,7 +420,7 @@ export default function ComparisonFloatingBar() {
                       title="Fechar comparação"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export default function ComparisonFloatingBar() {
                     onClick={clearComparison}
                     className="h-10 rounded-md px-3 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                     Limpar
                   </Button>
                   <Button
@@ -448,7 +448,7 @@ export default function ComparisonFloatingBar() {
                     onClick={handleDetailsClick}
                     className="h-10 rounded-md border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
                   >
-                    <List className="mr-2 h-4 w-4" />
+                    <List className="mr-2 h-4 w-4" aria-hidden="true" />
                     Ver detalhes
                   </Button>
                   {canAddMore ? (
@@ -457,7 +457,7 @@ export default function ComparisonFloatingBar() {
                       onClick={handleAddCompany}
                       className="h-10 rounded-md border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 sm:hidden"
                     >
-                      <Plus className="mr-2 h-4 w-4" />
+                      <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                       Adicionar
                     </Button>
                   ) : null}
@@ -469,7 +469,7 @@ export default function ComparisonFloatingBar() {
                     )}
                   >
                     Comparar {count} {companyLabel}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -483,7 +483,7 @@ export default function ComparisonFloatingBar() {
                   <TrustItem>Comparação justa e imparcial</TrustItem>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 lg:hidden">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                   Patrocínios não alteram sua comparação.
                 </div>
                 <ComparisonSponsoredRecommendation

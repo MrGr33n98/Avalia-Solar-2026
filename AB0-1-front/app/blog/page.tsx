@@ -137,7 +137,7 @@ export default async function BlogIndexPage({
               </div>
             ) : (
               <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-200">
-                <div className="text-slate-400 mb-4 text-6xl">🔍</div>
+                <div className="text-slate-500 mb-4 text-6xl" aria-hidden="true">🔍</div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhum artigo encontrado</h3>
                 <p className="text-slate-500 max-w-md mx-auto">
                   Tente ajustar seus filtros ou busca para encontrar o que procura.

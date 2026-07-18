@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Building2 } from 'lucide-react';
@@ -41,7 +41,9 @@ function resolveCategoryImage(category: Category): string {
 
 export default function LandingCategoryCard({ category, className }: LandingCategoryCardProps) {
   const [imageError, setImageError] = useState(false);
+  const reactId = useId().replace(/:/g, '');
   const href = buildCategoryPath(category?.seo_url, category?.id);
+  const titleId = `landing-category-${category?.id || reactId}-title-${reactId}`;
 
   return (
     <Card
@@ -52,12 +54,13 @@ export default function LandingCategoryCard({ category, className }: LandingCate
     >
       <Link
         href={href}
+        aria-labelledby={titleId}
         className="flex h-full flex-col rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <div className="relative h-[92px] shrink-0 overflow-hidden bg-slate-100 sm:h-[96px]">
           <Image
             src={imageError ? CATEGORY_IMAGE_PLACEHOLDER : resolveCategoryImage(category)}
-            alt={`Solução de ${category?.name || 'energia solar'}`}
+            alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover object-center transition-transform duration-300 group-hover/card:scale-[1.03]"
@@ -68,7 +71,7 @@ export default function LandingCategoryCard({ category, className }: LandingCate
 
         <div className="flex min-h-0 flex-1 flex-col px-3.5 py-3 sm:px-4">
           <div>
-            <h3 className="line-clamp-2 text-sm font-semibold leading-[1.25rem] tracking-tight text-slate-950">
+            <h3 id={titleId} className="line-clamp-2 text-sm font-semibold leading-[1.25rem] tracking-tight text-slate-950">
               {category?.name || 'Categoria'}
             </h3>
             <p className="mt-1 line-clamp-2 text-xs leading-[1.05rem] text-slate-500">

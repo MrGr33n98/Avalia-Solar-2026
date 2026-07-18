@@ -102,13 +102,14 @@ export default function ChatWidget() {
 
   // Estados para Fase 4A - Discovery Guiado
   const [activeWizard, setActiveWizard] = useState<'solar' | 'ev' | null>(null);
-  const [wizardAnswers, setWizardAnswers] = useState<Record<string, string>>({});
+  const [, setWizardAnswers] = useState<Record<string, string>>({});
   const [showDiscoveryMenu, setShowDiscoveryMenu] = useState(false);
   const [reengagementVariant, setReengagementVariant] = useState<'idle_30s' | 'idle_60s' | 'after_companies' | null>(null);
   const [showReengagementPrompt, setShowReengagementPrompt] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [canShowInvite, setCanShowInvite] = useState(false);
+  const compactHelpId = 'mobivolt-ai-compact-help';
 
   const allCompanies = messages
     .filter(msg => msg.metadata?.type === 'company_recommendations')
@@ -346,7 +347,7 @@ export default function ChatWidget() {
         track('mobivolt_company_card_viewed', {
           session_id: lastMsg.id,
           companies_count: companies.length,
-          company_ids: companies.map((c: any) => c.id)
+          company_ids: (companies as Array<{ id?: unknown }>).map((company) => company.id)
         });
       }
     }
@@ -413,7 +414,9 @@ export default function ChatWidget() {
 
     // Compila os metadados de RAG, cliques e LGPD
     const allRecommendedCompanyIds = messages
-      .flatMap(m => m.metadata?.companies?.map((c: any) => c.id) || [])
+      .flatMap((message) =>
+        ((message.metadata?.companies || []) as Array<{ id?: unknown }>).map((company) => company.id)
+      )
       .filter((id): id is number => typeof id === 'number');
 
     const enrichedMetadata = {
@@ -495,13 +498,14 @@ export default function ChatWidget() {
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt="MobiVolt AI Avatar"
+                    alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full"></span>
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full" aria-hidden="true"></span>
               </div>
               <div>
                 <h3 className="font-semibold text-sm tracking-wide">MobiVolt AI</h3>
@@ -511,6 +515,7 @@ export default function ChatWidget() {
             <div className="flex items-center space-x-1">
               {messages.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => {
                     if (window.confirm('Deseja iniciar uma nova conversa e limpar o histórico atual?')) {
                       setWizardAnswers({});
@@ -521,21 +526,22 @@ export default function ChatWidget() {
                       clearSession();
                     }
                   }}
-                  className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full"
+                  className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   aria-label="Nova conversa"
                   title="Nova conversa"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full"
+                className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label="Minimizar chat"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 12H6" />
                 </svg>
               </button>
@@ -547,25 +553,27 @@ export default function ChatWidget() {
             {messages.length === 0 && !isLoading && !hasAcceptedTerms && (
               <div className="flex flex-col items-center justify-center h-full space-y-5 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-1 border-2 border-brand-blue/20">
-                   <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                    </svg>
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-bold text-zinc-900 dark:text-white text-base">Termos e Privacidade</h3>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    Para iniciar sua consultoria com o MobiVolt AI, ao clicar em <span className="font-bold text-zinc-900 dark:text-zinc-100">"Aceitar"</span>, você confirma que leu e concorda com nossos termos e condições de uso de dados.
+                    Para iniciar sua consultoria com o MobiVolt AI, ao clicar em <span className="font-bold text-zinc-900 dark:text-zinc-100">&quot;Aceitar&quot;</span>, você confirma que leu e concorda com nossos termos e condições de uso de dados.
                   </p>
                 </div>
 
                 <div className="flex flex-col w-full space-y-2 pt-2">
                   <button
+                    type="button"
                     onClick={handleAcceptTerms}
                     className="w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95"
                   >
                     Aceitar
                   </button>
                   <button
+                    type="button"
                     onClick={() => setIsOpen(false)}
                     className="w-full bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-medium py-2 rounded-xl text-xs transition-all"
                   >
@@ -582,9 +590,10 @@ export default function ChatWidget() {
             {messages.length === 0 && !isLoading && hasAcceptedTerms && !showDiscoveryMenu && !activeWizard && (
               <div className="flex flex-col items-center justify-center min-h-full space-y-4 py-8 px-5 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
+                   {/* eslint-disable-next-line @next/next/no-img-element */}
                    <img
                     src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt="MobiVolt AI"
+                    alt=""
                     className="w-24 h-24 object-cover rounded-full"
                   />
                 </div>
@@ -599,12 +608,13 @@ export default function ChatWidget() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-2">
                   {discoveryActions.map((action) => (
                     <button
+                      type="button"
                       key={action.label}
                       onClick={() => executeInviteAction(action)}
                       className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
                     >
                       <span className="block text-sm">{action.label}</span>
-                      <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
@@ -674,9 +684,10 @@ export default function ChatWidget() {
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/images/mobivolt-ai-avaliasolar.webp"
-                      alt="MobiVolt AI"
+                      alt=""
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -718,6 +729,7 @@ export default function ChatWidget() {
                     <div className="flex items-center space-x-2 px-1 text-xs text-zinc-400 dark:text-zinc-500">
                       <span>Esta resposta foi útil?</span>
                       <button
+                        type="button"
                         onClick={() => sendFeedback(msg.id, 1)}
                         className={`hover:text-brand-blue transition-colors ${msg.feedback === 1 ? 'text-brand-blue font-bold' : ''}`}
                         aria-label="Útil"
@@ -725,6 +737,7 @@ export default function ChatWidget() {
                         👍
                       </button>
                       <button
+                        type="button"
                         onClick={() => sendFeedback(msg.id, -1)}
                         className={`hover:text-red-500 transition-colors ${msg.feedback === -1 ? 'text-red-500 font-bold' : ''}`}
                         aria-label="Não útil"
@@ -741,9 +754,10 @@ export default function ChatWidget() {
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt="MobiVolt AI"
+                    alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -782,6 +796,7 @@ export default function ChatWidget() {
               <div className="flex flex-wrap gap-2 pt-2">
                 {initialQuickReplies.map((reply, i) => (
                   <button
+                    type="button"
                     key={i}
                     onClick={() => handleQuickReply(reply)}
                     className="text-xs text-left bg-brand-blue/5 dark:bg-brand-blue/10 text-brand-blue dark:text-brand-blue-light border border-brand-blue/20 dark:border-brand-blue/30 hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-full px-3.5 py-1.5 transition-all font-medium duration-200"
@@ -807,7 +822,7 @@ export default function ChatWidget() {
               <div className="bg-white dark:bg-zinc-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg space-y-4 animate-in fade-in zoom-in-95 mt-4">
                 <div className="flex flex-col items-center justify-center text-center space-y-2">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-500 mb-2">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -869,7 +884,7 @@ export default function ChatWidget() {
                     rel="noopener noreferrer"
                     className="flex w-full items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg text-sm shadow-md transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
                     </svg>
                     <span>Falar no WhatsApp</span>
@@ -907,15 +922,16 @@ export default function ChatWidget() {
               disabled={isLoading || showLeadForm}
               onChange={(e) => setInput(e.target.value)}
               placeholder={showLeadForm ? "Preencha o formulário acima..." : "Escreva sua mensagem..."}
+              aria-label="Mensagem para o assistente"
               className="flex-1 px-4 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading || showLeadForm}
-              className="bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl p-2 transition-colors disabled:opacity-50 shadow-md shadow-brand-blue/10"
+              className="bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl p-2 transition-colors disabled:opacity-50 shadow-md shadow-brand-blue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
               aria-label="Enviar mensagem"
             >
-              <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
@@ -928,7 +944,7 @@ export default function ChatWidget() {
                 onClick={() => setShowComparisonModal(true)}
                 className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold px-4 py-2.5 rounded-full shadow-xl text-xs flex items-center space-x-2 hover:scale-105 transition-transform"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
                 <span>Ver Comparação ({comparedCompanyIds.length})</span>
               </button>
             </div>
@@ -946,6 +962,7 @@ export default function ChatWidget() {
 
       {!isOpen && showCompactHelp && (
         <section
+          id={compactHelpId}
           aria-label="Ajuda rápida do MobiVolt AI"
           className="pointer-events-auto mb-3 max-h-[45vh] w-[calc(100vw-2rem)] max-w-[360px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 animate-in fade-in slide-in-from-bottom-3 duration-200 sm:hidden"
         >
@@ -964,9 +981,9 @@ export default function ChatWidget() {
                   track('ai_panel_minimized', {});
                 }}
                 aria-label="Minimizar ajuda"
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
-                <Minus className="h-3 w-3" />
+                <Minus className="h-3 w-3" aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -975,9 +992,9 @@ export default function ChatWidget() {
                   track('ai_panel_closed', {});
                 }}
                 aria-label="Fechar ajuda"
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"
+                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3 w-3" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -988,7 +1005,7 @@ export default function ChatWidget() {
               onClick={handleCompactReviews}
               className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
             >
-              <Star className="h-4 w-4" />
+              <Star className="h-4 w-4" aria-hidden="true" />
               <span className="flex-1">Ver avaliações</span>
               <span aria-hidden="true">→</span>
             </button>
@@ -997,7 +1014,7 @@ export default function ChatWidget() {
               onClick={handleCompactComparison}
               className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
             >
-              <Scale className="h-4 w-4" />
+              <Scale className="h-4 w-4" aria-hidden="true" />
               <span className="flex-1">Comparar empresas</span>
               <span aria-hidden="true">→</span>
             </button>
@@ -1006,14 +1023,14 @@ export default function ChatWidget() {
               onClick={handleCompactQuote}
               className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
             >
-              <FileText className="h-4 w-4" />
+              <FileText className="h-4 w-4" aria-hidden="true" />
               <span className="flex-1">Pedir orçamento</span>
               <span aria-hidden="true">→</span>
             </button>
           </div>
 
           <p className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
             Patrocínios não alteram sua comparação.
           </p>
         </section>
@@ -1031,10 +1048,10 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={dismissInviteBubble}
-              className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="rounded-full p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Fechar convite do chat"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -1058,12 +1075,14 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 dark:bg-zinc-900 sm:h-[60px] sm:w-[60px]"
-          aria-label="Abrir assistente de IA"
+          className="group pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-[60px] sm:w-[60px]"
+          aria-label={showCompactHelp ? 'Fechar assistente de IA (inteligência artificial)' : 'Abrir assistente de IA (inteligência artificial)'}
           aria-expanded={showCompactHelp}
+          aria-controls={showCompactHelp ? compactHelpId : undefined}
+          aria-haspopup="dialog"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1.5 py-0.5 text-[9px] font-bold text-white dark:border-zinc-900">
+          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1.5 py-0.5 text-[9px] font-bold text-white dark:border-zinc-900" aria-hidden="true">
             IA
           </span>
 
@@ -1072,7 +1091,7 @@ export default function ChatWidget() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/mobivolt-ai-avaliasolar.webp"
-              alt="MobiVolt AI Avatar"
+              alt=""
               className="h-full w-full rounded-full object-cover"
             />
           </span>

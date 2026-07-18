@@ -223,6 +223,7 @@ const CarouselPrevious = React.forwardRef<
   return (
     <Button
       ref={ref}
+      type="button"
       variant={variant}
       size={size}
       className={cn(
@@ -236,8 +237,8 @@ const CarouselPrevious = React.forwardRef<
       onClick={scrollPrev}
       {...props}
     >
-      <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Previous slide</span>
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      <span className="sr-only">Slide anterior</span>
     </Button>
   );
 });
@@ -252,6 +253,7 @@ const CarouselNext = React.forwardRef<
   return (
     <Button
       ref={ref}
+      type="button"
       variant={variant}
       size={size}
       className={cn(
@@ -265,8 +267,8 @@ const CarouselNext = React.forwardRef<
       onClick={scrollNext}
       {...props}
     >
-      <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Next slide</span>
+      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      <span className="sr-only">Próximo slide</span>
     </Button>
   );
 });
@@ -288,13 +290,15 @@ const CarouselIndicators = React.forwardRef<
     >
       {scrollSnaps.map((_, index) => (
         <button
+          type="button"
           key={index}
           className={cn(
             'h-1.5 rounded-full transition-all duration-300',
             index === selectedIndex ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
           )}
           onClick={() => scrollTo(index)}
-          aria-label={`Go to slide ${index + 1}`}
+          aria-label={`Ir para o slide ${index + 1}`}
+          aria-current={index === selectedIndex ? 'true' : undefined}
         />
       ))}
     </div>

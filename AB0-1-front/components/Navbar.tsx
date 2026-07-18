@@ -44,6 +44,8 @@ export default function Navbar() {
   const logoPriority = pathname === '/';
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
   const hideNavbar = pathname?.startsWith('/f/');
+  const categoriesMegaMenuId = 'categories-mega-menu';
+  const mobileCategoriesDrawerId = 'mobile-categories-drawer';
 
   const handleLocationSelect = (location: { state: string; city?: string }) => {
     const params = new URLSearchParams();
@@ -125,6 +127,9 @@ export default function Navbar() {
                 variant="ghost"
                 className="h-10 rounded-none border-b-2 border-transparent px-3 text-sm font-medium text-slate-700 hover:border-blue-600 hover:bg-white hover:text-blue-700"
                 onClick={toggleMegaMenu}
+                aria-expanded={isMegaMenuOpen}
+                aria-controls={megaMenuMounted ? categoriesMegaMenuId : undefined}
+                aria-haspopup="menu"
               >
                 Categorias{' '}
                 <ChevronDown
@@ -132,10 +137,12 @@ export default function Navbar() {
                     'ml-1 h-4 w-4 transition-transform',
                     isMegaMenuOpen && 'rotate-180'
                   )}
+                  aria-hidden="true"
                 />
               </Button>
               {megaMenuMounted ? (
                 <CategoriesMegaMenu
+                  id={categoriesMegaMenuId}
                   isOpen={isMegaMenuOpen}
                   onClose={() => setIsMegaMenuOpen(false)}
                 />
@@ -162,8 +169,8 @@ export default function Navbar() {
               size="icon"
               className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
             >
-              <Link href="/search" aria-label="Buscar">
-                <Search className="h-5 w-5" />
+              <Link href="/search" aria-label="Buscar no site">
+                <Search className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
 
@@ -175,7 +182,7 @@ export default function Navbar() {
                   className="hidden h-10 rounded-lg px-3 text-sm font-bold text-slate-600 sm:inline-flex"
                 >
                   <Link href="/login">
-                    <UserIcon className="mr-1.5 h-4 w-4" /> Entrar
+                    <UserIcon className="mr-1.5 h-4 w-4" aria-hidden="true" /> Entrar
                   </Link>
                 </Button>
                 <Button
@@ -198,16 +205,19 @@ export default function Navbar() {
                 if (!mobileDrawerMounted) setMobileDrawerMounted(true);
                 setIsMobileDrawerOpen(true);
               }}
-              aria-label="Abrir menu"
+              aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
+              aria-expanded={isMobileDrawerOpen}
+              aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
               className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
           </div>
         </div>
 
         {mobileDrawerMounted ? (
           <MobileCategoriesDrawer
+            id={mobileCategoriesDrawerId}
             isOpen={isMobileDrawerOpen}
             onClose={() => setIsMobileDrawerOpen(false)}
           />
@@ -269,6 +279,9 @@ export default function Navbar() {
                   isMegaMenuOpen ? 'border-blue-600 text-blue-700 shadow-none' : ''
                 )}
                 onClick={toggleMegaMenu}
+                aria-expanded={isMegaMenuOpen}
+                aria-controls={megaMenuMounted ? categoriesMegaMenuId : undefined}
+                aria-haspopup="menu"
               >
                 Categorias
                 <ChevronDown
@@ -276,11 +289,13 @@ export default function Navbar() {
                     'h-3.5 w-3.5 transition-transform duration-300',
                     isMegaMenuOpen && 'rotate-180'
                   )}
+                  aria-hidden="true"
                 />
               </Button>
 
               {megaMenuMounted && (
                 <CategoriesMegaMenu
+                  id={categoriesMegaMenuId}
                   isOpen={isMegaMenuOpen}
                   onClose={() => setIsMegaMenuOpen(false)}
                 />
@@ -341,8 +356,8 @@ export default function Navbar() {
               isChatRoute ? 'h-10 rounded-xl' : 'h-11 rounded-xl'
             )}
           >
-            <Link href="/search" aria-label="Buscar">
-              <Search className="mr-2 h-[18px] w-[18px]" />
+            <Link href="/search">
+              <Search className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
               <span>Buscar</span>
             </Link>
           </Button>
@@ -370,13 +385,15 @@ export default function Navbar() {
               if (!mobileDrawerMounted) setMobileDrawerMounted(true);
               setIsMobileDrawerOpen(true);
             }}
-            aria-label="Menu"
+            aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
+            aria-expanded={isMobileDrawerOpen}
+            aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
             className={cn(
               'shrink-0 border border-brand-border bg-white text-slate-600 shadow-none hover:bg-slate-50 hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
               isChatRoute ? 'h-10 w-10 rounded-xl' : 'h-11 w-11 rounded-xl'
             )}
           >
-            <Menu className={cn(isChatRoute ? 'h-5 w-5' : 'h-6 w-6')} />
+            <Menu className={cn(isChatRoute ? 'h-5 w-5' : 'h-6 w-6')} aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -384,6 +401,7 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileDrawerMounted && (
         <MobileCategoriesDrawer
+          id={mobileCategoriesDrawerId}
           isOpen={isMobileDrawerOpen}
           onClose={() => setIsMobileDrawerOpen(false)}
         />

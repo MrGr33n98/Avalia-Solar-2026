@@ -253,7 +253,11 @@ export function BannerContainer({
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full h-full"
-            aria-label={banner.alt_text?.trim() || banner.title || 'Abrir anúncio'}
+            aria-label={
+              banner.sponsored
+                ? `Patrocinado: ${banner.alt_text?.trim() || banner.title || 'Abrir anúncio'}`
+                : banner.alt_text?.trim() || banner.title || 'Abrir anúncio'
+            }
             onClick={() => trackBannerClick(banner)}
           >
             {renderBannerContent(banner, isPriority)}

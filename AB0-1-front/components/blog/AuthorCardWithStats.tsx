@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Linkedin, Mail, Twitter, FileText, Star, Users } from 'lucide-react';
+import { FileText, Linkedin, Star, Users } from 'lucide-react';
 
 interface AuthorCardWithStatsProps {
   name: string;
@@ -39,11 +39,21 @@ export function AuthorCardWithStats({
           </Avatar>
           
           <div className="flex gap-2">
-            <a href="https://www.linkedin.com/in/felipe-morais-8bb61a7b/?locale=pt" target="_blank" rel="noopener noreferrer">
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-[#0077b5]/10 text-slate-500 hover:text-[#0077b5] transition-colors">
-                <Linkedin className="w-4 h-4" />
-              </Button>
-            </a>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-[#0077b5]/10 text-slate-500 hover:text-[#0077b5] transition-colors"
+            >
+              <a
+                href="https://www.linkedin.com/in/felipe-morais-8bb61a7b/?locale=pt"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Abrir LinkedIn de ${name}`}
+              >
+                <Linkedin className="w-4 h-4" aria-hidden="true" />
+              </a>
+            </Button>
           </div>
         </div>
         
@@ -62,22 +72,22 @@ export function AuthorCardWithStats({
           {stats && (
             <div className="grid grid-cols-3 gap-4 border-t border-slate-200 pt-4 mt-4 w-full max-w-md mx-auto sm:mx-0">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                  <FileText className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-1.5 text-slate-600 mb-1">
+                  <FileText className="w-4 h-4" aria-hidden="true" />
                   <span className="text-xs font-semibold uppercase tracking-wider">Posts</span>
                 </div>
                 <span className="font-bold text-slate-900">{stats.posts}</span>
               </div>
               <div className="text-center border-l border-slate-200">
-                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                  <Star className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-1.5 text-slate-600 mb-1">
+                  <Star className="w-4 h-4" aria-hidden="true" />
                   <span className="text-xs font-semibold uppercase tracking-wider">Likes</span>
                 </div>
                 <span className="font-bold text-slate-900">{stats.likes}</span>
               </div>
               <div className="text-center border-l border-slate-200">
-                <div className="flex items-center justify-center gap-1.5 text-slate-400 mb-1">
-                  <Users className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-1.5 text-slate-600 mb-1">
+                  <Users className="w-4 h-4" aria-hidden="true" />
                   <span className="text-xs font-semibold uppercase tracking-wider">Seguidores</span>
                 </div>
                 <span className="font-bold text-slate-900">

@@ -58,7 +58,7 @@ export function BlogPromoBanner({
             aria-label="Fechar banner"
             className="text-slate-500 hover:text-slate-700"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </Button>
         )}
       </div>

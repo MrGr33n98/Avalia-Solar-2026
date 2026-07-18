@@ -17,6 +17,7 @@ import {
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  id?: string;
 }
 
 function getCategoryHref(category: CategoryTreeNode) {
@@ -55,6 +56,7 @@ function filterSubcategories(category: CategoryTreeNode, query: string) {
 export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
   isOpen,
   onClose,
+  id = 'mobile-categories-drawer',
 }) => {
   const { categories, loading, error } = useCategoriesTree();
   const [selectedCategory, setSelectedCategory] = useState<CategoryTreeNode | null>(null);
@@ -89,6 +91,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeDrawer()}>
       <SheetContent
+        id={id}
         side="left"
         className="bottom-0 top-0 flex h-dvh max-h-dvh w-[92vw] max-w-[430px] flex-col gap-0 rounded-none border-r border-slate-200 bg-white p-0 shadow-[8px_0_24px_rgba(15,23,42,0.08)] sm:w-[420px] [&>button]:hidden"
       >
@@ -99,10 +102,10 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50"
-                  aria-label="Voltar"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  aria-label="Voltar para categorias principais"
                 >
-                  <ArrowLeft className="h-[18px] w-[18px]" />
+                  <ArrowLeft className="h-[18px] w-[18px]" aria-hidden="true" />
                 </button>
               )}
               <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">
@@ -113,21 +116,22 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 bg-white text-slate-950 transition-colors hover:bg-slate-50"
-              aria-label="Fechar categorias"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 bg-white text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-label="Fechar menu de categorias"
             >
-              <X className="h-[18px] w-[18px]" />
+              <X className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           </div>
 
           <label className="mt-4 flex h-11 items-center gap-2.5 rounded-none border border-slate-300 bg-white px-3.5 text-slate-500 shadow-none focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20">
-            <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" />
+            <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={
                 selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
               }
+              aria-label={selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'}
               className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
             />
           </label>
@@ -159,7 +163,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
             onClick={closeDrawer}
             className="flex h-12 w-full items-center justify-center gap-2.5 rounded-none bg-blue-700 text-sm font-semibold text-white shadow-none transition-colors hover:bg-blue-800"
           >
-            <Grid2X2 className="h-[18px] w-[18px]" />
+            <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
             Ver todas as categorias
           </Link>
         </div>
@@ -192,7 +196,7 @@ function ErrorState() {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
       <div className="mb-4 rounded-none border border-amber-200 bg-amber-50 p-4 text-amber-500">
-        <Zap className="h-8 w-8" />
+        <Zap className="h-8 w-8" aria-hidden="true" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-slate-950">Menu em manutenção</h3>
       <p className="mb-6 text-sm leading-relaxed text-slate-500">
@@ -203,7 +207,7 @@ function ErrorState() {
         onClick={() => window.location.reload()}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-none border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
       >
-        <RefreshCw className="h-4 w-4 text-blue-600" />
+        <RefreshCw className="h-4 w-4 text-blue-600" aria-hidden="true" />
         Recarregar menu
       </button>
     </div>
@@ -234,7 +238,7 @@ function MainCategoriesView({
             key={category.id}
             type="button"
             onClick={() => (hasChildren ? onOpenCategory(category) : undefined)}
-            className={`flex min-h-[68px] w-full items-center gap-3 rounded-none border-x-0 border-b border-t-0 px-3 text-left transition-colors ${
+            className={`flex min-h-[68px] w-full items-center gap-3 rounded-none border-x-0 border-b border-t-0 px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               index === 0
                 ? 'border-blue-200 bg-blue-50/40'
                 : 'border-slate-100 bg-white hover:border-blue-100 hover:bg-blue-50/30'
@@ -249,7 +253,7 @@ function MainCategoriesView({
                 {formatCount(category.companies_count || 0)}
               </p>
             </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-blue-700" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-blue-700" aria-hidden="true" />
           </button>
         );
       })}
@@ -260,7 +264,7 @@ function MainCategoriesView({
         className="flex min-h-[68px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-slate-200 bg-white px-3 transition-colors hover:bg-blue-50/40"
       >
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-blue-50 text-blue-700">
-          <Grid2X2 className="h-5 w-5" />
+          <Grid2X2 className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-medium text-slate-950">Ver todas as categorias</p>
@@ -268,7 +272,7 @@ function MainCategoriesView({
             Explore todas as opções disponíveis
           </p>
         </div>
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
       </Link>
     </div>
   );
@@ -291,12 +295,12 @@ function SubcategoryView({
         className="flex min-h-[64px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-blue-100 bg-blue-50/60 px-3 text-blue-700 transition-colors hover:bg-blue-50"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-white text-blue-700 shadow-none">
-          <Grid2X2 className="h-[18px] w-[18px]" />
+          <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
         <p className="min-w-0 flex-1 text-[15px] font-medium leading-tight">
           Ver tudo em {category.name}
         </p>
-        <ChevronRight className="h-5 w-5 shrink-0" />
+        <ChevronRight className="h-5 w-5 shrink-0" aria-hidden="true" />
       </Link>
 
       {subcategories.map((subcategory) => {
@@ -321,7 +325,7 @@ function SubcategoryView({
                 {subcategory.companies_count}
               </span>
             )}
-            <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
           </Link>
         );
       })}
@@ -353,13 +357,13 @@ function CategoryIcon({
       {fallbackIcon ? (
         <Image
           src={fallbackIcon}
-          alt={`Ícone de ${name}`}
+          alt=""
           fill
           className="object-contain p-1"
           sizes={imageSize}
         />
       ) : (
-        <Grid2X2 className="h-5 w-5 text-blue-700" />
+        <Grid2X2 className="h-5 w-5 text-blue-700" aria-hidden="true" />
       )}
     </span>
   );

@@ -11,7 +11,7 @@ export function ChecklistCard() {
     <Card className="border-slate-100 shadow-sm overflow-hidden bg-white">
       <CardHeader className="pb-2 bg-slate-50/50">
         <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <CheckSquare className="w-5 h-5 text-primary" />
+          <CheckSquare className="w-5 h-5 text-primary" aria-hidden="true" />
           Checklist Popular
         </CardTitle>
       </CardHeader>
@@ -32,18 +32,18 @@ export function ChecklistCard() {
         <div className="p-4 space-y-3">
           <ul className="text-xs text-slate-600 space-y-2">
             <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
               Guia passo a passo da instalação
             </li>
             <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true" />
               Checklist para validar orçamentos
             </li>
           </ul>
           <Button className="w-full font-bold" size="sm">
             Baixar Checklist
           </Button>
-          <p className="text-[10px] text-center text-slate-400">
+          <p className="text-[10px] text-center text-slate-600">
             Mais de 1.000 downloads este mês
           </p>
         </div>

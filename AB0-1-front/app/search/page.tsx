@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
-import { CompanyCardEnhanced } from '@/components/search/CompanyCardEnhanced';
+import CompanyCard from '@/components/CompanyCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
 import {
   defaultSearchFilters,
@@ -34,6 +34,7 @@ import { searchApi } from '@/lib/api';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
 import { CONTACT } from '@/lib/site';
 import { buildCategoryPath } from '@/lib/slug';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const normalize = (value: unknown) =>
   String(value ?? '')
@@ -99,9 +100,10 @@ function SearchPageContent() {
     city: urlCity,
     verifiedOnly: urlVerified,
   });
+  const isMobile = useIsMobile();
+  const companyCardVariant = isMobile ? 'standard' : 'expanded';
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
-  const [companyFavorites, setCompanyFavorites] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     setSearchTerm(query);
@@ -117,9 +119,6 @@ function SearchPageContent() {
     try {
       setProductFavorites(
         new Set<number>(JSON.parse(localStorage.getItem('search-product-favorites') || '[]'))
-      );
-      setCompanyFavorites(
-        new Set<number>(JSON.parse(localStorage.getItem('search-company-favorites') || '[]'))
       );
     } catch {
       // Storage indisponível ou valor antigo inválido: favoritos começam vazios.
@@ -286,7 +285,7 @@ function SearchPageContent() {
   };
 
   const toggleFavorite = (
-    kind: 'product' | 'company',
+    kind: 'product',
     id: number,
     current: Set<number>,
     setter: (value: Set<number>) => void
@@ -480,20 +479,13 @@ function SearchPageContent() {
                           ) : undefined
                         }
                       >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-2">
                           {filteredCompanies.map((company) => (
-                            <CompanyCardEnhanced
+                            <CompanyCard
                               key={company.id}
                               company={company}
-                              favorite={companyFavorites.has(company.id)}
-                              onToggleFavorite={() =>
-                                toggleFavorite(
-                                  'company',
-                                  company.id,
-                                  companyFavorites,
-                                  setCompanyFavorites
-                                )
-                              }
+                              variant={companyCardVariant}
+                              compact={false}
                             />
                           ))}
                         </div>

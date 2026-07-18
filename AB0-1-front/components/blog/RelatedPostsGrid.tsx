@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Article } from '@/types/article';
@@ -24,7 +24,7 @@ export function RelatedPostsGrid({ articles }: RelatedPostsGridProps) {
       <div className="flex items-center justify-between mb-8">
         <h3 className="text-2xl font-bold text-slate-900">Continue Lendo</h3>
         <Button variant="link" className="text-primary" asChild>
-          <Link href="/blog">Ver todos <ArrowRight className="ml-2 w-4 h-4" /></Link>
+          <Link href="/blog">Ver todos <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" /></Link>
         </Button>
       </div>
       
@@ -72,7 +72,7 @@ export function RelatedPostsGrid({ articles }: RelatedPostsGridProps) {
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
+                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600 text-sm">
                       Sem imagem
                     </div>
                   )}
@@ -85,7 +85,7 @@ export function RelatedPostsGrid({ articles }: RelatedPostsGridProps) {
                 
                 <CardContent className="p-4 pt-5 px-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{readTime} min leitura</span>
                   </div>
                   <h4 className="font-bold text-lg text-slate-900 leading-tight group-hover:text-primary transition-colors line-clamp-2">

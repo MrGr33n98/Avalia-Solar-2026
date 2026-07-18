@@ -3,7 +3,6 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar, ArrowRight } from 'lucide-react';
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
@@ -42,7 +41,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
       {/* Section header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <span className="block w-0.5 h-5 bg-blue-600" />
+          <span className="block w-0.5 h-5 bg-blue-600" aria-hidden="true" />
           <h2 className="text-lg font-semibold text-gray-900 tracking-tight">
             Destaques da Semana
           </h2>
@@ -51,7 +50,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
           href="/blog"
           className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
         >
-          Ver todos <ArrowRight className="w-3.5 h-3.5" />
+          Ver todos <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
 
@@ -115,14 +114,14 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                               className="object-cover object-top"
                             />
                             <AvatarFallback className="bg-white/10 text-[9px] text-white">
-                              <User className="w-2.5 h-2.5" />
+                              <User className="w-2.5 h-2.5" aria-hidden="true" />
                             </AvatarFallback>
                           </Avatar>
                           <span>{mainAuthorName}</span>
                         </div>
                       )}
                       <span suppressHydrationWarning className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 opacity-70" />
+                        <Calendar className="w-3 h-3 opacity-70" aria-hidden="true" />
                         {format(
                           new Date(mainPost.published_at || mainPost.created_at || new Date()),
                           'd MMM, yyyy',
@@ -131,7 +130,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                       </span>
                       {mainReadingTime ? (
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 opacity-70" />
+                          <Clock className="w-3 h-3 opacity-70" aria-hidden="true" />
                           {mainReadingTime} min
                         </span>
                       ) : null}
@@ -197,9 +196,9 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                   <h4 className="font-medium text-sm text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-700 transition-colors">
                     {post.title}
                   </h4>
-                  <div className="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-400">
+                  <div className="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-500">
                     <span suppressHydrationWarning className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
+                      <Calendar className="w-3 h-3" aria-hidden="true" />
                       {format(
                         new Date(post.published_at || post.created_at || new Date()),
                         'd MMM',
@@ -207,7 +206,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                       )}
                     </span>
                     <span className="flex items-center gap-1 font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Ler <ArrowRight className="w-3 h-3" />
+                      Ler <ArrowRight className="w-3 h-3" aria-hidden="true" />
                     </span>
                   </div>
                 </div>
@@ -216,7 +215,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
           })}
 
           {/* Promo Slot */}
-          <div className="border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center h-[76px] text-xs text-gray-400 font-medium">
+          <div className="border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center h-[76px] text-xs text-gray-500 font-medium">
             Publicidade · Solar
           </div>
         </div>

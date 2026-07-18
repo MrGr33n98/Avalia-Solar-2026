@@ -11,8 +11,16 @@ import { VerifiedCompaniesMiniList } from '@/components/blog/VerifiedCompaniesMi
 import { ChecklistCard } from '@/components/blog/ChecklistCard';
 import BannerByLocation from '@/components/BannerByLocation';
 
+type SidebarCompany = {
+  id: number;
+  name: string;
+  rating: number;
+  city: string;
+  logo_url?: string;
+};
+
 interface BlogSidebarProps {
-  verifiedCompanies?: any[];
+  verifiedCompanies?: SidebarCompany[];
 }
 
 export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
@@ -26,19 +34,19 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
       {/* 1. Simulador de Economia */}
       <div className="border border-gray-100 bg-white p-5 space-y-4">
         <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
-          <Calculator className="w-4 h-4 text-blue-600 shrink-0" />
+          <Calculator className="w-4 h-4 text-blue-600 shrink-0" aria-hidden="true" />
           <div>
             <h3 className="text-sm font-semibold text-gray-900 leading-tight">
               Simular Economia Solar
             </h3>
-            <p className="text-[11px] text-gray-400 mt-0.5 font-normal">
+            <p className="text-[11px] text-gray-500 mt-0.5 font-normal">
               Descubra o potencial da sua conta de luz.
             </p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="sidebar-state" className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+          <Label htmlFor="sidebar-state" className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
             Onde você mora?
           </Label>
           <Select>
@@ -65,7 +73,7 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
           Receber Orçamento Grátis
         </Button>
 
-        <div className="relative flex items-center gap-2 text-[10px] text-gray-300">
+        <div className="relative flex items-center gap-2 text-[10px] text-gray-500">
           <div className="flex-1 h-px bg-gray-100" />
           <span>ou fale agora</span>
           <div className="flex-1 h-px bg-gray-100" />
@@ -76,11 +84,11 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
           className="w-full rounded-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 font-medium h-9 text-sm shadow-none"
           onClick={() => window.open('https://wa.me/556593465055', '_blank')}
         >
-          <MessageCircle className="w-3.5 h-3.5 mr-2" />
+          <MessageCircle className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
           Chamar no WhatsApp
         </Button>
 
-        <p className="text-[10px] text-center text-gray-400">
+        <p className="text-[10px] text-center text-gray-500">
           +15.000 orçamentos realizados
         </p>
       </div>
@@ -88,12 +96,12 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
       {/* 2. Newsletter */}
       <div className="border border-gray-100 bg-gray-900 p-5 space-y-3.5">
         <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+          <Mail className="w-4 h-4 text-blue-400 shrink-0" aria-hidden="true" />
           <div>
             <h3 className="text-sm font-semibold text-white leading-tight">
               Newsletter Solar
             </h3>
-            <p className="text-[11px] text-gray-400 mt-0.5 font-normal">
+            <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
               50.000+ leitores. Dicas exclusivas toda semana.
             </p>
           </div>
@@ -109,7 +117,7 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
         >
           Receber Guia Gratuito
         </Button>
-        <p className="text-[10px] text-gray-500 text-center">
+        <p className="text-[10px] text-gray-300 text-center">
           Zero spam. Cancele quando quiser.
         </p>
       </div>
@@ -117,7 +125,7 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
       {/* 3. Verified Companies */}
       <div className="border border-gray-100 bg-white">
         <div className="flex items-center gap-2 p-4 border-b border-gray-50">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true" />
           <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
             Empresas Verificadas
           </h3>

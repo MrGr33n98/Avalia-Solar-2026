@@ -21,8 +21,8 @@ export function BlogHero() {
               <span className="text-[11px] font-semibold text-blue-600 tracking-widest uppercase">
                 Blog
               </span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span className="text-[11px] text-gray-400 font-medium">
+              <span className="w-1 h-1 rounded-full bg-gray-300" aria-hidden="true" />
+              <span className="text-[11px] text-gray-500 font-medium">
                 Energia Solar &amp; Mobilidade Elétrica
               </span>
             </div>
@@ -64,7 +64,7 @@ export function BlogHero() {
                 <p className="text-2xl font-semibold text-gray-900 tracking-tight">
                   {stat.value}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5 max-w-[90px] leading-snug">
+                <p className="text-xs text-gray-500 mt-0.5 max-w-[90px] leading-snug">
                   {stat.label}
                 </p>
               </div>
