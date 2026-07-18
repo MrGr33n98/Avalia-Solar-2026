@@ -1,6 +1,6 @@
 "use client";
 
-import { Award } from "lucide-react";
+import { Gem } from "lucide-react";
 import { Company } from "@/lib/api";
 import { isFeatureEnabled } from "@/lib/feature-access";
 
@@ -10,7 +10,8 @@ interface PremiumHighlightBadgeProps {
 
 export default function PremiumHighlightBadge({ company }: PremiumHighlightBadgeProps) {
   const isHighlightEnabled = isFeatureEnabled(company.feature_access, "highlight_badges");
-  const isProOrEnterprise = ["pro", "enterprise"].includes((company as any).plan_tier || "");
+  const planTier = (company as Company & { plan_tier?: string | null }).plan_tier || "";
+  const isProOrEnterprise = ["pro", "enterprise"].includes(planTier);
 
   if (!company.featured || (!isHighlightEnabled && !isProOrEnterprise)) {
     return null;
@@ -19,9 +20,9 @@ export default function PremiumHighlightBadge({ company }: PremiumHighlightBadge
   return (
     <span 
       id="premium-highlight-badge"
-      className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-3.5 py-1 text-xs font-black text-white shadow-md animate-shimmer"
+      className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black text-violet-700 shadow-sm"
     >
-      <Award className="h-3.5 w-3.5 text-white" />
+      <Gem className="h-3 w-3 fill-violet-600 text-violet-600" aria-hidden="true" />
       DESTAQUE PREMIUM
     </span>
   );
