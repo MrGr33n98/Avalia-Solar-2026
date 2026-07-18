@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, ChevronDown, Search, User as UserIcon } from 'lucide-react';
@@ -38,26 +38,12 @@ export default function Navbar() {
   const [megaMenuMounted, setMegaMenuMounted] = useState(false);
   const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const logoPriority = pathname === '/';
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
   const hideNavbar = pathname?.startsWith('/f/');
-
-  const handleMinhaContaClick = (e: React.MouseEvent) => {
-    if (user?.role === 'review') {
-      e.preventDefault();
-      setTimeout(() => {
-        router.push('/review-dashboard');
-      }, 50);
-    }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
 
   const handleLocationSelect = (location: { state: string; city?: string }) => {
     const params = new URLSearchParams();
@@ -97,23 +83,23 @@ export default function Navbar() {
   if (pathname === '/') {
     return (
       <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 lg:h-24 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:h-24 lg:gap-5 lg:px-8 xl:px-10">
           <Link
             href="/"
-            className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ml-2 md:ml-4"
+            className="ml-2 mr-2 flex shrink-0 items-center self-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:ml-4 lg:mr-6 xl:mr-8"
             aria-label="Home Avalia Solar"
           >
             <BrandLogo className="h-8 sm:h-9" priority />
           </Link>
 
-          <div className="hidden lg:flex flex-1 max-w-[750px] items-center gap-2 mx-4">
+          <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex xl:gap-4">
             <NavbarSearch
-              className="min-w-[12rem] flex-1"
+              className="min-w-[20rem] flex-[1_1_46%]"
               inputClassName="bg-slate-50 border-slate-200"
               placeholder="Buscar empresas, produtos..."
               onSearch={handleSearch}
             />
-            <div className="w-[210px] shrink-0">
+            <div className="w-[188px] shrink-0 xl:w-[210px]">
               <LocationSearch
                 className="w-full bg-slate-50 border-slate-200"
                 onLocationSelect={handleLocationSelect}
@@ -121,7 +107,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="hidden items-center gap-1 lg:flex">
+          <div className="hidden items-center gap-1 xl:flex">
             <Link
               href="/companies"
               className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
@@ -170,6 +156,17 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
+            >
+              <Link href="/search" aria-label="Buscar">
+                <Search className="h-5 w-5" />
+              </Link>
+            </Button>
+
             {!isAuthenticated ? (
               <>
                 <Button
