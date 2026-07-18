@@ -93,6 +93,69 @@ export const FOOTER_LOCAL_SOLAR_LINKS = BRAZIL_CAPITAL_SOLAR_PAGES.map((page) =>
   city: string;
 }[];
 
+// Curadoria baseada em páginas locais indexáveis e densidade real de empresas.
+// Florianópolis é uma prioridade editorial; as demais seguem relevância do marketplace.
+const PRIORITY_LOCAL_SOLAR_KEYS = [
+  'SC:florianopolis',
+  'SP:sao-paulo',
+  'MG:belo-horizonte',
+  'PR:curitiba',
+  'DF:brasilia',
+  'GO:goiania',
+] as const;
+
+export const FOOTER_PRIORITY_LOCAL_SOLAR_LINKS = PRIORITY_LOCAL_SOLAR_KEYS.map((key) => {
+  const [state, citySlug] = key.split(':');
+  const page = BRAZIL_CAPITAL_SOLAR_PAGES.find(
+    (candidate) => candidate.state === state && candidate.citySlug === citySlug
+  );
+
+  if (!page) throw new Error(`Footer local solar page not found: ${key}`);
+
+  return {
+    href: page.href,
+    label: `Energia solar em ${page.city}`,
+  };
+});
+
+export const FOOTER_DISCOVERY_SECTIONS = {
+  companies: [
+    { href: '/companies', label: 'Todas as empresas' },
+    { href: '/categories/energia-solar', label: 'Empresas de energia solar' },
+    { href: '/categories/instaladores-energia-solar', label: 'Instaladores de energia solar' },
+    {
+      href: '/categories/energia-solar-comercial-industrial',
+      label: 'Energia comercial e industrial',
+    },
+    { href: '/empresas-verificadas', label: 'Empresas verificadas' },
+    { href: '/categories', label: 'Ver todas as especialidades' },
+  ],
+  products: [
+    { href: '/products', label: 'Todos os produtos' },
+    { href: '/categories/paineis-solares', label: 'Painéis solares' },
+    { href: '/categories/baterias-armazenamento', label: 'Baterias e armazenamento' },
+    { href: '/categories/carregadores-residenciais', label: 'Carregadores residenciais' },
+    { href: '/categories/mobilidade-eletrica', label: 'Mobilidade elétrica' },
+    { href: '/products/compare', label: 'Comparar produtos' },
+  ],
+  content: [
+    { href: '/blog', label: 'Guias e notícias' },
+    { href: '/melhores-empresas', label: 'Melhores empresas' },
+    { href: '/como-funciona-o-ranking', label: 'Como funciona o ranking' },
+    { href: '/metodologia', label: 'Metodologia' },
+    { href: '/criterios-de-avaliacao', label: 'Critérios de avaliação' },
+    { href: '/dados-do-setor', label: 'Dados do setor' },
+  ],
+  support: [
+    { href: '/help', label: 'Central de ajuda' },
+    { href: '/contact', label: 'Fale conosco' },
+    { href: '/terms', label: 'Termos de uso' },
+    { href: '/privacy', label: 'Privacidade' },
+    { href: '/cookies', label: 'Cookies' },
+    { href: '/dmca', label: 'DMCA' },
+  ],
+} as const;
+
 export const STATIC_SITEMAP_LAST_MODIFIED = '2026-04-14T00:00:00.000Z';
 
 export function absoluteUrl(path: string) {
