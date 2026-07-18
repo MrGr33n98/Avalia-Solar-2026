@@ -1,7 +1,11 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeCheck, Building2, MapPin, Star } from 'lucide-react';
 
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
+import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 
@@ -34,10 +38,27 @@ function numberValue(value: unknown): number {
 
 export default function PublicCompanyCard({ company, rank }: PublicCompanyCardProps) {
   const href = buildCompanyPath(company.slug, company.name, company.id);
+  const companyId = numberValue(company.id);
   const rating = numberValue(company.average_rating ?? company.rating_avg ?? company.rating);
   const reviews = numberValue(company.rating_count ?? company.reviews_count ?? company.total_reviews);
   const location = [company.city, company.state].filter(Boolean).join(', ');
   const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+  const comparisonCompany = {
+    ...company,
+    id: companyId,
+    slug: company.slug || String(company.id),
+    city: company.city || '',
+    state: company.state || '',
+    status: 'active',
+    verified: Boolean(company.verified),
+    category: '',
+    description: '',
+    website: '',
+    phone: '',
+    address: '',
+    created_at: '',
+    updated_at: '',
+  } as Company;
 
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
@@ -102,12 +123,22 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         </div>
       </div>
 
-      <Link
-        href={href}
-        className="mt-4 inline-flex h-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
-      >
-        Ver perfil
-      </Link>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Link
+          href={href}
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          Ver perfil
+        </Link>
+        <ComparisonToggleButton
+          company={comparisonCompany}
+          variant="card"
+          size="sm"
+          compactLabel
+          className="h-10 rounded-xl shadow-none"
+          animated={false}
+        />
+      </div>
     </article>
   );
 }
