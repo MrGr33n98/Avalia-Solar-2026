@@ -116,6 +116,13 @@ export default function CompanyProfileShell({
             <CompanyProfileTabs
               activeTab={activeTab}
               onTabChange={onTabChange}
+              categories={
+                company.categories?.length
+                  ? company.categories
+                  : company.category_info
+                    ? [company.category_info]
+                    : []
+              }
               showFinancing={false}
               showGallery={false}
               showFaq={showFaq}
