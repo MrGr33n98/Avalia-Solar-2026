@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AnswerBlock from '@/components/seo/AnswerBlock';
 import WhatsappButton from '@/components/WhatsappButton';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { Company, Review } from '@/lib/api';
 import {
   CheckCircle2,
@@ -17,14 +18,12 @@ import {
   Phone,
   MapPin,
   Clock,
-  FileText,
   ExternalLink,
 } from 'lucide-react';
 import SponsoredBanner from './SponsoredBanner';
 import { RatingStars } from '@/components/RatingStars';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
 import { getFullImageUrl } from '@/utils/image';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 
 interface CompanyOverviewProps {
   company: Company;
@@ -424,18 +423,11 @@ function MobileCompanyOverview({ company }: { company: Company }) {
       </section>
 
       <section className="grid grid-cols-[1.15fr_0.85fr] gap-3">
-        <Button
-          onClick={() =>
-            openQuoteWizard({
-              source: 'company-mobile-overview',
-              preferredCompanyId: company.id,
-            })
-          }
+        <ReviewCompanyButton
+          company={company}
           className="h-14 rounded-2xl bg-blue-700 text-base font-black text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800"
-        >
-          <FileText className="mr-2 h-5 w-5" />
-          Solicitar orçamento
-        </Button>
+          iconClassName="h-5 w-5 fill-white text-white"
+        />
 
         {whatsappHref ? (
           <WhatsappButton

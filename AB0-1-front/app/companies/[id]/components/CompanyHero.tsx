@@ -4,6 +4,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
@@ -13,8 +14,6 @@ import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { trackCTAClick, trackCompanyProfileView } from '@/lib/analytics/track-cta';
-import Link from 'next/link';
-import { buildCompanySubPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
@@ -60,7 +59,7 @@ export default function CompanyHero({
   const [badgeImageError, setBadgeImageError] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
-  const quoteEnabled = canRequestQuote ?? company.active_admin === true;
+  const quoteEnabled = Boolean(canRequestQuote);
   const directChatAvailable =
     company.p2p_chat_enabled === true &&
     (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
@@ -68,7 +67,6 @@ export default function CompanyHero({
   const directChatEnabled = directChatVisible;
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
-  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const hasLogo = Boolean(logoUrl) && !logoError;
   const ratingLabel = `${Number(companyStats.rating).toFixed(1)}/5.0`;
@@ -376,17 +374,11 @@ export default function CompanyHero({
                       <span className="hidden sm:inline">Solicitar orçamento</span>
                     </Button>
                   ) : (
-                    <Button
-                      size="default"
-                      variant="outline"
+                    <ReviewCompanyButton
+                      company={company}
+                      compactLabel="Avaliar"
                       className="h-10 min-w-0 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:h-11 sm:px-5"
-                      asChild
-                    >
-                      <Link href={reviewPath}>
-                        <span className="sm:hidden">Avaliar</span>
-                        <span className="hidden sm:inline">Avaliar empresa</span>
-                      </Link>
-                    </Button>
+                    />
                   )}
                 </div>
               </div>

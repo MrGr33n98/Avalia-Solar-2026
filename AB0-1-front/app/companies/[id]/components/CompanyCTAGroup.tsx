@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageCircle, Share2, Star } from 'lucide-react';
+import { MessageCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { Company } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { track } from '@/lib/analytics/lazy';
-import { buildCompanySubPath } from '@/lib/slug';
 
 interface CompanyCTAGroupProps {
   company: Company;
@@ -20,14 +19,9 @@ interface CompanyCTAGroupProps {
 export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTAGroupProps) {
   const [isSharing, setIsSharing] = useState(false);
   const wizardCategoryId = resolveWizardCategoryId(company);
-  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
-  // Entitlement Check for CTAs
-  const planTier = (company as Company & { plan_tier?: string }).plan_tier || '';
   const isCustomCtasEnabled = isFeatureEnabled(company.feature_access, 'custom_ctas');
-  const isProOrEnterprise = ['pro', 'enterprise'].includes(planTier);
-  const canShowQuoteButton =
-    canRequestQuote && (isCustomCtasEnabled || isProOrEnterprise || company.active_admin === true);
+  const canShowQuoteButton = canRequestQuote && isCustomCtasEnabled;
 
   const handleShare = async () => {
     track('company_share_click', {
@@ -99,18 +93,12 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
           <span className="hidden sm:inline">Solicitar Orçamento</span>
         </Button>
       ) : (
-        <Button
-          size="default"
-          variant="outline"
+        <ReviewCompanyButton
+          company={company}
+          compactLabel="Avaliar"
           className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl border-blue-200 bg-white px-3 text-sm font-bold text-blue-700 shadow-none transition-all hover:bg-blue-50 active:scale-[0.98] sm:gap-2 sm:px-5"
-          asChild
-        >
-          <Link href={reviewPath}>
-            <Star className="h-4 w-4 fill-blue-700 text-blue-700" strokeWidth={0} />
-            <span className="sm:hidden">Avaliar</span>
-            <span className="hidden sm:inline">Avaliar Empresa</span>
-          </Link>
-        </Button>
+          iconClassName="h-4 w-4"
+        />
       )}
     </div>
   );

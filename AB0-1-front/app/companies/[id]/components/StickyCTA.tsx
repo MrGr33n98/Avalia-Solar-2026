@@ -9,6 +9,7 @@ import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 interface StickyCTAProps {
   company: Company;
@@ -24,7 +25,7 @@ export default function StickyCTA({
   ctaUrl,
 }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const quoteEnabled = canRequestQuote ?? company.active_admin === true;
+  const quoteEnabled = Boolean(canRequestQuote);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,8 +56,6 @@ export default function StickyCTA({
     });
   };
 
-  if (!quoteEnabled) return null;
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -85,18 +84,28 @@ export default function StickyCTA({
               </div>
               <div>
                 <p className="font-bold text-slate-900 leading-none">{company.name}</p>
-                <p className="text-xs text-slate-500 mt-1">Solicite um orçamento agora</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {quoteEnabled ? 'Solicite um orçamento agora' : 'Compartilhe sua experiência'}
+                </p>
               </div>
             </div>
 
             <div className="flex flex-1 md:flex-none items-center gap-2 md:gap-3">
-              <Button
-                onClick={handleQuoteClick}
-                className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold h-11 md:h-10 px-6 shadow-sm"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Pedir Orçamento
-              </Button>
+              {quoteEnabled ? (
+                <Button
+                  onClick={handleQuoteClick}
+                  className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold h-11 md:h-10 px-6 shadow-sm"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Pedir Orçamento
+                </Button>
+              ) : (
+                <ReviewCompanyButton
+                  company={company}
+                  className="h-11 flex-1 bg-primary px-6 text-white hover:bg-primary/90 md:h-10 md:flex-none"
+                  iconClassName="fill-white text-white"
+                />
+              )}
 
               {ctaEnabled && ctaUrl && (
                 <div className="flex-1 md:flex-none">

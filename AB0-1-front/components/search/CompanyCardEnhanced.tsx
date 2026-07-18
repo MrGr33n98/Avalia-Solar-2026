@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { Heart, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import type { Company } from '@/lib/api';
-import { openLeadModal } from '@/lib/lead-engine';
 import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 
@@ -100,19 +100,10 @@ export function CompanyCardEnhanced({
         >
           Ver perfil
         </Link>
-        <button
-          type="button"
-          onClick={() =>
-            openLeadModal({
-              preferredCompanyId: company.id,
-              source: 'search_results',
-              type: 'quick',
-            })
-          }
-          className="h-10 rounded-lg text-xs font-bold text-blue-700 hover:bg-blue-50"
-        >
-          Solicitar orçamento
-        </button>
+        <ReviewCompanyButton
+          company={company}
+          className="h-10 rounded-lg text-xs"
+        />
       </div>
     </article>
   );

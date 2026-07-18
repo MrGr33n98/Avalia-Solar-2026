@@ -17,14 +17,12 @@ import {
   Search, 
   ArrowRight,
   Zap,
-  Clock,
   Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash/debounce';
-
-import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 interface CompanyComparisonSectionProps {
   currentCompany: Company;
@@ -40,7 +38,6 @@ export default function CompanyComparisonSection({
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const wizardCategoryId = resolveWizardCategoryId(currentCompany);
 
   // Add current company to comparison on mount if not already there
   useEffect(() => {
@@ -82,15 +79,6 @@ export default function CompanyComparisonSection({
     addToComparison(company);
     setSearchTerm('');
     setShowResults(false);
-  };
-
-  const handleQuoteClick = (companyId: number) => {
-    openLeadModal({
-      preferredCompanyId: companyId,
-      categoryId: wizardCategoryId,
-      source: 'comparison-section',
-      type: 'wizard'
-    });
   };
 
   // Organize companies: Current company first, then others
@@ -284,9 +272,12 @@ export default function CompanyComparisonSection({
                 label="Experiência" 
                 companies={displayedCompanies} 
                 value={(c) => {
-                  const year = (c as any).founded_year;
-                  if (!year) return <span className="text-slate-300 font-medium">—</span>;
-                  const years = new Date().getFullYear() - year;
+                  const year = (c as Company & { founded_year?: number | string | null }).founded_year;
+                  const foundedYear = Number(year);
+                  if (!Number.isFinite(foundedYear) || foundedYear <= 0) {
+                    return <span className="text-slate-300 font-medium">—</span>;
+                  }
+                  const years = new Date().getFullYear() - foundedYear;
                   return <span className="text-sm font-bold text-slate-700">{years > 0 ? `${years} anos no mercado` : 'Novo no mercado'}</span>;
                 }} 
               />
@@ -302,12 +293,11 @@ export default function CompanyComparisonSection({
                   "p-8 border-r border-slate-100 last:border-r-0",
                   idx === 0 && "bg-blue-50/20"
                 )}>
-                  <Button 
-                    className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black h-14 shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.02]"
-                    onClick={() => handleQuoteClick(company.id)}
-                  >
-                    Pedir Orçamento
-                  </Button>
+                  <ReviewCompanyButton
+                    company={company}
+                    className="h-14 w-full rounded-2xl bg-blue-600 font-black text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.02] hover:bg-blue-700"
+                    iconClassName="fill-white text-white"
+                  />
                 </div>
               ))}
               {Array.from({ length: 3 - displayedCompanies.length }).map((_, i) => (

@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, MapPin, Building2, Trophy, Info } from 'lucide-react';
+import { MapPin, Building2, Trophy, Info } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { RatingStars } from '@/components/RatingStars';
 import { Badge } from '@/components/ui/badge';
@@ -18,12 +17,23 @@ import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 import { isCardFeatureEnabled } from '@/components/CompanyCard';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 interface Props {
   company: Company;
   rank: number; // 1, 2, 3...
   className?: string;
 }
+
+type TopCompanyCardCompany = Company & {
+  sponsored?: boolean;
+  rating_count?: number | string | null;
+  reviews_count?: number | string | null;
+  total_reviews?: number | string | null;
+  rating_avg?: number | string | null;
+  average_rating?: number | string | null;
+  rating?: number | string | null;
+};
 
 const RANK_COLORS = {
   1: { border: 'border-[#D4AF37]', bg: 'bg-[#D4AF37]/10', text: 'text-[#D4AF37]', label: 'Ouro' },
@@ -32,17 +42,15 @@ const RANK_COLORS = {
 } as const;
 
 export default function TopCompanyCard({ company, rank, className }: Props) {
+  const topCompany = company as TopCompanyCardCompany;
   const { id, name, city, state, description } = company;
-  const sponsored = (company as any).sponsored === true;
-  const rating_count = Number((company as any).rating_count ?? (company as any).reviews_count ?? (company as any).total_reviews ?? 0);
-  const average_rating = parseFloat((company as any).rating_avg ?? (company as any).average_rating ?? (company as any).rating ?? 0);
+  const sponsored = topCompany.sponsored === true;
+  const rating_count = Number(topCompany.rating_count ?? topCompany.reviews_count ?? topCompany.total_reviews ?? 0);
+  const average_rating = parseFloat(String(topCompany.rating_avg ?? topCompany.average_rating ?? topCompany.rating ?? 0));
 
-  // Feature gate: "Pedir orçamento" é feature paga controlada via ActiveAdmin
-  const featureAccessMap = (company as any).feature_access ?? {};
-  const hasFeatureAccess = Object.keys(featureAccessMap).length > 0;
-  const canRequestQuote  = hasFeatureAccess
-    ? isCardFeatureEnabled(featureAccessMap, 'custom_ctas')
-    : sponsored; // fallback: só patrocinados têm CTA de orçamento
+  // Feature gate: "Pedir orçamento" é feature paga.
+  const featureAccessMap = company.feature_access ?? {};
+  const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
   
   const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || { border: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-400', label: `#${rank}` };
   const companyPath = buildCompanyPath(company.slug || String(id));
@@ -137,7 +145,6 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
         </p>
 
         <div className="mt-auto pt-2 flex gap-2">
-          {/* Botão "Pedir orçamento" — feature paga, estilo laranja diferenciado */}
           {canRequestQuote ? (
             <Button
               className="flex-1 h-11 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold text-xs shadow-none"
@@ -149,6 +156,13 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
               Pedir orçamento
             </Button>
           ) : null}
+          <ReviewCompanyButton
+            company={company}
+            label="Avaliar"
+            className="h-11 flex-1 rounded-xl text-xs"
+            iconClassName="h-3.5 w-3.5"
+            stopPropagation
+          />
           <Button
             variant="outline"
             className={cn(

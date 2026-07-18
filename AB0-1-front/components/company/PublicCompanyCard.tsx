@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BadgeCheck, Building2, MapPin, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
@@ -137,6 +138,11 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
           compactLabel
           className="h-10 rounded-xl shadow-none"
           animated={false}
+        />
+        <ReviewCompanyButton
+          company={comparisonCompany}
+          className="col-span-2 h-10 bg-blue-700 text-white hover:bg-blue-800"
+          iconClassName="fill-white text-white"
         />
       </div>
     </article>

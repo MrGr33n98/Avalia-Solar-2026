@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle, ShieldCheck, Zap, Shield, HelpCircle, Heart, PhoneCall, Scale, BadgeCheck, CheckCircle, ChevronRight } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -159,10 +160,10 @@ const extractTopCriteria = (comp: any): string[] => {
 /**
  * Verifica se uma feature paga está habilitada no feature_access.
  * Fonte primária: feature_access (gerenciado via ActiveAdmin/planos).
- * Fallback retro-compatível: is_claimed || sponsored.
+ * O fallback só deve ser usado quando a chamada fornecer uma regra explícita.
  */
 export const isCardFeatureEnabled = (
-  featureAccess: Record<string, { state: string; value?: any }> | undefined | null,
+  featureAccess: Record<string, { state: string; value?: unknown }> | undefined | null,
   key: string,
   fallback: boolean = false
 ): boolean => {
@@ -291,14 +292,10 @@ export default function CompanyCard({
   const p2pChatEnabled = company.actions.p2p_chat_enabled;
   const selectedInComparison = isInComparison(id);
 
-  // ── Feature gates controlados via ActiveAdmin / planos ──
+  // ── Feature gates controlados via planos pagos ──
   // feature_access.custom_ctas: controla se o botão "Pedir orçamento" aparece
-  // Fallback retro-compatível: is_claimed || sponsored (para empresas sem feature_access ainda)
   const featureAccessMap = company.feature_access ?? {};
-  const hasFeatureAccess  = Object.keys(featureAccessMap).length > 0;
-  const canRequestQuote   = hasFeatureAccess
-    ? isCardFeatureEnabled(featureAccessMap, 'custom_ctas')
-    : (company.trust.is_claimed || company.sponsored);
+  const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
 
   // Critérios reais de avaliação
   const topCriteria = company.top_criteria ?? ['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'];
@@ -387,14 +384,13 @@ export default function CompanyCard({
               Orçamento
             </Button>
           ) : (
-            <Button
-              size="sm"
-              asChild
-              className="w-full h-8 text-[11px] font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-none"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Link href={companyPath}>Ver perfil</Link>
-            </Button>
+            <ReviewCompanyButton
+              company={company}
+              label="Avaliar"
+              className="h-8 w-full rounded-lg bg-blue-600 text-[11px] text-white hover:bg-blue-700"
+              iconClassName="h-3.5 w-3.5 fill-white text-white"
+              stopPropagation
+            />
           )}
         </div>
       </Card>
@@ -482,15 +478,17 @@ export default function CompanyCard({
                 >
                   Pedir orçamento
                 </Button>
-              ) : (
-                <Button
-                  asChild
-                  className="w-full font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white h-9 text-xs"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link href={companyPath}>Ver perfil</Link>
-                </Button>
-              )}
+              ) : null}
+              <ReviewCompanyButton
+                company={company}
+                label="Avaliar"
+                className={cn(
+                  'h-9 w-full rounded-xl text-xs',
+                  canRequestQuote ? 'col-span-2' : ''
+                )}
+                iconClassName="h-3.5 w-3.5"
+                stopPropagation
+              />
             </div>
           </div>
         </div>
@@ -609,15 +607,14 @@ export default function CompanyCard({
               >
                 Pedir orçamento
               </Button>
-            ) : (
-              <Button
-                asChild
-                className="h-7 font-bold text-[10px] rounded-lg shadow-none bg-blue-600 hover:bg-blue-700 text-white w-full justify-center"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Link href={companyPath}>Ver perfil</Link>
-              </Button>
-            )}
+            ) : null}
+            <ReviewCompanyButton
+              company={company}
+              label="Avaliar"
+              className="h-7 w-full rounded-lg px-2 text-[10px]"
+              iconClassName="h-3 w-3"
+              stopPropagation
+            />
           </div>
         </div>
       </div>
@@ -788,17 +785,27 @@ export default function CompanyCard({
             />
           )}
 
-          <Button
-            variant="outline"
-            className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              openLeadModal({ preferredCompanyId: id, source: 'company-card-contact', type: 'quick' });
-            }}
-          >
-            <PhoneCall className="h-3 w-3 mr-1 text-slate-400" />
-            Contato
-          </Button>
+          {canRequestQuote ? (
+            <Button
+              variant="outline"
+              className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                openLeadModal({ preferredCompanyId: id, source: 'company-card-contact', type: 'quick' });
+              }}
+            >
+              <PhoneCall className="h-3 w-3 mr-1 text-slate-400" />
+              Contato
+            </Button>
+          ) : (
+            <ReviewCompanyButton
+              company={company}
+              label="Avaliar"
+              className="h-7 rounded-lg px-2.5 text-[10px]"
+              iconClassName="h-3 w-3"
+              stopPropagation
+            />
+          )}
         </div>
 
         <Button

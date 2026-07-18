@@ -268,7 +268,7 @@ export default function CompanyDetailClient({
   const extendedCompany = currentCompany as ExtendedCompany;
   const canRequestQuote = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
-    : extendedCompany.active_admin === true;
+    : false;
   const showFaq = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'faq_block')
     : Boolean(currentCompany.faqs?.length);
