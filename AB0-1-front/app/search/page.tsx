@@ -354,8 +354,13 @@ function SearchPageContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#071e4a] via-[#082b69] to-[#041638] text-white">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.25),transparent_65%)]" />
+      <section
+        className="relative overflow-hidden bg-[#071e4a] bg-cover bg-[position:center_55%] text-white"
+        style={{
+          backgroundImage:
+            "url('/assets/avalia_symbol_search_banner_avalia_solar.png')",
+        }}
+      >
         <div className="relative mx-auto max-w-[1240px] px-4 py-9 sm:px-6 sm:py-12">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
             Encontre a empresa certa para você.
