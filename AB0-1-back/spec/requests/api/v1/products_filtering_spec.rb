@@ -113,6 +113,21 @@ RSpec.describe 'Api::V1::Products', type: :request do
         expect(company_ids.uniq).to eq([company.id])
         expect(json['meta']['total']).to eq(3)
       end
+
+      it 'includes a canonical product linked through the company catalog' do
+        linked_product = create(:product, name: 'Produto Global Vinculado', company: other_company)
+        CompanyProduct.create!(
+          company: company,
+          product: linked_product,
+          relationship_type: 'reseller',
+          status: 'active'
+        )
+
+        get '/api/v1/products', params: { company_id: company.id }
+
+        json = JSON.parse(response.body)
+        expect(json['data'].map { |product| product['id'] }).to include(linked_product.id)
+      end
     end
 
     context 'with brand_id filter' do

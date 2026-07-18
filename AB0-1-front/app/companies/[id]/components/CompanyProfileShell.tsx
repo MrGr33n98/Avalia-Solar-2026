@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { Company, Product, Review } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/feature-access';
+import { buildCompanyPath } from '@/lib/slug';
 
 import CompanyPremiumHero from './CompanyPremiumHero';
 import CompanyIdentityCard from './CompanyIdentityCard';
@@ -123,6 +124,7 @@ export default function CompanyProfileShell({
                     ? [company.category_info]
                     : []
               }
+              companyPath={buildCompanyPath(company.slug, company.name, company.id)}
               showFinancing={false}
               showGallery={false}
               showFaq={showFaq}

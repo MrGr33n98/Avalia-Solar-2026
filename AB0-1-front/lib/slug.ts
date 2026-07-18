@@ -34,10 +34,15 @@ export const buildCompanySubPath = (
   return `${buildCompanyPath(slug, name, fallbackId)}/${suffix}`;
 };
 
-export const buildProductPath = (
-  id?: number | string | null,
-  name?: string | null
-): string => {
+export const buildCompanyCategoryPath = (
+  slug: string | null | undefined,
+  name: string | null | undefined,
+  categorySlug: string,
+  fallbackId?: number | string
+): string =>
+  `${buildCompanyPath(slug, name, fallbackId)}/categories/${String(categorySlug).replace(/^\/+/, '')}`;
+
+export const buildProductPath = (id?: number | string | null, name?: string | null): string => {
   const base = slugify(name || String(id || 'produto'));
   return `/products/${id}-${base}`;
 };

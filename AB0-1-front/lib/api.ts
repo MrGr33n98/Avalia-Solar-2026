@@ -618,6 +618,22 @@ export interface ProductReviewsResponse {
   reviews: Review[];
 }
 
+export interface CompanyCatalogService {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  price_from?: number | null;
+  coverage?: string[];
+}
+
+export interface CompanyCatalogResponse {
+  company: Company;
+  category: Category;
+  products: Product[];
+  services: CompanyCatalogService[];
+}
+
 export interface SocialProofReview {
   id: number;
   rating: number;

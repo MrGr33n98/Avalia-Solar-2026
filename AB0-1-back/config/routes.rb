@@ -87,6 +87,7 @@ Rails.application.routes.draw do
           get :feature_access
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
+          get :catalog
           get :social_proof
         end
 

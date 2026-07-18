@@ -4,10 +4,15 @@ class Api::V1::ProductsController < Api::V1::BaseController
   def index
     include_specs = ActiveModel::Type::Boolean.new.cast(params[:include_specs])
     scope = ::Product
-            .includes(:brand, :company, :categories, images_attachments: :blob)
+            .includes(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
             .where(status: ::Product.statuses[:active])
 
-    scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
+    if params[:company_id].present?
+      company_id = params[:company_id].to_i
+      scope = scope.left_joins(:company_products)
+                   .where('company_products.company_id = :company_id OR products.company_id = :company_id', company_id: company_id)
+                   .distinct
+    end
     scope = scope.where(brand_id: params[:brand_id]) if params[:brand_id].present?
     scope = scope.where(featured: ActiveModel::Type::Boolean.new.cast(params[:featured])) if params.key?(:featured)
     scope = scope.where('products.price >= ?', params[:price_min].to_d) if params[:price_min].present?

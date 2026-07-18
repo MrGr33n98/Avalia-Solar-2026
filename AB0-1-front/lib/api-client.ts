@@ -6,6 +6,7 @@ import {
   CampaignReviewProject,
   Category,
   Company,
+  CompanyCatalogResponse,
   FinancingOption,
   Product,
   ProductReviewsResponse,
@@ -22,6 +23,7 @@ export type {
   CampaignReviewProject,
   Category,
   Company,
+  CompanyCatalogResponse,
   FinancingOption,
   Product,
   ProductReviewsResponse,
@@ -107,7 +109,9 @@ const SAFE_API_BLOCKED_UNTIL = new Map<string, number>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const isPublicCacheableEndpoint = (endpoint: string) =>
-  /^(categories|companies|local_solar_pages|products|states|banners)/i.test(endpoint.replace(/^\/+/, ''));
+  /^(categories|companies|local_solar_pages|products|states|banners)/i.test(
+    endpoint.replace(/^\/+/, '')
+  );
 
 // Utility functions to manage rate limiting
 export const clearRateLimitBlock = (endpoint?: string) => {
@@ -157,10 +161,7 @@ const buildQueryParams = (params: Record<string, any>) => {
 // ------------------
 // FunÃ§Ã£o genÃ©rica com fetch seguro (SSR friendly)
 // ------------------
-export async function fetchApiSafe<T>(
-  endpoint: string,
-  options: any = {}
-): Promise<T> {
+export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Promise<T> {
   const url = buildApiUrl(endpoint);
   const requestOptions: any = { ...options };
   const normalizedEndpoint = endpoint.replace(/^\//, '');
@@ -180,7 +181,9 @@ export async function fetchApiSafe<T>(
   const throttleKey = `${method}:${normalizedEndpoint}`;
   const blockedUntil = SAFE_API_BLOCKED_UNTIL.get(throttleKey) || 0;
   if (Date.now() < blockedUntil) {
-    console.warn(`[API] Rate limited until ${new Date(blockedUntil).toISOString()}, trying cached data`);
+    console.warn(
+      `[API] Rate limited until ${new Date(blockedUntil).toISOString()}, trying cached data`
+    );
 
     // Try to use cached data if available
     if (shouldUseCache) {
@@ -264,127 +267,124 @@ export async function fetchApiSafe<T>(
 
   const executeRequest = async (): Promise<T> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      console.log('[API] Request ->', method, url);
+      try {
+        console.log('[API] Request ->', method, url);
 
-      const response = await fetch(url, {
-        ...requestOptions,
-        headers: {
-          ...defaultHeaders,
-          ...requestOptions.headers,
-        },
-        credentials: requestOptions.credentials || 'include',
-      });
-
-      const responseBody = await response.json().catch(() => null);
-      console.log('[API] Response data:', responseBody);
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          const retryAfterRaw = response.headers.get('retry-after');
-          const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;
-          const retryAfterMs =
-            Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
-              ? retryAfterSeconds * 1000
-              : SAFE_API_RATE_LIMIT_BLOCK_MS;
-          SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + retryAfterMs);
-        }
-
-        if (response.status === 401 && responseBody) {
-          const errorCode = responseBody.code;
-          const errorMsg = responseBody.error || responseBody.message || '';
-          if (
-            errorCode === 'TOKEN_REVOKED' ||
-            errorCode === 'SESSION_EXPIRED' ||
-            errorMsg.toLowerCase().includes('revoked') ||
-            errorMsg.toLowerCase().includes('session expired')
-          ) {
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('auth');
-              localStorage.removeItem('user');
-              sessionStorage.clear();
-              document.cookie.split(';').forEach((c) => {
-                document.cookie = c
-                  .replace(/^ +/, '')
-                  .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
-              });
-              window.location.href = '/login?reason=session_expired';
-            }
-            throw new Error('Session expired. Please login again.');
-          }
-        }
-
-        const errorData = responseBody || { error: `API Error (${response.status})` };
-        const message = errorData?.error || errorData?.message || response.statusText || 'API Error';
-        const apiError = new ApiError(`[${response.status}] ${message}`, {
-          status: response.status,
-          code: errorData?.code,
-          url,
-          method,
-          details: responseBody,
+        const response = await fetch(url, {
+          ...requestOptions,
+          headers: {
+            ...defaultHeaders,
+            ...requestOptions.headers,
+          },
+          credentials: requestOptions.credentials || 'include',
         });
 
+        const responseBody = await response.json().catch(() => null);
+        console.log('[API] Response data:', responseBody);
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            const retryAfterRaw = response.headers.get('retry-after');
+            const retryAfterSeconds = retryAfterRaw ? Number(retryAfterRaw) : NaN;
+            const retryAfterMs =
+              Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+                ? retryAfterSeconds * 1000
+                : SAFE_API_RATE_LIMIT_BLOCK_MS;
+            SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + retryAfterMs);
+          }
+
+          if (response.status === 401 && responseBody) {
+            const errorCode = responseBody.code;
+            const errorMsg = responseBody.error || responseBody.message || '';
+            if (
+              errorCode === 'TOKEN_REVOKED' ||
+              errorCode === 'SESSION_EXPIRED' ||
+              errorMsg.toLowerCase().includes('revoked') ||
+              errorMsg.toLowerCase().includes('session expired')
+            ) {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth');
+                localStorage.removeItem('user');
+                sessionStorage.clear();
+                document.cookie.split(';').forEach((c) => {
+                  document.cookie = c
+                    .replace(/^ +/, '')
+                    .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+                });
+                window.location.href = '/login?reason=session_expired';
+              }
+              throw new Error('Session expired. Please login again.');
+            }
+          }
+
+          const errorData = responseBody || { error: `API Error (${response.status})` };
+          const message =
+            errorData?.error || errorData?.message || response.statusText || 'API Error';
+          const apiError = new ApiError(`[${response.status}] ${message}`, {
+            status: response.status,
+            code: errorData?.code,
+            url,
+            method,
+            details: responseBody,
+          });
+
+          const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+          const retryableStatus =
+            response.status === 401 || response.status === 404 || response.status >= 500;
+          const shouldRetry = isIdempotent && retryableStatus && attempt < maxRetries - 1;
+          if (shouldRetry) {
+            const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
+            await sleep(delay);
+            continue;
+          }
+
+          if (response.status === 404 && options?.fallback !== undefined) {
+            return options.fallback;
+          }
+          if (options?.fallback !== undefined) {
+            return options.fallback;
+          }
+          throw apiError;
+        }
+
+        if (shouldUseCache) {
+          SAFE_API_CACHE.set(cacheKey, {
+            expiresAt: Date.now() + cacheTtlMs,
+            data: responseBody,
+          });
+        }
+
+        return responseBody;
+      } catch (error) {
+        const apiError = toApiError(error, {
+          url,
+          method,
+          isNetworkError: error instanceof TypeError,
+        });
+
+        if (apiError.isNetworkError) {
+          SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + SAFE_API_NETWORK_BLOCK_MS);
+        }
+
+        const status = (apiError as any)?.status;
         const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
-        const retryableStatus =
-          response.status === 401 ||
-          response.status === 404 ||
-          response.status >= 500;
-        const shouldRetry = isIdempotent && retryableStatus && attempt < maxRetries - 1;
-        if (shouldRetry) {
+        const shouldRetryNetwork =
+          isIdempotent && apiError.isNetworkError && attempt < maxRetries - 1;
+        const shouldRetryStatus =
+          isIdempotent &&
+          attempt < maxRetries - 1 &&
+          (status === 401 || status === 404 || (typeof status === 'number' && status >= 500));
+
+        if (shouldRetryNetwork || shouldRetryStatus) {
           const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
           await sleep(delay);
           continue;
         }
 
-        if (response.status === 404 && options?.fallback !== undefined) {
-          return options.fallback;
-        }
-        if (options?.fallback !== undefined) {
-          return options.fallback;
-        }
+        console.error(`[API] Failed to access ${url}:`, apiError);
         throw apiError;
       }
-
-      if (shouldUseCache) {
-        SAFE_API_CACHE.set(cacheKey, {
-          expiresAt: Date.now() + cacheTtlMs,
-          data: responseBody,
-        });
-      }
-
-      return responseBody;
-    } catch (error) {
-      const apiError = toApiError(error, {
-        url,
-        method,
-        isNetworkError: error instanceof TypeError,
-      });
-
-      if (apiError.isNetworkError) {
-        SAFE_API_BLOCKED_UNTIL.set(throttleKey, Date.now() + SAFE_API_NETWORK_BLOCK_MS);
-      }
-
-      const status = (apiError as any)?.status;
-      const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
-      const shouldRetryNetwork =
-        isIdempotent &&
-        apiError.isNetworkError &&
-        attempt < maxRetries - 1;
-      const shouldRetryStatus =
-        isIdempotent &&
-        attempt < maxRetries - 1 &&
-        (status === 401 || status === 404 || (typeof status === 'number' && status >= 500));
-
-      if (shouldRetryNetwork || shouldRetryStatus) {
-        const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
-        await sleep(delay);
-        continue;
-      }
-
-      console.error(`[API] Failed to access ${url}:`, apiError);
-      throw apiError;
     }
-  }
 
     throw new ApiError('API request failed after retries', { url, method });
   };
@@ -406,27 +406,25 @@ export async function fetchApiSafe<T>(
 
 // Empresas
 export const companiesApiSafe = {
-  getAll: async (
-    params?: {
-      status?: string;
-      featured?: boolean;
-      category_id?: number;
-      category_ids?: number[];
-      limit?: number;
-      include?: string;
-      sort?: string;
-      q?: string;
-      state?: string[] | string;
-      city?: string[] | string;
-      serves_state?: string[] | string;
-      serves_city?: string[] | string;
-      min_rating?: number;
-      verified?: boolean;
-      page?: number;
-      per_page?: number;
-      fields?: 'card';
-    }
-  ): Promise<Company[]> => {
+  getAll: async (params?: {
+    status?: string;
+    featured?: boolean;
+    category_id?: number;
+    category_ids?: number[];
+    limit?: number;
+    include?: string;
+    sort?: string;
+    q?: string;
+    state?: string[] | string;
+    city?: string[] | string;
+    serves_state?: string[] | string;
+    serves_city?: string[] | string;
+    min_rating?: number;
+    verified?: boolean;
+    page?: number;
+    per_page?: number;
+    fields?: 'card';
+  }): Promise<Company[]> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url); // Usar 'any' temporariamente para inspecionar a resposta
@@ -447,25 +445,23 @@ export const companiesApiSafe = {
     }
   },
 
-  getAllPaginated: async (
-    params?: {
-      status?: string;
-      featured?: boolean;
-      category_id?: number;
-      category_ids?: number[];
-      sort?: string;
-      q?: string;
-      state?: string[] | string;
-      city?: string[] | string;
-      serves_state?: string[] | string;
-      serves_city?: string[] | string;
-      min_rating?: number;
-      verified?: boolean;
-      page?: number;
-      per_page?: number;
-      fields?: 'card';
-    }
-  ): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
+  getAllPaginated: async (params?: {
+    status?: string;
+    featured?: boolean;
+    category_id?: number;
+    category_ids?: number[];
+    sort?: string;
+    q?: string;
+    state?: string[] | string;
+    city?: string[] | string;
+    serves_state?: string[] | string;
+    serves_city?: string[] | string;
+    min_rating?: number;
+    verified?: boolean;
+    page?: number;
+    per_page?: number;
+    fields?: 'card';
+  }): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
       console.log('[companiesApiSafe.getAllPaginated] Fetching:', url);
@@ -481,15 +477,25 @@ export const companiesApiSafe = {
       });
 
       if (response && Array.isArray(response.data)) {
-        console.log('[companiesApiSafe.getAllPaginated] Returning data array with', response.data.length, 'items');
+        console.log(
+          '[companiesApiSafe.getAllPaginated] Returning data array with',
+          response.data.length,
+          'items'
+        );
         return { data: response.data, meta: response.meta };
       }
       if (Array.isArray(response)) {
-        console.log('[companiesApiSafe.getAllPaginated] Returning direct array with', response.length, 'items');
+        console.log(
+          '[companiesApiSafe.getAllPaginated] Returning direct array with',
+          response.length,
+          'items'
+        );
         return { data: response };
       }
 
-      console.warn('[companiesApiSafe.getAllPaginated] Unexpected response format, returning empty array');
+      console.warn(
+        '[companiesApiSafe.getAllPaginated] Unexpected response format, returning empty array'
+      );
       return { data: [] };
     } catch (error) {
       console.error('[companiesApiSafe.getAllPaginated] Error:', error);
@@ -498,23 +504,21 @@ export const companiesApiSafe = {
     }
   },
 
-  getTotalCount: async (
-    params?: {
-      status?: string;
-      featured?: boolean;
-      category_id?: number;
-      category_ids?: number[];
-      sort?: string;
-      q?: string;
-      state?: string[] | string;
-      city?: string[] | string;
-      serves_state?: string[] | string;
-      serves_city?: string[] | string;
-      min_rating?: number;
-      verified?: boolean;
-      fields?: 'card';
-    }
-  ): Promise<number | null> => {
+  getTotalCount: async (params?: {
+    status?: string;
+    featured?: boolean;
+    category_id?: number;
+    category_ids?: number[];
+    sort?: string;
+    q?: string;
+    state?: string[] | string;
+    city?: string[] | string;
+    serves_state?: string[] | string;
+    serves_city?: string[] | string;
+    min_rating?: number;
+    verified?: boolean;
+    fields?: 'card';
+  }): Promise<number | null> => {
     try {
       const response = await companiesApiSafe.getAllPaginated({
         ...(params || {}),
@@ -539,7 +543,9 @@ export const companiesApiSafe = {
 
     try {
       console.log(`[companiesApiSafe.getById] Fetching company by ID: ${id}`);
-      const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`, { retries: 1 });
+      const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`, {
+        retries: 1,
+      });
 
       if (response) {
         console.log('[companiesApiSafe.getById] Raw response:', response);
@@ -551,7 +557,7 @@ export const companiesApiSafe = {
             id: response.company.id,
             name: response.company.name,
             slug: response.company.slug,
-            status: response.company.status
+            status: response.company.status,
           });
           return response.company;
         }
@@ -563,8 +569,12 @@ export const companiesApiSafe = {
       }
 
       if (slugCandidate) {
-        console.warn(`[companiesApiSafe.getById] Direct lookup returned empty for slug candidate, checking by_slug: ${id}`);
-        const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, { retries: 1 });
+        console.warn(
+          `[companiesApiSafe.getById] Direct lookup returned empty for slug candidate, checking by_slug: ${id}`
+        );
+        const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, {
+          retries: 1,
+        });
         if (bySlug?.company) return bySlug.company;
         if (bySlug?.id) return bySlug;
       }
@@ -573,13 +583,21 @@ export const companiesApiSafe = {
       return null;
     } catch (error) {
       if (slugCandidate) {
-        console.warn(`[companiesApiSafe.getById] Direct ID lookup failed for slug candidate ${id}, attempting by_slug fallback:`, error);
+        console.warn(
+          `[companiesApiSafe.getById] Direct ID lookup failed for slug candidate ${id}, attempting by_slug fallback:`,
+          error
+        );
         try {
-          const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, { retries: 1 });
+          const bySlug = await fetchApiSafe<any>(`companies/by_slug/${encodeURIComponent(id)}`, {
+            retries: 1,
+          });
           if (bySlug?.company) return bySlug.company;
           if (bySlug?.id) return bySlug;
         } catch (fallbackError) {
-          console.error(`[companiesApiSafe.getById] Fallback to by_slug also failed for ${id}:`, fallbackError);
+          console.error(
+            `[companiesApiSafe.getById] Fallback to by_slug also failed for ${id}:`,
+            fallbackError
+          );
         }
       } else {
         console.error(`Error fetching company with ID ${id}:`, error);
@@ -621,6 +639,20 @@ export const companiesApiSafe = {
     }
   },
 
+  getCatalog: async (
+    companyId: number,
+    category: string | number
+  ): Promise<CompanyCatalogResponse | null> => {
+    try {
+      return await fetchApiSafe<CompanyCatalogResponse>(
+        `companies/${companyId}/catalog${buildQueryParams({ category })}`
+      );
+    } catch (error) {
+      console.error(`Error fetching catalog for company ${companyId}:`, error);
+      return null;
+    }
+  },
+
   getSocialProof: async (
     companyId: number,
     params?: { limit?: number }
@@ -644,9 +676,13 @@ export const companiesApiSafe = {
 
 // Categorias
 export const categoriesApiSafe = {
-  getAll: async (
-    params?: { status?: string; featured?: boolean; category_id?: number; limit?: number; include_subcategories?: boolean }
-  ): Promise<Category[]> => {
+  getAll: async (params?: {
+    status?: string;
+    featured?: boolean;
+    category_id?: number;
+    limit?: number;
+    include_subcategories?: boolean;
+  }): Promise<Category[]> => {
     try {
       const url = `categories${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
@@ -768,7 +804,9 @@ export const localSolarPagesApi = {
         ? `local_solar_pages/${encodeURIComponent(state)}/${encodeURIComponent(city)}`
         : `local_solar_pages/${encodeURIComponent(state)}`;
 
-      return await fetchApiSafe<LocalSolarPageResponse>(`${endpoint}${buildQueryParams(params || {})}`);
+      return await fetchApiSafe<LocalSolarPageResponse>(
+        `${endpoint}${buildQueryParams(params || {})}`
+      );
     } catch (error: any) {
       console.error('[localSolarPagesApi.get] Error:', error);
       if (error?.status === 404) {
@@ -795,13 +833,25 @@ export const bannersApiSafe = {
       console.error('Error fetching banners:', error);
       return [];
     }
-  }
+  },
 };
-
 
 // Produtos
 export const productsApiSafe = {
-  getAll: async (params?: { category_id?: number; company_id?: number; brand_id?: number; price_min?: number; price_max?: number; featured?: boolean; limit?: number; include_specs?: boolean; q?: string; sort?: string; page?: number; per_page?: number }): Promise<Product[]> => {
+  getAll: async (params?: {
+    category_id?: number;
+    company_id?: number;
+    brand_id?: number;
+    price_min?: number;
+    price_max?: number;
+    featured?: boolean;
+    limit?: number;
+    include_specs?: boolean;
+    q?: string;
+    sort?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<Product[]> => {
     try {
       const url = `products${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
@@ -831,18 +881,29 @@ export const productsApiSafe = {
     sort?: string;
     page?: number;
     per_page?: number;
-  }): Promise<{ data: Product[]; meta: { total: number; page: number; per_page: number; total_pages: number } }> => {
+  }): Promise<{
+    data: Product[];
+    meta: { total: number; page: number; per_page: number; total_pages: number };
+  }> => {
     try {
       const url = `products${buildQueryParams(params || {})}`;
       const response = await fetchApiSafe<any>(url);
       if (response && Array.isArray(response.data)) {
         return {
           data: response.data,
-          meta: response.meta || { total: response.data.length, page: 1, per_page: response.data.length, total_pages: 1 },
+          meta: response.meta || {
+            total: response.data.length,
+            page: 1,
+            per_page: response.data.length,
+            total_pages: 1,
+          },
         };
       }
       if (Array.isArray(response)) {
-        return { data: response, meta: { total: response.length, page: 1, per_page: response.length, total_pages: 1 } };
+        return {
+          data: response,
+          meta: { total: response.length, page: 1, per_page: response.length, total_pages: 1 },
+        };
       }
       return { data: [], meta: { total: 0, page: 1, per_page: 12, total_pages: 0 } };
     } catch (error) {
@@ -864,7 +925,9 @@ export const productsApiSafe = {
     params?: { limit?: number; category_id?: number }
   ): Promise<ProductReviewsResponse | null> => {
     try {
-      return await fetchApiSafe<ProductReviewsResponse>(`products/${id}/reviews${buildQueryParams(params || {})}`);
+      return await fetchApiSafe<ProductReviewsResponse>(
+        `products/${id}/reviews${buildQueryParams(params || {})}`
+      );
     } catch (error) {
       console.error(`Error fetching reviews for product ${id}:`, error);
       return null;
@@ -956,7 +1019,10 @@ export const leadsApiSafe = {
 };
 
 export const leadsWizardApi = {
-  create: async (payload: { lead: Record<string, any>; preferred_company_id?: number }): Promise<any> => {
+  create: async (payload: {
+    lead: Record<string, any>;
+    preferred_company_id?: number;
+  }): Promise<any> => {
     return await fetchApiSafe<any>('leads/wizard_create', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -986,7 +1052,11 @@ export const leadsWizardApi = {
 
 // Financiamento
 export const financingOptionsApiSafe = {
-  getAll: async (params: { company_id: number; audience?: string; active?: boolean }): Promise<FinancingOption[]> => {
+  getAll: async (params: {
+    company_id: number;
+    audience?: string;
+    active?: boolean;
+  }): Promise<FinancingOption[]> => {
     try {
       const url = `companies/${params.company_id}/financing_options${buildQueryParams({ audience: params.audience, active: params.active })}`;
       return await fetchApiSafe<FinancingOption[]>(url);
@@ -997,7 +1067,7 @@ export const financingOptionsApiSafe = {
   },
   compare: async (companyId: number, ids: number[]): Promise<{ options: FinancingOption[] }> => {
     try {
-      const query = ids.map(id => `ids[]=${id}`).join('&');
+      const query = ids.map((id) => `ids[]=${id}`).join('&');
       const url = `companies/${companyId}/financing_options/compare?${query}`;
       return await fetchApiSafe<{ options: FinancingOption[] }>(url);
     } catch (error) {

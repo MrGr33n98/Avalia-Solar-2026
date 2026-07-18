@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useMemo } from 'react';
 import {
   LayoutDashboard,
@@ -9,6 +10,7 @@ import {
   ImageIcon,
   HelpCircle,
   LucideIcon,
+  ChevronDown,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -23,6 +25,7 @@ interface CompanyProfileTabsProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
   categories?: Array<{ id: number; name: string; seo_url?: string }>;
+  companyPath: string;
   showFinancing: boolean;
   showGallery: boolean;
   showFaq: boolean;
@@ -32,6 +35,7 @@ export default function CompanyProfileTabs({
   activeTab,
   onTabChange,
   categories = [],
+  companyPath,
 }: CompanyProfileTabsProps) {
   const tabs = useMemo(() => {
     const list: TabItem[] = [
@@ -70,6 +74,12 @@ export default function CompanyProfileTabs({
                 >
                   <tab.icon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span className="whitespace-nowrap">{tab.label}</span>
+                  {tab.id === 'products' && uniqueCategories.length > 0 && (
+                    <ChevronDown
+                      className="ml-1 h-4 w-4 shrink-0 transition-transform group-hover:rotate-180"
+                      aria-hidden="true"
+                    />
+                  )}
                 </TabsTrigger>
               );
 
@@ -85,9 +95,8 @@ export default function CompanyProfileTabs({
                     <ul className="py-1" aria-label="Categorias de produtos e serviços da empresa">
                       {uniqueCategories.map((category) => (
                         <li key={category.id}>
-                          <button
-                            type="button"
-                            onClick={() => onTabChange('products')}
+                          <Link
+                            href={`${companyPath}/categories/${category.seo_url || category.id}`}
                             className="flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
                           >
                             <Image
@@ -99,7 +108,7 @@ export default function CompanyProfileTabs({
                               className="h-5 w-5 shrink-0"
                             />
                             <span>{category.name}</span>
-                          </button>
+                          </Link>
                         </li>
                       ))}
                     </ul>

@@ -17,6 +17,9 @@ class Product < ApplicationRecord
   belongs_to :company, optional: true
   belongs_to :brand, optional: true
   has_and_belongs_to_many :categories
+  has_many :company_products, dependent: :destroy
+  has_many :related_companies, through: :company_products, source: :company
+  has_many :product_offers, through: :company_products
   has_many_attached :images
   has_many :product_specifications, dependent: :destroy
   has_many :spec_templates, through: :product_specifications
@@ -28,6 +31,7 @@ class Product < ApplicationRecord
   before_save :capture_category_ids_for_metrics, prepend: true
   after_save :update_associated_categories_metrics
   after_save :track_price_history
+  after_save :sync_legacy_company_relationship
   # after_commit :update_associated_categories_metrics, on: [:create, :update, :destroy]
 
   enum status: {
@@ -109,13 +113,49 @@ class Product < ApplicationRecord
       specs: specs_payload,
       brand: brand_payload,
       brand_id: brand&.id,
-      brand_slug: brand&.slug
+      brand_slug: brand&.slug,
+      company_relationships: serialized_company_relationships
     ).compact
   end
 
   after_create :track_creation_event
 
   private
+
+  def serialized_company_relationships
+    company_products.visible.includes(:company, :product_offers).map do |relationship|
+      {
+        company_id: relationship.company_id,
+        company_name: relationship.company.name,
+        company_slug: relationship.company.slug,
+        relationship_type: relationship.relationship_type,
+        authorized: relationship.authorized,
+        territories: relationship.territories,
+        offers: relationship.product_offers.visible.map do |offer|
+          {
+            id: offer.id,
+            price: offer.price&.to_f,
+            stock: offer.stock,
+            lead_time_days: offer.lead_time_days,
+            installation_available: offer.installation_available,
+            coverage: offer.coverage,
+            commercial_terms: offer.commercial_terms
+          }
+        end
+      }
+    end
+  end
+
+  def sync_legacy_company_relationship
+    return if company_id.blank?
+
+    company_products.find_or_create_by!(company_id: company_id) do |relationship|
+      relationship.relationship_type = 'catalog_owner'
+      relationship.status = 'active'
+    end
+  rescue StandardError => e
+    Rails.logger.error("[Catalog] Failed to sync legacy company relationship for product #{id}: #{e.message}")
+  end
 
   def track_creation_event
     Analytics::TrackEventService.call(

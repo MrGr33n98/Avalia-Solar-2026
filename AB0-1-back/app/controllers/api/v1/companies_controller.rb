@@ -5,7 +5,7 @@ module Api
       include Paginatable # TASK-017: Enable pagination
 
       before_action :set_company,
-                    only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories
+                    only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories catalog
                              feature_access social_proof]
       before_action :authenticate_api_user,
                     only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
@@ -99,6 +99,37 @@ module Api
       def categories
         cats = @company.categories.select(:id, :name, :seo_url, :status, :featured, :created_at, :updated_at)
         render json: { categories: cats.as_json }, status: :ok
+      end
+
+      # GET /api/v1/companies/:id/catalog?category=slug-or-id
+      def catalog
+        category_value = params[:category].presence
+        category = if category_value.to_s.match?(/\A\d+\z/)
+                     @company.categories.active.find_by(id: category_value)
+                   else
+                     @company.categories.active.find_by(seo_url: category_value)
+                   end
+
+        return render json: { error: 'Category not found for company' }, status: :not_found unless category
+
+        linked_ids = CompanyProduct.visible.where(company_id: @company.id).select(:product_id)
+        products = Product
+                   .includes(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
+                   .active_status
+                   .joins(:categories)
+                   .where(categories: { id: category.id })
+                   .where('products.id IN (?) OR products.company_id = ?', linked_ids, @company.id)
+                   .distinct
+                   .order(featured: :desc, name: :asc)
+
+        services = @company.company_services.visible.where(category_id: category.id).order(name: :asc)
+
+        render json: {
+          company: @company.as_json(only: %i[id name slug logo_url city state rating_avg rating_count]),
+          category: category.as_json(only: %i[id name seo_url description short_description]),
+          products: products.map { |product| product.as_json(include_specs: true) },
+          services: services.as_json(only: %i[id name slug description price_from coverage])
+        }, status: :ok
       end
 
       # GET /api/v1/companies/:id/feature_access

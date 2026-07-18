@@ -167,7 +167,13 @@ end
   has_many :conversations, dependent: :destroy
   has_many :review_aggregates, dependent: :destroy
   has_many :pending_changes, dependent: :destroy
-  has_many :products, dependent: :destroy
+  # Legacy ownership remains during the catalog migration. New marketplace
+  # relationships must use company_products/catalog_products.
+  has_many :products, dependent: :nullify
+  has_many :company_products, dependent: :destroy
+  has_many :catalog_products, through: :company_products, source: :product
+  has_many :product_offers, through: :company_products
+  has_many :company_services, dependent: :destroy
   has_many :leads, dependent: :destroy
   has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :company
   has_many :lead_distributions, dependent: :destroy
