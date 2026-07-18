@@ -366,6 +366,7 @@ export default function CategoryPageClient({
                       <div className="relative w-full sm:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
+                          aria-label="Buscar empresas nesta categoria"
                           placeholder="Buscar empresas..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
@@ -375,7 +376,10 @@ export default function CategoryPageClient({
 
                       <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sortBy} onValueChange={handleSortChange}>
-                          <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200">
+                          <SelectTrigger
+                            aria-label="Ordenar empresas"
+                            className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
@@ -390,6 +394,7 @@ export default function CategoryPageClient({
                             variant="outline"
                             size="icon"
                             onClick={handleClearFilters}
+                            aria-label="Limpar filtros da categoria"
                             className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600"
                             title="Limpar filtros"
                           >
@@ -407,7 +412,7 @@ export default function CategoryPageClient({
                         <h2 className="truncate text-base font-bold tracking-tight text-slate-950 md:text-xl md:font-black md:uppercase">
                           {hasActiveFilters ? 'Resultados filtrados' : 'Empresas da categoria'}
                         </h2>
-                        <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 md:bg-transparent md:p-0 md:text-sm md:text-slate-400">
+                        <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 md:bg-transparent md:p-0 md:text-sm md:text-slate-600">
                           {filteredCompanies.length} empresas
                         </span>
                       </div>

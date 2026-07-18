@@ -396,9 +396,9 @@ export default function CompanyCard({
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+            <h3 className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
               {name}
-            </h4>
+            </h3>
             <div className="flex items-center gap-1.5 mt-1">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
               <span className="text-xs font-bold text-slate-800">
@@ -406,12 +406,12 @@ export default function CompanyCard({
                   ? company.reputation.rating_avg.toFixed(1)
                   : 'S/N'}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] font-medium text-slate-600">
                 ({company.reputation.rating_count})
               </span>
             </div>
             {company.identity.city && (
-              <span className="text-[10px] text-slate-400 mt-1 block truncate">
+              <span className="mt-1 block truncate text-[10px] font-medium text-slate-600">
                 {company.identity.city}, {company.identity.state}
               </span>
             )}
@@ -499,7 +499,7 @@ export default function CompanyCard({
                   ? company.reputation.rating_avg.toFixed(1)
                   : 'S/N'}
               </span>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-slate-600">
                 ({company.reputation.rating_count} avaliações)
               </span>
             </div>

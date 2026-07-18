@@ -34,7 +34,7 @@ export default function CompaniesGrid({
         <p className="text-slate-500 font-bold uppercase tracking-widest text-sm text-center">
           Nenhuma empresa encontrada com estes filtros
         </p>
-        <p className="text-xs text-slate-400 mt-2 font-medium">
+        <p className="mt-2 text-xs font-medium text-slate-600">
           Tente ajustar seus critérios de busca
         </p>
       </div>

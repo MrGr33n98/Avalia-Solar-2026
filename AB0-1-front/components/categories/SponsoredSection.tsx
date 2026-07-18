@@ -9,10 +9,7 @@ interface SponsoredSectionProps {
   category: string;
 }
 
-export default function SponsoredSection({
-  companies,
-  category,
-}: SponsoredSectionProps) {
+export default function SponsoredSection({ companies, category }: SponsoredSectionProps) {
   // Limitar a máximo 4 patrocinados
   const sponsoredCompanies = companies.slice(0, 4);
 
@@ -47,7 +44,7 @@ export default function SponsoredSection({
       </div>
 
       {/* Disclaimer */}
-      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 text-center opacity-70">
+      <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-600">
         Publicidade • O Ranking não é afetado
       </p>
     </section>

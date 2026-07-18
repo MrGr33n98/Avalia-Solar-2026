@@ -648,8 +648,9 @@ export const companiesApiSafe = {
         `companies/${companyId}/catalog${buildQueryParams({ category })}`
       );
     } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
       console.error(`Error fetching catalog for company ${companyId}:`, error);
-      return null;
+      throw error;
     }
   },
 

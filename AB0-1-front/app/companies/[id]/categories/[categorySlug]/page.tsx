@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -11,13 +12,21 @@ interface Props {
   params: { id: string; categorySlug: string };
 }
 
-async function loadCatalog(params: Props['params']) {
-  const company = await companiesApiSafe.getById(params.id);
-  return company ? companiesApiSafe.getCatalog(company.id, params.categorySlug) : null;
-}
+const loadCatalog = cache(async (companySlug: string, categorySlug: string) => {
+  const company = await companiesApiSafe.getById(companySlug);
+  return company ? companiesApiSafe.getCatalog(company.id, categorySlug) : null;
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const catalog = await loadCatalog(params);
+  let catalog;
+  try {
+    catalog = await loadCatalog(params.id, params.categorySlug);
+  } catch {
+    return {
+      title: 'Catálogo temporariamente indisponível | Avalia Solar',
+      robots: { index: false, follow: true },
+    };
+  }
   if (!catalog) return { title: 'Catálogo não encontrado | Avalia Solar' };
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br';
   const path = `${buildCompanyPath(catalog.company.slug, catalog.company.name, catalog.company.id)}/categories/${catalog.category.seo_url}`;
@@ -37,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const revalidate = 900;
 
 export default async function CompanyCategoryCatalogPage({ params }: Props) {
-  const catalog = await loadCatalog(params);
+  const catalog = await loadCatalog(params.id, params.categorySlug);
   if (!catalog) notFound();
   const companyPath = buildCompanyPath(
     catalog.company.slug,

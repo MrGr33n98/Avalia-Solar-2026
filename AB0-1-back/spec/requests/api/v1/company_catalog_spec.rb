@@ -47,5 +47,18 @@ RSpec.describe 'Api::V1::CompanyCatalog', type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    it 'returns a structured error without exposing implementation details' do
+      allow(Product).to receive(:active_status).and_raise(StandardError, 'database detail')
+
+      get "/api/v1/companies/#{company.id}/catalog", params: { category: category.seo_url }
+
+      expect(response).to have_http_status(:internal_server_error)
+      expect(JSON.parse(response.body)).to include(
+        'error' => 'Catalog temporarily unavailable',
+        'code' => 'CATALOG_UNAVAILABLE'
+      )
+      expect(response.body).not_to include('database detail')
+    end
   end
 end

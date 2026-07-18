@@ -120,7 +120,7 @@ module Api
                    .where(categories: { id: category.id })
                    .where('products.id IN (?) OR products.company_id = ?', linked_ids, @company.id)
                    .distinct
-                   .order(featured: :desc, name: :asc)
+                   .order(Arel.sql('products.featured DESC NULLS LAST, products.name ASC'))
 
         services = @company.company_services.visible.where(category_id: category.id).order(name: :asc)
 
@@ -130,6 +130,17 @@ module Api
           products: products.map { |product| product.as_json(include_specs: true) },
           services: services.as_json(only: %i[id name slug description price_from coverage])
         }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error(
+          "[CompaniesController#catalog] request_id=#{request.request_id} " \
+          "company_id=#{@company&.id} category=#{params[:category]} " \
+          "error=#{e.class}: #{e.message}"
+        )
+        render json: {
+          error: 'Catalog temporarily unavailable',
+          code: 'CATALOG_UNAVAILABLE',
+          request_id: request.request_id
+        }, status: :internal_server_error
       end
 
       # GET /api/v1/companies/:id/feature_access

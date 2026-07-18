@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BriefcaseBusiness, Search } from 'lucide-react';
+import Link from 'next/link';
+import { BriefcaseBusiness, PackageSearch, Search } from 'lucide-react';
 import type { CompanyCatalogResponse } from '@/lib/api';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 
 export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResponse }) {
   const [query, setQuery] = useState('');
@@ -100,8 +102,28 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
               ))}
             </div>
           ) : (
-            <div className="border border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
-              Nenhum produto encontrado nesta categoria.
+            <div className="border border-slate-300 bg-white p-8 text-center sm:p-10">
+              <PackageSearch className="mx-auto h-8 w-8 text-[#0B1F4B]" aria-hidden="true" />
+              <h3 className="mt-4 text-lg font-bold text-[#0B1F4B]">Catálogo em atualização</h3>
+              <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-slate-600">
+                Ainda não há produtos publicados nesta categoria. Solicite uma solução à{' '}
+                {catalog.company.name} ou consulte o perfil completo da empresa.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => openQuoteWizard({ source: 'company-category-empty-catalog' })}
+                  className="inline-flex min-h-11 items-center justify-center rounded-[2px] bg-[#0B1F4B] px-5 text-sm font-semibold text-white hover:bg-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  Solicitar orçamento
+                </button>
+                <Link
+                  href={`/companies/${catalog.company.slug || catalog.company.id}`}
+                  className="inline-flex min-h-11 items-center justify-center rounded-[2px] border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  Ver perfil da empresa
+                </Link>
+              </div>
             </div>
           )}
         </section>
