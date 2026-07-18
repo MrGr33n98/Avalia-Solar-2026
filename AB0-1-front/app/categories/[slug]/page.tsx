@@ -40,6 +40,7 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
     if (!category) {
       return {
         title: 'Categoria não encontrada | Avalia Solar',
+        robots: { index: false, follow: false },
       };
     }
 
@@ -87,6 +88,7 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
   } catch {
     return {
       title: 'Avalia Solar',
+      robots: { index: false, follow: true },
     };
   }
 }

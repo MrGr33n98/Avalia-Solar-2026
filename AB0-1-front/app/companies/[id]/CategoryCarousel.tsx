@@ -84,6 +84,7 @@ export function CategoryCarousel({ data, searchParams }: { data: LocalSolarPageR
               <CarouselItem key={projectType.name} className="pl-3 basis-auto">
                 <Link
                   href={`${data.location.canonical_path}${buildQuery(searchParams, { project_types: active ? null : projectType.name, page: null })}`}
+                  rel="nofollow"
                   className={`block min-h-[132px] w-[132px] sm:w-[146px] rounded-lg border bg-white p-3 text-center shadow-sm transition hover:border-blue-200 hover:shadow-md ${
                     active ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
                   }`}

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Solicitar orçamento | Avalia Solar',
   robots: {
     index: false,
-    follow: true,
+    follow: false,
   },
 };
 

@@ -11,15 +11,15 @@ import {
   resolveCategoryIdsFromSegments,
   resolveCategoryNamesFromIds,
 } from '@/lib/server/companies-category-seo';
+import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
+import { absoluteUrl } from '@/lib/site';
 
 interface CompaniesCategoryPageProps {
   params: { categorySlugs: string[] };
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-const SITE_URL = 'https://www.avaliasolar.com.br';
-
-function buildCategoryMetadata(categoryNames: string[], canonicalPath: string): Metadata {
+function buildCategoryMetadata(categoryNames: string[], canonicalPath: string, noindex = false): Metadata {
   const title = categoryNames.length > 0
     ? `Empresas de ${categoryNames.join(' e ')} | Avalia Solar`
     : 'Empresas de Energia Solar | Avalia Solar';
@@ -27,6 +27,8 @@ function buildCategoryMetadata(categoryNames: string[], canonicalPath: string): 
   const description = categoryNames.length > 0
     ? `Explore empresas de ${categoryNames.join(', ')} com filtros por localizacao, avaliacao e qualidade de atendimento.`
     : 'Explore empresas de energia solar com filtros por categoria, localizacao e reputacao.';
+
+  const canonicalUrl = absoluteUrl(canonicalPath);
 
   return {
     title,
@@ -37,13 +39,14 @@ function buildCategoryMetadata(categoryNames: string[], canonicalPath: string): 
       'instalacao solar',
       'fornecedores energia limpa',
     ],
+    robots: noindex ? { index: false, follow: true } : undefined,
     alternates: {
-      canonical: canonicalPath,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}${canonicalPath}`,
+      url: canonicalUrl,
       type: 'website',
     },
     twitter: {
@@ -54,18 +57,19 @@ function buildCategoryMetadata(categoryNames: string[], canonicalPath: string): 
   };
 }
 
-export async function generateMetadata({ params }: CompaniesCategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: CompaniesCategoryPageProps): Promise<Metadata> {
   const seoIndex = await getCompaniesCategorySeoIndex();
   const categoryIds = resolveCategoryIdsFromSegments(params.categorySlugs || [], seoIndex);
+  const noindex = shouldNoindexSearchParams(searchParams);
 
   if (categoryIds.length === 0) {
-    return buildCategoryMetadata([], COMPANIES_PATH);
+    return buildCategoryMetadata([], COMPANIES_PATH, noindex);
   }
 
   const categoryNames = resolveCategoryNamesFromIds(categoryIds, seoIndex);
   const canonicalPath = buildCompaniesCategoriesPath(categoryIds, seoIndex.byId);
 
-  return buildCategoryMetadata(categoryNames, canonicalPath);
+  return buildCategoryMetadata(categoryNames, canonicalPath, noindex);
 }
 
 export default async function CompaniesCategoryPage({ params, searchParams }: CompaniesCategoryPageProps) {
@@ -94,7 +98,7 @@ export default async function CompaniesCategoryPage({ params, searchParams }: Co
     <CompaniesPageClient
       forcedCategoryIds={categoryIds}
       categoryNames={categoryNames}
-      canonicalPath={`${canonicalPath}${queryString ? `?${queryString}` : ''}`}
+      canonicalPath={canonicalPath}
     />
   );
 }

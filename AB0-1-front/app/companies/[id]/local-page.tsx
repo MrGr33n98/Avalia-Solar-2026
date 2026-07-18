@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import {
   ArrowRight,
   Building2,
@@ -63,6 +63,20 @@ function allParams(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : [value];
 }
 
+function hasActiveLocalFilters(searchParams?: SearchParams): boolean {
+  if (!searchParams) return false;
+
+  return LOCAL_PAGE_FILTER_KEYS.some((key) =>
+    allParams(searchParams[key]).some((value) => value.trim().length > 0)
+  );
+}
+
+function cleanLocalPath(input: LocalSolarPageInput): string {
+  return `/companies/${input.vertical}/${input.state.toLowerCase()}${
+    input.city ? `/${input.city}` : ''
+  }`;
+}
+
 function buildApiFilters(searchParams?: SearchParams) {
   const categoryIds = allParams(searchParams?.category_ids)
     .flatMap((value) => value.split(','))
@@ -121,13 +135,16 @@ async function getLocalData(input: LocalSolarPageInput) {
     return await publicLocalSolarPagesApi.get(input.state, input.city, {
       ...filters,
       vertical: input.vertical,
-    }, { revalidate: 300 });
+    }, { revalidate: 300, timeoutMs: 6_000 });
   } catch (error) {
     console.error('[LocalSolarDirectoryPage] Failed to fetch vertical local page:', error);
 
     if (input.vertical === 'energia-solar') {
       try {
-        return await publicLocalSolarPagesApi.get(input.state, input.city, filters, { revalidate: 300 });
+        return await publicLocalSolarPagesApi.get(input.state, input.city, filters, {
+          revalidate: 300,
+          timeoutMs: 6_000,
+        });
       } catch (fallbackError) {
         console.error('[LocalSolarDirectoryPage] Failed to fetch default local page fallback:', fallbackError);
       }
@@ -135,6 +152,35 @@ async function getLocalData(input: LocalSolarPageInput) {
 
     return null;
   }
+}
+
+async function getBaseLocalData(input: LocalSolarPageInput) {
+  const baseFilters = {
+    page: '1',
+    per_page: '12',
+  };
+
+  try {
+    return await publicLocalSolarPagesApi.get(input.state, input.city, {
+      ...baseFilters,
+      vertical: input.vertical,
+    }, { revalidate: 900, timeoutMs: 6_000 });
+  } catch (baseError) {
+    console.error('[LocalSolarDirectoryPage] Failed to fetch base local page fallback:', baseError);
+  }
+
+  if (input.vertical === 'energia-solar') {
+    try {
+      return await publicLocalSolarPagesApi.get(input.state, input.city, baseFilters, {
+        revalidate: 900,
+        timeoutMs: 6_000,
+      });
+    } catch (fallbackError) {
+      console.error('[LocalSolarDirectoryPage] Failed to fetch default base local page fallback:', fallbackError);
+    }
+  }
+
+  return null;
 }
 
 export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Promise<Metadata> {
@@ -149,13 +195,16 @@ export async function generateLocalSolarMetadata(input: LocalSolarPageInput): Pr
     data = await publicLocalSolarPagesApi.get(input.state, input.city, {
       ...metadataFilters,
       vertical: input.vertical,
-    }, { revalidate: 900 });
+    }, { revalidate: 900, timeoutMs: 5_000 });
   } catch (error) {
     console.error('[generateLocalSolarMetadata] Failed to fetch vertical local metadata:', error);
 
     if (input.vertical === 'energia-solar') {
       try {
-        data = await publicLocalSolarPagesApi.get(input.state, input.city, metadataFilters, { revalidate: 900 });
+        data = await publicLocalSolarPagesApi.get(input.state, input.city, metadataFilters, {
+          revalidate: 900,
+          timeoutMs: 5_000,
+        });
       } catch (fallbackError) {
         console.error('[generateLocalSolarMetadata] Failed to fetch default local metadata fallback:', fallbackError);
       }
@@ -471,23 +520,10 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
   if (!data) {
     // A API falhou com os filtros atuais. Antes de retornar 404,
     // verificamos se a localização em si existe (sem filtros).
-    const hasFilters = input.searchParams && Object.keys(input.searchParams).some(
-      (key) => LOCAL_PAGE_FILTER_KEYS.includes(key as (typeof LOCAL_PAGE_FILTER_KEYS)[number])
-    );
+    const hasFilters = hasActiveLocalFilters(input.searchParams);
 
     if (hasFilters) {
-      let baseData: LocalSolarPageResponse | null = null;
-
-      try {
-        // Tenta carregar a página base (sem filtros) para confirmar que a cidade/estado existe
-        baseData = await publicLocalSolarPagesApi.get(input.state, input.city, {
-          page: '1',
-          per_page: '12',
-          vertical: input.vertical,
-        }, { revalidate: 900 });
-      } catch (baseError) {
-        console.error('[LocalSolarDirectoryPage] Failed to fetch base local page fallback:', baseError);
-      }
+      const baseData = await getBaseLocalData(input);
 
       if (baseData) {
         // A localização existe, mas os filtros causaram o erro.
@@ -505,8 +541,11 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
           filters: {
             ...baseData.filters,
             ...(input.searchParams?.category_ids ? { category_ids: allParams(input.searchParams.category_ids).flatMap(v => v.split(',')).map(Number).filter(Boolean) } : {}),
+            ...(input.searchParams?.project_types ? { project_types: allParams(input.searchParams.project_types).flatMap(v => v.split(',')).filter(Boolean) } : {}),
           },
         };
+      } else {
+        permanentRedirect(cleanLocalPath(input));
       }
     }
 
@@ -723,6 +762,7 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
                       <Link
                         key={category.id}
                         href={`${safeData.location.canonical_path}${buildQuery(input.searchParams, { category_ids: category.id, page: null })}`}
+                        rel="nofollow"
                         className="font-medium text-blue-700 hover:text-blue-800"
                       >
                         {category.name} em {locality}

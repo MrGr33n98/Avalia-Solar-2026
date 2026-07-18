@@ -27,6 +27,31 @@ type ApiRecord = Record<string, unknown>;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
+const SITEMAP_FETCH_TIMEOUT_MS = 6_000;
+const PRIVATE_OR_ACTION_PATH_PATTERNS = [
+  /^\/admin(?:\/|$)/,
+  /^\/api(?:\/|$)/,
+  /^\/dashboard(?:\/|$)/,
+  /^\/company-dashboard(?:\/|$)/,
+  /^\/review-dashboard(?:\/|$)/,
+  /^\/favorites(?:\/|$)/,
+  /^\/profile(?:\/|$)/,
+  /^\/login(?:\/|$)/,
+  /^\/logout(?:\/|$)/,
+  /^\/register(?:\/|$)/,
+  /^\/signup(?:\/|$)/,
+  /^\/register-user(?:\/|$)/,
+  /^\/forgot-password(?:\/|$)/,
+  /^\/reset-password(?:\/|$)/,
+  /^\/confirm-email(?:\/|$)/,
+  /^\/search(?:\/|$)/,
+  /^\/compare(?:\/|$)/,
+  /^\/quote-wizard(?:\/|$)/,
+  /^\/select-company(?:\/|$)/,
+  /^\/chat(?:\/|$)/,
+  /^\/companies\/[^/]+\/(?:review|claim|quote)(?:\/|$)/,
+] as const;
+
 const isRecord = (value: unknown): value is ApiRecord =>
   Boolean(value && typeof value === 'object' && !Array.isArray(value));
 
@@ -47,13 +72,46 @@ const unwrapData = (payload: unknown): ApiRecord[] => {
   return Array.isArray(data) ? data.filter(isRecord) : [];
 };
 
+const normalizeSitemapEntries = (entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap => {
+  const seen = new Set<string>();
+  const normalized: MetadataRoute.Sitemap = [];
+
+  entries.forEach((entry) => {
+    try {
+      const parsed = new URL(entry.url);
+      parsed.hash = '';
+      parsed.search = '';
+      const path = parsed.pathname.replace(/\/+$/, '') || '/';
+
+      if (PRIVATE_OR_ACTION_PATH_PATTERNS.some((pattern) => pattern.test(path))) return;
+
+      const url = parsed.toString();
+      if (seen.has(url)) return;
+      seen.add(url);
+      normalized.push({ ...entry, url });
+    } catch {
+      // Drop malformed sitemap entries instead of emitting invalid XML.
+    }
+  });
+
+  return normalized;
+};
+
 async function fetchRecords(endpoint: string, revalidate = 3600): Promise<ApiRecord[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+
   try {
-    const response = await fetch(buildApiUrl(endpoint), { next: { revalidate } });
+    const response = await fetch(buildApiUrl(endpoint), {
+      next: { revalidate },
+      signal: controller.signal,
+    });
     if (!response.ok) return [];
     return unwrapData(await response.json());
   } catch {
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -79,12 +137,14 @@ export function getStaticSitemapEntries(): MetadataRoute.Sitemap {
     { route: '/cookies', priority: 0.4, changeFrequency: 'yearly' as const },
   ];
 
-  return routes.map(({ route, priority, changeFrequency }) => ({
-    url: absoluteUrl(route || '/'),
-    lastModified: STATIC_SITEMAP_LAST_MODIFIED,
-    changeFrequency,
-    priority,
-  }));
+  return normalizeSitemapEntries(
+    routes.map(({ route, priority, changeFrequency }) => ({
+      url: absoluteUrl(route || '/'),
+      lastModified: STATIC_SITEMAP_LAST_MODIFIED,
+      changeFrequency,
+      priority,
+    }))
+  );
 }
 
 export async function getBlogSitemapEntries(): Promise<MetadataRoute.Sitemap> {
@@ -94,51 +154,62 @@ export async function getBlogSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       const slug = getString(post, 'slug');
       if (!slug) return null;
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+
       try {
         const response = await fetch(buildApiUrl(`articles/${encodeURIComponent(slug)}`), {
           method: 'GET',
           next: { revalidate: 3600 },
+          signal: controller.signal,
         });
         return response.ok ? post : null;
       } catch {
         return null;
+      } finally {
+        clearTimeout(timeout);
       }
     })
   );
 
-  return validPosts
-    .filter((post): post is ApiRecord => Boolean(post))
-    .map((post) => ({
+  return normalizeSitemapEntries(
+    validPosts
+      .filter((post): post is ApiRecord => Boolean(post))
+      .map((post) => ({
       url: absoluteUrl(`/blog/${getString(post, 'slug')}`),
       lastModified: getString(post, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
-    }));
+      }))
+  );
 }
 
 export async function getCategorySitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const categories = await fetchRecords('categories?per_page=100');
-  return categories
-    .filter((category) => getString(category, 'seo_url'))
-    .map((category) => ({
+  return normalizeSitemapEntries(
+    categories
+      .filter((category) => getString(category, 'seo_url'))
+      .map((category) => ({
       url: absoluteUrl(`/categories/${getString(category, 'seo_url')}`),
       lastModified: getString(category, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
-    }));
+      }))
+  );
 }
 
 export async function getCompanyCategorySitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const categories = await fetchRecords('categories?per_page=100');
-  return categories
-    .filter((category) => {
+  return normalizeSitemapEntries(
+    categories
+      .filter((category) => {
       const id = getNumber(category, 'id');
       const name = getString(category, 'name');
       const seoUrl = getString(category, 'seo_url');
       const companiesCount = getNumber(category, 'companies_count') || 0;
       return Boolean(id && name && seoUrl && companiesCount > 0);
-    })
-    .map((category) => {
+      })
+      .map((category) => {
       const id = getNumber(category, 'id') as number;
       const name = getString(category, 'name') as string;
       const seoUrl = getString(category, 'seo_url') as string;
@@ -150,20 +221,22 @@ export async function getCompanyCategorySitemapEntries(): Promise<MetadataRoute.
         changeFrequency: 'weekly' as const,
         priority: 0.75,
       };
-    });
+      })
+  );
 }
 
 export async function getLocalRankingSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const rankings = await fetchRecords('sitemaps/local_rankings');
-  return rankings
-    .filter((item) => {
+  return normalizeSitemapEntries(
+    rankings
+      .filter((item) => {
       return (
         getString(item, 'category_slug') &&
         getString(item, 'state') &&
         getString(item, 'city_slug')
       );
-    })
-    .map((item) => ({
+      })
+      .map((item) => ({
       url: absoluteUrl(
         `/melhores-empresas/${getString(item, 'category_slug')}/${getString(
           item,
@@ -173,19 +246,22 @@ export async function getLocalRankingSitemapEntries(): Promise<MetadataRoute.Sit
       lastModified: getString(item, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
-    }));
+      }))
+  );
 }
 
 export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const companies = await fetchRecords('companies?status=active&per_page=100');
-  return companies
-    .filter((company) => getString(company, 'slug'))
-    .map((company) => ({
+  return normalizeSitemapEntries(
+    companies
+      .filter((company) => getString(company, 'slug'))
+      .map((company) => ({
       url: absoluteUrl(`/companies/${getString(company, 'slug')}`),
       lastModified: getString(company, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
       changeFrequency: 'daily' as const,
       priority: 0.9,
-    }));
+      }))
+  );
 }
 
 export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitemap> {
@@ -207,9 +283,13 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
     const batch = localPages.slice(i, i + 5);
     const batchResults = await Promise.all(
       batch.map(async (page) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+
         try {
           const response = await fetch(buildApiUrl(`${page.endpoint}?page=1&per_page=1`), {
             next: { revalidate: 3600 },
+            signal: controller.signal,
           });
           if (!response.ok) return null;
 
@@ -226,13 +306,15 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
           };
         } catch {
           return null;
+        } finally {
+          clearTimeout(timeout);
         }
       })
     );
     checks.push(...batchResults);
   }
 
-  return checks.filter((entry): entry is SitemapEntry => Boolean(entry));
+  return normalizeSitemapEntries(checks.filter((entry): entry is SitemapEntry => Boolean(entry)));
 }
 
 export async function getSitemapEntriesBySection(
@@ -258,7 +340,7 @@ export async function getSitemapEntriesBySection(
 
 export async function getAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const sections = await Promise.all(SITEMAP_SECTIONS.map(getSitemapEntriesBySection));
-  return sections.flat();
+  return normalizeSitemapEntries(sections.flat());
 }
 
 export const getSitemapIndexEntries = () =>
@@ -282,7 +364,7 @@ const normalizeLastModified = (value: SitemapEntry['lastModified']) => {
 };
 
 export function serializeSitemapUrlset(entries: MetadataRoute.Sitemap) {
-  const urls = entries
+  const urls = normalizeSitemapEntries(entries)
     .map((entry) => {
       const lastModified = normalizeLastModified(entry.lastModified);
       return [

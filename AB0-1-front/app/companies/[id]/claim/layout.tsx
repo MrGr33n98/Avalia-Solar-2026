@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Reivindicar perfil | Avalia Solar',
   robots: {
     index: false,
-    follow: true,
+    follow: false,
   },
 };
 

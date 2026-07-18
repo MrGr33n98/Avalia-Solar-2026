@@ -19,7 +19,7 @@ const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'home-fallback-cache.json');
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_STALE_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_API_TIMEOUT_MS = 12_000;
+const DEFAULT_API_TIMEOUT_MS = 5_000;
 const API_TIMEOUT_MS = (() => {
   const raw = Number(process.env.HOME_FALLBACK_API_TIMEOUT_MS);
   return Number.isFinite(raw) && raw >= 1_000 ? raw : DEFAULT_API_TIMEOUT_MS;
@@ -144,7 +144,7 @@ const getCache = async () => {
   return cacheReady;
 };
 
-const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 2): Promise<T> => {
+const fetchJSON = async <T>(endpoint: string, signal: AbortSignal, retries = 1): Promise<T> => {
   const url = buildApiUrl(endpoint);
   
   for (let i = 0; i <= retries; i++) {

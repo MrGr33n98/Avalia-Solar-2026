@@ -17,9 +17,20 @@ type PublicFetchOptions<TFallback = undefined> = {
   tags?: string[];
   fallback?: TFallback;
   silent?: boolean;
+  timeoutMs?: number;
 };
 
 const DEFAULT_PUBLIC_REVALIDATE_SECONDS = 600;
+const DEFAULT_PUBLIC_API_TIMEOUT_MS = 8_000;
+
+const getPublicApiTimeoutMs = (timeoutMs?: number) => {
+  if (Number.isFinite(timeoutMs) && (timeoutMs || 0) > 0) return timeoutMs as number;
+
+  const envTimeout = Number(process.env.PUBLIC_API_TIMEOUT_MS);
+  return Number.isFinite(envTimeout) && envTimeout >= 1_000
+    ? envTimeout
+    : DEFAULT_PUBLIC_API_TIMEOUT_MS;
+};
 
 type PublicCompanyListParams = {
   status?: string;
@@ -98,12 +109,15 @@ export async function fetchApiPublic<T, TFallback = undefined>(
   const endpointWithParams = appendParams(endpoint, options.params);
   const url = buildApiUrl(endpointWithParams);
   const revalidate = options.revalidate ?? DEFAULT_PUBLIC_REVALIDATE_SECONDS;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), getPublicApiTimeoutMs(options.timeoutMs));
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: getApiRequestHeaders(),
       credentials: 'omit',
+      signal: controller.signal,
       next: {
         revalidate,
         ...(options.tags ? { tags: options.tags } : {}),
@@ -142,6 +156,8 @@ export async function fetchApiPublic<T, TFallback = undefined>(
     }
 
     throw apiError;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

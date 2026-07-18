@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     return {
       title: `Avaliar ${company.name} | Avalia Solar`,
       description: `Deixe sua avaliação e ajude a comunidade a conhecer o serviço prestado por ${company.name}.`,
-      robots: { index: false, follow: true },
+      robots: { index: false, follow: false },
       alternates: {
         canonical: companyCanonicalUrl,
       },
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   } catch {
     return {
       title: 'Avaliar empresa | Avalia Solar',
-      robots: { index: false, follow: true },
+      robots: { index: false, follow: false },
     };
   }
 }

@@ -27,39 +27,58 @@ import { SITE, absoluteUrl } from '@/lib/site';
 export const revalidate = 3600; // ISR - 1 hora
 
 async function getArticle(slug: string): Promise<Article | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+
   try {
     const safeSlug = decodeURIComponent(slug || '').trim();
     const res = await fetch(buildApiUrl(`articles/${safeSlug || slug}`), {
       headers: getApiRequestHeaders(),
-      next: { revalidate: 3600 }
+      next: { revalidate: 3600 },
+      signal: controller.signal,
     });
     if (res.ok) return res.json();
 
     if (safeSlug && safeSlug !== slug) {
-      const fallbackRes = await fetch(buildApiUrl(`articles/${safeSlug}`), {
-        headers: getApiRequestHeaders(),
-        next: { revalidate: 3600 }
-      });
-      if (fallbackRes.ok) return fallbackRes.json();
+      const fallbackController = new AbortController();
+      const fallbackTimeout = setTimeout(() => fallbackController.abort(), 8_000);
+      try {
+        const fallbackRes = await fetch(buildApiUrl(`articles/${safeSlug}`), {
+          headers: getApiRequestHeaders(),
+          next: { revalidate: 3600 },
+          signal: fallbackController.signal,
+        });
+        if (fallbackRes.ok) return fallbackRes.json();
+      } finally {
+        clearTimeout(fallbackTimeout);
+      }
     }
 
     return null;
   } catch (error) {
     console.error('Failed to fetch article:', error);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 async function getRelatedArticles(slug: string): Promise<Article[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5_000);
+
   try {
     const res = await fetch(buildApiUrl(`articles/${slug}/related`), {
       headers: getApiRequestHeaders(),
-      next: { revalidate: 3600 }
+      next: { revalidate: 3600 },
+      signal: controller.signal,
     });
     if (!res.ok) return [];
     return res.json();
   } catch {
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -67,7 +86,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const article = await getArticle(params.slug);
 
   if (!article) {
-    return { title: 'Artigo não encontrado' };
+    return {
+      title: 'Artigo não encontrado | Avalia Solar',
+      robots: { index: false, follow: false },
+    };
   }
 
   const ogImage = article.image_url ? toCrawlableImageUrl(getFullImageUrl(article.image_url)) : undefined;
