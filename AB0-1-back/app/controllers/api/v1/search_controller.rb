@@ -18,11 +18,11 @@ module Api
         longitude = params[:longitude].presence
         radius_km = params[:radius_km].presence
 
-      legacy_results = safe_legacy_results(query, state: state, city: city, category_id: category_id)
-      reviews_results = Array(legacy_results[:reviews])
+        legacy_results = safe_legacy_results(query, state: state, city: city, category_id: category_id)
+        reviews_results = Array(legacy_results[:reviews])
 
-      company_results = safe_company_results(
-        query: query,
+        company_results = safe_company_results(
+          query: query,
           state: state,
           city: city,
           category_id: category_id,
@@ -33,6 +33,8 @@ module Api
           longitude: longitude,
           radius_km: radius_km
         )
+        company_results = legacy_company_results(legacy_results[:companies], page: page, per: per) if
+          safe_company_total_count(company_results).zero? && safe_count(legacy_results[:companies]).positive?
 
         track_search_event(
           query: query,
@@ -272,6 +274,26 @@ module Api
           },
           facets: {},
           map: { companies: [], total_count: 0 }
+        }
+      end
+
+      def legacy_company_results(collection, page:, per:)
+        total_count = safe_count(collection)
+        total_pages = (total_count.to_f / per).ceil
+        total_pages = 1 if total_pages.zero?
+
+        {
+          nodes: paginate_legacy_collection(collection, page: page, per: per),
+          page_info: {
+            current_page: page,
+            total_pages: total_pages,
+            total_count: total_count,
+            per_page: per,
+            has_next_page: page < total_pages,
+            has_previous_page: page > 1
+          },
+          facets: {},
+          map: empty_map_results
         }
       end
 

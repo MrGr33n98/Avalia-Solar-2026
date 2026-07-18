@@ -35,19 +35,30 @@ module Api
         assert json['companies'].any? { |company| company['name'] == 'WEG' }
       end
 
-      test 'search all returns an empty payload when company search fails' do
+      test 'search all falls back to legacy companies when company search fails' do
         failing_service = Object.new
         def failing_service.call
           raise StandardError, 'search boom'
         end
 
-        with_company_search_service(failing_service) do
-          get '/api/v1/search/all', params: { q: 'weg' }
+        legacy_payload = {
+          companies: [@company],
+          products: [],
+          categories: [],
+          articles: [],
+          reviews: []
+        }
+
+        with_legacy_search_service(legacy_payload) do
+          with_company_search_service(failing_service) do
+            get '/api/v1/search/all', params: { q: 'weg' }
+          end
         end
 
         assert_response :success
         json = JSON.parse(response.body)
-        assert_equal [], json['companies']
+        assert json['companies'].any? { |company| company['name'] == 'WEG' }
+        assert_operator json.dig('counts', 'companies'), :>=, 1
         assert_includes json.dig('meta', 'error_stage'), 'company_search'
       end
 
@@ -73,6 +84,17 @@ module Api
 
         assert without_accent['companies'].any? { |company| company['city'] == 'Florianópolis' }
         assert with_accent['companies'].any? { |company| company['city'] == 'Florianópolis' }
+      end
+
+      test 'search all matches broad solar category terms' do
+        with_company_search_service(successful_company_service(@company)) do
+          get '/api/v1/search/all', params: { q: 'solar', sort: 'rating' }
+        end
+
+        assert_response :success
+        json = JSON.parse(response.body)
+        assert json['companies'].any? { |company| company['name'] == 'WEG' }
+        assert_operator json.dig('counts', 'companies'), :>=, 1
       end
 
       private
@@ -107,6 +129,25 @@ module Api
       ensure
         ::Search.send(:remove_const, :CompanySearchService)
         ::Search.const_set(:CompanySearchService, original)
+      end
+
+      def with_legacy_search_service(payload)
+        original = ::SearchService
+        ::Object.send(:remove_const, :SearchService)
+        replacement = Class.new do
+          define_method(:initialize) do |*|
+            @result = payload
+          end
+
+          define_method(:call) do
+            @result
+          end
+        end
+        ::Object.const_set(:SearchService, replacement)
+        yield
+      ensure
+        ::Object.send(:remove_const, :SearchService)
+        ::Object.const_set(:SearchService, original)
       end
     end
   end

@@ -41,14 +41,18 @@ module Search
     end
 
     def call
-      result = if search_enabled? && opensearch_responsive?
-                 search_via_opensearch
-               else
-                 search_via_postgresql
-               end
+      use_opensearch = search_enabled? && opensearch_responsive?
+      result = use_opensearch ? search_via_opensearch : search_via_postgresql
+
+      if use_opensearch && zero_company_results?(result) && @submitted_q.present?
+        Rails.logger.warn(
+          "[Search] OpenSearch retornou zero empresas para '#{@submitted_q}', usando fallback PostgreSQL"
+        )
+        result = search_via_postgresql
+      end
 
       if result && result[:nodes] && result[:nodes].empty? && @submitted_q.present?
-        log_zero_results(search_enabled? && opensearch_responsive? ? 'opensearch' : 'postgresql')
+        log_zero_results(use_opensearch ? 'opensearch_postgresql_fallback' : 'postgresql')
       end
 
       result
@@ -62,6 +66,10 @@ module Search
     end
 
     private
+
+    def zero_company_results?(result)
+      result.is_a?(Hash) && Array(result[:nodes]).empty?
+    end
 
     def normalize_state(value)
       ::Locations::CoverageNormalizer.normalize_state(value)

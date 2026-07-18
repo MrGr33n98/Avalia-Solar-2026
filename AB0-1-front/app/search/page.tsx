@@ -31,6 +31,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Company, Product, SearchAllResponse } from '@/lib/api';
 import { searchApi } from '@/lib/api';
+import { companiesApiSafe } from '@/lib/api-client';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
 import { CONTACT } from '@/lib/site';
 import { buildCategoryPath } from '@/lib/slug';
@@ -78,6 +79,24 @@ const matchesPrice = (price: number, range: PriceRange) => {
 const isSearchTab = (value: string | null): value is SearchTab =>
   value === 'all' || value === 'products' || value === 'companies' || value === 'reviews';
 
+const isSearchSort = (value: string | null): value is SearchSort =>
+  value === 'relevance' || value === 'price_asc' || value === 'price_desc' || value === 'rating';
+
+const toApiSort = (sort: SearchSort) => {
+  if (sort === 'rating') return 'rating_desc';
+  if (sort === 'relevance') return 'recommended';
+  return sort;
+};
+
+const mergeUniqueCompanies = (primary: Company[], fallback: Company[]) => {
+  const seen = new Set<number | string>();
+  return [...primary, ...fallback].filter((company) => {
+    if (seen.has(company.id)) return false;
+    seen.add(company.id);
+    return true;
+  });
+};
+
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,6 +104,7 @@ function SearchPageContent() {
   const urlCity = searchParams.get('city') || '';
   const urlVerified = searchParams.get('verified') === 'true';
   const tabParam = searchParams.get('tab');
+  const sortParam = searchParams.get('sort');
 
   const [searchTerm, setSearchTerm] = useState(query);
   const [locationTerm, setLocationTerm] = useState(urlCity);
@@ -94,7 +114,7 @@ function SearchPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SearchTab>(isSearchTab(tabParam) ? tabParam : 'all');
-  const [sort, setSort] = useState<SearchSort>('relevance');
+  const [sort, setSort] = useState<SearchSort>(isSearchSort(sortParam) ? sortParam : 'relevance');
   const [filters, setFilters] = useState<SearchFilterState>({
     ...defaultSearchFilters,
     city: urlCity,
@@ -116,6 +136,10 @@ function SearchPageContent() {
   }, [tabParam]);
 
   useEffect(() => {
+    setSort(isSearchSort(sortParam) ? sortParam : 'relevance');
+  }, [sortParam]);
+
+  useEffect(() => {
     try {
       setProductFavorites(
         new Set<number>(JSON.parse(localStorage.getItem('search-product-favorites') || '[]'))
@@ -133,9 +157,25 @@ function SearchPageContent() {
     setLoading(true);
     setError(null);
     try {
-      const response = await searchApi.all(query, urlCity ? { city: urlCity } : undefined);
+      const apiFilters = {
+        ...(urlCity ? { city: urlCity } : {}),
+        sort: toApiSort(sort),
+      };
+      const response = await searchApi.all(query, apiFilters);
+      const companies = response.companies || [];
+      const fallbackCompanies =
+        query.trim() && companies.length === 0
+          ? await companiesApiSafe.getAll({
+              q: query.trim(),
+              ...(urlCity ? { city: urlCity } : {}),
+              status: 'active',
+              sort: toApiSort(sort),
+              limit: 24,
+              fields: 'card',
+            })
+          : [];
       setResults({
-        companies: response.companies || [],
+        companies: mergeUniqueCompanies(companies, fallbackCompanies),
         products: response.products || [],
         categories: response.categories || [],
         articles: response.articles || [],
@@ -145,7 +185,8 @@ function SearchPageContent() {
         search_term: query,
         city: urlCity || undefined,
         products_count: response.products?.length || 0,
-        companies_count: response.companies?.length || 0,
+        companies_count: companies.length || fallbackCompanies.length || 0,
+        companies_fallback_count: fallbackCompanies.length || undefined,
       });
     } catch (caughtError) {
       setError(
@@ -154,7 +195,7 @@ function SearchPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [query, urlCity]);
+  }, [query, sort, urlCity]);
 
   useEffect(() => {
     void performSearch();
@@ -263,6 +304,15 @@ function SearchPageContent() {
     const params = new URLSearchParams(searchParams.toString());
     if (tab === 'all') params.delete('tab');
     else params.set('tab', tab);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSortChange = (nextSort: SearchSort) => {
+    setSort(nextSort);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextSort === 'relevance') params.delete('sort');
+    else params.set('sort', nextSort);
+    params.delete('page');
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
@@ -383,7 +433,7 @@ function SearchPageContent() {
               companiesCount={filteredCompanies.length}
               reviewsCount={results.reviews?.length || 0}
               sort={sort}
-              onSortChange={setSort}
+              onSortChange={handleSortChange}
             />
 
             <SearchTabs value={activeTab} counts={counts} onChange={handleTabChange} />
