@@ -1,10 +1,10 @@
 'use client';
 
-import { Star, MessageSquare } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
-interface ReviewV1 {
+export interface ReviewV1 {
   id: number;
   rating: number;
   comment: string;
@@ -20,15 +20,15 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
   return (
-    <div className="bg-slate-50/50 rounded-2xl border border-slate-100 p-6 flex gap-4 opacity-80 hover:opacity-100 transition-opacity">
-      <Avatar className="h-10 w-10 grayscale">
+    <article className="flex gap-4 rounded-[2px] border border-slate-300 bg-white p-5 sm:p-6">
+      <Avatar className="h-11 w-11 rounded-[2px] border border-slate-300 grayscale">
         <AvatarImage src={review.user.avatar_url || undefined} />
-        <AvatarFallback className="bg-slate-200 text-slate-400 font-bold">
+        <AvatarFallback className="rounded-[2px] bg-slate-200 text-slate-500 font-bold">
           {review.user.name.substring(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
@@ -37,22 +37,22 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
           <div>
             <h4 className="text-sm font-bold text-slate-900">{review.user.name}</h4>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest">{formatDate(review.created_at)}</span>
-              <span className="text-[10px] font-black uppercase text-slate-300 tracking-tighter bg-slate-100 px-1.5 py-0.5 rounded">Avaliação Geral</span>
+              <span className="text-[10px] text-slate-400 uppercase tracking-widest">
+                {formatDate(review.created_at)}
+              </span>
+              <span className="border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Avaliação Geral
+              </span>
             </div>
           </div>
-          <div 
-            className="flex gap-0.5" 
-            role="img" 
-            aria-label={`${review.rating} de 5 estrelas`}
-          >
+          <div className="flex gap-0.5" role="img" aria-label={`${review.rating} de 5 estrelas`}>
             {[1, 2, 3, 4, 5].map((s) => (
-              <Star 
-                key={s} 
+              <Star
+                key={s}
                 className={cn(
-                  "h-3 w-3",
-                  s <= review.rating ? "fill-slate-400 text-slate-400" : "text-slate-200"
-                )} 
+                  'h-3 w-3',
+                  s <= review.rating ? 'fill-slate-400 text-slate-400' : 'text-slate-200'
+                )}
                 aria-hidden="true"
               />
             ))}
@@ -62,6 +62,6 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
           &ldquo;{review.comment}&rdquo;
         </p>
       </div>
-    </div>
+    </article>
   );
 }

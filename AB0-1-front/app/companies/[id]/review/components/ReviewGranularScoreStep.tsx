@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Star, Loader2 } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { fetchApi } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,13 +14,21 @@ interface Criterion {
   required: boolean;
 }
 
+interface EvaluationContextResponse {
+  criteria?: Criterion[];
+}
+
 interface ReviewGranularScoreStepProps {
   categoryId: number;
   onChange: (scores: Record<number, number>) => void;
   values: Record<number, number>;
 }
 
-export function ReviewGranularScoreStep({ categoryId, onChange, values }: ReviewGranularScoreStepProps) {
+export function ReviewGranularScoreStep({
+  categoryId,
+  onChange,
+  values,
+}: ReviewGranularScoreStepProps) {
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,14 +37,14 @@ export function ReviewGranularScoreStep({ categoryId, onChange, values }: Review
     setLoading(true);
     setError(null);
     fetchApi(`/categories/${categoryId}/evaluation_context`)
-      .then((data: any) => {
+      .then((data: EvaluationContextResponse) => {
         if (data?.criteria && Array.isArray(data.criteria)) {
           setCriteria(data.criteria);
         } else {
           setCriteria([]);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('[ReviewGranularScoreStep] Failed to fetch criteria:', err);
         setError('Não foi possível carregar os critérios de avaliação.');
       })
@@ -55,11 +63,13 @@ export function ReviewGranularScoreStep({ categoryId, onChange, values }: Review
         <h3 className="text-lg font-semibold">Avalie os detalhes do serviço</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 border rounded-lg space-y-3">
+            <div key={i} className="space-y-3 border border-slate-200 p-4">
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-3 w-3/4" />
               <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((j) => <Skeleton key={j} className="h-8 w-8 rounded-full" />)}
+                {[1, 2, 3, 4, 5].map((j) => (
+                  <Skeleton key={j} className="h-8 w-8" />
+                ))}
               </div>
             </div>
           ))}
@@ -69,41 +79,54 @@ export function ReviewGranularScoreStep({ categoryId, onChange, values }: Review
   }
 
   if (error) {
-    return <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>;
+    return (
+      <div role="alert" className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {error}
+      </div>
+    );
   }
 
   if (criteria.length === 0) {
     return (
-      <div className="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center space-y-2">
-        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Critérios Específicos</p>
-        <p className="text-xs text-slate-500">Esta categoria ainda não possui critérios técnicos detalhados para avaliação.</p>
+      <div className="space-y-2 border border-slate-300 bg-slate-50 p-6 text-center">
+        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+          Critérios Específicos
+        </p>
+        <p className="text-xs text-slate-500">
+          Esta categoria ainda não possui critérios técnicos detalhados para avaliação.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Avalie os detalhes do serviço</h3>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <h3 className="text-lg font-semibold text-[#0B1F4B]">Critérios de avaliação</h3>
+      <div className="grid border-l border-t border-slate-300 sm:grid-cols-2 lg:grid-cols-3">
         {criteria.map((criterion) => (
-          <div key={criterion.id} className="p-4 bg-muted/10 rounded-lg border border-border/50 hover:bg-muted/20 transition-colors">
+          <div key={criterion.id} className="border-b border-r border-slate-300 bg-white p-4">
             <Label className="text-sm font-bold flex items-center justify-between mb-1">
-              <span>{criterion.title} {criterion.required && <span className="text-red-500">*</span>}</span>
+              <span>
+                {criterion.title} {criterion.required && <span className="text-red-500">*</span>}
+              </span>
             </Label>
             {criterion.help_text && (
               <p className="text-xs text-muted-foreground mb-3">{criterion.help_text}</p>
             )}
-            <div className="flex gap-1">
+            <div className="flex gap-0.5" role="radiogroup" aria-label={criterion.title}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
                   onClick={() => handleScoreChange(criterion.id, star)}
                   aria-label={`${star} estrela${star > 1 ? 's' : ''} para ${criterion.title}`}
-                  className="focus:outline-none transition-transform hover:scale-110 p-1"
+                  role="radio"
+                  aria-checked={(values[criterion.id] || 0) === star}
+                  className="flex h-11 w-9 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                 >
                   <Star
-                    className={`h-7 w-7 ${
+                    aria-hidden="true"
+                    className={`h-6 w-6 ${
                       star <= (values[criterion.id] || 0)
                         ? 'text-yellow-400 fill-yellow-400'
                         : 'text-gray-200 hover:text-yellow-200'

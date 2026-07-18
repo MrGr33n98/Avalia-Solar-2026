@@ -205,13 +205,13 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex gap-1.5">
+    <div className="border border-slate-300 bg-white">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-8">
+        <div className="flex gap-1" aria-label={`Passo ${step} de 3`}>
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`h-1.5 w-8 rounded-full transition-all duration-500 ${step >= i ? 'bg-blue-600' : 'bg-slate-200'}`}
+              className={`h-1 w-10 transition-colors ${step >= i ? 'bg-[#0B1F4B]' : 'bg-slate-200'}`}
             />
           ))}
         </div>
@@ -220,12 +220,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         </span>
       </div>
 
-      <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
-        <CardContent className="p-6 sm:p-10">
+      <Card className="overflow-hidden rounded-none border-0 bg-white shadow-none">
+        <CardContent className="p-5 sm:p-8 lg:p-10">
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="space-y-8">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
                   Sobre qual serviço você deseja falar?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -241,14 +241,21 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               />
 
               {availableCategories.length === 0 && (
-                <div className="p-4 bg-amber-50 text-amber-700 text-sm font-medium rounded-xl border border-amber-100">
+                <div
+                  role="status"
+                  className="border border-amber-300 bg-amber-50 p-4 text-sm font-medium text-amber-800"
+                >
                   Esta empresa não possui categorias de serviço configuradas no momento. Tente
                   novamente mais tarde.
                 </div>
               )}
 
               {submitError && step === 1 && (
-                <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+                >
                   {submitError}
                 </div>
               )}
@@ -257,7 +264,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 <Button
                   onClick={nextStep}
                   disabled={!categoryId || !!errorCategoryId}
-                  className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
+                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
                 >
                   Próximo: Notas
                   <ArrowRight className="h-4 w-4" />
@@ -267,9 +274,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 2 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="space-y-8">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
                   Como foi o desempenho técnico?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -277,21 +284,24 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 </p>
               </div>
 
-              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
+              <div className="flex flex-col justify-between gap-5 border border-slate-300 bg-slate-50 p-5 sm:flex-row sm:items-center">
                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-3">
                   Satisfação Geral
                 </Label>
-                <div className="flex gap-2">
+                <div className="flex gap-1" role="radiogroup" aria-label="Satisfação geral">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
                       aria-label={`${star} estrela${star > 1 ? 's' : ''} de 5`}
-                      className="focus:outline-none transition-transform hover:scale-110"
+                      role="radio"
+                      aria-checked={rating === star}
+                      className="flex h-11 w-11 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                     >
                       <Star
-                        className={`h-10 w-10 ${
+                        aria-hidden="true"
+                        className={`h-8 w-8 ${
                           star <= rating
                             ? 'text-yellow-400 fill-yellow-400'
                             : 'text-slate-200 hover:text-yellow-200'
@@ -310,18 +320,18 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 />
               )}
 
-              <div className="flex justify-between pt-8 border-t">
+              <div className="flex justify-between gap-3 border-t border-slate-200 pt-6">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
-                  className="rounded-full px-6 text-slate-500"
+                  className="h-12 rounded-[2px] px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                 >
                   Voltar
                 </Button>
                 <Button
                   onClick={nextStep}
                   disabled={rating === 0}
-                  className="rounded-full px-8 h-12 font-bold shadow-lg hover:shadow-xl transition-all gap-2"
+                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
                 >
                   Próximo: Texto
                   <ArrowRight className="h-4 w-4" />
@@ -331,9 +341,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 3 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="space-y-8">
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
                   Agora, conte-nos em palavras
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -344,23 +354,28 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               <ReviewEditorialStep data={editorialData} onChange={setEditorialData} />
 
               {submitError && (
-                <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+                >
                   {submitError}
                 </div>
               )}
 
-              <div className="flex justify-between pt-8 border-t">
+              <div className="flex flex-col-reverse justify-between gap-3 border-t border-slate-200 pt-6 sm:flex-row">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
-                  className="rounded-full px-6 text-slate-500"
+                  className="h-12 rounded-[2px] px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                 >
                   Voltar
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting || editorialData.comment.length < 10}
-                  className="rounded-full px-10 h-12 font-black shadow-lg bg-slate-950 hover:bg-blue-700 hover:shadow-blue-200 transition-all gap-2"
+                  aria-busy={isSubmitting}
+                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-10 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
                 >
                   {isSubmitting ? 'Enviando...' : 'Finalizar Avaliação'}
                   <CheckCircle2 className="h-4 w-4" />
@@ -372,9 +387,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
       </Card>
 
       <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
-        <DialogContent className="rounded-3xl p-0 overflow-hidden border-none max-w-md">
-          <div className="bg-green-600 p-8 flex justify-center">
-            <div className="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+        <DialogContent
+          className="max-w-md overflow-hidden rounded-[2px] border border-slate-300 p-0 shadow-none"
+          overlayClassName="bg-slate-950/60 backdrop-blur-sm"
+        >
+          <div className="flex justify-center border-b border-slate-200 bg-green-700 p-8">
+            <div className="flex h-16 w-16 items-center justify-center border border-white/40">
               <CheckCircle2 className="h-10 w-10 text-white" />
             </div>
           </div>
@@ -391,7 +409,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
             <DialogFooter className="pt-4">
               <Button
                 onClick={handleCloseModal}
-                className="w-full rounded-full h-12 font-bold bg-slate-950"
+                className="h-12 w-full rounded-[2px] bg-[#0B1F4B] font-bold"
               >
                 Entendi, voltar para a empresa
               </Button>
@@ -445,22 +463,27 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-12 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <header className="space-y-2">
+    <div className="min-h-screen bg-slate-100 px-0 py-0 sm:px-6 sm:py-8 lg:py-12">
+      <div className="mx-auto max-w-[1040px] space-y-0">
+        <header className="border-x border-t border-slate-300 bg-white px-5 py-6 sm:px-8">
           <Link
             href={companyPath}
-            className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-1 group"
+            className="mb-5 flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
           >
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
             Voltar para {company.name}
           </Link>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900">
-            Sua opinião vale muito.
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[30px]">
+            Avaliar empresa
           </h1>
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">
+            Compartilhe sua experiência e ajude outras pessoas.
+          </p>
         </header>
 
-        <Suspense fallback={<div className="h-64 bg-white shadow-xl rounded-3xl animate-pulse" />}>
+        <Suspense
+          fallback={<div className="h-64 border border-slate-300 bg-white animate-pulse" />}
+        >
           <ReviewForm company={company} companyPath={companyPath} />
         </Suspense>
       </div>

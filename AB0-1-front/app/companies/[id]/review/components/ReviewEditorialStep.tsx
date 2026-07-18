@@ -52,49 +52,69 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
 
   return (
     <div className="space-y-8">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Sua experiência em detalhes</h3>
-        
+      <div className="space-y-4 border-b border-slate-200 pb-8">
+        <h3 className="text-lg font-semibold text-[#0B1F4B]">Sua experiência em detalhes</h3>
+
         <div className="space-y-2">
-          <Label htmlFor="headline" className="text-sm font-bold">Título da sua Avaliação</Label>
+          <Label htmlFor="headline" className="text-sm font-bold">
+            Título da sua Avaliação
+          </Label>
           <input
             id="headline"
             placeholder="Ex: Instalação rápida e suporte excelente"
-            className="w-full p-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            className="h-12 w-full rounded-[2px] border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#0B1F4B] focus:ring-2 focus:ring-[#0B1F4B]/20"
             value={data.headline}
             onChange={(e) => onChange({ ...data, headline: e.target.value })}
           />
         </div>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Prós */}
-        <div className="space-y-3">
-          <Label className="text-xs font-black text-green-700 uppercase tracking-widest">O que foi bom?</Label>
+        <div className="min-h-44 space-y-3 border border-slate-300 p-4 sm:p-5">
+          <Label
+            htmlFor="pro-input"
+            className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
+          >
+            O que foi bom?
+          </Label>
           <div className="space-y-2">
             {data.pros.map((pro, i) => (
-              <div key={i} className="flex items-center gap-2 bg-green-50 p-2 rounded-md border border-green-100 group">
-                <span className="flex-1 text-sm text-green-900">{pro}</span>
-                <button 
-                  type="button" 
+              <div
+                key={i}
+                className="group flex items-center gap-2 border border-slate-200 bg-slate-50 p-2"
+              >
+                <span className="flex-1 text-sm text-slate-700">{pro}</span>
+                <button
+                  type="button"
                   onClick={() => handleRemovePro(i)}
-                  className="text-green-400 hover:text-green-600 transition-colors"
+                  aria-label={`Remover ponto positivo: ${pro}`}
+                  className="flex h-11 w-11 items-center justify-center text-slate-500 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ))}
             <div className="flex gap-2">
-              <label htmlFor="pro-input" className="sr-only">Adicionar ponto positivo</label>
+              <label htmlFor="pro-input" className="sr-only">
+                Adicionar ponto positivo
+              </label>
               <input
                 id="pro-input"
                 placeholder="Adicionar ponto positivo..."
-                className="flex-1 p-2 text-sm rounded-md border border-green-200 bg-green-50/30 focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
                 value={newPro}
                 onChange={(e) => setNewPro(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPro())}
               />
-              <Button type="button" size="icon" variant="ghost" onClick={handleAddPro} className="text-green-600 hover:bg-green-100">
+              <Button
+                aria-label="Adicionar ponto positivo"
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={handleAddPro}
+                className="h-11 w-11 rounded-[2px] border-slate-300 text-[#0B1F4B]"
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -102,32 +122,50 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         </div>
 
         {/* Contras */}
-        <div className="space-y-3">
-          <Label className="text-xs font-black text-red-700 uppercase tracking-widest">O que pode melhorar?</Label>
+        <div className="min-h-44 space-y-3 border border-slate-300 p-4 sm:p-5">
+          <Label
+            htmlFor="con-input"
+            className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
+          >
+            O que pode melhorar?
+          </Label>
           <div className="space-y-2">
             {data.cons.map((con, i) => (
-              <div key={i} className="flex items-center gap-2 bg-red-50 p-2 rounded-md border border-red-100 group">
-                <span className="flex-1 text-sm text-red-900">{con}</span>
-                <button 
-                  type="button" 
+              <div
+                key={i}
+                className="group flex items-center gap-2 border border-slate-200 bg-slate-50 p-2"
+              >
+                <span className="flex-1 text-sm text-slate-700">{con}</span>
+                <button
+                  type="button"
                   onClick={() => handleRemoveCon(i)}
-                  className="text-red-400 hover:text-red-600 transition-colors"
+                  aria-label={`Remover ponto de melhoria: ${con}`}
+                  className="flex h-11 w-11 items-center justify-center text-slate-500 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ))}
             <div className="flex gap-2">
-              <label htmlFor="con-input" className="sr-only">Adicionar ponto negativo</label>
+              <label htmlFor="con-input" className="sr-only">
+                Adicionar ponto negativo
+              </label>
               <input
                 id="con-input"
                 placeholder="Adicionar ponto negativo..."
-                className="flex-1 p-2 text-sm rounded-md border border-red-200 bg-red-50/30 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
                 value={newCon}
                 onChange={(e) => setNewCon(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCon())}
               />
-              <Button type="button" size="icon" variant="ghost" onClick={handleAddCon} className="text-red-600 hover:bg-red-100">
+              <Button
+                aria-label="Adicionar ponto de melhoria"
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={handleAddCon}
+                className="h-11 w-11 rounded-[2px] border-slate-300 text-[#0B1F4B]"
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -136,33 +174,40 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="comment" className="text-sm font-bold">Relato detalhado da experiência</Label>
+        <Label htmlFor="comment" className="text-sm font-bold">
+          Relato detalhado da experiência
+        </Label>
         <Textarea
           id="comment"
           placeholder="Conte-nos os detalhes da sua experiência (ex: atendimento, qualidade, pós-venda)..."
           value={data.comment}
           onChange={(e) => onChange({ ...data, comment: e.target.value })}
-          className="min-h-[120px] focus:ring-2 focus:ring-blue-500"
+          aria-describedby="comment-requirement"
+          className="min-h-[120px] rounded-[2px] border-slate-300 focus:ring-2 focus:ring-[#0B1F4B]"
         />
-        <p className="text-[10px] text-muted-foreground text-right uppercase tracking-tighter">
+        <p id="comment-requirement" className="text-right text-[11px] text-muted-foreground">
           Mínimo de 10 caracteres
         </p>
       </div>
 
-      <div className="space-y-2 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+      <div className="space-y-2 border border-slate-300 bg-slate-50 p-4 sm:p-5">
         <div className="flex justify-between items-center">
-          <Label htmlFor="buyerTip" className="text-sm font-bold text-blue-800">Dica para o próximo comprador (Opcional)</Label>
-          <span className={cn(
-            "text-[10px] font-bold uppercase",
-            data.buyerTip.length > 450 ? "text-red-500" : "text-blue-400"
-          )}>
+          <Label htmlFor="buyerTip" className="text-sm font-bold text-[#0B1F4B]">
+            Dica do comprador (opcional)
+          </Label>
+          <span
+            className={cn(
+              'text-[10px] font-bold uppercase',
+              data.buyerTip.length > 450 ? 'text-red-600' : 'text-slate-500'
+            )}
+          >
             {data.buyerTip.length}/500
           </span>
         </div>
         <Textarea
           id="buyerTip"
           placeholder="Ex: Peça o cronograma detalhado antes de assinar o contrato."
-          className="resize-none h-20 text-sm italic border-blue-200 bg-white focus:ring-2 focus:ring-blue-500"
+          className="h-24 resize-none rounded-[2px] border-slate-300 bg-white text-sm focus:ring-2 focus:ring-[#0B1F4B]"
           value={data.buyerTip}
           maxLength={500}
           onChange={(e) => onChange({ ...data, buyerTip: e.target.value })}

@@ -19,23 +19,33 @@ interface CompanyReputationSwitcherProps {
   onSwitch: (id: number | null) => void;
 }
 
-export function CompanyReputationSwitcher({ aggregates, activeCategoryId, onSwitch }: CompanyReputationSwitcherProps) {
+export function CompanyReputationSwitcher({
+  aggregates,
+  activeCategoryId,
+  onSwitch,
+}: CompanyReputationSwitcherProps) {
   const hasCategories = aggregates.by_category.length > 0;
 
   if (!hasCategories && !aggregates.global) return null;
 
   return (
-    <div className="bg-white p-1 rounded-2xl border border-slate-100 shadow-sm inline-block max-w-full">
+    <div className="inline-block max-w-full border border-slate-300 bg-white">
       <ScrollArea className="w-full">
-        <div className="flex items-center gap-1">
+        <div
+          className="flex items-center"
+          role="tablist"
+          aria-label="Filtrar avaliações por categoria"
+        >
           {/* Global Tab */}
           <button
             onClick={() => onSwitch(null)}
+            role="tab"
+            aria-selected={activeCategoryId === null}
             className={cn(
-              "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap",
-              activeCategoryId === null 
-                ? "bg-slate-900 text-white shadow-md" 
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              'min-h-11 whitespace-nowrap border-r border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0B1F4B]',
+              activeCategoryId === null
+                ? 'bg-[#0B1F4B] text-white'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
             )}
           >
             Geral {aggregates.global && `(${aggregates.global.average_rating.toFixed(1)})`}
@@ -46,11 +56,13 @@ export function CompanyReputationSwitcher({ aggregates, activeCategoryId, onSwit
             <button
               key={agg.category_id}
               onClick={() => onSwitch(agg.category_id)}
+              role="tab"
+              aria-selected={activeCategoryId === agg.category_id}
               className={cn(
-                "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap",
-                activeCategoryId === agg.category_id 
-                  ? "bg-blue-600 text-white shadow-md" 
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                'min-h-11 whitespace-nowrap border-r border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0B1F4B]',
+                activeCategoryId === agg.category_id
+                  ? 'bg-[#0B1F4B] text-white'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
               )}
             >
               {agg.category_name} ({agg.average_rating.toFixed(1)})
