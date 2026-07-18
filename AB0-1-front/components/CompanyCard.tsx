@@ -4,7 +4,26 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Star, MapPin, Building, Share2, Check, Info, Trophy, MessageCircle, ShieldCheck, Zap, Shield, HelpCircle, Heart, PhoneCall, Scale, BadgeCheck, CheckCircle, ChevronRight } from 'lucide-react';
+import {
+  Star,
+  MapPin,
+  Building,
+  Share2,
+  Check,
+  Info,
+  Trophy,
+  MessageCircle,
+  ShieldCheck,
+  Zap,
+  Shield,
+  HelpCircle,
+  Heart,
+  PhoneCall,
+  Scale,
+  BadgeCheck,
+  CheckCircle,
+  ChevronRight,
+} from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
@@ -189,73 +208,91 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
   }
 
   // Formato legado (resposta plana da API antiga)
-  const rating  = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
+  const rating = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
   const reviews = Number(comp?.rating_count ?? comp?.reviews_count ?? comp?.total_reviews ?? 0);
 
   // Sentiment: prioriza dados reais da API, nunca fabrica se ambos são zero
   const apiSentiment = comp?.reputation?.sentiment ?? comp?.sentiment ?? null;
-  const sentimentData = apiSentiment ?? (reviews > 0 ? undefined : { positive: 100, neutral: 0, negative: 0 });
+  const sentimentData =
+    apiSentiment ?? (reviews > 0 ? undefined : { positive: 100, neutral: 0, negative: 0 });
 
   // recommendation_rate: prioriza real da API
-  const apiRecommendation = comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate ?? null;
+  const apiRecommendation =
+    comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate ?? null;
 
   return {
-    id:       comp?.id || 0,
-    name:     comp?.name || '',
-    slug:     comp?.slug || '',
+    id: comp?.id || 0,
+    name: comp?.name || '',
+    slug: comp?.slug || '',
     logo_url: comp?.logo_url,
     featured: comp?.featured === true,
     sponsored: comp?.sponsored === true,
     feature_access: comp?.feature_access ?? {},
     top_criteria: extractTopCriteria(comp),
     identity: {
-      name:        comp?.name || '',
-      slug:        comp?.slug || '',
-      logo_url:    comp?.logo_url,
+      name: comp?.name || '',
+      slug: comp?.slug || '',
+      logo_url: comp?.logo_url,
       description: comp?.description,
-      city:        comp?.city,
-      state:       comp?.state
+      city: comp?.city,
+      state: comp?.state,
     },
     trust: {
-      is_claimed:          comp?.active_admin === true,
+      is_claimed: comp?.active_admin === true,
       verification_status: comp?.verified ? 'verified' : 'unverified',
-      verified_at:         comp?.verified_at,
-      verification_method: comp?.verification_method
+      verified_at: comp?.verified_at,
+      verification_method: comp?.verification_method,
     },
     reputation: {
-      rating_avg:          rating,
-      rating_count:        reviews,
-      nps_score:           comp?.nps_score,
-      nps_responses:       comp?.nps_responses || 0,
+      rating_avg: rating,
+      rating_count: reviews,
+      nps_score: comp?.nps_score,
+      nps_responses: comp?.nps_responses || 0,
       recommendation_rate: apiRecommendation,
-      sentiment:           sentimentData
+      sentiment: sentimentData,
     },
     operations: {
-      delivered_projects:   comp?.operations?.delivered_projects ??
-                            comp?.delivered_projects_count ??
-                            comp?.delivered_projects_score ?? 0,
-      sla_label:            comp?.operations?.sla_label ?? comp?.response_time_sla ?? '24h',
-      sla_minutes:          comp?.operations?.sla_minutes ?? comp?.response_sla_minutes,
-      warranty_years:       comp?.operations?.warranty_years ?? comp?.warranty_years ?? comp?.installation_warranty_years,
-      engineering_insurance: comp?.operations?.engineering_insurance ?? comp?.engineering_insurance === true,
-      updated_at:           comp?.operations?.updated_at ?? comp?.updated_at ?? comp?.operational_data_updated_at ?? ''
+      delivered_projects:
+        comp?.operations?.delivered_projects ??
+        comp?.delivered_projects_count ??
+        comp?.delivered_projects_score ??
+        0,
+      sla_label: comp?.operations?.sla_label ?? comp?.response_time_sla ?? '24h',
+      sla_minutes: comp?.operations?.sla_minutes ?? comp?.response_sla_minutes,
+      warranty_years:
+        comp?.operations?.warranty_years ??
+        comp?.warranty_years ??
+        comp?.installation_warranty_years,
+      engineering_insurance:
+        comp?.operations?.engineering_insurance ?? comp?.engineering_insurance === true,
+      updated_at:
+        comp?.operations?.updated_at ?? comp?.updated_at ?? comp?.operational_data_updated_at ?? '',
     },
     coverage: {
-      states: comp?.coverage?.states ??
-              (Array.isArray(comp?.coverage_states)
-                ? comp.coverage_states
-                : String(comp?.coverage_states || '').split(',').map((s: string) => s.trim()).filter(Boolean)),
-      cities: comp?.coverage?.cities ??
-              (Array.isArray(comp?.coverage_cities)
-                ? comp.coverage_cities
-                : String(comp?.coverage_cities || '').split(',').map((s: string) => s.trim()).filter(Boolean))
+      states:
+        comp?.coverage?.states ??
+        (Array.isArray(comp?.coverage_states)
+          ? comp.coverage_states
+          : String(comp?.coverage_states || '')
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)),
+      cities:
+        comp?.coverage?.cities ??
+        (Array.isArray(comp?.coverage_cities)
+          ? comp.coverage_cities
+          : String(comp?.coverage_cities || '')
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)),
     },
     actions: {
-      whatsapp_url:     comp?.actions?.whatsapp_url ?? comp?.whatsapp_url ?? comp?.cta_whatsapp_url,
-      whatsapp_enabled: comp?.actions?.whatsapp_enabled ??
-                        (comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true),
-      p2p_chat_enabled: comp?.actions?.p2p_chat_enabled ?? comp?.p2p_chat_enabled === true
-    }
+      whatsapp_url: comp?.actions?.whatsapp_url ?? comp?.whatsapp_url ?? comp?.cta_whatsapp_url,
+      whatsapp_enabled:
+        comp?.actions?.whatsapp_enabled ??
+        (comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true),
+      p2p_chat_enabled: comp?.actions?.p2p_chat_enabled ?? comp?.p2p_chat_enabled === true,
+    },
   };
 };
 
@@ -286,7 +323,10 @@ export default function CompanyCard({
   const intentCompanyId = String(id);
 
   const companyPath = useMemo(() => buildCompanyPath(slug, name, id), [slug, name, id]);
-  const companyReviewPath = useMemo(() => buildCompanySubPath(slug, name, 'reviews', id), [slug, name, id]);
+  const companyReviewPath = useMemo(
+    () => buildCompanySubPath(slug, name, 'reviews', id),
+    [slug, name, id]
+  );
 
   const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
   const p2pChatEnabled = company.actions.p2p_chat_enabled;
@@ -298,7 +338,12 @@ export default function CompanyCard({
   const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
 
   // Critérios reais de avaliação
-  const topCriteria = company.top_criteria ?? ['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'];
+  const topCriteria = company.top_criteria ?? [
+    'Equipe qualificada',
+    'Cumpre prazos',
+    'Ótimo atendimento',
+    'Produtos de qualidade',
+  ];
 
   const handleCardClick = () => {
     track('company_card_click', {
@@ -357,7 +402,9 @@ export default function CompanyCard({
             <div className="flex items-center gap-1.5 mt-1">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
               <span className="text-xs font-bold text-slate-800">
-                {company.reputation.rating_avg > 0 ? company.reputation.rating_avg.toFixed(1) : 'S/N'}
+                {company.reputation.rating_avg > 0
+                  ? company.reputation.rating_avg.toFixed(1)
+                  : 'S/N'}
               </span>
               <span className="text-[10px] text-slate-400">
                 ({company.reputation.rating_count})
@@ -378,7 +425,11 @@ export default function CompanyCard({
               className="w-full h-8 text-[11px] font-bold rounded-lg bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none"
               onClick={(e) => {
                 e.stopPropagation();
-                openLeadModal({ preferredCompanyId: id, source: 'company-card-compact', type: 'quick' });
+                openLeadModal({
+                  preferredCompanyId: id,
+                  source: 'company-card-compact',
+                  type: 'quick',
+                });
               }}
             >
               Orçamento
@@ -423,7 +474,12 @@ export default function CompanyCard({
 
         <div className="relative px-5 pb-5 pt-10 flex-1 flex flex-col">
           <div className="absolute -top-6 left-5 z-20" data-testid="company-logo">
-            <CompanyLogo logoUrl={company.logo_url} name={name} size="md" className="border-2 border-white shadow-md bg-white" />
+            <CompanyLogo
+              logoUrl={company.logo_url}
+              name={name}
+              size="md"
+              className="border-2 border-white shadow-md bg-white"
+            />
           </div>
 
           <div className="flex flex-col flex-1">
@@ -439,7 +495,9 @@ export default function CompanyCard({
             <div className="flex items-center gap-1.5 mt-2">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span className="text-xs font-semibold text-slate-800">
-                {company.reputation.rating_avg > 0 ? company.reputation.rating_avg.toFixed(1) : 'S/N'}
+                {company.reputation.rating_avg > 0
+                  ? company.reputation.rating_avg.toFixed(1)
+                  : 'S/N'}
               </span>
               <span className="text-[11px] text-slate-400">
                 ({company.reputation.rating_count} avaliações)
@@ -459,10 +517,10 @@ export default function CompanyCard({
                 onClick={handleCompareClick}
                 disabled={!selectedInComparison && !canAddMore}
                 className={cn(
-                  "w-full font-semibold rounded-xl shadow-none h-9 text-xs inline-flex items-center justify-center gap-1",
+                  'w-full font-semibold rounded-xl shadow-none h-9 text-xs inline-flex items-center justify-center gap-1',
                   selectedInComparison
-                    ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    : 'border-slate-300 text-slate-700 hover:bg-slate-50'
                 )}
               >
                 {selectedInComparison ? 'Selecionada' : 'Comparar'}
@@ -473,7 +531,11 @@ export default function CompanyCard({
                   className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openLeadModal({ preferredCompanyId: id, source: 'company-card-standard', type: 'quick' });
+                    openLeadModal({
+                      preferredCompanyId: id,
+                      source: 'company-card-standard',
+                      type: 'quick',
+                    });
                   }}
                 >
                   Pedir orçamento
@@ -482,10 +544,7 @@ export default function CompanyCard({
               <ReviewCompanyButton
                 company={company}
                 label="Avaliar"
-                className={cn(
-                  'h-9 w-full rounded-xl text-xs',
-                  canRequestQuote ? 'col-span-2' : ''
-                )}
+                className={cn('h-9 w-full rounded-xl text-xs', canRequestQuote ? 'col-span-2' : '')}
                 iconClassName="h-3.5 w-3.5"
                 stopPropagation
               />
@@ -498,19 +557,18 @@ export default function CompanyCard({
 
   // ── Variante 3: Expanded (layout horizontal compacto — full-width) ──
   // Sentiment: dados reais da API; mostra placeholder se sem reviews
-  const sentiment = company.reputation.sentiment ?? (
-    company.reputation.rating_count > 0
-      ? { positive: 85, neutral: 10, negative: 5 }
-      : null
-  );
+  const sentiment =
+    company.reputation.sentiment ??
+    (company.reputation.rating_count > 0 ? { positive: 85, neutral: 10, negative: 5 } : null);
 
   // Anel de recomendação (dados reais)
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation.recommendation_rate ?? null;
-  const strokeDashoffset = recommendationRate !== null
-    ? circumference - (recommendationRate / 100) * circumference
-    : circumference;
+  const strokeDashoffset =
+    recommendationRate !== null
+      ? circumference - (recommendationRate / 100) * circumference
+      : circumference;
 
   return (
     <Card
@@ -524,7 +582,6 @@ export default function CompanyCard({
     >
       {/* 1. CABEÇALHO — sempre horizontal */}
       <div className="flex justify-between items-start gap-4">
-
         {/* Esquerda: Logo + Identidade */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div data-testid="company-logo" className="shrink-0">
@@ -542,7 +599,10 @@ export default function CompanyCard({
                 <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
               </h3>
               {company.trust.verification_status === 'verified' && (
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] font-bold py-0 px-1.5 rounded-full inline-flex items-center gap-0.5 h-4">
+                <Badge
+                  variant="outline"
+                  className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] font-bold py-0 px-1.5 rounded-full inline-flex items-center gap-0.5 h-4"
+                >
                   <Check className="h-2.5 w-2.5" /> Verificada
                 </Badge>
               )}
@@ -552,12 +612,16 @@ export default function CompanyCard({
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span>{company.reputation.rating_avg.toFixed(1)}</span>
                 <span className="font-medium text-slate-300">|</span>
-                <span className="font-medium text-slate-400">{company.reputation.rating_count} aval.</span>
+                <span className="font-medium text-slate-600">
+                  {company.reputation.rating_count} aval.
+                </span>
               </div>
               {company.identity.city && (
-                <div className="flex items-center gap-0.5 font-medium text-slate-400">
+                <div className="flex items-center gap-0.5 font-medium text-slate-600">
                   <MapPin className="h-3 w-3 text-blue-500" />
-                  <span>{company.identity.city}, {company.identity.state}</span>
+                  <span>
+                    {company.identity.city}, {company.identity.state}
+                  </span>
                 </div>
               )}
             </div>
@@ -569,13 +633,21 @@ export default function CompanyCard({
           {/* Box de KPIs mini */}
           <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
             <div className="border-r border-slate-100 py-1">
-              <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Respostas</span>
-              <span className="text-[10px] font-black text-slate-900 block">{company.operations.sla_label || '24h'}</span>
+              <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
+                Respostas
+              </span>
+              <span className="text-[10px] font-black text-slate-900 block">
+                {company.operations.sla_label || '24h'}
+              </span>
             </div>
             <div className="py-1">
-              <span className="block text-[8px] text-slate-400 font-bold uppercase tracking-wider">Cobertura</span>
+              <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
+                Cobertura
+              </span>
               <span className="text-[10px] font-black text-slate-900 block truncate px-1">
-                {company.coverage.cities.length > 0 ? `${company.coverage.cities.length} reg.` : 'Consulte'}
+                {company.coverage.cities.length > 0
+                  ? `${company.coverage.cities.length} reg.`
+                  : 'Consulte'}
               </span>
             </div>
           </div>
@@ -588,10 +660,10 @@ export default function CompanyCard({
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
               className={cn(
-                "h-7 font-bold text-[10px] rounded-lg shadow-none w-full justify-center",
+                'h-7 font-bold text-[10px] rounded-lg shadow-none w-full justify-center',
                 selectedInComparison
-                  ? "border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
               )}
             >
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
@@ -602,7 +674,11 @@ export default function CompanyCard({
                 className="h-7 font-bold text-[10px] rounded-lg shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] w-full justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openLeadModal({ preferredCompanyId: id, source: 'company-card-expanded', type: 'quick' });
+                  openLeadModal({
+                    preferredCompanyId: id,
+                    source: 'company-card-expanded',
+                    type: 'quick',
+                  });
                 }}
               >
                 Pedir orçamento
@@ -623,7 +699,9 @@ export default function CompanyCard({
       <div className="mt-3 flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
         <p className="text-[11px] text-slate-500 leading-relaxed font-medium flex-1 min-w-0">
           {(() => {
-            const desc = company.identity.description || `A ${name} oferece soluções completas em energia solar com tecnologia de ponta.`;
+            const desc =
+              company.identity.description ||
+              `A ${name} oferece soluções completas em energia solar com tecnologia de ponta.`;
             return desc.length > 110 ? desc.slice(0, 110) + '...' : desc;
           })()}
         </p>
@@ -648,7 +726,6 @@ export default function CompanyCard({
       {/* 3. PAINEL DE REPUTAÇÃO — 3 colunas compactas (só renderiza se tiver avaliações) */}
       {company.reputation.rating_count > 0 && (
         <div className="mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
-
           {/* Col 1: Avaliação Geral */}
           <div className="p-3 flex items-center gap-3 md:flex-col md:items-center md:text-center">
             <span className="text-2xl font-black text-slate-900 leading-none">
@@ -660,27 +737,36 @@ export default function CompanyCard({
                   <Star
                     key={i}
                     className={cn(
-                      "h-3 w-3",
+                      'h-3 w-3',
                       i < Math.floor(company.reputation.rating_avg)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-slate-200 fill-slate-200"
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-slate-200 fill-slate-200'
                     )}
                   />
                 ))}
               </div>
-              <span className="text-[10px] text-slate-400 font-bold">{company.reputation.rating_count} avaliações</span>
+              <span className="text-[10px] text-slate-600 font-bold">
+                {company.reputation.rating_count} avaliações
+              </span>
             </div>
           </div>
 
           {/* Col 2: Review Sentiment */}
           <div className="p-3 flex flex-col justify-center">
             <div className="flex items-center gap-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Review Sentiment</span>
+              <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider">
+                Review Sentiment
+              </span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="p-0.5 rounded-full hover:bg-slate-100 transition-colors" onClick={(e) => e.stopPropagation()}>
-                      <Info className="h-3 w-3 text-slate-300 cursor-help" />
+                    <button
+                      type="button"
+                      aria-label="Entender como o sentimento das avaliações é calculado"
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Info className="h-4 w-4 cursor-help" aria-hidden="true" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-slate-900 text-white border-none p-2.5 rounded-lg max-w-xs shadow-xl text-[10px] space-y-1 leading-relaxed z-50">
@@ -693,24 +779,35 @@ export default function CompanyCard({
             {sentiment ? (
               <>
                 <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-slate-100 mt-2">
-                  <div style={{ width: `${sentiment.positive}%` }} className="bg-emerald-500 h-full" />
+                  <div
+                    style={{ width: `${sentiment.positive}%` }}
+                    className="bg-emerald-500 h-full"
+                  />
                   <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
                   <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
                 </div>
                 <div className="grid grid-cols-3 gap-1 mt-1.5 text-center">
                   <div>
-                    <span className="text-[10px] font-black text-emerald-600">{sentiment.positive}%</span>
+                    <span className="text-[10px] font-black text-emerald-600">
+                      {sentiment.positive}%
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-500">{sentiment.neutral}%</span>
+                    <span className="text-[10px] font-black text-amber-700">
+                      {sentiment.neutral}%
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-500">{sentiment.negative}%</span>
+                    <span className="text-[10px] font-black text-rose-500">
+                      {sentiment.negative}%
+                    </span>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="mt-2 text-[10px] text-slate-400 font-medium">Dados em processamento</div>
+              <div className="mt-2 text-[10px] text-slate-600 font-medium">
+                Dados em processamento
+              </div>
             )}
           </div>
 
@@ -718,8 +815,27 @@ export default function CompanyCard({
           <div className="p-3 flex items-center gap-3">
             <div className="relative shrink-0">
               <svg className="w-11 h-11 transform -rotate-90">
-                <circle className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
-                <circle className="text-emerald-500 transition-all duration-300" strokeWidth="3.5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" stroke="currentColor" fill="transparent" r={radius} cx="22" cy="22" />
+                <circle
+                  className="text-slate-100"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r={radius}
+                  cx="22"
+                  cy="22"
+                />
+                <circle
+                  className="text-emerald-500 transition-all duration-300"
+                  strokeWidth="3.5"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r={radius}
+                  cx="22"
+                  cy="22"
+                />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-[10px] font-black text-slate-800">
@@ -728,13 +844,16 @@ export default function CompanyCard({
               </div>
             </div>
             <div className="min-w-0">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Recomendação</span>
+              <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider block">
+                Recomendação
+              </span>
               {recommendationRate !== null ? (
                 <p className="text-[10px] text-slate-600 font-bold mt-0.5 leading-snug">
-                  <span className="text-emerald-600 font-black">{recommendationRate}%</span> recomendam
+                  <span className="text-emerald-600 font-black">{recommendationRate}%</span>{' '}
+                  recomendam
                 </p>
               ) : (
-                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Sem dados</p>
+                <p className="text-[10px] text-slate-600 font-medium mt-0.5">Sem dados</p>
               )}
             </div>
           </div>
@@ -756,7 +875,10 @@ export default function CompanyCard({
         {topCriteria.length > 4 && (
           <span
             className="text-[10px] text-slate-400 font-bold ml-0.5 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
-            onClick={(e) => { e.stopPropagation(); router.push(companyPath); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(companyPath);
+            }}
           >
             Ver mais
           </span>
@@ -769,7 +891,10 @@ export default function CompanyCard({
           <Button
             variant="outline"
             className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
-            onClick={(e) => { e.stopPropagation(); router.push(companyPath); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(companyPath);
+            }}
           >
             <Building className="h-3 w-3 mr-1 text-slate-400" />
             Ver perfil
@@ -791,7 +916,11 @@ export default function CompanyCard({
               className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
               onClick={(e) => {
                 e.stopPropagation();
-                openLeadModal({ preferredCompanyId: id, source: 'company-card-contact', type: 'quick' });
+                openLeadModal({
+                  preferredCompanyId: id,
+                  source: 'company-card-contact',
+                  type: 'quick',
+                });
               }}
             >
               <PhoneCall className="h-3 w-3 mr-1 text-slate-400" />
@@ -810,7 +939,10 @@ export default function CompanyCard({
 
         <Button
           className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 px-3 inline-flex items-center gap-1"
-          onClick={(e) => { e.stopPropagation(); router.push(companyReviewPath); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(companyReviewPath);
+          }}
         >
           Ver avaliações
           <Badge className="bg-white/20 hover:bg-white/20 text-white text-[9px] font-bold rounded px-1 shadow-none border-none">

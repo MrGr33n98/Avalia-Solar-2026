@@ -39,7 +39,7 @@ export function ProductCardEnhanced({
             className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center rounded-lg bg-slate-50 text-xs font-semibold text-slate-400">
+          <div className="flex h-full items-center justify-center rounded-lg bg-slate-50 text-xs font-semibold text-slate-600">
             Imagem indisponível
           </div>
         )}
@@ -52,7 +52,7 @@ export function ProductCardEnhanced({
           type="button"
           onClick={onToggleFavorite}
           aria-label={`${favorite ? 'Remover' : 'Adicionar'} ${product.name} dos favoritos`}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm hover:text-rose-500"
+          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
         >
           <Heart className={cn('h-4 w-4', favorite && 'fill-rose-500 text-rose-500')} />
         </button>
@@ -74,10 +74,10 @@ export function ProductCardEnhanced({
           {rating > 0 ? (
             <>
               <strong className="text-slate-800">{rating.toFixed(1)}</strong>
-              <span className="text-slate-400">({reviewsCount} avaliações)</span>
+              <span className="text-slate-600">({reviewsCount} avaliações)</span>
             </>
           ) : (
-            <span className="text-slate-400">Sem avaliações</span>
+            <span className="text-slate-600">Sem avaliações</span>
           )}
         </div>
 

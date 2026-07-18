@@ -51,7 +51,9 @@ export function SearchFilters({
     <div className="rounded-none border border-slate-200 bg-white shadow-none">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
         <h2 className="flex items-center gap-3 text-base font-semibold text-slate-950">
-          <span className="flex h-10 w-10 items-center justify-center rounded-none border border-slate-200 bg-slate-50"><SlidersHorizontal className="h-5 w-5 text-slate-900" /></span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-none border border-slate-200 bg-slate-50">
+            <SlidersHorizontal className="h-5 w-5 text-slate-900" />
+          </span>
           Filtros
         </h2>
         <button
@@ -104,7 +106,7 @@ export function SearchFilters({
             value={value.city}
             onChange={(event) => update('city', event.target.value)}
             placeholder="Digite uma cidade ou UF"
-            className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
         </label>
         <label className="block text-sm font-semibold text-slate-700">
@@ -167,7 +169,7 @@ function FilterCheckbox({
         className="h-4 w-4 rounded-none border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
       />
       <span>{label}</span>
-      <span className="text-xs text-slate-400">({count})</span>
+      <span className="text-xs text-slate-600">({count})</span>
     </label>
   );
 }

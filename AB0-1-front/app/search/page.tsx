@@ -357,8 +357,7 @@ function SearchPageContent() {
       <section
         className="relative overflow-hidden bg-[#071e4a] bg-cover bg-[position:center_55%] text-white"
         style={{
-          backgroundImage:
-            "url('/assets/avalia_symbol_search_banner_avalia_solar.png')",
+          backgroundImage: "url('/assets/avalia_symbol_search_banner_avalia_solar.webp')",
         }}
       >
         <div className="relative mx-auto max-w-[1240px] px-4 py-9 sm:px-6 sm:py-12">
@@ -376,32 +375,38 @@ function SearchPageContent() {
           >
             <label className="relative border-b border-slate-200 sm:border-b-0 sm:border-r">
               <span className="sr-only">Buscar empresa, produto ou serviço</span>
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <Search
+                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              />
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Buscar empresa, produto ou serviço..."
-                className="h-14 w-full bg-transparent pl-12 pr-10 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                className="h-14 w-full bg-transparent pl-12 pr-12 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
               />
               {searchTerm ? (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
                   aria-label="Limpar termo da busca"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               ) : null}
             </label>
             <label className="relative border-b border-slate-200 sm:border-b-0">
               <span className="sr-only">CEP ou cidade</span>
-              <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <MapPin
+                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              />
               <input
                 value={locationTerm}
                 onChange={(event) => setLocationTerm(event.target.value)}
                 placeholder="CEP ou cidade..."
-                className="h-14 w-full bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                className="h-14 w-full bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
               />
             </label>
             <Button
@@ -599,7 +604,7 @@ function ResultSection({
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="flex items-center gap-2 text-xl font-bold text-slate-950">
           {icon}
-          {title} <span className="text-sm font-medium text-slate-400">({count})</span>
+          {title} <span className="text-sm font-medium text-slate-600">({count})</span>
         </h2>
         {action}
       </div>
