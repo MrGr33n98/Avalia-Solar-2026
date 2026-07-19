@@ -18,10 +18,11 @@ import { track } from '@/lib/analytics/lazy';
 
 interface LocationSearchProps {
   className?: string;
+  ariaLabelledBy?: string;
   onLocationSelect?: (location: { state: string; city?: string }) => void;
 }
 
-export default function LocationSearch({ className, onLocationSelect }: LocationSearchProps) {
+export default function LocationSearch({ className, ariaLabelledBy, onLocationSelect }: LocationSearchProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedCity, setSelectedCity] = React.useState('');
   const [searchValue, setSearchValue] = React.useState('');
@@ -88,7 +89,8 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           role="combobox"
           aria-expanded={open}
           aria-controls={open ? popoverId : undefined}
-          aria-label={`${selectedLabel}: selecionar localização`}
+          aria-label={ariaLabelledBy ? undefined : `${selectedLabel}: selecionar localização`}
+          aria-labelledby={ariaLabelledBy}
           className={cn(
             "h-[40px] w-full justify-between rounded-lg border-slate-200 bg-white px-3 text-left text-sm text-foreground shadow-none transition-colors",
             "hover:border-slate-300 hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",

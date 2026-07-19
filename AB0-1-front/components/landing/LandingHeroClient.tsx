@@ -47,15 +47,15 @@ export default function LandingHeroClient({
 
   return (
     <div className="z-10 flex w-full flex-col items-start text-left">
-      <h1 className="max-w-[660px] text-[2rem] font-semibold leading-[1.06] tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[56px]">
+      <h1 className="max-w-[680px] text-[34px] font-semibold leading-[1.03] tracking-[-0.035em] text-slate-950 sm:text-[42px] lg:text-[50px]">
         Encontre empresas solares confiáveis na sua região
       </h1>
 
-      <p className="mt-4 max-w-[620px] text-sm font-normal leading-6 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
+      <p className="mt-4 max-w-[680px] text-[15px] font-normal leading-6 text-slate-600 sm:mt-5 sm:text-[17px] sm:leading-7">
         Compare empresas verificadas, avaliações reais e áreas de atendimento antes de solicitar propostas para o seu projeto.
       </p>
 
-      <div className="mt-6 w-full sm:mt-8">
+      <div className="mt-6 w-full sm:mt-7">
         <LandingHeroSearch
           categories={categories}
           heroVariant={variant}

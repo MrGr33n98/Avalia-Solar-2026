@@ -134,15 +134,15 @@ export function LandingHeroSearch({
   };
 
   return (
-    <Card className="w-full rounded-lg border border-slate-200 bg-white p-3 shadow-[0_12px_32px_-24px_rgba(15,23,42,.38)] sm:p-5">
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end md:gap-4 lg:gap-5">
+    <Card className="w-full rounded-lg border border-slate-200 bg-white p-4 shadow-none">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(220px,0.8fr)] lg:gap-4">
         <div className="group relative w-full">
-          <label htmlFor="category-select" className="mb-1.5 block text-[11px] font-semibold text-slate-700 sm:mb-2 sm:text-xs">
+          <label htmlFor="category-select" className="mb-1.5 block text-[11px] font-semibold leading-4 text-slate-700">
             O que você precisa?
           </label>
           <select
             id="category-select"
-            className="h-10 w-full cursor-pointer appearance-none rounded-md border border-slate-300 bg-white pl-10 pr-9 text-sm font-medium text-slate-900 shadow-sm outline-none transition-colors hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:h-12 sm:rounded-lg sm:pl-11"
+            className="h-[48px] w-full cursor-pointer appearance-none rounded-md border border-slate-300 bg-white pl-10 pr-9 text-sm font-medium text-slate-900 shadow-none outline-none transition-colors hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 lg:h-[50px]"
             value={selectedCategory}
             onChange={handleCategoryChange}
             aria-label="Selecionar categoria de serviço"
@@ -156,16 +156,17 @@ export function LandingHeroSearch({
               </option>
             ))}
           </select>
-          <Search className="absolute bottom-2.5 left-3.5 h-5 w-5 text-slate-400 transition-colors group-hover:text-blue-600 sm:bottom-3.5 sm:left-4" />
-          <ChevronDown className="pointer-events-none absolute bottom-3 right-4 h-4 w-4 text-slate-400 sm:bottom-4" />
+          <Search className="absolute bottom-[14px] left-3.5 h-5 w-5 text-slate-500 transition-colors group-hover:text-blue-600 lg:bottom-[15px]" aria-hidden="true" />
+          <ChevronDown className="pointer-events-none absolute bottom-4 right-4 h-4 w-4 text-slate-500 lg:bottom-[17px]" aria-hidden="true" />
         </div>
 
         <div className="w-full">
-          <label className="mb-1.5 block text-[11px] font-semibold text-slate-700 sm:mb-2 sm:text-xs">
+          <span id="landing-hero-location-label" className="mb-1.5 block text-[11px] font-semibold leading-4 text-slate-700">
             Cidade ou CEP
-          </label>
+          </span>
           <LocationSearch
-            className="h-10 w-full rounded-md border-slate-300 bg-white pl-10 text-sm font-medium shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:h-12 sm:rounded-lg"
+            ariaLabelledBy="landing-hero-location-label"
+            className="h-[48px] w-full rounded-md border-slate-300 bg-white px-3 text-sm font-medium shadow-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 lg:h-[50px]"
             onLocationSelect={setLocation}
           />
         </div>
@@ -174,7 +175,7 @@ export function LandingHeroSearch({
           type="button"
           onClick={handleSearch}
           aria-label="Buscar Empresas"
-          className="flex h-10 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-md bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:h-12 sm:rounded-lg md:min-w-[180px] md:w-auto"
+          className="flex h-[48px] w-full min-w-0 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-none transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:col-span-2 lg:col-span-1 lg:h-[50px]"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           <span>Buscar empresas</span>
