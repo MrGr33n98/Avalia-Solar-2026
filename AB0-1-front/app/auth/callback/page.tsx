@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { setAuthSessionHint } from '@/lib/api';
 
 type CallbackStatus = 'loading' | 'success' | 'pending_approval' | 'inactive' | 'error';
 
@@ -44,6 +45,12 @@ function AuthCallbackContent() {
     if (rawStatus === 'success') {
       if (refreshCalled.current) return;
       refreshCalled.current = true;
+
+      // OAuth credentials are stored in HttpOnly cookies, so client-side code
+      // cannot detect them through document.cookie. Mark the session as
+      // possible before asking AuthContext to validate it against /auth/me.
+      // A failed validation clears this hint again inside AuthContext.
+      setAuthSessionHint();
 
       refreshAuth().then((ok) => {
         if (!ok) {
