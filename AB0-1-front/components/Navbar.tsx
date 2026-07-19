@@ -1,17 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, ChevronDown, Search, User as UserIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Menu, Search, User as UserIcon } from 'lucide-react';
+
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import LocationSearch from '@/components/LocationSearch';
+import NavbarSearch from '@/components/NavbarSearch';
+import { UserAvatarDropdown } from '@/components/navigation/UserAvatarDropdown';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import NavbarSearch from './NavbarSearch';
-import LocationSearch from './LocationSearch';
-import { BrandLogo } from './brand/BrandLogo';
-import { UserAvatarDropdown } from './navigation/UserAvatarDropdown';
-
-import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 
 const CompanySwitcher = dynamic(
@@ -19,18 +19,26 @@ const CompanySwitcher = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-9 w-48 animate-pulse rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10" />
+      <div className="h-9 w-40 animate-pulse rounded-lg border border-black/5 bg-black/5" />
     ),
   }
 );
+
 const CategoriesMegaMenu = dynamic(
   () => import('./categories/CategoriesMegaMenu').then((mod) => mod.CategoriesMegaMenu),
   { ssr: false, loading: () => null }
 );
+
 const MobileCategoriesDrawer = dynamic(
   () => import('./navigation/MobileCategoriesDrawer').then((mod) => mod.MobileCategoriesDrawer),
   { ssr: false, loading: () => null }
 );
+
+const primaryLinks = [
+  { label: 'Empresas', href: '/companies' },
+  { label: 'Como funciona', href: '/#como-funciona' },
+  { label: 'Conteúdo', href: '/blog' },
+] as const;
 
 export default function Navbar() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -41,9 +49,6 @@ export default function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const logoPriority = pathname === '/';
-  const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
-  const hideNavbar = pathname?.startsWith('/f/');
   const categoriesMegaMenuId = 'categories-mega-menu';
   const mobileCategoriesDrawerId = 'mobile-categories-drawer';
 
@@ -65,7 +70,12 @@ export default function Navbar() {
 
   const toggleMegaMenu = () => {
     if (!megaMenuMounted) setMegaMenuMounted(true);
-    setIsMegaMenuOpen((prev) => !prev);
+    setIsMegaMenuOpen((current) => !current);
+  };
+
+  const openMobileDrawer = () => {
+    if (!mobileDrawerMounted) setMobileDrawerMounted(true);
+    setIsMobileDrawerOpen(true);
   };
 
   useEffect(() => {
@@ -74,209 +84,63 @@ export default function Navbar() {
         setIsMegaMenuOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (hideNavbar) {
-    return null;
-  }
+  if (pathname?.startsWith('/f/')) return null;
 
-  if (pathname === '/') {
-    return (
-      <nav className="sticky top-0 z-[1000] border-b border-slate-200 bg-white/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:h-24 lg:gap-5 lg:px-8 xl:px-10">
-          <Link
-            href="/"
-            className="ml-2 mr-2 flex shrink-0 items-center self-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:ml-4 lg:mr-6 xl:mr-8"
-            aria-label="Home Avalia Solar"
-          >
-            <BrandLogo className="h-8 sm:h-9" priority />
-          </Link>
+  return (
+    <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)]">
+      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-2 px-3 sm:px-4 xl:h-[60px] xl:gap-4 xl:px-5">
+        <Link
+          href="/"
+          aria-label="Home Avalia Solar"
+          className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
+        >
+          <BrandLogo
+            className="h-7 sm:h-8 xl:h-[30px]"
+            priority={pathname === '/'}
+            sizes="(max-width: 639px) 112px, 140px"
+          />
+        </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex xl:gap-4">
-            <NavbarSearch
-              className="min-w-[20rem] flex-[1_1_46%]"
-              inputClassName="bg-slate-50 border-slate-200"
-              placeholder="Buscar empresas, produtos..."
-              onSearch={handleSearch}
+        <div className="hidden min-w-0 flex-1 items-center gap-3 xl:flex">
+          <NavbarSearch
+            className="w-[280px] min-w-0 2xl:w-[360px]"
+            inputClassName="border-brand-border bg-slate-50"
+            placeholder="Buscar empresas, produtos..."
+            onSearch={handleSearch}
+          />
+
+          <div className="w-[176px] shrink-0 2xl:w-[200px]">
+            <LocationSearch
+              className="w-full border-brand-border bg-slate-50"
+              onLocationSelect={handleLocationSelect}
             />
-            <div className="w-[188px] shrink-0 xl:w-[210px]">
-              <LocationSearch
-                className="w-full bg-slate-50 border-slate-200"
-                onLocationSelect={handleLocationSelect}
-              />
-            </div>
           </div>
 
-          <div className="hidden items-center gap-1 xl:flex">
+          <div className="ml-auto flex h-full shrink-0 items-center gap-1" aria-label="Navegação principal">
             <Link
-              href="/companies"
-              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
+              href={primaryLinks[0].href}
+              className="inline-flex h-[40px] items-center whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
             >
-              Empresas
+              {primaryLinks[0].label}
             </Link>
+
             <div
-              className="static"
               ref={megaMenuRef}
+              className="static"
               onMouseEnter={openMegaMenu}
               onMouseLeave={() => setIsMegaMenuOpen(false)}
             >
               <Button
                 type="button"
                 variant="ghost"
-                className="h-10 rounded-none border-b-2 border-transparent px-3 text-sm font-medium text-slate-700 hover:border-blue-600 hover:bg-white hover:text-blue-700"
-                onClick={toggleMegaMenu}
-                aria-expanded={isMegaMenuOpen}
-                aria-controls={megaMenuMounted ? categoriesMegaMenuId : undefined}
-                aria-haspopup="menu"
-              >
-                Categorias{' '}
-                <ChevronDown
-                  className={cn(
-                    'ml-1 h-4 w-4 transition-transform',
-                    isMegaMenuOpen && 'rotate-180'
-                  )}
-                  aria-hidden="true"
-                />
-              </Button>
-              {megaMenuMounted ? (
-                <CategoriesMegaMenu
-                  id={categoriesMegaMenuId}
-                  isOpen={isMegaMenuOpen}
-                  onClose={() => setIsMegaMenuOpen(false)}
-                />
-              ) : null}
-            </div>
-            <Link
-              href="/#como-funciona"
-              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
-            >
-              Como funciona
-            </Link>
-            <Link
-              href="/blog"
-              className="rounded-lg px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-700"
-            >
-              Conteúdo
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
-            >
-              <Link href="/search" aria-label="Buscar no site">
-                <Search className="h-5 w-5" aria-hidden="true" />
-              </Link>
-            </Button>
-
-            {!isAuthenticated ? (
-              <>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="hidden h-10 rounded-lg px-3 text-sm font-bold text-slate-600 sm:inline-flex"
-                >
-                  <Link href="/login">
-                    <UserIcon className="mr-1.5 h-4 w-4" aria-hidden="true" /> Entrar
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="hidden h-10 rounded-lg border-blue-300 bg-white px-4 text-sm font-bold text-blue-700 hover:bg-blue-50 sm:inline-flex"
-                >
-                  <Link href="/register">Para empresas</Link>
-                </Button>
-              </>
-            ) : (
-              <UserAvatarDropdown />
-            )}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                if (!mobileDrawerMounted) setMobileDrawerMounted(true);
-                setIsMobileDrawerOpen(true);
-              }}
-              aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
-              aria-expanded={isMobileDrawerOpen}
-              aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
-              className="h-10 w-10 rounded-lg border-slate-300 text-slate-700 lg:hidden"
-            >
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-
-        {mobileDrawerMounted ? (
-          <MobileCategoriesDrawer
-            id={mobileCategoriesDrawerId}
-            isOpen={isMobileDrawerOpen}
-            onClose={() => setIsMobileDrawerOpen(false)}
-          />
-        ) : null}
-      </nav>
-    );
-  }
-
-  return (
-    <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-[#F8FAFC]/95 pt-[var(--safe-area-inset-top)] backdrop-blur-xl dark:border-white/10 dark:bg-[#020617]/95">
-      <div
-        className={cn(
-          'mx-auto flex max-w-[86rem] items-center px-2 sm:px-4 lg:px-4 xl:px-5',
-          isChatRoute ? 'h-16 gap-1 md:h-[4.5rem] md:gap-1.5' : 'h-[4.5rem] lg:h-[6rem] gap-1.5'
-        )}
-      >
-        <Link
-          href="/"
-          className="group ml-2 md:ml-4 flex shrink-0 items-center gap-1.5 rounded-xl px-0 py-1 transition-transform duration-200 hover:-translate-y-0.5"
-          aria-label="Home Avalia Solar"
-        >
-          <BrandLogo
-            className={cn(
-              'transition-transform duration-200 group-hover:scale-[1.02]',
-              'dark:rounded-md dark:bg-white dark:px-1 dark:py-0.5',
-              isChatRoute ? 'h-6 sm:h-8' : 'h-6 sm:h-9'
-            )}
-            priority={logoPriority}
-          />
-        </Link>
-
-        <div className="hidden lg:flex flex-1 items-center gap-4">
-          <div className="flex min-w-0 max-w-[1350px] flex-[1.4] items-center gap-2.5">
-            <NavbarSearch
-              className="min-w-[15rem] flex-[1.45]"
-              inputClassName="bg-white dark:bg-[#081a2e]/82 border-brand-border"
-              placeholder="Buscar empresas, produtos e serviços"
-              onSearch={handleSearch}
-            />
-            <div className="w-[234px] shrink-0">
-              <LocationSearch
-                className="w-full bg-white dark:bg-[#081a2e]/82 border-brand-border"
-                onLocationSelect={handleLocationSelect}
-              />
-            </div>
-          </div>
-
-          <div className="ml-auto flex items-center gap-4">
-            <div
-              className="static"
-              ref={megaMenuRef}
-              onMouseEnter={openMegaMenu}
-              onMouseLeave={() => setIsMegaMenuOpen(false)}
-            >
-              <Button
-                variant="ghost"
                 className={cn(
-                  'h-10 rounded-none border-x-0 border-b-2 border-t-0 border-transparent bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:border-blue-600 hover:bg-white hover:text-blue-700 dark:bg-transparent dark:text-white/60',
-                  isMegaMenuOpen ? 'border-blue-600 text-blue-700 shadow-none' : ''
+                  'h-[40px] whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-blue',
+                  isMegaMenuOpen && 'bg-slate-50 text-brand-blue'
                 )}
                 onClick={toggleMegaMenu}
                 aria-expanded={isMegaMenuOpen}
@@ -285,127 +149,91 @@ export default function Navbar() {
               >
                 Categorias
                 <ChevronDown
-                  className={cn(
-                    'h-3.5 w-3.5 transition-transform duration-300',
-                    isMegaMenuOpen && 'rotate-180'
-                  )}
+                  className={cn('ml-1 h-3.5 w-3.5 transition-transform', isMegaMenuOpen && 'rotate-180')}
                   aria-hidden="true"
                 />
               </Button>
 
-              {megaMenuMounted && (
+              {megaMenuMounted ? (
                 <CategoriesMegaMenu
                   id={categoriesMegaMenuId}
                   isOpen={isMegaMenuOpen}
                   onClose={() => setIsMegaMenuOpen(false)}
                 />
-              )}
+              ) : null}
             </div>
 
-            <nav className="flex items-center gap-1">
-              {[
-                { label: 'Empresas', href: '/companies' },
-                { label: 'Produtos', href: '/products' },
-                { label: 'Blog', href: '/blog' },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100 hover:text-brand-blue dark:text-white/62 dark:hover:bg-white/6 dark:hover:text-white"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+            {primaryLinks.slice(1).map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="inline-flex h-[40px] items-center whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
 
-            <div className="flex items-center gap-2 border-l border-brand-borderSoft pl-4 dark:border-white/10">
-              {!isAuthenticated ? (
-                <>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="sm"
-                    className="h-10 rounded-xl px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-slate-100 dark:text-white/60"
-                  >
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="h-10 rounded-xl bg-brand-blue hover:bg-brand-blue/90 px-5 text-[11px] font-bold uppercase tracking-[0.12em] text-white shadow-none"
-                  >
-                    <Link href="/register">Cadastre sua empresa</Link>
-                  </Button>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  {user?.role !== 'review' && <CompanySwitcher className="h-10 w-44" />}
-                  <UserAvatarDropdown />
-                </div>
-              )}
-            </div>
+          <div className="flex shrink-0 items-center gap-1.5 border-l border-brand-borderSoft pl-3">
+            {!isAuthenticated ? (
+              <>
+                <Button asChild variant="ghost" className="h-[40px] rounded-md px-2.5 text-[13px] font-semibold text-slate-700">
+                  <Link href="/login">
+                    <UserIcon className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Entrar
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-[40px] rounded-md border-blue-300 px-3 text-xs font-semibold text-blue-700 shadow-none">
+                  <Link href="/register">Para empresas</Link>
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 2xl:block" /> : null}
+                <UserAvatarDropdown />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-2 xl:hidden">
-          <Button
-            asChild
-            variant="ghost"
-            className={cn(
-              'shrink-0 border border-brand-border bg-white px-3 text-sm font-semibold text-slate-600 shadow-none hover:bg-slate-50 hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
-              isChatRoute ? 'h-10 rounded-xl' : 'h-11 rounded-xl'
-            )}
-          >
-            <Link href="/search">
-              <Search className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
-              <span>Buscar</span>
+        <div className="ml-auto flex min-w-0 items-center justify-end gap-2 xl:hidden">
+          <Button asChild variant="outline" size="icon" className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none">
+            <Link href="/search" aria-label="Buscar no site">
+              <Search className="h-5 w-5" aria-hidden="true" />
             </Link>
           </Button>
 
-          <div
-            className={cn(
-              'min-w-0 flex-1',
-              isChatRoute ? 'max-w-[190px] sm:max-w-[230px]' : 'max-w-[220px] sm:max-w-[250px]'
-            )}
-          >
+          <div className="hidden w-[190px] min-w-0 sm:block md:w-[220px]">
             <LocationSearch
-              className="max-w-none text-xs sm:text-sm border-brand-border rounded-xl"
+              className="h-[44px] w-full border-brand-border bg-white"
               onLocationSelect={handleLocationSelect}
             />
           </div>
 
-          {isAuthenticated && user?.role !== 'review' && (
-            <CompanySwitcher className="hidden h-10 w-[132px] md:block" />
-          )}
+          {isAuthenticated ? <UserAvatarDropdown /> : null}
 
           <Button
-            variant="ghost"
+            type="button"
+            variant="outline"
             size="icon"
-            onClick={() => {
-              if (!mobileDrawerMounted) setMobileDrawerMounted(true);
-              setIsMobileDrawerOpen(true);
-            }}
+            onClick={openMobileDrawer}
             aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
             aria-expanded={isMobileDrawerOpen}
             aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
-            className={cn(
-              'shrink-0 border border-brand-border bg-white text-slate-600 shadow-none hover:bg-slate-50 hover:text-brand-blue dark:border-white/10 dark:bg-[#0b1a2b]/82 dark:text-white/65 dark:hover:bg-[#10263d] dark:hover:text-white',
-              isChatRoute ? 'h-10 w-10 rounded-xl' : 'h-11 w-11 rounded-xl'
-            )}
+            className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none"
           >
-            <Menu className={cn(isChatRoute ? 'h-5 w-5' : 'h-6 w-6')} aria-hidden="true" />
+            <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
-      {mobileDrawerMounted && (
+      {mobileDrawerMounted ? (
         <MobileCategoriesDrawer
           id={mobileCategoriesDrawerId}
           isOpen={isMobileDrawerOpen}
           onClose={() => setIsMobileDrawerOpen(false)}
         />
-      )}
+      ) : null}
     </nav>
   );
 }

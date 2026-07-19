@@ -32,13 +32,13 @@ export default function NavbarSearch({
 
   return (
     <form onSubmit={submit} className={cn('w-full', className)} role="search" aria-label="Buscar">
-      <div className="flex h-12 lg:h-16 w-full items-center rounded-2xl lg:rounded-[1.5rem] border border-[#ededed] bg-white px-2 transition-colors hover:border-[#999] focus-within:ring-2 focus-within:ring-brand-blue/30 dark:border-white/10 dark:bg-[#081a2e]/82 dark:hover:border-white/30">
+      <div className="flex h-[40px] w-full items-center rounded-lg border border-brand-border bg-white px-1.5 transition-colors hover:border-slate-400 focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-brand-blue/20 dark:border-white/10 dark:bg-[#081a2e]/82 dark:hover:border-white/30">
         <button
           type="submit"
-          className="ml-2 p-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue"
+          className="ml-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-brand-blue"
           aria-label="Buscar"
         >
-          <Search className="h-5 w-5" aria-hidden="true" />
+          <Search className="h-4 w-4" aria-hidden="true" />
         </button>
         <Input
           id="navbar-search"
@@ -48,7 +48,7 @@ export default function NavbarSearch({
           placeholder={placeholder}
           aria-label="Buscar"
           className={cn(
-            'h-full flex-1 rounded-none border-0 bg-transparent px-3 text-[16px] text-slate-900 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0',
+            'h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-2 text-sm text-slate-900 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0',
             'placeholder:text-slate-500',
             'dark:text-white dark:placeholder:text-white/50',
             inputClassName

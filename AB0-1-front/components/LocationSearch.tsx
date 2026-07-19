@@ -90,7 +90,7 @@ export default function LocationSearch({ className, onLocationSelect }: Location
           aria-controls={open ? popoverId : undefined}
           aria-label={`${selectedLabel}: selecionar localização`}
           className={cn(
-            "h-12 lg:h-16 w-full justify-between rounded-[1.25rem] lg:rounded-[1.5rem] border-slate-200/80 bg-white/92 px-4 text-left text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-colors",
+            "h-[40px] w-full justify-between rounded-lg border-slate-200 bg-white px-3 text-left text-sm text-foreground shadow-none transition-colors",
             "hover:border-slate-300 hover:bg-white hover:text-foreground focus-visible:border-brand-blue/30 focus-visible:ring-brand-blue/20",
             "dark:border-white/10 dark:bg-[#081a2e]/82 dark:text-white dark:hover:bg-[#0b2037]",
             className

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Navbar from '@/components/Navbar';
 import { useCategories } from '@/hooks/useCategories';
 import { Category } from '@/lib/api';
@@ -36,6 +36,7 @@ jest.mock('@/components/SearchBar', () => {
 
 // Mock the useRouter hook from next/navigation
 jest.mock('next/navigation', () => ({
+  usePathname: () => '/',
   useRouter: () => ({
     push: jest.fn(),
     pathname: '/',
@@ -132,7 +133,7 @@ describe('Navbar', () => {
     
     const logo = screen.getByRole('img', { name: /Avalia Solar/ });
     expect(logo).toBeInTheDocument();
-    expect(logo).toHaveAttribute('src', '/favicon.ico');
+    expect(logo).toHaveAttribute('src', '/images/avalia-solar-logo-horizontal.svg');
     
     const homeLink = screen.getByRole('link', { name: 'Home Avalia Solar' });
     expect(homeLink).toBeInTheDocument();
@@ -143,19 +144,19 @@ describe('Navbar', () => {
     render(<Navbar />);
     
     expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Produtos' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Como funciona' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Conteúdo' })).toBeInTheDocument();
     
     // Check for new components
     expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
-    expect(screen.getByTestId('location-search')).toBeInTheDocument();
+    expect(screen.getAllByTestId('location-search')).toHaveLength(2);
     expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
   });
 
   it('renders login and register buttons', () => {
     render(<Navbar />);
     
-    expect(screen.getByRole('link', { name: 'Login' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cadastre sua empresa' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Para empresas' })).toBeInTheDocument();
   });
 });

@@ -225,6 +225,24 @@ function MainCategoriesView({
 }) {
   return (
     <div className="border-t border-slate-200">
+      <nav aria-label="Navegação principal" className="grid grid-cols-2 gap-2 border-b border-slate-200 py-3">
+        {[
+          { href: '/companies', label: 'Empresas' },
+          { href: '/categories', label: 'Categorias' },
+          { href: '/#como-funciona', label: 'Como funciona' },
+          { href: '/blog', label: 'Conteúdo' },
+        ].map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            onClick={onClose}
+            className="flex min-h-11 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50/40 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
       {categories.map((category, index) => {
         const iconSrc = getPreferredCategoryIcon(
           category.slug || category.seo_url,

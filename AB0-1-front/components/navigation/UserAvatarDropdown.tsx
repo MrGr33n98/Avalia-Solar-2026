@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  User as UserIcon,
   ChevronDown,
   LayoutDashboard,
   ClipboardList,
@@ -54,23 +54,26 @@ export function UserAvatarDropdown() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group flex items-center gap-1.5 rounded-xl border border-brand-border bg-white p-1 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+          className="group flex h-[44px] max-w-[110px] items-center gap-1 rounded-lg border border-brand-border bg-white p-1 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 xl:h-[40px] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
         >
           {user.avatar_url ? (
-            <img
+            <Image
               src={getFullImageUrl(user.avatar_url)}
               alt={user.name || 'Avatar'}
-              className="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
+              width={34}
+              height={34}
+              unoptimized
+              className="h-[34px] w-[34px] rounded-full border border-slate-200 object-cover xl:h-8 xl:w-8 dark:border-white/10"
               onError={(e) => {
                 (e.currentTarget as HTMLElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 font-semibold text-xs dark:bg-emerald-950 dark:text-emerald-400">
+            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700 xl:h-8 xl:w-8 dark:bg-emerald-950 dark:text-emerald-400">
               {initialsFromName(user.name)}
             </div>
           )}
-          <span className="hidden max-w-[100px] truncate text-xs font-semibold text-slate-700 dark:text-white/80 sm:block">
+          <span className="hidden max-w-[54px] truncate text-xs font-semibold text-slate-700 dark:text-white/80 sm:block">
             {user.name.split(' ')[0]}
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -82,9 +85,12 @@ export function UserAvatarDropdown() {
         <div className="flex flex-col items-center p-6 text-center bg-slate-50/50">
           <div className="relative mb-3">
             {user.avatar_url ? (
-              <img
+              <Image
                 src={getFullImageUrl(user.avatar_url)}
                 alt={user.name}
+                width={64}
+                height={64}
+                unoptimized
                 className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
               />
             ) : (
