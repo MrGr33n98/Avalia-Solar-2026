@@ -21,7 +21,6 @@ const OPERATIONAL_ROUTE_PREFIXES = [
   '/register-user',
   '/reset-password',
   '/review',
-  '/review-dashboard',
   '/reviews/my',
   '/select-company',
   '/signup',
@@ -29,9 +28,7 @@ const OPERATIONAL_ROUTE_PREFIXES = [
   '/test-images',
 ] as const;
 
-const OPERATIONAL_ROUTE_PATTERNS = [
-  /^\/companies\/[^/]+\/(?:claim|quote|review)(?:\/|$)/,
-] as const;
+const OPERATIONAL_ROUTE_PATTERNS = [/^\/companies\/[^/]+\/(?:claim|quote|review)(?:\/|$)/] as const;
 
 function matchesRoutePrefix(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);

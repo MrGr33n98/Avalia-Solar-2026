@@ -60,3 +60,8 @@ docs/
 !AB0-1-back/spec/mailers/brand_identity_spec.rb
 !AB0-1-back/spec/mailers/previews/
 !AB0-1-back/spec/mailers/previews/avalia_solar_mailer_preview.rb
+
+# Regressão da regra global de visibilidade do footer.
+!AB0-1-front/__tests__/
+!AB0-1-front/__tests__/lib/
+!AB0-1-front/__tests__/lib/footer-visibility.test.ts

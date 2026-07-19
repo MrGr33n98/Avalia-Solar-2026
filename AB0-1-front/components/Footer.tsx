@@ -169,53 +169,70 @@ function FooterSection({
   cta?: FooterLink;
 }) {
   return (
-    <details className="group border-t border-slate-800 lg:border-0">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F5B800] lg:hidden [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-2">
-          <span className="text-[#F5B800]">{icon}</span>
+    <>
+      <details className="group border-t border-slate-800 lg:hidden">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F5B800] [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <span className="text-[#F5B800]">{icon}</span>
+            {title}
+          </span>
+          <ChevronDown
+            className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <FooterLinks links={links} cta={cta} title={title} mobile />
+      </details>
+
+      <section className="hidden lg:block" aria-labelledby={id}>
+        <h2
+          id={id}
+          className="flex min-h-12 items-start gap-2 text-xs font-bold uppercase leading-5 tracking-[0.12em] text-white"
+        >
+          <span className="mt-0.5 text-[#F5B800]">{icon}</span>
           {title}
-        </span>
-        <ChevronDown
-          className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"
-          aria-hidden="true"
-        />
-      </summary>
+        </h2>
+        <FooterLinks links={links} cta={cta} title={title} />
+      </section>
+    </>
+  );
+}
 
-      <h2
-        id={id}
-        className="hidden min-h-12 items-start gap-2 text-xs font-bold uppercase leading-5 tracking-[0.12em] text-white lg:flex"
-      >
-        <span className="mt-0.5 text-[#F5B800]">{icon}</span>
-        {title}
-      </h2>
-
-      <ul
-        className="hidden space-y-1 pb-5 group-open:block lg:!block lg:pb-0 lg:pt-3"
-        aria-label={title}
-      >
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="flex min-h-11 items-center text-sm leading-5 text-slate-300 transition-colors hover:text-[#F5B800] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800] lg:min-h-0 lg:py-1.5"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-        {cta && (
-          <li className="pt-2">
-            <Link
-              href={cta.href}
-              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[#F5B800] transition-colors hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800] lg:min-h-0"
-            >
-              {cta.label}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </li>
-        )}
-      </ul>
-    </details>
+function FooterLinks({
+  links,
+  cta,
+  title,
+  mobile = false,
+}: {
+  links: readonly FooterLink[];
+  cta?: FooterLink;
+  title: string;
+  mobile?: boolean;
+}) {
+  return (
+    <ul className={mobile ? 'space-y-1 pb-5' : 'space-y-1 pt-3'} aria-label={title}>
+      {links.map((link) => (
+        <li key={link.href}>
+          <Link
+            href={link.href}
+            className={`${mobile ? 'min-h-11' : 'py-1.5'} flex items-center text-sm leading-5 text-slate-300 transition-colors hover:text-[#F5B800] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
+          >
+            {link.label}
+          </Link>
+        </li>
+      ))}
+      {cta && (
+        <li className="pt-2">
+          <Link
+            href={cta.href}
+            className={`${mobile ? 'min-h-11' : ''} inline-flex items-center gap-1.5 text-sm font-bold text-[#F5B800] transition-colors hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
+          >
+            {cta.label}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </li>
+      )}
+    </ul>
   );
 }
 
