@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Footer from '@/components/Footer';
+import { shouldShowStrategicFooter } from '@/lib/footer-visibility';
 
 /**
  * Renders the global Footer only on public pages.
@@ -10,23 +11,7 @@ import Footer from '@/components/Footer';
 export default function ConditionalFooter() {
   const pathname = usePathname();
 
-  const hideFooterRoutes = [
-    '/dashboard',
-    '/review-dashboard',
-    '/profile',
-    '/chat',
-    '/company-dashboard',
-    '/admin',
-    '/painel',
-    '/control',
-    '/f',
-  ];
-
-  const isInternal =
-    pathname &&
-    hideFooterRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
-
-  if (isInternal) return null;
+  if (!shouldShowStrategicFooter(pathname)) return null;
 
   return <Footer compact={pathname === '/'} />;
 }
