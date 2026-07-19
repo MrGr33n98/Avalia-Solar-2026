@@ -9,6 +9,7 @@ type AnswerBlockProps = {
   linkLabel?: string;
   className?: string;
   tone?: 'blue' | 'emerald' | 'slate';
+  compact?: boolean;
 };
 
 const toneStyles = {
@@ -44,28 +45,29 @@ export default function AnswerBlock({
   linkLabel = 'Ver mais detalhes',
   className = '',
   tone = 'blue',
+  compact = false,
 }: AnswerBlockProps) {
   const styles = toneStyles[tone];
 
   return (
-    <section className={`rounded-2xl border p-5 shadow-sm md:p-6 ${styles.section} ${className}`}>
-      <div className="flex items-start gap-4">
-        <span className={`mt-1 h-12 w-1.5 shrink-0 rounded-full ${styles.rule}`} aria-hidden />
+    <section className={`${compact ? 'rounded-lg p-3 md:p-4' : 'rounded-2xl p-5 md:p-6'} border shadow-sm ${styles.section} ${className}`}>
+      <div className={`flex items-start ${compact ? 'gap-3' : 'gap-4'}`}>
+        <span className={`${compact ? 'mt-0.5 h-8 w-1' : 'mt-1 h-12 w-1.5'} shrink-0 rounded-full ${styles.rule}`} aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className={`text-xs font-black uppercase tracking-[0.2em] ${styles.eyebrow}`}>
+          <p className={`${compact ? 'text-[11px]' : 'text-xs'} font-black uppercase tracking-[0.2em] ${styles.eyebrow}`}>
             {eyebrow}
           </p>
-          <h2 className="mt-2 text-xl font-black tracking-tight text-slate-950 md:text-2xl">
+          <h2 className={`${compact ? 'mt-1 text-base md:text-lg' : 'mt-2 text-xl md:text-2xl'} font-black tracking-tight text-slate-950`}>
             {question}
           </h2>
-          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 md:text-base">
+          <p className={`${compact ? 'mt-1.5 text-sm leading-5' : 'mt-3 text-sm leading-7 md:text-base'} max-w-4xl text-slate-700`}>
             {answer}
           </p>
 
           {facts.length > 0 && (
-            <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+            <dl className={`${compact ? 'mt-3 gap-2' : 'mt-5 gap-3'} grid sm:grid-cols-3`}>
               {facts.map((fact) => (
-                <div key={fact} className={`rounded-xl border px-3 py-2 text-sm font-bold ${styles.fact}`}>
+                <div key={fact} className={`${compact ? 'rounded-md px-2.5 py-1.5 text-xs' : 'rounded-xl px-3 py-2 text-sm'} border font-bold ${styles.fact}`}>
                   <dt className="sr-only">Dado importante</dt>
                   <dd>{fact}</dd>
                 </div>
@@ -74,7 +76,7 @@ export default function AnswerBlock({
           )}
 
           {href ? (
-            <Link href={href} className={`mt-5 inline-flex text-sm font-black ${styles.link}`}>
+            <Link href={href} className={`${compact ? 'mt-3 min-h-11 items-center sm:min-h-0' : 'mt-5'} inline-flex text-sm font-black ${styles.link}`}>
               {linkLabel}
             </Link>
           ) : null}

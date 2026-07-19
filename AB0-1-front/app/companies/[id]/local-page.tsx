@@ -591,86 +591,89 @@ export async function LocalSolarDirectoryPage(input: LocalSolarPageInput) {
           </div>
 
           <div className="flex-1 min-w-0 space-y-8">
-            <div className="grid gap-8 xl:grid-cols-[1fr_400px] xl:items-center">
-              <div>
-                <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+            <section className="space-y-4" aria-label="Resumo de empresas na região">
+              <div className="grid gap-4 xl:grid-cols-[1fr_360px] xl:items-center">
+                <div>
+                <h1 className="max-w-4xl text-2xl font-bold leading-tight tracking-tight text-slate-950 sm:text-3xl">
                   Encontre empresas de {verticalNameFor(input.vertical)} em {locality}
                 </h1>
-                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+                <p className="mt-2 max-w-3xl text-sm leading-5 text-slate-600">
                   Compare fornecedores, avaliações, categorias, serviços oferecidos e solicite orçamento com empresas que atendem sua região.
                 </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <Link
                     href="#todas"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 sm:h-9"
                   >
                     <SlidersHorizontal className="h-4 w-4" />
                     Solicitar orçamento
                   </Link>
                   <Link
                     href="#todas"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-700"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:h-9"
                   >
                     <Building2 className="h-4 w-4" />
                     Comparar empresas
                   </Link>
                 </div>
-              </div>
+                </div>
 
-              <div className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-sky-50 to-blue-100 shadow-sm">
-                <div className="grid gap-5 p-5 sm:grid-cols-[1fr_220px]">
-                  <div>
+                <div className="overflow-hidden rounded-lg border border-blue-100 bg-gradient-to-br from-white via-sky-50 to-blue-100 shadow-sm">
+                  <div className="grid gap-3 p-3 sm:grid-cols-[1fr_132px]">
+                    <div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-blue-700" />
-                      <p className="text-xl font-bold text-slate-950">{locationTitle}/{safeData.location.state}</p>
+                      <MapPin className="h-4 w-4 text-blue-700" />
+                      <p className="text-base font-bold text-slate-950">{locationTitle}/{safeData.location.state}</p>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-700">
+                    <p className="mt-1.5 text-xs leading-4 text-slate-700">
                       {safeData.stats.total_companies} empresas encontradas<br />
                       {safeData.stats.verified_companies} verificadas · {safeData.stats.featured_companies} em destaque
                     </p>
-                    <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                        <Star className="mx-auto h-5 w-5 text-amber-500" />
-                        <p className="mt-1 text-xs font-semibold text-slate-700">Ranking</p>
+                    <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
+                      <div className="rounded-md bg-white/85 p-1.5 shadow-sm">
+                        <Star className="mx-auto h-4 w-4 text-amber-500" />
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-700">Ranking</p>
                       </div>
-                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                        <Building2 className="mx-auto h-5 w-5 text-blue-600" />
-                        <p className="mt-1 text-xs font-semibold text-slate-700">Local</p>
+                      <div className="rounded-md bg-white/85 p-1.5 shadow-sm">
+                        <Building2 className="mx-auto h-4 w-4 text-blue-600" />
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-700">Local</p>
                       </div>
-                      <div className="rounded-lg bg-white/85 p-3 shadow-sm">
-                        <ShieldCheck className="mx-auto h-5 w-5 text-emerald-600" />
-                        <p className="mt-1 text-xs font-semibold text-slate-700">Verificadas</p>
+                      <div className="rounded-md bg-white/85 p-1.5 shadow-sm">
+                        <ShieldCheck className="mx-auto h-4 w-4 text-emerald-600" />
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-700">Verificadas</p>
                       </div>
                     </div>
-                  </div>
-                  <div className="hidden min-h-44 items-center justify-center gap-3 rounded-xl bg-white/40 p-4 sm:flex">
+                    </div>
+                    <div className="hidden min-h-24 items-center justify-center gap-1.5 rounded-md bg-white/40 p-2 sm:flex">
                     {topProjectTypes.map((projectType) => {
                       const { iconSrc } = projectTypeVisualFor(projectType.name);
                       return iconSrc ? (
-                        <div key={projectType.name} className="relative h-16 w-16 rounded-xl bg-white shadow-sm">
-                          <Image src={iconSrc} alt={projectType.name} fill sizes="64px" className="object-contain p-2" unoptimized />
+                        <div key={projectType.name} className="relative h-10 w-10 rounded-md bg-white shadow-sm">
+                          <Image src={iconSrc} alt={projectType.name} fill sizes="40px" className="object-contain p-1.5" unoptimized />
                         </div>
                       ) : null;
                     })}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {(safeData.project_types || []).length > 0 && <CategoryCarousel data={safeData} searchParams={input.searchParams} />}
+              {(safeData.project_types || []).length > 0 && <CategoryCarousel data={safeData} searchParams={input.searchParams} />}
 
-            <AnswerBlock
-              tone="emerald"
-              question={`Quanto custa contratar ${verticalNameFor(input.vertical)} em ${locality}?`}
-              answer={`O custo de ${verticalNameFor(input.vertical)} em ${locality} depende do consumo, tipo de imovel, distancia de atendimento, equipamentos, complexidade da instalacao e garantias oferecidas. Use a listagem para comparar empresas locais, verificar reputacao, filtrar categorias e solicitar propostas equivalentes antes de decidir.`}
-              facts={[
-                `${safeData.stats.total_companies} empresas encontradas`,
-                `${safeData.stats.verified_companies} verificadas`,
-                `${safeData.stats.featured_companies} destaques`,
-              ]}
-              href="/help"
-              linkLabel="Ver criterios para comparar propostas"
-            />
+              <AnswerBlock
+                compact
+                tone="emerald"
+                question={`Quanto custa contratar ${verticalNameFor(input.vertical)} em ${locality}?`}
+                answer={`O custo de ${verticalNameFor(input.vertical)} em ${locality} depende do consumo, tipo de imovel, distancia de atendimento, equipamentos, complexidade da instalacao e garantias oferecidas. Use a listagem para comparar empresas locais, verificar reputacao, filtrar categorias e solicitar propostas equivalentes antes de decidir.`}
+                facts={[
+                  `${safeData.stats.total_companies} empresas encontradas`,
+                  `${safeData.stats.verified_companies} verificadas`,
+                  `${safeData.stats.featured_companies} destaques`,
+                ]}
+                href="/help"
+                linkLabel="Ver criterios para comparar propostas"
+              />
+            </section>
 
             <BannerByLocation
               location="companies_top"
