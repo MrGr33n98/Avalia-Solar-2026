@@ -1,9 +1,6 @@
-﻿Solicitação rejeitada
+Solicitação rejeitada
 
-Olá, <%= @user.name %>!
+Olá, <%= @user.name.presence || @user.email %>.
 
-Sua solicitação de acesso à empresa <%= @company.name %> foi rejeitada.
-
+Sua solicitação de acesso à empresa <%= @company.name %> não foi aprovada.
 Motivo: <%= @reason %>
-
-Se precisar de ajuda, responda este e-mail.

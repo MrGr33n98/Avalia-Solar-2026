@@ -1,0 +1,5 @@
+Alerta administrativo: <%= @alert_type %>
+
+<%= strip_tags(@details.to_s) %>
+
+Registrado em <%= l(@timestamp, format: :long) %>.

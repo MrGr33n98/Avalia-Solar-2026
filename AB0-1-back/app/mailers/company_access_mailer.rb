@@ -1,8 +1,8 @@
-﻿class CompanyAccessMailer < ApplicationMailer
+class CompanyAccessMailer < ApplicationMailer
   def access_granted(user, company)
     @user = user
     @company = company
-    @dashboard_url = "#{self.class.default_url_options[:protocol]}://#{self.class.default_url_options[:host]}/company-dashboard?company_id=#{company.id}"
+    @dashboard_url = frontend_url("/company-dashboard?company_id=#{company.id}")
 
     mail(
       to: @user.email,

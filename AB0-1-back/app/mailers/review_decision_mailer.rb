@@ -7,7 +7,7 @@ class ReviewDecisionMailer < ApplicationMailer
     @notes = params[:notes]
     @admin_name = params[:admin_name]
     @company = @review.company
-    @company_url = "#{default_url_options[:protocol]}://#{default_url_options[:host]}/companies/#{@company.slug || @company.id}"
+    @company_url = frontend_url("/companies/#{@company.slug || @company.id}")
 
     mail(
       to: @user.email,

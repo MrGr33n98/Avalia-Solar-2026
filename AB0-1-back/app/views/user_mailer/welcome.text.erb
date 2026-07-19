@@ -1,12 +1,8 @@
-Olá <%= @user&.name || @user&.email || "" %>,
+Bem-vindo ao Avalia Solar
 
-Bem-vindo à Avalia Solar!
+Olá, <%= @user.name.presence || @user.email %>.
 
-A Avalia Solar conecta consumidores e empresas de energia solar. Aqui você vai:
-- Encontrar empresas confiáveis e bem avaliadas;
-- Comparar propostas e economizar tempo;
-- Construir sua reputação com avaliações reais.
+Sua conta está pronta. Encontre empresas, compare soluções e compartilhe experiências reais.
 
-Acesse sua conta: <%= @login_url || ENV['FRONTEND_LOGIN_URL'] || "https://www.avaliasolar.com.br/login" %>
-
-Se precisar de ajuda, responda este e-mail.
+Acessar minha conta:
+<%= @dashboard_url %>

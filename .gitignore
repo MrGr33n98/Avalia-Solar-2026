@@ -54,3 +54,9 @@ AB0-1-front/public/**/*.zip
 # Ignorar documentações de desenvolvimento
 docs/
 
+# Testes e previews de e-mail fazem parte da implementação de produção.
+!AB0-1-back/spec/
+!AB0-1-back/spec/mailers/
+!AB0-1-back/spec/mailers/brand_identity_spec.rb
+!AB0-1-back/spec/mailers/previews/
+!AB0-1-back/spec/mailers/previews/avalia_solar_mailer_preview.rb

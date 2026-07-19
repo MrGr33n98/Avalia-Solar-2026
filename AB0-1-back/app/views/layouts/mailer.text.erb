@@ -1,5 +1,8 @@
 <%= yield %>
 
----
-© <%= Time.current.year %> AB0-1
-<%= ENV.fetch('APP_HOST', 'localhost:3000') %>
+--
+Equipe Avalia Solar
+Suporte: <%= mailer_support_email %>
+Site: <%= mailer_site_url %>
+Política de privacidade: <%= mailer_privacy_url %>
+© <%= Time.current.year %> Avalia Solar. Todos os direitos reservados.

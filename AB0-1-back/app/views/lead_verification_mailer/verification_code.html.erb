@@ -1,9 +1,6 @@
-<p>Ola, <%= @lead.name.presence || 'usuario' %>.</p>
-
-<p>Seu codigo de verificacao do Avalia Solar e:</p>
-
-<p style="font-size: 28px; font-weight: 700; letter-spacing: 6px;"><%= @otp_code %></p>
-
-<p>Este codigo expira em <%= @expires_in_minutes %> minutos.</p>
-
-<p>Se voce nao solicitou este codigo, ignore este e-mail.</p>
+<% content_for :preheader, 'Use este código para verificar seu acesso.' %>
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Verificação</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Seu código de verificação</h1>
+<p style="margin:0 0 18px;color:#667085;">Digite o código abaixo para continuar:</p>
+<p style="margin:0 0 18px;padding:16px;border:1px solid #D9E0EA;background:#F7F9FC;color:#0D1B2A;font-size:30px;font-weight:bold;letter-spacing:8px;text-align:center;"><%= @otp_code %></p>
+<p style="margin:0;color:#667085;font-size:13px;">Este código expira em <%= @expires_in_minutes %> minutos. Não compartilhe com terceiros.</p>

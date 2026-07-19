@@ -1,12 +1,4 @@
-<h2>Nova notificação</h2>
-
-<p>Olá <%= @user.name || @user.email %>,</p>
-
-<div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin: 20px 0;">
-  <%= @data %>
-</div>
-
-<p>
-  Atenciosamente,<br>
-  <strong>Equipe AB0-1</strong>
-</p>
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Atualização</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Nova notificação</h1>
+<p style="margin:0 0 16px;">Olá, <strong><%= @user.name.presence || @user.email %></strong>.</p>
+<div style="padding:16px;border:1px solid #D9E0EA;background:#F7F9FC;color:#172033;"><%= @data %></div>

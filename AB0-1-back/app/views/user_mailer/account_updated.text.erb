@@ -1,0 +1,9 @@
+Dados da conta atualizados
+
+Olá, <%= @user.name.presence || @user.email %>.
+
+Os seguintes dados importantes da sua conta foram alterados:
+<% @changes.keys.each do |field| %>- <%= field.to_s.humanize %>
+<% end %>
+
+Se você não reconhece essa alteração, entre em contato com o suporte imediatamente.

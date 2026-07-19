@@ -1,0 +1,6 @@
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Segurança da conta</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Dados da conta atualizados</h1>
+<p style="margin:0 0 16px;">Olá, <strong><%= @user.name.presence || @user.email %></strong>.</p>
+<p style="margin:0 0 16px;color:#667085;">Os seguintes dados importantes da sua conta foram alterados:</p>
+<ul style="margin:0 0 18px;padding-left:20px;color:#172033;"><% @changes.keys.each do |field| %><li style="margin-bottom:6px;"><%= field.to_s.humanize %></li><% end %></ul>
+<p style="margin:0;color:#667085;font-size:13px;">Se você não reconhece essa alteração, entre em contato com o suporte imediatamente.</p>

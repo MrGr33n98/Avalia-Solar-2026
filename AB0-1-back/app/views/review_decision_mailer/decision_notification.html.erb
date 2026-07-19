@@ -1,0 +1,6 @@
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Moderação de avaliação</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;"><%= @new_status.to_s == 'approved' ? 'Sua avaliação foi aprovada' : (@new_status.to_s == 'rejected' ? 'Sua avaliação foi rejeitada' : 'Sua avaliação foi atualizada') %></h1>
+<p style="margin:0 0 16px;">Olá, <strong><%= @user.name.presence || @user.email %></strong>.</p>
+<p style="margin:0 0 18px;color:#667085;">O status da sua avaliação sobre <strong><%= @company.name %></strong> foi atualizado.</p>
+<% if @notes.present? %><p style="margin:0 0 18px;padding:14px;border:1px solid #D9E0EA;background:#F7F9FC;"><strong>Observação:</strong> <%= @notes %></p><% end %>
+<p style="margin:0;"><a href="<%= @company_url %>" style="color:#0A66C2;font-weight:bold;">Ver página da empresa</a></p>

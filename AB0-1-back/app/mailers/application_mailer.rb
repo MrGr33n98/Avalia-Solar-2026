@@ -2,16 +2,27 @@
 
 # Base mailer - TASK-018
 class ApplicationMailer < ActionMailer::Base
+  helper MailerHelper
+  include MailerHelper
+
   default from: ENV.fetch('MAILER_FROM_EMAIL', 'noreply@avaliasolar.com.br')
   layout 'mailer'
 
   # Helper methods
   def self.default_url_options
+    origin = URI.parse(ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br'))
     {
-      host: ENV.fetch('APP_HOST', 'localhost:3000'),
-      protocol: Rails.env.production? ? 'https' : 'http'
-    }
+      host: origin.host || 'www.avaliasolar.com.br',
+      port: (origin.port unless [80, 443].include?(origin.port)),
+      protocol: origin.scheme || 'https'
+    }.compact
   end
+
+  def frontend_url(path = '/')
+    mailer_absolute_url(path)
+  end
+
+  helper_method :frontend_url
 
   private
 

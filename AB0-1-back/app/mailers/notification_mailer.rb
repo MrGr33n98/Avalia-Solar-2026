@@ -20,7 +20,7 @@ class NotificationMailer < ApplicationMailer
 
     mail(
       to: admin_email,
-      subject: "⚠️ Admin Alert: #{alert_type}"
+      subject: "Alerta administrativo: #{alert_type}"
     )
   end
 
@@ -44,7 +44,7 @@ class NotificationMailer < ApplicationMailer
     when 'new_comment' then 'Novo comentário na sua avaliação'
     when 'review_helpful' then 'Sua avaliação foi marcada como útil'
     when 'company_response' then 'A empresa respondeu sua avaliação'
-    else 'Nova notificação - AB0-1'
+    else 'Nova notificação - Avalia Solar'
     end
   end
 end

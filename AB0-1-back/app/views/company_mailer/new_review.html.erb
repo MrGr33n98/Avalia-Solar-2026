@@ -1,22 +1,6 @@
-<h2>Nova avaliação recebida! ⭐</h2>
-
-<p>Olá <%= @company.name %>,</p>
-
-<p>Você recebeu uma nova avaliação:</p>
-
-<div style="background: #f9f9f9; padding: 20px; border-radius: 6px; margin: 20px 0;">
-  <p><strong>Avaliação:</strong> <%= '⭐' * @review.rating.to_i %> (<%= @review.rating %>/5)</p>
-  <% if @review.comment.present? %>
-    <p><strong>Comentário:</strong></p>
-    <p style="font-style: italic;">"<%= @review.comment %>"</p>
-  <% end %>
-</div>
-
-<p style="text-align: center;">
-  <a href="<%= @review_url %>" class="button">Ver avaliação completa</a>
-</p>
-
-<p>
-  Atenciosamente,<br>
-  <strong>Equipe AB0-1</strong>
-</p>
+<% content_for :preheader, "A empresa #{@company.name} recebeu uma nova avaliação." %>
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Nova avaliação</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Sua empresa recebeu uma avaliação</h1>
+<p style="margin:0 0 16px;"><strong><%= @company.name %></strong> recebeu a nota <strong><%= @review.rating %> de 5</strong>.</p>
+<div style="margin:0 0 22px;padding:16px;border:1px solid #D9E0EA;background:#F7F9FC;color:#172033;"><%= @review.comment %></div>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0A66C2"><a href="<%= @review_url %>" style="display:inline-block;padding:13px 22px;color:#FFFFFF;text-decoration:none;font-weight:bold;">Ver avaliação</a></td></tr></table>

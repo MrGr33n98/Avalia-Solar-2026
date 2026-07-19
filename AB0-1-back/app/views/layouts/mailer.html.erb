@@ -1,81 +1,43 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="pt-BR">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <style>
-      /* Email styles - Avalia Solar */
-      body {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        color: #333;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 20px auto;
-        background: #ffffff;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      .header {
-        background: linear-gradient(135deg, #0A66C2 0%, #0052A3 100%);
-        color: white;
-        padding: 30px 20px;
-        text-align: center;
-      }
-      .header h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-      }
-      .content {
-        padding: 30px 20px;
-      }
-      .button {
-        display: inline-block;
-        padding: 12px 30px;
-        background: #0A66C2;
-        color: white !important;
-        text-decoration: none;
-        border-radius: 6px;
-        font-weight: 600;
-        margin: 20px 0;
-      }
-      .button:hover {
-        background: #0052A3;
-      }
-      .footer {
-        background: #f9f9f9;
-        padding: 20px;
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-        border-top: 1px solid #e0e0e0;
-      }
-      .footer a {
-        color: #0A66C2;
-        text-decoration: none;
-      }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title><%= message.subject %></title>
   </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>⚡ Avalia Solar</h1>
-      </div>
-      <div class="content">
-        <%= yield %>
-      </div>
-      <div class="footer">
-        <p>
-          © <%= Time.current.year %> Avalia Solar. Todos os direitos reservados.<br>
-          <a href="<%= ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br') %>">Visitar site</a>
-        </p>
-      </div>
-    </div>
+  <body style="margin:0;padding:0;background-color:#F4F6F8;color:#172033;font-family:Arial,Helvetica,sans-serif;">
+    <% if content_for?(:preheader) %>
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;"><%= yield :preheader %></div>
+    <% end %>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#F4F6F8;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background-color:#FFFFFF;border:1px solid #D9E0EA;border-collapse:collapse;">
+            <tr>
+              <td align="center" style="padding:26px 24px 22px;border-bottom:3px solid #FFC107;">
+                <picture>
+                  <source srcset="<%= mailer_logo_url %>" type="image/svg+xml">
+                  <img src="<%= mailer_logo_fallback_url %>" width="190" alt="Avalia Solar" style="display:block;width:190px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">
+                </picture>
+                <span style="display:none;font-size:1px;color:#FFFFFF;">Avalia Solar</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 34px;font-size:15px;line-height:1.6;color:#172033;">
+                <%= yield %>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 34px;border-top:1px solid #D9E0EA;background-color:#FFFFFF;font-size:12px;line-height:1.6;color:#667085;">
+                <p style="margin:0 0 8px;">Precisa de ajuda? <a href="mailto:<%= mailer_support_email %>" style="color:#0A66C2;text-decoration:underline;"><%= mailer_support_email %></a></p>
+                <p style="margin:0 0 8px;"><a href="<%= mailer_site_url %>" style="color:#0A66C2;text-decoration:underline;">Visitar o Avalia Solar</a> &nbsp;|&nbsp; <a href="<%= mailer_privacy_url %>" style="color:#0A66C2;text-decoration:underline;">Política de privacidade</a></p>
+                <p style="margin:0;color:#667085;">© <%= Time.current.year %> Avalia Solar. Todos os direitos reservados.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

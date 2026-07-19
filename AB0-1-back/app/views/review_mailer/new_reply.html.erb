@@ -1,14 +1,5 @@
-﻿<h1>Resposta recebida</h1>
-
-<p>Olá, <%= @user.name %>!</p>
-
-<p>A empresa <strong><%= @company.name %></strong> respondeu sua avaliação:</p>
-
-<blockquote>
-  <%= @reply %>
-</blockquote>
-
-<p>Você pode ver mais detalhes no link abaixo:</p>
-<p><a href="<%= @review_url %>"><%= @review_url %></a></p>
-
-<p>Obrigado por usar a AB0-1.</p>
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Resposta da empresa</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Sua avaliação recebeu uma resposta</h1>
+<p style="margin:0 0 16px;color:#667085;"><strong><%= @company.name %></strong> respondeu:</p>
+<div style="margin:0 0 22px;padding:16px;border:1px solid #D9E0EA;background:#F7F9FC;"><%= @reply %></div>
+<p style="margin:0;"><a href="<%= @review_url %>" style="color:#0A66C2;font-weight:bold;">Ver avaliação e resposta</a></p>

@@ -1,0 +1,11 @@
+Atualização da sua avaliação
+
+Olá, <%= @user.name.presence || @user.email %>.
+
+O status da sua avaliação sobre <%= @company.name %> foi atualizado para: <%= @new_status %>.
+<% if @notes.present? %>
+Observação: <%= @notes %>
+<% end %>
+
+Ver página da empresa:
+<%= @company_url %>

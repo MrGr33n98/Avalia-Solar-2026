@@ -6,11 +6,11 @@ class CompanyMailer < ApplicationMailer
   def new_review(company, review)
     @company = company
     @review = review
-    @review_url = "#{self.class.default_url_options[:protocol]}://#{self.class.default_url_options[:host]}/companies/#{company.id}/reviews/#{review.id}"
+    @review_url = frontend_url("/companies/#{company.id}/reviews/#{review.id}")
 
     mail(
       to: company.email,
-      subject: "Nova avaliação recebida - #{review.rating}⭐"
+      subject: "Nova avaliação recebida - nota #{review.rating} de 5"
     )
   end
 
@@ -19,8 +19,8 @@ class CompanyMailer < ApplicationMailer
     @company = company
     @reviews = reviews
     @total_reviews = reviews.count
-    @avg_rating = reviews.average(:rating).round(1)
-    @dashboard_url = "#{self.class.default_url_options[:protocol]}://#{self.class.default_url_options[:host]}/companies/#{company.id}/dashboard"
+    @avg_rating = reviews.average(:rating)&.round(1) || 0
+    @dashboard_url = frontend_url("/companies/#{company.id}/dashboard")
 
     mail(
       to: company.email,
@@ -38,7 +38,7 @@ class CompanyMailer < ApplicationMailer
 
   def registration_approved(company)
     @company = company
-    @dashboard_url = "#{self.class.default_url_options[:protocol]}://#{self.class.default_url_options[:host]}/login"
+    @dashboard_url = frontend_url('/login')
     mail(
       to: company.email,
       subject: 'Seu cadastro foi aprovado - Acesse seu painel'

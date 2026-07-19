@@ -1,17 +1,7 @@
-<h2>Confirme seu email</h2>
-
-<p>Olá <%= @user.name || @user.email %>,</p>
-
-<p>Por favor, confirme seu endereço de email clicando no botão abaixo:</p>
-
-<p style="text-align: center;">
-  <a href="<%= @confirmation_url %>" class="button">Confirmar email</a>
-</p>
-
-<p>Ou copie e cole este link no seu navegador:</p>
-<p style="word-break: break-all; font-size: 12px; color: #666;"><%= @confirmation_url %></p>
-
-<p>
-  Atenciosamente,<br>
-  <strong>Equipe AB0-1</strong>
-</p>
+<% content_for :preheader, 'Confirme seu e-mail para concluir seu cadastro no Avalia Solar.' %>
+<p style="margin:0 0 8px;color:#0A66C2;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Acesso seguro</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;line-height:1.2;">Confirme seu e-mail</h1>
+<p style="margin:0 0 14px;">Olá, <strong><%= @user.name.presence || @user.email %></strong>.</p>
+<p style="margin:0 0 22px;color:#667085;">Confirme seu endereço de e-mail para concluir o cadastro e acessar o Avalia Solar.</p>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0A66C2" style="border:1px solid #0A66C2;"><a href="<%= @confirmation_url %>" style="display:inline-block;padding:13px 22px;color:#FFFFFF;text-decoration:none;font-weight:bold;">Confirmar meu e-mail</a></td></tr></table>
+<p style="margin:22px 0 0;padding-top:18px;border-top:1px solid #D9E0EA;color:#667085;font-size:13px;">Se você não criou esta conta, ignore esta mensagem.</p>

@@ -1,9 +1,8 @@
-﻿Acesso liberado
+Acesso liberado
 
-Olá, <%= @user.name %>!
+Olá, <%= @user.name.presence || @user.email %>.
 
 Seu acesso à empresa <%= @company.name %> foi aprovado.
 
-Acesse o painel: <%= @dashboard_url %>
-
-Equipe AB0-1
+Acessar painel da empresa:
+<%= @dashboard_url %>

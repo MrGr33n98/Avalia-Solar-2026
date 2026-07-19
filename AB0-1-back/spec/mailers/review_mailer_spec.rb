@@ -20,7 +20,8 @@ RSpec.describe ReviewMailer, type: :mailer do
       rating: 4,
       comment: 'Comentario suficiente para passar validacao',
       reply: 'Obrigado pelo feedback!',
-      replied_at: Time.current
+      replied_at: Time.current,
+      capture_flow_source: 'profile'
     )
   end
 
