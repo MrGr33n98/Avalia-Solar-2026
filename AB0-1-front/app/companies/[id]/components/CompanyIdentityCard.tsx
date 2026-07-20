@@ -44,7 +44,7 @@ export default function CompanyIdentityCard({
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         {/* Logo Container com Fallback */}
         <div className="absolute left-4 top-0 -translate-y-1/2 sm:static sm:translate-y-0">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-none border-[3px] border-white bg-white shadow-[0_12px_24px_-12px_rgba(15,23,42,0.35)] sm:h-[72px] sm:w-[72px]">
+          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-[1px] shadow-sm sm:h-[72px] sm:w-[72px]">
             {hasLogo ? (
               <OptimizedImage
                 src={logoUrl!}
@@ -55,8 +55,8 @@ export default function CompanyIdentityCard({
                 entityName={company.name}
                 locationLabel={locationLabel}
                 objectFit="contain"
-                className="rounded-none bg-white p-1"
-                containerClassName="h-full w-full rounded-none bg-white"
+                className="rounded-md bg-white p-0.5"
+                containerClassName="h-full w-full rounded-md bg-white"
                 fallbackSrc="/images/logo-placeholder.svg"
                 onError={() => setLogoError(true)}
               />
