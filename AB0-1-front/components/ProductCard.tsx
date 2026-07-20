@@ -204,21 +204,15 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
             {/* Left: Image Box */}
             <div className="relative w-full md:w-64 bg-slate-50/50 flex items-center justify-center p-4 flex-shrink-0 border-r border-slate-100/60">
               <Link href={friendlyUrl} className="block w-full h-44 relative min-h-[11rem]">
-                {displayImage ? (
-                  <Image
-                    src={displayImage}
-                    alt={product.name}
-                    fill
-                    className="object-contain p-4 transition-transform duration-500 hover:scale-105"
-                    onError={() => setImageError(true)}
-                    sizes="(max-width: 640px) 100vw, 256px"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-400">
-                    Imagem indisponível
-                  </div>
-                )}
+                <Image
+                  src={displayImage || '/images/product-placeholder.svg'}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-4 transition-transform duration-500 hover:scale-105"
+                  onError={() => setImageError(true)}
+                  sizes="(max-width: 640px) 100vw, 256px"
+                  loading="lazy"
+                />
               </Link>
 
               {/* Badges Overlay */}

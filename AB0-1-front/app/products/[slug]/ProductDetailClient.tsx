@@ -526,21 +526,15 @@ export default function ProductDetailClient({
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-[var(--border-radius-lg)] bg-[var(--color-background-secondary)]">
                     <div className="relative aspect-[4/3] w-full">
-                      {selectedImage ? (
-                        <Image
-                          src={selectedImage}
-                          alt={product.name}
-                          fill
-                          className="object-contain p-6"
-                          sizes="(max-width: 1024px) 100vw, 60vw"
-                          onError={() => setSelectedImage(null)}
-                          priority
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-medium text-[var(--color-text-tertiary)]">
-                          Imagem indisponível
-                        </div>
-                      )}
+                      <Image
+                        src={selectedImage || '/images/product-placeholder.svg'}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-6"
+                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        onError={() => setSelectedImage('/images/product-placeholder.svg')}
+                        priority
+                      />
                     </div>
                   </div>
 
