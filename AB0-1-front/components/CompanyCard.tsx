@@ -922,6 +922,20 @@ export default function CompanyCard({
             />
           )}
 
+          {p2pChatEnabled && (
+            <Button
+              variant="outline"
+              className="rounded-lg border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100 font-bold text-[10px] h-7 px-2.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/chat?company_id=${id}`);
+              }}
+            >
+              <MessageCircle className="h-3 w-3 mr-1 text-blue-600" />
+              Chat
+            </Button>
+          )}
+
           {canRequestQuote ? (
             <Button
               variant="outline"

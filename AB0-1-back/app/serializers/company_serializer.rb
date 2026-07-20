@@ -35,7 +35,16 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_rating_count,
              :badges,
              :media_urls, :videos,
-             :review_aggregates
+             :review_aggregates,
+             :actions
+
+  def actions
+    {
+      whatsapp_url: whatsapp_url,
+      whatsapp_enabled: whatsapp_enabled,
+      p2p_chat_enabled: p2p_chat_enabled
+    }
+  end
 
   def review_aggregates
     return empty_review_aggregates unless review_aggregates_available?

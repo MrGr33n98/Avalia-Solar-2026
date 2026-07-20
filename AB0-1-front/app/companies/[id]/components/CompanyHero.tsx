@@ -61,10 +61,11 @@ export default function CompanyHero({
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const quoteEnabled = Boolean(canRequestQuote);
   const directChatAvailable =
-    company.p2p_chat_enabled === true &&
-    (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatVisible = directChatAvailable && canUseBuyerChat;
-  const directChatEnabled = directChatVisible;
+    company.p2p_chat_enabled === true ||
+    (company as any)?.actions?.p2p_chat_enabled === true ||
+    (Boolean(company.feature_access) && isFeatureEnabled(company.feature_access, 'p2p_chat'));
+  const directChatVisible = Boolean(directChatAvailable);
+  const directChatEnabled = canUseBuyerChat;
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
