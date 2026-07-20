@@ -13,6 +13,7 @@ import {
   Review,
   SocialProofReview,
   Banner,
+  FinancialInstitution,
 } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
@@ -30,6 +31,7 @@ export type {
   Review,
   SocialProofReview,
   Banner,
+  FinancialInstitution,
 };
 
 export interface LocalSolarCategory {
@@ -1074,6 +1076,17 @@ export const financingOptionsApiSafe = {
     } catch (error) {
       console.error('Error comparing financing options:', error);
       return { options: [] };
+    }
+  },
+};
+
+export const financialInstitutionsApiSafe = {
+  getAll: async (): Promise<FinancialInstitution[]> => {
+    try {
+      return await fetchApiSafe<FinancialInstitution[]>('financial_institutions');
+    } catch (error) {
+      console.error('Error fetching financial institutions:', error);
+      return [];
     }
   },
 };

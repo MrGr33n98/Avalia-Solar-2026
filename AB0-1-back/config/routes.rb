@@ -65,6 +65,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :financial_institutions, only: %i[index show]
+
       resources :companies do
         collection do
           get :states

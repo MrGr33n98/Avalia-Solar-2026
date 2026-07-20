@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_20_053045) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -345,11 +345,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
     t.string "target_states", default: [], array: true
     t.string "target_cities", default: [], array: true
     t.string "alt_text"
+    t.bigint "financial_institution_id"
+    t.bigint "financing_option_id"
     t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "((active = true) AND ((moderation_status)::text = 'approved'::text))"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
     t.index ["company_id"], name: "index_banners_on_company_id"
     t.index ["end_date"], name: "index_banners_on_end_date"
+    t.index ["financial_institution_id"], name: "index_banners_on_financial_institution_id"
+    t.index ["financing_option_id"], name: "index_banners_on_financing_option_id"
     t.index ["moderation_status"], name: "index_banners_on_moderation_status"
     t.index ["priority", "sponsored", "created_at"], name: "idx_banners_priority_order", where: "((active = true) AND ((moderation_status)::text = 'approved'::text))"
     t.index ["priority"], name: "index_banners_on_priority"
@@ -1468,6 +1472,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "financial_institutions", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "short_name"
+    t.string "official_url"
+    t.boolean "active", default: true, null: false
+    t.integer "display_order", default: 0, null: false
+    t.boolean "featured", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_financial_institutions_on_slug", unique: true
+  end
+
   create_table "financing_configurations", force: :cascade do |t|
     t.string "name", null: false
     t.integer "financing_type", default: 0, null: false
@@ -1485,8 +1502,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
   end
 
   create_table "financing_options", force: :cascade do |t|
-    t.bigint "company_id", null: false
-    t.string "institution_name", null: false
+    t.bigint "company_id"
+    t.string "institution_name"
     t.string "credit_line", null: false
     t.string "target_audience", null: false
     t.integer "max_term_months"
@@ -1499,8 +1516,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
     t.text "category_filters"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "financial_institution_id"
+    t.decimal "minimum_project_value", precision: 12, scale: 2
+    t.decimal "maximum_project_value", precision: 12, scale: 2
+    t.decimal "minimum_down_payment_percentage", precision: 5, scale: 2
+    t.decimal "maximum_down_payment_percentage", precision: 5, scale: 2
+    t.string "amortization_system"
+    t.integer "display_order", default: 0
+    t.date "valid_from"
+    t.date "valid_until"
+    t.string "terms_url"
     t.index ["company_id", "active"], name: "index_financing_options_on_company_id_and_active"
     t.index ["company_id"], name: "index_financing_options_on_company_id"
+    t.index ["financial_institution_id"], name: "index_financing_options_on_financial_institution_id"
     t.index ["target_audience"], name: "index_financing_options_on_target_audience"
   end
 
@@ -2683,6 +2711,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
   add_foreign_key "banners", "admin_users", column: "approved_by_admin_user_id"
   add_foreign_key "banners", "categories"
   add_foreign_key "banners", "companies"
+  add_foreign_key "banners", "financial_institutions"
+  add_foreign_key "banners", "financing_options"
   add_foreign_key "banners_categories", "banners"
   add_foreign_key "banners_categories", "categories"
   add_foreign_key "billing_admin_actions", "admin_users"
@@ -2738,6 +2768,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
   add_foreign_key "conversations", "users"
   add_foreign_key "direct_messages", "conversations"
   add_foreign_key "financing_options", "companies"
+  add_foreign_key "financing_options", "financial_institutions"
   add_foreign_key "forum_answers", "forum_questions"
   add_foreign_key "forum_answers", "users"
   add_foreign_key "forum_questions", "categories"

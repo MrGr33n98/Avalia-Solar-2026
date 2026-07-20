@@ -408,15 +408,25 @@ export interface Company {
 
 export interface FinancingOption {
   id: number;
-  company_id: number;
-  institution_name: string;
+  company_id?: number | null;
+  financial_institution_id?: number | null;
+  institution_name?: string | null;
   credit_line: string;
   target_audience: 'PF' | 'PJ' | 'Rural';
+  amortization_system?: 'price' | 'sac' | string | null;
   max_term_months?: number;
   grace_period_months?: number;
   interest_rate_percent?: number;
   interest_rate_details?: string;
+  minimum_project_value?: number | null;
+  maximum_project_value?: number | null;
+  minimum_down_payment_percentage?: number | null;
+  maximum_down_payment_percentage?: number | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  terms_url?: string | null;
   active: boolean;
+  display_order?: number;
   service_filters?: string[];
   project_filters?: string[];
   category_filters?: string[];
@@ -428,6 +438,22 @@ export interface FinancingOption {
   min_rate?: number;
   max_months?: number;
   grace_period_days?: number;
+}
+
+export interface FinancialInstitution {
+  id: number;
+  name: string;
+  slug: string;
+  short_name?: string | null;
+  official_url?: string | null;
+  active: boolean;
+  display_order?: number;
+  featured?: boolean;
+  logo_url?: string | null;
+  created_at: string;
+  updated_at: string;
+  financing_options?: FinancingOption[];
+  banners?: Banner[];
 }
 
 export interface ProductSpecification {

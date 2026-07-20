@@ -18,11 +18,13 @@ import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Company, CompanyFinancingOffer, CompanyFinancingPartner } from '@/lib/api';
+import { Company, CompanyFinancingOffer, CompanyFinancingPartner, FinancingOption } from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
 import { useCalculatorInput } from '@/lib/analytics/hooks/useIntentTracking';
 import { simulateFinancing, AmortizationType } from '@/lib/financing';
 import { cn } from '@/lib/utils';
+import { FinancialInstitutionDropdown } from '@/components/financing/FinancialInstitutionDropdown';
+import { FinancialInstitution } from '@/lib/api';
 
 type Props = {
   company?: Company;
@@ -77,6 +79,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     (profile?.amortization_type as AmortizationType) || 'price',
   );
   const [graceMonths, setGraceMonths] = useState<number>(0);
+  const [selectedInstitution, setSelectedInstitution] = useState<FinancialInstitution | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -100,14 +103,24 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     [amount, downPayment, termMonths, interest, graceMonths, amortization, profile?.grace_months_enabled],
   );
 
-  const applyOffer = (offer: CompanyFinancingOffer) => {
-    if (offer.term_months) setTermMonths(offer.term_months);
-    if (offer.interest_rate_monthly) setInterest(offer.interest_rate_monthly);
-    if (offer.min_down_payment_percent) setDownPayment(offer.min_down_payment_percent);
-    if (offer.amortization_type) setAmortization(offer.amortization_type as AmortizationType);
-    if (offer.grace_months) setGraceMonths(offer.grace_months);
+  const applyOffer = (offer: CompanyFinancingOffer | FinancingOption, institution?: FinancialInstitution) => {
+    const o = offer as any;
+    const term = o.term_months || o.max_term_months;
+    const rate = o.interest_rate_monthly || o.interest_rate_percent;
+    const minDown = o.min_down_payment_percent || o.minimum_down_payment_percentage;
+    const grace = o.grace_months || o.grace_period_months;
+    const amort = o.amortization_type || o.amortization_system;
+
+    if (term) setTermMonths(term);
+    if (rate) setInterest(rate);
+    if (minDown) setDownPayment(minDown);
+    if (amort) setAmortization(amort as AmortizationType);
+    if (grace) setGraceMonths(grace);
+    
+    if (institution) setSelectedInstitution(institution);
+
     if (trackingCompanyId) {
-      trackSimulation(amount, offer.term_months ?? termMonths);
+      trackSimulation(amount, term ?? termMonths);
     }
   };
 
@@ -126,12 +139,31 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     companyData?.website;
   const ctaLabel = profile?.cta_label || 'Falar com especialista';
 
+  const microBanner = selectedInstitution?.banners?.find(
+    (b) => b.position === 'financing_simulator_micro_banner' && b.active
+  );
+
   if (!companyData) {
     return null;
   }
 
   return (
     <div className="space-y-6">
+      {microBanner && microBanner.image_url && (
+        <a 
+          href={microBanner.link_url || microBanner.link || '#'} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block w-full overflow-hidden rounded-lg shadow-sm hover:shadow-md transition border border-primary/20"
+        >
+          <img 
+            src={microBanner.image_url} 
+            alt={microBanner.title || 'Banner Patrocinado'} 
+            className="w-full h-auto max-h-[120px] object-cover"
+          />
+        </a>
+      )}
+
       <Card className="border-none shadow-lg bg-card/70 backdrop-blur-sm">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
@@ -170,6 +202,13 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4">
+            <div className="grid gap-3">
+              <label className="text-sm font-medium text-muted-foreground">Instituição Financeira</label>
+              <FinancialInstitutionDropdown 
+                onSelectOption={applyOffer} 
+              />
+            </div>
+            
             <div className="grid gap-3">
               <label className="text-sm font-medium text-muted-foreground">Valor do projeto</label>
               <Input

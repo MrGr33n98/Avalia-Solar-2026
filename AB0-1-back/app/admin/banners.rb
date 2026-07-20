@@ -19,7 +19,8 @@ banner_position_options = [
   ['Compare - Inline (Meio)', 'compare_page_inline'],
   ['Compare - Sidebar', 'compare_page_sidebar'],
   ['Compare - Bottom (Rodapé)', 'compare_page_bottom'],
-  ['Comparação - Barra Flutuante (Patrocínio)', 'comparison_floating_bar']
+  ['Comparação - Barra Flutuante (Patrocínio)', 'comparison_floating_bar'],
+  ['Simulador de Financiamento - Micro Banner', 'financing_simulator_micro_banner']
 ].freeze
 
 def safe_banner_image_tag(record, style: 'max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;')
@@ -39,7 +40,7 @@ end
 
 ActiveAdmin.register Banner do
   permit_params do
-    allowed = %i[title alt_text image company_id link active sponsored banner_type position
+    allowed = %i[title alt_text image company_id financial_institution_id financing_option_id link active sponsored banner_type position
                  start_date end_date moderation_status priority rejected_reason width height slot_key]
     if Banner.column_names.include?('target_states')
       allowed << :target_states
@@ -123,6 +124,12 @@ ActiveAdmin.register Banner do
         f.inputs 'Audiência' do
           f.input :company, label: 'Empresa Proprietária (Opcional)',
                             hint: 'Se selecionado, o banner será vinculado à performance desta empresa.'
+          
+          f.input :financial_institution, label: 'Instituição Financeira (Opcional)',
+                                          hint: 'Para banners patrocinados por instituições financeiras.'
+          f.input :financing_option, label: 'Opção de Financiamento (Opcional)',
+                                     hint: 'Se aplicável, vincula o banner a uma oferta de crédito específica.'
+
           f.input :categories, as: :check_boxes, collection: Category.order(:name),
                                label: 'Exibir nestas categorias',
                                hint: 'Deixe vazio para exibição global (se a posição permitir).'
@@ -221,6 +228,8 @@ ActiveAdmin.register Banner do
       row :position
       row :slot_key
       row :company
+      row :financial_institution
+      row :financing_option
       row :categories do |banner|
         banner.categories.pluck(:name).join(', ')
       end

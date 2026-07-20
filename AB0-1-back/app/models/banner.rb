@@ -7,6 +7,8 @@ class Banner < ApplicationRecord
   # New many-to-many categories targeting
   has_and_belongs_to_many :categories, join_table: :banners_categories
   belongs_to :company, optional: true
+  belongs_to :financial_institution, optional: true
+  belongs_to :financing_option, optional: true
   belongs_to :approved_by_admin_user, class_name: 'AdminUser', optional: true
   has_one_attached :image
 
@@ -34,6 +36,7 @@ class Banner < ApplicationRecord
     compare_page_sidebar
     compare_page_bottom
     comparison_floating_bar
+    financing_simulator_micro_banner
   ].freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
   DEFAULT_DIMENSIONS_BY_POSITION = {
@@ -55,7 +58,8 @@ class Banner < ApplicationRecord
     'compare_page_inline' => [1200, 160],
     'compare_page_sidebar' => [300, 600],
     'compare_page_bottom' => [1200, 160],
-    'comparison_floating_bar' => [720, 120]
+    'comparison_floating_bar' => [720, 120],
+    'financing_simulator_micro_banner' => [600, 200]
   }.freeze
 
   # === Validações Básicas ===
@@ -138,7 +142,7 @@ class Banner < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[alt_text category_id company_id created_at id image_url title updated_at link active sponsored width height
+    %w[alt_text category_id company_id financial_institution_id financing_option_id created_at id image_url title updated_at link active sponsored width height
        banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
   end
 
