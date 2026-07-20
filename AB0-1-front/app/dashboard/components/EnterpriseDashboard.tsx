@@ -196,7 +196,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
-  const dashboardCompany = company as DashboardChatCompany | null;
+  const dashboardCompany = company;
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;
 
@@ -217,7 +217,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         .map((item) => item.id)
         .filter(
           (tabId) =>
-            ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
+            ALWAYS_VISIBLE_TABS.has(tabId as any) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
         ),
     [tabAccessEntries]
   );
@@ -225,9 +225,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const renderGuardedTab = useCallback(
     (tabId: string, children: ReactNode) => {
       const entry = tabAccessEntries[tabId];
-      if (isFeatureHiddenEntry(entry) && !ALWAYS_VISIBLE_TABS.has(tabId)) return null;
+      if (isFeatureHiddenEntry(entry) && !ALWAYS_VISIBLE_TABS.has(tabId as any)) return null;
       const visibleEntry =
-        ALWAYS_VISIBLE_TABS.has(tabId) && isFeatureHiddenEntry(entry) ? null : entry;
+        ALWAYS_VISIBLE_TABS.has(tabId as any) && isFeatureHiddenEntry(entry) ? null : entry;
 
       const copy = DASHBOARD_TAB_GUARD_COPY[tabId];
       if (!copy) return children;

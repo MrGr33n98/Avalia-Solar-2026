@@ -149,8 +149,6 @@ export default function CompanyFinancing({ company, companyId }: Props) {
 
   return (
     <div className="space-y-6">
-
-
       <Card className="border-none shadow-lg bg-card/70 backdrop-blur-sm">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
