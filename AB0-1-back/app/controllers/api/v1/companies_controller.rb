@@ -620,7 +620,7 @@ module Api
         }.compact
 
         filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
-        "companies:index:v3:#{filter_hash}"
+        "companies:index:v4:#{filter_hash}"
       end
 
       def cache_ttl_for_params(params)

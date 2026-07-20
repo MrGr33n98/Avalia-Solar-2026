@@ -562,14 +562,14 @@ export default function CompanyCard({
   // ── Variante 3: Expanded (layout horizontal compacto — full-width) ──
   // Sentiment: dados reais da API; mostra placeholder se sem reviews
   const sentiment =
-    company.reputation.sentiment ??
-    (company.reputation.rating_count > 0 ? { positive: 85, neutral: 10, negative: 5 } : null);
+    company.reputation?.sentiment ??
+    (company.reputation?.rating_count > 0 ? { positive: 85, neutral: 10, negative: 5 } : null);
 
   // Anel de recomendação (dados reais)
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
-  const recommendationRate = company.reputation.recommendation_rate ?? null;
-  const recentReviewers = company.reputation.recent_reviewer_avatars ?? [];
+  const recommendationRate = company.reputation?.recommendation_rate ?? null;
+  const recentReviewers = company.reputation?.recent_reviewer_avatars || [];
   const strokeDashoffset =
     recommendationRate !== null
       ? circumference - (recommendationRate / 100) * circumference

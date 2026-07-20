@@ -79,12 +79,15 @@ class CompanyListSerializer < ActiveModel::Serializer
                 end
 
     recommendation_rate = aggregate&.recommendation_rate&.to_f
-    recommendation_rate ||= total > 0 ? ((positive_count.to_f / total) * 100).round : nil
+    if recommendation_rate.nil? && rating_count > 0
+      recommendation_rate = total > 0 ? ((positive_count.to_f / total) * 100).round : (rating_avg >= 3.5 ? 100 : 80)
+    end
 
     # Load up to 3 recent reviewer avatars
     recent_reviewer_avatars = []
-    if rating_count > 0
-      recent_reviewer_avatars = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3).map do |review|
+    reviews_scope = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3)
+    if reviews_scope.any?
+      recent_reviewer_avatars = reviews_scope.map do |review|
         {
           name: review.user&.name || review.author_name || 'Usuário',
           url: review.user&.avatar_url
