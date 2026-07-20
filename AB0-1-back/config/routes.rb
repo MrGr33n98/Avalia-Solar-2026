@@ -281,12 +281,17 @@ Rails.application.routes.draw do
       resources :notifications, only: [:index] do
         collection do
           get :unread_count
+          get :counts_by_filter
           post :mark_all_as_read
         end
         member do
           post :mark_as_read
+          post :archive
+          post :unarchive
         end
       end
+
+      resource :notification_preferences, only: [:show, :update]
 
       namespace :admin do
         resources :reviews, only: %i[index show] do

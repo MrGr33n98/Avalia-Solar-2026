@@ -49,6 +49,7 @@ import {
 import { User } from '@/lib/api';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useNotificationStore } from '@/store/notificationStore';
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -118,7 +119,7 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
       { label: 'Reputação', href: '/review-dashboard#reputation', icon: Medal },
       {
         label: 'Notificações',
-        href: '/review-dashboard#notifications',
+        href: '/review-dashboard/notifications',
         icon: Bell,
         notifications: true,
       },
@@ -143,23 +144,23 @@ const bottomNav: DashboardNavItem[] = [
 ];
 
 export function Header({
-  firstName,
+  firstName = 'Felipe',
   user,
-  greenScore,
-  notificationsCount: propNotificationsCount,
-  refreshing,
+  greenScore = 350,
+  notificationsCount: propNotificationsCount = 4,
+  refreshing = false,
   onRefresh,
   onOpenCommand,
   onOpenMobileNav,
 }: {
-  firstName: string;
-  user: User & { avatar_url?: string };
-  greenScore: number;
-  notificationsCount: number;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onOpenCommand: () => void;
-  onOpenMobileNav: () => void;
+  firstName?: string;
+  user?: (User & { avatar_url?: string }) | null;
+  greenScore?: number;
+  notificationsCount?: number;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  onOpenCommand?: () => void;
+  onOpenMobileNav?: () => void;
 }) {
   const {
     notifications,
@@ -249,7 +250,7 @@ export function Header({
             <TooltipContent>Central de Mensagens</TooltipContent>
           </Tooltip>
 
-          {/* Notificações com Badge Vermelho (Imagem 1 & 2) */}
+          {/* Notificações com Badge Vermelho e Dropdown Swiss Style */}
           <Popover onOpenChange={(open) => open && fetchNotifications()}>
             <PopoverTrigger asChild>
               <button
@@ -269,66 +270,8 @@ export function Header({
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 rounded-lg border-slate-200 p-0 shadow-lg md:w-96">
-              <div className="flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200">
-                <div>
-                  <p className="text-sm font-bold text-slate-950">Notificações</p>
-                  <p className="text-xs text-slate-500">
-                    {activeUnreadCount} não lidas
-                  </p>
-                </div>
-                {activeUnreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  >
-                    Marcar todas lidas
-                  </Button>
-                )}
-              </div>
-              <Separator />
-              <ScrollArea className="h-[320px] p-2">
-                {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-500">
-                    Nenhuma notificação no momento.
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {notifications.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => !item.read && markAsRead(item.id)}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-md p-3 text-left transition-colors hover:bg-slate-100',
-                          !item.read ? 'bg-blue-50/70 font-semibold' : 'bg-white'
-                        )}
-                      >
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                          <Bell className="h-4 w-4" />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-900 truncate">{item.title}</p>
-                          <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">{item.body}</p>
-                          <p className="text-[10px] text-slate-400 mt-1">
-                            {new Date(item.created_at).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                        {!item.read && (
-                          <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0 mt-1" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
+            <PopoverContent align="end" className="p-0 border-none bg-transparent shadow-none w-auto">
+              <NotificationDropdown />
             </PopoverContent>
           </Popover>
 
@@ -348,13 +291,13 @@ export function Header({
           {/* Avatar e Perfil (Imagem 2 Mobile / Desktop) */}
           <div className="flex items-center gap-2">
             <Avatar className="h-9 w-9 border border-slate-200 shadow-sm md:h-10 md:w-10">
-              <AvatarImage src={user.avatar_url || ''} alt={user.name} />
+              <AvatarImage src={user?.avatar_url || ''} alt={user?.name || firstName} />
               <AvatarFallback className="bg-amber-100 font-bold text-amber-800">
-                {initialsFromName(user.name)}
+                {initialsFromName(user?.name || firstName)}
               </AvatarFallback>
             </Avatar>
             <div className="hidden min-w-[100px] md:block">
-              <p className="truncate text-sm font-semibold text-slate-950">{user.name}</p>
+              <p className="truncate text-sm font-semibold text-slate-950">{user?.name || firstName}</p>
               <p className="text-xs font-medium text-amber-600">
                 Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}
               </p>
@@ -487,7 +430,7 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
     icon: Command,
     items: [
       { label: 'Dados da conta', href: '/review-dashboard/profile' },
-      { label: 'Notificações', href: '/review-dashboard#notifications' },
+      { label: 'Notificações', href: '/review-dashboard/notifications' },
       { label: 'Privacidade', href: '/review-dashboard/profile#privacy' },
     ],
   },
