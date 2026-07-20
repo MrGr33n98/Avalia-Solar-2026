@@ -75,6 +75,10 @@ import {
   Users,
   Laptop,
   Gift,
+  UserRound,
+  ClipboardList,
+  FileText,
+  Heart,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -136,9 +140,10 @@ type ReviewKpi = {
   iconClass: string;
 };
 
-function initialsFromName(name?: string | null) {
-  const safeName = name?.trim() || 'Usuário';
-  const parts = safeName.split(/\s+/).slice(0, 2);
+function initialsFromName(name?: unknown) {
+  const str = typeof name === 'string' ? name.trim() : String(name || '').trim();
+  const safeName = str || 'Usuário';
+  const parts = safeName.split(/\s+/).filter(Boolean).slice(0, 2);
   return parts
     .map((part) => part[0])
     .join('')
@@ -176,18 +181,21 @@ function getCompanyInfo(review: Review) {
     };
   }
 
+  const companyObj = review.company && typeof review.company === 'object' ? review.company : null;
+  const companyName = typeof companyObj?.name === 'string' ? companyObj.name : 'Empresa';
+
   return {
-    name: review.company?.name || 'Empresa',
-    logoUrl: review.company?.logo_url || null,
-    slug: review.company?.slug,
+    name: companyName,
+    logoUrl: companyObj?.logo_url || null,
+    slug: companyObj?.slug,
   };
 }
 
 function getLeadCompanyName(lead: Lead) {
   if (typeof lead.company === 'string' && lead.company.trim()) return lead.company;
-  if (lead.company && typeof lead.company === 'object' && lead.company.name)
+  if (lead.company && typeof lead.company === 'object' && typeof lead.company.name === 'string' && lead.company.name.trim())
     return lead.company.name;
-  if (lead.company_obj?.name) return lead.company_obj.name;
+  if (lead.company_obj?.name && typeof lead.company_obj.name === 'string') return lead.company_obj.name;
   return 'Empresa recomendada';
 }
 
@@ -442,7 +450,13 @@ export function ReputationDashboard({
     },
   ];
 
-  const categories = Array.from(new Set(rows.map((row) => row.category).filter(Boolean)));
+  const categories = Array.from(
+    new Set(
+      rows
+        .map((row) => (typeof row.category === 'string' ? row.category.trim() : ''))
+        .filter(Boolean)
+    )
+  );
   const filteredRows = rows.filter((row) => {
     const matchesSearch = row.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'todos' || row.status === statusFilter;
@@ -606,6 +620,152 @@ export function ReputationDashboard({
       <div className="min-w-0 md:hidden">{renderMobileTabContent()}</div>
 
       <div className="hidden md:block">
+        {/* Cabeçalho principal com saudação, progresso, ações rápidas e resumo */}
+        <div className="mb-6 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Olá, {profileUser.name?.split(' ')[0] || 'Felipe'}! 👋
+                </h2>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Acompanhe o progresso do seu perfil.
+                </p>
+              </div>
+
+              <div className="w-full md:w-72 rounded-xl bg-slate-50 p-4 border border-slate-100">
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+                  <span>Perfil concluído</span>
+                  <span className="text-blue-600">{profileCompletion}%</span>
+                </div>
+                <Progress value={profileCompletion} className="h-2 bg-slate-200" />
+              </div>
+            </div>
+
+            {/* Ações Rápidas */}
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Ações rápidas</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Link
+                  href="/review-dashboard/profile"
+                  className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center hover:border-blue-500 hover:shadow-md transition-all group"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <UserRound className="h-6 w-6" />
+                  </div>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">Ver meu perfil</span>
+                </Link>
+
+                <Link
+                  href="#reviews"
+                  className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center hover:border-blue-500 hover:shadow-md transition-all group"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <ClipboardList className="h-6 w-6" />
+                  </div>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">Minhas avaliações</span>
+                </Link>
+
+                <Link
+                  href="#proposals"
+                  className="relative flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center hover:border-blue-500 hover:shadow-md transition-all group"
+                >
+                  <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                    {leads.length || 2}
+                  </span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">Propostas recebidas</span>
+                </Link>
+
+                <Link
+                  href="#solutions"
+                  className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center hover:border-blue-500 hover:shadow-md transition-all group"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <Heart className="h-6 w-6" />
+                  </div>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">Soluções salvas</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Resumo do seu perfil & Etapas do perfil (Grid 2 colunas) */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Resumo do seu perfil */}
+            <Card className="rounded-2xl border-slate-200 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold text-slate-900">Resumo do seu perfil</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <Eye className="h-4 w-4 text-slate-400" />
+                    Visualizações
+                  </span>
+                  <span className="font-bold text-slate-900">{profileViews || 428}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <Star className="h-4 w-4 text-slate-400" />
+                    Avaliações
+                  </span>
+                  <span className="font-bold text-slate-900">{reviews.length || 12}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <MessageCircle className="h-4 w-4 text-slate-400" />
+                    Propostas recebidas
+                  </span>
+                  <span className="font-bold text-slate-900">{leads.length || 7}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <ThumbsUp className="h-4 w-4 text-slate-400" />
+                    Taxa de resposta
+                  </span>
+                  <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">
+                    92%
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Etapas do perfil */}
+            <Card className="rounded-2xl border-slate-200 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-bold text-slate-900">Etapas do perfil</CardTitle>
+                  <span className="text-xs font-medium text-slate-500">4 de 6 concluídas</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[
+                  { label: 'Dados da empresa', done: true },
+                  { label: 'Dados pessoais', done: true },
+                  { label: 'Interesses e atuação', done: true },
+                  { label: 'Redes sociais', done: true },
+                  { label: 'Publicação e avaliação', done: false },
+                  { label: 'Privacidade e visibilidade', done: false },
+                ].map((step) => (
+                  <div key={step.label} className="flex items-center gap-3 text-sm">
+                    {step.done ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 fill-emerald-100" />
+                    ) : (
+                      <CircleHelp className="h-5 w-5 text-slate-300" />
+                    )}
+                    <span className={cn('font-medium', step.done ? 'text-slate-800' : 'text-slate-400')}>
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Banner de incentivo de conquista */}
         {reviews.length === 0 && (
           <div className="mb-6 flex items-center justify-between rounded-none border border-slate-200 bg-white px-5 py-4">

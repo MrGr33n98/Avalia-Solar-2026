@@ -46,10 +46,12 @@ const createDefaultPrivacySettings = () => ({
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-function initialsFromName(name?: string | null) {
-  const safeName = name?.trim() || 'Usuário';
+function initialsFromName(name?: unknown) {
+  const str = typeof name === 'string' ? name.trim() : String(name || '').trim();
+  const safeName = str || 'Usuário';
   return safeName
     .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join('')
@@ -205,7 +207,7 @@ export default function ProfileDetailsPage() {
 
     const normalizedAdditionalData = {
       ...additionalData,
-      aboutMe: additionalData.aboutMe.trim(),
+      aboutMe: typeof additionalData.aboutMe === 'string' ? additionalData.aboutMe.trim() : '',
     };
     setSaving(true);
 

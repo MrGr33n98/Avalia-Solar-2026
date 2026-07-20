@@ -88,10 +88,12 @@ export function mapCompanyToCompareCompany(
       [
         source.primary_category,
         source.category_name,
-        source.category,
+        typeof source.category === 'string' ? source.category : (source.category as any)?.name,
         source.category_info?.name,
-        ...(source.categories || []).map((category) => category.name),
-      ].filter((value): value is string => Boolean(value?.trim()))
+        ...(source.categories || []).map((category: any) => (typeof category === 'string' ? category : category?.name)),
+      ]
+        .map((val) => (typeof val === 'string' ? val.trim() : typeof val === 'number' ? String(val) : ''))
+        .filter(Boolean)
     )
   );
   const verificationStatus =

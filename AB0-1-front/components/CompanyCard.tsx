@@ -272,7 +272,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       states:
         comp?.coverage?.states ??
         (Array.isArray(comp?.coverage_states)
-          ? comp.coverage_states
+          ? comp.coverage_states.map(String).map((s: string) => s.trim()).filter(Boolean)
           : String(comp?.coverage_states || '')
               .split(',')
               .map((s: string) => s.trim())
@@ -280,7 +280,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       cities:
         comp?.coverage?.cities ??
         (Array.isArray(comp?.coverage_cities)
-          ? comp.coverage_cities
+          ? comp.coverage_cities.map(String).map((s: string) => s.trim()).filter(Boolean)
           : String(comp?.coverage_cities || '')
               .split(',')
               .map((s: string) => s.trim())

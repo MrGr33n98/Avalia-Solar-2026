@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ import {
   Recycle,
   Medal,
   LogOut,
+  Star,
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
@@ -308,6 +310,86 @@ export function MobileDrawer({
   );
 }
 
+export type SidebarCollapsibleGroup = {
+  label: string;
+  href?: string;
+  icon: LucideIcon;
+  items?: Array<{ label: string; href: string }>;
+};
+
+export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
+  { label: 'Dashboard', href: '/review-dashboard', icon: Home },
+  {
+    label: 'Avaliações',
+    icon: Star,
+    items: [
+      { label: 'Todas as avaliações', href: '/review-dashboard#reviews' },
+      { label: 'Minhas avaliações', href: '/review-dashboard#reviews' },
+      { label: 'Rascunhos', href: '/review-dashboard#drafts' },
+      { label: 'Respostas recebidas', href: '/review-dashboard#company-replies' },
+    ],
+  },
+  {
+    label: 'Propostas',
+    icon: MessageCircle,
+    items: [
+      { label: 'Todas as propostas', href: '/review-dashboard#proposals' },
+      { label: 'Em andamento', href: '/review-dashboard#proposals-progress' },
+      { label: 'Concluídas', href: '/review-dashboard#proposals-done' },
+    ],
+  },
+  {
+    label: 'Empresas',
+    icon: Building2,
+    items: [
+      { label: 'Minhas empresas', href: '/review-dashboard#companies' },
+      { label: 'Soluções em uso', href: '/review-dashboard#solutions' },
+    ],
+  },
+  {
+    label: 'Meu perfil',
+    icon: UserRound,
+    items: [
+      { label: 'Dados da empresa', href: '/review-dashboard/profile#company' },
+      { label: 'Dados pessoais', href: '/review-dashboard/profile#personal' },
+      { label: 'Interesses e atuação', href: '/review-dashboard/profile#interests' },
+      { label: 'Redes sociais', href: '/review-dashboard/profile#social' },
+      { label: 'Privacidade e visibilidade', href: '/review-dashboard/profile#privacy' },
+      { label: 'Publicação e avaliação', href: '/review-dashboard/profile#publishing' },
+    ],
+  },
+  {
+    label: 'Soluções salvas',
+    icon: Leaf,
+    items: [
+      { label: 'Energia Solar', href: '/review-dashboard#solutions' },
+      { label: 'Mobilidade Elétrica', href: '/review-dashboard#mobility' },
+    ],
+  },
+  {
+    label: 'Relatórios',
+    icon: Trophy,
+    items: [
+      { label: 'Resumo mensal', href: '/review-dashboard#reports' },
+      { label: 'Estatísticas de impacto', href: '/review-dashboard#impact' },
+    ],
+  },
+  {
+    label: 'Configurações',
+    icon: Command,
+    items: [
+      { label: 'Dados da conta', href: '/review-dashboard/profile' },
+      { label: 'Notificações', href: '/review-dashboard#notifications' },
+      { label: 'Privacidade', href: '/review-dashboard/profile#privacy' },
+    ],
+  },
+  {
+    label: 'Ajuda e suporte',
+    href: '/faq',
+    icon: Bell,
+  },
+];
+
 function SidebarContent({
   repliesCount,
   notificationsCount,
@@ -319,91 +401,108 @@ function SidebarContent({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    'Meu perfil': true,
+  });
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev: Record<string, boolean>) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const name = user?.name || 'Avaliador';
+  const initials = initialsFromName(name);
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex h-[72px] items-center px-6">
-        <Link href="/" onClick={onNavigate} aria-label="Página inicial da Avalia Solar">
-          <BrandLogo className="h-10" sizes="174px" priority />
-        </Link>
+      {/* Top Profile Card inside Sidebar */}
+      <div className="border-b border-slate-100 p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-800 border border-slate-200">
+              {initials}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-950">{name}</p>
+              <Link
+                href="/review-dashboard/profile"
+                onClick={onNavigate}
+                className="text-xs font-medium text-blue-600 hover:underline"
+              >
+                Ver meu perfil
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4">
-        <nav className="space-y-6 pb-6 mt-4">
-          {sidebarSections.map((section) => (
-            <div key={section.title} className="space-y-2">
-              <p className="px-2 text-xs font-semibold uppercase text-slate-500">{section.title}</p>
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const count = item.replies
-                    ? repliesCount
-                    : item.notifications
-                      ? notificationsCount
-                      : 0;
-                  const active =
-                    pathname === item.href ||
-                    (pathname === '/review-dashboard' && item.href === '/review-dashboard');
-                  return (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={cn(
-                        'group flex h-11 items-center justify-between rounded-none border-l-2 px-3 text-sm font-medium transition-colors',
-                        active
-                          ? 'border-blue-600 bg-slate-100 text-slate-950'
-                          : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950',
-                        item.replies &&
-                          repliesCount > 0 &&
-                          'border border-emerald-300 bg-emerald-50 text-slate-950'
-                      )}
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <Icon
-                          className={cn(
-                             'h-5 w-5 shrink-0',
-                            active ? 'text-blue-600' : 'text-slate-500'
-                          )}
-                        />
-                        <span className="truncate">
-                          {item.label}
-                          {item.replies && repliesCount > 0 ? ` (${repliesCount})` : ''}
-                        </span>
-                      </span>
-                      {count > 0 && (
-                        <span
-                          className={cn(
-                            'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white',
-                            item.replies ? 'animate-pulse bg-red-600' : 'bg-red-500'
-                          )}
-                        >
-                          {count}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
+      <ScrollArea className="flex-1 px-3 py-3">
+        <nav className="space-y-1">
+          {sidebarMenuGroups.map((group) => {
+            const Icon = group.icon;
+            const hasSubitems = Array.isArray(group.items) && group.items.length > 0;
+            const isOpen = !!openGroups[group.label];
+            const isDirectActive = group.href && pathname === group.href;
+
+            if (!hasSubitems && group.href) {
+              return (
+                <Link
+                  key={group.label}
+                  href={group.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    'flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors',
+                    isDirectActive
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950'
+                  )}
+                >
+                  <Icon className={cn('h-4.5 w-4.5', isDirectActive ? 'text-blue-600' : 'text-slate-500')} />
+                  <span>{group.label}</span>
+                </Link>
+              );
+            }
+
+            return (
+              <div key={group.label} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex h-11 w-full items-center justify-between rounded-xl px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon className="h-4.5 w-4.5 text-slate-500" />
+                    <span>{group.label}</span>
+                  </span>
+                  <span className="text-slate-400">
+                    {isOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isOpen && group.items && (
+                  <div className="ml-9 space-y-1 border-l border-slate-100 pl-3">
+                    {group.items.map((sub) => (
+                      <Link
+                        key={sub.label}
+                        href={sub.href}
+                        onClick={onNavigate}
+                        className="block rounded-lg py-1.5 px-2 text-xs font-normal text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors"
+                      >
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </ScrollArea>
 
-      <div className="border-t border-slate-100 p-4 space-y-2">
-        <Button
-          className="h-12 w-full rounded-none bg-blue-600 font-medium hover:bg-blue-700"
-          asChild
-        >
-          <Link href="/companies">
-            <Plus className="mr-2 h-4 w-4" />
-            Avaliar empresa
-          </Link>
-        </Button>
+      <div className="border-t border-slate-100 p-4">
         <Button
           variant="outline"
-          className="h-11 w-full rounded-none border-slate-300 text-slate-700 font-medium hover:bg-slate-50 hover:text-slate-950"
+          className="h-11 w-full rounded-xl border-slate-200 text-slate-700 font-medium hover:bg-slate-50 hover:text-slate-950"
           onClick={async () => {
             if (onNavigate) onNavigate();
             await logout();
@@ -411,7 +510,7 @@ function SidebarContent({
           }}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Sair da Conta
+          Sair
         </Button>
       </div>
     </div>
