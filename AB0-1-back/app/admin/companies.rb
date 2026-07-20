@@ -77,7 +77,7 @@ ActiveAdmin.register Company do
       :linkedin, :description,
       :moderation_status, :rejected_reason, :financing_enabled, :financing_tab_visible,
       :active_admin, :p2p_chat_enabled, :seo_title, :seo_description, :meta_description, :seo_keywords,
-      { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [], financing_options_attributes: %i[id institution_name credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
+      { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [], financing_options_attributes: %i[id financial_institution_id credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
         company_members_attributes: %i[id user_id role _destroy],
@@ -301,7 +301,7 @@ ActiveAdmin.register Company do
 
     f.inputs 'Opções de Financiamento' do
       f.has_many :financing_options, allow_destroy: true, heading: false, new_record: 'Adicionar Opção' do |fo|
-        fo.input :institution_name, label: 'Instituição'
+        fo.input :financial_institution_id, as: :select, collection: FinancialInstitution.ordered.map { |fi| [fi.name, fi.id] }, label: 'Instituição (banco com logo)'
         fo.input :credit_line, label: 'Linha de Crédito'
         fo.input :target_audience, as: :select, collection: %w[PF PJ Rural], label: 'Público Alvo'
         fo.input :interest_rate_percent, label: 'Taxa de Juros (%)', input_html: { step: 0.01 }
