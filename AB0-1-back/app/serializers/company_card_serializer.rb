@@ -80,13 +80,22 @@ class CompanyCardSerializer < ActiveModel::Serializer
       recommendation_rate = 100
     end
 
+    # Load up to 3 recent reviewer avatars
+    recent_reviewer_avatars = []
+    if rating_count > 0
+      recent_reviewer_avatars = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3).map do |review|
+        review.user&.avatar_url
+      end.compact
+    end
+
     {
       rating_avg: rating_avg,
       rating_count: rating_count,
       nps_score: nps_avg,
       nps_responses: nps_responses,
       recommendation_rate: recommendation_rate,
-      sentiment: sentiment
+      sentiment: sentiment,
+      recent_reviewer_avatars: recent_reviewer_avatars
     }
   end
 

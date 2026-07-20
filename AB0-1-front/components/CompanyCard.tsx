@@ -86,6 +86,7 @@ export interface CompanyCardData {
       neutral: number;
       negative: number;
     };
+    recent_reviewer_avatars?: string[];
   };
   operations: {
     delivered_projects: number;
@@ -250,6 +251,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       nps_responses: comp?.nps_responses || 0,
       recommendation_rate: apiRecommendation,
       sentiment: sentimentData,
+      recent_reviewer_avatars: comp?.reputation?.recent_reviewer_avatars || comp?.recent_reviewer_avatars || [],
     },
     operations: {
       delivered_projects:
@@ -565,6 +567,7 @@ export default function CompanyCard({
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation.recommendation_rate ?? null;
+  const recentReviewerAvatars = company.reputation.recent_reviewer_avatars ?? [];
   const strokeDashoffset =
     recommendationRate !== null
       ? circumference - (recommendationRate / 100) * circumference
@@ -827,9 +830,16 @@ export default function CompanyCard({
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-black text-slate-800">
-                  {recommendationRate !== null ? `${recommendationRate}%` : '–'}
-                </span>
+                {recentReviewerAvatars.length > 0 ? (
+                  <div className="relative w-7 h-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={recentReviewerAvatars[0]} alt="Reviewer" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-black text-slate-800">
+                    {recommendationRate !== null ? `${recommendationRate}%` : '–'}
+                  </span>
+                )}
               </div>
             </div>
             <div className="min-w-0">
