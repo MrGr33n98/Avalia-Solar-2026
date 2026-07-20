@@ -1,32 +1,37 @@
-"use client";
+'use client';
 
-import { ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Company } from "@/lib/api";
+import React from 'react';
+import Link from 'next/link';
+import { Briefcase, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Company } from '@/lib/api';
 
 interface ClaimProfileCardProps {
   company: Company;
 }
 
 export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
-  // Lógica dinâmica para saber se a empresa já está reivindicada ou verificada
-  const isClaimed = (company as any).claimed === true || company.verified === true || company.has_paid_plan === true;
+  const isClaimed =
+    (company as any).claimed === true || company.verified === true || company.has_paid_plan === true;
 
   if (isClaimed) {
-    // Se a empresa já está reivindicada, exibe bloco institucional que reforça a confiança
     return (
-      <Card className="overflow-hidden border border-emerald-100 bg-emerald-50/20 shadow-sm rounded-2xl">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center gap-2 text-emerald-700">
-            <CheckCircle2 className="h-5 w-5 shrink-0" />
-            <h4 className="font-black text-sm uppercase tracking-wider leading-tight">
-              Perfil Verificado Oficial
-            </h4>
+      <Card className="overflow-hidden border border-emerald-900/30 bg-[#0B1528] text-white shadow-lg rounded-2xl">
+        <CardContent className="p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shrink-0">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-sm uppercase tracking-wider text-white">
+                Perfil Verificado Oficial
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">Empresa auditada e ativa</p>
+            </div>
           </div>
-          
-          <p className="text-xs text-slate-500 leading-relaxed">
+
+          <p className="text-xs text-slate-300 leading-relaxed pt-1">
             As informações desta empresa foram autenticadas e são gerenciadas ativamente pelo representante legal sob auditoria do portal **Avalia Solar**.
           </p>
         </CardContent>
@@ -34,28 +39,33 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
     );
   }
 
-  // Se NÃO está reivindicada, exibe o convite para reivindicar o perfil
   return (
-    <Card className="overflow-hidden border border-blue-100 bg-blue-50/40 shadow-sm rounded-2xl">
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-center gap-2 text-blue-700">
-          <ShieldCheck className="h-5 w-5 shrink-0" />
-          <h4 className="font-black text-sm uppercase tracking-wider leading-tight">
-            Trabalha nesta empresa?
-          </h4>
+    <div className="overflow-hidden bg-[#0B1528] text-white shadow-xl rounded-2xl p-6 border border-slate-800 space-y-5 font-sans">
+      {/* Top Header with Golden Briefcase Icon Box & Title */}
+      <div className="flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-amber-500/60 bg-amber-500/10 text-amber-400 shrink-0 shadow-inner">
+          <Briefcase className="h-6 w-6 stroke-[2]" />
         </div>
-        
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Reivindique o controle deste perfil comercial para atualizar dados de contato, responder a avaliações de clientes e gerenciar o catálogo de produtos de forma gratuita.
-        </p>
+        <h3 className="font-extrabold text-sm sm:text-base tracking-wide text-white uppercase leading-tight">
+          TRABALHA NESTA EMPRESA?
+        </h3>
+      </div>
 
-        <Button asChild className="w-full rounded-xl bg-blue-700 hover:bg-blue-800 text-xs font-bold text-white shadow-md h-9 group" variant="default">
-          <Link href={`/companies/${company.id}/claim`}>
-            Reivindicar Perfil Grátis
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+      {/* Body Description */}
+      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+        Mostre que sua empresa é confiável. Você terá um perfil verificado especial na plataforma, com selo de empresa e destaque nas buscas e cotações.
+      </p>
+
+      {/* Golden CTA Button */}
+      <Button
+        asChild
+        className="w-full h-11 bg-[#F5B529] hover:bg-[#E5A71F] text-slate-950 font-black text-sm rounded-xl shadow-md transition-all duration-200 group border-none"
+      >
+        <Link href={`/companies/${company.id}/claim`} className="flex items-center justify-center gap-2">
+          <span>Reivindicar Perfil Grátis</span>
+          <ArrowRight className="h-4 w-4 stroke-[2.5] text-slate-950 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </Button>
+    </div>
   );
 }
