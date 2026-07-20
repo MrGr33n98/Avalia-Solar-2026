@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class UpdateNotificationsAndCreatePreferences < ActiveRecord::Migration[7.1]
+class UpdateNotificationsAndCreatePreferences < ActiveRecord::Migration[7.0]
   def change
     # Adiciona colunas extras para a Central de Notificações
     change_table :notifications, bulk: true do |t|
