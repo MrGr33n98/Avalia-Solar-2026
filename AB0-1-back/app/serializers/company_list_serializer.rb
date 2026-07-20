@@ -85,8 +85,11 @@ class CompanyListSerializer < ActiveModel::Serializer
     recent_reviewer_avatars = []
     if rating_count > 0
       recent_reviewer_avatars = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3).map do |review|
-        review.user&.avatar_url
-      end.compact
+        {
+          name: review.user&.name || review.author_name || 'Usuário',
+          url: review.user&.avatar_url
+        }
+      end
     end
 
     {

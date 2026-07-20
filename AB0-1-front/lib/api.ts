@@ -314,6 +314,7 @@ export interface Company {
     rating_avg?: number | null;
     rating_count?: number | null;
     recommendation_rate?: number | null;
+    recent_reviewer_avatars?: { name: string; url: string | null }[];
   };
   operations?: {
     delivered_projects?: number | null;

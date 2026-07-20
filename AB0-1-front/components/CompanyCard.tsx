@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getInitials } from '@/lib/utils';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +88,7 @@ export interface CompanyCardData {
       neutral: number;
       negative: number;
     };
-    recent_reviewer_avatars?: string[];
+    recent_reviewer_avatars?: { name: string; url: string | null }[];
   };
   operations: {
     delivered_projects: number;
@@ -567,7 +569,7 @@ export default function CompanyCard({
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation.recommendation_rate ?? null;
-  const recentReviewerAvatars = company.reputation.recent_reviewer_avatars ?? [];
+  const recentReviewers = company.reputation.recent_reviewer_avatars ?? [];
   const strokeDashoffset =
     recommendationRate !== null
       ? circumference - (recommendationRate / 100) * circumference
@@ -830,11 +832,13 @@ export default function CompanyCard({
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                {recentReviewerAvatars.length > 0 ? (
-                  <div className="relative w-7 h-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={recentReviewerAvatars[0]} alt="Reviewer" className="w-full h-full object-cover" />
-                  </div>
+                {recentReviewers.length > 0 ? (
+                  <Avatar className="h-7 w-7 border-2 border-white shadow-sm bg-slate-50 text-[10px]">
+                    {recentReviewers[0]?.url && <AvatarImage src={recentReviewers[0].url} alt={recentReviewers[0]?.name || 'Reviewer'} />}
+                    <AvatarFallback className="bg-slate-100 text-slate-600 font-bold uppercase">
+                      {getInitials(recentReviewers[0]?.name || 'U')}
+                    </AvatarFallback>
+                  </Avatar>
                 ) : (
                   <span className="text-[10px] font-black text-slate-800">
                     {recommendationRate !== null ? `${recommendationRate}%` : '–'}
