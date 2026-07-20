@@ -80,6 +80,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
   );
   const [graceMonths, setGraceMonths] = useState<number>(0);
   const [selectedInstitution, setSelectedInstitution] = useState<FinancialInstitution | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -188,6 +189,9 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         <CardContent className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4">
             <FinancialInstitutionDropdown 
+              partners={partners}
+              selectedPartnerId={selectedPartnerId}
+              onSelectPartner={(partner) => setSelectedPartnerId(partner.id)}
               onSelectOption={applyOffer} 
             />
             
@@ -333,7 +337,17 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 </div>
                 <div className="flex items-center gap-4 overflow-x-auto pb-2">
                   {partners.map((partner: CompanyFinancingPartner) => (
-                    <div key={partner.id} className="flex-shrink-0 opacity-80 hover:opacity-100 transition-opacity">
+                    <button
+                      key={partner.id}
+                      type="button"
+                      onClick={() => setSelectedPartnerId(partner.id)}
+                      className={cn(
+                        "flex-shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer",
+                        selectedPartnerId === partner.id
+                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 opacity-100 ring-2 ring-blue-500/20"
+                          : "border-transparent opacity-80 hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      )}
+                    >
                       {partner.logo_url ? (
                         <Image
                           src={partner.logo_url}
@@ -346,7 +360,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                       ) : (
                         <span className="text-xs font-semibold text-muted-foreground">{partner.name}</span>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
