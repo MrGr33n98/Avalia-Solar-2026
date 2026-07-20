@@ -31,8 +31,15 @@ type Props = {
   companyId?: number;
 };
 
-const formatCurrency = (value: number, currency: string = 'BRL') =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value);
+const formatCurrency = (value: number, curr: string = 'BRL') => {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const safeCurr = typeof curr === 'string' && curr.length === 3 ? curr.toUpperCase() : 'BRL';
+  try {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: safeCurr }).format(safeValue);
+  } catch {
+    return `R$ ${safeValue.toFixed(2)}`;
+  }
+};
 
 const clamp = (value: number, min?: number | null, max?: number | null) => {
   let result = value;
@@ -123,6 +130,17 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     if (trackingCompanyId) {
       trackSimulation(amount, term ?? termMonths);
     }
+  };
+
+  const resetForm = () => {
+    setAmount(Number(profile?.default_amount_cents ? profile.default_amount_cents / 100 : 50000));
+    setDownPayment(Number(profile?.default_down_payment_percent ?? 20));
+    setTermMonths(Number(profile?.default_term_months ?? 60));
+    setInterest(Number(profile?.default_interest_rate_monthly ?? 1.2));
+    setGraceMonths(0);
+    setAmortization((profile?.amortization_type as AmortizationType) || 'price');
+    setSelectedPartnerId(null);
+    setSelectedInstitution(null);
   };
 
   const trackCurrentSimulation = useCallback(
@@ -290,8 +308,8 @@ export default function CompanyFinancing({ company, companyId }: Props) {
             </Tabs>
 
             <div className="flex gap-3 pt-2">
-              <Button className="w-full font-semibold" onClick={() => trackCurrentSimulation()}>Calcular</Button>
-              <Button variant="outline" className="w-full font-semibold">Limpar</Button>
+              <Button type="button" className="w-full font-semibold bg-blue-600 hover:bg-blue-700 text-white" onClick={() => trackCurrentSimulation()}>Calcular</Button>
+              <Button type="button" variant="outline" className="w-full font-semibold" onClick={resetForm}>Limpar</Button>
             </div>
             
             {profile?.disclaimer && (
