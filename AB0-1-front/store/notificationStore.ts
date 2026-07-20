@@ -21,6 +21,8 @@ interface NotificationStore {
   loading: boolean;
   
   chatState: 'closed' | 'minimized' | 'expanded';
+  activeTab: 'priority' | 'budgets' | 'other';
+  setActiveTab: (tab: 'priority' | 'budgets' | 'other') => void;
   
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
@@ -36,6 +38,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   unreadMessagesCount: 0,
   loading: false,
   chatState: 'minimized',
+  activeTab: 'priority',
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
   fetchNotifications: async () => {
     set({ loading: true });

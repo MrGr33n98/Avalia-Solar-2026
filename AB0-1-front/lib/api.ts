@@ -124,7 +124,10 @@ export interface Conversation {
   user_name?: string | null;
   company_name?: string | null;
   company_logo?: string | null;
+  company_logo_url?: string | null;
   company_avatar?: string | null;
+  user_avatar?: string | null;
+  user_avatar_url?: string | null;
   status?: 'open' | 'pending_user' | 'pending_company' | 'resolved' | 'blocked';
   last_message?: string | null;
   last_message_at?: string | null;
