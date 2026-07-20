@@ -198,7 +198,7 @@ export default function Navbar() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 2xl:block" /> : null}
+                {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 lg:block" /> : null}
                 
                 <button
                   className="relative rounded-full bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-600"

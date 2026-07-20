@@ -7,7 +7,7 @@ import { Clock3, MessageCircle, PhoneCall, Wifi, WifiOff } from 'lucide-react';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
-import EnterpriseHeader from './EnterpriseHeader';
+import DashboardToolbar from './DashboardToolbar';
 import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
 import CompanyChatInbox from './CompanyChatInbox';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -555,19 +555,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       />
 
       <div className="lg:pl-[var(--enterprise-sidebar-width,280px)] flex flex-col min-h-screen">
-        {/* Header */}
-        <EnterpriseHeader
-          company={company}
-          notifications={notifications}
-          onNotificationClick={markNotificationAsRead}
-          onMenuClick={() => setSidebarOpen(true)}
-          onTabChange={handleTabChange}
-          themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
-        />
-
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1400px] mx-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto pt-4 lg:pt-6">
+          <div className="max-w-[1400px] mx-auto p-4 lg:p-6 lg:pt-0">
             <MobileDashboardQuickAccess
               activeTab={activeTab}
               company={company}
@@ -575,6 +565,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               onTabChange={handleTabChange}
               onOpenNavigation={() => setSidebarOpen(true)}
               visibleTabIds={visibleTabIds}
+            />
+
+            <DashboardToolbar
+              company={company}
+              onTabChange={handleTabChange}
+              themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
             />
 
             {/* Content based on active tab using Shadcn Tabs */}
