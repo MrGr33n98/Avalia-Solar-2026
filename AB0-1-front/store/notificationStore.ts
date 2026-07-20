@@ -14,22 +14,6 @@ export interface Notification {
   };
 }
 
-import { create } from 'zustand';
-
-export interface Notification {
-  id: number;
-  type: string;
-  title: string;
-  body: string;
-  read: boolean;
-  created_at: string;
-  notifiable?: {
-    type: string;
-    id: number;
-    company_id?: number;
-  };
-}
-
 interface NotificationStore {
   notifications: Notification[];
   unreadCount: number;
