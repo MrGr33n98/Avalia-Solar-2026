@@ -17,10 +17,10 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
 
   if (isClaimed) {
     return (
-      <Card className="overflow-hidden border border-emerald-900/30 bg-[#0B1528] text-white shadow-lg rounded-2xl">
+      <Card className="overflow-hidden border border-emerald-900/30 bg-[#0B1528] text-white shadow-lg rounded-none">
         <CardContent className="p-6 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shrink-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-none border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shrink-0">
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <div>
@@ -40,10 +40,10 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
   }
 
   return (
-    <div className="overflow-hidden bg-[#0B1528] text-white shadow-xl rounded-2xl p-6 border border-slate-800 space-y-5 font-sans">
+    <div className="overflow-hidden bg-[#0B1528] text-white shadow-xl rounded-none p-6 border border-slate-800 space-y-5 font-sans">
       {/* Top Header with Golden Briefcase Icon Box & Title */}
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-amber-500/60 bg-amber-500/10 text-amber-400 shrink-0 shadow-inner">
+        <div className="flex h-12 w-12 items-center justify-center rounded-none border border-amber-500/60 bg-amber-500/10 text-amber-400 shrink-0 shadow-inner">
           <Briefcase className="h-6 w-6 stroke-[2]" />
         </div>
         <h3 className="font-extrabold text-sm sm:text-base tracking-wide text-white uppercase leading-tight">
@@ -59,7 +59,7 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
       {/* Golden CTA Button */}
       <Button
         asChild
-        className="w-full h-11 bg-[#F5B529] hover:bg-[#E5A71F] text-slate-950 font-black text-sm rounded-xl shadow-md transition-all duration-200 group border-none"
+        className="w-full h-11 bg-[#F5B529] hover:bg-[#E5A71F] text-slate-950 font-black text-sm rounded-none shadow-md transition-all duration-200 group border-none"
       >
         <Link href={`/companies/${company.id}/claim`} className="flex items-center justify-center gap-2">
           <span>Reivindicar Perfil Grátis</span>
