@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_18_213000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -516,7 +516,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -915,7 +915,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -932,7 +932,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1106,6 +1106,21 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["user_id"], name: "index_company_members_on_user_id"
   end
 
+  create_table "company_products", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "product_id", null: false
+    t.string "relationship_type", default: "catalog_owner", null: false
+    t.string "status", default: "active", null: false
+    t.boolean "authorized", default: false, null: false
+    t.jsonb "territories", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "product_id"], name: "index_company_products_on_company_id_and_product_id", unique: true
+    t.index ["company_id", "status"], name: "index_company_products_on_company_id_and_status"
+    t.index ["company_id"], name: "index_company_products_on_company_id"
+    t.index ["product_id"], name: "index_company_products_on_product_id"
+  end
+
   create_table "company_ranking_score", primary_key: "company_id", force: :cascade do |t|
     t.decimal "score", precision: 10, scale: 4, null: false
     t.datetime "computed_at", default: -> { "now()" }, null: false
@@ -1125,6 +1140,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.datetime "updated_at", null: false
     t.index ["company_id", "order"], name: "index_company_sector_questions_on_company_and_order", unique: true
     t.index ["company_id"], name: "index_company_sector_questions_on_company_id"
+  end
+
+  create_table "company_services", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "category_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.decimal "price_from", precision: 12, scale: 2
+    t.jsonb "coverage", default: [], null: false
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_company_services_on_category_id"
+    t.index ["company_id", "category_id", "status"], name: "idx_company_services_context"
+    t.index ["company_id", "slug"], name: "index_company_services_on_company_id_and_slug", unique: true
+    t.index ["company_id"], name: "index_company_services_on_company_id"
   end
 
   create_table "company_trust_score", primary_key: "company_id", force: :cascade do |t|
@@ -1212,7 +1244,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -1500,7 +1532,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1779,7 +1811,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
-    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying::text, 'pending_otp'::character varying::text, 'verified'::character varying::text, 'distributed'::character varying::text, 'proposal_submitted'::character varying::text, 'proposal_processing'::character varying::text, 'proposal_sent'::character varying::text, 'proposal_failed'::character varying::text])", name: "ck_leads_valid_status"
+    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
   end
 
   create_table "milestones", force: :cascade do |t|
@@ -1931,7 +1963,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigserial "id", null: false
+    t.bigint "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1
@@ -2165,6 +2197,21 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["user_id"], name: "index_product_accesses_on_user_id"
   end
 
+  create_table "product_offers", force: :cascade do |t|
+    t.bigint "company_product_id", null: false
+    t.decimal "price", precision: 12, scale: 2
+    t.integer "stock"
+    t.integer "lead_time_days"
+    t.boolean "installation_available", default: false, null: false
+    t.jsonb "coverage", default: [], null: false
+    t.text "commercial_terms"
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_product_id", "status"], name: "index_product_offers_on_company_product_id_and_status"
+    t.index ["company_product_id"], name: "index_product_offers_on_company_product_id"
+  end
+
   create_table "product_price_histories", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.decimal "price", precision: 12, scale: 2, null: false
@@ -2196,7 +2243,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.string "name", null: false
     t.text "description"
     t.decimal "price", precision: 12, scale: 2
-    t.bigint "company_id", null: false
+    t.bigint "company_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "short_description"
@@ -2213,7 +2260,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
   end
 
   create_table "push_tokens", force: :cascade do |t|
@@ -2674,7 +2721,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
   add_foreign_key "company_financing_profiles", "companies"
   add_foreign_key "company_members", "companies"
   add_foreign_key "company_members", "users"
+  add_foreign_key "company_products", "companies"
+  add_foreign_key "company_products", "products"
   add_foreign_key "company_sector_questions", "companies"
+  add_foreign_key "company_services", "categories"
+  add_foreign_key "company_services", "companies"
   add_foreign_key "company_utm_attributions", "companies"
   add_foreign_key "company_videos", "companies"
   add_foreign_key "company_webhooks", "companies"
@@ -2718,6 +2769,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_13_032000) do
   add_foreign_key "pricings", "products"
   add_foreign_key "product_accesses", "products"
   add_foreign_key "product_accesses", "users"
+  add_foreign_key "product_offers", "company_products"
   add_foreign_key "product_price_histories", "products"
   add_foreign_key "product_specifications", "products"
   add_foreign_key "product_specifications", "spec_templates"
