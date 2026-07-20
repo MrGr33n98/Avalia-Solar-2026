@@ -84,10 +84,10 @@ export default function CompanyFinancing({ company, companyId }: Props) {
 
   useEffect(() => {
     if (!profile) return;
-    setAmount(profile.default_amount_cents ? profile.default_amount_cents / 100 : 50000);
-    setDownPayment(profile.default_down_payment_percent ?? 20);
-    setTermMonths(profile.default_term_months ?? 60);
-    setInterest(profile.default_interest_rate_monthly ?? 1.2);
+    setAmount(Number(profile.default_amount_cents ? profile.default_amount_cents / 100 : 50000));
+    setDownPayment(Number(profile.default_down_payment_percent ?? 20));
+    setTermMonths(Number(profile.default_term_months ?? 60));
+    setInterest(Number(profile.default_interest_rate_monthly ?? 1.2));
     setAmortization((profile.amortization_type as AmortizationType) || 'price');
   }, [profile]);
 
@@ -112,11 +112,11 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     const grace = o.grace_months || o.grace_period_months;
     const amort = o.amortization_type || o.amortization_system;
 
-    if (term) setTermMonths(term);
-    if (rate) setInterest(rate);
-    if (minDown) setDownPayment(minDown);
+    if (term) setTermMonths(Number(term));
+    if (rate) setInterest(Number(rate));
+    if (minDown) setDownPayment(Number(minDown));
     if (amort) setAmortization(amort as AmortizationType);
-    if (grace) setGraceMonths(grace);
+    if (grace) setGraceMonths(Number(grace));
     
     if (institution) setSelectedInstitution(institution);
 
@@ -210,8 +210,8 @@ export default function CompanyFinancing({ company, companyId }: Props) {
 
             <div className="grid gap-2">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Entrada ({downPayment.toFixed(0)}%)</span>
-                <span>{formatCurrency((amount * downPayment) / 100, currency)}</span>
+                <span>Entrada ({Number(downPayment || 0).toFixed(0)}%)</span>
+                <span>{formatCurrency((Number(amount || 0) * Number(downPayment || 0)) / 100, currency)}</span>
               </div>
               <Slider
                 value={[downPayment]}
@@ -241,7 +241,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
             <div className="grid gap-2">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>Taxa mensal</span>
-                <span>{interest.toFixed(2)}%</span>
+                <span>{Number(interest || 0).toFixed(2)}%</span>
               </div>
               <Input
                 type="number"
