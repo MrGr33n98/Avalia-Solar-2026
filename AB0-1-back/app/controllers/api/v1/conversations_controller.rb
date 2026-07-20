@@ -10,7 +10,7 @@ module Api
         @conversations = if current_user.company_user?
                            company_conversations_scope
                          else
-                           current_user.conversations.includes(:company)
+                           current_user.conversations.includes(:company, :direct_messages)
                          end
 
         render json: @conversations.ordered_for_inbox.map { |conv| conversation_json(conv) }
@@ -111,7 +111,7 @@ module Api
         companies = current_user.active_member_companies
         companies = ::Company.where(id: current_user.company&.id) if companies.blank? && current_user.company.present?
 
-        ::Conversation.where(company_id: companies.select(:id)).includes(:user, :company)
+        ::Conversation.where(company_id: companies.select(:id)).includes(:user, :company, :direct_messages)
       end
 
       def conversation_json(conversation)

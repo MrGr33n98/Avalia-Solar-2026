@@ -655,6 +655,13 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
                   <div className="space-y-3">
                     {messages.map((message) => {
                       const isCompany = message.sender_type === 'Company';
+                      const attachmentList: Array<{ id?: number | string; filename?: string; url?: string; content_type?: string }> =
+                        (message.attachments || []).length > 0
+                          ? (message.attachments as any[])
+                          : message.attachment_url
+                            ? [{ id: 0, filename: 'Anexo', url: message.attachment_url, content_type: '' }]
+                            : [];
+
                       return (
                         <div
                           key={message.id}
@@ -673,23 +680,23 @@ export default function CompanyChatInbox({ enabled }: CompanyChatInboxProps) {
                                 {message.body}
                               </p>
                             )}
-                            {(message.attachments || []).length > 0 && (
+                            {attachmentList.length > 0 && (
                               <div className="mt-2 space-y-1">
-                                {(message.attachments || []).map((attachment) => (
+                                {attachmentList.map((attachment, attIdx) => (
                                   <a
-                                    key={attachment.id}
+                                    key={attachment.id || attIdx}
                                     href={attachment.url || '#'}
                                     target="_blank"
                                     rel="noreferrer"
                                     className={cn(
                                       'flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold',
                                       isCompany
-                                        ? 'bg-white/15 text-white'
-                                        : 'bg-slate-100 text-slate-700'
+                                        ? 'bg-white/15 text-white hover:bg-white/25'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     )}
                                   >
                                     <Paperclip className="h-3.5 w-3.5" />
-                                    <span className="truncate">{attachment.filename}</span>
+                                    <span className="truncate">{attachment.filename || 'Anexo'}</span>
                                   </a>
                                 ))}
                               </div>

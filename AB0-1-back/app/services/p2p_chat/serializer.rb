@@ -5,7 +5,11 @@ module P2pChat
 
       def conversation(conversation, viewer: nil, viewer_role: nil)
         role = viewer_role || conversation.viewer_role_for(viewer)
-        last_message = conversation.direct_messages.order(created_at: :desc).first
+        last_message = if conversation.association(:direct_messages).loaded?
+                         conversation.direct_messages.sort_by { |m| m.created_at || Time.at(0) }.last
+                       else
+                         conversation.direct_messages.order(created_at: :desc).first
+                       end
 
         {
           id: conversation.id,
