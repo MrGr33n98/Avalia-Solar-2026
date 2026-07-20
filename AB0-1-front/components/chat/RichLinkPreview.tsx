@@ -116,7 +116,9 @@ export function RichLinkPreview({ text, isSelf = false, className }: RichLinkPre
           {info.type === 'product' && <Zap className="h-3.5 w-3.5 text-amber-500" />}
           {info.type === 'external' && <ExternalLink className="h-3.5 w-3.5" />}
           <span>{info.domain}</span>
-          <ShieldCheck className="h-3 w-3 text-emerald-400 ml-auto" title="Link seguro e verificado" />
+          <span title="Link seguro e verificado" className="ml-auto">
+            <ShieldCheck className="h-3 w-3 text-emerald-400" />
+          </span>
         </div>
 
         <h4 className="text-xs font-bold leading-snug line-clamp-1 group-hover:underline">
