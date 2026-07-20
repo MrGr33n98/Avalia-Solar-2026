@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:14
-    pull_policy: missing
+    pull_policy: if_not_present
     container_name: ab0-postgres
     restart: unless-stopped
     mem_limit: ${POSTGRES_MEMORY_LIMIT:-320m}
@@ -24,7 +24,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    pull_policy: missing
+    pull_policy: if_not_present
     container_name: ab0-redis
     restart: unless-stopped
     mem_limit: ${REDIS_MEMORY_LIMIT:-224m}
