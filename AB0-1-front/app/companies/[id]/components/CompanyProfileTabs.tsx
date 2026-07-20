@@ -11,6 +11,7 @@ import {
   HelpCircle,
   LucideIcon,
   ChevronDown,
+  Banknote,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,9 @@ export default function CompanyProfileTabs({
   onTabChange,
   categories = [],
   companyPath,
+  showFinancing,
+  showGallery,
+  showFaq,
 }: CompanyProfileTabsProps) {
   const tabs = useMemo(() => {
     const list: TabItem[] = [
@@ -45,8 +49,11 @@ export default function CompanyProfileTabs({
       { id: 'projects', label: 'Projetos', icon: ImageIcon },
       { id: 'contact', label: 'Contato', icon: HelpCircle },
     ];
+    if (showFinancing) {
+      list.splice(3, 0, { id: 'financing', label: 'Financiamento', icon: Banknote });
+    }
     return list;
-  }, []);
+  }, [showFinancing]);
 
   const uniqueCategories = useMemo(
     () => Array.from(new Map(categories.map((category) => [category.id, category])).values()),

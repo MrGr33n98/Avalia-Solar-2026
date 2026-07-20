@@ -284,12 +284,7 @@ export default function CompanyDetailClient({
   const showCompetitorBanners = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'show_competitor_banners')
     : true;
-  const showFinancing = Boolean(
-    currentCompany?.financing_tab_visible &&
-    (currentCompany.feature_access
-      ? isFeatureEnabled(currentCompany.feature_access, 'financing_simulation')
-      : true)
-  );
+  const showFinancing = Boolean(currentCompany?.financing_tab_visible);
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
   const ctaEnabled = canRequestQuote
@@ -474,6 +469,9 @@ export default function CompanyDetailClient({
         canRequestQuote={canRequestQuote}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        showFinancing={showFinancing}
+        showGallery={showGallery}
+        showFaq={showFaq}
       />
     );
   }

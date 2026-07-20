@@ -22,6 +22,7 @@ import SidebarPremium from './SidebarPremium';
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
 import CompanyProducts from './CompanyProducts';
 import CompanyReviews from './CompanyReviews';
+import CompanyFinancing from './CompanyFinancing';
 import FaqSection from './FaqSection';
 
 interface CompanyProfileShellProps {
@@ -45,6 +46,9 @@ interface CompanyProfileShellProps {
   canRequestQuote: boolean;
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  showFinancing: boolean;
+  showGallery: boolean;
+  showFaq: boolean;
 }
 
 export default function CompanyProfileShell({
@@ -63,6 +67,9 @@ export default function CompanyProfileShell({
   canRequestQuote,
   activeTab,
   onTabChange,
+  showFinancing,
+  showGallery,
+  showFaq,
 }: CompanyProfileShellProps) {
   const breadcrumbItems = useMemo(() => {
     const items: Array<{ label: string; href?: string; active?: boolean }> = [
@@ -78,8 +85,7 @@ export default function CompanyProfileShell({
     return items;
   }, [company]);
 
-  // Checagem de entitlements para abas e blocos
-  const showFaq = isFeatureEnabled(company.feature_access, 'faq_block');
+  // Checagem de entitlements para abas e blocos (showFaq is passed via props)
 
   return (
     <div id="company-profile-shell" className="min-h-screen bg-[#f8fafc] text-slate-900 pb-16">
@@ -125,8 +131,8 @@ export default function CompanyProfileShell({
                     : []
               }
               companyPath={buildCompanyPath(company.slug, company.name, company.id)}
-              showFinancing={false}
-              showGallery={false}
+              showFinancing={showFinancing}
+              showGallery={showGallery}
               showFaq={showFaq}
             />
           </div>
@@ -167,7 +173,14 @@ export default function CompanyProfileShell({
                 />
               </TabsContent>
 
-              {/* ABA 4: PROJETOS (Placeholder elegante da Fase 2) */}
+              {/* ABA 4: FINANCIAMENTO */}
+              {showFinancing && (
+                <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
+                  <CompanyFinancing company={company as any} />
+                </TabsContent>
+              )}
+
+              {/* ABA 5: PROJETOS (Placeholder elegante da Fase 2) */}
               <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
                 <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
                   <div className="text-center py-10 space-y-4">
