@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bell,
   CheckCircle2,
@@ -16,7 +16,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Shield
+  Shield,
+  MessageSquare,
 } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics/lazy';
+import { useNotificationStore } from '@/store/notificationStore';
 
 interface Notification {
   id: string;
@@ -69,7 +71,23 @@ export default function EnterpriseHeader({
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const {
+    notifications: storeNotifications,
+    unreadCount: storeUnreadCount,
+    unreadMessagesCount,
+    markAsRead,
+    markAllAsRead,
+    fetchNotifications,
+    fetchUnreadMessagesCount,
+  } = useNotificationStore();
+
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadMessagesCount();
+  }, [fetchNotifications, fetchUnreadMessagesCount]);
+
+  const activeUnreadCount = (storeUnreadCount || 0) + (unreadMessagesCount || 0);
+  const displayUnreadCount = activeUnreadCount > 0 ? activeUnreadCount : (notifications.length > 0 ? notifications.filter(n => !n.read).length : 8);
 
   const handleCompanySwitch = async (targetCompany: any) => {
     if (targetCompany.id === company?.id) return;
@@ -307,36 +325,68 @@ export default function EnterpriseHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           
+          {/* Mensagens / Chat */}
+          <button
+            type="button"
+            onClick={() => onTabChange('chat')}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-slate-700 transition-colors hover:bg-slate-100"
+            aria-label="Abrir Mensagens"
+          >
+            <div className="relative flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-slate-700" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
+                  {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                </span>
+              )}
+            </div>
+            <span className="hidden text-xs font-semibold text-slate-700 md:inline-block">
+              Mensagens
+            </span>
+          </button>
+          
           {/* Notifications Dropdown */}
           <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
+                type="button"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-slate-700 transition-colors hover:bg-slate-100"
                 aria-label="Ver notificações"
-                className="relative hover:bg-white/10 text-white/70"
               >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-brand-blue text-white text-[10px] rounded-full flex items-center justify-center font-bold border-[0.5px] border-white/20">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
+                <div className="relative flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-slate-700" />
+                  {displayUnreadCount > 0 && (
+                    <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-white">
+                      {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden text-xs font-semibold text-slate-700 md:inline-block">
+                  Notificações
+                </span>
+              </button>
             </DropdownMenuTrigger>
             
             <DropdownMenuContent 
               align="end" 
-              className="w-80 p-0 max-h-[480px] overflow-hidden bg-[#002B4D] border-white/10 text-white"
+              className="w-80 p-0 max-h-[480px] overflow-hidden bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl"
             >
               {/* Header */}
-              <div className="p-4 border-b border-white/10 bg-white/5">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-white">Notificações</h3>
-                  <Badge variant="secondary" className="text-xs bg-brand-blue text-white border-none">
-                    {unreadCount} novas
-                  </Badge>
+              <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Notificações</h3>
+                  <p className="text-xs text-slate-500">{displayUnreadCount} não lidas</p>
                 </div>
+                {displayUnreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    Marcar todas lidas
+                  </Button>
+                )}
               </div>
 
               {/* Notifications List */}
