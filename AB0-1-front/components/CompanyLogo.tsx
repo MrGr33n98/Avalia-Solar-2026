@@ -21,47 +21,49 @@ export function CompanyLogo({
   className,
   imageClassName,
   size = 'md',
-  priority = false
+  priority = false,
 }: CompanyLogoProps) {
   const [error, setError] = useState(false);
   const resolvedUrl = getFullImageUrl(logoUrl || undefined);
 
-  // Tamanhos padronizados:
-  // sm (Mobile padrão/Compacto): 56x40px -> Desktop: 60x44px
-  // md (Cards padrão): 64x44px -> Desktop: 76x52px
-  // lg (Detalhes/Destaques): 80x56px -> Desktop: 96x64px
+  // Tamanhos padronizados com proporção fixa (largura x altura):
+  // sm (Mobile / Cards compactos): 56x40px (md: 64x44px)
+  // md (Cards padrão / Comparadores): 68x48px (md: 80x56px)
+  // lg (Detalhes / Destaques / Busca): 88x60px (md: 104x72px)
   const sizeClasses = {
-    sm: 'w-[56px] h-[40px] md:w-[60px] md:h-[44px]',
-    md: 'w-[64px] h-[44px] md:w-[76px] md:h-[52px]',
-    lg: 'w-[80px] h-[56px] md:w-[96px] md:h-[64px]',
-    custom: ''
+    sm: 'w-[56px] h-[40px] md:w-[64px] md:h-[44px]',
+    md: 'w-[68px] h-[48px] md:w-[80px] md:h-[56px]',
+    lg: 'w-[88px] h-[60px] md:w-[104px] md:h-[72px]',
+    custom: '',
   };
 
-  const hasImage = resolvedUrl && !error;
+  const hasImage = Boolean(resolvedUrl) && !error;
 
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-lg bg-slate-50/40 border border-slate-100/80 p-1.5 transition-all select-none",
+        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white border border-slate-200/80 p-0.5 transition-all select-none shadow-xs',
         sizeClasses[size],
         className
       )}
     >
       {hasImage ? (
-        <Image
-          src={resolvedUrl}
-          alt={name ? `Logo da empresa ${name}` : 'Logo da empresa'}
-          fill
-          sizes="(max-width: 768px) 80px, 120px"
-          priority={priority}
-          className={cn(
-            "object-contain object-center w-full h-full mix-blend-multiply transition-opacity duration-300",
-            imageClassName
-          )}
-          onError={() => setError(true)}
-        />
+        <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg">
+          <Image
+            src={resolvedUrl!}
+            alt={name ? `Logo da empresa ${name}` : 'Logo da empresa'}
+            fill
+            sizes="(max-width: 768px) 90px, 140px"
+            priority={priority}
+            className={cn(
+              'h-full w-full object-contain object-center transition-opacity duration-300',
+              imageClassName
+            )}
+            onError={() => setError(true)}
+          />
+        </div>
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-slate-100/80 text-slate-400/80 rounded-md">
+        <div className="flex h-full w-full items-center justify-center rounded-lg bg-slate-50 text-slate-400">
           <Building2 className="h-5 w-5 stroke-[1.5]" />
         </div>
       )}

@@ -585,12 +585,7 @@ export default function CompanyCard({
         {/* Esquerda: Logo + Identidade */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div data-testid="company-logo" className="shrink-0">
-            <CompanyLogo
-              logoUrl={company.logo_url}
-              name={name}
-              size="sm"
-              className="border border-slate-100 shadow-sm bg-white shrink-0 rounded-xl"
-            />
+            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
           </div>
           <div className="min-w-0 space-y-0.5">
             <div className="flex flex-wrap items-center gap-1.5">

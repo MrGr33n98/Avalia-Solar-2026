@@ -22,10 +22,34 @@ banner_position_options = [
   ['Comparação - Barra Flutuante (Patrocínio)', 'comparison_floating_bar']
 ].freeze
 
+def safe_banner_image_tag(record, style: 'max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;')
+  return nil unless record.respond_to?(:image) && record.image.attached? && record.image.persisted?
+
+  url = begin
+    Rails.application.routes.url_helpers.rails_blob_path(record.image, only_path: true)
+  rescue StandardError
+    nil
+  end
+  return nil unless url.present?
+
+  image_tag(url, style: style)
+rescue StandardError
+  nil
+end
+
 ActiveAdmin.register Banner do
-  permit_params :title, :alt_text, :image, :company_id, :link, :active, :sponsored, :banner_type, :position,
-                :start_date, :end_date, :moderation_status, :priority, :rejected_reason,
-                :width, :height, :slot_key, :target_states, :target_cities, category_ids: []
+  permit_params do
+    allowed = %i[title alt_text image company_id link active sponsored banner_type position
+                 start_date end_date moderation_status priority rejected_reason width height slot_key]
+    if Banner.column_names.include?('target_states')
+      allowed << :target_states
+    end
+    if Banner.column_names.include?('target_cities')
+      allowed << :target_cities
+    end
+    allowed << { category_ids: [] }
+    allowed
+  end
 
   scope :all, default: true
   scope('Ativos agora', &:currently_active)
@@ -39,10 +63,7 @@ ActiveAdmin.register Banner do
     id_column
     column :title
     column :image do |banner|
-      if banner.image.attached?
-        image_tag url_for(banner.image),
-                  style: 'max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;'
-      end
+      safe_banner_image_tag(banner)
     end
     column 'Status Operacional' do |banner|
       if !banner.active
@@ -76,7 +97,7 @@ ActiveAdmin.register Banner do
                              hint: 'Descreva objetivamente a imagem para leitores de tela.'
           f.input :link, label: 'Link de Destino', placeholder: 'https://...'
           f.input :image, as: :file,
-                          hint: f.object.image.attached? ? image_tag(url_for(f.object.image), style: 'max-height: 100px') : 'Upload da imagem (PNG, JPG, WebP)',
+                          hint: safe_banner_image_tag(f.object, style: 'max-height: 100px;') || 'Upload da imagem (PNG, JPG, WebP)',
                           input_html: { direct_upload: true, accept: 'image/*' }
         end
 
@@ -105,14 +126,18 @@ ActiveAdmin.register Banner do
           f.input :categories, as: :check_boxes, collection: Category.order(:name),
                                label: 'Exibir nestas categorias',
                                hint: 'Deixe vazio para exibição global (se a posição permitir).'
-          f.input :target_states, as: :string,
-                                  input_html: { value: Array(f.object.target_states).join(', ') },
-                                  label: 'Estados Alvo (Sigla)',
-                                  hint: 'Separe múltiplos estados por vírgula. Ex: SP, RJ. Deixe vazio para todos.'
-          f.input :target_cities, as: :string,
-                                  input_html: { value: Array(f.object.target_cities).join(', ') },
-                                  label: 'Cidades Alvo',
-                                  hint: 'Separe múltiplas cidades por vírgula. Ex: São Paulo, Campinas. Deixe vazio para todas.'
+          if Banner.column_names.include?('target_states')
+            f.input :target_states, as: :string,
+                                    input_html: { value: Array(f.object.target_states).join(', ') },
+                                    label: 'Estados Alvo (Sigla)',
+                                    hint: 'Separe múltiplos estados por vírgula. Ex: SP, RJ. Deixe vazio para todos.'
+          end
+          if Banner.column_names.include?('target_cities')
+            f.input :target_cities, as: :string,
+                                    input_html: { value: Array(f.object.target_cities).join(', ') },
+                                    label: 'Cidades Alvo',
+                                    hint: 'Separe múltiplas cidades por vírgula. Ex: São Paulo, Campinas. Deixe vazio para todas.'
+          end
           f.input :sponsored, label: 'Banner Patrocinado?'
           f.input :priority, label: 'Prioridade (1-1000)', hint: 'Valores menores aparecem primeiro (ex: 1 > 10).'
         end
@@ -188,10 +213,7 @@ ActiveAdmin.register Banner do
         end
       end
       row :image do |banner|
-        if banner.image.attached?
-          image_tag url_for(banner.image),
-                    style: 'max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;'
-        end
+        safe_banner_image_tag(banner, style: 'max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;')
       end
       row :link do |banner|
         link_to banner.link, banner.link, target: '_blank' if banner.link.present?
@@ -202,11 +224,15 @@ ActiveAdmin.register Banner do
       row :categories do |banner|
         banner.categories.pluck(:name).join(', ')
       end
-      row :target_states do |banner|
-        Array(banner.target_states).join(', ')
+      if Banner.column_names.include?('target_states')
+        row :target_states do |banner|
+          Array(banner.target_states).join(', ')
+        end
       end
-      row :target_cities do |banner|
-        Array(banner.target_cities).join(', ')
+      if Banner.column_names.include?('target_cities')
+        row :target_cities do |banner|
+          Array(banner.target_cities).join(', ')
+        end
       end
       row :banner_type
       row :dimensions do |banner|
@@ -218,12 +244,14 @@ ActiveAdmin.register Banner do
       row :moderation_status
       row :approved_by_admin_user
       row :approved_at
-      row :rejected_reason if resource.moderation_status == 'rejected'
+      row :rejected_reason do |banner|
+        banner.rejected_reason if banner.moderation_status == 'rejected'
+      end
       row :created_at
       row :updated_at
     end
   end
-  # Defina filtros apenas para atributos simples
+
   filter :title
   filter :company
   filter :moderation_status

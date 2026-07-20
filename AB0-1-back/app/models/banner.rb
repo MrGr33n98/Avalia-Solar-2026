@@ -191,6 +191,63 @@ class Banner < ApplicationRecord
     end
 
     Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
+       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[category categories company approved_by_admin_user image_attachment image_blob]
+  end
+
+  scope :approved, -> { where(moderation_status: 'approved') }
+
+  def self.default_dimensions_for_position(position)
+    DEFAULT_DIMENSIONS_BY_POSITION.fetch(position.to_s, [600, 200])
+  end
+
+  def submit_for_review!
+    update!(moderation_status: 'submitted', active: false)
+  end
+
+  def approve!(admin_user)
+    update!(
+      moderation_status: 'approved',
+      approved_by_admin_user: admin_user,
+      approved_at: Time.current,
+      rejected_reason: nil
+    )
+  end
+
+  def reject!(admin_user, reason)
+    update!(
+      moderation_status: 'rejected',
+      approved_by_admin_user: admin_user,
+      approved_at: Time.current,
+      active: false,
+      rejected_reason: reason
+    )
+  end
+
+  def link_url
+    link
+  end
+
+  scope :currently_active, lambda {
+    scope = where(active: true)
+    scope = scope.where(moderation_status: 'approved') if column_names.include?('moderation_status')
+    scope = scope.where('start_date IS NULL OR start_date <= ?', Time.current) if column_names.include?('start_date')
+    scope = scope.where('end_date IS NULL OR end_date >= ?', Time.current) if column_names.include?('end_date')
+    scope
+  }
+
+  def image_url
+    return nil unless image.attached?
+
+    source = image
+    if self.class.banner_variants_enabled? && width.present? && height.present?
+      source = image.variant(resize_to_limit: [width, height])
+    end
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
   rescue StandardError => e
     Rails.logger.error("Error generating banner image URL: #{e.message}")
     begin
@@ -214,25 +271,36 @@ class Banner < ApplicationRecord
   end
 
   def target_states=(val)
-    val = val.dup if val.is_a?(String) && val.frozen?
-    val = val.split(',') if val.is_a?(String)
-    super(Array(val).map(&:to_s).map(&:strip).reject(&:blank?))
+    return unless self.class.column_names.include?('target_states')
+
+    raw_list = if val.is_a?(String)
+                 val.split(',')
+               elsif val.is_a?(Array)
+                 val.flat_map { |v| v.to_s.split(',') }
+               else
+                 Array(val)
+               end
+    super(raw_list.map(&:to_s).map(&:strip).map(&:upcase).reject(&:blank?).uniq)
   end
 
   def target_cities=(val)
-    val = val.dup if val.is_a?(String) && val.frozen?
-    val = val.split(',') if val.is_a?(String)
-    super(Array(val).map(&:to_s).map(&:strip).reject(&:blank?))
+    return unless self.class.column_names.include?('target_cities')
+
+    raw_list = if val.is_a?(String)
+                 val.split(',')
+               elsif val.is_a?(Array)
+                 val.flat_map { |v| v.to_s.split(',') }
+               else
+                 Array(val)
+               end
+    super(raw_list.map(&:to_s).map(&:strip).reject(&:blank?).uniq)
   end
 
   def normalize_locations
-    if self.class.column_names.include?('target_states')
-      self.target_states = Array(target_states).map { |s| s.to_s.strip.upcase }.reject(&:blank?).uniq
-    end
+    return unless self.class.column_names.include?('target_states') || self.class.column_names.include?('target_cities')
 
-    return unless self.class.column_names.include?('target_cities')
-
-    self.target_cities = Array(target_cities).map { |c| c.to_s.strip }.reject(&:blank?).uniq
+    self.target_states = Array(target_states) if respond_to?(:target_states=)
+    self.target_cities = Array(target_cities) if respond_to?(:target_cities=)
   end
 
   def default_dimensions_for_position(pos)
@@ -246,22 +314,15 @@ class Banner < ApplicationRecord
     self.category_id = ids.first
   end
 
-  # === Validações Customizadas (Fase 1) ===
-
-  # Valida que end_date seja posterior a start_date
-  # Previne banners com período inválido que nunca seriam exibidos
   def end_date_must_be_after_start_date
     return unless end_date < start_date
 
     errors.add(:end_date, 'deve ser posterior à data de início')
   end
 
-  # Valida limite de banners ativos por empresa conforme assinatura
-  # Verifica regras do BannerOffer associado à assinatura ativa da empresa
   def respect_company_active_banners_limit
     return unless company
 
-    # Busca assinatura ativa da empresa
     active_subscription = company.banner_subscriptions
                                  .where(status: 'active')
                                  .where('starts_at <= ?', Time.current)
@@ -270,16 +331,14 @@ class Banner < ApplicationRecord
 
     return unless active_subscription&.banner_offer
 
-    # Extrai regras do offer
     offer = active_subscription.banner_offer
     max_total = offer.rules['max_total_active']&.to_i
     max_per_position = offer.rules['max_active_per_position']&.to_i
 
-    # Valida limite total de banners ativos
     if max_total.present?
       current_active_count = company.banners
                                     .where(active: true)
-                                    .where.not(id: id) # Exclui self se for update
+                                    .where.not(id: id)
                                     .count
 
       if current_active_count >= max_total
@@ -288,7 +347,6 @@ class Banner < ApplicationRecord
       end
     end
 
-    # Valida limite por posição
     return unless max_per_position.present? && position.present?
 
     current_position_count = company.banners
@@ -301,8 +359,6 @@ class Banner < ApplicationRecord
     errors.add(:position, "Limite de #{max_per_position} banners ativos na posição '#{position}' atingido.")
   end
 
-  # Invalida cache quando banner é alterado
-  # Garante que API sempre retorna dados atualizados
   def invalidate_cache
     Rails.cache.delete_matched('banners/v1/*')
     Rails.logger.info("[Banner##{id}] Cache invalidado após alteração")
