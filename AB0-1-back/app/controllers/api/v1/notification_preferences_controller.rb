@@ -19,14 +19,20 @@ module Api
 
         preferences_params.each do |pref_data|
           pref = current_user.notification_preferences.find_or_initialize_by(event_type: pref_data[:event_type])
+
+          in_app_enabled   = pref_data.key?(:in_app_enabled)   ? pref_data[:in_app_enabled]   : pref.in_app_enabled
+          email_enabled    = pref_data.key?(:email_enabled)    ? pref_data[:email_enabled]    : pref.email_enabled
+          push_enabled     = pref_data.key?(:push_enabled)     ? pref_data[:push_enabled]     : pref.push_enabled
+          whatsapp_enabled = pref_data.key?(:whatsapp_enabled) ? pref_data[:whatsapp_enabled] : pref.whatsapp_enabled
+
           pref.update!(
-            in_app_enabled: pref_data[:in_app_enabled] ?? pref.in_app_enabled,
-            email_enabled: pref_data[:email_enabled] ?? pref.email_enabled,
-            push_enabled: pref_data[:push_enabled] ?? pref.push_enabled,
-            whatsapp_enabled: pref_data[:whatsapp_enabled] ?? pref.whatsapp_enabled,
-            frequency: pref_data[:frequency] || pref.frequency,
-            consent_version: pref_data[:consent_version] || pref.consent_version,
-            consented_at: pref_data[:whatsapp_enabled] ? Time.current : pref.consented_at
+            in_app_enabled: in_app_enabled,
+            email_enabled: email_enabled,
+            push_enabled: push_enabled,
+            whatsapp_enabled: whatsapp_enabled,
+            frequency: pref_data[:frequency].presence || pref.frequency,
+            consent_version: pref_data[:consent_version].presence || pref.consent_version,
+            consented_at: whatsapp_enabled ? Time.current : pref.consented_at
           )
         end
 
