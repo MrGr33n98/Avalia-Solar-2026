@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, MapPin, ShieldCheck, Star } from 'lucide-react';
+import { BadgeCheck, Heart, MapPin, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import type { Company } from '@/lib/api';
@@ -51,15 +51,11 @@ export function CompanyCardEnhanced({
         </button>
       </div>
 
-      {verified ? (
-        <span className="mt-3 inline-flex w-fit items-center gap-1 rounded bg-emerald-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700">
-          <ShieldCheck className="h-3 w-3" />
-          Verificada
-        </span>
-      ) : null}
-
       <Link href={href} className="mt-3 hover:text-blue-700">
-        <h3 className="line-clamp-2 text-sm font-bold text-slate-950">{company.name}</h3>
+        <h3 className="line-clamp-2 text-sm font-bold text-slate-950 inline-flex items-center gap-1">
+          {company.name}
+          {verified && <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />}
+        </h3>
       </Link>
       <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
         <MapPin className="h-3.5 w-3.5" />

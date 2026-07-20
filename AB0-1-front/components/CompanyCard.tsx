@@ -172,8 +172,8 @@ const extractTopCriteria = (comp: any): string[] => {
   if (Array.isArray(comp?.services) && comp.services.length > 0) {
     return comp.services.slice(0, 4);
   }
-  // Fallback: critérios genéricos do setor solar
-  return ['Equipe qualificada', 'Cumpre prazos', 'Ótimo atendimento', 'Produtos de qualidade'];
+  // Sem dados reais de critérios/serviços: retorna array vazio (não fabrica tags fictícias)
+  return [];
 };
 
 /**
@@ -211,10 +211,10 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
   const rating = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
   const reviews = Number(comp?.rating_count ?? comp?.reviews_count ?? comp?.total_reviews ?? 0);
 
-  // Sentiment: prioriza dados reais da API, nunca fabrica se ambos são zero
+  // Sentiment: prioriza dados reais da API, nunca fabrica se não há avaliações
   const apiSentiment = comp?.reputation?.sentiment ?? comp?.sentiment ?? null;
   const sentimentData =
-    apiSentiment ?? (reviews > 0 ? undefined : { positive: 100, neutral: 0, negative: 0 });
+    apiSentiment ?? (reviews > 0 ? undefined : null);
 
   // recommendation_rate: prioriza real da API
   const apiRecommendation =
@@ -596,16 +596,10 @@ export default function CompanyCard({
             <div className="flex flex-wrap items-center gap-1.5">
               <h3 className="text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1 truncate">
                 {name}
-                <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
+                {company.trust.verification_status === 'verified' && (
+                  <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
+                )}
               </h3>
-              {company.trust.verification_status === 'verified' && (
-                <Badge
-                  variant="outline"
-                  className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] font-bold py-0 px-1.5 rounded-full inline-flex items-center gap-0.5 h-4"
-                >
-                  <Check className="h-2.5 w-2.5" /> Verificada
-                </Badge>
-              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
               <div className="flex items-center gap-0.5 font-bold text-slate-800">
