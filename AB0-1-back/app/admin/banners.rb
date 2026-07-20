@@ -145,8 +145,8 @@ ActiveAdmin.register Banner do
 
       tab 'Agendamento & Moderação' do
         f.inputs 'Controle' do
-          f.input :moderation_status, as: :select, collection: Banner::MODERATION_STATUSES, include_blank: false
-          f.input :active, label: 'Ativo (Visível se aprovado)'
+          f.input :moderation_status, as: :select, collection: Banner::MODERATION_STATUSES, include_blank: false, selected: f.object.new_record? ? 'approved' : f.object.moderation_status
+          f.input :active, label: 'Ativo (Visível se aprovado)', input_html: { checked: f.object.new_record? ? true : (f.object.active.nil? ? true : f.object.active) }
           f.input :start_date, as: :datetime_picker, label: 'Início da Exibição'
           f.input :end_date, as: :datetime_picker, label: 'Fim da Exibição'
         end

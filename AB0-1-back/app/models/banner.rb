@@ -309,7 +309,10 @@ class Banner < ApplicationRecord
   end
 
   def invalidate_cache
-    Rails.cache.delete_matched('banners/v1/*')
+    if Rails.cache.respond_to?(:delete_matched)
+      Rails.cache.delete_matched('banners/v1/*') rescue nil
+    end
+    Rails.cache.clear rescue nil
     Rails.logger.info("[Banner##{id}] Cache invalidado após alteração")
   rescue StandardError => e
     Rails.logger.error("[Banner##{id}] Erro ao invalidar cache: #{e.message}")
