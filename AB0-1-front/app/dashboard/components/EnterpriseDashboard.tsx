@@ -131,7 +131,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   chat: 'p2p_chat',
 };
 
-const ALWAYS_VISIBLE_TABS = new Set([]);
+const ALWAYS_VISIBLE_TABS = new Set<string>([]);
 
 const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
   analytics: {
@@ -217,7 +217,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         .map((item) => item.id)
         .filter(
           (tabId) =>
-            ALWAYS_VISIBLE_TABS.has(tabId as any) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
+            ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
         ),
     [tabAccessEntries]
   );
@@ -225,9 +225,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const renderGuardedTab = useCallback(
     (tabId: string, children: ReactNode) => {
       const entry = tabAccessEntries[tabId];
-      if (isFeatureHiddenEntry(entry) && !ALWAYS_VISIBLE_TABS.has(tabId as any)) return null;
+      if (isFeatureHiddenEntry(entry) && !ALWAYS_VISIBLE_TABS.has(tabId)) return null;
       const visibleEntry =
-        ALWAYS_VISIBLE_TABS.has(tabId as any) && isFeatureHiddenEntry(entry) ? null : entry;
+        ALWAYS_VISIBLE_TABS.has(tabId) && isFeatureHiddenEntry(entry) ? null : entry;
 
       const copy = DASHBOARD_TAB_GUARD_COPY[tabId];
       if (!copy) return children;
