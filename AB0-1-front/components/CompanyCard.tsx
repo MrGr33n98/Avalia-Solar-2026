@@ -23,6 +23,7 @@ import {
   BadgeCheck,
   CheckCircle,
   ChevronRight,
+  User,
 } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
@@ -834,15 +835,23 @@ export default function CompanyCard({
               <div className="absolute inset-0 flex items-center justify-center">
                 {recentReviewers.length > 0 ? (
                   <Avatar className="h-7 w-7 border-2 border-white shadow-sm bg-slate-50 text-[10px]">
-                    {recentReviewers[0]?.url && <AvatarImage src={recentReviewers[0].url} alt={recentReviewers[0]?.name || 'Reviewer'} />}
+                    <AvatarImage
+                      src={
+                        recentReviewers[0]?.url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(recentReviewers[0]?.name || 'Cliente')}&background=0D8ABC&color=fff&size=128`
+                      }
+                      alt={recentReviewers[0]?.name || 'Reviewer'}
+                    />
                     <AvatarFallback className="bg-slate-100 text-slate-600 font-bold uppercase">
                       {getInitials(recentReviewers[0]?.name || 'U')}
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <span className="text-[10px] font-black text-slate-800">
-                    {recommendationRate !== null ? `${recommendationRate}%` : '–'}
-                  </span>
+                  <Avatar className="h-7 w-7 border-2 border-white shadow-sm bg-slate-50 text-[10px]">
+                    <AvatarFallback className="bg-blue-100 text-blue-700 font-extrabold text-[10px]">
+                      <User className="h-3.5 w-3.5 text-blue-600" />
+                    </AvatarFallback>
+                  </Avatar>
                 )}
               </div>
             </div>

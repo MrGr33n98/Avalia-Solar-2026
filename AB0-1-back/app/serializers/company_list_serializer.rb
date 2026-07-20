@@ -88,9 +88,12 @@ class CompanyListSerializer < ActiveModel::Serializer
     reviews_scope = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3)
     if reviews_scope.any?
       recent_reviewer_avatars = reviews_scope.map do |review|
+        name = review.user&.name || review.author_name || 'Cliente'
+        avatar_url = review.user&.avatar_url
+        avatar_url = "https://ui-avatars.com/api/?name=#{CGI.escape(name)}&background=0D8ABC&color=fff&size=128" if avatar_url.blank?
         {
-          name: review.user&.name || review.author_name || 'Usuário',
-          url: review.user&.avatar_url
+          name: name,
+          url: avatar_url
         }
       end
     end
