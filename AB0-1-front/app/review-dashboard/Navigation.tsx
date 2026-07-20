@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -41,10 +41,14 @@ import {
   Medal,
   LogOut,
   Star,
+  MessageSquare,
+  Search,
+  LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { useNotificationStore } from '@/store/notificationStore';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -142,7 +146,7 @@ export function Header({
   firstName,
   user,
   greenScore,
-  notificationsCount,
+  notificationsCount: propNotificationsCount,
   refreshing,
   onRefresh,
   onOpenCommand,
@@ -157,9 +161,33 @@ export function Header({
   onOpenCommand: () => void;
   onOpenMobileNav: () => void;
 }) {
+  const {
+    notifications,
+    unreadCount,
+    unreadMessagesCount,
+    fetchNotifications,
+    fetchUnreadCount,
+    fetchUnreadMessagesCount,
+    markAsRead,
+    markAllAsRead,
+  } = useNotificationStore();
+
+  useEffect(() => {
+    fetchUnreadCount();
+    fetchUnreadMessagesCount();
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchUnreadMessagesCount();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount, fetchUnreadMessagesCount]);
+
+  const activeUnreadCount = unreadCount || propNotificationsCount || 0;
+
   return (
     <TooltipProvider>
       <header className="sticky top-[72px] z-30 flex h-16 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2 md:h-auto md:min-h-[72px] md:gap-4 md:p-4 md:px-6 lg:px-8">
+        {/* Esquerda: Boas-vindas (Desktop) ou Marca/Mobile Nav (Mobile) */}
         <div className="flex min-w-0 items-center gap-2 md:gap-3">
           <Button
             variant="outline"
@@ -179,69 +207,134 @@ export function Header({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        {/* Direita: Ações de Cabeçalho (Conforme Imagem 1 Desktop e Imagem 2 Mobile) */}
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
+          {/* Busca (Mobile e Desktop) */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="hidden h-11 w-11 rounded-none border-slate-200 bg-white md:inline-flex"
+                className="h-9 w-9 rounded-full hover:bg-slate-100 md:h-10 md:w-10"
                 onClick={onOpenCommand}
               >
-                <Command className="h-5 w-5 text-slate-600" />
+                <Search className="h-5 w-5 text-slate-700" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Menu de comandos</TooltipContent>
+            <TooltipContent>Buscar no Avalia Solar</TooltipContent>
           </Tooltip>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 rounded-none border-slate-200 bg-white md:h-11 md:w-11"
+          {/* Mensagens com Badge (Imagem 1 & 2) */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/chat"
+                className="relative flex flex-col items-center justify-center p-1 text-slate-700 transition-colors hover:text-blue-600"
               >
-                <Bell className="h-4 w-4 text-slate-600 md:h-5 md:w-5" />
-                {notificationsCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-semibold text-white md:h-5 md:min-w-5 md:text-[10px]">
-                    {notificationsCount}
-                  </span>
-                )}
-              </Button>
+                <div className="relative">
+                  <MessageSquare className="h-5 w-5 text-slate-800 md:h-6 md:w-6" />
+                  {unreadMessagesCount > 0 && (
+                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
+                      {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden text-[11px] font-semibold text-slate-700 md:inline-block">
+                  Mensagens
+                </span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Central de Mensagens</TooltipContent>
+          </Tooltip>
+
+          {/* Notificações com Badge Vermelho (Imagem 1 & 2) */}
+          <Popover onOpenChange={(open) => open && fetchNotifications()}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="relative flex flex-col items-center justify-center p-1 text-slate-700 transition-colors hover:text-blue-600 focus:outline-none"
+              >
+                <div className="relative">
+                  <Bell className="h-5 w-5 text-slate-800 md:h-6 md:w-6" />
+                  {activeUnreadCount > 0 && (
+                    <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-white">
+                      {activeUnreadCount > 99 ? '99+' : activeUnreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden text-[11px] font-semibold text-slate-700 md:inline-block">
+                  Notificações
+                </span>
+              </button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 rounded-none border-slate-200 p-0 shadow-sm">
-              <div className="p-4">
-                <p className="text-sm font-semibold text-slate-950">Notificações</p>
-                <p className="text-xs font-medium text-slate-500">
-                  Curtidas, comentários, respostas e conquistas.
-                </p>
+            <PopoverContent align="end" className="w-80 rounded-lg border-slate-200 p-0 shadow-lg md:w-96">
+              <div className="flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200">
+                <div>
+                  <p className="text-sm font-bold text-slate-950">Notificações</p>
+                  <p className="text-xs text-slate-500">
+                    {activeUnreadCount} não lidas
+                  </p>
+                </div>
+                {activeUnreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    Marcar todas lidas
+                  </Button>
+                )}
               </div>
               <Separator />
-              <div className="space-y-1 p-2">
-                {[
-                  'Novas respostas das empresas',
-                  'Curtidas em avaliações',
-                  'Conquista desbloqueada',
-                ].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className="flex w-full items-center gap-3 rounded-none p-2 text-left hover:bg-slate-50"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                      <Bell className="h-4 w-4" />
-                    </span>
-                    <span className="text-sm font-semibold text-slate-700">{item}</span>
-                  </button>
-                ))}
-              </div>
+              <ScrollArea className="h-[320px] p-2">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-slate-500">
+                    Nenhuma notificação no momento.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {notifications.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => !item.read && markAsRead(item.id)}
+                        className={cn(
+                          'flex w-full items-start gap-3 rounded-md p-3 text-left transition-colors hover:bg-slate-100',
+                          !item.read ? 'bg-blue-50/70 font-semibold' : 'bg-white'
+                        )}
+                      >
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                          <Bell className="h-4 w-4" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate">{item.title}</p>
+                          <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">{item.body}</p>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {new Date(item.created_at).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                        {!item.read && (
+                          <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0 mt-1" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
             </PopoverContent>
           </Popover>
 
+          {/* Botão de Atualizar */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-none border-slate-200 bg-white md:h-11 md:w-11"
+            className="h-9 w-9 rounded-full hover:bg-slate-100 md:h-10 md:w-10"
             onClick={onRefresh}
             disabled={refreshing}
           >
@@ -250,18 +343,31 @@ export function Header({
             />
           </Button>
 
-          <div className="hidden items-center gap-3 rounded-none border border-slate-200 bg-white px-3 py-2 shadow-none md:flex">
-            <Avatar className="h-10 w-10">
+          {/* Avatar e Perfil (Imagem 2 Mobile / Desktop) */}
+          <div className="flex items-center gap-2">
+            <Avatar className="h-9 w-9 border border-slate-200 shadow-sm md:h-10 md:w-10">
               <AvatarImage src={user.avatar_url || ''} alt={user.name} />
-              <AvatarFallback>{initialsFromName(user.name)}</AvatarFallback>
+              <AvatarFallback className="bg-amber-100 font-bold text-amber-800">
+                {initialsFromName(user.name)}
+              </AvatarFallback>
             </Avatar>
-            <div className="min-w-[120px]">
+            <div className="hidden min-w-[100px] md:block">
               <p className="truncate text-sm font-semibold text-slate-950">{user.name}</p>
               <p className="text-xs font-medium text-amber-600">
                 Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}
               </p>
             </div>
           </div>
+
+          {/* Menu de Grade / Dots (Imagem 2 Mobile) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-full hover:bg-slate-100 md:hidden"
+            onClick={onOpenMobileNav}
+          >
+            <LayoutGrid className="h-5 w-5 text-slate-800" />
+          </Button>
         </div>
       </header>
     </TooltipProvider>

@@ -16,6 +16,17 @@ module Api
         render json: @conversations.ordered_for_inbox.map { |conv| conversation_json(conv) }
       end
 
+      def unread_count
+        scope = if current_user.company_user?
+                  company_conversations_scope
+                else
+                  current_user.conversations.includes(:direct_messages)
+                end
+
+        total = scope.sum { |conv| conv.unread_count_for(current_user) }
+        render json: { unread_count: total }
+      end
+
       def create
         unless current_user.review_user?
           return render json: { error: 'Only buyer users can start direct chats' },

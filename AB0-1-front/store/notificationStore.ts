@@ -17,10 +17,12 @@ export interface Notification {
 interface NotificationStore {
   notifications: Notification[];
   unreadCount: number;
+  unreadMessagesCount: number;
   loading: boolean;
   
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
+  fetchUnreadMessagesCount: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
@@ -28,6 +30,7 @@ interface NotificationStore {
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
   notifications: [],
   unreadCount: 0,
+  unreadMessagesCount: 0,
   loading: false,
 
   fetchNotifications: async () => {
@@ -43,8 +46,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
       const data = await response.json();
       set({ 
-        notifications: data.data,
-        unreadCount: data.meta.unread_count,
+        notifications: data.data || [],
+        unreadCount: data.meta?.unread_count ?? 0,
         loading: false,
       });
     } catch (error) {
@@ -64,9 +67,26 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       if (!response.ok) throw new Error('Failed to fetch unread count');
 
       const data = await response.json();
-      set({ unreadCount: data.unread_count });
+      set({ unreadCount: data.unread_count || 0 });
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
+    }
+  },
+
+  fetchUnreadMessagesCount: async () => {
+    try {
+      const response = await fetch('/api/v1/conversations/unread_count', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch unread messages count');
+
+      const data = await response.json();
+      set({ unreadMessagesCount: data.unread_count || 0 });
+    } catch (error) {
+      console.error('Failed to fetch unread messages count:', error);
     }
   },
 
