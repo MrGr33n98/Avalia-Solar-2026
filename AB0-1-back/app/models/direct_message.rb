@@ -18,8 +18,13 @@ class DirectMessage < ApplicationRecord
 
   before_validation :normalize_body
   before_create :mark_delivered
+  after_create_commit :enqueue_fallback_notification
 
   private
+
+  def enqueue_fallback_notification
+    P2pMessageNotificationJob.set(wait: 1.minute).perform_later(id)
+  end
 
   def normalize_body
     self.body = body.to_s.strip.presence
