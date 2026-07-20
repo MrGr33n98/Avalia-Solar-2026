@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Menu, Search, User as UserIcon } from 'lucide-react';
+import { ChevronDown, Menu, Search, User as UserIcon, Bell, MessageSquare } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import LocationSearch from '@/components/LocationSearch';
@@ -13,6 +13,7 @@ import { UserAvatarDropdown } from '@/components/navigation/UserAvatarDropdown';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { useNotificationStore } from '@/store/notificationStore';
 
 const CompanySwitcher = dynamic(
   () => import('./company/CompanySwitcher').then((mod) => ({ default: mod.CompanySwitcher })),
@@ -51,6 +52,15 @@ export default function Navbar() {
   const pathname = usePathname();
   const categoriesMegaMenuId = 'categories-mega-menu';
   const mobileCategoriesDrawerId = 'mobile-categories-drawer';
+
+  const { unreadCount, unreadMessagesCount, fetchUnreadCount, fetchUnreadMessagesCount } = useNotificationStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount();
+      fetchUnreadMessagesCount();
+    }
+  }, [isAuthenticated, fetchUnreadCount, fetchUnreadMessagesCount]);
 
   const handleLocationSelect = (location: { state: string; city?: string }) => {
     const params = new URLSearchParams();
@@ -190,6 +200,39 @@ export default function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 2xl:block" /> : null}
+                
+                {/* Chat Icon */}
+                <Link
+                  href={user?.role === 'review' ? '/review-dashboard/chat' : '/dashboard/chat'}
+                  className="relative flex items-center justify-center p-2 text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-lg focus:outline-none"
+                  aria-label="Mensagens"
+                >
+                  <div className="relative">
+                    <MessageSquare className="h-5 w-5 text-slate-800" />
+                    {unreadMessagesCount > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white shadow-md ring-1 ring-white">
+                        {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+
+                {/* Notification Icon */}
+                <Link
+                  href={user?.role === 'review' ? '/review-dashboard/notifications' : '/dashboard/notifications'}
+                  className="relative flex items-center justify-center p-2 text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-lg focus:outline-none"
+                  aria-label="Notificações"
+                >
+                  <div className="relative">
+                    <Bell className="h-5 w-5 text-slate-800" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white shadow-md ring-1 ring-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+
                 <UserAvatarDropdown />
               </div>
             )}
