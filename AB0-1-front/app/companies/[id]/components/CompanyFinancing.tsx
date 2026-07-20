@@ -288,7 +288,6 @@ export default function CompanyFinancing({ company, companyId }: Props) {
               <TabsContent value="sac" className="text-sm text-muted-foreground">
                 Parcelas decrescentes com amortização linear.
               </TabsContent>
-              </TabsContent>
             </Tabs>
 
             <div className="flex gap-3 pt-2">
