@@ -174,62 +174,6 @@ class Banner < ApplicationRecord
     link
   end
 
-  scope :currently_active, lambda {
-    scope = where(active: true)
-    scope = scope.where(moderation_status: 'approved') if column_names.include?('moderation_status')
-    scope = scope.where('start_date IS NULL OR start_date <= ?', Time.current) if column_names.include?('start_date')
-    scope = scope.where('end_date IS NULL OR end_date >= ?', Time.current) if column_names.include?('end_date')
-    scope
-  }
-
-  def image_url
-    return nil unless image.attached?
-
-    source = image
-    if self.class.banner_variants_enabled? && width.present? && height.present?
-      source = image.variant(resize_to_limit: [width, height])
-    end
-
-    Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
-       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
-  end
-
-  def self.ransackable_associations(_auth_object = nil)
-    %w[category categories company approved_by_admin_user image_attachment image_blob]
-  end
-
-  scope :approved, -> { where(moderation_status: 'approved') }
-
-  def self.default_dimensions_for_position(position)
-    DEFAULT_DIMENSIONS_BY_POSITION.fetch(position.to_s, [600, 200])
-  end
-
-  def submit_for_review!
-    update!(moderation_status: 'submitted', active: false)
-  end
-
-  def approve!(admin_user)
-    update!(
-      moderation_status: 'approved',
-      approved_by_admin_user: admin_user,
-      approved_at: Time.current,
-      rejected_reason: nil
-    )
-  end
-
-  def reject!(admin_user, reason)
-    update!(
-      moderation_status: 'rejected',
-      approved_by_admin_user: admin_user,
-      approved_at: Time.current,
-      active: false,
-      rejected_reason: reason
-    )
-  end
-
-  def link_url
-    link
-  end
 
   scope :currently_active, lambda {
     scope = where(active: true)
