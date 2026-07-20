@@ -3,7 +3,10 @@ export function getFullImageUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return placeholder;
   const trimmed = url.trim();
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const rawBase =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:3001';
   const base = rawBase
     .split('#')[0]
     .trim()

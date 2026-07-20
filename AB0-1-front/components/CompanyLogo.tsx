@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
-import { Building2 } from 'lucide-react';
+import { getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 interface CompanyLogoProps {
@@ -24,20 +24,22 @@ export function CompanyLogo({
   priority = false,
 }: CompanyLogoProps) {
   const [error, setError] = useState(false);
-  const resolvedUrl = getFullImageUrl(logoUrl || undefined);
+
+  const isValidLogo =
+    Boolean(logoUrl) &&
+    logoUrl !== '/images/avalia-solar-place-holder.PNG' &&
+    logoUrl !== '/images/logo-placeholder.svg';
+
+  const resolvedUrl = isValidLogo ? getFullImageUrl(logoUrl) : null;
+  const hasImage = Boolean(resolvedUrl) && !error;
 
   // Tamanhos padronizados com proporção fixa (largura x altura):
-  // sm (Mobile / Cards compactos): 56x40px (md: 64x44px)
-  // md (Cards padrão / Comparadores): 68x48px (md: 80x56px)
-  // lg (Detalhes / Destaques / Busca): 88x60px (md: 104x72px)
   const sizeClasses = {
     sm: 'w-[52px] h-[38px] md:w-[60px] md:h-[42px]',
     md: 'w-[64px] h-[46px] md:w-[76px] md:h-[52px]',
     lg: 'w-[84px] h-[58px] md:w-[98px] md:h-[68px]',
     custom: '',
   };
-
-  const hasImage = Boolean(resolvedUrl) && !error;
 
   return (
     <div
@@ -63,8 +65,8 @@ export function CompanyLogo({
           />
         </div>
       ) : (
-        <div className="flex h-full w-full items-center justify-center rounded-md bg-slate-50 text-slate-400">
-          <Building2 className="h-5 w-5 stroke-[1.5]" />
+        <div className="flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br from-[#0B1528] to-[#1E293B] text-amber-400 font-black uppercase text-xs sm:text-sm tracking-wider">
+          {getInitials(name)}
         </div>
       )}
     </div>
