@@ -149,20 +149,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
 
   return (
     <div className="space-y-6">
-      {microBanner && microBanner.image_url && (
-        <a 
-          href={microBanner.link_url || microBanner.link || '#'} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="block w-full overflow-hidden rounded-lg shadow-sm hover:shadow-md transition border border-primary/20"
-        >
-          <img 
-            src={microBanner.image_url} 
-            alt={microBanner.title || 'Banner Patrocinado'} 
-            className="w-full h-auto max-h-[120px] object-cover"
-          />
-        </a>
-      )}
+
 
       <Card className="border-none shadow-lg bg-card/70 backdrop-blur-sm">
         <CardHeader className="pb-4">
@@ -301,10 +288,38 @@ export default function CompanyFinancing({ company, companyId }: Props) {
               <TabsContent value="sac" className="text-sm text-muted-foreground">
                 Parcelas decrescentes com amortização linear.
               </TabsContent>
+              </TabsContent>
             </Tabs>
+
+            <div className="flex gap-3 pt-2">
+              <Button className="w-full font-semibold" onClick={() => trackCurrentSimulation()}>Calcular</Button>
+              <Button variant="outline" className="w-full font-semibold">Limpar</Button>
+            </div>
+            
+            {profile?.disclaimer && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span>{profile.disclaimer}</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
+            {microBanner && microBanner.image_url && (
+              <a 
+                href={microBanner.link_url || microBanner.link || '#'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-full overflow-hidden rounded-xl shadow-sm hover:shadow-md transition border border-primary/10 bg-white"
+              >
+                <img 
+                  src={microBanner.image_url} 
+                  alt={microBanner.title || 'Banner Patrocinado'} 
+                  className="w-full h-auto max-h-[120px] object-cover"
+                />
+              </a>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <SummaryCard
                 label="Parcela estimada"
@@ -316,27 +331,41 @@ export default function CompanyFinancing({ company, companyId }: Props) {
               <SummaryCard label="Custo total" value={formatCurrency(simulation.totalPaid, currency)} />
             </div>
 
-            <Separator />
+            {partners.length > 0 && profile?.show_bank_logos !== false && (
+              <div className="pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-muted-foreground">Instituições disponíveis</span>
+                  <span className="text-xs font-medium text-primary cursor-pointer hover:underline">Ver todas</span>
+                </div>
+                <div className="flex items-center gap-4 overflow-x-auto pb-2">
+                  {partners.map((partner: CompanyFinancingPartner) => (
+                    <div key={partner.id} className="flex-shrink-0 opacity-80 hover:opacity-100 transition-opacity">
+                      {partner.logo_url ? (
+                        <Image
+                          src={partner.logo_url}
+                          alt={partner.name}
+                          width={48}
+                          height={24}
+                          className="h-6 w-auto object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-muted-foreground">{partner.name}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            <div className="flex flex-col gap-3">
-              {profile?.disclaimer && (
-                <Alert className="bg-amber-50 border-amber-200 text-amber-900">
-                  <AlertDescription className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 mt-0.5" />
-                    <span>{profile.disclaimer}</span>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {ctaUrl && (
-                <Button className="h-11 gap-2" asChild>
-                  <a href={ctaUrl} target="_blank" rel="noreferrer">
-                    {ctaLabel}
-                    <ArrowRight className="h-4 w-4" />
-                  </a>
-                </Button>
-              )}
-            </div>
+            {ctaUrl && (
+              <Button className="w-full h-12 gap-2 mt-2 font-semibold text-md bg-blue-600 hover:bg-blue-700" asChild>
+                <a href={ctaUrl} target="_blank" rel="noreferrer">
+                  <Sparkles className="h-4 w-4" />
+                  {ctaLabel}
+                </a>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -379,47 +408,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         </Card>
       )}
 
-      {partners.length > 0 && profile?.show_bank_logos !== false && (
-        <Card className="border-none shadow-lg bg-card/70 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              Bancos e parceiros
-            </CardTitle>
-            <CardDescription>Instituições que oferecem condições preferenciais.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            {partners.map((partner: CompanyFinancingPartner) => (
-              <div
-                key={partner.id}
-                className="rounded-lg border bg-card/60 p-4 flex items-center gap-3 hover:border-primary/40 transition"
-              >
-                <div className="h-12 w-12 rounded-md border bg-white flex items-center justify-center overflow-hidden">
-                  {partner.logo_url ? (
-                    <Image
-                      src={partner.logo_url}
-                      alt={partner.name}
-                      width={48}
-                      height={48}
-                      className="h-full w-full object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{partner.name}</span>
-                    {partner.badge && <Badge variant="secondary">{partner.badge}</Badge>}
-                  </div>
-                  {partner.partner_type && <p className="text-xs text-muted-foreground">{partner.partner_type}</p>}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+
     </div>
   );
 }
