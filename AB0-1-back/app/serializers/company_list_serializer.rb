@@ -15,7 +15,8 @@ class CompanyListSerializer < ActiveModel::Serializer
              :social_proof_enabled, :can_use_social_proof,
              :effect, :media_upload_allowed,
              :response_time_sla, :delivered_projects_score, :warranty_years,
-             :coverage_cities, :coverage_states
+             :coverage_cities, :coverage_states,
+             :identity, :trust, :reputation
 
   # ─── Identidade estruturada (contrato CompanyCardData.identity) ───────────────
   def identity
@@ -86,6 +87,8 @@ class CompanyListSerializer < ActiveModel::Serializer
     # Load up to 3 recent reviewer avatars
     recent_reviewer_avatars = []
     reviews_scope = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3)
+    reviews_scope = object.reviews.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3) if reviews_scope.empty?
+
     if reviews_scope.any?
       recent_reviewer_avatars = reviews_scope.map do |review|
         name = review.user&.name || review.author_name || 'Cliente'

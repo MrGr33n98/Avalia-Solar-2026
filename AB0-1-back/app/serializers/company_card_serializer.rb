@@ -82,8 +82,11 @@ class CompanyCardSerializer < ActiveModel::Serializer
 
     # Load up to 3 recent reviewer avatars
     recent_reviewer_avatars = []
-    if rating_count > 0
-      recent_reviewer_avatars = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3).map do |review|
+    reviews_scope = object.reviews.published.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3)
+    reviews_scope = object.reviews.includes(user: { avatar_attachment: :blob }).order(created_at: :desc).limit(3) if reviews_scope.empty?
+
+    if reviews_scope.any?
+      recent_reviewer_avatars = reviews_scope.map do |review|
         name = review.user&.name || review.author_name || 'Cliente'
         avatar_url = review.user&.avatar_url
         avatar_url = "https://ui-avatars.com/api/?name=#{CGI.escape(name)}&background=0D8ABC&color=fff&size=128" if avatar_url.blank?

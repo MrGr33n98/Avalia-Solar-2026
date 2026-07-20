@@ -570,7 +570,7 @@ export default function CompanyCard({
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation?.recommendation_rate ?? null;
-  const recentReviewers = company.reputation?.recent_reviewer_avatars || [];
+  const recentReviewers = company.reputation?.recent_reviewer_avatars || (company as any).recent_reviewer_avatars || [];
   const strokeDashoffset =
     recommendationRate !== null
       ? circumference - (recommendationRate / 100) * circumference
