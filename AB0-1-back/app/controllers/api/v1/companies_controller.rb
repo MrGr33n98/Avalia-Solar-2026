@@ -112,14 +112,18 @@ module Api
 
         return render json: { error: 'Category not found for company' }, status: :not_found unless category
 
-        linked_ids = CompanyProduct.visible.where(company_id: @company.id).select(:product_id)
+        linked_ids = CompanyProduct.visible.where(company_id: @company.id).pluck(:product_id)
+        product_ids = Product
+                      .active_status
+                      .joins(:categories)
+                      .where(categories: { id: category.id })
+                      .where('products.id IN (?) OR products.company_id = ?', linked_ids.presence || [0], @company.id)
+                      .pluck(:id)
+                      .uniq
+
         products = Product
+                   .where(id: product_ids)
                    .includes(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
-                   .active_status
-                   .joins(:categories)
-                   .where(categories: { id: category.id })
-                   .where('products.id IN (?) OR products.company_id = ?', linked_ids, @company.id)
-                   .distinct
                    .order(Arel.sql('products.featured DESC NULLS LAST, products.name ASC'))
 
         services = @company.company_services.visible.where(category_id: category.id).order(name: :asc)
