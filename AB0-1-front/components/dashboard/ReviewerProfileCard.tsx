@@ -49,7 +49,7 @@ export function ReviewerProfileCard({
     { label: 'Soluções que Uso', href: '/review-dashboard#solutions', icon: Laptop },
     { label: 'Conquistas', href: '/review-dashboard/achievements', icon: Trophy },
     { label: 'Recompensas', href: '/review-dashboard#rewards', icon: Award },
-    { label: 'Notificações', href: '/review-dashboard#notifications', icon: Bell },
+    { label: 'Notificações', href: '/review-dashboard/notifications', icon: Bell },
   ];
 
   const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';

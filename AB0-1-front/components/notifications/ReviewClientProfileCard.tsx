@@ -15,47 +15,37 @@ import {
   Settings,
   HelpCircle,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { useNotificationStore } from '@/store/notificationStore';
 import { AchievementsModal } from './AchievementsModal';
 import { cn } from '@/lib/utils';
 
-interface ReviewClientProfileCardProps {
-  user?: {
-    name: string;
-    avatar_url?: string;
-    city?: string;
-    state?: string;
-    created_at?: string;
-    level?: number;
-    points?: number;
-    max_points?: number;
-    verified?: boolean;
-  };
-}
-
-export const ReviewClientProfileCard: React.FC<ReviewClientProfileCardProps> = ({ user }) => {
+export const ReviewClientProfileCard: React.FC = () => {
+  const { user } = useAuth();
   const pathname = usePathname();
   const { unreadCount, unreadMessagesCount } = useNotificationStore();
   const [showAchievements, setShowAchievements] = useState(false);
 
-  const name = user?.name || 'Felipe Morais';
-  const avatarUrl = user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
-  const location = user?.city && user?.state ? `${user.city}, ${user.state}` : 'Florianópolis, SC';
-  const memberSince = 'Membro desde jan/2024';
-  const level = user?.level || 2;
-  const points = user?.points || 350;
-  const maxPoints = user?.max_points || 500;
+  const name = user?.name || 'Cliente';
+  const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=128`;
+  const location = [user?.city, user?.state].filter(Boolean).join(', ') || 'Brasil';
+  const memberSince = user?.created_at
+    ? `Membro desde ${new Date(user.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}`
+    : 'Membro registrado';
+  const level = 2;
+  const points = 350;
+  const maxPoints = 500;
   const progressPercent = Math.min(100, Math.round((points / maxPoints) * 100));
 
   const menuItems = [
     { label: 'Dashboard', href: '/review-dashboard', icon: LayoutDashboard },
     { label: 'Minhas avaliações', href: '/review-dashboard/reviews', icon: Star },
-    { label: 'Orçamentos', href: '/review-dashboard/quotes', icon: FileText, badge: 2 },
-    { label: 'Mensagens', href: '/review-dashboard/messages', icon: MessageSquare, badge: unreadMessagesCount || 1 },
+    { label: 'Orçamentos', href: '/review-dashboard/quotes', icon: FileText },
+    { label: 'Mensagens', href: '/review-dashboard/messages', icon: MessageSquare, badge: unreadMessagesCount || 0 },
     { label: 'Empresas favoritas', href: '/review-dashboard/favorites', icon: Building2 },
-    { label: 'Notificações', href: '/review-dashboard/notifications', icon: Bell, badge: unreadCount || 4 },
+    { label: 'Notificações', href: '/review-dashboard/notifications', icon: Bell, badge: unreadCount || 0 },
     { label: 'Perfil e configurações', href: '/review-dashboard/profile', icon: Settings },
   ];
 
