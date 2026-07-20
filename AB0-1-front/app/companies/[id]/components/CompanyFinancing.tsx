@@ -24,6 +24,7 @@ import { useCalculatorInput } from '@/lib/analytics/hooks/useIntentTracking';
 import { simulateFinancing, AmortizationType } from '@/lib/financing';
 import { cn } from '@/lib/utils';
 import { FinancialInstitutionDropdown } from '@/components/financing/FinancialInstitutionDropdown';
+import { BankLogo } from '@/components/financing/BankLogo';
 import { FinancialInstitution } from '@/lib/api';
 
 type Props = {
@@ -366,18 +367,10 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                           : "border-transparent opacity-80 hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                       )}
                     >
-                      {partner.logo_url ? (
-                        <Image
-                          src={partner.logo_url}
-                          alt={partner.name}
-                          width={48}
-                          height={24}
-                          className="h-6 w-auto object-contain"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="text-xs font-semibold text-muted-foreground">{partner.name}</span>
-                      )}
+                      <div className="flex items-center gap-1.5 px-1 py-0.5">
+                        <BankLogo name={partner.name} logoUrl={partner.logo_url} size={22} />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{partner.name}</span>
+                      </div>
                     </button>
                   ))}
                 </div>

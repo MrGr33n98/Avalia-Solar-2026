@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Building2, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BankLogo } from '@/components/financing/BankLogo';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -101,13 +102,7 @@ export function FinancialInstitutionDropdown({
             className={cn("w-full h-11 justify-between bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm rounded-xl px-3.5", className)}
           >
             <div className="flex items-center gap-2.5 truncate">
-              {displayLogo ? (
-                <div className="relative w-6 h-6 shrink-0 flex items-center justify-center">
-                  <Image src={displayLogo} alt={displayName || 'Banco'} width={24} height={24} className="max-h-6 w-auto object-contain" />
-                </div>
-              ) : (
-                <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
-              )}
+              <BankLogo name={displayName} logoUrl={displayLogo} size={22} />
               <span className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                 {displayName ? (
                   <>
@@ -142,11 +137,7 @@ export function FinancialInstitutionDropdown({
                       className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {partner.logo_url ? (
-                          <Image src={partner.logo_url} alt={partner.name} width={20} height={20} className="h-5 w-auto object-contain shrink-0" />
-                        ) : (
-                          <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
-                        )}
+                        <BankLogo name={partner.name} logoUrl={partner.logo_url} size={20} />
                         <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{partner.name}</span>
                       </div>
                       <Check
@@ -169,11 +160,7 @@ export function FinancialInstitutionDropdown({
                   {institutions.map((institution) => (
                     <div key={`inst-${institution.id}`} className="mb-1">
                       <div className="px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        {institution.logo_url ? (
-                          <Image src={institution.logo_url} alt={institution.name} width={16} height={16} className="h-4 w-auto object-contain" />
-                        ) : (
-                          <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                        )}
+                        <BankLogo name={institution.name} logoUrl={institution.logo_url} size={18} />
                         {institution.name}
                       </div>
                       {institution.financing_options?.map((option) => (
