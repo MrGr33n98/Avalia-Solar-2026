@@ -277,7 +277,27 @@ export default function ProfileDetailsPage() {
         <ChevronRight className="h-3 w-3" />
         <span className="text-gray-400">Meu Perfil</span>
         <ChevronRight className="h-3 w-3" />
-        <span className="text-gray-700">Detalhes do Perfil</span>
+        <span className="text-gray-700">Configurações & Detalhes</span>
+      </div>
+
+      {/* Sub-navegação com as 6 Etapas do Perfil (Conforme o Menu Lateral da imagem de referência) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-gray-200 text-xs font-semibold scrollbar-none">
+        {[
+          { id: 'company', label: 'Dados da empresa' },
+          { id: 'personal', label: 'Dados pessoais' },
+          { id: 'interests', label: 'Interesses e atuação' },
+          { id: 'social', label: 'Redes sociais' },
+          { id: 'privacy', label: 'Privacidade e visibilidade' },
+          { id: 'publishing', label: 'Publicação e avaliação' },
+        ].map((tab) => (
+          <a
+            key={tab.id}
+            href={`#${tab.id}`}
+            className="shrink-0 rounded-full bg-white px-4 py-2 text-slate-700 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-all shadow-sm"
+          >
+            {tab.label}
+          </a>
+        ))}
       </div>
 
       {/* Card Superior Opcional: Soluções que você usa */}
@@ -318,7 +338,7 @@ export default function ProfileDetailsPage() {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 space-y-8">
               {/* Foto do Perfil (Upload Compacto) */}
               <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-gray-100">
                 <div className="relative">
@@ -363,11 +383,62 @@ export default function ProfileDetailsPage() {
                 </div>
               )}
 
-              {/* Seção 1: Dados Pessoais */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
-                  Dados Pessoais
-                </h3>
+              {/* Seção: Dados da Empresa */}
+              <div id="company" className="space-y-4 pt-2 scroll-mt-24">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                  <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider">
+                    Dados da Empresa
+                  </h3>
+                  <span className="text-xs text-slate-400">1 de 6</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-companyname" className="text-xs font-semibold text-gray-500">
+                      Nome da Empresa
+                    </Label>
+                    <Input
+                      id="profile-companyname"
+                      placeholder="Ex: GreenTech Solar"
+                      value={additionalData.companyName}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, companyName: e.target.value })
+                      }
+                      className="h-10 rounded-lg border-gray-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-companysize" className="text-xs font-semibold text-gray-500">
+                      Tamanho da Empresa
+                    </Label>
+                    <select
+                      id="profile-companysize"
+                      value={additionalData.companySize}
+                      onChange={(e) =>
+                        setAdditionalData({ ...additionalData, companySize: e.target.value })
+                      }
+                      className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="1-10">1-10 funcionários</option>
+                      <option value="11-50">11-50 funcionários</option>
+                      <option value="51-200">51-200 funcionários</option>
+                      <option value="201-500">201-500 funcionários</option>
+                      <option value="500+">Mais de 500</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Seção 2: Dados Pessoais */}
+              <div id="personal" className="space-y-4 pt-2 scroll-mt-24">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                  <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider">
+                    Dados Pessoais
+                  </h3>
+                  <span className="text-xs text-slate-400">2 de 6</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="profile-name" className="text-xs font-semibold text-gray-500">
@@ -495,11 +566,14 @@ export default function ProfileDetailsPage() {
 
               <Separator />
 
-              {/* Seção 2: Informações de Consumo e Profissional */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
-                  Interesses e Atuação
-                </h3>
+              {/* Seção 3: Informações de Consumo e Profissional */}
+              <div id="interests" className="space-y-4 pt-2 scroll-mt-24">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                  <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider">
+                    Interesses e Atuação
+                  </h3>
+                  <span className="text-xs text-slate-400">3 de 6</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label
@@ -545,7 +619,7 @@ export default function ProfileDetailsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="profile-job" className="text-xs font-semibold text-gray-500">
                       Cargo / Função
@@ -562,13 +636,13 @@ export default function ProfileDetailsPage() {
                   </div>
                   <div className="space-y-1">
                     <Label
-                      htmlFor="profile-companyname"
+                      htmlFor="profile-companyname-sub"
                       className="text-xs font-semibold text-gray-500"
                     >
-                      Empresa atual
+                      Empresa Atual
                     </Label>
                     <Input
-                      id="profile-companyname"
+                      id="profile-companyname-sub"
                       placeholder="GreenTech Solar"
                       value={additionalData.companyName}
                       onChange={(e) =>
@@ -577,39 +651,19 @@ export default function ProfileDetailsPage() {
                       className="h-10 rounded-lg border-gray-200"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="profile-companysize"
-                      className="text-xs font-semibold text-gray-500"
-                    >
-                      Tamanho da empresa
-                    </Label>
-                    <select
-                      id="profile-companysize"
-                      value={additionalData.companySize}
-                      onChange={(e) =>
-                        setAdditionalData({ ...additionalData, companySize: e.target.value })
-                      }
-                      className="w-full text-sm h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="1-10">1-10 funcionários</option>
-                      <option value="11-50">11-50 funcionários</option>
-                      <option value="51-200">51-200 funcionários</option>
-                      <option value="201-500">201-500 funcionários</option>
-                      <option value="500+">Mais de 500</option>
-                    </select>
-                  </div>
                 </div>
               </div>
 
               <Separator />
 
-              {/* Seção 3: Social & Links */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
-                  Redes Sociais
-                </h3>
+              {/* Seção 4: Redes Sociais */}
+              <div id="social" className="space-y-4 pt-2 scroll-mt-24">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                  <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider">
+                    Redes Sociais
+                  </h3>
+                  <span className="text-xs text-slate-400">4 de 6</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label
@@ -650,12 +704,15 @@ export default function ProfileDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Card: Privacidade e Visibilidade */}
-          <Card className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden">
+          {/* Card 5: Privacidade e Visibilidade */}
+          <Card id="privacy" className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden scroll-mt-24">
             <CardHeader className="border-b border-gray-100 p-6">
-              <CardTitle className="text-lg font-bold text-gray-900">
-                Privacidade & Visibilidade
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-gray-900">
+                  Privacidade & Visibilidade
+                </CardTitle>
+                <span className="text-xs text-slate-400">5 de 6</span>
+              </div>
               <CardDescription className="text-xs text-gray-400">
                 Gerencie como suas informações de reputação são expostas na comunidade.
               </CardDescription>
@@ -728,6 +785,32 @@ export default function ProfileDetailsPage() {
                   </button>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Card 6: Publicação e Avaliação */}
+          <Card id="publishing" className="rounded-2xl border-gray-200 bg-white shadow-sm overflow-hidden scroll-mt-24">
+            <CardHeader className="border-b border-gray-100 p-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-gray-900">
+                  Publicação & Avaliação
+                </CardTitle>
+                <span className="text-xs text-slate-400">6 de 6</span>
+              </div>
+              <CardDescription className="text-xs text-gray-400">
+                Resumo das suas preferências de publicação de avaliações e interações.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div>
+                  <p className="text-xs font-bold text-slate-900">Avaliações publicadas</p>
+                  <p className="text-xs text-slate-500">{userReviews.length} avaliações enviadas até o momento</p>
+                </div>
+                <Button size="sm" variant="outline" asChild className="rounded-lg text-xs font-bold">
+                  <Link href="/review-dashboard#reviews">Ver Avaliações</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
