@@ -36,47 +36,18 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const router = useRouter();
   const { markAsRead, archiveNotification } = useNotificationStore();
 
-  const getCategoryIcon = () => {
-    if (notification.company_logo_url) {
-      return (
-        <img
-          src={notification.company_logo_url}
-          alt={notification.company_name || 'Empresa'}
-          className="h-10 w-10 rounded-none border border-slate-200 object-cover"
-        />
-      );
-    }
+  const getCategoryDot = () => {
     switch (notification.category) {
       case 'quotes':
-        return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-emerald-50 text-emerald-600 border border-emerald-200">
-            <FileText className="h-5 w-5" />
-          </div>
-        );
+        return <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />;
       case 'reviews':
-        return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-purple-50 text-purple-600 border border-purple-200">
-            <Star className="h-5 w-5" />
-          </div>
-        );
+        return <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shrink-0 mt-1.5" />;
       case 'messages':
-        return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-blue-50 text-blue-600 border border-blue-200">
-            <MessageSquare className="h-5 w-5" />
-          </div>
-        );
+        return <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />;
       case 'companies':
-        return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-amber-50 text-amber-600 border border-amber-200">
-            <Building2 className="h-5 w-5" />
-          </div>
-        );
+        return <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0 mt-1.5" />;
       default:
-        return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-slate-100 text-slate-600 border border-slate-200">
-            <ShieldAlert className="h-5 w-5" />
-          </div>
-        );
+        return <span className="h-2.5 w-2.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />;
     }
   };
 
@@ -126,8 +97,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
         <span className="mt-2.5 h-2 w-2 rounded-full bg-blue-600 shrink-0" title="Não lida" />
       )}
 
-      {/* Category or Company Icon */}
-      <div className="shrink-0 mt-0.5">{getCategoryIcon()}</div>
+      {/* Category Indicator Dot */}
+      {getCategoryDot()}
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">

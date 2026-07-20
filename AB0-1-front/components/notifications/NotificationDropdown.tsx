@@ -1,25 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Bell,
   CheckCheck,
-  MoreVertical,
   ExternalLink,
-  FileText,
-  MessageSquare,
-  Star,
-  Building2,
-  ShieldAlert,
-  Archive,
+  ArrowRight,
+  MoreVertical,
   Eye,
-  EyeOff,
+  Archive,
+  Bell,
+  Info,
 } from 'lucide-react';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,52 +32,25 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
   const { notifications, unreadCount, markAsRead, markAllAsRead, archiveNotification, loading } =
     useNotificationStore();
 
-  const filteredNotifications = notifications.filter((n) => {
-    if (tab === 'unread') return !n.read;
-    return true;
-  }).slice(0, 6);
+  const filteredNotifications = notifications
+    .filter((n) => {
+      if (tab === 'unread') return !n.read;
+      return true;
+    })
+    .slice(0, 6);
 
-  const getCategoryIcon = (n: Notification) => {
-    if (n.company_logo_url) {
-      return (
-        <img
-          src={n.company_logo_url}
-          alt={n.company_name || 'Empresa'}
-          className="h-8 w-8 rounded-none border border-slate-200 object-cover"
-        />
-      );
-    }
+  const getCategoryDot = (n: Notification) => {
     switch (n.category) {
       case 'quotes':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-emerald-50 text-emerald-600 border border-emerald-200">
-            <FileText className="h-4 w-4" />
-          </div>
-        );
+        return <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 mt-1.5" />;
       case 'reviews':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-purple-50 text-purple-600 border border-purple-200">
-            <Star className="h-4 w-4" />
-          </div>
-        );
+        return <span className="h-2 w-2 rounded-full bg-purple-500 shrink-0 mt-1.5" />;
       case 'messages':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-blue-50 text-blue-600 border border-blue-200">
-            <MessageSquare className="h-4 w-4" />
-          </div>
-        );
+        return <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />;
       case 'companies':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-amber-50 text-amber-600 border border-amber-200">
-            <Building2 className="h-4 w-4" />
-          </div>
-        );
+        return <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0 mt-1.5" />;
       default:
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-slate-100 text-slate-600 border border-slate-200">
-            <ShieldAlert className="h-4 w-4" />
-          </div>
-        );
+        return <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0 mt-1.5" />;
     }
   };
 
@@ -96,10 +63,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins < 60) return `Há ${diffMins} min`;
-    if (diffHours < 24) return `Há ${diffHours}h`;
+    if (diffMins < 60) return `${diffMins} min atrás`;
+    if (diffHours < 24) return `${diffHours}h atrás`;
     if (diffDays === 1) return 'Ontem';
-    return `Há ${diffDays} dias`;
+    return `${diffDays}d atrás`;
   };
 
   const handleItemClick = (n: Notification) => {
@@ -113,16 +80,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
   };
 
   return (
-    <div className="w-[380px] md:w-[420px] max-h-[580px] bg-white border border-slate-200 shadow-xl flex flex-col font-sans text-slate-900 rounded-none">
-      {/* Header Swiss Style */}
-      <div className="flex items-center justify-between p-3 border-b border-slate-200 bg-white">
+    <div className="w-[360px] md:w-[400px] bg-white border border-slate-200 shadow-2xl flex flex-col font-sans text-slate-900 rounded-none">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold tracking-tight text-slate-900 uppercase">Notificações</h3>
-          {unreadCount > 0 && (
-            <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-none">
-              {unreadCount} não lidas
-            </span>
-          )}
+          <h3 className="text-sm font-bold tracking-tight text-slate-900">Notificações</h3>
         </div>
         {unreadCount > 0 && (
           <Button
@@ -131,120 +93,144 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
             onClick={() => markAllAsRead()}
             className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 rounded-none"
           >
-            <CheckCheck className="mr-1 h-3.5 w-3.5" />
-            Marcar todas lidas
+            Marcar todas como lidas
           </Button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="px-3 pt-2 bg-slate-50 border-b border-slate-200">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | 'unread')}>
-          <TabsList className="h-8 bg-transparent p-0 gap-4">
-            <TabsTrigger
-              value="all"
-              className="h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 px-1 text-xs font-semibold text-slate-600"
-            >
-              Todas ({notifications.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="unread"
-              className="h-8 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 px-1 text-xs font-semibold text-slate-600"
-            >
-              Não lidas ({unreadCount})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-100">
+        <button
+          onClick={() => setTab('all')}
+          className={cn(
+            'px-3 py-1 text-xs font-bold transition-all rounded-full flex items-center gap-1.5',
+            tab === 'all'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-transparent text-slate-600 hover:bg-slate-200/60'
+          )}
+        >
+          Todas
+          <span
+            className={cn(
+              'px-1.5 py-0.2 text-[10px] rounded-full',
+              tab === 'all' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'
+            )}
+          >
+            {notifications.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setTab('unread')}
+          className={cn(
+            'px-3 py-1 text-xs font-bold transition-all rounded-full flex items-center gap-1.5',
+            tab === 'unread'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-transparent text-slate-600 hover:bg-slate-200/60'
+          )}
+        >
+          Não lidas
+          <span
+            className={cn(
+              'px-1.5 py-0.2 text-[10px] rounded-full',
+              tab === 'unread' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'
+            )}
+          >
+            {unreadCount}
+          </span>
+        </button>
       </div>
 
       {/* Content List */}
-      <div className="flex-1 overflow-y-auto max-h-[380px] divide-y divide-slate-100">
+      <div className="flex-1 overflow-y-auto max-h-[360px] divide-y divide-slate-100">
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">
-            Carregando notificações...
-          </div>
+          <div className="p-8 text-center text-xs text-slate-500">Carregando notificações...</div>
         ) : filteredNotifications.length === 0 ? (
           <div className="p-8 text-center">
             <Bell className="mx-auto h-8 w-8 text-slate-300 mb-2" />
             <p className="text-xs font-bold text-slate-700">Você está em dia!</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Nenhuma notificação encontrada nesta aba.</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Nenhuma notificação encontrada.</p>
           </div>
         ) : (
           filteredNotifications.map((n) => (
             <div
               key={n.id}
               className={cn(
-                'group relative flex items-start gap-3 p-3 transition-colors hover:bg-slate-50 border-l-2',
-                !n.read ? 'border-l-blue-600 bg-blue-50/40' : 'border-l-transparent bg-white'
+                'group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-50 cursor-pointer',
+                !n.read ? 'bg-white' : 'bg-white'
               )}
+              onClick={() => handleItemClick(n)}
             >
-              <div className="mt-0.5 shrink-0">{getCategoryIcon(n)}</div>
+              {/* Category Dot Indicator */}
+              {getCategoryDot(n)}
 
-              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleItemClick(n)}>
-                <div className="flex items-center justify-between gap-2">
-                  <p className={cn('text-xs truncate', !n.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700')}>
-                    {n.title}
-                  </p>
-                  <span className="text-[10px] text-slate-400 shrink-0 font-mono">
-                    {formatRelativeTime(n.created_at)}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 line-clamp-2 mt-0.5 leading-snug">
-                  {n.body}
+              {/* Title & Body */}
+              <div className="flex-1 min-w-0">
+                <p className={cn('text-xs truncate', !n.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700')}>
+                  {n.title}
                 </p>
-
-                {n.cta_label && (
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline">
-                      {n.cta_label}
-                      <ExternalLink className="h-3 w-3" />
-                    </span>
-                  </div>
+                {n.body && (
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5 leading-snug">
+                    {n.body}
+                  </p>
                 )}
               </div>
 
-              {/* Action Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-slate-400 hover:text-slate-700 rounded-none shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="rounded-none text-xs w-44">
-                  <DropdownMenuItem onClick={() => markAsRead(n.id)}>
-                    {n.read ? (
-                      <>
-                        <EyeOff className="mr-2 h-3.5 w-3.5 text-slate-500" /> Marcar não lida
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="mr-2 h-3.5 w-3.5 text-slate-500" /> Marcar como lida
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => archiveNotification(n.id)}>
-                    <Archive className="mr-2 h-3.5 w-3.5 text-slate-500" /> Arquivar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Time & Unread Indicator */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {formatRelativeTime(n.created_at)}
+                </span>
+                {!n.read && <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0" />}
+
+                {/* More Action Menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-slate-400 hover:text-slate-700 rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-none text-xs w-44">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(n.id);
+                      }}
+                    >
+                      <Eye className="mr-2 h-3.5 w-3.5" /> Marcar como lida
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        archiveNotification(n.id);
+                      }}
+                    >
+                      <Archive className="mr-2 h-3.5 w-3.5" /> Arquivar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Footer Swiss Style */}
-      <div className="p-2.5 border-t border-slate-200 bg-slate-50 text-center">
-        <Link
-          href="/review-dashboard/notifications"
-          onClick={onClose}
-          className="inline-flex items-center justify-center w-full py-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-white border border-blue-200 transition-colors uppercase tracking-wider rounded-none"
+      {/* Footer Link */}
+      <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+        <button
+          onClick={() => {
+            router.push('/review-dashboard/notifications');
+            if (onClose) onClose();
+          }}
+          className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
         >
           Ver todas as notificações
-        </Link>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );

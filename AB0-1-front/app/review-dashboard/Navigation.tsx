@@ -250,30 +250,35 @@ export function Header({
             <TooltipContent>Central de Mensagens</TooltipContent>
           </Tooltip>
 
-          {/* Notificações com Badge Vermelho e Dropdown Swiss Style */}
-          <Popover onOpenChange={(open) => open && fetchNotifications()}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="relative flex flex-col items-center justify-center p-1 text-slate-700 transition-colors hover:text-blue-600 focus:outline-none"
-              >
-                <div className="relative">
-                  <Bell className="h-5 w-5 text-slate-800 md:h-6 md:w-6" />
-                  {activeUnreadCount > 0 && (
-                    <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-white">
-                      {activeUnreadCount > 99 ? '99+' : activeUnreadCount}
+          {/* Notificações com Badge Vermelho, Tooltip no hover e Dropdown Swiss Style */}
+          <Tooltip>
+            <Popover onOpenChange={(open) => open && fetchNotifications()}>
+              <PopoverTrigger asChild>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="relative flex flex-col items-center justify-center p-1 text-slate-700 transition-colors hover:text-blue-600 focus:outline-none"
+                  >
+                    <div className="relative">
+                      <Bell className="h-5 w-5 text-slate-800 md:h-6 md:w-6" />
+                      {activeUnreadCount > 0 && (
+                        <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-md ring-2 ring-white">
+                          {activeUnreadCount > 99 ? '99+' : activeUnreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="hidden text-[11px] font-semibold text-slate-700 md:inline-block">
+                      Notificações
                     </span>
-                  )}
-                </div>
-                <span className="hidden text-[11px] font-semibold text-slate-700 md:inline-block">
-                  Notificações
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-0 border-none bg-transparent shadow-none w-auto">
-              <NotificationDropdown />
-            </PopoverContent>
-          </Popover>
+                  </button>
+                </TooltipTrigger>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="p-0 border-none bg-transparent shadow-none w-auto">
+                <NotificationDropdown />
+              </PopoverContent>
+            </Popover>
+            <TooltipContent>Notificações</TooltipContent>
+          </Tooltip>
 
           {/* Botão de Atualizar */}
           <Button
