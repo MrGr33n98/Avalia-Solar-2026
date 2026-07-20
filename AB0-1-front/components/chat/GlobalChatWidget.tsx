@@ -86,7 +86,18 @@ export default function GlobalChatWidget() {
   }, [conversations]);
 
   const filteredConversations = useMemo(() => {
-    return conversations.filter((c) => {
+    const seenKeys = new Set<string>();
+    const uniqueList: Conversation[] = [];
+
+    conversations.forEach((c) => {
+      const key = isUser ? `company-${c.company_id}` : `user-${c.user_id}-${c.company_id}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueList.push(c);
+      }
+    });
+
+    return uniqueList.filter((c) => {
       // 1. Busca textual
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -127,7 +138,11 @@ export default function GlobalChatWidget() {
           (item) => item.id === message.id || (message.client_message_id && item.client_message_id === message.client_message_id)
         )
       ) {
-        return current;
+        return current.map((item) =>
+          item.id === message.id || (message.client_message_id && item.client_message_id === message.client_message_id)
+            ? { ...item, ...message }
+            : item
+        );
       }
       return [...current, message];
     });
@@ -235,7 +250,15 @@ export default function GlobalChatWidget() {
         disconnected: () => setRealtimeStatus('disconnected'),
         rejected: () => setRealtimeStatus('rejected'),
         received: (data: ChatCablePayload) => {
-          if (data.event === 'typing') {
+          if (
+            data.event === 'typing' ||
+            data.event === 'typing.started' ||
+            data.event === 'typing.stopped'
+          ) {
+            if (data.event === 'typing.stopped') {
+              setTypingByCompany(false);
+              return;
+            }
             if (data.actor_type !== (isUser ? 'User' : 'Company')) {
               setTypingByCompany(true);
               if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -290,16 +313,30 @@ export default function GlobalChatWidget() {
   const sendReply = async () => {
     if ((!reply.trim() && !pendingAttachment) || !selectedConversationId || sending) return;
 
+    const text = reply.trim();
+    const tempId = -Date.now();
+    const optimisticMsg: DirectMessage = {
+      id: tempId,
+      conversation_id: selectedConversationId,
+      body: text,
+      sender_type: isUser ? 'User' : 'Company',
+      created_at: new Date().toISOString(),
+      delivered_at: new Date().toISOString(),
+    };
+
+    appendMessage(optimisticMsg, selectedConversationId);
+    setReply('');
+    setPendingAttachment(null);
     setSending(true);
+
     try {
       const payloadOptions = pendingAttachment ? { attachments: [pendingAttachment] } : undefined;
-      const newMessage = await conversationsApi.sendMessage(selectedConversationId, reply.trim(), payloadOptions);
-      appendMessage(newMessage, selectedConversationId);
-      setReply('');
-      setPendingAttachment(null);
+      const newMessage = await conversationsApi.sendMessage(selectedConversationId, text, payloadOptions);
+      setMessages((current) => current.map((m) => (m.id === tempId ? newMessage : m)));
       channelRef.current?.perform?.('typing', { typing: false });
     } catch {
       console.error('Failed to send message');
+      setMessages((current) => current.filter((m) => m.id !== tempId));
     } finally {
       setSending(false);
     }
@@ -320,7 +357,7 @@ export default function GlobalChatWidget() {
 
   // ESTADO EXPANDIDO (Painel Flutuante estilo LinkedIn)
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-900 sm:bottom-0 sm:right-8 sm:top-auto sm:left-auto sm:h-[580px] sm:w-[360px] sm:rounded-t-xl sm:border sm:border-b-0 sm:border-slate-200 dark:sm:border-slate-800 sm:shadow-[0_-8px_30px_rgba(0,0,0,0.14)] overflow-hidden">
+    <div className="fixed bottom-4 right-4 z-50 flex h-[540px] w-[360px] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-5">
       <FloatingChatHeader
         currentUser={user}
         activeConversation={
@@ -331,7 +368,7 @@ export default function GlobalChatWidget() {
                   (isUser ? selectedConversation.company_name : selectedConversation.user_name) ||
                   'Conversa',
                 avatar_url: isUser
-                  ? selectedConversation.company_logo_url || selectedConversation.company_logo
+                  ? selectedConversation.company_logo_url || selectedConversation.company_logo || selectedConversation.company_avatar
                   : selectedConversation.user_avatar_url || selectedConversation.user_avatar,
                 isTyping: typingByCompany,
               }
@@ -349,6 +386,7 @@ export default function GlobalChatWidget() {
             messages={messages}
             loading={loadingMessages}
             isUser={isUser}
+            isTyping={typingByCompany}
           />
           <FloatingChatInput
             reply={reply}

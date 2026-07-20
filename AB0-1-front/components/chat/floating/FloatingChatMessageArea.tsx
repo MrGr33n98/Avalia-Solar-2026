@@ -9,6 +9,7 @@ interface FloatingChatMessageAreaProps {
   messages: DirectMessage[];
   loading?: boolean;
   isUser: boolean;
+  isTyping?: boolean;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function FloatingChatMessageArea({
   messages,
   loading = false,
   isUser,
+  isTyping = false,
   className,
 }: FloatingChatMessageAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -118,6 +120,18 @@ export function FloatingChatMessageArea({
           </div>
         );
       })}
+      {isTyping && (
+        <div className="flex justify-start">
+          <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 shadow-xs flex items-center gap-1.5 text-xs text-slate-500">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Digitando</span>
+            <span className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </span>
+          </div>
+        </div>
+      )}
       <div ref={messagesEndRef} />
     </div>
   );

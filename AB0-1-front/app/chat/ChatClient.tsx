@@ -552,15 +552,30 @@ export default function ChatClient() {
       setErrorMessage(null);
       const msgText = inputMessage;
       const attachment = pendingAttachment;
+      const clientMsgId = createClientMessageId();
+
+      const optimisticMsg: DirectMessage = {
+        id: -Date.now(),
+        conversation_id: activeConversation.id,
+        body: msgText,
+        sender_type: 'User',
+        client_message_id: clientMsgId,
+        created_at: new Date().toISOString(),
+        delivered_at: new Date().toISOString(),
+      };
+
+      appendMessage(optimisticMsg);
+      scrollToBottom();
       setInputMessage('');
       setPendingAttachment(null);
       channelRef.current?.perform?.('typing', { typing: false });
+
       const newMessage = await conversationsApi.sendMessage(activeConversation.id, msgText, {
-        client_message_id: createClientMessageId(),
+        client_message_id: clientMsgId,
         attachments: attachment ? [attachment] : undefined,
         client: 'web',
       });
-      appendMessage(newMessage);
+      setMessages((current) => current.map((m) => (m.client_message_id === clientMsgId || m.id === optimisticMsg.id ? newMessage : m)));
       scrollToBottom();
     } catch (error) {
       console.error('Error sending message', error);
