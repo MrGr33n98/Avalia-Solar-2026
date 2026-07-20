@@ -210,15 +210,6 @@ class Banner < ApplicationRecord
     super.merge(image_url: image_url)
   end
 
-  private
-
-  def ensure_dimensions
-    return unless self.class.column_names.include?('width') && self.class.column_names.include?('height')
-    return if width.present? && height.present?
-
-    self.width, self.height = default_dimensions_for_position(position)
-  end
-
   def target_states=(val)
     return unless self.class.column_names.include?('target_states')
 
@@ -244,6 +235,16 @@ class Banner < ApplicationRecord
                end
     super(raw_list.map(&:to_s).map(&:strip).reject(&:blank?).uniq)
   end
+
+  private
+
+  def ensure_dimensions
+    return unless self.class.column_names.include?('width') && self.class.column_names.include?('height')
+    return if width.present? && height.present?
+
+    self.width, self.height = default_dimensions_for_position(position)
+  end
+
 
   def normalize_locations
     return unless self.class.column_names.include?('target_states') || self.class.column_names.include?('target_cities')
