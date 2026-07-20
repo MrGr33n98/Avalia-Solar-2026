@@ -80,6 +80,7 @@ ActiveAdmin.register Company do
       { project_types: [], services_offered: [], niche_tags: [], coverage_state_codes: [], coverage_city_names: [], category_ids: [], badge_ids: [], media_assets: [], financing_options_attributes: %i[id financial_institution_id credit_line target_audience max_term_months grace_period_months interest_rate_percent active _destroy],
         company_buttons_attributes: %i[id label url active position button_type _destroy],
         company_faqs_attributes: %i[id question answer status position _destroy],
+        company_financing_partners_attributes: %i[id name partner_type website priority position active badge logo _destroy],
         company_members_attributes: %i[id user_id role _destroy],
         company_sector_questions_attributes: %i[id prompt weight order enabled _destroy] }
     ]
@@ -308,6 +309,19 @@ ActiveAdmin.register Company do
         fo.input :max_term_months, label: 'Prazo Máximo (meses)'
         fo.input :grace_period_months, label: 'Carência (meses)'
         fo.input :active, label: 'Ativo'
+      end
+    end
+
+    f.inputs 'Parceiros de Financiamento' do
+      f.has_many :company_financing_partners, allow_destroy: true, heading: false, new_record: 'Adicionar Parceiro' do |fp|
+        fp.input :name, label: 'Nome do Banco/Parceiro'
+        fp.input :website, label: 'Website'
+        fp.input :logo, as: :file, label: 'Logo do Parceiro', hint: (fp.object.logo.attached? ? image_tag(url_for(fp.object.logo), style: 'max-width: 120px;') : 'Nenhuma imagem selecionada')
+        fp.input :partner_type, label: 'Tipo'
+        fp.input :badge, label: 'Selo'
+        fp.input :priority, label: 'Prioridade'
+        fp.input :position, label: 'Posição'
+        fp.input :active, label: 'Ativo'
       end
     end
 

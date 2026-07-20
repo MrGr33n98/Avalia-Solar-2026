@@ -187,6 +187,7 @@ end
   accepts_nested_attributes_for :company_faqs, allow_destroy: true
   has_one :company_financing_profile, dependent: :destroy
   has_many :company_financing_partners, dependent: :destroy
+  accepts_nested_attributes_for :company_financing_partners, allow_destroy: true
   has_many :company_financing_offers, dependent: :destroy
   has_many :banners, dependent: :nullify
   has_many :banner_events, dependent: :nullify

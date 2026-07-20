@@ -187,12 +187,9 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4">
-            <div className="grid gap-3">
-              <label className="text-sm font-medium text-muted-foreground">Instituição Financeira</label>
-              <FinancialInstitutionDropdown 
-                onSelectOption={applyOffer} 
-              />
-            </div>
+            <FinancialInstitutionDropdown 
+              onSelectOption={applyOffer} 
+            />
             
             <div className="grid gap-3">
               <label className="text-sm font-medium text-muted-foreground">Valor do projeto</label>

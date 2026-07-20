@@ -63,7 +63,9 @@ export function FinancialInstitutionDropdown({ onSelectOption, className }: Prop
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <div className="grid gap-3">
+      <label className="text-sm font-medium text-muted-foreground">Instituição Financeira</label>
+      <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -133,5 +135,6 @@ export function FinancialInstitutionDropdown({ onSelectOption, className }: Prop
         </Command>
       </PopoverContent>
     </Popover>
+    </div>
   );
 }

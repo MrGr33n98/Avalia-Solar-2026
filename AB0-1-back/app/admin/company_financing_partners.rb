@@ -19,6 +19,28 @@ ActiveAdmin.register CompanyFinancingPartner do
   filter :partner_type
   filter :active
 
+  show do
+    attributes_table do
+      row :company
+      row :name
+      row :partner_type
+      row :website
+      row :priority
+      row :position
+      row :active
+      row :badge
+      row :logo do |partner|
+        if partner.logo.attached?
+          image_tag url_for(partner.logo), style: 'max-height: 120px;'
+        else
+          'Sem logo'
+        end
+      end
+      row :created_at
+      row :updated_at
+    end
+  end
+
   form do |f|
     f.inputs do
       f.input :company
