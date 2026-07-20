@@ -35,6 +35,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
+import { RichLinkPreview } from '@/components/chat/RichLinkPreview';
+import { RightChatSidebar } from './components/RightChatSidebar';
 
 type Message = DirectMessage;
 type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
@@ -198,7 +200,21 @@ export default function ChatClient() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const visibleConversations = useMemo(() => dedupeConversations(conversations), [conversations]);
+  const [filterChip, setFilterChip] = useState<'all' | 'budgets' | 'unread' | 'resolved'>('all');
+
+  const visibleConversations = useMemo(() => {
+    const list = dedupeConversations(conversations);
+    if (filterChip === 'unread') {
+      return list.filter((c) => (c.unread_count ?? c.user_unread_count ?? 0) > 0);
+    }
+    if (filterChip === 'budgets') {
+      return list.filter((c) => c.status === 'pending_user' || c.status === 'pending_company');
+    }
+    if (filterChip === 'resolved') {
+      return list.filter((c) => c.status === 'resolved' || c.status === 'blocked');
+    }
+    return list;
+  }, [conversations, filterChip]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     window.setTimeout(() => {
@@ -631,6 +647,29 @@ export default function ChatClient() {
           </Button>
         </header>
 
+        {/* Chips de Filtro Horizontais estilo LinkedIn */}
+        <div className="flex gap-1.5 overflow-x-auto px-3 py-2 bg-slate-50/70 border-b border-slate-200 text-xs no-scrollbar shrink-0">
+          {[
+            { id: 'all', label: 'Todas' },
+            { id: 'budgets', label: 'Orçamentos 📑' },
+            { id: 'unread', label: 'Não lidas 🔴' },
+            { id: 'resolved', label: 'Resolvidas ✅' },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => setFilterChip(chip.id as any)}
+              className={cn(
+                'rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
+                filterChip === chip.id
+                  ? 'bg-[#1646A0] text-white shadow-xs'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+              )}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white">
           {errorMessage && (
             <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
@@ -884,7 +923,10 @@ export default function ChatClient() {
                           )}
                         >
                           {message.body && (
-                            <p className="whitespace-pre-wrap break-words">{message.body}</p>
+                            <>
+                              <p className="whitespace-pre-wrap break-words">{message.body}</p>
+                              <RichLinkPreview text={message.body} isSelf={isMine} />
+                            </>
                           )}
                           {attachmentList.length > 0 && (
                             <div className="mt-2 space-y-1">
@@ -1013,6 +1055,13 @@ export default function ChatClient() {
           </div>
         )}
       </section>
+
+      {/* Sidebar Direita de Contexto & Monetização (LinkedIn Level) */}
+      <RightChatSidebar
+        activeConversation={activeConversation}
+        messages={messages}
+        isUser={user?.role === 'review'}
+      />
     </main>
   );
 }

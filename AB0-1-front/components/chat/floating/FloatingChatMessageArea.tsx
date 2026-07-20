@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { CheckCheck, Paperclip, Loader2, MessageCircle, FileText } from 'lucide-react';
 import { type DirectMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { RichLinkPreview } from '../RichLinkPreview';
 
 interface FloatingChatMessageAreaProps {
   messages: DirectMessage[];
@@ -83,7 +84,12 @@ export function FloatingChatMessageArea({
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-xs'
               )}
             >
-              {message.body && <p className="whitespace-pre-wrap font-normal">{message.body}</p>}
+              {message.body && (
+                <>
+                  <p className="whitespace-pre-wrap font-normal">{message.body}</p>
+                  <RichLinkPreview text={message.body} isSelf={isSelf} />
+                </>
+              )}
 
               {attachmentList.map((att, i) => (
                 <a
