@@ -284,6 +284,12 @@ ActiveAdmin.register Banner do
       if params[:banner].present?
         params[:banner].delete(:image) if params[:banner][:image].blank?
         params[:banner][:company_id] = nil if params[:banner][:company_id].blank?
+        unless Banner.column_names.include?('target_states')
+          params[:banner].delete(:target_states)
+        end
+        unless Banner.column_names.include?('target_cities')
+          params[:banner].delete(:target_cities)
+        end
         if params[:banner][:category_ids].is_a?(Array)
           params[:banner][:category_ids] = params[:banner][:category_ids].reject(&:blank?).map(&:to_i)
         end
@@ -294,6 +300,12 @@ ActiveAdmin.register Banner do
     def create
       if params[:banner].present?
         params[:banner][:company_id] = nil if params[:banner][:company_id].blank?
+        unless Banner.column_names.include?('target_states')
+          params[:banner].delete(:target_states)
+        end
+        unless Banner.column_names.include?('target_cities')
+          params[:banner].delete(:target_cities)
+        end
         if params[:banner][:category_ids].is_a?(Array)
           params[:banner][:category_ids] = params[:banner][:category_ids].reject(&:blank?).map(&:to_i)
         end
