@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, MapPin, Star } from 'lucide-react';
 import { companiesApiSafe } from '@/lib/api-client';
 import { buildCompanyPath, buildProductPath } from '@/lib/slug';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import CatalogClient from './CatalogClient';
 
 interface Props {
@@ -81,17 +82,12 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
         </nav>
         <header className="border border-slate-300 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="relative h-16 w-16 shrink-0 border border-slate-300 bg-white">
-              {catalog.company.logo_url && (
-                <Image
-                  src={catalog.company.logo_url}
-                  alt={`Logo da ${catalog.company.name}`}
-                  fill
-                  sizes="64px"
-                  className="object-contain p-2"
-                />
-              )}
-            </div>
+            <CompanyLogo
+              logoUrl={catalog.company.logo_url}
+              name={catalog.company.name}
+              size="lg"
+              className="h-16 w-16 rounded-[2px]"
+            />
             <div>
               <h1 className="text-2xl font-bold text-[#0B1F4B]">{catalog.company.name}</h1>
               <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">

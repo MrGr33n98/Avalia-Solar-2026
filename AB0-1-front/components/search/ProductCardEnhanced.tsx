@@ -30,19 +30,13 @@ export function ProductCardEnhanced({
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
       <div className="relative aspect-[4/3] bg-white p-5">
-        {product.image_url ? (
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center rounded-lg bg-slate-50 text-xs font-semibold text-slate-600">
-            Imagem indisponível
-          </div>
-        )}
+        <Image
+          src={product.image_url || '/images/product-placeholder.svg'}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
+        />
         {verified ? (
           <span className="absolute left-3 top-3 rounded bg-emerald-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700">
             Verificado
