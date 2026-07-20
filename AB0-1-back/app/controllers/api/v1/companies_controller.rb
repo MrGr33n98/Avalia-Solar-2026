@@ -129,7 +129,16 @@ module Api
         services = @company.company_services.visible.where(category_id: category.id).order(name: :asc)
 
         render json: {
-          company: @company.as_json(only: %i[id name slug logo_url city state rating_avg rating_count]),
+          company: {
+            id: @company.id,
+            name: @company.name,
+            slug: @company.slug,
+            logo_url: @company.logo_url,
+            city: @company.city,
+            state: @company.state,
+            rating_avg: @company.rating_avg,
+            rating_count: @company.rating_count
+          },
           category: category.as_json(only: %i[id name seo_url description short_description]),
           products: products.map { |product| product.as_json(include_specs: true) },
           services: services.as_json(only: %i[id name slug description price_from coverage])
