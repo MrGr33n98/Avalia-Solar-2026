@@ -592,36 +592,12 @@ export function ReputationDashboard({
         </Card>
       )}
 
-      <div className="lg:hidden">
-        <section id="overview" className="min-w-0 max-w-full">
-          <ReviewMobileStatsStrip kpis={kpis} loading={loading} />
-        </section>
 
-        <div className="mt-4">
-          <HeroProfile
-            user={profileUser}
-            reviewsCount={reviews.length}
-            companiesCount={rows.length}
-            helpfulVotes={helpfulVotes}
-            impactedPeople={impactedPeople}
-            repliesCount={companyReplies.length}
-            onOpenReplies={() => {
-              document.getElementById('company-replies')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            unlockedBadgeIds={unlockedBadgeIds}
-          />
-        </div>
 
-        <div className="mt-4">
-          <ReviewTabsCompact activeTab={activeTab} onChange={setActiveTab} />
-        </div>
-      </div>
-
-      <div className="min-w-0 md:hidden">{renderMobileTabContent()}</div>
-
-      <div className="hidden md:block">
+      {/* Layout Principal Unificado (Mobile e Desktop) */}
+      <div className="w-full space-y-6">
         {/* Cabeçalho principal com saudação, progresso, ações rápidas e resumo */}
-        <div className="mb-6 space-y-6">
+        <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
