@@ -62,7 +62,12 @@ class Banner < ApplicationRecord
   validates :title, :banner_type, :position, presence: true
   validates :banner_type, inclusion: { in: ALLOWED_BANNER_TYPES }
   validates :position, inclusion: { in: ALLOWED_POSITIONS }
-  validates :image, presence: true
+  validates :image, presence: true, unless: -> { image.attached? }
+
+  def category_ids=(val)
+    clean_ids = Array(val).flatten.compact.map(&:to_s).reject(&:blank?).map(&:to_i).uniq
+    super(clean_ids)
+  end
   validates :moderation_status, inclusion: { in: MODERATION_STATUSES },
                                 if: -> { self.class.column_names.include?('moderation_status') }
 

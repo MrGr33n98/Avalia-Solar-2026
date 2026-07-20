@@ -279,6 +279,29 @@ ActiveAdmin.register Banner do
     end
   end
 
+  controller do
+    def update
+      if params[:banner].present?
+        params[:banner].delete(:image) if params[:banner][:image].blank?
+        params[:banner][:company_id] = nil if params[:banner][:company_id].blank?
+        if params[:banner][:category_ids].is_a?(Array)
+          params[:banner][:category_ids] = params[:banner][:category_ids].reject(&:blank?).map(&:to_i)
+        end
+      end
+      super
+    end
+
+    def create
+      if params[:banner].present?
+        params[:banner][:company_id] = nil if params[:banner][:company_id].blank?
+        if params[:banner][:category_ids].is_a?(Array)
+          params[:banner][:category_ids] = params[:banner][:category_ids].reject(&:blank?).map(&:to_i)
+        end
+      end
+      super
+    end
+  end
+
   member_action :approve, method: :put do
     resource.approve!(current_admin_user)
     redirect_to resource_path(resource), notice: 'Banner aprovado.'
