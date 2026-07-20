@@ -53,7 +53,7 @@ export default function Navbar() {
   const categoriesMegaMenuId = 'categories-mega-menu';
   const mobileCategoriesDrawerId = 'mobile-categories-drawer';
 
-  const { unreadCount, unreadMessagesCount, fetchUnreadCount, fetchUnreadMessagesCount } = useNotificationStore();
+  const { unreadCount, unreadMessagesCount, fetchUnreadCount, fetchUnreadMessagesCount, toggleChat } = useNotificationStore();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -112,7 +112,6 @@ export default function Navbar() {
           <BrandLogo
             className="h-7 sm:h-8 xl:h-[30px]"
             priority={pathname === '/'}
-            sizes="(max-width: 639px) 112px, 140px"
           />
         </Link>
 
@@ -201,11 +200,10 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 2xl:block" /> : null}
                 
-                {/* Chat Icon */}
-                <Link
-                  href={user?.role === 'review' ? '/review-dashboard/chat' : '/dashboard/chat'}
-                  className="relative flex items-center justify-center p-2 text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-lg focus:outline-none"
+                <button
+                  className="relative rounded-full bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-600"
                   aria-label="Mensagens"
+                  onClick={() => toggleChat()}
                 >
                   <div className="relative">
                     <MessageSquare className="h-5 w-5 text-slate-800" />
@@ -215,7 +213,7 @@ export default function Navbar() {
                       </span>
                     )}
                   </div>
-                </Link>
+                </button>
 
                 {/* Notification Icon */}
                 <Link

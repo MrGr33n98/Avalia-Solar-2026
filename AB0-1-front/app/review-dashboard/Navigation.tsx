@@ -168,6 +168,7 @@ export function Header({
     fetchNotifications,
     fetchUnreadCount,
     fetchUnreadMessagesCount,
+    toggleChat,
     markAsRead,
     markAllAsRead,
   } = useNotificationStore();
@@ -227,8 +228,9 @@ export function Header({
           {/* Mensagens com Badge (Imagem 1 & 2) */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="/chat"
+              <button
+                type="button"
+                onClick={() => toggleChat()}
                 className="relative flex flex-col items-center justify-center p-1 text-slate-700 transition-colors hover:text-blue-600"
               >
                 <div className="relative">
@@ -242,7 +244,7 @@ export function Header({
                 <span className="hidden text-[11px] font-semibold text-slate-700 md:inline-block">
                   Mensagens
                 </span>
-              </Link>
+              </button>
             </TooltipTrigger>
             <TooltipContent>Central de Mensagens</TooltipContent>
           </Tooltip>

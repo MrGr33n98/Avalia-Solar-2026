@@ -20,11 +20,14 @@ interface NotificationStore {
   unreadMessagesCount: number;
   loading: boolean;
   
+  isChatOpen: boolean;
+  
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
   fetchUnreadMessagesCount: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  toggleChat: (open?: boolean) => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
@@ -32,6 +35,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   unreadCount: 0,
   unreadMessagesCount: 0,
   loading: false,
+  isChatOpen: false,
 
   fetchNotifications: async () => {
     set({ loading: true });
@@ -131,4 +135,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       console.error('Failed to mark all as read:', error);
     }
   },
+
+  toggleChat: (open?: boolean) => {
+    set((state) => ({ isChatOpen: open !== undefined ? open : !state.isChatOpen }));
+  }
 }));

@@ -21,6 +21,7 @@ import {
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
 import { deriveAchievementStatuses } from '@/config/achievements';
 import type { UserSolution } from '@/components/profile/UserSolutionChip';
+import ReviewUserChatWidget from '@/components/chat/ReviewUserChatWidget';
 
 export interface ReviewDashboardSummary {
   kpis?: {
@@ -504,6 +505,8 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             </CommandGroup>
           </CommandList>
         </CommandDialog>
+        
+        <ReviewUserChatWidget />
       </div>
     </DashboardContext.Provider>
   );
