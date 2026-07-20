@@ -104,15 +104,6 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     ],
   },
   {
-    id: 'chat',
-    label: 'Atendimento',
-    icon: MessageCircle,
-    context: ['operational', 'quick_access'],
-    group: 'engagement',
-    badge: true,
-    description: 'Chat, WhatsApp e status online',
-  },
-  {
     id: 'product-edit-group',
     label: 'Perfil da Empresa',
     icon: Edit3,

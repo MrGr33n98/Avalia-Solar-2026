@@ -9,7 +9,7 @@ import { Clock3, MessageCircle, PhoneCall, Wifi, WifiOff } from 'lucide-react';
 import EnterpriseSidebar from './EnterpriseSidebar';
 import DashboardToolbar from './DashboardToolbar';
 import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
-import CompanyChatInbox from './CompanyChatInbox';
+
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,157 +113,6 @@ function DashboardTabSkeleton() {
   );
 }
 
-type DashboardChatCompany = {
-  name?: string;
-  plan_id?: number | string | null;
-  plan_tier?: string | null;
-  p2p_chat_enabled?: boolean;
-  feature_access?: FeatureAccessMap;
-  cta_whatsapp_enabled?: boolean;
-  whatsapp_enabled?: boolean;
-  cta_whatsapp_url?: string | null;
-  whatsapp_url?: string | null;
-  whatsapp?: string | null;
-};
-
-function CompanyChatTab({ company }: { company: DashboardChatCompany | null | undefined }) {
-  const [isOnline, setIsOnline] = useState(true);
-  const [lastSeen, setLastSeen] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const updateOnlineStatus = () => {
-      const online = navigator.onLine;
-      setIsOnline(online);
-      setLastSeen(new Date());
-    };
-
-    updateOnlineStatus();
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
-    };
-  }, []);
-
-  const chatEnabled =
-    company?.p2p_chat_enabled === true &&
-    (!company.feature_access || isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const whatsappEnabled =
-    company?.cta_whatsapp_enabled === true ||
-    company?.whatsapp_enabled === true ||
-    Boolean(company?.cta_whatsapp_url || company?.whatsapp_url || company?.whatsapp);
-  const hasAnyChannel = chatEnabled || whatsappEnabled;
-  const lastSeenLabel = lastSeen
-    ? lastSeen.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    : 'agora';
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="mb-1 text-2xl font-bold text-foreground lg:text-3xl">Atendimento</h2>
-        <p className="text-sm text-slate-500">
-          Acompanhe se sua empresa está disponível para receber contatos e conversas.
-        </p>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
-          <CardContent className="flex items-center gap-3 px-4 py-3">
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              {isOnline ? <Wifi className="h-5 w-5" /> : <WifiOff className="h-5 w-5" />}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">Status do painel</p>
-              <p className="text-base font-black leading-tight text-slate-950">
-                {isOnline ? 'Online agora' : 'Offline'}
-              </p>
-              <p className="mt-0.5 text-xs leading-tight text-slate-400">
-                Atualizado às {lastSeenLabel}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
-          <CardContent className="flex items-center gap-3 px-4 py-3">
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                chatEnabled ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              <MessageCircle className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">Chat direto</p>
-              <p className="text-base font-black leading-tight text-slate-950">
-                {chatEnabled ? 'Ativo' : 'Não configurado'}
-              </p>
-              <p className="mt-0.5 text-xs leading-tight text-slate-400">
-                {chatEnabled ? 'Disponível no perfil público' : 'Ative para receber conversas'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
-          <CardContent className="flex items-center gap-3 px-4 py-3">
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                whatsappEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              <PhoneCall className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">WhatsApp</p>
-              <p className="text-base font-black leading-tight text-slate-950">
-                {whatsappEnabled ? 'Conectado' : 'Não configurado'}
-              </p>
-              <p className="mt-0.5 text-xs leading-tight text-slate-400">
-                {whatsappEnabled ? 'Canal pronto para leads' : 'Configure nas informações gerais'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
-        <CardContent className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-              <Clock3 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-950">Disponibilidade no perfil</h3>
-              <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-slate-500">
-                {hasAnyChannel
-                  ? 'Sua empresa já possui pelo menos um canal de atendimento configurado. O status online considera a conexão atual deste painel.'
-                  : 'Nenhum canal de atendimento foi encontrado. Configure WhatsApp ou chat direto para exibir atendimento ativo no perfil.'}
-              </p>
-            </div>
-          </div>
-          <div
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-black ${
-              isOnline && hasAnyChannel
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-amber-50 text-amber-700'
-            }`}
-          >
-            {isOnline && hasAnyChannel ? 'Atendimento disponível' : 'Ação recomendada'}
-          </div>
-        </CardContent>
-      </Card>
-
-      <CompanyChatInbox enabled={chatEnabled} />
-    </div>
-  );
-}
 
 interface CompanyDashboardProps {
   companyId: string;
@@ -282,7 +131,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   chat: 'p2p_chat',
 };
 
-const ALWAYS_VISIBLE_TABS = new Set(['chat']);
+const ALWAYS_VISIBLE_TABS = new Set([]);
 
 const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
   analytics: {
@@ -941,9 +790,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 )}
               </TabsContent>
 
-              <TabsContent value="chat" className="mt-0 focus-visible:outline-none">
-                {renderGuardedTab('chat', <CompanyChatTab company={company} />)}
-              </TabsContent>
 
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">

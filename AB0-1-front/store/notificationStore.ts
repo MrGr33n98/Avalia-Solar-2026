@@ -14,20 +14,36 @@ export interface Notification {
   };
 }
 
+import { create } from 'zustand';
+
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string;
+  notifiable?: {
+    type: string;
+    id: number;
+    company_id?: number;
+  };
+}
+
 interface NotificationStore {
   notifications: Notification[];
   unreadCount: number;
   unreadMessagesCount: number;
   loading: boolean;
   
-  isChatOpen: boolean;
+  chatState: 'closed' | 'minimized' | 'expanded';
   
   fetchNotifications: () => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
   fetchUnreadMessagesCount: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
-  toggleChat: (open?: boolean) => void;
+  toggleChat: (state?: 'closed' | 'minimized' | 'expanded') => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
@@ -35,7 +51,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   unreadCount: 0,
   unreadMessagesCount: 0,
   loading: false,
-  isChatOpen: false,
+  chatState: 'closed',
 
   fetchNotifications: async () => {
     set({ loading: true });
@@ -136,7 +152,13 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  toggleChat: (open?: boolean) => {
-    set((state) => ({ isChatOpen: open !== undefined ? open : !state.isChatOpen }));
+  toggleChat: (state?: 'closed' | 'minimized' | 'expanded') => {
+    set((current) => {
+      if (state) return { chatState: state };
+      // Default toggle behavior: closed -> expanded -> minimized -> expanded
+      if (current.chatState === 'closed') return { chatState: 'expanded' };
+      if (current.chatState === 'expanded') return { chatState: 'minimized' };
+      return { chatState: 'expanded' };
+    });
   }
 }));

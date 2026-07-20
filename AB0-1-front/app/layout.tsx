@@ -19,6 +19,7 @@ import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import { SITE } from '@/lib/site';
 
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
+const GlobalChatWidget = dynamic(() => import('@/components/chat/GlobalChatWidget'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'Avalia Solar | Compare Empresas de Energia Solar',
@@ -158,6 +159,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Navbar />
               <AppContentFrame>{children}</AppContentFrame>
               <ComparisonFloatingBar />
+              <GlobalChatWidget />
               <ConditionalFooter />
               <MobileBottomNav />
             </Providers>

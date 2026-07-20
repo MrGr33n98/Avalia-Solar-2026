@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:14
-    pull_policy: if_not_present
+    pull_policy: missing
     container_name: ab0-postgres
     restart: unless-stopped
     mem_limit: ${POSTGRES_MEMORY_LIMIT:-320m}
@@ -17,14 +17,14 @@ services:
     networks:
       - ab0-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    pull_policy: if_not_present
+    pull_policy: missing
     container_name: ab0-redis
     restart: unless-stopped
     mem_limit: ${REDIS_MEMORY_LIMIT:-224m}
@@ -37,7 +37,7 @@ services:
     networks:
       - ab0-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -88,7 +88,7 @@ services:
     volumes:
       - storage_data:/app/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3001/health/liveness || exit 1"]
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:3001/health/liveness || exit 1" ]
       interval: 20s
       timeout: 10s
       retries: 15
@@ -161,7 +161,7 @@ services:
     networks:
       - ab0-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1"]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1" ]
       interval: 30s
       timeout: 20s
       retries: 10

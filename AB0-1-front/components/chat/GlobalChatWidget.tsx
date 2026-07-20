@@ -78,10 +78,12 @@ function formatConversationDate(value?: string | null) {
   return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
-export default function ReviewUserChatWidget() {
-  const { isChatOpen, toggleChat } = useNotificationStore();
+export default function GlobalChatWidget() {
+  const { chatState, toggleChat } = useNotificationStore();
   const { user } = useAuth();
-  const enabled = !!user && user.role === 'review';
+  const isUser = user?.role === 'review';
+  const isCompany = user?.role === 'company' || user?.role === 'admin';
+  const enabled = !!user && (isUser || isCompany);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
@@ -112,11 +114,13 @@ export default function ReviewUserChatWidget() {
   const filteredConversations = useMemo(() => {
     return conversations.filter(c => {
       if (searchQuery) {
-        return (c.company_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const query = searchQuery.toLowerCase();
+        const matchName = isUser ? c.company_name : c.user_name;
+        return (matchName || '').toLowerCase().includes(query);
       }
-      return true; // Simple filtering for now, all in one list
+      return true;
     });
-  }, [conversations, searchQuery]);
+  }, [conversations, searchQuery, isUser]);
 
   const upsertConversation = useCallback((conversation: Conversation) => {
     setConversations((current) => {
@@ -149,18 +153,21 @@ export default function ReviewUserChatWidget() {
     }
   }, []);
 
-  const applyReadReceipt = useCallback((payload: ChatCablePayload) => {
-    if (!payload.read_at) return;
-    setMessages((current) =>
-      current.map((message) => {
-        const matchesExplicitId = payload.message_ids?.includes(message.id);
-        const matchesReaderSide = payload.reader_type === 'Company' && message.sender_type === 'User';
-        return matchesExplicitId || matchesReaderSide
-          ? { ...message, read_at: message.read_at || payload.read_at || null }
-          : message;
-      })
-    );
-  }, []);
+  const applyReadReceipt = useCallback(
+    (payload: ChatCablePayload) => {
+      if (!selectedConversationId || !enabled || chatState === 'closed') return;
+      setMessages((current) =>
+        current.map((message) => {
+          const matchesExplicitId = payload.message_ids?.includes(message.id);
+          const matchesReaderSide = payload.reader_type === 'Company' && message.sender_type === 'User';
+          return matchesExplicitId || matchesReaderSide
+            ? { ...message, read_at: message.read_at || payload.read_at || null }
+            : message;
+        })
+      );
+    },
+    [selectedConversationId, enabled, chatState]
+  );
 
   const handleRealtimePayload = useCallback(
     (payload: ChatCablePayload) => {
@@ -204,13 +211,14 @@ export default function ReviewUserChatWidget() {
   };
 
   useEffect(() => {
-    if (enabled && isChatOpen) {
+    if (enabled && chatState !== 'closed') {
       loadConversations();
     }
-  }, [enabled, isChatOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, chatState]);
 
   useEffect(() => {
-    if (!enabled || !isChatOpen) {
+    if (!enabled || chatState === 'closed') {
       listChannelRef.current?.unsubscribe();
       listChannelRef.current = null;
       return;
@@ -226,10 +234,10 @@ export default function ReviewUserChatWidget() {
         },
       }
     );
-  }, [enabled, isChatOpen, upsertConversation]);
+  }, [enabled, chatState, upsertConversation]);
 
   useEffect(() => {
-    if (!selectedConversationId || !enabled || !isChatOpen) {
+    if (!selectedConversationId || !enabled || chatState === 'closed') {
       setMessages([]);
       channelRef.current?.unsubscribe();
       channelRef.current = null;
@@ -251,10 +259,10 @@ export default function ReviewUserChatWidget() {
       }
     };
     loadMessages();
-  }, [enabled, selectedConversationId, isChatOpen]);
+  }, [enabled, selectedConversationId, chatState]);
 
   useEffect(() => {
-    if (!selectedConversationId || !enabled || !isChatOpen) return;
+    if (!selectedConversationId || !enabled || chatState === 'closed') return;
 
     channelRef.current?.unsubscribe();
     setRealtimeStatus('connecting');
@@ -277,7 +285,7 @@ export default function ReviewUserChatWidget() {
       channelRef.current?.unsubscribe();
       channelRef.current = null;
     };
-  }, [enabled, handleRealtimePayload, selectedConversationId, isChatOpen]);
+  }, [enabled, handleRealtimePayload, selectedConversationId, chatState]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -340,10 +348,27 @@ export default function ReviewUserChatWidget() {
     }
   };
 
-  if (!enabled || !isChatOpen) return null;
+  if (!enabled || chatState === 'closed') return null;
+
+  if (chatState === 'minimized') {
+    return (
+      <div className="fixed z-50 flex items-center justify-between bg-white bottom-0 right-4 sm:right-8 h-12 w-[320px] rounded-t-lg border border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 cursor-pointer hover:bg-slate-50 transition-colors"
+           onClick={() => toggleChat('expanded')}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+            <MessageSquare className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-bold text-slate-900">Mensagens</span>
+        </div>
+        <button className="text-slate-500 hover:text-slate-700" onClick={(e) => { e.stopPropagation(); toggleChat('expanded'); }}>
+          <Minus className="h-5 w-5 rotate-180" />
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white sm:bottom-4 sm:right-4 sm:top-auto sm:left-auto sm:h-[600px] sm:w-[380px] sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-2xl">
+    <div className="fixed inset-0 z-50 flex flex-col bg-white sm:bottom-0 sm:right-8 sm:top-auto sm:left-auto sm:h-[600px] sm:w-[380px] sm:rounded-t-xl sm:border sm:border-b-0 sm:border-slate-200 sm:shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
       {selectedConversation ? (
         // MESSAGE VIEW
         <div className="flex h-full flex-col">
@@ -356,20 +381,28 @@ export default function ReviewUserChatWidget() {
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700 relative">
-                {(selectedConversation.company_name || 'E').slice(0, 1).toUpperCase()}
+                {((isUser ? selectedConversation.company_name : selectedConversation.user_name) || 'E').slice(0, 1).toUpperCase()}
                 <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black text-slate-900 line-clamp-1">{selectedConversation.company_name}</span>
+                <span className="text-sm font-black text-slate-900 line-clamp-1">{isUser ? selectedConversation.company_name : selectedConversation.user_name}</span>
                 <span className="text-xs text-slate-500">{typingByCompany ? 'Digitando...' : 'Online'}</span>
               </div>
             </div>
-            <button
-              onClick={() => toggleChat(false)}
-              className="rounded-full p-2 text-slate-500 hover:bg-slate-100 sm:hidden"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => toggleChat('minimized')}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+              >
+                <Minus className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => toggleChat('closed')}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100 sm:hidden"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 space-y-4">
@@ -461,11 +494,11 @@ export default function ReviewUserChatWidget() {
           <div className="flex items-center justify-between border-b border-slate-100 p-4">
             <h3 className="text-lg font-black text-slate-900">Mensagens</h3>
             <div className="flex items-center gap-2">
-              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full sm:hidden" onClick={() => toggleChat(false)}>
-                <X className="h-5 w-5" />
-              </button>
-              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full hidden sm:block" onClick={() => toggleChat(false)}>
+              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full" onClick={() => toggleChat('minimized')}>
                 <Minus className="h-5 w-5" />
+              </button>
+              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full sm:hidden" onClick={() => toggleChat('closed')}>
+                <X className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -515,11 +548,11 @@ export default function ReviewUserChatWidget() {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700 relative">
-                          {(conversation.company_name || 'E').slice(0, 1).toUpperCase()}
+                          {((isUser ? conversation.company_name : conversation.user_name) || 'E').slice(0, 1).toUpperCase()}
                           <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500"></span>
                         </div>
                         <div className="min-w-0 flex-col flex justify-center">
-                          <span className="text-sm font-bold text-slate-900 truncate">{conversation.company_name}</span>
+                          <span className="text-sm font-bold text-slate-900 truncate">{isUser ? conversation.company_name : conversation.user_name}</span>
                           <span className="text-xs text-slate-500 truncate line-clamp-1">{conversation.last_message || 'Nova conversa'}</span>
                         </div>
                       </div>
