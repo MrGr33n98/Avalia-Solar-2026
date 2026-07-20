@@ -35,7 +35,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   unreadCount: 0,
   unreadMessagesCount: 0,
   loading: false,
-  chatState: 'closed',
+  chatState: 'minimized',
 
   fetchNotifications: async () => {
     set({ loading: true });
