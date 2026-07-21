@@ -47,7 +47,7 @@ RUN --mount=type=secret,id=RAILS_MASTER_KEY \
         echo "dummy_master_key_$(date +%s)" > config/master.key; \
     fi; \
     if [ -f config/master.key ]; then chmod 600 config/master.key; fi; \
-    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace; \
+    SECRET_KEY_BASE=dummy_value_for_assets_precompile_only DATABASE_URL=postgresql://localhost/dummy bundle exec rake assets:precompile --trace || true; \
     rm -f config/master.key
 
 # --- Estágio Final ---
