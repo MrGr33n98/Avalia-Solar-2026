@@ -30,6 +30,7 @@ gem 'kaminari'
 
 # PostHog analytics (product analytics + session replay + feature flags)
 gem 'posthog-rails'
+gem 'newrelic_rpm'
 
 # TASK-008: Structured logging
 gem 'amazing_print' # Better console output
