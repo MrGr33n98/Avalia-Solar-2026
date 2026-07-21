@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { type Conversation, type DirectMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 
 interface RightChatSidebarProps {
   activeConversation: Conversation | null;

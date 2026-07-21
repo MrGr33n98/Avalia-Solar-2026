@@ -35,6 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 import { RichLinkPreview } from '@/components/chat/RichLinkPreview';
 import { RightChatSidebar } from './components/RightChatSidebar';
 
@@ -930,23 +931,28 @@ export default function ChatClient() {
                           )}
                           {attachmentList.length > 0 && (
                             <div className="mt-2 space-y-1">
-                              {attachmentList.map((attachment, attIdx) => (
-                                <a
-                                  key={attachment.id || attIdx}
-                                  href={attachment.url || '#'}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className={cn(
-                                    'flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium',
-                                    isMine
-                                      ? 'bg-white/15 text-white hover:bg-white/25'
-                                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                  )}
-                                >
-                                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                                  <span className="truncate">{attachment.filename || 'Anexo'}</span>
-                                </a>
-                              ))}
+                              {attachmentList.map((attachment, attIdx) => {
+                                const targetUrl = attachment.url ? getFullImageUrl(attachment.url) : '#';
+                                const fileName = attachment.filename || 'Anexo do Orçamento';
+                                return (
+                                  <a
+                                    key={attachment.id || attIdx}
+                                    href={targetUrl}
+                                    download={fileName}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={cn(
+                                      'flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium',
+                                      isMine
+                                        ? 'bg-white/15 text-white hover:bg-white/25'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    )}
+                                  >
+                                    <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="truncate">{fileName}</span>
+                                  </a>
+                                );
+                              })}
                             </div>
                           )}
                           {isMine && (

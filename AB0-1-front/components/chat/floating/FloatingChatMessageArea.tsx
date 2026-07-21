@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { CheckCheck, Paperclip, Loader2, MessageCircle, FileText } from 'lucide-react';
 import { type DirectMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getFullImageUrl } from '@/utils/image';
 import { RichLinkPreview } from '../RichLinkPreview';
 
 interface FloatingChatMessageAreaProps {
@@ -91,23 +92,28 @@ export function FloatingChatMessageArea({
                 </>
               )}
 
-              {attachmentList.map((att, i) => (
-                <a
-                  key={i}
-                  href={att.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={cn(
-                    'flex items-center gap-2 mt-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                    isSelf
-                      ? 'bg-black/15 hover:bg-black/25 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200'
-                  )}
-                >
-                  <FileText className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">Anexo do Orçamento</span>
-                </a>
-              ))}
+              {attachmentList.map((att, i) => {
+                const targetUrl = att.url ? getFullImageUrl(att.url) : '#';
+                const fileName = att.filename || att.name || 'Anexo do Orçamento';
+                return (
+                  <a
+                    key={i}
+                    href={targetUrl}
+                    download={fileName}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={cn(
+                      'flex items-center gap-2 mt-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+                      isSelf
+                        ? 'bg-black/15 hover:bg-black/25 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200'
+                    )}
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{fileName}</span>
+                  </a>
+                );
+              })}
 
               <div
                 className={cn(
