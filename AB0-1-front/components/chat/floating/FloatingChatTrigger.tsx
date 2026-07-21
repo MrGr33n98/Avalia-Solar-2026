@@ -25,9 +25,9 @@ export function FloatingChatTrigger({
     <div
       onClick={onExpand}
       className={cn(
-        'fixed bottom-0 right-4 sm:right-8 z-50 flex h-12 w-[290px] sm:w-[320px] cursor-pointer items-center justify-between',
-        'rounded-t-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 shadow-[0_-4px_16px_rgba(0,0,0,0.1)]',
-        'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-[0_-6px_20px_rgba(0,0,0,0.14)]',
+        'fixed bottom-0 right-4 sm:right-8 z-50 flex h-14 w-[290px] sm:w-[320px] cursor-pointer items-center justify-between',
+        'rounded-t-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]',
+        'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-[0_-6px_24px_rgba(0,0,0,0.16)]',
         className
       )}
     >

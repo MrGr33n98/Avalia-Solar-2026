@@ -486,7 +486,7 @@ export default function ChatWidget() {
 
   return (
     <div
-      className={`fixed bottom-[calc(5.5rem+var(--safe-area-inset-bottom))] right-4 font-sans flex flex-col items-end pointer-events-none sm:bottom-5 sm:right-5 ${
+      className={`fixed bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] right-4 font-sans flex flex-col items-end pointer-events-none sm:bottom-20 sm:right-6 ${
         isOpen || showCompactHelp ? 'z-[9010]' : 'z-[9000]'
       }`}
     >
@@ -1075,19 +1075,19 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-[60px] sm:w-[60px]"
+          className="group pointer-events-auto relative flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-12 sm:w-12"
           aria-label={showCompactHelp ? 'Fechar assistente de IA (inteligência artificial)' : 'Abrir assistente de IA (inteligência artificial)'}
           aria-expanded={showCompactHelp}
           aria-controls={showCompactHelp ? compactHelpId : undefined}
           aria-haspopup="dialog"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1.5 py-0.5 text-[9px] font-bold text-white dark:border-zinc-900" aria-hidden="true">
+          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1 py-0.2 text-[8px] font-bold text-white dark:border-zinc-900" aria-hidden="true">
             IA
           </span>
 
           {/* Avatar Image as launcher icon */}
-          <span className="flex h-10 w-10 overflow-hidden rounded-full bg-white">
+          <span className="flex h-8 w-8 overflow-hidden rounded-full bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/mobivolt-ai-avaliasolar.webp"
