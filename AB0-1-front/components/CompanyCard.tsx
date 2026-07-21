@@ -335,7 +335,7 @@ export default function CompanyCard({
   );
 
   const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
-  const p2pChatEnabled = company.actions.p2p_chat_enabled;
+  const p2pChatEnabled = company.actions.p2p_chat_enabled === true || (company as any)?.p2p_chat_enabled === true;
   const selectedInComparison = isInComparison(id);
 
   // ── Feature gates controlados via planos pagos ──
@@ -541,7 +541,9 @@ export default function CompanyCard({
                 {selectedInComparison ? 'Selecionada' : 'Comparar'}
               </Button>
 
-              <CompanyChatButton companyId={id} companyName={name} variant="button" className="w-full h-9 rounded-xl text-xs" />
+              {p2pChatEnabled && (
+                <CompanyChatButton companyId={id} companyName={name} variant="button" className="w-full h-9 rounded-xl text-xs" />
+              )}
 
               {canRequestQuote ? (
                 <Button
@@ -934,7 +936,7 @@ export default function CompanyCard({
             />
           )}
 
-          <CompanyChatButton companyId={id} companyName={name} variant="compact" />
+          {p2pChatEnabled && <CompanyChatButton companyId={id} companyName={name} variant="compact" />}
 
           {canRequestQuote ? (
             <Button

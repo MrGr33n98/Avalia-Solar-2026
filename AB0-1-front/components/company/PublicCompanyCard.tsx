@@ -62,6 +62,10 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
     updated_at: '',
   } as Company;
 
+  const p2pChatEnabled =
+    company.p2p_chat_enabled === true ||
+    (company as any)?.actions?.p2p_chat_enabled === true;
+
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
       <div className="flex items-start gap-3">
@@ -126,7 +130,9 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         >
           Ver perfil
         </Link>
-        <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-xl text-xs" />
+        {p2pChatEnabled && (
+          <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-xl text-xs" />
+        )}
         <ComparisonToggleButton
           company={comparisonCompany}
           variant="card"

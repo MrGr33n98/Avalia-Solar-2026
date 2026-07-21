@@ -64,7 +64,7 @@ export default function CompanyHero({
     company.p2p_chat_enabled === true ||
     (company as any)?.actions?.p2p_chat_enabled === true ||
     (Boolean(company.feature_access) && isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatVisible = true;
+  const directChatVisible = directChatAvailable;
   const directChatEnabled = canUseBuyerChat;
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);

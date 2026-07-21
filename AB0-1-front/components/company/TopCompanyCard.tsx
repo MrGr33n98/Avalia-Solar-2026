@@ -53,6 +53,10 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
   const featureAccessMap = company.feature_access ?? {};
   const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
   
+  const p2pChatEnabled =
+    company.p2p_chat_enabled === true ||
+    (company as any)?.actions?.p2p_chat_enabled === true;
+  
   const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || { border: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-400', label: `#${rank}` };
   const companyPath = buildCompanyPath(company.slug || String(id));
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
@@ -146,7 +150,9 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
         </p>
 
         <div className="mt-auto pt-2 grid grid-cols-2 gap-2">
-          <CompanyChatButton companyId={id} companyName={name} variant="button" className="h-10 rounded-xl text-xs" />
+          {p2pChatEnabled && (
+            <CompanyChatButton companyId={id} companyName={name} variant="button" className="h-10 rounded-xl text-xs" />
+          )}
           <Button
             variant="outline"
             className="h-10 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50"

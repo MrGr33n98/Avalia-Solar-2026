@@ -30,13 +30,13 @@ export function CompanyCardEnhanced({
       company.rating ||
       0
   );
-  const reviewsCount = Number(
-    company.reputation?.rating_count || company.reviews_count || company.total_reviews || 0
-  );
   const services = (company.services_offered || company.project_types || [])
     .filter(Boolean)
     .slice(0, 3);
   const href = buildCompanyPath(company.slug, company.name, company.id);
+  const p2pChatEnabled =
+    company.p2p_chat_enabled === true ||
+    (company as any)?.actions?.p2p_chat_enabled === true;
 
   return (
     <article className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
@@ -97,7 +97,9 @@ export function CompanyCardEnhanced({
         >
           Ver perfil
         </Link>
-        <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-lg text-xs" />
+        {p2pChatEnabled && (
+          <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-lg text-xs" />
+        )}
         <ReviewCompanyButton
           company={company}
           className="col-span-2 h-10 rounded-lg text-xs"
