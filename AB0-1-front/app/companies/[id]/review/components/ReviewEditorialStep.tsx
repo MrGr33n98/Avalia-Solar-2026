@@ -56,13 +56,13 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         <h3 className="text-lg font-semibold text-[#0B1F4B]">Sua experiência em detalhes</h3>
 
         <div className="space-y-2">
-          <Label htmlFor="headline" className="text-sm font-bold">
+          <Label htmlFor="headline" className="text-sm font-bold text-slate-900">
             Título da sua Avaliação
           </Label>
           <input
             id="headline"
             placeholder="Ex: Instalação rápida e suporte excelente"
-            className="h-12 w-full rounded-[2px] border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#0B1F4B] focus:ring-2 focus:ring-[#0B1F4B]/20"
+            className="h-12 w-full rounded-[2px] border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#0B1F4B] focus:ring-2 focus:ring-[#0B1F4B]/20"
             value={data.headline}
             onChange={(e) => onChange({ ...data, headline: e.target.value })}
           />
@@ -71,7 +71,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Prós */}
-        <div className="min-h-44 space-y-3 border border-slate-300 p-4 sm:p-5">
+        <div className="min-h-44 space-y-3 border border-slate-300 bg-white p-4 sm:p-5">
           <Label
             htmlFor="pro-input"
             className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
@@ -102,7 +102,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
               <input
                 id="pro-input"
                 placeholder="Adicionar ponto positivo..."
-                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
+                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
                 value={newPro}
                 onChange={(e) => setNewPro(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPro())}
@@ -113,7 +113,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
                 size="icon"
                 variant="outline"
                 onClick={handleAddPro}
-                className="h-11 w-11 rounded-[2px] border-slate-300 text-[#0B1F4B]"
+                className="h-11 w-11 rounded-[2px] border-slate-300 bg-white text-[#0B1F4B] hover:bg-slate-100"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -122,7 +122,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         </div>
 
         {/* Contras */}
-        <div className="min-h-44 space-y-3 border border-slate-300 p-4 sm:p-5">
+        <div className="min-h-44 space-y-3 border border-slate-300 bg-white p-4 sm:p-5">
           <Label
             htmlFor="con-input"
             className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
@@ -153,7 +153,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
               <input
                 id="con-input"
                 placeholder="Adicionar ponto negativo..."
-                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
+                className="min-w-0 flex-1 rounded-[2px] border border-slate-300 bg-white p-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B1F4B]"
                 value={newCon}
                 onChange={(e) => setNewCon(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCon())}
@@ -164,7 +164,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
                 size="icon"
                 variant="outline"
                 onClick={handleAddCon}
-                className="h-11 w-11 rounded-[2px] border-slate-300 text-[#0B1F4B]"
+                className="h-11 w-11 rounded-[2px] border-slate-300 bg-white text-[#0B1F4B] hover:bg-slate-100"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -174,7 +174,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="comment" className="text-sm font-bold">
+        <Label htmlFor="comment" className="text-sm font-bold text-slate-900">
           Relato detalhado da experiência
         </Label>
         <Textarea
@@ -183,9 +183,9 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
           value={data.comment}
           onChange={(e) => onChange({ ...data, comment: e.target.value })}
           aria-describedby="comment-requirement"
-          className="min-h-[120px] rounded-[2px] border-slate-300 focus:ring-2 focus:ring-[#0B1F4B]"
+          className="min-h-[120px] rounded-[2px] border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-[#0B1F4B]"
         />
-        <p id="comment-requirement" className="text-right text-[11px] text-muted-foreground">
+        <p id="comment-requirement" className="text-right text-[11px] text-slate-500">
           Mínimo de 10 caracteres
         </p>
       </div>
@@ -207,7 +207,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         <Textarea
           id="buyerTip"
           placeholder="Ex: Peça o cronograma detalhado antes de assinar o contrato."
-          className="h-24 resize-none rounded-[2px] border-slate-300 bg-white text-sm focus:ring-2 focus:ring-[#0B1F4B]"
+          className="h-24 resize-none rounded-[2px] border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm focus:ring-2 focus:ring-[#0B1F4B]"
           value={data.buyerTip}
           maxLength={500}
           onChange={(e) => onChange({ ...data, buyerTip: e.target.value })}
