@@ -1,7 +1,7 @@
 # Configuration file for New Relic APM
 common: &default_settings
   license_key: '<%= ENV["NEW_RELIC_LICENSE_KEY"] %>'
-  app_name: <%= ENV["NEW_RELIC_APP_NAME"] || "Avalia Solar (Produção)" %>
+  app_name: '<%= ENV["NEW_RELIC_APP_NAME"] || "Avalia Solar (Production APM)" %>'
   monitor_mode: true
   developer_mode: false
   log_level: info
