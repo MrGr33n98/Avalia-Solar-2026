@@ -26,9 +26,14 @@ import {
 import { SearchEmptyState } from '@/components/search/SearchEmptyState';
 import { SearchResultsHeader, type SearchSort } from '@/components/search/SearchResultsHeader';
 import { SearchTabs, type SearchTab } from '@/components/search/SearchTabs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import type { Company, Product, SearchAllResponse } from '@/lib/api';
 import { searchApi } from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -103,6 +108,7 @@ function SearchPageContent() {
   const query = searchParams.get('q') || '';
   const urlCity = searchParams.get('city') || '';
   const urlVerified = searchParams.get('verified') === 'true';
+  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const tabParam = searchParams.get('tab');
   const sortParam = searchParams.get('sort');
 
@@ -111,6 +117,11 @@ function SearchPageContent() {
   const [results, setResults] = useState<
     Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles' | 'reviews'>
   >({ companies: [], products: [], categories: [], articles: [], reviews: [] });
+  const [paginationMeta, setPaginationMeta] = useState<{
+    page: number;
+    total_pages: number;
+    total_count: number;
+  }>({ page: 1, total_pages: 1, total_count: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SearchTab>(isSearchTab(tabParam) ? tabParam : 'all');
@@ -160,6 +171,8 @@ function SearchPageContent() {
       const apiFilters = {
         ...(urlCity ? { city: urlCity } : {}),
         sort: toApiSort(sort),
+        page: pageParam,
+        per_page: 24,
       };
       const response = await searchApi.all(query, apiFilters);
       const companies = response.companies || [];
@@ -170,22 +183,44 @@ function SearchPageContent() {
               ...(urlCity ? { city: urlCity } : {}),
               status: 'active',
               sort: toApiSort(sort),
+              page: pageParam,
               limit: 24,
               fields: 'card',
             })
           : [];
+
+      const mergedCompanies = mergeUniqueCompanies(companies, fallbackCompanies);
+      const rawCount = response.counts?.companies ??
+        (typeof response.meta?.total_count === 'object'
+          ? response.meta.total_count.companies
+          : typeof response.meta?.total_count === 'number'
+          ? response.meta.total_count
+          : undefined);
+
+      const totalCompaniesCount = typeof rawCount === 'number' ? rawCount : mergedCompanies.length;
+      const totalPagesVal = response.pagination?.total_pages ||
+        response.meta?.total_pages ||
+        Math.max(1, Math.ceil(totalCompaniesCount / 24));
+
       setResults({
-        companies: mergeUniqueCompanies(companies, fallbackCompanies),
+        companies: mergedCompanies,
         products: response.products || [],
         categories: response.categories || [],
         articles: response.articles || [],
         reviews: response.reviews || [],
       });
+
+      setPaginationMeta({
+        page: pageParam,
+        total_pages: totalPagesVal,
+        total_count: Math.max(totalCompaniesCount, mergedCompanies.length),
+      });
+
       track('search_results_loaded', {
         search_term: query,
         city: urlCity || undefined,
         products_count: response.products?.length || 0,
-        companies_count: companies.length || fallbackCompanies.length || 0,
+        companies_count: mergedCompanies.length,
         companies_fallback_count: fallbackCompanies.length || undefined,
       });
     } catch (caughtError) {
@@ -195,7 +230,7 @@ function SearchPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [query, sort, urlCity]);
+  }, [query, sort, urlCity, pageParam]);
 
   useEffect(() => {
     void performSearch();
@@ -277,10 +312,17 @@ function SearchPageContent() {
   }, [filters, results.companies, sort]);
 
   const counts: Record<SearchTab, number> = {
-    all: filteredProducts.length + filteredCompanies.length,
+    all: filteredProducts.length + (paginationMeta.total_count || filteredCompanies.length),
     products: filteredProducts.length,
-    companies: filteredCompanies.length,
+    companies: paginationMeta.total_count || filteredCompanies.length,
     reviews: results.reviews?.length || 0,
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage <= 1) params.delete('page');
+    else params.set('page', newPage.toString());
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -527,7 +569,7 @@ function SearchPageContent() {
                       <ResultSection
                         icon={<Building2 className="h-5 w-5 text-blue-600" />}
                         title="Empresas"
-                        count={filteredCompanies.length}
+                        count={paginationMeta.total_count || filteredCompanies.length}
                         action={
                           activeTab === 'all' ? (
                             <button
@@ -549,6 +591,52 @@ function SearchPageContent() {
                             />
                           ))}
                         </div>
+
+                        {paginationMeta.total_pages > 1 && (
+                          <div className="mt-6 flex justify-center">
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (paginationMeta.page > 1) handlePageChange(paginationMeta.page - 1);
+                                    }}
+                                    className={paginationMeta.page <= 1 ? 'pointer-events-none opacity-50' : ''}
+                                  />
+                                </PaginationItem>
+                                {Array.from({ length: paginationMeta.total_pages }).map((_, idx) => {
+                                  const p = idx + 1;
+                                  return (
+                                    <PaginationItem key={p}>
+                                      <PaginationLink
+                                        href="#"
+                                        isActive={p === paginationMeta.page}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handlePageChange(p);
+                                        }}
+                                      >
+                                        {p}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                  );
+                                })}
+                                <PaginationItem>
+                                  <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (paginationMeta.page < paginationMeta.total_pages) handlePageChange(paginationMeta.page + 1);
+                                    }}
+                                    className={paginationMeta.page >= paginationMeta.total_pages ? 'pointer-events-none opacity-50' : ''}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
+                        )}
                       </ResultSection>
                     ) : null}
 
