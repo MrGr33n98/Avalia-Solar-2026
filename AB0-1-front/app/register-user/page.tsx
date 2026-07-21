@@ -251,7 +251,7 @@ export default function RegisterUserPage() {
                         onChange={(e) => setName(e.target.value)} 
                         required 
                         aria-required="true" 
-                        className="pl-10 rounded-xl h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-colors" 
+                        className="pl-10 rounded-xl h-12 border-slate-200 bg-white text-slate-900 focus:bg-white transition-colors" 
                       />
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export default function RegisterUserPage() {
                         onChange={(e) => setEmail(e.target.value)} 
                         required 
                         aria-required="true" 
-                        className="pl-10 rounded-xl h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-colors" 
+                        className="pl-10 rounded-xl h-12 border-slate-200 bg-white text-slate-900 focus:bg-white transition-colors" 
                       />
                     </div>
                   </div>
@@ -289,7 +289,7 @@ export default function RegisterUserPage() {
                         onChange={(e) => setPassword(e.target.value)} 
                         required 
                         aria-required="true" 
-                        className="pl-10 rounded-xl h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-colors" 
+                        className="pl-10 rounded-xl h-12 border-slate-200 bg-white text-slate-900 focus:bg-white transition-colors" 
                       />
                     </div>
                     {password && (
@@ -316,7 +316,7 @@ export default function RegisterUserPage() {
                         onChange={(e) => setPasswordConfirmation(e.target.value)} 
                         required 
                         aria-required="true" 
-                        className="pl-10 rounded-xl h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-colors" 
+                        className="pl-10 rounded-xl h-12 border-slate-200 bg-white text-slate-900 focus:bg-white transition-colors" 
                       />
                     </div>
                   </div>
@@ -334,7 +334,7 @@ export default function RegisterUserPage() {
                         onChange={(e) => setDateOfBirth(e.target.value)} 
                         required 
                         aria-required="true" 
-                        className="pl-10 rounded-xl h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-colors text-slate-700" 
+                        className="pl-10 rounded-xl h-12 border-slate-200 bg-white text-slate-900 focus:bg-white transition-colors" 
                       />
                     </div>
                     {!isAdult && dateOfBirth && (<p className="text-xs font-medium text-red-600 mt-1 px-1">É necessário ser maior de 18 anos</p>)}

@@ -195,13 +195,13 @@ export default function RegisterCompanyTab() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">
+            <Label htmlFor="name" className="text-slate-700 font-semibold text-sm">
               Nome Completo <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
               placeholder="Seu nome"
-              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.name ? 'border-red-500' : ''}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white focus-visible:ring-blue-500/25 ${errors.name ? 'border-red-500' : ''}`}
               {...register('name', {
                 required: 'Nome é obrigatório',
                 minLength: { value: 3, message: 'Mínimo 3 caracteres' },
@@ -211,14 +211,14 @@ export default function RegisterCompanyTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">
+            <Label htmlFor="email" className="text-slate-700 font-semibold text-sm">
               E-mail Corporativo <span className="text-red-500">*</span>
             </Label>
             <Input
               id="email"
               type="email"
               placeholder="voce@suaempresa.com"
-              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.email ? 'border-red-500' : ''}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white focus-visible:ring-blue-500/25 ${errors.email ? 'border-red-500' : ''}`}
               {...register('email', {
                 required: 'E-mail é obrigatório',
                 pattern: {
@@ -231,13 +231,13 @@ export default function RegisterCompanyTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">
+            <Label htmlFor="phone" className="text-slate-700 font-semibold text-sm">
               Telefone / WhatsApp <span className="text-red-500">*</span>
             </Label>
             <Input
               id="phone"
               placeholder="(00) 00000-0000"
-              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.phone ? 'border-red-500' : ''}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white focus-visible:ring-blue-500/25 ${errors.phone ? 'border-red-500' : ''}`}
               {...register('phone', {
                 required: 'Telefone é obrigatório',
               })}
@@ -247,14 +247,14 @@ export default function RegisterCompanyTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">
+            <Label htmlFor="password" className="text-slate-700 font-semibold text-sm">
               Senha <span className="text-red-500">*</span>
             </Label>
             <Input
               id="password"
               type="password"
               placeholder="********"
-              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.password ? 'border-red-500' : ''}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white focus-visible:ring-blue-500/25 ${errors.password ? 'border-red-500' : ''}`}
               {...register('password', {
                 required: 'Senha é obrigatória',
                 minLength: { value: 8, message: 'Mínimo 8 caracteres' },
@@ -266,14 +266,14 @@ export default function RegisterCompanyTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="passwordConfirmation">
+            <Label htmlFor="passwordConfirmation" className="text-slate-700 font-semibold text-sm">
               Confirmar Senha <span className="text-red-500">*</span>
             </Label>
             <Input
               id="passwordConfirmation"
               type="password"
               placeholder="********"
-              className={`h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25 ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white focus-visible:ring-blue-500/25 ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
               {...register('passwordConfirmation', {
                 required: 'Confirmação de senha é obrigatória',
                 validate: (val) => val === password || 'As senhas não conferem',

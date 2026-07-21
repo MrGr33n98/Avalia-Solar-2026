@@ -281,20 +281,20 @@ export default function RegisterUserTab() {
           </p>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo *</Label>
+            <Label htmlFor="name" className="text-slate-700 font-semibold text-sm">Nome Completo *</Label>
             <Input
               id="name"
               {...register('name', {
                 required: 'Nome é obrigatório',
                 minLength: { value: 3, message: 'Mínimo 3 caracteres' },
               })}
-              className={`h-11 rounded-md ${errors.name ? 'border-red-500' : 'border-slate-200'}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white ${errors.name ? 'border-red-500' : ''}`}
             />
             {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail *</Label>
+            <Label htmlFor="email" className="text-slate-700 font-semibold text-sm">E-mail *</Label>
             <Input
               id="email"
               type="email"
@@ -305,28 +305,28 @@ export default function RegisterUserTab() {
                   message: 'E-mail inválido',
                 },
               })}
-              className={`h-11 rounded-md ${errors.email ? 'border-red-500' : 'border-slate-200'}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white ${errors.email ? 'border-red-500' : ''}`}
             />
             {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city">Cidade *</Label>
+              <Label htmlFor="city" className="text-slate-700 font-semibold text-sm">Cidade *</Label>
               <Input
                 id="city"
                 {...register('city', { required: 'Cidade é obrigatória' })}
-                className={`h-11 rounded-md ${errors.city ? 'border-red-500' : 'border-slate-200'}`}
+                className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white ${errors.city ? 'border-red-500' : ''}`}
               />
               {errors.city && <span className="text-xs text-red-500">{errors.city.message}</span>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">Estado (UF)</Label>
+              <Label htmlFor="state" className="text-slate-700 font-semibold text-sm">Estado (UF)</Label>
               <Select onValueChange={(val) => setValue('state', val)}>
-                <SelectTrigger id="state" className="h-11 rounded-md border-slate-200">
+                <SelectTrigger id="state" className="h-11 rounded-md bg-white text-slate-900 border-slate-200">
                   <SelectValue placeholder="UF" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white text-slate-900 border-slate-200">
                   {UFS.map((uf) => (
                     <SelectItem key={uf} value={uf}>
                       {uf}
@@ -338,18 +338,18 @@ export default function RegisterUserTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Telefone / WhatsApp</Label>
+            <Label htmlFor="phone" className="text-slate-700 font-semibold text-sm">Telefone / WhatsApp</Label>
             <Input
               id="phone"
               {...register('phone')}
               onChange={handlePhoneChange}
               placeholder="(00) 00000-0000"
-              className="h-11 rounded-md border-slate-200"
+              className="h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha *</Label>
+            <Label htmlFor="password" className="text-slate-700 font-semibold text-sm">Senha *</Label>
             <Input
               id="password"
               type="password"
@@ -364,7 +364,7 @@ export default function RegisterUserTab() {
                   return true;
                 },
               })}
-              className={`h-11 rounded-md ${errors.password ? 'border-red-500' : 'border-slate-200'}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white ${errors.password ? 'border-red-500' : ''}`}
             />
             {errors.password && (
               <span className="text-xs text-red-500">{errors.password.message}</span>
@@ -372,14 +372,14 @@ export default function RegisterUserTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+            <Label htmlFor="confirmPassword" className="text-slate-700 font-semibold text-sm">Confirmar Senha *</Label>
             <Input
               id="confirmPassword"
               type="password"
               {...register('passwordConfirmation', {
                 validate: (val) => val === password || 'As senhas não conferem',
               })}
-              className={`h-11 rounded-md ${errors.passwordConfirmation ? 'border-red-500' : 'border-slate-200'}`}
+              className={`h-11 rounded-md bg-white text-slate-900 border-slate-200 focus:bg-white ${errors.passwordConfirmation ? 'border-red-500' : ''}`}
             />
             {errors.passwordConfirmation && (
               <span className="text-xs text-red-500">{errors.passwordConfirmation.message}</span>
