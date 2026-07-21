@@ -6,6 +6,8 @@ import CategoryClientComponent from '@/app/categories/[slug]/CategoryClientCompo
 import { absoluteUrl } from '@/lib/site';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 
+import { buildGeoOtherMeta } from '@/lib/seo/geo-metadata';
+
 interface LocalRankingPageProps {
   params: { category_slug: string; state: string; city: string };
   searchParams: { [key: string]: string | string[] | undefined };
@@ -41,9 +43,15 @@ export async function generateMetadata({ params }: LocalRankingPageProps): Promi
 
     const totalCount = companiesResponse?.meta?.total_count || companiesResponse?.companies?.length || 0;
 
+    const geoMeta = buildGeoOtherMeta({
+      city: cityName,
+      state: stateName,
+    });
+
     return {
       title,
       description,
+      other: geoMeta,
       alternates: {
         canonical: canonicalUrl,
       },
