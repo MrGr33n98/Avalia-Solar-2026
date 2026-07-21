@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useNotificationStore, NotificationFilter } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
 
-export const NotificationFilters: React.FC = () => {
+function NotificationFiltersContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentFilterParam = (searchParams.get('filter') as NotificationFilter) || 'all';
 
@@ -30,7 +31,8 @@ export const NotificationFilters: React.FC = () => {
     } else {
       params.set('filter', id);
     }
-    router.push(`/review-dashboard/notifications?${params.toString()}`, { scroll: false });
+    const targetUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(targetUrl, { scroll: false });
   };
 
   const selectedFilter = activeFilter || currentFilterParam;
@@ -74,5 +76,13 @@ export const NotificationFilters: React.FC = () => {
         );
       })}
     </nav>
+  );
+}
+
+export const NotificationFilters: React.FC = () => {
+  return (
+    <Suspense fallback={<div className="h-9 w-full animate-pulse bg-slate-100 rounded-lg" />}>
+      <NotificationFiltersContent />
+    </Suspense>
   );
 };

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import React, { useEffect, useState, Suspense } from 'react';
 import { CheckCheck, Settings2, Bell, RefreshCw } from 'lucide-react';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { NotificationFilters } from '@/components/notifications/NotificationFilters';
@@ -121,7 +123,9 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filter Tabs */}
-          <NotificationFilters />
+          <Suspense fallback={<div className="h-9 w-full animate-pulse bg-slate-100 rounded-lg" />}>
+            <NotificationFilters />
+          </Suspense>
 
           {/* Real Notification Groups */}
           <div className="space-y-6 pt-2">
