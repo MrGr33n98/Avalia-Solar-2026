@@ -215,19 +215,24 @@ export function RightChatSidebar({
           <p className="text-[11px] text-slate-400 py-2 text-center">Nenhum documento compartilhado nesta conversa ainda.</p>
         ) : (
           <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-            {sharedAttachments.map((att: any, index: number) => (
-              <a
-                key={index}
-                href={att.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 rounded-xl p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-500 transition-colors"
-              >
-                <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-                <span className="truncate flex-1 text-[11px]">{att.filename || 'Documento Orçamento.pdf'}</span>
-                <ExternalLink className="h-3 w-3 text-slate-400" />
-              </a>
-            ))}
+            {sharedAttachments.map((att: any, index: number) => {
+              const targetUrl = att.url ? getFullImageUrl(att.url) : '#';
+              const fileName = att.filename || 'Documento Orçamento.pdf';
+              return (
+                <a
+                  key={index}
+                  href={targetUrl}
+                  download={fileName}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-xl p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-500 transition-colors"
+                >
+                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                  <span className="truncate flex-1 text-[11px]">{fileName}</span>
+                  <ExternalLink className="h-3 w-3 text-slate-400" />
+                </a>
+              );
+            })}
           </div>
         )}
       </div>
