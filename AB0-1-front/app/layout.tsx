@@ -16,6 +16,7 @@ import ComparisonDebugger from '@/components/ComparisonDebugger';
 import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
+import { TabNotificationNotifier } from '@/components/notifications/TabNotificationNotifier';
 import { SITE } from '@/lib/site';
 
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
@@ -155,6 +156,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <UtmProvider>
             <Providers>
+              <TabNotificationNotifier />
               <PwaOfflineController />
               <Navbar />
               <AppContentFrame>{children}</AppContentFrame>
