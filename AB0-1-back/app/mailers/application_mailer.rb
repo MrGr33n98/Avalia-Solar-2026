@@ -5,7 +5,13 @@ class ApplicationMailer < ActionMailer::Base
   helper MailerHelper
   include MailerHelper
 
-  default from: ENV.fetch('MAILER_FROM_EMAIL', 'noreply@avaliasolar.com.br')
+  def self.default_sender
+    name = ENV.fetch('MAILER_FROM_NAME', 'Avalia Solar')
+    email = ENV.fetch('MAILER_FROM_EMAIL', 'noreply@avaliasolar.com.br')
+    "#{name} <#{email}>"
+  end
+
+  default from: default_sender
   layout 'mailer'
 
   # Helper methods
