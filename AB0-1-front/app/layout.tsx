@@ -17,6 +17,7 @@ import PwaOfflineController from '@/components/PwaOfflineController';
 import ClipboardTracker from '@/components/ClipboardTracker';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import { TabNotificationNotifier } from '@/components/notifications/TabNotificationNotifier';
+import NewRelicBrowser from '@/components/observability/NewRelicBrowser';
 import { SITE } from '@/lib/site';
 
 const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
@@ -156,6 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <UtmProvider>
             <Providers>
+              <NewRelicBrowser />
               <TabNotificationNotifier />
               <PwaOfflineController />
               <Navbar />
