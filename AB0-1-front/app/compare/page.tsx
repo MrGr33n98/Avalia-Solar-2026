@@ -38,6 +38,7 @@ import CompareTable from '@/components/compare/CompareTable';
 import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
 import RecommendedCompanies from '@/components/compare/RecommendedCompanies';
 import { getRecommendedCompanies } from '@/components/compare/compare-insights';
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import {
   CompareCompany,
   mapCompanyToCompareCompany,
@@ -50,6 +51,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useComparison } from '@/hooks/useComparison';
 import { companiesApi, type Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
+import { buildCompanyPath } from '@/lib/slug';
+import { absoluteUrl } from '@/lib/site';
 
 const MAX_COMPANIES = 4;
 
@@ -256,8 +259,45 @@ function ComparePageContent() {
 
   const isLoading = isStorageLoading || isResolvingUrl;
 
+  const compareJsonLd = useMemo(() => {
+    if (companies.length === 0) return null;
+    const names = companies.map((c) => c.name).join(' vs ');
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: `Comparação de Empresas: ${names}`,
+      description: `Comparativo detalhado de nota, avaliações e termos de garantia entre ${companies.map((c) => c.name).join(', ')} no Avalia Solar.`,
+      itemListElement: companies.map((comp, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        item: {
+          '@type': 'Organization',
+          name: comp.name,
+          url: absoluteUrl(buildCompanyPath(comp.slug, comp.name, comp.id)),
+          aggregateRating: comp.rating > 0 ? {
+            '@type': 'AggregateRating',
+            ratingValue: comp.rating,
+            reviewCount: comp.reviewsCount || 1,
+          } : undefined,
+        },
+      })),
+    };
+  }, [companies]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] overflow-x-clip bg-slate-50">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Início', item: '/' },
+          { name: 'Comparador', item: '/compare' },
+        ]}
+      />
+      {compareJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(compareJsonLd) }}
+        />
+      )}
       <CompareHero />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-3 sm:px-6">

@@ -3,7 +3,8 @@ import { Suspense } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import CompanyDetailClient from './CompanyDetailClient';
 import { publicCompaniesApi, publicReviewsApi } from '@/lib/api-public';
-import { buildCompanyLocalBusinessJsonLd } from '@/lib/seo/company-jsonld';
+import { buildCompanyLocalBusinessJsonLd, buildCompanyFaqJsonLd } from '@/lib/seo/company-jsonld';
+import { buildGeoOtherMeta } from '@/lib/seo/geo-metadata';
 import { buildCompanyPath } from '@/lib/slug';
 import { absoluteUrl } from '@/lib/site';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
@@ -43,10 +44,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locationLabel,
     ].filter(Boolean).join(', ');
 
+    const geoMeta = buildGeoOtherMeta({
+      city: company.city,
+      state: company.state,
+      latitude: company.latitude,
+      longitude: company.longitude,
+    });
+
     return {
       title: seoTitle,
       description: seoDescription,
       keywords: seoKeywords,
+      other: geoMeta,
       openGraph: {
         title: seoTitle,
         description: seoDescription,
@@ -106,6 +115,11 @@ export default async function CompanyDetailPage({ params }: Props) {
     canonicalUrl,
   });
 
+  const faqJsonLd = buildCompanyFaqJsonLd({
+    company,
+    canonicalUrl,
+  });
+
   return (
     <>
       <BreadcrumbSchema
@@ -116,6 +130,7 @@ export default async function CompanyDetailPage({ params }: Props) {
         ]}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <Suspense fallback={
         <div className="min-h-screen bg-slate-50">
           <div className="relative h-[250px] sm:h-[300px] w-full bg-slate-900 overflow-hidden">

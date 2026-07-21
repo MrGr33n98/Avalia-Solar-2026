@@ -47,6 +47,7 @@ import { cn } from '@/lib/utils';
 import CompanyHero from './components/CompanyHero';
 import CompanySidebar from './components/CompanySidebar';
 import CompanyOverview from './components/CompanyOverview';
+import { CompanyAeoFactSheet } from './components/CompanyAeoFactSheet';
 import CompanyComparisonSection from './components/CompanyComparisonSection';
 import WinnerBadge from '@/components/company/WinnerBadge';
 import Top1StickyCTA from '@/components/company/Top1StickyCTA';
@@ -559,6 +560,11 @@ export default function CompanyDetailClient({
                       reviews={reviews}
                       reviewsLoading={reviewsLoading}
                       showCompetitorBanners={showCompetitorBanners}
+                    />
+                    <CompanyAeoFactSheet
+                      company={currentCompany}
+                      reviewCount={companyStats.reviewCount}
+                      rating={Number(companyStats.rating || 0)}
                     />
                     {showSocialProof && (
                       <SocialProof companyId={companyId} companyName={currentCompany.name} />

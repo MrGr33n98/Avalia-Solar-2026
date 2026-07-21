@@ -125,6 +125,33 @@ export function buildCompanyLocalBusinessJsonLd({
     normalizeUrl(company.youtube_url),
   ].filter((url): url is string => Boolean(url && url !== canonicalUrl));
 
+  const areaServed = Array.isArray(company.coverage_cities) && company.coverage_cities.length > 0
+    ? company.coverage_cities.map((cityName) => ({
+        '@type': 'City',
+        name: cityName,
+      }))
+    : company.city
+    ? [{ '@type': 'City', name: company.city }]
+    : undefined;
+
+  const contactPoint = company.phone || company.email
+    ? compactRecord({
+        '@type': 'ContactPoint',
+        telephone: cleanString(company.phone),
+        email: cleanString(company.email),
+        contactType: 'customer service',
+        availableLanguage: ['Portuguese'],
+      })
+    : undefined;
+
+  const knowsAbout = [
+    'Energia Solar Fotovoltaica',
+    'Inversores Solares',
+    'Painéis Solares',
+    'Mobilidade Elétrica e Carregadores EV',
+    company.category_name,
+  ].filter(Boolean);
+
   return compactRecord({
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -133,11 +160,15 @@ export function buildCompanyLocalBusinessJsonLd({
     description: cleanString(company.description),
     url: canonicalUrl,
     telephone: cleanString(company.phone),
+    email: cleanString(company.email),
     logo: toCrawlableImageUrl(company.logo_url),
     image: toCrawlableImageUrl(company.banner_url) || toCrawlableImageUrl(company.logo_url),
     priceRange: '$$',
     address,
     geo,
+    areaServed,
+    contactPoint,
+    knowsAbout: knowsAbout.length > 0 ? knowsAbout : undefined,
     aggregateRating: buildAggregateRating(company),
     review: buildReviews(reviews),
     openingHours: cleanString(company.working_hours) || cleanString(company.business_hours),
@@ -149,4 +180,45 @@ export function buildCompanyLocalBusinessJsonLd({
       url: SITE.url,
     },
   });
+}
+
+export function buildCompanyFaqJsonLd({
+  company,
+  canonicalUrl,
+}: {
+  company: Company;
+  canonicalUrl: string;
+}) {
+  const ratingAvg = Number(company.rating_avg ?? company.average_rating ?? company.rating ?? 0).toFixed(1);
+  const ratingCount = Number(company.rating_count ?? company.total_reviews ?? company.reviews_count ?? 0);
+  const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
+
+  const mainQuestions = [
+    {
+      question: `A empresa ${company.name} é confiável e verificada no Avalia Solar?`,
+      answer: `Sim. A empresa ${company.name} possui perfil no Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, contando com uma nota média de ${ratingAvg}/5.0 baseada em ${ratingCount} avaliações reais de clientes auditados.`,
+    },
+    {
+      question: `Quais serviços e produtos a ${company.name} oferece?`,
+      answer: `${company.name} atua com ${company.description || 'soluções em energia solar fotovoltaica, mobilidade elétrica, inversores e instalação de projetos solares'}.`,
+    },
+    {
+      question: `Como solicitar orçamento com a ${company.name}?`,
+      answer: `Você pode solicitar um orçamento diretamente através do perfil da ${company.name} no portal Avalia Solar (${canonicalUrl}), garantindo atendimento rápido e comparativo de preços sem compromisso.`,
+    },
+  ];
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${canonicalUrl}#faqpage`,
+    mainEntity: mainQuestions.map((q) => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: q.answer,
+      },
+    })),
+  };
 }

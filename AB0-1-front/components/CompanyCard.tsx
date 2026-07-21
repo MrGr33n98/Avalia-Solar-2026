@@ -388,6 +388,8 @@ export default function CompanyCard({
   if (variant === 'compact') {
     return (
       <Card
+        itemScope
+        itemType="https://schema.org/Organization"
         className={cn(
           'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
           className
@@ -401,10 +403,17 @@ export default function CompanyCard({
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+            <h3 itemProp="name" className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
               {name}
             </h3>
-            <div className="flex items-center gap-1.5 mt-1">
+            <div 
+              itemProp="aggregateRating" 
+              itemScope 
+              itemType="https://schema.org/AggregateRating"
+              className="flex items-center gap-1.5 mt-1"
+            >
+              <meta itemProp="ratingValue" content={company.reputation.rating_avg.toString()} />
+              <meta itemProp="reviewCount" content={company.reputation.rating_count.toString()} />
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
               <span className="text-xs font-bold text-slate-800">
                 {company.reputation.rating_avg > 0
