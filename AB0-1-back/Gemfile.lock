@@ -296,6 +296,7 @@ GEM
       net-imap
       net-pop
       net-smtp
+    newrelic_rpm (9.16.0)
     marcel (1.1.0)
     matrix (0.4.3)
     mercadopago-sdk (2.3.0)
@@ -690,6 +691,7 @@ DEPENDENCIES
   pg
   pg_search (~> 2.3)
   posthog-rails
+  newrelic_rpm
   puma (~> 5.0)
   pundit
   rack-attack
