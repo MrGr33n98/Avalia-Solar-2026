@@ -146,33 +146,34 @@
   }
 
   .dark {
-    --background: 222 47% 6%; /* AS Slate 950 */
-    --foreground: 210 40% 98%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11.2%;
 
-    --card: 222 47% 11%; /* AS Slate 900 */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11.2%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11.2%;
 
-    --primary: 221 83% 53%;
+    --primary: 221 83% 53.3%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 38 92% 51%; /* Suavemente clareado para contraste no escuro */
-    --secondary-foreground: 222 47% 98%;
+    --secondary: 222 47% 11.2%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 142 71% 48%; /* Suavemente clareado para contraste no escuro */
-    --accent-foreground: 222 47% 98%;
+    --accent: 162.1 76.2% 40.6%;
+    --accent-foreground: 222 47% 11.2%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17.5%;
-    --input: 217 33% 17.5%;
-    --ring: 224 76% 48%;
+    --border: 213.8 26.8% 83.7%;
+    --input: 213.8 26.8% 83.7%;
+    --ring: 221 83% 53.3%;
+  }
 
     /* === AS-EDS CLAYMORPHISM DARK TOKENS === */
     --clay-bg: 222 47% 4%;
@@ -840,11 +841,15 @@
   }
 }
 
-/* Chrome / Safari / Edge Webkit Autofill fix for input backgrounds and text readability */
+/* Chrome / Safari / Edge Webkit Autofill & Global Form Control Contrast Fix */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
   -webkit-text-fill-color: #0f172a !important;
   caret-color: #0f172a !important;
@@ -854,8 +859,12 @@ input:-webkit-autofill:active {
 .dark input:-webkit-autofill,
 .dark input:-webkit-autofill:hover,
 .dark input:-webkit-autofill:focus,
-.dark input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
-  -webkit-text-fill-color: #f8fafc !important;
-  caret-color: #f8fafc !important;
+.dark input:-webkit-autofill:active,
+.dark textarea:-webkit-autofill,
+.dark textarea:-webkit-autofill:hover,
+.dark textarea:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
 }
