@@ -13,6 +13,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,13 +25,21 @@ import { cn } from '@/lib/utils';
 
 interface NotificationDropdownProps {
   onClose?: () => void;
+  filterType?: string;
 }
 
-export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onClose }) => {
+export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  onClose,
+  filterType,
+}) => {
   const router = useRouter();
+  const { user } = useAuth();
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const { notifications, unreadCount, markAsRead, markAllAsRead, archiveNotification, loading } =
     useNotificationStore();
+
+  const targetNotificationsUrl =
+    user?.role === 'review' ? '/review-dashboard/notifications' : '/dashboard/notifications';
 
   const filteredNotifications = notifications
     .filter((n) => {
@@ -223,7 +232,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
       <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
         <button
           onClick={() => {
-            router.push('/review-dashboard/notifications');
+            router.push(targetNotificationsUrl);
             if (onClose) onClose();
           }}
           className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
