@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BadgeCheck, Heart, MapPin, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
+import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
@@ -89,16 +90,17 @@ export function CompanyCardEnhanced({
         )}
       </div>
 
-      <div className="mt-auto grid gap-2 pt-5">
+      <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
         <Link
           href={href}
           className="flex h-10 items-center justify-center rounded-lg border border-slate-300 text-xs font-bold text-slate-800 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700"
         >
           Ver perfil
         </Link>
+        <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-lg text-xs" />
         <ReviewCompanyButton
           company={company}
-          className="h-10 rounded-lg text-xs"
+          className="col-span-2 h-10 rounded-lg text-xs"
         />
       </div>
     </article>

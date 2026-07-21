@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
@@ -540,6 +541,8 @@ export default function CompanyCard({
                 {selectedInComparison ? 'Selecionada' : 'Comparar'}
               </Button>
 
+              <CompanyChatButton companyId={id} companyName={name} variant="button" className="w-full h-9 rounded-xl text-xs" />
+
               {canRequestQuote ? (
                 <Button
                   className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
@@ -558,7 +561,7 @@ export default function CompanyCard({
               <ReviewCompanyButton
                 company={company}
                 label="Avaliar"
-                className={cn('h-9 w-full rounded-xl text-xs', canRequestQuote ? 'col-span-2' : '')}
+                className={cn('h-9 w-full rounded-xl text-xs', canRequestQuote ? '' : 'col-span-2')}
                 iconClassName="h-3.5 w-3.5"
                 stopPropagation
               />
@@ -931,19 +934,7 @@ export default function CompanyCard({
             />
           )}
 
-          {p2pChatEnabled && (
-            <Button
-              variant="outline"
-              className="rounded-lg border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100 font-bold text-[10px] h-7 px-2.5"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/chat?company_id=${id}`);
-              }}
-            >
-              <MessageCircle className="h-3 w-3 mr-1 text-blue-600" />
-              Chat
-            </Button>
-          )}
+          <CompanyChatButton companyId={id} companyName={name} variant="compact" />
 
           {canRequestQuote ? (
             <Button

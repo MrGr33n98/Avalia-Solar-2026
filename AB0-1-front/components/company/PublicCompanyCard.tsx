@@ -6,6 +6,7 @@ import { BadgeCheck, MapPin, Star } from 'lucide-react';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
@@ -121,10 +122,11 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
       <div className="mt-4 grid grid-cols-2 gap-2">
         <Link
           href={href}
-          className="inline-flex h-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         >
           Ver perfil
         </Link>
+        <CompanyChatButton companyId={company.id} companyName={company.name} variant="button" className="h-10 rounded-xl text-xs" />
         <ComparisonToggleButton
           company={comparisonCompany}
           variant="card"
@@ -135,7 +137,7 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         />
         <ReviewCompanyButton
           company={comparisonCompany}
-          className="col-span-2 h-10 bg-blue-700 text-white hover:bg-blue-800"
+          className="h-10 rounded-xl bg-blue-700 text-xs text-white hover:bg-blue-800"
           iconClassName="fill-white text-white"
         />
       </div>

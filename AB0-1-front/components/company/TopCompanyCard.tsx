@@ -18,6 +18,7 @@ import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 import { isCardFeatureEnabled } from '@/components/CompanyCard';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
+import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 
 interface Props {
   company: Company;
@@ -144,10 +145,18 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           {description || "Especialista em soluções energéticas de alta performance."}
         </p>
 
-        <div className="mt-auto pt-2 flex gap-2">
+        <div className="mt-auto pt-2 grid grid-cols-2 gap-2">
+          <CompanyChatButton companyId={id} companyName={name} variant="button" className="h-10 rounded-xl text-xs" />
+          <Button
+            variant="outline"
+            className="h-10 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50"
+            asChild
+          >
+            <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
+          </Button>
           {canRequestQuote ? (
             <Button
-              className="flex-1 h-11 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold text-xs shadow-none"
+              className="h-10 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold text-xs shadow-none"
               onClick={(e) => {
                 e.stopPropagation();
                 openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' });
@@ -159,20 +168,10 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           <ReviewCompanyButton
             company={company}
             label="Avaliar"
-            className="h-11 flex-1 rounded-xl text-xs"
+            className={cn("h-10 rounded-xl text-xs", canRequestQuote ? "" : "col-span-2")}
             iconClassName="h-3.5 w-3.5"
             stopPropagation
           />
-          <Button
-            variant="outline"
-            className={cn(
-              "h-11 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50",
-              !canRequestQuote && "flex-1"
-            )}
-            asChild
-          >
-            <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
-          </Button>
         </div>
       </CardContent>
     </Card>

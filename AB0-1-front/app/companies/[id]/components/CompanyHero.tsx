@@ -64,7 +64,7 @@ export default function CompanyHero({
     company.p2p_chat_enabled === true ||
     (company as any)?.actions?.p2p_chat_enabled === true ||
     (Boolean(company.feature_access) && isFeatureEnabled(company.feature_access, 'p2p_chat'));
-  const directChatVisible = Boolean(directChatAvailable);
+  const directChatVisible = true;
   const directChatEnabled = canUseBuyerChat;
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
@@ -285,9 +285,12 @@ export default function CompanyHero({
                     </span>
 
                     {directChatVisible && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-black text-emerald-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        Online
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-300/80 px-2.5 py-0.5 text-[11px] font-black text-emerald-800 shadow-xs">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        </span>
+                        Atendimento Chat Online
                       </span>
                     )}
 
@@ -336,7 +339,7 @@ export default function CompanyHero({
                   {directChatVisible && (
                     <Button
                       size="default"
-                      className="h-11 w-full rounded-xl bg-orange-500 px-3 text-sm font-semibold text-white shadow-none hover:bg-orange-600"
+                      className="relative group overflow-hidden h-11 w-full rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-sm font-extrabold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30"
                       onClick={() => {
                         track('company_direct_chat_click', {
                           company_id: company.id,
@@ -356,7 +359,12 @@ export default function CompanyHero({
                         });
                       }}
                     >
-                      <MessageCircle className="mr-2 h-4 w-4" />
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                      <span className="relative flex h-2.5 w-2.5 mr-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                      </span>
+                      <MessageCircle className="mr-1.5 h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
                       Chat Direto
                     </Button>
                   )}
