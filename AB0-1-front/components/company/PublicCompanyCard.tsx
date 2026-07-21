@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { BadgeCheck, Building2, MapPin, Star } from 'lucide-react';
+import { BadgeCheck, MapPin, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
@@ -66,20 +66,14 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
       <div className="flex items-start gap-3">
         <Link
           href={href}
-          className="relative flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50"
+          className="shrink-0"
           aria-label={`Ver perfil de ${company.name}`}
         >
-          {logoUrl ? (
-            <Image
-              src={logoUrl}
-              alt={`Logo da empresa ${company.name}`}
-              fill
-              sizes="64px"
-              className="object-contain p-2"
-            />
-          ) : (
-            <Building2 className="h-6 w-6 text-slate-300" aria-hidden="true" />
-          )}
+          <CompanyLogo
+            logoUrl={company.logo_url}
+            name={company.name}
+            size="md"
+          />
         </Link>
 
         <div className="min-w-0 flex-1">
