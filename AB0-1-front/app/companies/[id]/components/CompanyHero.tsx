@@ -167,8 +167,20 @@ export default function CompanyHero({
       </div>
 
       <div className="!rounded-none border border-slate-200/80 bg-white/80 p-0 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
-        <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-200">
-          <div className="relative h-[160px] sm:h-[205px] lg:h-[230px]">
+        <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-950">
+          <div className="relative h-[160px] sm:h-[205px] lg:h-[230px] w-full flex items-center justify-center overflow-hidden">
+            {/* Background Blur Fill Layer */}
+            <OptimizedImage
+              src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
+              alt=""
+              fill
+              aria-hidden="true"
+              className="object-cover filter blur-xl opacity-40 scale-110"
+              containerClassName="absolute inset-0 h-full w-full pointer-events-none"
+              unoptimized={!bannerUrl || bannerError}
+            />
+
+            {/* Centered, Fully Framed Banner Image */}
             <OptimizedImage
               src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
               alt={company.name}
@@ -178,8 +190,8 @@ export default function CompanyHero({
               imageContext="company-banner"
               entityName={company.name}
               locationLabel={locationLabel}
-              className="object-cover !rounded-none"
-              containerClassName="h-full w-full !rounded-none"
+              className="object-contain object-center relative z-10 !rounded-none"
+              containerClassName="relative h-full w-full z-10 !rounded-none"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               fallbackSrc="/images/banner-avalia-solar.png"
               useAspectRatio={false}
@@ -188,9 +200,9 @@ export default function CompanyHero({
               unoptimized={!bannerUrl || bannerError}
               onError={() => setBannerError(true)}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/10 via-transparent to-black/5 pointer-events-none" />
             {(!bannerUrl || bannerError) && (
-              <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
+              <div className="pointer-events-none absolute inset-0 z-20 ring-1 ring-slate-300/60">
                 <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
                   Imagem ilustrativa
                 </span>
