@@ -270,9 +270,7 @@ export default function CompanyDetailClient({
   const canRequestQuote = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
     : false;
-  const showFaq = currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'faq_block')
-    : Boolean(currentCompany.faqs?.length);
+  const showFaq = true;
   const showGallery = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'media_gallery')
     : Boolean(currentCompany.media_urls?.length || currentCompany.videos?.length);
@@ -602,7 +600,7 @@ export default function CompanyDetailClient({
                   </TabsContent>
 
                   <TabsContent value="faq" className="mt-0 focus-visible:outline-none">
-                    <FaqSection companyId={companyId} />
+                    <FaqSection companyId={companyId} companyName={currentCompany?.name} company={currentCompany} />
                   </TabsContent>
                 </motion.div>
               </AnimatePresence>

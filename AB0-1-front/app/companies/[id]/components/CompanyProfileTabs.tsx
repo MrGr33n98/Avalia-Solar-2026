@@ -48,6 +48,7 @@ export default function CompanyProfileTabs({
       { id: 'reviews', label: 'Avaliações', icon: MessageCircle },
       { id: 'projects', label: 'Projetos', icon: ImageIcon },
       { id: 'contact', label: 'Contato', icon: HelpCircle },
+      { id: 'faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle },
     ];
     if (showFinancing) {
       list.splice(3, 0, { id: 'financing', label: 'Financiamento', icon: Banknote });

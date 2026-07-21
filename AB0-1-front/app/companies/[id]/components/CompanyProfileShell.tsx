@@ -257,7 +257,12 @@ export default function CompanyProfileShell({
                   </div>
                 </Card>
 
-                {showFaq && <FaqSection companyId={Number(company.id)} />}
+                <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
+              </TabsContent>
+
+              {/* ABA 7: PERGUNTAS FREQUENTES (FAQ) */}
+              <TabsContent value="faq" className="mt-0 space-y-6 focus-visible:outline-none">
+                <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
               </TabsContent>
             </div>
 
