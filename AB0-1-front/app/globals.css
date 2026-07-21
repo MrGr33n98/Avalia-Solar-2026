@@ -220,8 +220,6 @@
     --border-radius-lg: 1rem;
   }
 
-}
-
 @layer base {
   * {
     @apply border-border;
