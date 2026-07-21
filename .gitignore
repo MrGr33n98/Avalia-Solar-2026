@@ -53,6 +53,11 @@ AB0-1-front/public/**/*.zip
 
 # Ignorar documentações de desenvolvimento
 docs/
+!docs/
+docs/*
+!docs/observability/
+docs/observability/*
+!docs/observability/new-relic-setup.md
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/
@@ -63,5 +68,8 @@ docs/
 
 # Regressão da regra global de visibilidade do footer.
 !AB0-1-front/__tests__/
+!AB0-1-front/__tests__/new-relic-csp.test.ts
+!AB0-1-front/components/observability/__tests__/
+!AB0-1-front/components/observability/__tests__/NewRelicBrowser.test.tsx
 !AB0-1-front/__tests__/lib/
 !AB0-1-front/__tests__/lib/footer-visibility.test.ts

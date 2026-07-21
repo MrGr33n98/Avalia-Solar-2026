@@ -113,6 +113,29 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           docker buildx version
 
+      - name: Validate New Relic Browser variables
+        if: matrix.component == 'frontend'
+        env:
+          NEW_RELIC_ACCOUNT_ID: ${{ vars.STAGING_NEW_RELIC_ACCOUNT_ID }}
+          NEW_RELIC_APPLICATION_ID: ${{ vars.STAGING_NEW_RELIC_APPLICATION_ID }}
+          NEW_RELIC_BROWSER_LICENSE_KEY: ${{ vars.STAGING_NEW_RELIC_BROWSER_LICENSE_KEY }}
+          NEW_RELIC_TRUST_KEY: ${{ vars.STAGING_NEW_RELIC_TRUST_KEY }}
+          NEW_RELIC_AGENT_ID: ${{ vars.STAGING_NEW_RELIC_AGENT_ID }}
+        run: |
+          MISSING=()
+          [ -z "$NEW_RELIC_ACCOUNT_ID" ] && MISSING+=("STAGING_NEW_RELIC_ACCOUNT_ID")
+          [ -z "$NEW_RELIC_APPLICATION_ID" ] && MISSING+=("STAGING_NEW_RELIC_APPLICATION_ID")
+          [ -z "$NEW_RELIC_BROWSER_LICENSE_KEY" ] && MISSING+=("STAGING_NEW_RELIC_BROWSER_LICENSE_KEY")
+          [ -z "$NEW_RELIC_TRUST_KEY" ] && MISSING+=("STAGING_NEW_RELIC_TRUST_KEY")
+          [ -z "$NEW_RELIC_AGENT_ID" ] && MISSING+=("STAGING_NEW_RELIC_AGENT_ID")
+
+          if [ ${#MISSING[@]} -ne 0 ]; then
+            echo "::error::Missing New Relic Browser variables: ${MISSING[*]}"
+            exit 1
+          fi
+
+          echo "New Relic Browser variables are configured for staging."
+
       - name: Build and Push Backend (staging)
         if: matrix.component == 'backend'
         uses: docker/build-push-action@v5
@@ -148,6 +171,14 @@ jobs:
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || '' }}
             NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
+            NEXT_PUBLIC_NEW_RELIC_BROWSER_ENABLED=true
+            NEXT_PUBLIC_NEW_RELIC_ACCOUNT_ID=${{ vars.STAGING_NEW_RELIC_ACCOUNT_ID }}
+            NEXT_PUBLIC_NEW_RELIC_APPLICATION_ID=${{ vars.STAGING_NEW_RELIC_APPLICATION_ID }}
+            NEXT_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY=${{ vars.STAGING_NEW_RELIC_BROWSER_LICENSE_KEY }}
+            NEXT_PUBLIC_NEW_RELIC_TRUST_KEY=${{ vars.STAGING_NEW_RELIC_TRUST_KEY }}
+            NEXT_PUBLIC_NEW_RELIC_AGENT_ID=${{ vars.STAGING_NEW_RELIC_AGENT_ID }}
+            NEXT_PUBLIC_NEW_RELIC_ENVIRONMENT=staging
+            NEXT_PUBLIC_NEW_RELIC_RELEASE=${{ github.sha }}
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
