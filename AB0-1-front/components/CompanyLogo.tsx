@@ -33,18 +33,18 @@ export function CompanyLogo({
   const resolvedUrl = isValidLogo ? getFullImageUrl(logoUrl) : null;
   const hasImage = Boolean(resolvedUrl) && !error;
 
-  // Tamanhos padronizados com proporção fixa (largura x altura):
+  // Tamanhos padronizados quadrados para preenchimento 100% da moldura:
   const sizeClasses = {
-    sm: 'w-[52px] h-[38px] md:w-[60px] md:h-[42px]',
-    md: 'w-[64px] h-[46px] md:w-[76px] md:h-[52px]',
-    lg: 'w-[84px] h-[58px] md:w-[98px] md:h-[68px]',
+    sm: 'w-[44px] h-[44px] md:w-[48px] md:h-[48px]',
+    md: 'w-[56px] h-[56px] md:w-[64px] md:h-[64px]',
+    lg: 'w-[72px] h-[72px] md:w-[84px] md:h-[84px]',
     custom: '',
   };
 
   return (
     <div
       className={cn(
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white border border-slate-200/90 p-[1px] transition-all select-none shadow-2xs',
+        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white border border-slate-200/90 p-0 transition-all select-none shadow-2xs',
         sizeClasses[size],
         className
       )}
@@ -58,7 +58,7 @@ export function CompanyLogo({
             sizes="(max-width: 768px) 90px, 140px"
             priority={priority}
             className={cn(
-              'h-full w-full object-contain object-center transition-opacity duration-300 p-0.5',
+              'h-full w-full object-contain object-center transition-opacity duration-300 p-0',
               imageClassName
             )}
             onError={() => setError(true)}

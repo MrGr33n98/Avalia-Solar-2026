@@ -256,7 +256,7 @@ export default function CompanyHero({
                       entityName={company.name}
                       locationLabel={locationLabel}
                       objectFit="contain"
-                      className="p-2"
+                      className="p-0.5"
                       containerClassName="h-full w-full rounded-none bg-white"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
