@@ -41,7 +41,7 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
+          <img src={logoUrl} alt="" className="h-full w-full object-contain p-0" />
         ) : (
           <span className="text-sm font-bold uppercase text-slate-500">
             {company.name.charAt(0)}
@@ -93,7 +93,7 @@ function CompactCompanyRow({
       <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
+          <img src={logoUrl} alt="" className="h-full w-full object-contain p-0" />
         ) : (
           <span className="text-xs font-semibold uppercase text-slate-500">
             {company.name.charAt(0)}

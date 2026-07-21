@@ -195,14 +195,14 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   <div className="flex h-[112px] flex-col justify-start border-b border-slate-200 p-1.5 pt-4 md:h-[174px] md:justify-between md:p-5 md:pt-11">
                     <div className="flex items-start justify-between gap-1 md:gap-4">
                       {/* Logo Container */}
-                      <div className="relative flex h-7 w-9 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm sm:h-12 sm:w-20">
+                      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-0 shadow-sm sm:h-12 sm:w-12">
                         {logoUrl ? (
                           <Image
                             src={logoUrl}
                             alt={`Logo da ${company.name}`}
                             fill
-                            sizes="(max-width: 640px) 36px, 80px"
-                            className="object-contain"
+                            sizes="(max-width: 640px) 36px, 48px"
+                            className="object-contain p-0"
                           />
                         ) : (
                           <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />

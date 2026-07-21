@@ -45,7 +45,7 @@ export default function ComparisonSummary({
               >
                 <div
                   className={cn(
-                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-1 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
+                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-0 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
                     "clay-surface clay-convex",
                     isPremiumCompany(company) ? "border-blue-200/80" : "border-slate-100"
                   )}
@@ -53,7 +53,7 @@ export default function ComparisonSummary({
                   <img
                     src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
                     alt={`Logo da ${company.name}`}
-                    className="h-full w-full scale-[1.14] object-contain"
+                    className="h-full w-full object-contain"
                   />
                 </div>
                 

@@ -105,11 +105,11 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
             </div>
           )}
           
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.2rem] border border-white/40 bg-white/95 p-1 shadow-xl clay-surface clay-convex">
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.2rem] border border-white/40 bg-white/95 p-0 shadow-xl clay-surface clay-convex">
             <img
               src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
               alt={`Logo da ${company.name}`}
-              className="h-full w-full scale-[1.10] object-contain"
+              className="h-full w-full object-contain"
             />
           </div>
         </div>

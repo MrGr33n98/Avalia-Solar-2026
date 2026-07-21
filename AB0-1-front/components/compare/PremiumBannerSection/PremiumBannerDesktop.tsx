@@ -134,13 +134,13 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
         </div>
 
         <div className={cn(
-          "flex h-[4.8rem] w-[4.8rem] items-center justify-center overflow-hidden rounded-[1.65rem] border border-white/40 bg-white/95 p-1",
+          "flex h-[4.8rem] w-[4.8rem] items-center justify-center overflow-hidden rounded-[1.65rem] border border-white/40 bg-white/95 p-0",
           "clay-surface clay-convex shadow-2xl transition-all duration-500 hover:scale-[1.08] hover:-rotate-2"
         )}>
           <img
             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
             alt={`Logo da ${company.name}`}
-            className="h-full w-full scale-[1.10] object-contain transition-all duration-500"
+            className="h-full w-full object-contain transition-all duration-500"
           />
         </div>
       </div>
