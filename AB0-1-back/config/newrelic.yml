@@ -2,7 +2,7 @@
 common: &default_settings
   license_key: '<%= ENV["NEW_RELIC_LICENSE_KEY"] %>'
   app_name: '<%= ENV["NEW_RELIC_APP_NAME"] || "Avalia Solar (Production APM)" %>'
-  monitor_mode: true
+  monitor_mode: <%= ENV["NEW_RELIC_LICENSE_KEY"].to_s.strip.length > 5 %>
   developer_mode: false
   log_level: info
   transaction_tracer:
