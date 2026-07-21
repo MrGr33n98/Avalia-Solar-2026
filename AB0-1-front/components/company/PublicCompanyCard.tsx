@@ -26,6 +26,8 @@ export type PublicCompanyCardData = {
   city?: string | null;
   state?: string | null;
   response_time_sla?: string | null;
+  p2p_chat_enabled?: boolean | null;
+  actions?: { p2p_chat_enabled?: boolean } | null;
 };
 
 type PublicCompanyCardProps = {

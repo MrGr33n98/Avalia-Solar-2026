@@ -30,6 +30,9 @@ export function CompanyCardEnhanced({
       company.rating ||
       0
   );
+  const reviewsCount = Number(
+    company.reputation?.rating_count || company.reviews_count || company.total_reviews || 0
+  );
   const services = (company.services_offered || company.project_types || [])
     .filter(Boolean)
     .slice(0, 3);
