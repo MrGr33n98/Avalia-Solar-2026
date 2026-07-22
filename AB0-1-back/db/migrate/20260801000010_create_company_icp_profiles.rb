@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateCompanyIcpProfiles < ActiveRecord::Migration[7.1]
+class CreateCompanyIcpProfiles < ActiveRecord::Migration[7.0]
   def change
     create_table :company_icp_profiles do |t|
       t.references :company, null: false, foreign_key: true, index: { unique: true }
