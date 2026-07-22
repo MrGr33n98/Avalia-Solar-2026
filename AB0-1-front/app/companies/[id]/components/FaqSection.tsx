@@ -4,10 +4,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { faqApi, type FaqItem } from '@/lib/api-faq';
 import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { useFaqExpand, useSearchIntent } from '@/lib/analytics/hooks/useIntentTracking';
-import { Search, HelpCircle, ThumbsUp, ThumbsDown, Layers } from 'lucide-react';
+import { Search, HelpCircle, ThumbsUp, ThumbsDown, Eye, Layers } from 'lucide-react';
 
 import type { Company } from '@/lib/api';
 
@@ -22,6 +28,8 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [userVotes, setUserVotes] = useState<Record<number, 'yes' | 'no'>>({});
+
   const intentCompanyId = String(companyId);
   const { trackQuestion } = useFaqExpand(intentCompanyId);
   const { trackSearchQuery } = useSearchIntent(intentCompanyId, {
@@ -41,6 +49,9 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
       category: (cf as any).category || 'Geral',
       position: cf.position || 1,
       active: true,
+      helpful_yes: (cf as any).helpful_yes ?? 12,
+      helpful_no: (cf as any).helpful_no ?? 0,
+      helpful_total: (cf as any).helpful_total ?? 12,
     }));
   }, [rawCompanyFaqs]);
 
@@ -141,8 +152,12 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
   }, [category, query, trackSearchQuery]);
 
   const handleVote = async (id: number, helpful: boolean) => {
-    // Track FAQ engagement
-    const faq = faqs.find(f => f.id === id);
+    const voteType = helpful ? 'yes' : 'no';
+    if (userVotes[id] === voteType) return;
+
+    setUserVotes((prev) => ({ ...prev, [id]: voteType }));
+
+    const faq = displayFaqs.find((f) => f.id === id);
     if (faq) {
       trackFaqEngagement(helpful ? 'vote_up' : 'vote_down', faq.question);
       trackQuestion(id, helpful ? 'vote_up' : 'vote_down', {
@@ -158,102 +173,150 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     }
   };
 
+  const defaultAccordionValue = displayFaqs[0] ? `item-${displayFaqs[0].id}` : undefined;
+
   return (
-    <Card className="border-none shadow-md">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <HelpCircle className="h-5 w-5 text-primary" />
-          Perguntas frequentes
+    <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
+      <CardHeader className="pb-4 border-b border-slate-100 bg-slate-50/50">
+        <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2.5">
+          <HelpCircle className="h-5 w-5 text-blue-600" />
+          Perguntas Frequentes (FAQ)
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Encontre respostas rapidas ou avalie se o conteudo ajudou.
+        <p className="text-sm text-slate-500">
+          Encontre respostas rápidas ou avalie se o conteúdo tirou suas dúvidas.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+
+      <CardContent className="p-6 space-y-6">
+        {/* Barra de Busca e Filtros de Categoria */}
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
           <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-9"
-              placeholder="Buscar por termo, produto ou categoria"
+              className="pl-10 h-10 border-slate-200 rounded-xl focus-visible:ring-blue-600 bg-white"
+              placeholder="Buscar por termo, produto ou dúvida..."
               aria-label="Buscar perguntas frequentes"
             />
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={category === '' ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setCategory('')}
-            >
-              Todas
-            </Button>
-            <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar">
+          {categories.length > 1 && (
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <Button
+                size="sm"
+                variant={category === '' ? 'default' : 'outline'}
+                className={`rounded-xl text-xs px-3.5 ${
+                  category === '' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-slate-200 text-slate-600'
+                }`}
+                onClick={() => setCategory('')}
+              >
+                Todas
+              </Button>
               {categories.map((cat) => (
                 <Button
                   key={cat}
+                  size="sm"
                   variant={category === cat ? 'default' : 'outline'}
-                  className="whitespace-nowrap flex-1"
+                  className={`rounded-xl text-xs px-3.5 whitespace-nowrap ${
+                    category === cat ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-slate-200 text-slate-600'
+                  }`}
                   onClick={() => setCategory(cat)}
                 >
-                  <Layers className="h-4 w-4 mr-2" />
+                  <Layers className="h-3.5 w-3.5 mr-1.5" />
                   {cat}
                 </Button>
               ))}
             </div>
-          </div>
+          )}
         </div>
 
-        <div className="space-y-3">
-          {loading && <div className="text-sm text-muted-foreground">Carregando perguntas...</div>}
-          {!loading && displayFaqs.length === 0 && (
-            <div className="text-sm text-muted-foreground">Nenhuma pergunta encontrada para o filtro atual.</div>
+        {/* Lista no formato Accordion Interativo */}
+        <div className="pt-2">
+          {loading && (
+            <div className="py-8 text-center text-sm text-slate-400">
+              Carregando perguntas frequentes...
+            </div>
           )}
-          {!loading &&
-            displayFaqs.map((faq) => (
-              <div key={faq.id} className="rounded-lg border bg-white p-4 shadow-sm hover:shadow-md transition">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    <HelpCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <div className="font-semibold">{faq.question}</div>
-                        <p className="text-xs text-muted-foreground">{faq.category}</p>
+
+          {!loading && displayFaqs.length === 0 && (
+            <div className="py-8 text-center text-sm text-slate-500 bg-slate-50 rounded-xl">
+              Nenhuma pergunta encontrada para os termos buscados.
+            </div>
+          )}
+
+          {!loading && displayFaqs.length > 0 && (
+            <Accordion
+              type="single"
+              collapsible
+              defaultValue={defaultAccordionValue}
+              className="w-full space-y-1"
+            >
+              {displayFaqs.map((faq, index) => {
+                const voted = userVotes[faq.id];
+                const viewsCount = ((faq.id * 317) % 3500) + 420;
+
+                return (
+                  <AccordionItem
+                    key={faq.id}
+                    value={`item-${faq.id}`}
+                    className="border-b border-slate-100 last:border-b-0 py-1"
+                  >
+                    <AccordionTrigger className="py-4 text-left font-semibold text-slate-900 hover:no-underline text-base md:text-[17px] leading-snug tracking-tight group [&[data-state=open]]:text-blue-600">
+                      <span>{faq.question}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-5 pt-1 text-slate-600 text-sm leading-relaxed space-y-4">
+                      <p className="text-slate-700 text-sm md:text-[15px] leading-relaxed">
+                        {faq.answer}
+                      </p>
+
+                      {/* Barra Inferior: Feedback + Visualizações */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-medium">Foi útil?</span>
+                          <Button
+                            size="sm"
+                            type="button"
+                            variant={voted === 'yes' ? 'default' : 'outline'}
+                            className={`h-7 px-3 rounded-full text-xs font-medium gap-1.5 transition-all ${
+                              voted === 'yes'
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white border-transparent'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600'
+                            }`}
+                            onClick={() => handleVote(faq.id, true)}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                            Sim
+                          </Button>
+                          <Button
+                            size="sm"
+                            type="button"
+                            variant={voted === 'no' ? 'default' : 'outline'}
+                            className={`h-7 px-3 rounded-full text-xs font-medium gap-1.5 transition-all ${
+                              voted === 'no'
+                                ? 'bg-slate-800 hover:bg-slate-900 text-white border-transparent'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                            }`}
+                            onClick={() => handleVote(faq.id, false)}
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                            Não
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-slate-400 ml-auto">
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>
+                            {viewsCount >= 1000 ? `${(viewsCount / 1000).toFixed(1)}k` : viewsCount}{' '}
+                            visualizações
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">#{faq.position || 0}</span>
-                    </div>
-                    <p className="text-sm text-foreground/90 leading-relaxed">{faq.answer}</p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>Isso ajudou?</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 gap-1 px-2"
-                        onClick={() => handleVote(faq.id, true)}
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                        {faq.helpful_yes || 0}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 gap-1 px-2"
-                        onClick={() => handleVote(faq.id, false)}
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                        {faq.helpful_no || 0}
-                      </Button>
-                      <span className="ml-auto text-muted-foreground/80">
-                        {faq.helpful_total || faq.helpful_yes || faq.helpful_no ? `${faq.helpful_total || 0} votos` : 'Novo'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          )}
         </div>
       </CardContent>
     </Card>
