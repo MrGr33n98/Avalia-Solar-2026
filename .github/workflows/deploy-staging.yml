@@ -1,9 +1,7 @@
 name: Deploy Staging — Avalia Solar
 
-# Triggers on push to staging branch OR manual dispatch
+# Triggers only on manual dispatch (automatic push to staging disabled to save resources)
 on:
-  push:
-    branches: [ staging ]
   workflow_dispatch:
     inputs:
       reason:
