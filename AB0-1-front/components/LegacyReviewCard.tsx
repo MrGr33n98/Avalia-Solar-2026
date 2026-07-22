@@ -26,9 +26,9 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
 
   return (
     <article className="flex gap-4 rounded-[2px] border border-slate-300 bg-white p-5 sm:p-6">
-      <Avatar className="h-11 w-11 rounded-[2px] border border-slate-300 grayscale">
+      <Avatar className="h-11 w-11 rounded-full border border-slate-300 grayscale">
         <AvatarImage src={review.user.avatar_url || undefined} />
-        <AvatarFallback className="rounded-[2px] bg-slate-200 text-slate-500 font-bold">
+        <AvatarFallback className="rounded-full bg-slate-200 text-slate-500 font-bold">
           {review.user.name.substring(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>

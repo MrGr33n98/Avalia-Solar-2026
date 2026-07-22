@@ -44,9 +44,9 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3 sm:gap-4">
-            <Avatar className="h-12 w-12 rounded-[2px] border border-slate-300 sm:h-12 sm:w-12">
+            <Avatar className="h-12 w-12 rounded-full border border-slate-300 sm:h-12 sm:w-12">
               <AvatarImage src={review.user.avatar_url || undefined} />
-              <AvatarFallback className="rounded-[2px] bg-slate-100 font-medium text-slate-900">
+              <AvatarFallback className="rounded-full bg-slate-100 font-medium text-slate-900">
                 {review.user.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>

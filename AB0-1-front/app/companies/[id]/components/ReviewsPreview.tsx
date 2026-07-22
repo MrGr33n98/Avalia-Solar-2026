@@ -125,7 +125,7 @@ export default function ReviewsPreview({
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[2px] border border-slate-300 bg-white">
+                        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-300 bg-white">
                           {avatarUrl ? (
                             <Image
                               src={avatarUrl}
