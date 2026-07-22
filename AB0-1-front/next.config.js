@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Next.js config is CommonJS. */
 /** @type {import('next').NextConfig} */
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
