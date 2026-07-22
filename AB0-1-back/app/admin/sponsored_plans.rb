@@ -38,9 +38,9 @@ ActiveAdmin.register SponsoredPlan do
       f.input :plan
       f.input :custom_cta
       f.input :active
-      f.input :purchased_at
-      f.input :start_at
-      f.input :end_at
+      f.input :purchased_at, as: :datepicker
+      f.input :start_at, as: :datepicker
+      f.input :end_at, as: :datepicker
     end
     f.actions
   end

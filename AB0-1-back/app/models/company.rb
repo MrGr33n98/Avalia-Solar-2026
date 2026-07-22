@@ -24,7 +24,7 @@ def expire_local_pages_cache
   begin
     relevant_fields = %w[state city status active slug verified deleted_at]
     has_relevant_changes = previous_changes.keys.any? { |k| relevant_fields.include?(k) } || destroyed?
-    
+
     return unless has_relevant_changes
 
     %w[energia-solar].each do |vertical|
@@ -202,6 +202,8 @@ end
   has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy
+  has_many :chat_sessions, dependent: :nullify
+  has_many :assigned_chat_leads, class_name: 'ChatLead', foreign_key: :assigned_company_id, dependent: :nullify
   has_many :gated_downloads, dependent: :destroy
   has_many :sector_ratings, dependent: :destroy
   has_many :company_sector_questions, dependent: :destroy

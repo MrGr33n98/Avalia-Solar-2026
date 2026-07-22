@@ -36,6 +36,7 @@ type ChatInviteAction = {
 
 const CHAT_INVITE_DISMISSED_KEY = 'mobivolt_chat_invite_dismissed';
 const CHAT_INVITE_DELAY_MS = 3000;
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function ChatWidget() {
   const router = useRouter();
@@ -48,19 +49,18 @@ export default function ChatWidget() {
     showLeadForm,
     setShowLeadForm,
     hasLeadCaptured,
+    agentTyping,
     setHasLeadCaptured,
     startSession,
     sendMessage,
     sendFeedback,
     submitLead,
+    setTyping,
     clearSession
   } = useChatSession();
 
   const [input, setInput] = useState('');
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Inactivity timeout (30 minutes)
-  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
 
   const resetInactivityTimer = useCallback(() => {
     if (idleTimerRef.current) {
@@ -69,10 +69,9 @@ export default function ChatWidget() {
 
     if (messages.length > 0) {
       idleTimerRef.current = setTimeout(() => {
-        console.log('[Chat] Closing session due to inactivity');
         clearSession();
         setIsOpen(false);
-      }, INACTIVITY_TIMEOUT);
+      }, INACTIVITY_TIMEOUT_MS);
     }
   }, [messages.length, clearSession, setIsOpen]);
 
@@ -113,7 +112,7 @@ export default function ChatWidget() {
 
   const allCompanies = messages
     .filter(msg => msg.metadata?.type === 'company_recommendations')
-    .flatMap(msg => msg.metadata.companies || []);
+    .flatMap(msg => msg.metadata?.companies || []);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -195,7 +194,7 @@ export default function ChatWidget() {
       sendMessage('Gostaria de falar com um atendente humano.');
       setShowDiscoveryMenu(false);
     }
-  }, [sendMessage]);
+  }, [sendMessage, setShowLeadForm]);
 
   const handleSolarWizardComplete = useCallback((answers: Record<string, string>) => {
     setWizardAnswers(answers);
@@ -272,6 +271,7 @@ export default function ChatWidget() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     sendMessage(input);
+    setTyping(false);
     setInput('');
   };
 
@@ -912,6 +912,11 @@ export default function ChatWidget() {
             )}
 
             <div ref={messagesEndRef} />
+            {agentTyping && (
+              <p className="px-1 text-xs text-zinc-500" role="status">
+                Atendente digitando…
+              </p>
+            )}
           </div>
 
             {/* Input Area */}
@@ -920,7 +925,11 @@ export default function ChatWidget() {
               type="text"
               value={input}
               disabled={isLoading || showLeadForm}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setTyping(e.target.value.length > 0);
+              }}
+              onBlur={() => setTyping(false)}
               placeholder={showLeadForm ? "Preencha o formulário acima..." : "Escreva sua mensagem..."}
               aria-label="Mensagem para o assistente"
               className="flex-1 px-4 py-2 text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/50 disabled:opacity-50"

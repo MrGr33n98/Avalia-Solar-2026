@@ -1,0 +1,12 @@
+NOVO LEAD QUALIFICADO
+
+Empresa: <%= @company.name %>
+Nome: <%= @lead.name.presence || 'Não informado' %>
+Cidade: <%= [@lead.city, @lead.state].compact.join('/') %>
+Intent Score: <%= @lead.lead_score %>/100
+Fatura mensal: <%= @lead.monthly_bill || 'Não informada' %>
+
+Abrir Live Inbox: <%= @inbox_url %>
+<% if @whatsapp_url.present? %>Abrir WhatsApp: <%= @whatsapp_url %><% end %>
+
+Equipe Avalia Solar

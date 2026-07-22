@@ -2,8 +2,13 @@
 
 class ChatSession < ApplicationRecord
   belongs_to :user, optional: true
+  belongs_to :company, optional: true
+  belongs_to :assigned_agent, class_name: 'User', optional: true
   has_many :chat_messages, dependent: :destroy
   has_one :chat_lead, dependent: :destroy
+
+  MODES = %w[bot_only human_manual hybrid].freeze
+  INBOX_STATUSES = %w[active waiting_agent in_progress archived].freeze
 
   enum status: {
     active: 'active',
@@ -12,6 +17,8 @@ class ChatSession < ApplicationRecord
   }, _prefix: true
 
   validates :visitor_id, presence: true
+  validates :mode, inclusion: { in: MODES }
+  validates :inbox_status, inclusion: { in: INBOX_STATUSES }
 
   before_validation :generate_visitor_id, on: :create
   before_create :set_started_at
@@ -20,6 +27,8 @@ class ChatSession < ApplicationRecord
   scope :with_leads, -> { joins(:chat_lead) }
   scope :by_vertical, ->(v) { where(vertical: v) if v.present? }
   scope :by_source, ->(s) { where(source_page: s) if s.present? }
+  scope :for_inbox, -> { where.not(company_id: nil).where.not(inbox_status: 'archived') }
+  scope :inbox_recent, -> { order(Arel.sql('COALESCE(last_message_at, created_at) DESC')) }
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[
@@ -41,6 +50,40 @@ class ChatSession < ApplicationRecord
   def increment_message_count!
     increment!(:message_count)
     touch(:last_message_at)
+  end
+
+  def waiting_for_agent?
+    inbox_status == 'waiting_agent'
+  end
+
+  def bot_may_respond?
+    mode != 'human_manual'
+  end
+
+  def request_human!(company: self.company)
+    update!(
+      company: company,
+      mode: mode == 'bot_only' ? 'hybrid' : mode,
+      inbox_status: 'waiting_agent',
+      human_requested_at: human_requested_at || Time.current
+    )
+  end
+
+  def take_over!(agent:)
+    update!(
+      assigned_agent: agent,
+      mode: 'human_manual',
+      inbox_status: 'in_progress',
+      human_taken_over_at: human_taken_over_at || Time.current
+    )
+  end
+
+  def return_to_bot!
+    update!(assigned_agent: nil, mode: 'bot_only', inbox_status: 'active')
+  end
+
+  def archive!
+    update!(inbox_status: 'archived', archived_at: Time.current, company_unread_count: 0)
   end
 
   private

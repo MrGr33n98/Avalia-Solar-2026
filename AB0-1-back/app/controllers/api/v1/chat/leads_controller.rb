@@ -35,6 +35,9 @@ module Api
 
             lead.assign_attributes(safe_params)
 
+            assigned_company = resolve_assigned_company(lead_params[:metadata])
+            lead.assigned_company = assigned_company if assigned_company
+
             # Preenche defaults de sessão apenas se não existirem
             lead.consent_given = true
             lead.consent_given_at ||= Time.current
@@ -55,6 +58,12 @@ module Api
 
             lead.update!(safe_params)
           end
+
+          assigned_company ||= resolve_assigned_company(lead_params[:metadata])
+          lead.update!(assigned_company: assigned_company) if assigned_company && lead.assigned_company_id != assigned_company.id
+
+          attach_session_to_company!(session, lead)
+          enqueue_live_inbox_notifications(lead)
 
           # Extract insights (async-safe)
           ::Chat::InsightExtractionService.extract_from_lead(lead)
@@ -121,6 +130,33 @@ module Api
             pain_points: [], objections: [],
             metadata: {}
           )
+        end
+
+        def resolve_assigned_company(metadata)
+          raw = metadata.respond_to?(:to_h) ? metadata.to_h : {}
+          company_id = raw['quote_requested_company_id'] || raw[:quote_requested_company_id] ||
+                       Array(raw['recommended_company_ids'] || raw[:recommended_company_ids]).first
+          Company.find_by(id: company_id)
+        end
+
+        def attach_session_to_company!(session, lead)
+          return unless lead.assigned_company_id.present?
+
+          session.update!(
+            company_id: lead.assigned_company_id,
+            inbox_status: lead.lead_score.to_i >= 75 ? 'waiting_agent' : 'active',
+            human_requested_at: (Time.current if lead.lead_score.to_i >= 75)
+          )
+          ::Chat::InboxBroadcastService.session_updated(session)
+        end
+
+        def enqueue_live_inbox_notifications(lead)
+          return unless lead.assigned_company_id.present?
+
+          ::Chat::LeadEmailNotificationJob.perform_later(lead.id)
+          ::Chat::CrmWebhookDispatchJob.perform_later(lead.id, 'lead.captured')
+        rescue StandardError => e
+          Rails.logger.error("[Chat::LeadsController] live inbox dispatch failed: #{e.class}: #{e.message}")
         end
       end
     end

@@ -2,6 +2,7 @@
 
 class ChatLead < ApplicationRecord
   belongs_to :chat_session
+  belongs_to :assigned_company, class_name: 'Company', optional: true
   has_many :chat_lead_activities, dependent: :destroy
 
   SALES_STATUSES = %w[new qualified contacted proposal_sent converted lost spam].freeze

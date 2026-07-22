@@ -51,6 +51,7 @@ module Api
               status: session.status,
               vertical: session.vertical,
               message_count: session.message_count,
+              realtime_token: realtime_token_for(session),
               started_at: session.started_at
             },
             messages: [
@@ -74,6 +75,7 @@ module Api
             id: session.id,
             status: session.status,
             message_count: session.message_count,
+            realtime_token: realtime_token_for(session),
             messages: messages
           }
         end
@@ -92,6 +94,10 @@ module Api
 
         def chat_enabled?
           ENV.fetch('CHAT_ENABLED', 'true') == 'true'
+        end
+
+        def realtime_token_for(session)
+          Rails.application.message_verifier(:chat_session_realtime).generate(session.id)
         end
       end
     end

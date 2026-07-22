@@ -235,6 +235,18 @@ Rails.application.routes.draw do
         post 'messages/:id/feedback', to: 'messages#feedback', as: :message_feedback
       end
 
+      namespace :inbox do
+        resources :sessions, only: [:index] do
+          member do
+            get :messages
+            post :messages, action: :create_message
+            patch :mode, action: :update_mode
+            post :read, action: :mark_read
+            post :archive
+          end
+        end
+      end
+
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       # P2P Chat endpoints
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

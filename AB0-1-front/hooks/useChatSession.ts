@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createConsumer, type Cable } from '@rails/actioncable';
 import { fetchApiSafe } from '../lib/api-client';
 import { buildApiUrl } from '../lib/api-config';
 import { getCurrentUTMs } from '../lib/analytics/utm';
@@ -6,12 +7,12 @@ import { track } from '../lib/analytics/lazy';
 
 export interface ChatMessage {
   id: number;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'agent' | 'system';
   content: string;
   intent_detected?: string;
   latency_ms?: number;
   feedback?: number;
-  metadata?: any;
+  metadata?: ChatMessageMetadata;
   created_at: string;
 }
 
@@ -21,6 +22,24 @@ export interface ChatSession {
   status: string;
   vertical?: string;
   message_count: number;
+  realtime_token?: string;
+}
+
+export interface ChatMessageMetadata {
+  type?: string;
+  companies?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+interface ChatStreamPayload {
+  chunk?: string;
+  error?: boolean;
+  is_final?: boolean;
+  metadata?: {
+    message: ChatMessage;
+    response?: ChatMessage | null;
+    should_trigger_lead?: boolean;
+  };
 }
 
 export function useChatSession(sessionKey = 'as_chat_session') {
@@ -30,6 +49,82 @@ export function useChatSession(sessionKey = 'as_chat_session') {
   const [isLoading, setIsLoading] = useState(false);
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [hasLeadCaptured, setHasLeadCaptured] = useState(false);
+  const [agentTyping, setAgentTyping] = useState(false);
+  const agentTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cableRef = useRef<Cable | null>(null);
+  const subscriptionRef = useRef<{
+    unsubscribe?: () => void;
+    perform?: (action: string, payload: Record<string, unknown>) => void;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!session?.id || !session.realtime_token) return;
+
+    const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const cableUrl = `${apiOrigin.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '')}/cable`;
+    const cable = createConsumer(cableUrl);
+    cableRef.current = cable;
+    subscriptionRef.current = cable.subscriptions.create(
+      {
+        channel: 'ChatSessionChannel',
+        session_id: session.id,
+        session_token: session.realtime_token,
+      },
+      {
+        received(event: {
+          type?: string;
+          actor?: 'customer' | 'agent';
+          typing?: boolean;
+          message?: ChatMessage;
+        }) {
+          if (event.type === 'inbox.typing' && event.actor === 'agent') {
+            const typing = Boolean(event.typing);
+            setAgentTyping(typing);
+            if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
+            if (typing) {
+              agentTypingTimerRef.current = setTimeout(() => setAgentTyping(false), 4000);
+            }
+            return;
+          }
+          if (event.type === 'inbox.message.created' && event.message?.role === 'agent') {
+            setAgentTyping(false);
+            setMessages((current) =>
+              current.some((message) => message.id === event.message!.id)
+                ? current
+                : [...current, event.message!]
+            );
+          }
+        },
+      }
+    );
+
+    return () => {
+      if (subscriptionRef.current) cable.subscriptions.remove(subscriptionRef.current);
+      cable.disconnect();
+      if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
+      subscriptionRef.current = null;
+      cableRef.current = null;
+    };
+  }, [session?.id, session?.realtime_token]);
+
+  const fetchSessionMessages = useCallback(async (sessionId: number) => {
+    try {
+      const response = await fetchApiSafe<{ messages: ChatMessage[]; realtime_token?: string }>(`chat/sessions/${sessionId}`);
+      if (response && response.messages) {
+        setMessages(response.messages);
+        if (response.realtime_token) {
+          setSession((current) => {
+            if (!current || current.id !== sessionId) return current;
+            const refreshed = { ...current, realtime_token: response.realtime_token };
+            sessionStorage.setItem(sessionKey, JSON.stringify(refreshed));
+            return refreshed;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[Chat] Failed to fetch messages:', error);
+    }
+  }, [sessionKey]);
 
   // Load session from sessionStorage on mount
   useEffect(() => {
@@ -42,23 +137,12 @@ export function useChatSession(sessionKey = 'as_chat_session') {
         localStorage.removeItem(sessionKey); // Migrate existing to sessionStorage
         // Load messages for this session
         fetchSessionMessages(parsed.id);
-      } catch (e) {
+      } catch {
         sessionStorage.removeItem(sessionKey);
         localStorage.removeItem(sessionKey);
       }
     }
-  }, [sessionKey]);
-
-  const fetchSessionMessages = async (sessionId: number) => {
-    try {
-      const response = await fetchApiSafe<{ messages: ChatMessage[] }>(`chat/sessions/${sessionId}`);
-      if (response && response.messages) {
-        setMessages(response.messages);
-      }
-    } catch (error) {
-      console.error('[Chat] Failed to fetch messages:', error);
-    }
-  };
+  }, [sessionKey, fetchSessionMessages]);
 
   const startSession = useCallback(async (vertical?: string, pageUrl?: string) => {
     setIsLoading(true);
@@ -99,7 +183,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [sessionKey]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
@@ -181,7 +265,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
                 if (dataStr === '[DONE]') continue;
                 
                 try {
-                  const data = JSON.parse(dataStr);
+                  const data = JSON.parse(dataStr) as ChatStreamPayload;
                   
                   if (data.error) {
                     throw new Error(data.chunk);
@@ -189,30 +273,38 @@ export function useChatSession(sessionKey = 'as_chat_session') {
                   
                   if (data.is_final && data.metadata) {
                     // Final metadata event
+                    const finalMetadata = data.metadata;
                     setMessages(prev => {
                       const filtered = prev.filter(m => m.id !== tempUserMsg.id && m.id !== (officialMsg?.id || -1));
-                      return [...filtered, data.metadata.message, data.metadata.response];
+                      const finalMessages: ChatMessage[] = [finalMetadata.message];
+                      if (finalMetadata.response) finalMessages.push(finalMetadata.response);
+                      return finalMessages.reduce<ChatMessage[]>((next, message) => {
+                        if (next.some((current) => current.id === message.id)) return next;
+                        return [...next, message];
+                      }, filtered);
                     });
 
-                    if (data.metadata.should_trigger_lead && !hasLeadCaptured) {
+                    if (finalMetadata.should_trigger_lead && !hasLeadCaptured) {
                       setShowLeadForm(true);
                       track('chat_lead_form_triggered', { session_id: currentSession!.id });
                     }
                   } else if (data.chunk) {
                     // Incremental chunk
+                    const chunkText = data.chunk;
                     setMessages(prev => {
                       const filtered = prev.filter(m => m.id !== tempUserMsg.id);
                       
                       if (!officialMsg) {
-                        officialMsg = {
+                        const newMessage: ChatMessage = {
                           id: Date.now() + 1,
                           role: 'assistant',
-                          content: data.chunk,
+                          content: chunkText,
                           created_at: new Date().toISOString()
                         };
-                        return [...filtered, tempUserMsg, officialMsg];
+                        officialMsg = newMessage;
+                        return [...filtered, tempUserMsg, newMessage];
                       } else {
-                        officialMsg.content += data.chunk;
+                        officialMsg.content += chunkText;
                         // Find and update the existing message in the list
                         const msgIndex = filtered.findIndex(m => m.id === officialMsg!.id);
                         if (msgIndex >= 0) {
@@ -224,7 +316,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
                       }
                     });
                   }
-                } catch (e) {
+                } catch {
                   // Ignore malformed JSON chunk
                 }
               }
@@ -270,7 +362,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     city?: string;
     state?: string;
     consent_given: boolean;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) => {
     if (!session) return false;
 
@@ -327,7 +419,12 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     setMessages([]);
     setShowLeadForm(false);
     setHasLeadCaptured(false);
+    setAgentTyping(false);
   }, [sessionKey]);
+
+  const setTyping = useCallback((typing: boolean) => {
+    subscriptionRef.current?.perform?.('typing', { typing });
+  }, []);
 
   return {
     isOpen,
@@ -338,11 +435,13 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     showLeadForm,
     setShowLeadForm,
     hasLeadCaptured,
+    agentTyping,
     setHasLeadCaptured,
     startSession,
     sendMessage,
     sendFeedback,
     submitLead,
+    setTyping,
     clearSession
   };
 }

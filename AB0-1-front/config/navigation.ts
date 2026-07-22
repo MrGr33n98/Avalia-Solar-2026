@@ -94,6 +94,14 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     group: 'engagement',
     children: [
       {
+        id: 'live-inbox',
+        label: 'Atendimento ao vivo',
+        icon: MessageCircle,
+        context: ['operational', 'quick_access'],
+        badge: true,
+        description: 'Atender leads em tempo real',
+      },
+      {
         id: 'leads',
         label: 'Oportunidades',
         icon: Target,

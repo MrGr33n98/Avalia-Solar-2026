@@ -2,13 +2,16 @@
 
 class ChatMessage < ApplicationRecord
   belongs_to :chat_session
+  belongs_to :sender, class_name: 'User', optional: true
 
-  validates :role, presence: true, inclusion: { in: %w[user assistant system] }
+  validates :role, presence: true, inclusion: { in: %w[user assistant agent system] }
   validates :content, presence: true
+  validates :client_message_id, uniqueness: { scope: :chat_session_id }, allow_blank: true
 
   scope :by_role, ->(r) { where(role: r) }
   scope :user_messages, -> { where(role: 'user') }
   scope :assistant_messages, -> { where(role: 'assistant') }
+  scope :agent_messages, -> { where(role: 'agent') }
   scope :chronological, -> { order(created_at: :asc) }
 
   def self.ransackable_attributes(_auth_object = nil)

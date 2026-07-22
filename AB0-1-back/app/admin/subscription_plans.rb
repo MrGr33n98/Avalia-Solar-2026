@@ -119,9 +119,9 @@ ActiveAdmin.register SubscriptionPlan do
       f.input :product
       f.input :status, as: :select, include_blank: 'Nao definido', collection: SubscriptionPlan.status_collection
       f.input :value, label: 'Valor contratado (opcional)'
-      f.input :purchased_at, label: 'Adquirido em'
-      f.input :start_at, label: 'Inicio do ciclo'
-      f.input :end_at, label: 'Fim do ciclo'
+      f.input :purchased_at, label: 'Adquirido em', as: :datepicker
+      f.input :start_at, label: 'Inicio do ciclo', as: :datepicker
+      f.input :end_at, label: 'Fim do ciclo', as: :datepicker
     end
     f.actions
   end

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Clock3, MessageCircle, PhoneCall, Wifi, WifiOff } from 'lucide-react';
 
 // Layout Components
 import EnterpriseSidebar from './EnterpriseSidebar';
@@ -11,7 +10,6 @@ import DashboardToolbar from './DashboardToolbar';
 import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
 
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Hooks
@@ -27,9 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
 import {
   getFeatureAccessEntry,
-  isFeatureEnabled,
   isFeatureHiddenEntry,
-  type FeatureAccessMap,
 } from '@/lib/feature-access';
 
 // Components
@@ -129,6 +125,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'product-images': 'media_gallery',
   media: 'media_gallery',
   chat: 'p2p_chat',
+  'live-inbox': 'p2p_chat',
 };
 
 const ALWAYS_VISIBLE_TABS = new Set<string>([]);
@@ -189,8 +186,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     companyError,
     stats,
     featureAccess,
-    notifications,
-    markNotificationAsRead,
   } = useCompanyDashboardData(companyId);
 
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
@@ -248,6 +243,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
+    if (tab === 'live-inbox') {
+      router.push('/dashboard/inbox');
+      return;
+    }
+
     setActiveTab(tab);
 
     // Canonical Dashboard View tracking

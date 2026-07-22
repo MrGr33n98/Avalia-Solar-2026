@@ -24,6 +24,29 @@ module Chat
         safety_status: 'clean'
       )
 
+      register_customer_message(user_msg)
+
+      unless @session.bot_may_respond?
+        @session.increment_message_count!
+        final_metadata = {
+          message: message_metadata(user_msg),
+          response: nil,
+          awaiting_agent: true,
+          should_trigger_lead: false,
+          session: {
+            id: @session.id,
+            message_count: @session.message_count,
+            mode: @session.mode,
+            inbox_status: @session.inbox_status
+          }
+        }
+
+        return final_metadata unless block_given?
+
+        yield('', true, final_metadata)
+        return
+      end
+
       # 3. Build conversation history (limited)
       history = @session.chat_messages
                         .chronological
@@ -280,6 +303,8 @@ module Chat
         metadata: msg_metadata
       )
 
+      Chat::InboxBroadcastService.message_created(assistant_msg) if @session.company_id.present?
+
       # 8. Update session
       @session.increment_message_count!
 
@@ -319,6 +344,31 @@ module Chat
     end
 
     private
+
+    def register_customer_message(message)
+      return unless @session.company_id.present?
+
+      now = message.created_at || Time.current
+      @session.with_lock do
+        @session.update!(
+          company_unread_count: @session.company_unread_count + 1,
+          last_message_at: now,
+          last_customer_message_at: now,
+          inbox_status: @session.inbox_status == 'archived' ? 'active' : @session.inbox_status
+        )
+      end
+      Chat::InboxBroadcastService.message_created(message)
+      Chat::InboxBroadcastService.session_updated(@session)
+    end
+
+    def message_metadata(message)
+      {
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        created_at: message.created_at
+      }
+    end
 
     def detect_intent(user_text, _assistant_text)
       text = user_text.downcase

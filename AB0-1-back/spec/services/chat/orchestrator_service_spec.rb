@@ -3,7 +3,22 @@ require 'rails_helper'
 RSpec.describe Chat::OrchestratorService do
   # Mock basico para evitar dependências pesadas de DB se o projeto não estiver preparado
   let(:chat_messages) { double('chat_messages', chronological: double(last: [])) }
-  let(:session) { double('session', id: 1, chat_messages: chat_messages, metadata: {}, update!: true, increment_message_count!: true, message_count: 1, source_page: '/', vertical: 'solar', page_url: '/') }
+  let(:session) do
+    double(
+      'session',
+      id: 1,
+      chat_messages: chat_messages,
+      metadata: {},
+      update!: true,
+      increment_message_count!: true,
+      message_count: 1,
+      source_page: '/',
+      vertical: 'solar',
+      page_url: '/',
+      company_id: nil,
+      bot_may_respond?: true
+    )
+  end
 
   let(:user_message) { "quero instalar um painel solar urgente" }
   let(:service) { described_class.new(session: session) }

@@ -102,6 +102,22 @@ ActiveAdmin.register Company do
   end
 
 
+  sidebar 'Diagnóstico de Selos & Badges', only: %i[show edit] do
+    v_state = resource.feature_access.dig('verified_product', 'state') || 'locked'
+    h_state = resource.feature_access.dig('highlight_badges', 'state') || 'locked'
+
+    attributes_table_for resource do
+      row('Verificada (Campo)') { status_tag(resource.verified? ? 'Ativo (Sim)' : 'Inativo (Não)', class: resource.verified? ? 'ok' : 'error') }
+      row('Destaque (Campo)') { status_tag(resource.featured? ? 'Ativo (Sim)' : 'Inativo (Não)', class: resource.featured? ? 'ok' : 'warning') }
+      row('Plano Atual') { resource.plan&.name || 'Sem plano (Free)' }
+      row('Selo Verificado (Feature)') { status_tag(v_state, class: v_state == 'enabled' ? 'ok' : 'error') }
+      row('Badge Destaque (Feature)') { status_tag(h_state, class: h_state == 'enabled' ? 'ok' : 'error') }
+    end
+    div class: 'inline-hints', style: 'margin-top: 10px; font-size: 11px; color: #64748b;' do
+      '💡 Para exibir o selo no site: 1) Marque "Verified = Sim" E 2) Vincule um Plano Pago (Pro/Enterprise) que libere verified_product.'
+    end
+  end
+
   sidebar 'Social Proof status', only: %i[show edit] do
     plan_name = resource.plan&.name || 'No plan'
     plan_price = resource.plan&.price.to_f
@@ -520,8 +536,10 @@ ActiveAdmin.register Company do
                            collection: Category.all.order(:name)
     end
 
-    f.inputs 'Selos / Badges' do
-      f.input :badges, as: :check_boxes, collection: Badge.active.order(:name)
+    f.inputs 'Gestão de Selos, Verificação & Badges' do
+      f.input :verified, label: 'Empresa Verificada (Ativa Selo Verde no Perfil)', hint: '💡 Ativa a tag visual. Para exibir publicamente, o Plano da empresa também deve liberar a funcionalidade verified_product (Ex: Plano Pro).'
+      f.input :featured, label: 'Empresa em Destaque (Ativa Insígnia DESTAQUE PREMIUM)', hint: '💡 Ativa a tag de topo. Requer que o Plano da empresa possua a funcionalidade highlight_badges liberada.'
+      f.input :badges, as: :check_boxes, label: 'Medalhas & Reconhecimentos Globais da Plataforma', collection: Badge.active.order(:name)
     end
 
     f.inputs 'Botoes Personalizados' do
