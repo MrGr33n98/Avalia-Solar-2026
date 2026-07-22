@@ -15,7 +15,14 @@ export function useProducts(companyId: string) {
     try {
       setLoading(true);
       const data = await productsApi.getAll({ company_id: Number(companyId) });
-      setProducts((data || []).map((p: any) => ({ 
+      const productsList = Array.isArray(data)
+        ? data
+        : data && Array.isArray((data as any).products)
+          ? (data as any).products
+          : data && Array.isArray((data as any).data)
+            ? (data as any).data
+            : [];
+      setProducts(productsList.map((p: any) => ({ 
         ...p, 
         id: String(p.id) 
       })));
