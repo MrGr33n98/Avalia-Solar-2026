@@ -4,8 +4,8 @@ module Chat
   class OrchestratorService
     MAX_HISTORY_MESSAGES = 20
 
-    def self.process(session:, user_message:, &)
-      new(session: session).process(user_message, &)
+    def self.process(session:, user_message:, &block)
+      new(session: session).process(user_message, &block)
     end
 
     def initialize(session:)

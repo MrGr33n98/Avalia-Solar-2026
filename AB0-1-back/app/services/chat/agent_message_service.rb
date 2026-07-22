@@ -3,7 +3,7 @@
 module Chat
   class AgentMessageService
     def self.call(session:, agent:, content:, client_message_id: nil)
-      new(session:, agent:).call(content:, client_message_id:)
+      new(session: session, agent: agent).call(content: content, client_message_id: client_message_id)
     end
 
     def initialize(session:, agent:)
