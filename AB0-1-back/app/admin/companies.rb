@@ -599,6 +599,61 @@ ActiveAdmin.register Company do
       end
     end
 
+    panel 'Configuração do ICP (Ideal Customer Profile)' do
+      if resource.company_icp_profile.present?
+        details class: 'icp-collapsible-details', open: true do
+          summary style: 'cursor: pointer; font-weight: bold; padding: 6px 12px; outline: none; display: flex; align-items: center; gap: 8px; background: #f4f4f4; border: 1px solid #e2e2e2; border-radius: 4px; select-none: none;' do
+            span '⚙️ Parâmetros Ativos de Qualificação (Clique para minimizar)'
+          end
+          
+          div style: 'margin-top: 15px; border-top: 1px solid #e9e9e9; padding-top: 15px;' do
+            attributes_table_for resource.company_icp_profile do
+              row :strictness_level do |p|
+                status_tag p.strictness_level, class: "status_#{p.strictness_level}"
+              end
+              row :auto_reject_out_of_icp do |p|
+                status_tag (p.auto_reject_out_of_icp ? 'sim' : 'não'), class: (p.auto_reject_out_of_icp ? 'ok' : 'info')
+              end
+              row :notify_only_high_match do |p|
+                status_tag (p.notify_only_high_match ? 'sim' : 'não'), class: (p.notify_only_high_match ? 'ok' : 'info')
+              end
+              row :min_monthly_bill do |p|
+                number_to_currency(p.min_monthly_bill, unit: 'R$ ', separator: ',', delimiter: '.')
+              end
+              row :min_system_kwp do |p|
+                "#{p.min_system_kwp} kWp" if p.min_system_kwp
+              end
+              row :min_ev_chargers_count
+              row :target_audiences do |p|
+                Array(p.target_audiences).join(', ')
+              end
+              row :preferred_roof_types do |p|
+                Array(p.preferred_roof_types).join(', ')
+              end
+              row :ev_charger_types do |p|
+                Array(p.ev_charger_types).join(', ')
+              end
+              row :nationwide do |p|
+                status_tag (p.nationwide ? 'nacional' : 'regional'), class: (p.nationwide ? 'ok' : 'info')
+              end
+              row :target_states do |p|
+                Array(p.target_states).join(', ')
+              end
+              row :target_cities do |p|
+                Array(p.target_cities).join(', ')
+              end
+            end
+          end
+        end
+      else
+        div class: 'blank_slate_container' do
+          span class: 'blank_slate' do
+            'Esta empresa ainda não configurou as regras de ICP.'
+          end
+        end
+      end
+    end
+
     if Company.column_names.include?('effect')
       panel 'Visual Effect Preview' do
         div class: 'company-card admin-preview', 'data-controller': 'effect',
