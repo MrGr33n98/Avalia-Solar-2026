@@ -238,14 +238,13 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def faqs
-    return [] unless faq_block_enabled?
-
-    # Use loaded association to avoid N+1
     faq_list = if object.association(:company_faqs).loaded?
                  object.company_faqs.select(&:published?).sort_by { |f| f.position || 999 }
                else
                  object.company_faqs.published_only.ordered
                end
+
+    return [] if faq_list.empty? && !faq_block_enabled?
 
     faq_list.map do |faq|
       faq.as_json(only: %i[id question answer status position])

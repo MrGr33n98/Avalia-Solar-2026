@@ -29,10 +29,41 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     metadata: { source: 'company_faq_section' },
   });
 
+  const rawCompanyFaqs = company?.faqs;
+  const hasCompanyFaqs = Array.isArray(rawCompanyFaqs) && rawCompanyFaqs.length > 0;
+
+  const companyFaqItems: FaqItem[] = useMemo(() => {
+    if (!rawCompanyFaqs) return [];
+    return rawCompanyFaqs.map((cf) => ({
+      id: cf.id,
+      question: cf.question,
+      answer: cf.answer,
+      category: (cf as any).category || 'Geral',
+      position: cf.position || 1,
+      active: true,
+    }));
+  }, [rawCompanyFaqs]);
+
   const displayFaqs = useMemo(() => {
+    // 1. Prioridade total para FAQs reais da empresa (Active Admin / Dashboard)
+    if (hasCompanyFaqs) {
+      return companyFaqItems.filter((faq) => {
+        const matchesQuery =
+          !query ||
+          faq.question.toLowerCase().includes(query.toLowerCase()) ||
+          faq.answer.toLowerCase().includes(query.toLowerCase());
+        const matchesCategory = !category || faq.category === category;
+        return matchesQuery && matchesCategory;
+      });
+    }
+
+    // 2. FAQs buscadas via API
     if (faqs.length > 0) return faqs;
+
+    // 3. Filtro ativo sem correspondência
     if (query) return [];
 
+    // 4. Fallback padrão apenas quando a empresa não possui FAQs cadastradas
     const name = companyName || company?.name || 'esta empresa';
     const locationLabel = [company?.city, company?.state].filter(Boolean).join(' - ');
     const ratingAvg = Number(company?.rating_avg ?? company?.average_rating ?? company?.rating ?? 4.5).toFixed(1);
@@ -75,14 +106,16 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         helpful_no: 0,
       },
     ] as FaqItem[];
-  }, [faqs, query, companyName, company]);
+  }, [hasCompanyFaqs, companyFaqItems, faqs, query, category, companyName, company]);
 
   const categories = useMemo(() => {
-    const unique = new Set(displayFaqs.map((f) => f.category));
+    const unique = new Set(displayFaqs.map((f) => f.category).filter(Boolean));
     return Array.from(unique);
   }, [displayFaqs]);
 
   useEffect(() => {
+    if (hasCompanyFaqs) return;
+
     const load = async () => {
       setLoading(true);
       try {
@@ -95,7 +128,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
       }
     };
     load();
-  }, [query, category, companyId]);
+  }, [hasCompanyFaqs, query, category, companyId]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
