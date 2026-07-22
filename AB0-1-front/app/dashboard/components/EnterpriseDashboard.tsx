@@ -91,6 +91,9 @@ const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
 const ReviewFormsManagement = dynamic(() => import('./ReviewFormsManagement'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const IcpSetupForm = dynamic(() => import('./IcpSetupForm'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 
 function DashboardTabSkeleton() {
   return (
@@ -833,6 +836,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompanySettings companyId={companyId} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="icp-config" className="mt-0 focus-visible:outline-none">
+                <IcpSetupForm companyId={companyId} />
               </TabsContent>
             </Tabs>
           </div>
