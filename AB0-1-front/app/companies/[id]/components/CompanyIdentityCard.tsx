@@ -53,14 +53,14 @@ export default function CompanyIdentityCard({
           <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-[1px] shadow-sm sm:h-[72px] sm:w-[72px]">
             {badgeImageUrl && (
               <div 
-                className="absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center w-[24px] h-[24px] -right-1.5 -top-1.5 sm:w-[28px] sm:h-[28px] sm:-right-2 sm:-top-2 transition-transform hover:scale-110"
+                className="absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center w-[30px] h-[30px] -right-2 -top-2 sm:w-[38px] sm:h-[38px] sm:-right-3 sm:-top-3 transition-transform hover:scale-110"
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image
                   src={badgeImageUrl}
                   alt={badgeToRender?.name || 'Selo'}
-                  width={28}
-                  height={28}
+                  width={48}
+                  height={48}
                   className="object-contain w-full h-full rounded-full"
                   unoptimized
                 />

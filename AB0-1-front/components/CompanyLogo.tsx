@@ -44,10 +44,10 @@ export function CompanyLogo({
   };
 
   const badgeSizeClasses = {
-    sm: 'w-[18px] h-[18px] -right-1 -top-1 md:w-[22px] md:h-[22px] md:-right-1.5 md:-top-1.5',
-    md: 'w-[24px] h-[24px] -right-1.5 -top-1.5 md:w-[28px] md:h-[28px] md:-right-2 md:-top-2',
-    lg: 'w-[30px] h-[30px] -right-2 -top-2 md:w-[36px] md:h-[36px] md:-right-3 md:-top-3',
-    custom: 'w-[24px] h-[24px] -right-1.5 -top-1.5',
+    sm: 'w-[22px] h-[22px] -right-1.5 -top-1.5 md:w-[26px] md:h-[26px] md:-right-2 md:-top-2',
+    md: 'w-[28px] h-[28px] -right-2 -top-2 md:w-[34px] md:h-[34px] md:-right-2.5 md:-top-2.5',
+    lg: 'w-[34px] h-[34px] -right-2.5 -top-2.5 md:w-[42px] md:h-[42px] md:-right-3 md:-top-3',
+    custom: 'w-[28px] h-[28px] -right-2 -top-2',
   };
 
   const companyBadges = Array.isArray(badges) ? badges : [];
@@ -73,8 +73,8 @@ export function CompanyLogo({
           <Image
             src={badgeImageUrl}
             alt={badgeToRender?.name || 'Selo'}
-            width={32}
-            height={32}
+            width={48}
+            height={48}
             className="object-contain w-full h-full rounded-full"
             unoptimized
           />
