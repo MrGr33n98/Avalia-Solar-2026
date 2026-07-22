@@ -154,7 +154,7 @@ module Api
           return unless lead.assigned_company_id.present?
 
           ::Chat::LeadEmailNotificationJob.perform_later(lead.id)
-          ::Chat::CrmWebhookDispatchJob.perform_later(lead.id, 'lead.captured')
+          ::Chat::CRMWebhookDispatchJob.perform_later(lead.id, 'lead.captured')
         rescue StandardError => e
           Rails.logger.error("[Chat::LeadsController] live inbox dispatch failed: #{e.class}: #{e.message}")
         end

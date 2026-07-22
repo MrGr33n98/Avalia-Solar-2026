@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'ostruct'
 
-RSpec.describe Chat::CrmWebhookDispatchJob, type: :job do
+RSpec.describe Chat::CRMWebhookDispatchJob, type: :job do
   let(:company) { create(:company) }
   let(:session) { create(:chat_session, company: company) }
   let(:lead) { create(:chat_lead, chat_session: session, assigned_company: company) }

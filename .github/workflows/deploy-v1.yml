@@ -438,11 +438,32 @@ jobs:
 
             echo "?? Atualizando worker somente apos os health checks..."
             docker compose up -d --no-deps --no-build worker
-            sleep 5
+            sleep 3
             WORKER_CID=$(docker compose ps -q worker)
-            WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
-            if [ "$WORKER_STATE" != "running" ]; then
+            if [ -z "$WORKER_CID" ]; then
+              echo "!! ERRO: container ID do worker nao encontrado"
+              docker compose ps
               docker compose logs --tail=200 worker || true
+              rollback_apps
+              exit 1
+            fi
+
+            STABLE=1
+            for i in $(seq 1 10); do
+              WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
+              WORKER_EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$WORKER_CID" 2>/dev/null || echo unknown)
+              if [ "$WORKER_STATE" != "running" ]; then
+                echo "!! ERRO: worker nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
+                docker inspect "$WORKER_CID" --format '{{json .State}}' || true
+                docker logs --tail=200 "$WORKER_CID" || true
+                docker compose logs --tail=200 worker || true
+                STABLE=0
+                break
+              fi
+              sleep 2
+            done
+
+            if [ "$STABLE" -ne 1 ]; then
               rollback_apps
               exit 1
             fi

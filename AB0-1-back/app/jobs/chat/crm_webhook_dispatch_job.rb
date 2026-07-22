@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  class CrmWebhookDispatchJob < ApplicationJob
+  class CRMWebhookDispatchJob < ApplicationJob
     class TransientDeliveryError < StandardError; end
     class PermanentDeliveryError < StandardError; end
 
