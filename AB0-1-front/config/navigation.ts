@@ -109,6 +109,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         badge: true,
         description: 'Gerenciar leads e oportunidades',
       },
+      {
+        id: 'icp-config',
+        label: 'Perfil de Cliente (ICP)',
+        icon: Sparkles,
+        context: ['operational', 'quick_access'],
+        description: 'Configurar réguas de qualificação ICP Solar e EV',
+      },
     ],
   },
   {

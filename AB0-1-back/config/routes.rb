@@ -247,6 +247,10 @@ Rails.application.routes.draw do
         end
       end
 
+      namespace :dashboard do
+        resource :icp_profile, only: %i[show update]
+      end
+
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       # P2P Chat endpoints
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

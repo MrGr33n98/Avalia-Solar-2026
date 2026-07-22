@@ -60,7 +60,7 @@ function relativeTime(value?: string | null) {
 }
 
 function priority(score = 0) {
-  if (score >= 75) return { label: 'Alta intenção', className: 'border-red-300 bg-red-50 text-red-800' };
+  if (score >= 75) return { label: '🔥 ICP Match Alto', className: 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' };
   if (score >= 40) return { label: 'Média intenção', className: 'border-amber-300 bg-amber-50 text-amber-800' };
   return { label: 'Informativo', className: 'border-slate-300 bg-slate-50 text-slate-700' };
 }
