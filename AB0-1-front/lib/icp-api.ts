@@ -1,5 +1,5 @@
 // lib/icp-api.ts
-import { API_BASE_URL } from '@/lib/api';
+import { getApiBaseUrl } from '@/lib/api-config';
 
 export interface IcpProfile {
   id?: number;
@@ -21,7 +21,7 @@ export interface IcpProfile {
 }
 
 export async function fetchIcpProfile(companyId?: number): Promise<IcpProfile> {
-  const url = new URL(`${API_BASE_URL}/dashboard/icp_profile`);
+  const url = new URL(`${getApiBaseUrl()}/dashboard/icp_profile`);
   if (companyId) url.searchParams.set('company_id', companyId.toString());
 
   const res = await fetch(url.toString(), {
@@ -37,7 +37,7 @@ export async function fetchIcpProfile(companyId?: number): Promise<IcpProfile> {
 }
 
 export async function updateIcpProfile(profile: Partial<IcpProfile>, companyId?: number): Promise<IcpProfile> {
-  const url = new URL(`${API_BASE_URL}/dashboard/icp_profile`);
+  const url = new URL(`${getApiBaseUrl()}/dashboard/icp_profile`);
   if (companyId) url.searchParams.set('company_id', companyId.toString());
 
   const res = await fetch(url.toString(), {
