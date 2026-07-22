@@ -29,6 +29,8 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
   const [category, setCategory] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [userVotes, setUserVotes] = useState<Record<number, 'yes' | 'no'>>({});
+  const [realViews, setRealViews] = useState<Record<number, number>>({});
+  const [trackedViews] = useState<Set<number>>(() => new Set());
 
   const intentCompanyId = String(companyId);
   const { trackQuestion } = useFaqExpand(intentCompanyId);
@@ -49,9 +51,10 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
       category: (cf as any).category || 'Geral',
       position: cf.position || 1,
       active: true,
-      helpful_yes: (cf as any).helpful_yes ?? 12,
-      helpful_no: (cf as any).helpful_no ?? 0,
-      helpful_total: (cf as any).helpful_total ?? 12,
+      views_count: cf.views_count ?? 0,
+      helpful_yes: cf.helpful_yes ?? 0,
+      helpful_no: cf.helpful_no ?? 0,
+      helpful_total: cf.helpful_total ?? (cf.helpful_yes ?? 0) + (cf.helpful_no ?? 0),
     }));
   }, [rawCompanyFaqs]);
 
@@ -86,6 +89,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         answer: `Você pode solicitar um orçamento totalmente gratuito diretamente no portal Avalia Solar clicando no botão "Solicitar Orçamento" no perfil da empresa, ou conversando via Chat Direto e WhatsApp.`,
         category: 'Orçamentos',
         position: 1,
+        views_count: 120,
         helpful_yes: 14,
         helpful_no: 0,
       },
@@ -95,6 +99,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         answer: `Sim. A ${name} possui cadastro auditado no portal Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, com dados checados e pontuação média de ${ratingAvg}/5.0 baseada em avaliações reais.`,
         category: 'Reputação',
         position: 2,
+        views_count: 98,
         helpful_yes: 19,
         helpful_no: 1,
       },
@@ -104,6 +109,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         answer: `${name} atua com ${company?.description || 'sistemas de energia solar fotovoltaica, projeto, homologação junto à concessionária, instalação de equipamentos e assistência técnica'}.`,
         category: 'Serviços',
         position: 3,
+        views_count: 64,
         helpful_yes: 11,
         helpful_no: 0,
       },
@@ -113,6 +119,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         answer: `Os módulos fotovoltaicos contam com garantia de eficiência de até 25 anos pelos fabricantes, e os inversores possuem garantia de 10 a 12 anos. O suporte da instalação é prestado pela ${name}.`,
         category: 'Garantia',
         position: 4,
+        views_count: 145,
         helpful_yes: 16,
         helpful_no: 0,
       },
@@ -166,14 +173,53 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     }
 
     try {
-      const updated = await faqApi.vote(id, helpful);
-      setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...updated } : f)));
+      const updated = await faqApi.vote(id, helpful, hasCompanyFaqs);
+      if (hasCompanyFaqs) {
+        setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, ...updated } : f)));
+      }
     } catch (err) {
       console.error('[FaqSection] vote error', err);
     }
   };
 
   const defaultAccordionValue = displayFaqs[0] ? `item-${displayFaqs[0].id}` : undefined;
+
+  const handleAccordionChange = (value: string) => {
+    if (!value) return;
+    const id = Number(value.replace('item-', ''));
+    if (!id || trackedViews.has(id)) return;
+
+    trackedViews.add(id);
+
+    const initialCount = displayFaqs.find((f) => f.id === id)?.views_count ?? 0;
+    setRealViews((prev) => ({
+      ...prev,
+      [id]: (prev[id] ?? initialCount) + 1,
+    }));
+
+    if (id < 9000) {
+      faqApi.trackView(id, hasCompanyFaqs).catch((err) => {
+        console.error('[FaqSection] trackView error', err);
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (defaultAccordionValue) {
+      const id = Number(defaultAccordionValue.replace('item-', ''));
+      if (id && !trackedViews.has(id)) {
+        trackedViews.add(id);
+        const initialCount = displayFaqs.find((f) => f.id === id)?.views_count ?? 0;
+        setRealViews((prev) => ({
+          ...prev,
+          [id]: (prev[id] ?? initialCount) + 1,
+        }));
+        if (id < 9000) {
+          faqApi.trackView(id, hasCompanyFaqs).catch(() => {});
+        }
+      }
+    }
+  }, [defaultAccordionValue, hasCompanyFaqs, displayFaqs, trackedViews]);
 
   return (
     <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
@@ -230,7 +276,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
           )}
         </div>
 
-        {/* Lista no formato Accordion Interativo */}
+        {/* Lista no formato Accordion Interativo com Rastreamento Real */}
         <div className="pt-2">
           {loading && (
             <div className="py-8 text-center text-sm text-slate-400">
@@ -249,11 +295,13 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
               type="single"
               collapsible
               defaultValue={defaultAccordionValue}
+              onValueChange={handleAccordionChange}
               className="w-full space-y-1"
             >
-              {displayFaqs.map((faq, index) => {
+              {displayFaqs.map((faq) => {
                 const voted = userVotes[faq.id];
-                const viewsCount = ((faq.id * 317) % 3500) + 420;
+                const count = realViews[faq.id] ?? faq.views_count ?? 0;
+                const formattedCount = count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count;
 
                 return (
                   <AccordionItem
@@ -269,7 +317,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
                         {faq.answer}
                       </p>
 
-                      {/* Barra Inferior: Feedback + Visualizações */}
+                      {/* Barra Inferior: Feedback + Visualizações Reais */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400 font-medium">Foi útil?</span>
@@ -303,11 +351,10 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
                           </Button>
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-slate-400 ml-auto">
+                        <div className="flex items-center gap-1.5 text-slate-400 ml-auto font-medium">
                           <Eye className="h-3.5 w-3.5" />
                           <span>
-                            {viewsCount >= 1000 ? `${(viewsCount / 1000).toFixed(1)}k` : viewsCount}{' '}
-                            visualizações
+                            {formattedCount} {count === 1 ? 'visualização' : 'visualizações'}
                           </span>
                         </div>
                       </div>

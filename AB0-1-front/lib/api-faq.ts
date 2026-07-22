@@ -7,6 +7,7 @@ export interface FaqItem {
   category: string;
   position: number;
   active: boolean;
+  views_count?: number;
   helpful_yes?: number;
   helpful_no?: number;
   helpful_total?: number;
@@ -32,12 +33,19 @@ export const faqApi = {
     });
     return response;
   },
-  vote: async (faqId: number, helpful: boolean): Promise<FaqItem> => {
+  vote: async (faqId: number, helpful: boolean, isCompany = false): Promise<FaqItem> => {
     const response = await fetchApi<{ faq: FaqItem }>(`/faqs/${faqId}/vote`, {
       method: 'POST',
-      body: JSON.stringify({ helpful }),
+      body: JSON.stringify({ helpful, is_company: isCompany }),
     });
     return response.faq;
+  },
+  trackView: async (faqId: number, isCompany = false): Promise<{ success: boolean; views_count: number }> => {
+    const response = await fetchApi<{ success: boolean; views_count: number }>(`/faqs/${faqId}/view`, {
+      method: 'POST',
+      body: JSON.stringify({ is_company: isCompany }),
+    });
+    return response;
   },
 };
 

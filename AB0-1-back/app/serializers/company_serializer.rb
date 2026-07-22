@@ -247,7 +247,10 @@ class CompanySerializer < ActiveModel::Serializer
     return [] if faq_list.empty? && !faq_block_enabled?
 
     faq_list.map do |faq|
-      faq.as_json(only: %i[id question answer status position])
+      faq.as_json(
+        only: %i[id question answer status position views_count helpful_yes helpful_no],
+        methods: %i[helpful_total]
+      )
     end
   end
 

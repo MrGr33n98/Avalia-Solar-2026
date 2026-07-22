@@ -277,6 +277,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :faqs, only: %i[index create show update destroy] do
+        member do
+          post :vote
+          post :view
+        end
+      end
+
       # Notifications API
       resources :notifications, only: [:index] do
         collection do

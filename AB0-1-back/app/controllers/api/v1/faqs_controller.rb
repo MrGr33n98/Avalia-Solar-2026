@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Api::V1::FaqsController < Api::V1::BaseController
-  before_action :authenticate_api_user, except: %i[index vote]
-  before_action :set_faq, only: %i[show update destroy vote]
+  before_action :authenticate_api_user, except: %i[index vote view]
+  before_action :set_faq, only: %i[show update destroy vote view]
   before_action :require_admin, only: %i[create update destroy]
 
   # GET /api/v1/faqs
@@ -40,24 +40,40 @@ class Api::V1::FaqsController < Api::V1::BaseController
     head :no_content
   end
 
+  # POST /api/v1/faqs/:id/view
+  def view
+    if @faq.respond_to?(:views_count)
+      @faq.class.increment_counter(:views_count, @faq.id)
+      @faq.reload
+    end
+    render json: { success: true, views_count: @faq.try(:views_count) || 0 }
+  end
+
   # POST /api/v1/faqs/:id/vote
   def vote
     vote_value = params[:helpful].to_s == 'true'
     if vote_value
-      @faq.increment!(:helpful_yes)
-    else
+      @faq.increment!(:helpful_yes) if @faq.respond_to?(:helpful_yes)
+    elsif @faq.respond_to?(:helpful_no)
       @faq.increment!(:helpful_no)
     end
 
     render json: {
-      faq: @faq.as_json(methods: %i[helpful_total helpful_yes helpful_no])
+      faq: @faq.as_json(
+        only: %i[id question answer status position views_count helpful_yes helpful_no],
+        methods: %i[helpful_total]
+      )
     }
   end
 
   private
 
   def set_faq
-    @faq = Faq.find(params[:id])
+    if params[:is_company].to_s == 'true' || params[:type] == 'company'
+      @faq = CompanyFaq.find(params[:id])
+    else
+      @faq = Faq.find_by(id: params[:id]) || CompanyFaq.find_by(id: params[:id]) || Faq.find(params[:id])
+    end
   end
 
   def faq_params

@@ -23,6 +23,10 @@ export interface CompanyFaq {
   answer: string;
   status?: string;
   position?: number;
+  views_count?: number;
+  helpful_yes?: number;
+  helpful_no?: number;
+  helpful_total?: number;
 }
 
 export interface CompanyFinancingProfile {
