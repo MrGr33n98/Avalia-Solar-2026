@@ -64,10 +64,6 @@ jobs:
           printf 'Linting changed file: %s\n' "${CHANGED_FILES[@]}"
           npx eslint --quiet "${CHANGED_FILES[@]}"
 
-      - name: Report legacy lint debt
-        continue-on-error: true
-        run: npm run lint -- --quiet
-
       - name: Type check
         run: npm run typecheck
 
