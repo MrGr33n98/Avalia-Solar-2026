@@ -1,10 +1,12 @@
 "use client";
 
-import { HelpCircle, ShieldCheck } from "lucide-react";
+import { HelpCircle, ShieldCheck, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Image from "next/image";
 import { Company } from "@/lib/api";
 import { isFeatureEnabled } from "@/lib/feature-access";
+import { getFullImageUrl } from "@/utils/image";
 
 import { trackFaqEngagement } from "@/lib/analytics/consolidated";
 import { useFaqExpand } from "@/lib/analytics/hooks/useIntentTracking";
@@ -25,6 +27,7 @@ export default function SidebarPremium({
   // Entitlements
   const showFaq = isFeatureEnabled(company.feature_access, "faq_block");
   const showCompetitorBanners = isFeatureEnabled(company.feature_access, "show_competitor_banners");
+  const hasPaidPlan = company.featured || company.plan_status === 'active' || company.has_paid_plan || ["pro", "enterprise"].includes((company as any).plan_tier || "");
 
   // Hook legado de tracking de expansão de FAQ
   const { trackQuestion } = useFaqExpand(intentCompanyId);
@@ -55,8 +58,56 @@ export default function SidebarPremium({
         </div>
       </Card>
 
-      {/* 4. Slot Lateral de Anúncios Patrocinados */}
-      <PremiumSidebarAdSlot company={company} showCompetitorBanners={showCompetitorBanners} />
+      {/* 4. Slot Lateral de Anúncios Patrocinados ou Galeria de Selos */}
+      {hasPaidPlan ? (
+        company.badges && company.badges.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Selos e Reconhecimentos
+              </span>
+            </div>
+            <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="grid grid-cols-3 gap-y-5 gap-x-3">
+                {company.badges.map((badge, idx) => {
+                  const imageUrl = badge.image_url ? getFullImageUrl(badge.image_url) : null;
+                  return (
+                    <div key={badge.id || idx} className="flex flex-col items-center text-center space-y-1.5 group">
+                      <div className="relative w-14 h-14 transition-transform duration-300 group-hover:scale-105">
+                        {imageUrl ? (
+                          <Image
+                            src={imageUrl}
+                            alt={badge.name || "Selo"}
+                            fill
+                            sizes="56px"
+                            className="object-contain"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg text-slate-400">
+                            <Award className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-0.5 leading-tight">
+                        <p className="text-[9.5px] font-black text-slate-800 line-clamp-2">
+                          {badge.name}
+                        </p>
+                        {badge.year && (
+                          <p className="text-[8.5px] font-bold text-slate-400">
+                            {badge.year}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        )
+      ) : (
+        <PremiumSidebarAdSlot company={company} showCompetitorBanners={showCompetitorBanners} />
+      )}
 
       {/* 5. FAQ Resumida da Sidebar */}
       {showFaq && visibleFaqs.length > 0 && (
