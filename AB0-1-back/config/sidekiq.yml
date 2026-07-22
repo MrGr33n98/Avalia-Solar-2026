@@ -1,15 +1,6 @@
 # Sidekiq configuration - TASK-017
 # https://github.com/sidekiq/sidekiq/wiki/Advanced-Options
 
-:server_middleware:
-  - [Sidekiq::Middleware::Server::Logging]
-  - [Sidekiq::Middleware::Server::Status]
-  - [Sidekiq::Middleware::Server::RetryJobs]
-  - [Sidekiq::Middleware::Server::ActiveRecord]
-
-:client_middleware:
-  - [Sidekiq::Middleware::Client::Logging]
-
 # Concurrency (number of threads)
 :concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 5 } %>
 
