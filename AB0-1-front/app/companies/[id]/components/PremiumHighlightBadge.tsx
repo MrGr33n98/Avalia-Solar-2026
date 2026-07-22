@@ -12,7 +12,7 @@ export default function PremiumHighlightBadge({ company }: PremiumHighlightBadge
   const planTier = (company as Company & { plan_tier?: string | null }).plan_tier || "";
   const isProOrEnterprise = ["pro", "enterprise"].includes(planTier);
 
-  if (!company.featured || (!isHighlightEnabled && !isProOrEnterprise)) {
+  if (!company.featured) {
     return null;
   }
 

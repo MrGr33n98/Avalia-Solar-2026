@@ -10,8 +10,13 @@ interface CompanyVerificationBadgeProps {
 
 export default function CompanyVerificationBadge({ company }: CompanyVerificationBadgeProps) {
   const isVerifiedEnabled = isFeatureEnabled(company.feature_access, "verified_product");
+  const isVerified = Boolean(
+    company.verified ||
+    company.trust?.verification_status === "verified" ||
+    isVerifiedEnabled
+  );
   
-  if (!company.verified || !isVerifiedEnabled) {
+  if (!isVerified) {
     return null;
   }
 
