@@ -303,7 +303,6 @@ export interface Company {
   plan_features?: Record<string, any>;
   feature_access?: Record<string, FeatureAccessEntry>;
   media_upload_allowed?: boolean;
-  faqs?: CompanyFaq[];
   media_urls?: string[];
   videos?: string[];
   project_types?: string[];
