@@ -216,3 +216,16 @@ Após o deploy, validar em uma janela limpa:
 5. navegar pelas rotas públicas, login e cadastro;
 6. confirmar sessões, Web Vitals e erros JS na entidade Browser de staging;
 7. manter Session Replay desativado.
+
+### Baseline de lint do staging
+
+O primeiro deploy foi bloqueado por 971 erros de lint preexistentes em centenas de
+arquivos sem relação com esta integração. Para não ocultar a dívida nem permitir novas
+regressões, o Quality Gate adota uma baseline incremental:
+
+- arquivos JavaScript/TypeScript alterados no commit são verificados com regras de
+  erro e bloqueiam o deploy;
+- o lint completo continua sendo executado e exibido como relatório não bloqueante;
+- nenhuma regra foi desativada globalmente;
+- a eliminação do passivo deve ocorrer em lotes independentes, com typecheck e testes
+  por domínio.

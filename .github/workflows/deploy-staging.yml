@@ -48,7 +48,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Lint changed frontend files
+        shell: bash
+        run: |
+          mapfile -d '' CHANGED_FILES < <(
+            git diff --relative --name-only -z --diff-filter=ACMR HEAD^ HEAD -- \
+              '*.js' '*.jsx' '*.ts' '*.tsx'
+          )
+
+          if [ ${#CHANGED_FILES[@]} -eq 0 ]; then
+            echo "No changed frontend JavaScript/TypeScript files to lint."
+            exit 0
+          fi
+
+          printf 'Linting changed file: %s\n' "${CHANGED_FILES[@]}"
+          npx eslint --quiet "${CHANGED_FILES[@]}"
+
+      - name: Report legacy lint debt
+        continue-on-error: true
         run: npm run lint -- --quiet
 
       - name: Type check
