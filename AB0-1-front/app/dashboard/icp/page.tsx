@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormProvider } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,13 @@ import { useIcpForm } from '@/hooks/useIcpForm';
 import { useIcpScorePreview } from '@/hooks/useIcpScorePreview';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { toast } from 'sonner';
+
+// Navigation & Features imports
+import { getFlatNavigationByContext } from '@/config/navigation';
+import {
+  getFeatureAccessEntry,
+  isFeatureHiddenEntry,
+} from '@/lib/feature-access';
 
 // Swiss Style Components
 import { IcpPageHeader } from '@/components/dashboard/icp/IcpPageHeader';
@@ -33,6 +40,22 @@ import MobileDashboardQuickAccess from '../components/MobileDashboardQuickAccess
 import ThemeToggle from '../components/ThemeToggle';
 import { Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
+  analytics: 'advanced_analytics',
+  leads: 'leads_marketplace',
+  integrations: 'webhooks',
+  'product-banner': 'promo_banner',
+  'product-sponsored-description': 'sponsored_description',
+  'product-downloads': 'downloadable_materials',
+  'product-videos': 'media_gallery',
+  'product-images': 'media_gallery',
+  media: 'media_gallery',
+  chat: 'p2p_chat',
+  'live-inbox': 'p2p_chat',
+};
+
+const ALWAYS_VISIBLE_TABS = new Set<string>([]);
 
 export default function IcpPage() {
   const router = useRouter();
@@ -97,6 +120,29 @@ export default function IcpPage() {
   // Calculate live score preview based on form values
   const formValues = form.watch();
   const scorePreview = useIcpScorePreview(formValues);
+
+  // Tab permissions & Visibility checks
+  const tabAccessEntries = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(DASHBOARD_TAB_FEATURE_KEYS).map(([tabId, featureKey]) => [
+          tabId,
+          getFeatureAccessEntry(featureAccess, featureKey),
+        ])
+      ),
+    [featureAccess]
+  );
+
+  const visibleTabIds = useMemo(
+    () =>
+      getFlatNavigationByContext('operational')
+        .map((item) => item.id)
+        .filter(
+          (tabId) =>
+            ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
+        ),
+    [tabAccessEntries]
+  );
 
   // Handle unsaved changes block
   useUnsavedChanges(isDirty);
@@ -186,7 +232,7 @@ export default function IcpPage() {
         onClose={() => setSidebarOpen(false)}
         pendingCount={stats?.pendingApprovals || 0}
         pendingReviewsCount={stats?.pendingReviewsCount || 0}
-        visibleTabIds={[]}
+        visibleTabIds={visibleTabIds}
       />
 
       <div className="flex-1 lg:pl-[var(--enterprise-sidebar-width,240px)] flex flex-col min-h-screen">
@@ -198,7 +244,7 @@ export default function IcpPage() {
             stats={stats}
             onTabChange={() => {}}
             onOpenNavigation={() => setSidebarOpen(true)}
-            visibleTabIds={[]}
+            visibleTabIds={visibleTabIds}
           />
 
           <DashboardToolbar

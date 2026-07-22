@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -50,6 +48,7 @@ const TIMEFRAMES = [
 ];
 
 export function IcpMobilitySection({ form }: IcpMobilitySectionProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const evActive = form.watch('ev_active');
   const minEvChargersCount = form.watch('min_ev_chargers_count');
   const minEvVehiclesCount = form.watch('min_ev_vehicles_count') ?? 0;
@@ -81,146 +80,146 @@ export function IcpMobilitySection({ form }: IcpMobilitySectionProps) {
   };
 
   return (
-    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-5 md:p-6">
-      <div className="flex items-center justify-between gap-4 pb-3 border-b border-[#D8DEE8] mb-6">
-        <div className="space-y-1">
-          <h3 className="text-sm font-black uppercase tracking-tight text-[#0B1F3A]">
-            Mobilidade Elétrica e Carregadores EV
-          </h3>
-          <p className="text-[10.5px] font-medium text-[#526071]">
-            Qualifique leads interessados em infraestrutura de recarga de veículos elétricos e frotas corporativas.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-[#526071] uppercase tracking-wider">
-            {evActive ? 'ATIVADO' : 'DESATIVADO'}
-          </span>
-          <Switch
-            checked={evActive}
-            onCheckedChange={handleToggleEvActive}
-            aria-label="Ativar regras de mobilidade elétrica"
-          />
-        </div>
-      </div>
+    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-3.5 sm:p-4.5">
+      <IcpSectionHeader
+        title="Mobilidade Elétrica e Carregadores EV"
+        description="Qualifique leads interessados em infraestrutura de recarga de veículos elétricos e frotas corporativas."
+        badge={evActive ? "ATIVADO" : "DESATIVADO"}
+        isCollapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(!isCollapsed)}
+      />
 
-      {evActive && (
-        <CardContent className="p-0 space-y-8 animate-in fade-in duration-200">
-          {/* Sliders de Unidades de Carregadores e Veículos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <IcpSliderField
-              label="Quantidade Mínima de Carregadores"
-              tooltipText="Número de plugues ou totens de carregamento que o lead necessita."
-              value={minEvChargersCount}
-              onValueChange={handleChargersCountChange}
-              min={0}
-              max={50}
-              step={1}
-              unit="Unidades"
-              helperText="Filtra demandas com quantidades de carregadores menores do que o especificado."
-            />
-
-            <IcpSliderField
-              label="Tamanho Mínimo da Frota Elétrica"
-              tooltipText="Quantidade de veículos elétricos ou híbridos atualmente em operação ou previstos pelo lead."
-              value={minEvVehiclesCount}
-              onValueChange={handleVehiclesCountChange}
-              min={0}
-              max={100}
-              step={1}
-              unit="Veículos"
-              helperText="Útil para focar em grandes frotas logísticas ou frotas empresariais."
+      {!isCollapsed && (
+        <CardContent className="p-0 space-y-5 pt-2 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between gap-4 p-2 bg-[#F8FAFC] border border-[#D8DEE8] rounded-sm">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-black text-[#0B1F3A] uppercase tracking-tight">Ativar Filtros de Mobilidade</span>
+              <p className="text-[9px] text-[#526071] font-medium">Habilita qualificações de carregadores e frotas elétricas.</p>
+            </div>
+            <Switch
+              checked={evActive}
+              onCheckedChange={handleToggleEvActive}
+              aria-label="Ativar regras de mobilidade elétrica"
             />
           </div>
 
-          {/* Tipo de Carregador */}
-          <div className="space-y-3">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#526071] block">
-              Tipos de Carregadores Permitidos (Seleção Múltipla)
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {CHARGER_TYPES.map((type) => (
-                <IcpCheckboxCard
-                  key={type.id}
-                  checked={evChargerTypes.includes(type.id)}
-                  onCheckedChange={(checked) => handleChargerTypesChange(type.id, checked)}
-                  label={type.label}
-                  icon={Zap}
+          {evActive ? (
+            <>
+              {/* Sliders de Unidades de Carregadores e Veículos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <IcpSliderField
+                  label="Quantidade Mínima de Carregadores"
+                  tooltipText="Número de plugues ou totens de carregamento que o lead necessita."
+                  value={minEvChargersCount}
+                  onValueChange={handleChargersCountChange}
+                  min={0}
+                  max={50}
+                  step={1}
+                  unit="Unidades"
+                  helperText="Filtra demandas com quantidades de carregadores menores do que o especificado."
                 />
-              ))}
-            </div>
-          </div>
 
-          {/* Aplicações do Projeto */}
-          <div className="space-y-3">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#526071] block">
-              Aplicações do Projeto EV
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {APPLICATIONS.map((app) => (
-                <IcpCheckboxCard
-                  key={app.id}
-                  checked={evApplications.includes(app.id)}
-                  onCheckedChange={(checked) => handleApplicationsChange(app.id, checked)}
-                  label={app.label}
-                  icon={Briefcase}
+                <IcpSliderField
+                  label="Tamanho Mínimo da Frota Elétrica"
+                  tooltipText="Quantidade de veículos elétricos ou híbridos atualmente em operação ou previstos pelo lead."
+                  value={minEvVehiclesCount}
+                  onValueChange={handleVehiclesCountChange}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="Veículos"
+                  helperText="Útil para focar em grandes frotas logísticas ou frotas empresariais."
                 />
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Prazos e Orçamentos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-tight text-[#0B1F3A] flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-[#1F5EFF]" />
-                Prazo Esperado de Implantação
-              </Label>
-              <Select
-                value={evTimeframe}
-                onValueChange={(val) => form.setValue('ev_timeframe', val, { shouldDirty: true })}
-              >
-                <SelectTrigger className="h-9 text-xs rounded-sm border-[#D8DEE8] bg-white text-[#0B1F3A] focus:ring-1 focus:ring-[#1F5EFF]">
-                  <SelectValue placeholder="Selecione o prazo operacional máximo" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#D8DEE8]">
-                  {TIMEFRAMES.map((tf) => (
-                    <SelectItem key={tf.id} value={tf.id} className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF] focus:text-[#0B1F3A]">
-                      {tf.label}
-                    </SelectItem>
+              {/* Tipo de Carregador */}
+              <div className="space-y-2">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#526071] block">
+                  Tipos de Carregadores Permitidos (Seleção Múltipla)
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {CHARGER_TYPES.map((type) => (
+                    <IcpCheckboxCard
+                      key={type.id}
+                      checked={evChargerTypes.includes(type.id)}
+                      onCheckedChange={(checked) => handleChargerTypesChange(type.id, checked)}
+                      label={type.label}
+                      icon={Zap}
+                    />
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-tight text-[#0B1F3A] flex items-center gap-1.5">
-                <DollarSign className="h-3.5 w-3.5 text-[#1F5EFF]" />
-                Orçamento Previsto (Faixa Estimada)
-              </Label>
-              <Select
-                value={evBudget}
-                onValueChange={(val) => form.setValue('ev_budget', val, { shouldDirty: true })}
-              >
-                <SelectTrigger className="h-9 text-xs rounded-sm border-[#D8DEE8] bg-white text-[#0B1F3A] focus:ring-1 focus:ring-[#1F5EFF]">
-                  <SelectValue placeholder="Selecione a faixa de investimento disponível" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#D8DEE8]">
-                  <SelectItem value="low" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">Até R$ 10.000</SelectItem>
-                  <SelectItem value="medium" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">R$ 10.000 a R$ 50.000</SelectItem>
-                  <SelectItem value="high" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">R$ 50.000 a R$ 150.000</SelectItem>
-                  <SelectItem value="enterprise" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">Acima de R$ 150.000</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Aplicações do Projeto */}
+              <div className="space-y-2">
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#526071] block">
+                  Aplicações do Projeto EV
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {APPLICATIONS.map((app) => (
+                    <IcpCheckboxCard
+                      key={app.id}
+                      checked={evApplications.includes(app.id)}
+                      onCheckedChange={(checked) => handleApplicationsChange(app.id, checked)}
+                      label={app.label}
+                      icon={Briefcase}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Prazos e Orçamentos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase tracking-tight text-[#0B1F3A] flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5 text-[#1F5EFF]" />
+                    Prazo Esperado de Implantação
+                  </Label>
+                  <Select
+                    value={evTimeframe}
+                    onValueChange={(val) => form.setValue('ev_timeframe', val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger className="h-8.5 text-xs rounded-sm border-[#D8DEE8] bg-white text-[#0B1F3A] focus:ring-1 focus:ring-[#1F5EFF]">
+                      <SelectValue placeholder="Selecione o prazo operacional máximo" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-[#D8DEE8]">
+                      {TIMEFRAMES.map((tf) => (
+                        <SelectItem key={tf.id} value={tf.id} className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF] focus:text-[#0B1F3A]">
+                          {tf.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase tracking-tight text-[#0B1F3A] flex items-center gap-1">
+                    <DollarSign className="h-3.5 w-3.5 text-[#1F5EFF]" />
+                    Orçamento Previsto (Faixa Estimada)
+                  </Label>
+                  <Select
+                    value={evBudget}
+                    onValueChange={(val) => form.setValue('ev_budget', val, { shouldDirty: true })}
+                  >
+                    <SelectTrigger className="h-8.5 text-xs rounded-sm border-[#D8DEE8] bg-white text-[#0B1F3A] focus:ring-1 focus:ring-[#1F5EFF]">
+                      <SelectValue placeholder="Selecione a faixa de investimento disponível" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-[#D8DEE8]">
+                      <SelectItem value="low" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">Até R$ 10.000</SelectItem>
+                      <SelectItem value="medium" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">R$ 10.000 a R$ 50.000</SelectItem>
+                      <SelectItem value="high" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">R$ 50.000 a R$ 150.000</SelectItem>
+                      <SelectItem value="enterprise" className="text-xs text-[#0B1F3A] focus:bg-[#EEF4FF]">Acima de R$ 150.000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-sm border border-[#D8DEE8] bg-[#F8FAFC] py-4 px-6 text-center text-[10.5px] font-medium text-[#526071]">
+              Regras de Mobilidade Elétrica desativadas para esta qualificação.
             </div>
-          </div>
+          )}
         </CardContent>
-      )}
-
-      {!evActive && (
-        <div className="rounded-md border border-[#D8DEE8] bg-[#F8FAFC] p-6 text-center text-xs font-medium text-[#526071]">
-          Regras de Mobilidade Elétrica desativadas para esta qualificação.
-        </div>
       )}
     </Card>
   );

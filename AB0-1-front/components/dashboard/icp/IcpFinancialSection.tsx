@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { IcpSectionHeader } from './IcpSectionHeader';
 import { IcpSliderField } from './IcpSliderField';
@@ -12,6 +12,7 @@ interface IcpFinancialSectionProps {
 }
 
 export function IcpFinancialSection({ form }: IcpFinancialSectionProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const minMonthlyBill = form.watch('min_monthly_bill');
   const minSystemKwp = form.watch('min_system_kwp');
 
@@ -38,54 +39,58 @@ export function IcpFinancialSection({ form }: IcpFinancialSectionProps) {
   };
 
   return (
-    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-5 md:p-6">
+    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-3.5 sm:p-4.5">
       <IcpSectionHeader
         title="Perfil Financeiro e Consumo"
         description="Filtre leads de energia solar residencial ou corporativa através do faturamento energético estimado."
         badge="FAIXAS OPERACIONAIS"
+        isCollapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(!isCollapsed)}
       />
       
-      <CardContent className="p-0 grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Fatura Mensal Mínima */}
-        <IcpSliderField
-          label="Fatura Mensal de Energia"
-          tooltipText="O valor em Reais (R$) médio cobrado na conta de luz mensal do lead."
-          value={minMonthlyBill}
-          onValueChange={handleBillChange}
-          min={200}
-          max={50000}
-          step={100}
-          unit="R$"
-          isCurrency
-          helperText="Exclui leads com faturamento elétrico abaixo desta linha."
-        />
+      {!isCollapsed && (
+        <CardContent className="p-0 grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 animate-in fade-in duration-200">
+          {/* Fatura Mensal Mínima */}
+          <IcpSliderField
+            label="Fatura Mensal de Energia"
+            tooltipText="O valor em Reais (R$) médio cobrado na conta de luz mensal do lead."
+            value={minMonthlyBill}
+            onValueChange={handleBillChange}
+            min={200}
+            max={50000}
+            step={100}
+            unit="R$"
+            isCurrency
+            helperText="Exclui leads com faturamento elétrico abaixo desta linha."
+          />
 
-        {/* Consumo Mensal Mínimo (Sincronizado) */}
-        <IcpSliderField
-          label="Consumo Mensal Médio"
-          tooltipText="Consumo em kWh estimado ou medido mensalmente pelo lead."
-          value={calculatedKwh}
-          onValueChange={handleKwhChange}
-          min={100}
-          max={10000}
-          step={50}
-          unit="kWh"
-          helperText="Sincronizado de forma reativa com o valor em Reais da fatura."
-        />
+          {/* Consumo Mensal Mínimo (Sincronizado) */}
+          <IcpSliderField
+            label="Consumo Mensal Médio"
+            tooltipText="Consumo em kWh estimado ou medido mensalmente pelo lead."
+            value={calculatedKwh}
+            onValueChange={handleKwhChange}
+            min={100}
+            max={10000}
+            step={50}
+            unit="kWh"
+            helperText="Sincronizado de forma reativa com o valor em Reais da fatura."
+          />
 
-        {/* Potência Mínima do Sistema (kWp) */}
-        <IcpSliderField
-          label="Potência Mínima do Gerador"
-          tooltipText="Potência instalada em kWp mínima do sistema fotovoltaico para a qualificação."
-          value={minSystemKwp}
-          onValueChange={handleKwpChange}
-          min={1}
-          max={500}
-          step={1}
-          unit="kWp"
-          helperText="Potência nominal de pico recomendada para o escopo do projeto."
-        />
-      </CardContent>
+          {/* Potência Mínima do Sistema (kWp) */}
+          <IcpSliderField
+            label="Potência Mínima do Gerador"
+            tooltipText="Potência instalada em kWp mínima do sistema fotovoltaico para a qualificação."
+            value={minSystemKwp}
+            onValueChange={handleKwpChange}
+            min={1}
+            max={500}
+            step={1}
+            unit="kWp"
+            helperText="Potência nominal de pico recomendada para o escopo do projeto."
+          />
+        </CardContent>
+      )}
     </Card>
   );
 }

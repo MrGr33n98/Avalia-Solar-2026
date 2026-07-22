@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { IcpSectionHeader } from './IcpSectionHeader';
@@ -44,6 +42,7 @@ const ORIENTATIONS = [
 ];
 
 export function IcpPropertySection({ form }: IcpPropertySectionProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const targetAudiences = form.watch('target_audiences') || [];
   const preferredRoofTypes = form.watch('preferred_roof_types') || [];
   const targetRegions = form.watch('target_regions') || []; // Using targetRegions as orientation keys to avoid schema mismatch
@@ -64,66 +63,70 @@ export function IcpPropertySection({ form }: IcpPropertySectionProps) {
   };
 
   return (
-    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-5 md:p-6 space-y-6">
+    <Card className="bg-white border border-[#D8DEE8] rounded-md shadow-none p-3.5 sm:p-4.5 space-y-4">
       <IcpSectionHeader
         title="Tipo de Imóvel e Estrutura"
         description="Selecione as tipologias de propriedade, fixação de telhados e orientações solares preferenciais para as prospecções."
         badge="INFRAESTRUTURA"
+        isCollapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(!isCollapsed)}
       />
       
-      <CardContent className="p-0 space-y-6">
-        {/* Grupo A: Tipo de Imóvel */}
-        <div className="space-y-3">
-          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#526071] block">
-            A. Tipo de Imóvel
-          </Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {PROPERTY_TYPES.map((prop) => (
-              <IcpCheckboxCard
-                key={prop.id}
-                checked={targetAudiences.includes(prop.id)}
-                onCheckedChange={(checked) => handleAudienceChange(prop.id, checked)}
-                label={prop.label}
-                icon={prop.icon}
-              />
-            ))}
+      {!isCollapsed && (
+        <CardContent className="p-0 space-y-5 pt-2 animate-in fade-in duration-200">
+          {/* Grupo A: Tipo de Imóvel */}
+          <div className="space-y-2">
+            <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#526071] block">
+              A. Tipo de Imóvel
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {PROPERTY_TYPES.map((prop) => (
+                <IcpCheckboxCard
+                  key={prop.id}
+                  checked={targetAudiences.includes(prop.id)}
+                  onCheckedChange={(checked) => handleAudienceChange(prop.id, checked)}
+                  label={prop.label}
+                  icon={prop.icon}
+                />
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Grupo B: Estrutura ou Telhado */}
-        <div className="space-y-3">
-          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#526071] block">
-            B. Estrutura de Instalação / Fixação
-          </Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {ROOF_TYPES.map((roof) => (
-              <IcpCheckboxCard
-                key={roof.id}
-                checked={preferredRoofTypes.includes(roof.id)}
-                onCheckedChange={(checked) => handleRoofChange(roof.id, checked)}
-                label={roof.label}
-              />
-            ))}
+          {/* Grupo B: Estrutura ou Telhado */}
+          <div className="space-y-2">
+            <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#526071] block">
+              B. Estrutura de Instalação / Fixação
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ROOF_TYPES.map((roof) => (
+                <IcpCheckboxCard
+                  key={roof.id}
+                  checked={preferredRoofTypes.includes(roof.id)}
+                  onCheckedChange={(checked) => handleRoofChange(roof.id, checked)}
+                  label={roof.label}
+                />
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Grupo C: Orientação */}
-        <div className="space-y-3">
-          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#526071] block">
-            C. Orientação Solar (Módulos)
-          </Label>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
-            {ORIENTATIONS.map((ori) => (
-              <IcpCheckboxCard
-                key={ori.id}
-                checked={targetRegions.includes(ori.id)}
-                onCheckedChange={(checked) => handleOrientationChange(ori.id, checked)}
-                label={ori.label}
-              />
-            ))}
+          {/* Grupo C: Orientação */}
+          <div className="space-y-2">
+            <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#526071] block">
+              C. Orientação Solar (Módulos)
+            </Label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {ORIENTATIONS.map((ori) => (
+                <IcpCheckboxCard
+                  key={ori.id}
+                  checked={targetRegions.includes(ori.id)}
+                  onCheckedChange={(checked) => handleOrientationChange(ori.id, checked)}
+                  label={ori.label}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 }
