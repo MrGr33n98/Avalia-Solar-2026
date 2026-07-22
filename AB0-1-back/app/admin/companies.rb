@@ -82,7 +82,8 @@ ActiveAdmin.register Company do
         company_faqs_attributes: %i[id question answer status position _destroy],
         company_financing_partners_attributes: %i[id name partner_type website priority position active badge logo _destroy],
         company_members_attributes: %i[id user_id role _destroy],
-        company_sector_questions_attributes: %i[id prompt weight order enabled _destroy] }
+        company_sector_questions_attributes: %i[id prompt weight order enabled _destroy],
+        company_icp_profile_attributes: [:id, :min_monthly_bill, :max_monthly_bill, :min_system_kwp, :min_ev_chargers_count, :strictness_level, :auto_reject_out_of_icp, :notify_only_high_match, :nationwide, :target_cities_raw, :_destroy, { target_audiences: [], preferred_roof_types: [], ev_charger_types: [], target_states: [], target_cities: [] }] }
     ]
     permitted << :effect if Company.column_names.include?('effect')
     permitted << :plan_id if Company.column_names.include?('plan_id')
@@ -550,6 +551,24 @@ ActiveAdmin.register Company do
                                collection: [['Primário (Azul)', 'primary'], ['WhatsApp (Verde)', 'whatsapp'], ['Secundário (Outline)', 'secondary'], ['Custom', 'custom']], include_blank: false
         cb.input :active, label: 'Ativo'
       end
+    end
+
+    f.inputs 'Configuração do ICP (Ideal Customer Profile)', for: [:company_icp_profile, f.object.company_icp_profile || f.object.build_company_icp_profile] do |icp|
+      icp.input :strictness_level, as: :select, collection: CompanyIcpProfile::STRICTNESS_LEVELS, include_blank: false, label: 'Nível de Rigor do Match'
+      icp.input :auto_reject_out_of_icp, label: 'Rejeitar Automaticamente fora do ICP (Recurso Pago)'
+      icp.input :notify_only_high_match, label: 'Notificar Apenas Leads de Alto Match (Recurso Pago)'
+      icp.input :min_monthly_bill, label: 'Conta de Energia Mensal Mínima (R$)'
+      icp.input :max_monthly_bill, label: 'Conta de Energia Mensal Máxima (R$)'
+      icp.input :min_system_kwp, label: 'Potência Mínima do Sistema (kWp)'
+      icp.input :min_ev_chargers_count, label: 'Mínimo de Carregadores EV (Quantidade)'
+      
+      icp.input :target_audiences, as: :check_boxes, collection: CompanyIcpProfile::TARGET_AUDIENCES, label: 'Segmentos / Públicos-Alvo'
+      icp.input :preferred_roof_types, as: :check_boxes, collection: CompanyIcpProfile::ROOF_TYPES.map { |r| [r.humanize, r] }, label: 'Tipos de Telhado Preferidos'
+      icp.input :ev_charger_types, as: :check_boxes, collection: CompanyIcpProfile::EV_CHARGER_TYPES.map { |e| [e.humanize, e] }, label: 'Tipos de Carregadores EV Preferidos'
+      
+      icp.input :nationwide, label: 'Cobertura Nacional'
+      icp.input :target_states, as: :check_boxes, collection: brazil_states.map { |name, code| [name, code] }, label: 'Estados Atendidos'
+      icp.input :target_cities_raw, as: :string, label: 'Cidades Atendidas (separadas por vírgula)', placeholder: 'Ex: São Paulo, Campinas, Santos'
     end
 
     f.actions

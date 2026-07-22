@@ -201,6 +201,7 @@ end
   has_many :badges, through: :company_badges
   has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
   has_one :company_icp_profile, dependent: :destroy
+  accepts_nested_attributes_for :company_icp_profile, allow_destroy: true
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy
   has_many :chat_sessions, dependent: :nullify

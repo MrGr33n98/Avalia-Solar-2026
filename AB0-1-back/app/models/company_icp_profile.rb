@@ -31,4 +31,12 @@ class CompanyIcpProfile < ApplicationRecord
   def target_states_list
     Array(target_states)
   end
+
+  def target_cities_raw
+    Array(target_cities).join(', ')
+  end
+
+  def target_cities_raw=(value)
+    self.target_cities = value.to_s.split(',').map(&:strip).reject(&:empty?)
+  end
 end
