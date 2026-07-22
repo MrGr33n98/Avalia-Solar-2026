@@ -87,6 +87,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
               name={catalog.company.name}
               size="lg"
               className="h-16 w-16 rounded-[2px]"
+              badges={catalog.company.badges}
             />
             <div>
               <h1 className="text-2xl font-bold text-[#0B1F4B]">{catalog.company.name}</h1>

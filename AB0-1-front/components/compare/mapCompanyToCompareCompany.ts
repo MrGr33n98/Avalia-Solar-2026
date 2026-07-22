@@ -152,6 +152,7 @@ export function mapCompanyToCompareCompany(
     ),
     premium: Boolean(source.featured || source.has_paid_plan || source.plan_status === 'active'),
     sponsored: Boolean(source.sponsored),
+    badges: source.badges || [],
     verificationStatus,
     cnpjVerified: normalizedVerificationMethod.includes('cnpj') ? isBusinessVerified : null,
     documentsVerified: /document|documento/.test(normalizedVerificationMethod)

@@ -27,6 +27,7 @@ export type PublicCompanyCardData = {
   projects_count?: number | string | null;
   project_count?: number | string | null;
   projects?: number | string | null;
+  badges?: Array<{ image_url?: string | null; name?: string | null }> | null;
   p2p_chat_enabled?: boolean | null;
   actions?: { p2p_chat_enabled?: boolean } | null;
 };
@@ -77,7 +78,7 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
       {/* Header: Logo + Title + Verified + Location */}
       <div className="flex items-center gap-3.5">
         <Link href={href} className="shrink-0" aria-label={`Ver perfil de ${company.name}`}>
-          <CompanyLogo logoUrl={company.logo_url} name={company.name} size="md" />
+          <CompanyLogo logoUrl={company.logo_url} name={company.name} size="md" badges={company.badges} />
         </Link>
 
         <div className="min-w-0 flex-1">

@@ -44,7 +44,7 @@ export function CompanyCardEnhanced({
   return (
     <article className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
       <div className="flex items-start justify-between gap-3">
-        <CompanyLogo logoUrl={company.logo_url} name={company.name} size="lg" />
+        <CompanyLogo logoUrl={company.logo_url} name={company.name} size="lg" badges={company.badges} />
         <button
           type="button"
           onClick={onToggleFavorite}

@@ -500,7 +500,7 @@ function SelectedCompaniesPanel({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {companies.map((company) => (
           <article key={company.id} className="flex min-h-[84px] items-center gap-3 border border-slate-200 bg-white p-3">
-            <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+            <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-950">{company.name}</p>
               <p className="mt-1 truncate text-xs text-slate-500">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</p>
@@ -614,7 +614,7 @@ function CompanySearchPanel({
               className="flex w-full items-center gap-2 rounded-none border border-slate-200 p-2 text-left enabled:hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={`Adicionar ${company.name} à comparação`}
             >
-              <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+              <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
               <span className="min-w-0 flex-1">
                 <strong className="block truncate text-xs text-slate-900">{company.name}</strong>
                 <span className="block truncate text-[10px] text-slate-500">
@@ -631,7 +631,7 @@ function CompanySearchPanel({
           <div className="space-y-2">
             {selectedCompanies.map((company) => (
               <div key={company.id} className="flex items-center gap-2 text-xs">
-                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
                 <span className="min-w-0 flex-1 truncate font-bold text-slate-800">
                   {company.name}
                 </span>

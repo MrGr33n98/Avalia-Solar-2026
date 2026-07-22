@@ -181,7 +181,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                     <div className="flex items-center gap-2 pr-7 md:gap-3">
-                      <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+                      <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
                       <div className="min-w-0">
                         <Link
                           href={`/companies/${company.slug || company.id}`}

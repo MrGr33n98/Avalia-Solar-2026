@@ -68,6 +68,7 @@ export default function CompanyComparisonCard({
             "border-slate-100 bg-white dark:bg-slate-800",
             isPremium && "border-orange-200 bg-gradient-to-br from-orange-50 to-white dark:from-slate-900 dark:to-slate-800"
           )}
+          badges={company.badges}
         />
         
         <div className="flex-1 min-w-0">

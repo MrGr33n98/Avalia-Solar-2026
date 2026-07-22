@@ -61,6 +61,7 @@ export interface CompanyCardData {
   logo_url?: string;
   featured: boolean;
   sponsored: boolean;
+  badges?: any[];
   /** Feature access map — controla features pagas liberadas via ActiveAdmin/planos */
   feature_access?: Record<string, { state: string; value?: any }>;
   /** Top critérios de avaliação reais (ex: ['Equipe qualificada', 'Atendimento']). */
@@ -233,6 +234,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
     featured: comp?.featured === true,
     sponsored: comp?.sponsored === true,
     feature_access: comp?.feature_access ?? {},
+    badges: comp?.badges || [],
     top_criteria: extractTopCriteria(comp),
     identity: {
       name: comp?.name || '',
@@ -401,7 +403,7 @@ export default function CompanyCard({
       >
         <div className="flex items-start gap-3">
           <div data-testid="company-logo">
-            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
+            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 itemProp="name" className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
@@ -494,6 +496,7 @@ export default function CompanyCard({
               name={name}
               size="md"
               className="border-2 border-white shadow-md bg-white"
+              badges={company.badges}
             />
           </div>
 
@@ -605,7 +608,7 @@ export default function CompanyCard({
         {/* Esquerda: Logo + Identidade */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div data-testid="company-logo" className="shrink-0">
-            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" />
+            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
           <div className="min-w-0 space-y-0.5">
             <div className="flex flex-wrap items-center gap-1.5">

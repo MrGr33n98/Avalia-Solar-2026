@@ -55,7 +55,7 @@ export default function RecommendedCompanies({
           className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-3 text-left hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
           aria-label={`Substituir ${company.name} por ${replacement?.name || 'empresa recomendada'}`}
         >
-          <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+          <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
           <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-900">
             {company.name}
           </span>
@@ -101,7 +101,7 @@ export default function RecommendedCompanies({
           companies.map((company) => (
             <article key={company.id} className="rounded-lg border border-slate-200 p-3">
               <div className="flex gap-3">
-                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" />
+                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="truncate text-sm font-black text-slate-950">{company.name}</h3>

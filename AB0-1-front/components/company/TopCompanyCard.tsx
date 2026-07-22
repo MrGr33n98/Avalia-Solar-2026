@@ -128,6 +128,7 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
             name={name}
             size="sm"
             className="border-2 border-white dark:border-slate-800 shadow-md flex-shrink-0 bg-white"
+            badges={company.badges}
           />
           <div className="mb-0.5">
             <h3 className="text-white font-black text-lg leading-tight line-clamp-1 group-hover:text-amber-200 transition-colors">

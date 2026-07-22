@@ -5,6 +5,8 @@ import { ReactNode } from 'react';
 import { MapPin } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Company } from '@/lib/api';
+import Image from 'next/image';
+import { getFullImageUrl } from '@/utils/image';
 import CompanyVerificationBadge from './CompanyVerificationBadge';
 import PremiumHighlightBadge from './PremiumHighlightBadge';
 import CompanyRatingBadge from './CompanyRatingBadge';
@@ -32,6 +34,10 @@ export default function CompanyIdentityCard({
   const hasLogo = Boolean(logoUrl) && !logoError;
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
 
+  const companyBadges = Array.isArray(company.badges) ? company.badges : [];
+  const badgeToRender = companyBadges.find((b) => b && b.image_url);
+  const badgeImageUrl = badgeToRender?.image_url ? getFullImageUrl(badgeToRender.image_url) : null;
+
   const initialLetter = useMemo(() => {
     return company.name ? company.name.charAt(0).toUpperCase() : 'A';
   }, [company.name]);
@@ -44,27 +50,44 @@ export default function CompanyIdentityCard({
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         {/* Logo Container com Fallback */}
         <div className="absolute left-4 top-0 -translate-y-1/2 sm:static sm:translate-y-0">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-[1px] shadow-sm sm:h-[72px] sm:w-[72px]">
-            {hasLogo ? (
-              <OptimizedImage
-                src={logoUrl!}
-                alt={company.name}
-                fill
-                priority
-                imageContext="company-logo"
-                entityName={company.name}
-                locationLabel={locationLabel}
-                objectFit="contain"
-                className="rounded-md bg-white p-0.5"
-                containerClassName="h-full w-full rounded-md bg-white"
-                fallbackSrc="/images/logo-placeholder.svg"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className="flex h-full w-full select-none items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-2xl font-black text-white">
-                {initialLetter}
+          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-[1px] shadow-sm sm:h-[72px] sm:w-[72px]">
+            {badgeImageUrl && (
+              <div 
+                className="absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center w-[24px] h-[24px] -right-1.5 -top-1.5 sm:w-[28px] sm:h-[28px] sm:-right-2 sm:-top-2 transition-transform hover:scale-110"
+                title={badgeToRender?.name || 'Selo de conquista'}
+              >
+                <Image
+                  src={badgeImageUrl}
+                  alt={badgeToRender?.name || 'Selo'}
+                  width={28}
+                  height={28}
+                  className="object-contain w-full h-full rounded-full"
+                  unoptimized
+                />
               </div>
             )}
+            <div className="relative w-full h-full overflow-hidden rounded-lg">
+              {hasLogo ? (
+                <OptimizedImage
+                  src={logoUrl!}
+                  alt={company.name}
+                  fill
+                  priority
+                  imageContext="company-logo"
+                  entityName={company.name}
+                  locationLabel={locationLabel}
+                  objectFit="contain"
+                  className="rounded-md bg-white p-0.5"
+                  containerClassName="h-full w-full rounded-md bg-white"
+                  fallbackSrc="/images/logo-placeholder.svg"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <div className="flex h-full w-full select-none items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-2xl font-black text-white">
+                  {initialLetter}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

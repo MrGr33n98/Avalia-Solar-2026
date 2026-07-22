@@ -13,6 +13,7 @@ interface CompanyLogoProps {
   imageClassName?: string;
   size?: 'sm' | 'md' | 'lg' | 'custom';
   priority?: boolean;
+  badges?: Array<{ image_url?: string | null; name?: string | null }> | null;
 }
 
 export function CompanyLogo({
@@ -22,6 +23,7 @@ export function CompanyLogo({
   imageClassName,
   size = 'md',
   priority = false,
+  badges,
 }: CompanyLogoProps) {
   const [error, setError] = useState(false);
 
@@ -41,14 +43,43 @@ export function CompanyLogo({
     custom: '',
   };
 
+  const badgeSizeClasses = {
+    sm: 'w-[18px] h-[18px] -right-1 -top-1 md:w-[22px] md:h-[22px] md:-right-1.5 md:-top-1.5',
+    md: 'w-[24px] h-[24px] -right-1.5 -top-1.5 md:w-[28px] md:h-[28px] md:-right-2 md:-top-2',
+    lg: 'w-[30px] h-[30px] -right-2 -top-2 md:w-[36px] md:h-[36px] md:-right-3 md:-top-3',
+    custom: 'w-[24px] h-[24px] -right-1.5 -top-1.5',
+  };
+
+  const companyBadges = Array.isArray(badges) ? badges : [];
+  const badgeToRender = companyBadges.find((b) => b && b.image_url);
+  const badgeImageUrl = badgeToRender?.image_url ? getFullImageUrl(badgeToRender.image_url) : null;
+
   return (
     <div
       className={cn(
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white border border-slate-200/90 p-0 transition-all select-none shadow-2xs',
+        'relative flex shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200/90 p-0 transition-all select-none shadow-2xs',
         sizeClasses[size],
         className
       )}
     >
+      {badgeImageUrl && (
+        <div
+          className={cn(
+            'absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center transition-transform hover:scale-110',
+            badgeSizeClasses[size]
+          )}
+          title={badgeToRender?.name || 'Selo de conquista'}
+        >
+          <Image
+            src={badgeImageUrl}
+            alt={badgeToRender?.name || 'Selo'}
+            width={32}
+            height={32}
+            className="object-contain w-full h-full rounded-full"
+            unoptimized
+          />
+        </div>
+      )}
       {hasImage ? (
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-white">
           <Image
