@@ -250,6 +250,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       router.push('/dashboard/inbox');
       return;
     }
+    if (tab === 'icp-config') {
+      router.push('/dashboard/icp');
+      return;
+    }
 
     setActiveTab(tab);
 
@@ -286,10 +290,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   // Sync URL changes back to state (e.g. back button)
   useEffect(() => {
     const tab = searchParams.get('tab');
+    if (tab === 'icp-config') {
+      router.push('/dashboard/icp');
+      return;
+    }
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
     }
-  }, [searchParams, activeTab]);
+  }, [searchParams, activeTab, router]);
 
   useEffect(() => {
     if (visibleTabIds.length === 0 || visibleTabIds.includes(activeTab)) return;
