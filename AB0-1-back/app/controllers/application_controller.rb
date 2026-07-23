@@ -15,6 +15,19 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # ActiveAdmin e o dashboard público podem coexistir no mesmo navegador. Sem
+  # esta seleção explícita, o Pundit pode receber o `current_user` da sessão
+  # pública (empresa/reviewer) numa rota /admin e negar uma ação que o
+  # `current_admin_user` autenticado pode executar.
+  def pundit_user
+    if active_admin_request? && respond_to?(:current_admin_user, true)
+      admin = current_admin_user
+      return admin if admin.present?
+    end
+
+    current_user if respond_to?(:current_user, true)
+  end
+
   def prevent_backend_indexing
     response.set_header('X-Robots-Tag', 'noindex, nofollow, noarchive')
   end

@@ -7,22 +7,29 @@ module CompanyDashboard
     MAX_EXECUTION_VIEWS = 2_000.0
     MAX_EXECUTION_CLICKS = 300.0
 
-    attr_reader :company, :category_id, :criterion_slug
+    attr_reader :company, :category_id, :criterion_slug, :history_days
 
-    def initialize(company:, category_id: nil, criterion_slug: nil)
+    def initialize(company:, category_id: nil, criterion_slug: nil, history_days: 90)
       @company = company
       @category_id = category_id
       @criterion_slug = criterion_slug
+      @history_days = [[history_days.to_i, 7].max, 365].min
     end
 
     def ranking_data
+      snapshot = latest_snapshot
       {
-        current_position: current_position,
-        total_companies: total_companies,
-        percentile: percentile,
+        # Do not silently substitute the legacy rating ranking when the auditable
+        # snapshot is absent. Criterion filtering remains a quadrant preview until
+        # criterion-level snapshots are materialized.
+        current_position: criterion_slug.present? ? current_position : snapshot&.rank_position,
+        total_companies: criterion_slug.present? ? total_companies : snapshot&.population_size,
+        percentile: criterion_slug.present? ? percentile : snapshot&.percentile.to_f,
         category_rankings: category_rankings,
         magic_quadrant_competitors: competitors_for_quadrant,
-        quadrant_meta: quadrant_meta
+        quadrant_meta: quadrant_meta,
+        historical_data: historical_data,
+        transparency: transparency(snapshot)
       }
     end
 
@@ -34,6 +41,37 @@ module CompanyDashboard
         scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
       end
       scope
+    end
+
+    def snapshot_scope
+      category_id.present? ? ['category', category_id.to_i] : ['global', nil]
+    end
+
+    def latest_snapshot
+      @latest_snapshot ||= begin
+        type, id = snapshot_scope
+        CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
+                              .for_scope(type, id).latest_first.first
+      end
+    end
+
+    def historical_data
+      type, id = snapshot_scope
+      CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
+                            .for_scope(type, id).where('computed_at >= ?', history_days.days.ago).order(:computed_at)
+                            .map { |row| { week: row.computed_at.to_date.iso8601, position: row.rank_position, score: row.score.to_f, percentile: row.percentile.to_f } }
+    end
+
+    def transparency(snapshot)
+      {
+        definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
+        purpose: criterion_slug.present? ? 'criterion_quadrant_preview' : 'organic_performance', sponsored_included: false,
+        score_definition: 'Trust score × 10 + engagement score dos últimos 7 dias com decaimento exponencial.',
+        tie_breaker: 'company_id asc', scope: category_id.present? ? 'category' : 'global',
+        computed_at: snapshot&.computed_at, data_through: snapshot&.data_through,
+        quality_flags: (snapshot&.quality_flags || []) + (criterion_slug.present? ? ['criterion_ranking_not_persisted'] : (snapshot ? [] : ['snapshot_unavailable'])),
+        breakdown: snapshot&.breakdown || {}
+      }
     end
 
     def current_position
@@ -115,6 +153,21 @@ module CompanyDashboard
             criterion_title: scoped_service.send(:criterion_title)
           }
         else
+          snapshot = CompanyRankingSnapshot.where(company_id: company.id, scope_type: 'category', scope_id: category.id,
+                                                   definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
+                                           .latest_first.first
+          if snapshot
+            next {
+              category_id: category.id,
+              category_name: category.name,
+              position: snapshot.rank_position,
+              total: snapshot.population_size,
+              percentile: snapshot.percentile.to_f,
+              definition_version: snapshot.definition_version,
+              computed_at: snapshot.computed_at
+            }
+          end
+
           position = Company.active
                             .joins(:categories)
                             .where(categories: { id: category.id })

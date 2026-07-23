@@ -134,7 +134,10 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'live-inbox': 'p2p_chat',
 };
 
-const ALWAYS_VISIBLE_TABS = new Set<string>([]);
+// A galeria deve continuar descoberta no menu mesmo quando o plano não a inclui:
+// FeatureGuard informa o motivo e disponibiliza o caminho de upgrade, em vez de
+// fazer fotos e vídeos aparentemente “sumirem” do produto.
+const ALWAYS_VISIBLE_TABS = new Set<string>(['media']);
 
 const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
   analytics: {

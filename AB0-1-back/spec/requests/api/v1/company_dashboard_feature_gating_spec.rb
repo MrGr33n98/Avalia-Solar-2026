@@ -86,6 +86,8 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
         expect(json['rank_position']).to be_nil
         expect(json['ranking_score']).to eq(0)
         expect(json['magic_quadrant_points']).to eq([])
+        expect(json['historical_data']).to eq([])
+        expect(json.dig('transparency', 'sponsored_included')).to be(false)
         expect(json['is_premium_analytics']).to be(false)
         expect(json['upsell_message']).to include('Upgrade to Pro or Enterprise')
       end
@@ -154,6 +156,9 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
         json = JSON.parse(response.body)
 
         expect(json['is_premium_analytics']).to be(true)
+        expect(json).to have_key('historical_data')
+        expect(json.dig('transparency', 'purpose')).to eq('organic_performance')
+        expect(json.dig('transparency', 'sponsored_included')).to be(false)
       end
     end
 

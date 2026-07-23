@@ -163,6 +163,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         context: ['operational', 'admin'],
       },
       {
+        id: 'media',
+        label: 'Fotos e Vídeos',
+        icon: ImageIcon,
+        context: ['operational', 'admin'],
+        description: 'Gerenciar galeria de imagens e vídeos da empresa',
+      },
+      {
         id: 'product-features',
         label: 'Funcionalidades',
         icon: FileText,

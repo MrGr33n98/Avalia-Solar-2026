@@ -214,10 +214,12 @@ module Api
 
           category_id = params[:category_id].presence
           criterion_slug = params[:criterion_slug].presence
+          history_days = [[params.fetch(:history_days, 90).to_i, 7].max, 365].min
           service = ::CompanyDashboard::RankingService.new(
             company: @company,
             category_id: category_id,
-            criterion_slug: criterion_slug
+            criterion_slug: criterion_slug,
+            history_days: history_days
           )
           data = service.ranking_data
 
@@ -227,6 +229,8 @@ module Api
             magic_quadrant_points: data[:magic_quadrant_competitors],
             quadrant_meta: data[:quadrant_meta],
             category_rankings: data[:category_rankings],
+            historical_data: data[:historical_data],
+            transparency: data[:transparency],
             is_premium_analytics: true
           }
         rescue StandardError => e
@@ -1511,7 +1515,14 @@ module Api
           ranking_score: 0,
           magic_quadrant_points: [],
           quadrant_meta: {},
-          category_rankings: []
+          category_rankings: [],
+          historical_data: [],
+          transparency: {
+            definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
+            purpose: 'organic_performance',
+            sponsored_included: false,
+            quality_flags: ['snapshot_unavailable']
+          }
         }
       end
 

@@ -32,6 +32,7 @@ module Analytics
         SQL
 
         res = ActiveRecord::Base.connection.exec_query(sql, 'RankingScore')
+        ::CompanyDashboard::RankingSnapshotWriter.call(now: Time.current)
         ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array(["UPDATE analytics_processing_state SET last_processed_at = NOW() WHERE pipeline_name = ?", PIPELINE]))
         
         dur = ((Time.current - start_time) * 1000).to_i

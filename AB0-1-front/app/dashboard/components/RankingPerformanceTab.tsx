@@ -55,6 +55,7 @@ interface Props {
 export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>('all');
+  const [historyDays, setHistoryDays] = useState<string>('90');
 
   const criteriaQuery = useQuery({
     queryKey: ['category-evaluation-context', selectedCategoryId],
@@ -70,18 +71,22 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
   }, [selectedCategoryId]);
 
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, historyDays],
     queryFn: async () => {
       return companyDashboardApi.getRanking(
         company.id,
         selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
-        selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined
+        selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
+        Number(historyDays)
       );
     },
     enabled: Boolean(company.id),
   });
 
   const { data, isLoading } = rankingQuery;
+  const transparency = data?.transparency;
+  const rankingLabel = data?.rank_position ? `${data.rank_position}º` : '--';
+  const hasSnapshot = !transparency?.quality_flags?.includes('snapshot_unavailable');
 
   const quadrantData = useMemo(() => {
     if (!data?.magic_quadrant_points) return [];
@@ -159,11 +164,11 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
       {/* Matriz de KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
-          title="Velocidade no Ranking"
-          value={data?.ranking_score !== undefined && data?.ranking_score !== null ? Number(data.ranking_score).toFixed(1) : '--'}
+          title="Percentil orgânico"
+          value={data?.ranking_score !== undefined && data?.ranking_score !== null ? `${Number(data.ranking_score).toFixed(1)}%` : '--'}
           icon={Activity}
-          change="+4.2%"
-          changeType="positive"
+          change={hasSnapshot ? `Posição ${rankingLabel}` : 'Aguardando snapshot'}
+          changeType={hasSnapshot ? 'neutral' : 'neutral'}
           color="brand-yellow"
           delay={0.1}
         />
@@ -171,8 +176,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           title="Eficiência de Conversão"
           value={stats?.leadsReceived !== undefined ? stats.leadsReceived.toString() : '0'}
           icon={Target}
-          change="+12.5%"
-          changeType="positive"
+          change="Últimos dados disponíveis"
+          changeType="neutral"
           color="brand-blue"
           delay={0.2}
         />
@@ -182,7 +187,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             ? Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 0).toFixed(1)
             : '--'}
           icon={ZapIcon}
-          change="Ótimo"
+          change={selectedCriterionSlug !== 'all' ? 'Critério aplicado' : 'Sem filtro de critério'}
           changeType="neutral"
           color="brand-green"
           delay={0.3}
@@ -191,12 +196,32 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           title="Visibilidade de Mercado"
           value={stats?.profileViews !== undefined ? stats.profileViews.toLocaleString() : '--'}
           icon={Globe}
-          change="+22.1%"
-          changeType="positive"
+          change="Total acumulado"
+          changeType="neutral"
           color="brand-cyan"
           delay={0.4}
         />
       </div>
+
+      <Card className="border border-sky-100 bg-sky-50/50 dark:border-sky-900/30 dark:bg-sky-950/20">
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold text-sky-900 dark:text-sky-200">Ranking orgânico auditável</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                {transparency?.score_definition || 'Snapshot ainda não disponível. O ranking será calculado no próximo ciclo de dados.'}
+              </p>
+            </div>
+            <Badge variant="outline" className="w-fit text-[10px]">{transparency?.definition_version || 'Pendente'}</Badge>
+          </div>
+          <div className="mt-3 grid gap-2 text-[11px] text-slate-500 sm:grid-cols-3">
+            <span>Escopo: {transparency?.scope === 'category' ? 'categoria' : 'global'}</span>
+            <span>Patrocínio: {transparency?.sponsored_included ? 'incluído' : 'não influencia este ranking'}</span>
+            <span>Atualizado: {transparency?.computed_at ? new Date(transparency.computed_at).toLocaleString('pt-BR') : 'aguardando processamento'}</span>
+          </div>
+          {transparency?.quality_flags?.length ? <p className="mt-2 text-[10px] text-amber-700 dark:text-amber-300">Qualidade dos dados: {transparency.quality_flags.join(', ')}</p> : null}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Visualização de Vetor de Crescimento */}
@@ -205,14 +230,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             <div>
               <CardTitle className="text-lg font-bold text-foreground dark:text-white tracking-tight flex items-center gap-3">
                 <BarChart3 className="w-5 h-5 text-brand-blue" />
-                Vetor de Velocidade de Crescimento
+                Histórico de posicionamento orgânico
               </CardTitle>
-              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Acompanhamento de Performance Multidimensional</CardDescription>
+              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Snapshots diários · últimos 90 dias</CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-brand-blue" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Oportunidades</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Score orgânico</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-brand-green" />
@@ -262,12 +287,12 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     <Area 
                       yAxisId="right"
                       type="monotone" 
-                      dataKey="leads" 
+                      dataKey="score" 
                       stroke="#3b82f6" 
                       strokeWidth={4} 
                       fillOpacity={1} 
                       fill="url(#colorLeads)"
-                      name="Oportunidades" 
+                      name="Score orgânico" 
                     />
                     <Area 
                       yAxisId="left" 
@@ -322,6 +347,19 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                         {cat.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="relative group">
+                <Select value={historyDays} onValueChange={setHistoryDays}>
+                  <SelectTrigger className="w-full h-11 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
+                    <SelectValue placeholder="PERÍODO" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <SelectItem value="30" className="text-[10px] font-bold uppercase">Últimos 30 dias</SelectItem>
+                    <SelectItem value="90" className="text-[10px] font-bold uppercase">Últimos 90 dias</SelectItem>
+                    <SelectItem value="365" className="text-[10px] font-bold uppercase">Últimos 12 meses</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

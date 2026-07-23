@@ -1635,6 +1635,18 @@ export interface RankingData {
     criterion_title?: string;
   }>;
   historical_data?: any[];
+  transparency?: {
+    definition_version: string;
+    purpose: 'organic_performance' | 'criterion_quadrant_preview';
+    sponsored_included: boolean;
+    score_definition?: string;
+    tie_breaker?: string;
+    scope?: 'global' | 'category';
+    computed_at?: string | null;
+    data_through?: string | null;
+    quality_flags: string[];
+    breakdown?: Record<string, unknown>;
+  };
 }
 
 export const companyDashboardApi = {
@@ -1660,12 +1672,13 @@ export const companyDashboardApi = {
     fetchApi<CertificationProgress>('/company_dashboard/certification_progress', {
       params: companyId ? { company_id: companyId } : undefined,
     }),
-  getRanking: (companyId?: string | number, categoryId?: string | number, criterionSlug?: string) =>
+  getRanking: (companyId?: string | number, categoryId?: string | number, criterionSlug?: string, historyDays: number = 90) =>
     fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
       params: {
         company_id: companyId,
         category_id: categoryId,
         criterion_slug: criterionSlug,
+        history_days: historyDays,
       },
     }),
 };
