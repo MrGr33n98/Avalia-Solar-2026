@@ -49,19 +49,7 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
 
-            <div className="absolute right-2 top-2 flex items-center gap-1.5">
-              {category.featured ? (
-                <span className="rounded-md bg-blue-600 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm">
-                  Destaque
-                </span>
-              ) : null}
-              {rating > 0 ? (
-                <span className="flex items-center gap-1 rounded-md border border-white/60 bg-white/90 px-1.5 py-1 text-[10px] font-semibold text-slate-900 backdrop-blur-sm">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  {rating}
-                </span>
-              ) : null}
-            </div>
+
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col px-3.5 py-3 sm:px-4">

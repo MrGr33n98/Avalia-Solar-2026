@@ -639,32 +639,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               <TabsContent value="product-videos" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-videos',
-                  <div>
-                    <div className="mb-6">
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Vídeos
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        Gerencie vídeos e mídias do seu produto.
-                      </p>
-                    </div>
-                    <MediaGallery companyId={companyId} mode="videos" />
-                  </div>
+                  <ProjectsMaterialsHub companyId={companyId} />
                 )}
               </TabsContent>
 
               <TabsContent value="product-images" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-images',
-                  <div>
-                    <div className="mb-6">
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Imagens
-                      </h2>
-                      <p className="text-sm text-slate-500">Gerencie imagens do seu produto.</p>
-                    </div>
-                    <MediaGallery companyId={companyId} mode="photos" />
-                  </div>
+                  <ProjectsMaterialsHub companyId={companyId} />
                 )}
               </TabsContent>
 

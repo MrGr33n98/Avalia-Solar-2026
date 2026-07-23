@@ -18,6 +18,7 @@ class DigitalAsset < ApplicationRecord
   validate :external_video_or_file_present
   validate :file_is_allowed
   validate :external_url_is_safe
+  validate :external_video_provider_is_allowed
   validate :company_matches_attachable
 
   scope :published, -> { where(status: 'published', processing_status: 'ready').order(position: :asc) }
@@ -65,5 +66,15 @@ class DigitalAsset < ApplicationRecord
     return if attachable.company_id == company_id
 
     errors.add(:company, 'deve ser a empresa do recurso associado')
+  end
+
+  def external_video_provider_is_allowed
+    return unless kind == 'video' && external_url.present?
+
+    host = URI.parse(external_url).host.to_s.downcase.sub(/\Awww\./, '')
+    allowed = %w[youtube.com youtu.be vimeo.com]
+    errors.add(:external_url, 'provedor de vídeo não permitido') unless allowed.include?(host)
+  rescue URI::InvalidURIError
+    # URL inválida já é tratada pela validação de segurança.
   end
 end
