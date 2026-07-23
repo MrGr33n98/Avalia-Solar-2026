@@ -182,6 +182,15 @@ class AnalyticsTrackingJob
   def forward_to_posthog(event_name, properties, metadata)
     distinct_id = properties['user_id'] || properties['session_id'] || metadata[:session_id] || 'anonymous'
 
+    company_id = properties['company_id']
+    if company_id.present?
+      company = Company.find_by(id: company_id)
+      if company
+        properties['company_name'] = company.name
+        properties['category_name'] = company.categories.first&.name if company.categories.exists?
+      end
+    end
+
     Analytics::PostHogService.capture(event_name, properties.merge(metadata), distinct_id: distinct_id)
   rescue StandardError => e
     Rails.logger.warn(

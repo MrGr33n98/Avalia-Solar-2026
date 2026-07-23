@@ -91,7 +91,7 @@ module Recommendation
       score += 3.0 if company.logo_url.present? || company.logo.attached?
       score += 2.0 if company.description.present?
       score += 3.0 if company.response_time_sla.present?
-      score += 2.0 if company.phone.present? || company.whatsapp_number.present?
+      score += 2.0 if company.phone.present? || company.whatsapp.present?
       score += 0.05 * [company.delivered_projects_score.to_i, 100].min
       score.clamp(0.0, 10.0).round(2)
     end

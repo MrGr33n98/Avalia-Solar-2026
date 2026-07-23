@@ -262,6 +262,14 @@ module Analytics
         ph_event_name = 'company_profile_completed' # Use consistent terminology
       end
 
+      if @company_id.present?
+        company = Company.find_by(id: @company_id)
+        if company
+          ph_properties[:company_name] = company.name
+          ph_properties[:category_name] = company.categories.first&.name if company.categories.exists?
+        end
+      end
+
       Analytics::PostHogService.capture(
         ph_event_name,
         ph_properties.merge(
