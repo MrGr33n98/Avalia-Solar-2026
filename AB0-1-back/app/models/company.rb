@@ -193,6 +193,13 @@ end
   has_many :banner_events, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
   has_many :company_videos, dependent: :destroy
+  has_many :company_projects, dependent: :destroy
+  has_many :company_materials, dependent: :destroy
+  has_many :content_lead_forms, dependent: :destroy
+  has_many :content_leads, dependent: :destroy
+  has_many :material_downloads, dependent: :destroy
+  has_many :digital_assets, dependent: :destroy
+  has_many :content_moderation_decisions, dependent: :destroy
   has_and_belongs_to_many :articles
   belongs_to :plan, optional: true
   has_many :users, dependent: :nullify

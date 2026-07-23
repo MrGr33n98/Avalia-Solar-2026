@@ -52,6 +52,9 @@ const ReviewsManagement = dynamic(() => import('./ReviewsManagement'), {
 const MediaGallery = dynamic(() => import('./MediaGallery'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const ProjectsMaterialsHub = dynamic(() => import('./ProjectsMaterialsHub'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 const LeadsOpportunities = dynamic(() => import('./LeadsOpportunities'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -615,17 +618,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-downloads',
-                  <div>
-                    <div className="mb-6">
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Conteúdo Baixável
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        Envie arquivos e materiais para seus clientes.
-                      </p>
-                    </div>
-                    <MediaGallery companyId={companyId} mode="downloads" />
-                  </div>
+                  <ProjectsMaterialsHub companyId={companyId} />
                 )}
               </TabsContent>
 

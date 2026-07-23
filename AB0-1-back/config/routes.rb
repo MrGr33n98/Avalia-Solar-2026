@@ -77,6 +77,9 @@ Rails.application.routes.draw do
           get 'by_slug/:slug', to: 'companies#show_by_slug'
         end
 
+        resources :projects, only: %i[index show], controller: 'company_projects'
+        resources :materials, only: %i[index show], controller: 'company_materials'
+
         member do
           get 'sector_ratings/summary', to: 'sector_ratings#summary'
           get 'sector_ratings/questions', to: 'sector_ratings#questions'
@@ -132,6 +135,9 @@ Rails.application.routes.draw do
 
       # Gated Downloads API
       resources :gated_downloads, only: [:create]
+      resources :material_downloads, only: %i[create] do
+        member { get :file }
+      end
       resources :company_webhooks, only: %i[index create update destroy]
 
       # Consent endpoints
@@ -397,6 +403,18 @@ Rails.application.routes.draw do
       end
 
       namespace :company_admin do
+        get 'content_analytics/overview', to: 'content_analytics#overview'
+        get 'content_analytics/funnel', to: 'content_analytics#funnel'
+        get 'content_analytics/timeseries', to: 'content_analytics#timeseries'
+        resources :projects, only: %i[index show create update destroy] do
+          member { post :submit }
+        end
+        resources :materials, only: %i[index show create update destroy] do
+          member { post :submit }
+        end
+        resources :content_lead_forms, only: %i[index show create update destroy]
+        resources :assets, only: %i[create destroy]
+
         resources :review_forms, only: %i[index show create update destroy] do
           member do
             post :duplicate

@@ -117,6 +117,26 @@ module PlanFeatureCatalog
       group: 'content',
       aliases: %w[downloads materials gated_downloads]
     },
+    'projects_showcase' => {
+      label: 'Vitrine de Projetos',
+      description: 'Permite publicar projetos, cases e seus ativos visuais no perfil público.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'content',
+      aliases: %w[projects portfolio cases project_gallery]
+    },
+    'content_intent_analytics' => {
+      label: 'Analytics de Materiais',
+      description: 'Exibe funil de intenção, leads e entregas de materiais no dashboard.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'analytics',
+      aliases: %w[content_analytics material_analytics intent_data]
+    },
     'media_gallery' => {
       label: 'Galeria de Mídia (Fotos/Vídeos)',
       description: 'Exibe fotos de instalações e vídeos de cases no perfil.',
@@ -376,6 +396,8 @@ module PlanFeatureCatalog
       'special_offer' => false,
       'sponsored_description' => false,
       'downloadable_materials' => false,
+      'projects_showcase' => false,
+      'content_intent_analytics' => false,
       'media_gallery' => false,
       'media_upload' => false,
       'p2p_chat' => false,
@@ -407,6 +429,8 @@ module PlanFeatureCatalog
       'special_offer' => true,
       'sponsored_description' => true,
       'downloadable_materials' => true,
+      'projects_showcase' => true,
+      'content_intent_analytics' => true,
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,
@@ -438,6 +462,8 @@ module PlanFeatureCatalog
       'special_offer' => true,
       'sponsored_description' => true,
       'downloadable_materials' => true,
+      'projects_showcase' => true,
+      'content_intent_analytics' => true,
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,

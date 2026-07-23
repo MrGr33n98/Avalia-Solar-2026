@@ -1,0 +1,137 @@
+# frozen_string_literal: true
+
+require 'digest'
+
+module Api
+  module V1
+    class MaterialDownloadsController < BaseController
+      TOKEN_TTL = 15.minutes
+
+      def create
+        company = Company.find(params.require(:company_id))
+        material = company.company_materials.published.find_by!(slug: params.require(:material_slug))
+        return render json: { error: 'Not found' }, status: :not_found unless material.company.feature_enabled?('downloadable_materials')
+        token = authorization_token
+        download = create_download!(material, token)
+
+        track_server_event('material_download_authorized', material, download)
+        render json: {
+          download_id: download.id,
+          delivery_url: "/api/v1/material_downloads/#{download.id}/file?token=#{token}",
+          expires_at: download.expires_at
+        }, status: :created
+      end
+
+      def file
+        download = MaterialDownload.includes(company_material: :digital_assets).find(params[:id])
+        return render json: { error: 'Token inválido ou expirado' }, status: :forbidden unless valid_token?(download)
+
+        asset = download.company_material.digital_assets.published.document.first
+        return render json: { error: 'Arquivo indisponível' }, status: :not_found unless asset&.file&.attached?
+
+        first_delivery = download.delivered_at.blank?
+        download.update!(delivery_status: 'delivered', delivered_at: Time.current) if first_delivery
+        download.company_material.increment!(:download_count) if first_delivery
+        track_server_event('material_download_delivered', download.company_material, download) if first_delivery
+        redirect_to rails_blob_url(asset.file, disposition: 'attachment'), allow_other_host: true
+      end
+
+      private
+
+      def create_download!(material, token)
+        MaterialDownload.transaction do
+          lead = material.gated? ? find_or_create_lead!(material) : nil
+          find_or_create_download!(material, lead, token)
+        end
+      rescue ActiveRecord::RecordNotUnique
+        key = request.headers['Idempotency-Key'].presence
+        raise if key.blank?
+
+        material.company.material_downloads.find_by!(idempotency_key: key, company_material_id: material.id)
+      end
+
+      def find_or_create_lead!(material)
+        email = lead_params[:email].to_s.strip.downcase
+        raise ActionController::ParameterMissing, :email if email.blank?
+
+        lead = material.company.content_leads.find_or_initialize_by(email_digest: ContentLead.digest_for(email))
+        lead.assign_attributes(
+          email: email,
+          name: lead_params[:name],
+          phone: lead_params[:phone],
+          company_name: lead_params[:company_name],
+          attributes_data: lead_params[:attributes_data] || {},
+          consents: { form_version: material.content_lead_form.version, accepted_at: Time.current.iso8601, marketing: ActiveModel::Type::Boolean.new.cast(lead_params[:marketing_consent]) },
+          last_seen_at: Time.current
+        )
+        lead.save!
+        lead
+      end
+
+      def find_or_create_download!(material, lead, token)
+        key = request.headers['Idempotency-Key'].presence
+        existing = material.company.material_downloads.find_by(idempotency_key: key) if key
+        if existing
+          raise ActiveRecord::RecordNotUnique, 'idempotency key reused for a different material' if existing.company_material_id != material.id
+
+          return existing
+        end
+
+        MaterialDownload.create!(
+          company: material.company,
+          company_material: material,
+          content_lead: lead,
+          content_lead_form: material.content_lead_form,
+          anonymous_id: cookies[:anonymous_id],
+          authorization_token_digest: Digest::SHA256.hexdigest(token),
+          authorized_at: Time.current,
+          expires_at: TOKEN_TTL.from_now,
+          delivery_status: 'authorized',
+          idempotency_key: key,
+          utm_source: params[:utm_source], utm_medium: params[:utm_medium], utm_campaign: params[:utm_campaign],
+          referrer_host: referrer_host,
+          form_submission: lead_params.except(:email, :name, :phone, :company_name, :marketing_consent, :attributes_data)
+        )
+      end
+
+      def valid_token?(download)
+        return false if download.expires_at <= Time.current || download.delivery_status.in?(%w[revoked expired])
+
+        ActiveSupport::SecurityUtils.secure_compare(download.authorization_token_digest, Digest::SHA256.hexdigest(params[:token].to_s))
+      end
+
+      def authorization_token
+        key = request.headers['Idempotency-Key'].presence
+        return SecureRandom.urlsafe_base64(32) if key.blank?
+
+        OpenSSL::HMAC.hexdigest('SHA256', Rails.application.secret_key_base, "material-download:#{key}")
+      end
+
+      def referrer_host
+        URI.parse(request.referer).host if request.referer.present?
+      rescue URI::InvalidURIError
+        nil
+      end
+
+      def lead_params
+        params.permit(:email, :name, :phone, :company_name, :marketing_consent, :utm_source, :utm_medium, :utm_campaign, attributes_data: {})
+      end
+
+      def track_server_event(event_name, material, download)
+        Analytics::TrackEventService.call(
+          company_id: material.company_id,
+          event_type: event_name,
+          metadata: {
+            material_id: material.id,
+            material_download_id: download.id,
+            gate_mode: material.gate_mode,
+            distinct_id: "content_lead_#{download.content_lead_id || download.anonymous_id || download.id}"
+          },
+          event_id: "material-download:#{download.id}:#{event_name}"
+        )
+      rescue StandardError => error
+        Rails.logger.warn("[MaterialDownloads] analytics failed: #{error.class}")
+      end
+    end
+  end
+end

@@ -24,6 +24,8 @@ import CompanyProducts from './CompanyProducts';
 import CompanyReviews from './CompanyReviews';
 import CompanyFinancing from './CompanyFinancing';
 import FaqSection from './FaqSection';
+import ProjectsGallery from './ProjectsGallery';
+import MaterialsLibrary from './MaterialsLibrary';
 
 interface CompanyProfileShellProps {
   company: Company;
@@ -180,25 +182,10 @@ export default function CompanyProfileShell({
                 </TabsContent>
               )}
 
-              {/* ABA 5: PROJETOS (Placeholder elegante da Fase 2) */}
+              {/* ABA 5: PROJETOS */}
               <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
-                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
-                  <div className="text-center py-10 space-y-4">
-                    <Building2 className="h-12 w-12 text-blue-500 mx-auto animate-bounce" />
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Portfólio de Projetos Realizados
-                    </h3>
-                    <p className="text-sm text-slate-500 max-w-md mx-auto">
-                      Estamos preparando a vitrine de obras e instalações desta empresa. Em breve
-                      você verá fotos de cases e especificações técnicas reais.
-                    </p>
-                    <div className="flex justify-center gap-2 pt-2">
-                      <Skeleton className="h-24 w-32 rounded-xl" />
-                      <Skeleton className="h-24 w-32 rounded-xl" />
-                      <Skeleton className="h-24 w-32 rounded-xl" />
-                    </div>
-                  </div>
-                </Card>
+                <ProjectsGallery companyId={company.id} companyName={company.name} />
+                <MaterialsLibrary companyId={company.id} />
               </TabsContent>
 
               {/* ABA 6: CONTATO (Placeholder com detalhes de e-mail, telefone e FAQs expansíveis) */}
