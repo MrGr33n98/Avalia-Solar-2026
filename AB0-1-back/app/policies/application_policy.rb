@@ -40,6 +40,25 @@ class ApplicationPolicy
     admin?
   end
 
+  # ActiveAdmin authorizes custom member actions by their exact name.  Keep
+  # moderation decisions admin-only; otherwise a visible “Aprovar” button can
+  # still be denied because Pundit looks for `approve?`, not `update?`.
+  def approve?
+    admin?
+  end
+
+  def reject?
+    admin?
+  end
+
+  def request_changes?
+    admin?
+  end
+
+  def quarantine?
+    admin?
+  end
+
   def user_company_ids
     return [] if user.blank?
 
