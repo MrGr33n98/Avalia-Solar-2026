@@ -97,6 +97,9 @@ const ReviewFormsManagement = dynamic(() => import('./ReviewFormsManagement'), {
 const IcpSetupForm = dynamic(() => import('./IcpSetupForm'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const SupportTrainingDashboard = dynamic(() => import('./SupportTrainingDashboard'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 
 function DashboardTabSkeleton() {
   return (
@@ -568,17 +571,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="product-support" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Suporte e treinamento
-                    </h2>
-                    <p className="text-sm text-white/40">
-                      Configure canais e informações de suporte para seus clientes.
-                    </p>
-                  </div>
-                  <CompanySettings companyId={companyId} />
-                </div>
+                <SupportTrainingDashboard companyId={companyId} company={company} stats={stats} />
               </TabsContent>
 
               <TabsContent value="product-banner" className="mt-0 focus-visible:outline-none">

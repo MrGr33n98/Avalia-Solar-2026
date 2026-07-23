@@ -539,7 +539,7 @@ export default function MediaGallery({
 
       {/* Video Dialog */}
       <Dialog open={showVideoDialog && controlsVisible} onOpenChange={setShowVideoDialog}>
-        <DialogContent className="clay-precision bg-card dark:bg-[#0F172A] border-none rounded-[2.5rem] p-12 max-w-md animate-in zoom-in-95 duration-300">
+        <DialogContent className="!fixed !left-1/2 !top-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-none bg-card p-6 shadow-2xl dark:bg-[#0F172A] sm:rounded-[2.5rem] sm:p-10">
           <DialogHeader className="items-center text-center">
             <div className="h-20 w-20 rounded-[1.5rem] bg-brand-blue/10 flex items-center justify-center mb-8">
               <Video className="h-10 w-10 text-brand-blue" />
