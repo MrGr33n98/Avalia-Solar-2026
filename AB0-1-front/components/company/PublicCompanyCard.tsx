@@ -49,7 +49,7 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
   const location = [company.city, company.state].filter(Boolean).join(', ');
 
   const projectsCount = numberValue(
-    company.projects_count ?? company.project_count ?? company.projects
+    company.projects_count ?? company.project_count ?? company.projects ?? (company as any).delivered_projects_score
   );
 
   const comparisonCompany = {
@@ -130,7 +130,7 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         <div>
           <div className="flex items-center justify-center gap-1 font-extrabold text-slate-900">
             <Briefcase className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-            <span>{projectsCount > 0 ? projectsCount : '96'}</span>
+            <span>{projectsCount > 0 ? projectsCount : 'Consultar'}</span>
           </div>
           <p className="mt-1 text-[11px] font-medium text-slate-400">Projetos</p>
         </div>
