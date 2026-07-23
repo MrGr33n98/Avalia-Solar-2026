@@ -65,6 +65,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :recommendations, only: %i[index]
+
       resources :financial_institutions, only: %i[index show]
 
       resources :companies do
