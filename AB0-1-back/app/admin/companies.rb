@@ -539,7 +539,7 @@ ActiveAdmin.register Company do
 
     f.inputs 'Gestão de Selos, Verificação & Badges' do
       f.input :verified, label: 'Empresa Verificada (Ativa Selo Verde no Perfil)', hint: '💡 Ativa a tag visual. Para exibir publicamente, o Plano da empresa também deve liberar a funcionalidade verified_product (Ex: Plano Pro).'
-      f.input :featured, label: 'Empresa em Destaque (Ativa Insígnia DESTAQUE PREMIUM)', hint: '💡 Ativa a tag de topo. Requer que o Plano da empresa possua a funcionalidade highlight_badges liberada.'
+      f.input :featured, label: 'Empresa em Destaque (Ativa Insígnia DESTAQUE PREMIUM)', hint: '💡 [Legado] Ativa a tag de topo. Para gerenciar agendamentos comerciais com vigência, estado e rotação, utilize Placements de Recomendação.'
       f.input :badges, as: :check_boxes, label: 'Medalhas & Reconhecimentos Globais da Plataforma', collection: Badge.active.order(:name)
     end
 
