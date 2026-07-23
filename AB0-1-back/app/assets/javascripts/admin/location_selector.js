@@ -468,8 +468,33 @@
     }
   }
 
+  function setupCollapsibleFieldsets() {
+    const form = document.querySelector('form.company');
+    if (!form) return;
+
+    const fieldsets = form.querySelectorAll('fieldset.inputs');
+    fieldsets.forEach((fieldset) => {
+      if (fieldset.dataset.collapsibleBound === '1') return;
+      fieldset.dataset.collapsibleBound = '1';
+
+      const legend = fieldset.querySelector('legend');
+      if (!legend) return;
+
+      fieldset.classList.add('collapsible-fieldset');
+
+      const legendSpan = legend.querySelector('span');
+      if (!legendSpan) return;
+
+      legend.addEventListener('click', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'LABEL') return;
+        fieldset.classList.toggle('collapsed');
+      });
+    });
+  }
+
   function init() {
     initForCompanyForm();
+    setupCollapsibleFieldsets();
   }
 
   window.AvaliaAdminLocationSelector = {

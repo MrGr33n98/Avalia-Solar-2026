@@ -614,4 +614,61 @@ body.active_admin {
     font-size: 11px;
     font-weight: 800;
   }
+
+  // ----------------------
+  // Collapsible Fieldsets (Company form)
+  // ----------------------
+  form fieldset.inputs.collapsible-fieldset {
+    margin-bottom: 24px;
+    transition: all 250ms ease;
+
+    legend {
+      cursor: pointer;
+      user-select: none;
+      display: block;
+      width: 100%;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      transition: background-color 150ms ease;
+
+      &:hover {
+        background-color: rgba(0, 86, 210, 0.025);
+      }
+
+      span {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        position: relative;
+        font-size: 14px;
+        font-weight: 800;
+
+        &::after {
+          content: "▼";
+          display: inline-block;
+          font-size: 10px;
+          color: #64748b;
+          transition: transform 200ms ease;
+          margin-left: 12px;
+        }
+      }
+    }
+
+    ol {
+      padding: 24px;
+      transition: max-height 250ms ease;
+    }
+
+    &.collapsed {
+      legend {
+        border-bottom: none;
+        span::after {
+          transform: rotate(-90deg);
+        }
+      }
+      ol {
+        display: none !important;
+      }
+    }
+  }
 }
