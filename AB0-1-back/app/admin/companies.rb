@@ -1217,9 +1217,12 @@ ActiveAdmin.register Company do
     end
 
     def find_resource
-      scoped_collection.find_by(id: params[:id]) ||
-        scoped_collection.find_by(slug: params[:id]) ||
-        super
+      param_id = params[:id].to_s
+      if param_id.match?(/\A\d+\z/)
+        scoped_collection.find_by(id: param_id) || scoped_collection.find_by(slug: param_id)
+      else
+        scoped_collection.find_by(slug: param_id) || scoped_collection.find_by(id: param_id)
+      end
     end
 
     def update
