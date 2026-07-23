@@ -315,6 +315,12 @@
     return false;
   }
 
+  function syncSelect2(selectEl) {
+    if (typeof $ !== 'undefined' && $(selectEl).data('select2')) {
+      $(selectEl).trigger('change');
+    }
+  }
+
   function initForCompanyForm() {
     const stateSelect = document.getElementById('company_state');
     const citySelect = document.getElementById('company_city');
@@ -336,17 +342,15 @@
 
     const stateSelectedAttr = stateSelect.getAttribute('data-selected');
     const citySelectedAttr = citySelect.getAttribute('data-selected');
-    const stored = getSelectionFromStorage();
 
     const preselectedStateRaw = stateSelectedAttr || '';
     const preselectedCityRaw = citySelectedAttr || '';
 
     const stateCode =
       mapStateToCode(preselectedStateRaw) ||
-      mapStateToCode(stateSelect.value) ||
-      mapStateToCode(stored?.state);
+      mapStateToCode(stateSelect.value);
 
-    const cityName = String(preselectedCityRaw || stored?.city || '').trim();
+    const cityName = String(preselectedCityRaw || '').trim();
 
     if (stateCode && stateSelect.value !== stateCode) {
       stateSelect.value = stateCode;
@@ -367,11 +371,13 @@
           disabled: true,
         });
         setLoading(citySelect, cityLoader, false);
+        syncSelect2(citySelect);
         return;
       }
 
       setLoading(citySelect, cityLoader, true);
       setSelectOptions(citySelect, { placeholder: 'Carregando...', options: [], disabled: true });
+      syncSelect2(citySelect);
 
       try {
         const cities = await getCities(selectedState, {
@@ -386,6 +392,7 @@
             disabled: true,
           });
           setInlineMessage(cityError, 'Nenhuma cidade disponível para o estado selecionado.');
+          syncSelect2(citySelect);
           return;
         }
 
@@ -400,6 +407,7 @@
         if (desired) {
           citySelect.value = desired;
         }
+        syncSelect2(citySelect);
       } catch (error) {
         if (error?.name === 'AbortError') return;
 
@@ -409,6 +417,7 @@
           disabled: true,
         });
         setInlineMessage(cityError, 'Falha ao carregar cidades. Verifique sua conexão e tente novamente.');
+        syncSelect2(citySelect);
       } finally {
         setLoading(citySelect, cityLoader, false);
       }
@@ -455,6 +464,7 @@
       loadAndApplyCities({ preselectCity: cityName });
     } else {
       setSelectOptions(citySelect, { placeholder: 'Selecione um estado primeiro', options: [], disabled: true });
+      syncSelect2(citySelect);
     }
   }
 
