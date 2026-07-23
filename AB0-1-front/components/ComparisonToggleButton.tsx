@@ -249,17 +249,8 @@ export default function ComparisonToggleButton({
             ? showPosition && position
               ? `Posição ${position}`
               : 'Selecionada'
-            : compactLabel
-              ? 'Comparar'
-              : isPremium
-                ? 'Comparar Premium'
-                : 'Comparar'}
+            : 'Comparar'}
         </span>
-
-        {/* Premium indicator */}
-        {isPremium && !isSelected && !compactLabel && (
-          <Star className="h-3 w-3 text-amber-500 fill-current" />
-        )}
       </div>
     );
   };

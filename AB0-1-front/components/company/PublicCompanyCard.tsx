@@ -46,6 +46,7 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
   const href = buildCompanyPath(company.slug, company.name, company.id);
   const companyId = numberValue(company.id);
   const rating = numberValue(company.average_rating ?? company.rating_avg ?? company.rating);
+  const reviewsCount = numberValue(company.rating_count ?? company.reviews_count ?? company.total_reviews);
   const location = [company.city, company.state].filter(Boolean).join(', ');
 
   const projectsCount = numberValue(
@@ -114,15 +115,21 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         <div>
           <div className="flex items-center justify-center gap-1 font-extrabold text-slate-900">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-            <span>{rating > 0 ? rating.toFixed(1).replace('.', ',') : '4,5'}</span>
+            <span className={rating > 0 ? '' : 'text-[11px] font-semibold text-slate-500'}>
+              {rating > 0 ? rating.toFixed(1).replace('.', ',') : 'Sem avaliações'}
+            </span>
           </div>
-          <p className="mt-1 text-[11px] font-medium text-slate-400">Avaliação</p>
+          <p className="mt-1 text-[11px] font-medium text-slate-400">
+            {reviewsCount > 0 ? `Avaliação (${reviewsCount})` : 'Avaliação'}
+          </p>
         </div>
 
         <div>
           <div className="flex items-center justify-center gap-1 font-extrabold text-slate-900">
             <Clock className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-            <span>{company.response_time_sla || '24h'}</span>
+            <span className={company.response_time_sla ? '' : 'text-[10px] font-semibold text-slate-500'}>
+              {company.response_time_sla || 'Tempo de resposta não informado'}
+            </span>
           </div>
           <p className="mt-1 text-[11px] font-medium text-slate-400">Resposta média</p>
         </div>
@@ -130,7 +137,9 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         <div>
           <div className="flex items-center justify-center gap-1 font-extrabold text-slate-900">
             <Briefcase className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-            <span>{projectsCount > 0 ? projectsCount : 'Consultar'}</span>
+            <span className={projectsCount > 0 ? '' : 'text-[11px] font-semibold text-slate-500'}>
+              {projectsCount > 0 ? projectsCount : 'Não informado'}
+            </span>
           </div>
           <p className="mt-1 text-[11px] font-medium text-slate-400">Projetos</p>
         </div>
