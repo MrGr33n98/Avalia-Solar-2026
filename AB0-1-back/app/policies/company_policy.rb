@@ -78,7 +78,10 @@ class CompanyPolicy < ApplicationPolicy
   end
 
   def upload_media?
-    admin? || (company_owner? && record.media_upload_allowed?)
+    # The dashboard exposes the media controls to active company members. Keep
+    # the server-side authorization aligned with that contract; plan gating is
+    # still enforced by `media_upload_allowed?` in the controller/policy.
+    admin? || (company_member? && record.media_upload_allowed?)
   end
 
   def manage_pricing?
