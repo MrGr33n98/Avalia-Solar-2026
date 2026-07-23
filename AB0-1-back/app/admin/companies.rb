@@ -190,6 +190,7 @@ ActiveAdmin.register Company do
               hint: 'Identificador único na URL (slug). Cuidado ao alterar para não quebrar links externos indexados ou compartilhados.'
       f.input :description
       f.input :moderation_status, as: :select, collection: Company.moderation_statuses.keys
+      f.input :segment, as: :select, collection: Company::SEGMENTS, hint: 'Define em qual guia (aba) a empresa aparece.'
       f.input :rejected_reason, input_html: { rows: 3 }
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
