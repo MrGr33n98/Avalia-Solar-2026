@@ -32,7 +32,7 @@ module Recommendation
         scope = scope.where(id: matching_company_ids)
       end
 
-      scope.distinct
+      scope
     end
 
     private
