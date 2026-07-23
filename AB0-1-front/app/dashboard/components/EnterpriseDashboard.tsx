@@ -158,8 +158,8 @@ const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: str
     description: 'Esse espaco comercial so fica disponivel em planos elegiveis.',
   },
   'product-downloads': {
-    title: 'Conteudo baixavel bloqueado',
-    description: 'Seu plano atual nao permite publicar materiais para download.',
+    title: 'Projetos e materiais bloqueados',
+    description: 'Seu plano atual nao permite publicar projetos, mídia e materiais para download.',
   },
   'product-videos': {
     title: 'Galeria de videos bloqueada',

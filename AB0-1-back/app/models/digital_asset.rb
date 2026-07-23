@@ -48,7 +48,9 @@ class DigitalAsset < ApplicationRecord
               when 'document' then %w[application/pdf]
               else []
               end
-    errors.add(:file, 'tipo de arquivo não permitido') unless allowed.include?(file.blob.content_type)
+    declared_type = file.blob.content_type
+    detected_type = detected_content_type
+    errors.add(:file, 'tipo de arquivo não permitido') unless allowed.include?(declared_type) && allowed.include?(detected_type)
     errors.add(:file, 'arquivo excede 25 MB') if file.blob.byte_size > 25.megabytes
   end
 
@@ -76,5 +78,13 @@ class DigitalAsset < ApplicationRecord
     errors.add(:external_url, 'provedor de vídeo não permitido') unless allowed.include?(host)
   rescue URI::InvalidURIError
     # URL inválida já é tratada pela validação de segurança.
+  end
+
+  def detected_content_type
+    file.blob.open do |tempfile|
+      Marcel::MimeType.for(tempfile, name: file.blob.filename.to_s)
+    end
+  rescue StandardError
+    nil
   end
 end

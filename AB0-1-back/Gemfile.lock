@@ -296,7 +296,6 @@ GEM
       net-imap
       net-pop
       net-smtp
-    newrelic_rpm (9.16.0)
     marcel (1.1.0)
     matrix (0.4.3)
     mercadopago-sdk (2.3.0)
@@ -327,6 +326,7 @@ GEM
     net-smtp (0.3.4)
       net-protocol
     netrc (0.11.0)
+    newrelic_rpm (9.16.0)
     nio4r (2.7.5)
     nokogiri (1.15.3-x64-mingw-ucrt)
       racc (~> 1.4)
@@ -682,6 +682,7 @@ DEPENDENCIES
   lograge
   mercadopago-sdk (~> 2.3)
   mixpanel-ruby (~> 2.3)
+  newrelic_rpm
   noticed (= 2.2)
   omniauth-facebook (~> 9.0)
   omniauth-google-oauth2
@@ -691,7 +692,6 @@ DEPENDENCIES
   pg
   pg_search (~> 2.3)
   posthog-rails
-  newrelic_rpm
   puma (~> 5.0)
   pundit
   rack-attack
@@ -856,6 +856,7 @@ CHECKSUMS
   net-protocol (0.2.1) sha256=21adb19c197768899c389bd257545de9d5af64adb1928787653460c2699eac37
   net-smtp (0.3.4) sha256=3dd445186f3d6dd8c2559850eb5dafdc6c1c0a85195489a874338908e9c59143
   netrc (0.11.0) sha256=de1ce33da8c99ab1d97871726cba75151113f117146becbe45aa85cb3dabee3f
+  newrelic_rpm (9.16.0) sha256=0436b2025b36270d643a38c2ca62712e97db9f67b09044c66f7cee0f7e0af5c1
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
   nokogiri (1.15.3-x64-mingw-ucrt) sha256=599a46b6e4f5a34dd21da06bdbd69611728304af5ef42bb183e4b4ca073fd7a3
   nokogiri (1.15.3-x86_64-darwin) sha256=1f0bc0343f9dd1db8dd42e4c9110dd24fc11a7f923b9fa0f866e7f90739e4e7a

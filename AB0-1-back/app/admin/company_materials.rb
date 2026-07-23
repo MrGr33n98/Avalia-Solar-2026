@@ -45,11 +45,22 @@ ActiveAdmin.register CompanyMaterial do
     redirect_to resource_path, alert: 'Material rejeitado.'
   end
 
+  member_action :request_changes, method: :put do
+    reason = params[:reason].presence || 'Revise o arquivo e as informações antes de reenviar.'
+    resource.update!(status: 'draft', moderation_reason: reason)
+    ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'changes_requested', reason: reason)
+    redirect_to resource_path, notice: 'Ajustes solicitados à empresa.'
+  end
+
   action_item :approve, only: :show, if: proc { resource.status == 'pending' } do
     link_to 'Aprovar e publicar', approve_admin_company_material_path(resource), method: :put
   end
 
   action_item :reject, only: :show, if: proc { resource.status.in?(%w[pending published]) } do
     link_to 'Rejeitar', reject_admin_company_material_path(resource), method: :put, data: { confirm: 'Rejeitar este material? O motivo padrão será registrado.' }
+  end
+
+  action_item :request_changes, only: :show, if: proc { resource.status == 'pending' } do
+    link_to 'Solicitar ajustes', request_changes_admin_company_material_path(resource), method: :put
   end
 end

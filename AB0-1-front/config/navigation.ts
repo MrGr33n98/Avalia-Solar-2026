@@ -158,21 +158,14 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
       },
       {
         id: 'product-downloads',
-        label: 'Conteúdo Baixável',
-        icon: FileText,
+        label: 'Projetos e Materiais',
+        icon: ImageIcon,
         context: ['operational', 'admin'],
       },
       {
         id: 'product-features',
         label: 'Funcionalidades',
         icon: FileText,
-        context: ['operational', 'admin'],
-      },
-      { id: 'product-videos', label: 'Vídeos', icon: ImageIcon, context: ['operational', 'admin'] },
-      {
-        id: 'product-images',
-        label: 'Imagens',
-        icon: ImageIcon,
         context: ['operational', 'admin'],
       },
     ],
