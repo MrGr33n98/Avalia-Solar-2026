@@ -78,7 +78,13 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
       {/* Header: Logo + Title + Verified + Location */}
       <div className="flex items-center gap-3.5">
         <Link href={href} className="shrink-0" aria-label={`Ver perfil de ${company.name}`}>
-          <CompanyLogo logoUrl={company.logo_url} name={company.name} size="md" badges={company.badges} />
+          <CompanyLogo
+            logoUrl={company.logo_url}
+            name={company.name}
+            size="md"
+            badges={company.badges}
+            verifiedBadgeUrl={(company as any).verified_badge_image_url || (company as any).verified_badge_url}
+          />
         </Link>
 
         <div className="min-w-0 flex-1">

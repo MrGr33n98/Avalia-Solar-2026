@@ -197,6 +197,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                         name={company.name}
                         size="custom"
                         badges={company.badges}
+                        verifiedBadgeUrl={(company as any).verified_badge_image_url || (company as any).verified_badge_url}
                         className="h-9 w-9 rounded-lg shadow-sm sm:h-12 sm:w-12"
                         badgeClassName="-right-1 -top-1 h-4 w-4 sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5"
                       />

@@ -132,7 +132,7 @@ async function getCompaniesData(): Promise<{ companies: Company[] }> {
     featured: true,
     limit: 12,
     include:
-      'logo_url,badges,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
+      'logo_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
   });
 
   return { companies: Array.isArray(companies) ? companies : [] };

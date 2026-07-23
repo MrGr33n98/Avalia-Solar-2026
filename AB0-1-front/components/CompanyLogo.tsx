@@ -15,6 +15,7 @@ interface CompanyLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'custom';
   priority?: boolean;
   badges?: Array<{ image_url?: string | null; name?: string | null }> | null;
+  verifiedBadgeUrl?: string | null;
 }
 
 export function CompanyLogo({
@@ -26,6 +27,7 @@ export function CompanyLogo({
   size = 'md',
   priority = false,
   badges,
+  verifiedBadgeUrl,
 }: CompanyLogoProps) {
   const [error, setError] = useState(false);
 
@@ -52,9 +54,40 @@ export function CompanyLogo({
     custom: 'w-[28px] h-[28px] -right-2 -top-2',
   };
 
-  const companyBadges = Array.isArray(badges) ? badges : [];
-  const badgeToRender = companyBadges.find((b) => b && b.image_url);
-  const badgeImageUrl = badgeToRender?.image_url ? getFullImageUrl(badgeToRender.image_url) : null;
+  const companyBadges = Array.isArray(badges)
+    ? badges
+    : badges && typeof badges === 'object'
+    ? [badges]
+    : [];
+
+  const badgeToRender = companyBadges.find((b) => {
+    if (!b) return false;
+    const url =
+      b.image_url ||
+      (b as any).url ||
+      (b as any).image ||
+      (b as any).badge_url ||
+      (b as any).badgeUrl ||
+      (b as any).imageUrl ||
+      (b as any).icon_url ||
+      (b as any).iconUrl;
+    return Boolean(url);
+  });
+
+  const rawBadgeUrl =
+    (badgeToRender
+      ? badgeToRender.image_url ||
+        (badgeToRender as any).url ||
+        (badgeToRender as any).image ||
+        (badgeToRender as any).badge_url ||
+        (badgeToRender as any).badgeUrl ||
+        (badgeToRender as any).imageUrl ||
+        (badgeToRender as any).icon_url ||
+        (badgeToRender as any).iconUrl
+      : null) || verifiedBadgeUrl;
+
+  const badgeImageUrl = rawBadgeUrl ? getFullImageUrl(rawBadgeUrl) : null;
+  const badgeTitle = badgeToRender?.name || (badgeToRender as any)?.title || 'Selo de conquista';
 
   return (
     <div
@@ -72,11 +105,11 @@ export function CompanyLogo({
             badgeSizeClasses[size],
             badgeClassName
           )}
-          title={badgeToRender?.name || 'Selo de conquista'}
+          title={badgeTitle}
         >
           <Image
             src={badgeImageUrl}
-            alt={badgeToRender?.name || 'Selo'}
+            alt={badgeTitle}
             width={48}
             height={48}
             className="object-contain w-full h-full rounded-full"
