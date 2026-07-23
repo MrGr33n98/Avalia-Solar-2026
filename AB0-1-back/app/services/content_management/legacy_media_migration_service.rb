@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Content
+module ContentManagement
   class LegacyMediaMigrationService
     Result = Struct.new(:companies_processed, :projects_created, :assets_created, keyword_init: true)
 
@@ -64,7 +64,7 @@ module Content
         asset.save!
         true
       rescue ActiveRecord::RecordInvalid => error
-        Rails.logger.warn("[Content::LegacyMediaMigration] asset skipped company_id=#{company.id} blob_id=#{attachment.blob_id} error=#{error.message}")
+        Rails.logger.warn("[ContentManagement::LegacyMediaMigration] asset skipped company_id=#{company.id} blob_id=#{attachment.blob_id} error=#{error.message}")
         false
       end
     end
