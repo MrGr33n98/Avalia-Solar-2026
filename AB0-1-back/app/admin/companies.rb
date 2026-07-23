@@ -553,22 +553,217 @@ ActiveAdmin.register Company do
       end
     end
 
-    f.inputs 'Configuração do ICP (Ideal Customer Profile)', for: [:company_icp_profile, f.object.company_icp_profile || f.object.build_company_icp_profile] do |icp|
+    f.inputs 'Configuração do ICP (Ideal Customer Profile)', class: 'icp-compact-section inputs', for: [:company_icp_profile, f.object.company_icp_profile || f.object.build_company_icp_profile] do |icp|
+      icp.template.concat('
+        <style>
+          .icp-grid-row-2 {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 20px !important;
+            align-items: start !important;
+          }
+          .icp-grid-row-3 {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr 1fr !important;
+            gap: 15px !important;
+            align-items: start !important;
+          }
+          .icp-toggles-col {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            justify-content: center !important;
+            padding-top: 15px !important;
+          }
+          .icp-toggles-col li {
+            padding: 0 !important;
+            margin: 0 !important;
+            list-style: none !important;
+          }
+          .icp-chips-group fieldset.choices {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .icp-chips-group fieldset.choices legend.label {
+            display: block !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.04em !important;
+            color: #8a92a3 !important;
+            margin-bottom: 8px !important;
+            border-bottom: none !important;
+          }
+          .icp-chips-group ol.choices-group {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .icp-chips-group ol.choices-group li.choice {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .icp-chips-group ol.choices-group li.choice label {
+            display: inline-flex !important;
+            align-items: center !important;
+            padding: 6px 12px !important;
+            border-radius: 20px !important;
+            border: 1px solid #d7dce3 !important;
+            font-size: 12.5px !important;
+            color: #4b5567 !important;
+            background: #fbfcfd !important;
+            cursor: pointer !important;
+            transition: all 0.12s ease !important;
+            user-select: none !important;
+            font-weight: 500 !important;
+            line-height: 1 !important;
+          }
+          .icp-chips-group ol.choices-group li.choice label input[type="checkbox"] {
+            margin-right: 6px !important;
+            accent-color: #3b82f6 !important;
+          }
+          .icp-chips-group ol.choices-group li.choice label:has(input:checked) {
+            background: #eaf1ff !important;
+            border-color: #3b82f6 !important;
+            color: #1451c9 !important;
+            font-weight: 600 !important;
+          }
+          .icp-states-wrapper {
+            margin-top: 15px !important;
+          }
+          .icp-states-details {
+            border: 1px solid #d7dce3 !important;
+            border-radius: 8px !important;
+            background: #fbfcfd !important;
+            margin-top: 10px !important;
+          }
+          .icp-states-details.disabled {
+            opacity: 0.4 !important;
+            pointer-events: none !important;
+          }
+          .icp-states-summary {
+            cursor: pointer !important;
+            padding: 10px 14px !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            color: #1a2233 !important;
+            outline: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            user-select: none;
+          }
+          .icp-states-summary::-webkit-details-marker {
+            display: none !important;
+          }
+          .icp-states-details ol.choices-group {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 8px 12px !important;
+            padding: 12px 14px !important;
+            list-style: none !important;
+            border-top: 1px solid #e5e8ec !important;
+            margin: 0 !important;
+          }
+          .icp-states-details ol.choices-group li.choice {
+            display: flex !important;
+            align-items: center !important;
+            font-size: 12.5px !important;
+            color: #3a4356 !important;
+          }
+          .icp-states-details ol.choices-group li.choice label {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+          }
+          .icp-compact-section li.select select,
+          .icp-compact-section li.string input,
+          .icp-compact-section li.numeric input {
+            width: 100% !important;
+            height: 34px !important;
+            border: 1px solid #d7dce3 !important;
+            border-radius: 7px !important;
+            padding: 0 10px !important;
+            font-size: 13px !important;
+            color: #1a2233 !important;
+            background: #fbfcfd !important;
+            box-shadow: none !important;
+          }
+          .icp-compact-section li.select select:focus,
+          .icp-compact-section li.string input:focus,
+          .icp-compact-section li.numeric input:focus {
+            outline: none !important;
+            border-color: #3b82f6 !important;
+            background: #fff !important;
+          }
+        </style>
+      '.html_safe)
+      icp.template.concat('<div class="icp-grid-row-2">'.html_safe)
       icp.input :strictness_level, as: :select, collection: CompanyIcpProfile::STRICTNESS_LEVELS, include_blank: false, label: 'Nível de Rigor do Match'
+      icp.template.concat('<div class="icp-toggles-col">'.html_safe)
       icp.input :auto_reject_out_of_icp, label: 'Rejeitar Automaticamente fora do ICP (Recurso Pago)'
       icp.input :notify_only_high_match, label: 'Notificar Apenas Leads de Alto Match (Recurso Pago)'
+      icp.template.concat('</div></div>'.html_safe)
+      icp.template.concat('<div class="icp-grid-row-3">'.html_safe)
       icp.input :min_monthly_bill, label: 'Conta de Energia Mensal Mínima (R$)'
       icp.input :max_monthly_bill, label: 'Conta de Energia Mensal Máxima (R$)'
       icp.input :min_system_kwp, label: 'Potência Mínima do Sistema (kWp)'
+      icp.template.concat('</div>'.html_safe)
       icp.input :min_ev_chargers_count, label: 'Mínimo de Carregadores EV (Quantidade)'
-      
-      icp.input :target_audiences, as: :check_boxes, collection: CompanyIcpProfile::TARGET_AUDIENCES, label: 'Segmentos / Públicos-Alvo'
-      icp.input :preferred_roof_types, as: :check_boxes, collection: CompanyIcpProfile::ROOF_TYPES.map { |r| [r.humanize, r] }, label: 'Tipos de Telhado Preferidos'
-      icp.input :ev_charger_types, as: :check_boxes, collection: CompanyIcpProfile::EV_CHARGER_TYPES.map { |e| [e.humanize, e] }, label: 'Tipos de Carregadores EV Preferidos'
-      
-      icp.input :nationwide, label: 'Cobertura Nacional'
-      icp.input :target_states, as: :check_boxes, collection: brazil_states.map { |name, code| [name, code] }, label: 'Estados Atendidos'
+      icp.input :target_audiences, as: :check_boxes, collection: CompanyIcpProfile::TARGET_AUDIENCES, label: 'Segmentos / Públicos-Alvo', wrapper_html: { class: 'icp-chips-group' }
+      icp.input :preferred_roof_types, as: :check_boxes, collection: CompanyIcpProfile::ROOF_TYPES.map { |r| [r.humanize, r] }, label: 'Tipos de Telhado Preferidos', wrapper_html: { class: 'icp-chips-group' }
+      icp.input :ev_charger_types, as: :check_boxes, collection: CompanyIcpProfile::EV_CHARGER_TYPES.map { |e| [e.humanize, e] }, label: 'Tipos de Carregadores EV Preferidos', wrapper_html: { class: 'icp-chips-group' }
+      icp.template.concat('<div class="icp-states-wrapper">'.html_safe)
+      icp.input :nationwide, label: 'Cobertura Nacional', wrapper_html: { class: 'icp-nationwide-checkbox' }
+      icp.template.concat('
+        <details class="icp-states-details" open>
+          <summary class="icp-states-summary">
+            <span>Estados Atendidos (Clique para expandir/minimizar)</span>
+            <span class="chevron">▼</span>
+          </summary>
+      '.html_safe)
+      icp.input :target_states, as: :check_boxes, collection: brazil_states.map { |name, code| [name, code] }, label: false
+      icp.template.concat('</details></div>'.html_safe)
       icp.input :target_cities_raw, as: :string, label: 'Cidades Atendidas (separadas por vírgula)', placeholder: 'Ex: São Paulo, Campinas, Santos'
+      icp.template.concat('
+        <script>
+          (function() {
+            function setupIcpNationwide() {
+              const nationwideCheckbox = document.querySelector(".icp-nationwide-checkbox input[type=\'checkbox\']");
+              const statesDetails = document.querySelector(".icp-states-details");
+              if (!nationwideCheckbox || !statesDetails) return;
+              function updateStatesState() {
+                if (nationwideCheckbox.checked) {
+                  statesDetails.classList.add("disabled");
+                  statesDetails.querySelectorAll("input[type=\'checkbox\']").forEach(function(el) {
+                    el.disabled = true;
+                  });
+                } else {
+                  statesDetails.classList.remove("disabled");
+                  statesDetails.querySelectorAll("input[type=\'checkbox\']").forEach(function(el) {
+                    el.disabled = false;
+                  });
+                }
+              }
+              nationwideCheckbox.addEventListener("change", updateStatesState);
+              updateStatesState();
+            }
+            if (document.readyState === "loading") {
+              document.addEventListener("DOMContentLoaded", setupIcpNationwide);
+            } else {
+              setupIcpNationwide();
+            }
+            document.addEventListener("turbolinks:load", setupIcpNationwide);
+            document.addEventListener("ajaxComplete", setupIcpNationwide);
+          })();
+        </script>
+      '.html_safe)
     end
 
     f.actions
