@@ -16,6 +16,7 @@ import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingHero from '@/components/landing/LandingHero';
 import SavingsCalculator from '@/components/landing/SavingsCalculator';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
+import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { publicCompaniesApi } from '@/lib/api-public';
@@ -379,32 +380,7 @@ async function CompaniesSectionWrapper({
     console.error('[Home] CompaniesSectionWrapper fallback triggered:', error);
   }
 
-  return (
-    <SectionShell tone="white">
-      <SectionHeader
-        eyebrow="Dados reais da plataforma"
-        title="Empresas recomendadas para você"
-        subtitle="Perfis em destaque com sinais de reputação, verificação, localização e atendimento."
-        right={
-          <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800">
-            <Link href="/companies">
-              Ver todas <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
-        }
-      />
-
-      {companies.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {companies.slice(0, 8).map((company) => (
-            <PublicCompanyCard key={company.id} company={company} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState message="Nenhuma empresa em destaque encontrada." />
-      )}
-    </SectionShell>
-  );
+  return <RecommendedCompaniesSection initialCompanies={companies} />;
 }
 
 async function ComparisonSectionWrapper({

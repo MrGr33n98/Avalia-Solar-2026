@@ -20,6 +20,87 @@ type PublicFetchOptions<TFallback = undefined> = {
   timeoutMs?: number;
 };
 
+export type RecommendationReason = {
+  code: string;
+  label: string;
+};
+
+export type RecommendationItem = {
+  id: number;
+  name: string;
+  slug?: string | null;
+  logo_url?: string | null;
+  segment?: string | null;
+  comparable_group?: string | null;
+  verified?: boolean | null;
+  sponsored?: boolean | null;
+  recommendation_reason?: RecommendationReason | null;
+  coverage?: {
+    type?: string | null;
+    label?: string | null;
+  } | null;
+  rating?: {
+    average?: number | null;
+    count?: number | null;
+    label?: string | null;
+  } | null;
+  response_time?: {
+    value?: string | null;
+    label?: string | null;
+  } | null;
+  projects?: {
+    count?: number | null;
+    label?: string | null;
+  } | null;
+  primary_cta?: {
+    type?: string | null;
+    label?: string | null;
+    action?: string | null;
+    url?: string | null;
+  } | null;
+  secondary_cta?: {
+    type?: string | null;
+    label?: string | null;
+    action?: string | null;
+    url?: string | null;
+  } | null;
+  comparison?: {
+    enabled?: boolean | null;
+    group?: string | null;
+  } | null;
+  ranking?: {
+    position?: number | null;
+    organic_score?: number | null;
+    sponsored?: boolean | null;
+  } | null;
+};
+
+export type RecommendationMeta = {
+  request_id?: string | null;
+  recommendation_version?: string | null;
+  generated_at?: string | null;
+  location?: {
+    city?: string | null;
+    state?: string | null;
+    source?: string | null;
+    confidence?: number | null;
+  } | null;
+  filters?: {
+    category_slug?: string | null;
+    segment?: string | null;
+  } | null;
+  slots?: {
+    total?: number | null;
+    organic_count?: number | null;
+    sponsored_count?: number | null;
+  } | null;
+};
+
+export type RecommendationResponse = {
+  meta?: RecommendationMeta | null;
+  data: RecommendationItem[];
+};
+
 const DEFAULT_PUBLIC_REVALIDATE_SECONDS = 600;
 const DEFAULT_PUBLIC_API_TIMEOUT_MS = 8_000;
 
@@ -210,6 +291,20 @@ export const publicCompaniesApi = {
     }
 
     return { data: [] };
+  },
+
+  getRecommendations: async (
+    params?: { city?: string; state?: string; category_slug?: string; segment?: string; limit?: number },
+    options?: PublicFetchOptions<RecommendationResponse>
+  ): Promise<RecommendationResponse> => {
+    const payload = await fetchApiPublic<unknown, RecommendationResponse>('recommendations', {
+      params,
+      revalidate: options?.revalidate ?? 120,
+      tags: options?.tags || ['recommendations'],
+      fallback: options?.fallback || { data: [] },
+      silent: options?.silent,
+    });
+    return (payload as RecommendationResponse) || { data: [] };
   },
 
   getTotalCount: async (params?: PublicCompanyListParams) => {
