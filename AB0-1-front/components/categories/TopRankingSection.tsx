@@ -2,8 +2,7 @@
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
-import { OptimizedImage } from '@/components/ui/optimized-image';
-import { getFullImageUrl } from '@/utils/image';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import { Award, ChevronRight, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
@@ -75,9 +74,6 @@ function RankingCompanyCard({
   category: string;
   rank: number;
 }) {
-  const logoUrl = company.logo_url
-    ? getFullImageUrl(company.logo_url)
-    : '/images/logo-placeholder.svg';
   const location = [company.city, company.state].filter(Boolean).join(', ');
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
   const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
@@ -116,19 +112,15 @@ function RankingCompanyCard({
     >
       <div className="grid grid-cols-[72px_minmax(0,1fr)_52px] items-start gap-2 sm:grid-cols-[96px_minmax(0,1fr)_64px] sm:gap-3">
         <div>
-          <Link
-            href={href}
-            className={`relative flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[6px] border bg-white sm:h-24 sm:w-24 ${logoBorderTone}`}
-          >
-            <OptimizedImage
-              src={logoUrl}
-              alt={`Logo ${company.name}`}
-              fill
-              sizes="(max-width: 640px) 72px, 96px"
-              objectFit="contain"
-              className="p-2"
-              containerClassName="h-full w-full"
-              fallbackSrc="/images/logo-placeholder.svg"
+          <Link href={href} aria-label={`Ver perfil da ${company.name}`}>
+            <CompanyLogo
+              logoUrl={company.logo_url}
+              name={company.name}
+              size="custom"
+              badges={company.badges}
+              className={`h-[72px] w-[72px] rounded-[6px] sm:h-24 sm:w-24 ${logoBorderTone}`}
+              imageClassName="p-2"
+              badgeClassName="-right-2 -top-2 h-7 w-7 sm:h-8 sm:w-8"
             />
           </Link>
         </div>

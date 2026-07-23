@@ -73,3 +73,4 @@ docs/observability/*
 !AB0-1-front/components/observability/__tests__/NewRelicBrowser.test.tsx
 !AB0-1-front/__tests__/lib/
 !AB0-1-front/__tests__/lib/footer-visibility.test.ts
+!AB0-1-front/__tests__/components/CompanyLogoBadge.test.tsx

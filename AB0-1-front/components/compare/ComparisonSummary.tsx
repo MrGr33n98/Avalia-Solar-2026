@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
-import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { isPremiumCompany } from './compare-company-utils';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 interface ComparisonSummaryProps {
   companies: Company[];
@@ -33,7 +33,7 @@ export default function ComparisonSummary({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <AnimatePresence mode="popLayout">
-            {companies.slice(0, maxCompanies).map((company, idx) => (
+            {companies.slice(0, maxCompanies).map((company) => (
               <motion.div
                 key={company.id}
                 layout
@@ -43,19 +43,18 @@ export default function ComparisonSummary({
                 transition={{ duration: 0.2 }}
                 className="relative group"
               >
-                <div
+                <CompanyLogo
+                  logoUrl={company.logo_url}
+                  name={company.name}
+                  size="custom"
+                  badges={company.badges}
                   className={cn(
-                    "flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.15rem] border bg-white p-0 shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
+                    "h-14 w-14 rounded-[1.15rem] shadow-[0_16px_34px_-24px_rgba(15,23,42,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-26px_rgba(37,99,235,0.35)]",
                     "clay-surface clay-convex",
                     isPremiumCompany(company) ? "border-blue-200/80" : "border-slate-100"
                   )}
-                >
-                  <img
-                    src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
-                    alt={`Logo da ${company.name}`}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
+                  badgeClassName="-right-1.5 -top-1.5 h-6 w-6"
+                />
                 
                 <button
                   onClick={() => onRemove(company.id)}

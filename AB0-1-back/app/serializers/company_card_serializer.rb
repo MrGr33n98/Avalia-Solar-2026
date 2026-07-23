@@ -2,9 +2,10 @@
 
 class CompanyCardSerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
+  include CompanyBadgesSerialization
 
   attributes :id, :name, :slug, :logo_url, :featured, :sponsored,
-             :identity, :trust, :reputation, :operations, :coverage, :actions
+             :identity, :trust, :reputation, :operations, :coverage, :actions, :badges
 
   def logo_url
     return nil unless object.logo&.attached?

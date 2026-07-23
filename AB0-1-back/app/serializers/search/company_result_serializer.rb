@@ -3,6 +3,7 @@
 module Search
   class CompanyResultSerializer
     include Rails.application.routes.url_helpers
+    include CompanyBadgesSerialization
 
     MINIMAL_FEATURE_KEYS = %w[custom_ctas p2p_chat].freeze
 
@@ -41,6 +42,7 @@ module Search
         total_reviews: company.rating_count,
         logo_url: attachment_url(company.logo),
         banner_url: attachment_url(company.banner),
+        badges: badges,
         category_info: category_info,
         categories: categories,
         feature_access: feature_access
@@ -50,6 +52,10 @@ module Search
     private
 
     attr_reader :company
+
+    def object
+      company
+    end
 
     def categories
       category_records.map do |category|

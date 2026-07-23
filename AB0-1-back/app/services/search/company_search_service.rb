@@ -232,7 +232,7 @@ module Search
           state: { limit: 10 },
           city: { limit: 20 }
         },
-        includes: %i[categories badges],
+        includes: [:categories, { badges: { image_attachment: :blob } }],
         fields: [
           { name: :word_start },
           { category_names: :word_start },
@@ -328,7 +328,7 @@ module Search
 
     # Fallback utilizando queries PostgreSQL clássicas
     def search_via_postgresql
-      scope = Company.active.includes(:categories, :badges)
+      scope = Company.active.includes(:categories, badges: { image_attachment: :blob })
 
       if @q.present?
         adapter = ActiveRecord::Base.connection.adapter_name.downcase

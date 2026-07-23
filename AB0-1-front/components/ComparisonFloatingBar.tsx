@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import { ComparisonSponsoredRecommendation } from '@/components/compare/ComparisonSponsoredRecommendation';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
 import { useComparison } from '@/hooks/useComparison';
 import type { Company } from '@/lib/api';
@@ -27,27 +28,22 @@ import {
   openComparisonDock,
 } from '@/lib/floating-widget-events';
 import { cn } from '@/lib/utils';
-import { getFullImageUrl } from '@/utils/image';
 
 const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'), {
   ssr: false,
 });
 
 function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: number) => void }) {
-  const logoUrl = getFullImageUrl(company.logo_url || undefined);
-
   return (
     <div className="group flex h-16 min-w-[176px] max-w-[220px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-blue-300">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="h-full w-full object-contain p-0" />
-        ) : (
-          <span className="text-sm font-bold uppercase text-slate-500">
-            {company.name.charAt(0)}
-          </span>
-        )}
-      </div>
+      <CompanyLogo
+        logoUrl={company.logo_url}
+        name={company.name}
+        size="custom"
+        badges={company.badges}
+        className="h-10 w-10 rounded-md bg-slate-50"
+        badgeClassName="-right-1 -top-1 h-[18px] w-[18px]"
+      />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
@@ -85,21 +81,18 @@ function CompactCompanyRow({
   company: Company;
   onRemove: (id: number) => void;
 }) {
-  const logoUrl = getFullImageUrl(company.logo_url || undefined);
   const location = [company.city, company.state].filter(Boolean).join(', ');
 
   return (
     <div className="flex h-[52px] items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="h-full w-full object-contain p-0" />
-        ) : (
-          <span className="text-xs font-semibold uppercase text-slate-500">
-            {company.name.charAt(0)}
-          </span>
-        )}
-      </div>
+      <CompanyLogo
+        logoUrl={company.logo_url}
+        name={company.name}
+        size="custom"
+        badges={company.badges}
+        className="h-8 w-8 rounded-lg"
+        badgeClassName="-right-1 -top-1 h-4 w-4"
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-semibold text-slate-950">{company.name}</p>
         <p className="truncate text-[11px] text-slate-500">

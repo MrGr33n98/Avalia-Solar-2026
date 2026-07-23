@@ -1,4 +1,5 @@
 class CompanySerializer < ActiveModel::Serializer
+  include CompanyBadgesSerialization
   include Rails.application.routes.url_helpers
 
   attributes :id, :name, :description, :website,
@@ -129,24 +130,6 @@ class CompanySerializer < ActiveModel::Serializer
   rescue StandardError => e
     Rails.logger.warn("[CompanySerializer] categories unavailable for company=#{object.id}: #{e.class}: #{e.message}")
     []
-  end
-
-  def badges
-    object.badges.active.order(position: :asc).filter_map do |badge|
-      {
-        id: badge.id,
-        name: badge.name,
-        description: badge.description,
-        category: badge.category_label,
-        year: badge.year,
-        edition: badge.edition,
-        public_slug: badge.public_slug,
-        image_url: badge.image_url
-      }
-    rescue StandardError => e
-      Rails.logger.error("Error serializing badge #{badge&.id} for company #{object.id}: #{e.message}")
-      nil
-    end
   end
 
   def seo_title

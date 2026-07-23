@@ -134,7 +134,10 @@ module Api
           set_pagination_headers(companies_scope)
 
           # Optimization: Eager load associations
-          companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
+          companies_scope = companies_scope.includes(
+            { logo_attachment: :blob, banner_attachment: :blob },
+            badges: { image_attachment: :blob }
+          )
 
           render json: {
             companies: companies_scope.map { |c| CompanyListSerializer.new(c).as_json },
@@ -144,7 +147,10 @@ module Api
           companies_scope = companies_scope.limit(params[:limit].to_i) if limit_present?
 
           # Optimization: Eager load associations
-          companies_scope = companies_scope.includes(logo_attachment: :blob, banner_attachment: :blob)
+          companies_scope = companies_scope.includes(
+            { logo_attachment: :blob, banner_attachment: :blob },
+            badges: { image_attachment: :blob }
+          )
 
           render json: companies_scope.map { |c| CompanyListSerializer.new(c).as_json }, status: :ok
         end

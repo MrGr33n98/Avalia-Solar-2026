@@ -1,19 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowRight,
   BadgeCheck,
-  Building2,
   Star,
   Check,
   Sparkles,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
-import { getFullImageUrl } from '@/utils/image';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
 type HomeComparisonPreviewProps = {
@@ -167,7 +165,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
             {/* Colunas das Empresas */}
             {selected.map((company) => {
               const isHighlighted = company.id === highestRatedCompanyId;
-              const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
               const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
               const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
               const speed = getSpeedBadge(company.response_time_sla);
@@ -195,19 +192,14 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                   <div className="flex h-[112px] flex-col justify-start border-b border-slate-200 p-1.5 pt-4 md:h-[174px] md:justify-between md:p-5 md:pt-11">
                     <div className="flex items-start justify-between gap-1 md:gap-4">
                       {/* Logo Container */}
-                      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-0 shadow-sm sm:h-12 sm:w-12">
-                        {logoUrl ? (
-                          <Image
-                            src={logoUrl}
-                            alt={`Logo da ${company.name}`}
-                            fill
-                            sizes="(max-width: 640px) 36px, 48px"
-                            className="object-contain p-0"
-                          />
-                        ) : (
-                          <Building2 className="h-5 w-5 text-slate-300" aria-hidden="true" />
-                        )}
-                      </div>
+                      <CompanyLogo
+                        logoUrl={company.logo_url}
+                        name={company.name}
+                        size="custom"
+                        badges={company.badges}
+                        className="h-9 w-9 rounded-lg shadow-sm sm:h-12 sm:w-12"
+                        badgeClassName="-right-1 -top-1 h-4 w-4 sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5"
+                      />
 
                       {/* Status Badges */}
                       {company.verified ? (

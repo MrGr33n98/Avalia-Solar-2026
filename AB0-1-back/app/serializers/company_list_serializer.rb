@@ -2,6 +2,7 @@
 
 class CompanyListSerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
+  include CompanyBadgesSerialization
 
   # Campos escalares diretos do model
   attributes :id, :name, :description, :website,
@@ -16,7 +17,7 @@ class CompanyListSerializer < ActiveModel::Serializer
              :effect, :media_upload_allowed,
              :response_time_sla, :delivered_projects_score, :warranty_years,
              :coverage_cities, :coverage_states,
-             :identity, :trust, :reputation
+             :identity, :trust, :reputation, :badges
 
   # ─── Identidade estruturada (contrato CompanyCardData.identity) ───────────────
   def identity

@@ -159,7 +159,7 @@ module Api
       private
 
       def require_review_role
-        require_role('review')
+        require_role('review', 'admin')
       end
 
       def safe_count(scope)

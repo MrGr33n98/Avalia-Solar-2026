@@ -11,6 +11,7 @@ interface CompanyLogoProps {
   name: string;
   className?: string;
   imageClassName?: string;
+  badgeClassName?: string;
   size?: 'sm' | 'md' | 'lg' | 'custom';
   priority?: boolean;
   badges?: Array<{ image_url?: string | null; name?: string | null }> | null;
@@ -21,6 +22,7 @@ export function CompanyLogo({
   name,
   className,
   imageClassName,
+  badgeClassName,
   size = 'md',
   priority = false,
   badges,
@@ -64,9 +66,11 @@ export function CompanyLogo({
     >
       {badgeImageUrl && (
         <div
+          data-testid="company-achievement-badge"
           className={cn(
             'absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center transition-transform hover:scale-110',
-            badgeSizeClasses[size]
+            badgeSizeClasses[size],
+            badgeClassName
           )}
           title={badgeToRender?.name || 'Selo de conquista'}
         >

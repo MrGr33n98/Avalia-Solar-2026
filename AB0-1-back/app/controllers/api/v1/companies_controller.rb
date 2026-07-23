@@ -42,9 +42,13 @@ module Api
 
       # GET /api/v1/companies/featured
       def featured
-        cache_key = 'companies_featured_v2'
+        cache_key = 'companies_featured_v3'
         companies_json = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-          companies = ::Company.active.where(featured: true).limit(10).to_a
+          companies = ::Company.active
+                               .where(featured: true)
+                               .includes(:categories, badges: { image_attachment: :blob })
+                               .limit(10)
+                               .to_a
           companies.map { |company| company_json_attributes(company) }
         end
 
@@ -428,11 +432,11 @@ module Api
         begin
           @companies = ::Company.includes(
             :categories,
-            :badges,
             :company_faqs,
             :company_buttons,
             :plan,
             :company_financing_profile,
+            badges: { image_attachment: :blob },
             review_aggregates: [:category],
             company_financing_partners: { logo_attachment: :blob },
             company_financing_offers: []
