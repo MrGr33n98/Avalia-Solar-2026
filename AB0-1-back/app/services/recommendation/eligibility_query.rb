@@ -13,7 +13,6 @@ module Recommendation
     def call
       scope = Company.active
                      .where(moderation_status: 'approved')
-                     .where(deleted_at: nil)
                      .includes(:categories, :company_service_areas, logo_attachment: :blob)
 
       if context.segment.present?
