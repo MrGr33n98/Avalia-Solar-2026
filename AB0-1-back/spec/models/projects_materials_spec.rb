@@ -67,6 +67,25 @@ RSpec.describe 'Projects and materials domain', type: :model do
     end
   end
 
+  describe ContentLeadForm do
+    it 'requires a mandatory email field' do
+      form = build(:content_lead_form, fields: [{ 'key' => 'name', 'label' => 'Nome', 'type' => 'text', 'required' => true }])
+
+      expect(form).not_to be_valid
+      expect(form.errors[:fields]).to be_present
+    end
+
+    it 'requires options when a field is a list' do
+      form = build(:content_lead_form, fields: [
+        { 'key' => 'email', 'label' => 'E-mail', 'type' => 'email', 'required' => true },
+        { 'key' => 'segment', 'label' => 'Segmento', 'type' => 'select', 'required' => false, 'options' => [] }
+      ])
+
+      expect(form).not_to be_valid
+      expect(form.errors[:fields]).to be_present
+    end
+  end
+
   describe MaterialDownload do
     it 'cannot be saved under a company different from its material' do
       material = create(:company_material)

@@ -8,12 +8,15 @@ module Api
       TOKEN_TTL = 15.minutes
 
       def create
+        return render_spam_detected if params[:company_website].present?
+
         company = Company.find(params.require(:company_id))
         material = company.company_materials.published.find_by!(slug: params.require(:material_slug))
         return render json: { error: 'Not found' }, status: :not_found unless material.company.feature_enabled?('downloadable_materials')
         token = authorization_token
         download = create_download!(material, token)
 
+        track_server_event('material_form_submitted', material, download) if material.gated?
         track_server_event('material_download_authorized', material, download)
         render json: {
           download_id: download.id,
@@ -37,6 +40,10 @@ module Api
       end
 
       private
+
+      def render_spam_detected
+        render_error_response(message: 'Solicitação inválida', status: :unprocessable_entity, code: 'SPAM_DETECTED')
+      end
 
       def create_download!(material, token)
         MaterialDownload.transaction do
@@ -123,6 +130,7 @@ module Api
           event_type: event_name,
           metadata: {
             material_id: material.id,
+            material_slug: material.slug,
             material_download_id: download.id,
             gate_mode: material.gate_mode,
             distinct_id: "content_lead_#{download.content_lead_id || download.anonymous_id || download.id}"

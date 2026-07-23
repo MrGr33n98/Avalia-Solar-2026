@@ -1,13 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Building2, MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { Company, Product, Review } from '@/lib/api';
-import { isFeatureEnabled } from '@/lib/feature-access';
 import { buildCompanyPath } from '@/lib/slug';
 
 import CompanyPremiumHero from './CompanyPremiumHero';
@@ -178,7 +176,7 @@ export default function CompanyProfileShell({
               {/* ABA 4: FINANCIAMENTO */}
               {showFinancing && (
                 <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
-                  <CompanyFinancing company={company as any} />
+                  <CompanyFinancing company={company} />
                 </TabsContent>
               )}
 

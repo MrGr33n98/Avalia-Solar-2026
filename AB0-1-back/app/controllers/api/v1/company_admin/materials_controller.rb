@@ -27,7 +27,10 @@ module Api
 
         def update
           authorize @material
+          was_published = @material.status == 'published'
           return render json: { errors: @material.errors.full_messages }, status: :unprocessable_entity unless @material.update(material_params)
+
+          @material.update!(status: 'pending', published_at: nil, moderation_reason: nil) if was_published
 
           render json: { material: serialize(@material) }
         end

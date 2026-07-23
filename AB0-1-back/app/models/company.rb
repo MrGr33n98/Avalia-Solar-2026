@@ -197,6 +197,7 @@ end
   has_many :company_materials, dependent: :destroy
   has_many :content_lead_forms, dependent: :destroy
   has_many :content_leads, dependent: :destroy
+  has_many :content_lead_exports, dependent: :destroy
   has_many :material_downloads, dependent: :destroy
   has_many :digital_assets, dependent: :destroy
   has_many :content_moderation_decisions, dependent: :destroy

@@ -47,7 +47,7 @@ module Api
         end
 
         def form_params
-          params.require(:content_lead_form).permit(:name, :status, :consent_text, :privacy_url, fields: %i[key label type required options])
+          params.require(:content_lead_form).permit(:name, :status, :consent_text, :privacy_url, fields: [:key, :label, :type, :required, { options: [] }])
         end
 
         def serialize(form)

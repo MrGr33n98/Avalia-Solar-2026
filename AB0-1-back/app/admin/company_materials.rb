@@ -39,14 +39,18 @@ ActiveAdmin.register CompanyMaterial do
   end
 
   member_action :reject, method: :put do
-    reason = params[:reason].presence || 'Material não atende às políticas de publicação.'
-    resource.update!(status: 'rejected', moderation_reason: reason)
+    reason = params[:reason].to_s.strip
+    return redirect_to(resource_path, alert: 'Informe o motivo da rejeição.') if reason.blank?
+
+    resource.update!(status: 'rejected', published_at: nil, moderation_reason: reason)
     ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'rejected', reason: reason)
     redirect_to resource_path, alert: 'Material rejeitado.'
   end
 
   member_action :request_changes, method: :put do
-    reason = params[:reason].presence || 'Revise o arquivo e as informações antes de reenviar.'
+    reason = params[:reason].to_s.strip
+    return redirect_to(resource_path, alert: 'Informe o ajuste solicitado.') if reason.blank?
+
     resource.update!(status: 'draft', moderation_reason: reason)
     ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'changes_requested', reason: reason)
     redirect_to resource_path, notice: 'Ajustes solicitados à empresa.'
@@ -56,11 +60,21 @@ ActiveAdmin.register CompanyMaterial do
     link_to 'Aprovar e publicar', approve_admin_company_material_path(resource), method: :put
   end
 
-  action_item :reject, only: :show, if: proc { resource.status.in?(%w[pending published]) } do
-    link_to 'Rejeitar', reject_admin_company_material_path(resource), method: :put, data: { confirm: 'Rejeitar este material? O motivo padrão será registrado.' }
-  end
-
-  action_item :request_changes, only: :show, if: proc { resource.status == 'pending' } do
-    link_to 'Solicitar ajustes', request_changes_admin_company_material_path(resource), method: :put
+  sidebar 'Decisão de moderação', only: :show, if: proc { resource.status.in?(%w[pending published]) } do
+    div class: 'panel_contents' do
+      para 'Informe um motivo antes de rejeitar ou solicitar ajustes. A decisão ficará no histórico da empresa.'
+      form action: reject_admin_company_material_path(resource), method: :post do
+        input type: :hidden, name: :_method, value: :put
+        textarea name: :reason, required: true, placeholder: 'Motivo da rejeição', rows: 4
+        input type: :submit, value: 'Rejeitar material'
+      end
+      if resource.status == 'pending'
+        form action: request_changes_admin_company_material_path(resource), method: :post do
+          input type: :hidden, name: :_method, value: :put
+          textarea name: :reason, required: true, placeholder: 'Ajustes solicitados', rows: 4
+          input type: :submit, value: 'Solicitar ajustes'
+        end
+      end
+    end
   end
 end

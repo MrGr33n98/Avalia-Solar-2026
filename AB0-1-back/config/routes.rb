@@ -406,6 +406,10 @@ Rails.application.routes.draw do
         get 'content_analytics/overview', to: 'content_analytics#overview'
         get 'content_analytics/funnel', to: 'content_analytics#funnel'
         get 'content_analytics/timeseries', to: 'content_analytics#timeseries'
+        get 'content_analytics/sources', to: 'content_analytics#sources'
+        resources :content_leads, only: :index do
+          collection { get :export }
+        end
         resources :projects, only: %i[index show create update destroy] do
           member { post :submit }
         end
@@ -413,7 +417,7 @@ Rails.application.routes.draw do
           member { post :submit }
         end
         resources :content_lead_forms, only: %i[index show create update destroy]
-        resources :assets, only: %i[create destroy]
+        resources :assets, only: %i[create update destroy]
 
         resources :review_forms, only: %i[index show create update destroy] do
           member do

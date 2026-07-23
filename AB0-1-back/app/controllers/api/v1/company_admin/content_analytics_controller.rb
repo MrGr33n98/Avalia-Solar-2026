@@ -35,15 +35,28 @@ module Api
 
         def funnel
           authorize @company, :view_analytics?
-          downloads = @company.material_downloads.where(created_at: reporting_range)
+          range = reporting_range
+          downloads = @company.material_downloads.where(created_at: range)
+          events = AnalyticsEvent.where(company_id: @company.id, tracked_at: range)
           authorizations = downloads.count
           delivered = downloads.delivered.count
+          stages = [
+            { key: 'material_list_viewed', label: 'Visualizou material', value: events.where(event_type: 'material_list_viewed').count },
+            { key: 'material_download_clicked', label: 'Clicou em baixar', value: events.where(event_type: 'material_download_clicked').count },
+            { key: 'material_gate_viewed', label: 'Abriu formulário', value: events.where(event_type: 'material_gate_viewed').count },
+            { key: 'material_form_submitted', label: 'Enviou formulário', value: events.where(event_type: 'material_form_submitted').count },
+            { key: 'material_download_delivered', label: 'Arquivo entregue', value: delivered }
+          ]
+          stages.each_with_index do |stage, index|
+            next if index.zero?
+
+            previous = stages[index - 1][:value]
+            stage[:conversion_from_previous] = previous.positive? ? ((stage[:value].to_f / previous) * 100).round(2) : 0
+          end
           render json: {
-            stages: [
-              { key: 'material_download_authorized', label: 'Downloads autorizados', value: authorizations },
-              { key: 'material_download_delivered', label: 'Downloads entregues', value: delivered, conversion_from_previous: authorizations.positive? ? ((delivered.to_f / authorizations) * 100).round(2) : 0 },
-              { key: 'content_leads', label: 'Leads únicos', value: downloads.where.not(content_lead_id: nil).distinct.count(:content_lead_id) }
-            ],
+            stages: stages,
+            authorizations: authorizations,
+            unique_leads: downloads.where.not(content_lead_id: nil).distinct.count(:content_lead_id),
             data_freshness: { source: 'transactional_database', updated_at: Time.current }
           }
         end
@@ -59,6 +72,24 @@ module Api
             { date: date, authorizations: authorizations_by_day[date] || authorizations_by_day[date.to_s] || 0, delivered_downloads: delivered_by_day[date] || delivered_by_day[date.to_s] || 0 }
           end
           render json: { data: data, data_freshness: { source: 'transactional_database', updated_at: Time.current } }
+        end
+
+        def sources
+          authorize @company, :view_analytics?
+          downloads = @company.material_downloads.where(created_at: reporting_range)
+          rows = downloads.group(:utm_source, :utm_medium, :utm_campaign, :referrer_host).count.sort_by { |_, count| -count }.first(20)
+          render json: {
+            sources: rows.map do |(source, medium, campaign, referrer), authorizations|
+              {
+                source: source.presence || referrer.presence || 'Direto',
+                medium: medium.presence || '—',
+                campaign: campaign.presence || '—',
+                authorizations: authorizations,
+                delivered_downloads: downloads.where(utm_source: source, utm_medium: medium, utm_campaign: campaign, referrer_host: referrer).delivered.count
+              }
+            end,
+            data_freshness: { source: 'transactional_database', updated_at: Time.current }
+          }
         end
 
         private

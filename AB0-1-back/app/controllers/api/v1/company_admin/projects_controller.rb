@@ -27,7 +27,10 @@ module Api
 
         def update
           authorize @project
+          was_published = @project.status == 'published'
           return render json: { errors: @project.errors.full_messages }, status: :unprocessable_entity unless @project.update(project_params)
+
+          @project.update!(status: 'pending', published_at: nil, moderation_reason: nil) if was_published
 
           render json: { project: serialize(@project) }
         end
@@ -59,7 +62,7 @@ module Api
 
         def serialize(project)
           project.as_json(only: %i[id title slug summary project_type segment technology city state capacity_value capacity_unit completion_date status published_at position moderation_reason created_at updated_at]).merge(
-            assets: project.digital_assets.published.map { |asset| asset_payload(asset) }
+            assets: project.digital_assets.order(position: :asc, created_at: :asc).map { |asset| asset_payload(asset) }
           )
         end
 

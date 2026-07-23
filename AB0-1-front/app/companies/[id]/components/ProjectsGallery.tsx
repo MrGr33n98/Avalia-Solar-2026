@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Building2, ChevronDown, ImageIcon, Play, X } from 'lucide-react';
+import { Building2, ChevronDown, ImageIcon, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { fetchApi } from '@/lib/api';
@@ -52,6 +52,17 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
   const [segment, setSegment] = useState('');
   const [technology, setTechnology] = useState('');
   const [selected, setSelected] = useState<Project | null>(null);
+  const [filtersReady, setFiltersReady] = useState(false);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const initialMedia = query.get('project_media');
+    setMedia(initialMedia === 'image' || initialMedia === 'video' ? initialMedia : 'all');
+    setProjectType(query.get('project_type') || '');
+    setSegment(query.get('project_segment') || '');
+    setTechnology(query.get('project_technology') || '');
+    setFiltersReady(true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -61,6 +72,19 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [companyId]);
+
+  useEffect(() => {
+    if (!filtersReady) return;
+
+    const query = new URLSearchParams(window.location.search);
+    if (media === 'all') query.delete('project_media'); else query.set('project_media', media);
+    if (projectType) query.set('project_type', projectType); else query.delete('project_type');
+    if (segment) query.set('project_segment', segment); else query.delete('project_segment');
+    if (technology) query.set('project_technology', technology); else query.delete('project_technology');
+    const search = query.toString();
+    const nextUrl = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+    window.history.replaceState(null, '', nextUrl);
+  }, [filtersReady, media, projectType, segment, technology]);
 
   const options = useMemo(() => ({
     types: [...new Set(projects.map((project) => project.project_type).filter(Boolean) as string[])],
@@ -107,6 +131,31 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
       })}
     </div>
     {!filtered.length && <p className="rounded-xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">Nenhum projeto encontrado para estes filtros.</p>}
-    <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><DialogContent className="max-w-3xl"><DialogHeader><DialogTitle>{selected?.title}</DialogTitle></DialogHeader>{selected && <div className="space-y-4"><p className="text-sm text-slate-600">{selected.summary}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{selected.assets.map((asset) => <div key={asset.id} className="relative aspect-video overflow-hidden rounded-lg bg-slate-100">{asset.kind === 'image' && (asset.file_url || asset.external_url) ? <Image src={asset.file_url || asset.external_url || ''} alt={asset.alt_text || selected.title} fill className="object-cover" unoptimized /> : <div className="flex h-full items-center justify-center"><Play className="h-6 w-6 text-slate-400" /></div>}</div>)}</div></div>}</DialogContent></Dialog>
+    <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><DialogContent className="max-w-3xl"><DialogHeader><DialogTitle>{selected?.title}</DialogTitle></DialogHeader>{selected && <div className="space-y-4"><p className="text-sm text-slate-600">{selected.summary}</p><div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{selected.assets.map((asset) => <div key={asset.id} className="relative aspect-video overflow-hidden rounded-lg bg-slate-100">{asset.kind === 'image' && (asset.file_url || asset.external_url) ? <Image src={asset.file_url || asset.external_url || ''} alt={asset.alt_text || selected.title} fill className="object-cover" unoptimized /> : asset.kind === 'video' ? <VideoEmbed url={asset.external_url} title={asset.title || selected.title} /> : <div className="flex h-full items-center justify-center"><Play className="h-6 w-6 text-slate-400" /></div>}</div>)}</div></div>}</DialogContent></Dialog>
   </section>;
+}
+
+function VideoEmbed({ url, title }: { url?: string | null; title: string }) {
+  const embedUrl = toVideoEmbedUrl(url);
+  if (!embedUrl) return <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center"><Play className="h-6 w-6 text-slate-400" /><span className="text-xs text-slate-500">Vídeo indisponível</span></div>;
+
+  return <iframe src={embedUrl} title={title} className="h-full w-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />;
+}
+
+function toVideoEmbedUrl(rawUrl?: string | null) {
+  if (!rawUrl) return null;
+  try {
+    const url = new URL(rawUrl);
+    const host = url.hostname.replace(/^www\./, '').toLowerCase();
+    if (host === 'youtu.be') return url.pathname.length > 1 ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(url.pathname.slice(1))}` : null;
+    if (host === 'youtube.com') {
+      const id = url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop();
+      return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}` : null;
+    }
+    if (host === 'vimeo.com') {
+      const id = url.pathname.split('/').filter(Boolean).pop();
+      return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : null;
+    }
+  } catch { return null; }
+  return null;
 }

@@ -29,7 +29,9 @@ ActiveAdmin.register DigitalAsset do
   end
 
   member_action :quarantine, method: :put do
-    reason = params[:reason].presence || 'Ativo bloqueado pela moderação.'
+    reason = params[:reason].to_s.strip
+    return redirect_to(resource_path, alert: 'Informe o motivo da quarentena.') if reason.blank?
+
     resource.update!(status: 'quarantined', processing_status: 'quarantined')
     ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'quarantined', reason: reason)
     redirect_to resource_path, alert: 'Ativo colocado em quarentena.'
@@ -39,7 +41,14 @@ ActiveAdmin.register DigitalAsset do
     link_to 'Aprovar ativo', approve_admin_digital_asset_path(resource), method: :put
   end
 
-  action_item :quarantine, only: :show, if: proc { resource.status != 'quarantined' } do
-    link_to 'Colocar em quarentena', quarantine_admin_digital_asset_path(resource), method: :put, data: { confirm: 'Colocar este ativo em quarentena?' }
+  sidebar 'Quarentena', only: :show, if: proc { resource.status != 'quarantined' } do
+    div class: 'panel_contents' do
+      para 'A quarentena interrompe a exposição do ativo e exige justificativa para auditoria.'
+      form action: quarantine_admin_digital_asset_path(resource), method: :post do
+        input type: :hidden, name: :_method, value: :put
+        textarea name: :reason, required: true, placeholder: 'Motivo da quarentena', rows: 4
+        input type: :submit, value: 'Colocar em quarentena'
+      end
+    end
   end
 end

@@ -29,8 +29,15 @@ module Api
         document = material.digital_assets.published.document.first
         material.as_json(only: %i[id title slug description material_type gate_mode published_at expires_at download_count]).merge(
           gated: material.gated?,
-          file_available: document.present?
+          file_available: document.present?,
+          lead_form: public_form_payload(material.content_lead_form)
         )
+      end
+
+      def public_form_payload(form)
+        return nil unless form
+
+        form.as_json(only: %i[id name fields consent_text privacy_url version])
       end
     end
   end

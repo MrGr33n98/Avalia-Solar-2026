@@ -56,6 +56,21 @@ class Rack::Attack
     end
   end
 
+  # Gated materials are a lead-capture surface. Keep a tighter limit than
+  # generic API traffic so a bot cannot flood a company's CRM/intent data.
+  throttle('material_downloads/ip', limit: 12, period: 1.minute) do |req|
+    req.ip if req.path == '/api/v1/material_downloads' && req.post?
+  end
+
+  # Do not keep the e-mail itself in the cache key. This limit complements
+  # the IP throttle when a distributed sender targets one address repeatedly.
+  throttle('material_downloads/email', limit: 5, period: 10.minutes) do |req|
+    next unless req.path == '/api/v1/material_downloads' && req.post?
+
+    email = req.params['email'].to_s.strip.downcase
+    Digest::SHA256.hexdigest("material-download:#{email}") if email.present?
+  end
+
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta
   throttle('logins/ip', limit: 5, period: 20.seconds) do |req|

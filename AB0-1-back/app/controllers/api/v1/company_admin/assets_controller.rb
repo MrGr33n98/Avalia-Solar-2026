@@ -24,6 +24,18 @@ module Api
           head :no_content
         end
 
+        def update
+          asset = @company.digital_assets.find(params[:id])
+          require_company_feature!(asset.attachable.is_a?(CompanyProject) ? 'projects_showcase' : 'downloadable_materials')
+          return if performed?
+          authorize asset.attachable, :update?
+          was_published = asset.status == 'published'
+          return render json: { errors: asset.errors.full_messages }, status: :unprocessable_entity unless asset.update(asset_update_params)
+
+          asset.update!(status: 'pending') if was_published
+          render json: { asset: serialize(asset) }
+        end
+
         private
 
         def find_attachable!
@@ -37,6 +49,10 @@ module Api
 
         def asset_params
           params.permit(:kind, :title, :alt_text, :caption, :external_url, :provider, :position, :file, metadata: {})
+        end
+
+        def asset_update_params
+          params.permit(:title, :alt_text, :caption, :external_url, :provider, :position, metadata: {})
         end
 
         def serialize(asset)
