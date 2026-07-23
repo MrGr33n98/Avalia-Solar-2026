@@ -94,12 +94,7 @@ module Api
 
         private
 
-        def reporting_range
-          days = normalized_days
-          reporting_range(days)
-        end
-
-        def reporting_range(days)
+        def reporting_range(days = normalized_days)
           days.days.ago.beginning_of_day..Time.current
         end
 
