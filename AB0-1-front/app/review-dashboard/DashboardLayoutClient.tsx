@@ -21,6 +21,7 @@ import {
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
 import { deriveAchievementStatuses } from '@/config/achievements';
 import type { UserSolution } from '@/components/profile/UserSolutionChip';
+import { canAccessReviewDashboard } from '@/lib/auth/role-access';
 
 
 export interface ReviewDashboardSummary {
@@ -279,7 +280,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (authLoading || isRedirecting) return;
-    if (user?.role !== 'review') return;
+    if (!canAccessReviewDashboard(user?.role)) return;
     fetchDashboardData();
   }, [user, authLoading, isRedirecting, fetchDashboardData]);
 
@@ -353,14 +354,14 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     );
   }
 
-  if (!user || user.role !== 'review') {
+  if (!user || !canAccessReviewDashboard(user.role)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
         <div className="max-w-md text-center">
           <h2 className="mb-2 text-2xl font-bold text-slate-900">Acesso Restrito</h2>
           <p className="mb-6 text-slate-600">
-            Você não tem acesso à Central de Reputação. Faça login com uma conta de Especialista
-            Solar.
+            Você não tem acesso a esta área com a conta atual. Entre novamente com uma conta
+            autorizada.
           </p>
           <button
             onClick={() => router.push('/login')}
