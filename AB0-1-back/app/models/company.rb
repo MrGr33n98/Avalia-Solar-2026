@@ -205,6 +205,7 @@ end
   belongs_to :plan, optional: true
   has_many :users, dependent: :nullify
   has_many :company_members, dependent: :destroy
+  accepts_nested_attributes_for :company_members, allow_destroy: true
   has_many :company_badges, dependent: :destroy
   has_many :badges, through: :company_badges
   has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
@@ -217,6 +218,7 @@ end
   has_many :gated_downloads, dependent: :destroy
   has_many :sector_ratings, dependent: :destroy
   has_many :company_sector_questions, dependent: :destroy
+  accepts_nested_attributes_for :company_sector_questions, allow_destroy: true
   has_many :members, through: :company_members, source: :user
   has_many :company_service_areas, dependent: :destroy
   has_many :recommendation_placements, dependent: :destroy

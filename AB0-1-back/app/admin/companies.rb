@@ -104,8 +104,9 @@ ActiveAdmin.register Company do
 
 
   sidebar 'Diagnóstico de Selos & Badges', only: %i[show edit] do
-    v_state = resource.feature_access.dig('verified_product', 'state') || 'locked'
-    h_state = resource.feature_access.dig('highlight_badges', 'state') || 'locked'
+    access = resource.feature_access || {}
+    v_state = access.dig('verified_product', 'state') || 'locked'
+    h_state = access.dig('highlight_badges', 'state') || 'locked'
 
     attributes_table_for resource do
       row('Verificada (Campo)') { status_tag(resource.verified? ? 'Ativo (Sim)' : 'Inativo (Não)', class: resource.verified? ? 'ok' : 'error') }
