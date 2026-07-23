@@ -1,19 +1,51 @@
-'use client';
-
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { BadgeCheck, Briefcase, Clock, MapPin, Star, Sparkles, Megaphone } from 'lucide-react';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
-import type { RecommendationItem } from '@/lib/api-public';
+import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
 import { buildCompanyPath } from '@/lib/slug';
+import {
+  trackRecommendedCompanyImpression,
+  trackRecommendedPrimaryCtaClicked,
+} from '@/lib/analytics/recommendations';
 
 type RecommendedCompanyCardProps = {
   company: RecommendationItem;
   rank?: number;
+  meta?: RecommendationMeta | null;
 };
 
-export default function RecommendedCompanyCard({ company, rank }: RecommendedCompanyCardProps) {
+export default function RecommendedCompanyCard({ company, rank, meta }: RecommendedCompanyCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const impressionTracked = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window) || impressionTracked.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !impressionTracked.current) {
+            impressionTracked.current = true;
+            trackRecommendedCompanyImpression(company, meta);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [company, meta]);
+
   const href = company.primary_cta?.url || buildCompanyPath(company.slug, company.name, company.id);
 
   const comparisonCompany = {
@@ -47,6 +79,7 @@ export default function RecommendedCompanyCard({ company, rank }: RecommendedCom
 
   return (
     <article
+      ref={cardRef}
       className={`group relative flex h-full flex-col rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
         isSponsored ? 'border-amber-200 bg-gradient-to-b from-amber-50/20 via-white to-white' : 'border-slate-200 hover:border-blue-200'
       }`}
@@ -135,6 +168,7 @@ export default function RecommendedCompanyCard({ company, rank }: RecommendedCom
         />
         <Link
           href={primaryCtaUrl}
+          onClick={() => trackRecommendedPrimaryCtaClicked(company, meta)}
           className="inline-flex h-11 min-h-[44px] w-full items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-3 text-xs font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {primaryCtaText}

@@ -46,6 +46,14 @@ jest.mock('lucide-react', () => ({
   Crown: (props: any) => <svg data-testid="crown-icon" className={props.className} />,
 }));
 
+beforeAll(() => {
+  global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+    disconnect: jest.fn(),
+  }));
+});
+
 describe('RecommendedCompaniesSection', () => {
   const mockRecommendations = {
     meta: {

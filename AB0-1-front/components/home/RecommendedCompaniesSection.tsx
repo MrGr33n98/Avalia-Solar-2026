@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { MapPin, ArrowRight, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import RecommendedCompanyCard from '@/components/company/RecommendedCompanyCard';
+import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import { publicCompaniesApi } from '@/lib/api-public';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
+import {
+  trackRecommendedSectionViewed,
+  trackRecommendedFilterChanged,
+} from '@/lib/analytics/recommendations';
 
 type TabOption = {
   id: string;
@@ -44,6 +49,7 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
       if (response && Array.isArray(response.data) && response.data.length > 0) {
         setItems(response.data);
         setMeta(response.meta || null);
+        trackRecommendedSectionViewed(response.meta);
       } else {
         setItems([]);
         setMeta(response?.meta || null);
@@ -55,6 +61,11 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
       setLoading(false);
     }
   }, []);
+
+  const handleTabClick = (tab: TabOption) => {
+    setActiveTab(tab.id);
+    trackRecommendedFilterChanged(tab.id, tab.segment, meta);
+  };
 
   useEffect(() => {
     const currentTab = TABS.find((t) => t.id === activeTab);
@@ -110,7 +121,7 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
                   aria-selected={isActive}
                   aria-controls={`tabpanel-${tab.id}`}
                   id={`tab-${tab.id}`}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab)}
                   className={`min-h-[44px] px-4 py-2 text-xs font-bold rounded-xl transition border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isActive
                       ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
@@ -151,19 +162,27 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
               ))}
             </div>
           ) : error ? (
-            /* Error State */
-            <div className="rounded-2xl border border-red-200 bg-red-50/50 p-8 text-center">
-              <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" aria-hidden="true" />
-              <h3 className="text-base font-bold text-red-950">Não foi possível carregar as recomendações</h3>
-              <p className="mt-1 text-xs text-red-700">Ocorreu uma falha ao conectar com o serviço contextual.</p>
-              <button
-                onClick={() => fetchRecommendations(TABS.find((t) => t.id === activeTab)?.segment)}
-                className="mt-4 inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white border border-red-300 text-xs font-bold text-red-800 rounded-xl hover:bg-red-100 transition"
-              >
-                <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                Tentar novamente
-              </button>
-            </div>
+            initialCompanies && initialCompanies.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {initialCompanies.slice(0, 8).map((company) => (
+                  <PublicCompanyCard key={company.id} company={company} />
+                ))}
+              </div>
+            ) : (
+              /* Error State */
+              <div className="rounded-2xl border border-red-200 bg-red-50/50 p-8 text-center">
+                <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" aria-hidden="true" />
+                <h3 className="text-base font-bold text-red-950">Não foi possível carregar as recomendações</h3>
+                <p className="mt-1 text-xs text-red-700">Ocorreu uma falha ao conectar com o serviço contextual.</p>
+                <button
+                  onClick={() => fetchRecommendations(TABS.find((t) => t.id === activeTab)?.segment)}
+                  className="mt-4 inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white border border-red-300 text-xs font-bold text-red-800 rounded-xl hover:bg-red-100 transition"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Tentar novamente
+                </button>
+              </div>
+            )
           ) : items.length === 0 ? (
             /* Empty State */
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
@@ -175,7 +194,7 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
             /* Cards Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {items.map((company, idx) => (
-                <RecommendedCompanyCard key={company.id} company={company} rank={idx + 1} />
+                <RecommendedCompanyCard key={company.id} company={company} rank={idx + 1} meta={meta} />
               ))}
             </div>
           )}
