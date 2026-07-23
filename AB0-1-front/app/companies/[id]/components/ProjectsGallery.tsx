@@ -87,9 +87,9 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
   }, [filtersReady, media, projectType, segment, technology]);
 
   const options = useMemo(() => ({
-    types: [...new Set(projects.map((project) => project.project_type).filter(Boolean) as string[])],
-    segments: [...new Set(projects.map((project) => project.segment).filter(Boolean) as string[])],
-    technologies: [...new Set(projects.map((project) => project.technology).filter(Boolean) as string[])],
+    types: Array.from(new Set(projects.map((project) => project.project_type).filter(Boolean) as string[])),
+    segments: Array.from(new Set(projects.map((project) => project.segment).filter(Boolean) as string[])),
+    technologies: Array.from(new Set(projects.map((project) => project.technology).filter(Boolean) as string[])),
   }), [projects]);
 
   const filtered = useMemo(() => projects.filter((project) => {
