@@ -315,6 +315,47 @@
     return false;
   }
 
+  function ensureFormErrorBanner(form) {
+    if (!form) return null;
+
+    let banner = form.querySelector('.location-selector-form-error');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'location-selector-form-error flash flash_error';
+      banner.style.display = 'none';
+      banner.style.marginBottom = '16px';
+      banner.setAttribute('role', 'alert');
+      form.prepend(banner);
+    }
+
+    return banner;
+  }
+
+  function setFormErrorBanner(form, message) {
+    const banner = ensureFormErrorBanner(form);
+    if (!banner) return;
+
+    if (message) {
+      banner.textContent = message;
+      banner.style.display = '';
+    } else {
+      banner.textContent = '';
+      banner.style.display = 'none';
+    }
+  }
+
+  function revealInvalidField(selectEl) {
+    if (!selectEl) return;
+
+    const fieldset = selectEl.closest('fieldset.collapsible-fieldset');
+    if (fieldset) fieldset.classList.remove('collapsed');
+
+    const container = selectEl.closest('li') || selectEl;
+    if (typeof container.scrollIntoView === 'function') {
+      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
   function syncSelect2(selectEl) {
     if (typeof $ !== 'undefined' && $(selectEl).data('select2')) {
       $(selectEl).trigger('change');
@@ -440,6 +481,7 @@
       form.addEventListener('submit', (event) => {
         clearInlineMessage(stateError);
         clearInlineMessage(cityError);
+        setFormErrorBanner(form, '');
 
         const stateOk = validateSelect(stateSelect, stateError, 'Selecione um estado.');
         const cityMustValidate = Boolean(String(stateSelect.value || '').trim());
@@ -449,13 +491,19 @@
 
         if (!stateOk) {
           event.preventDefault();
+          setFormErrorBanner(form, 'Preencha os campos obrigatorios de localizacao antes de criar a empresa.');
+          revealInvalidField(stateSelect);
           stateSelect.focus();
+          if (typeof stateSelect.reportValidity === 'function') stateSelect.reportValidity();
           return;
         }
 
         if (!cityOk) {
           event.preventDefault();
+          setFormErrorBanner(form, 'Selecione a cidade antes de criar a empresa.');
+          revealInvalidField(citySelect);
           citySelect.focus();
+          if (typeof citySelect.reportValidity === 'function') citySelect.reportValidity();
         }
       });
     }

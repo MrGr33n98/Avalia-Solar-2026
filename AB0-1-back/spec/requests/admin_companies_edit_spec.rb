@@ -48,6 +48,18 @@ RSpec.describe 'Admin Companies Edit', type: :request do
     end
   end
 
+  describe 'GET /admin/companies/new' do
+    it 'defaults the new company status to pending' do
+      get new_admin_company_path
+
+      document = Nokogiri::HTML(response.body)
+      selected_status = document.at_css('#company_status option[selected]')&.[]('value')
+
+      expect(response).to have_http_status(:success)
+      expect(selected_status).to eq('pending')
+    end
+  end
+
   describe 'PATCH /admin/companies/:id' do
     it 'allows adding a member via nested form' do
       patch admin_company_path(company), params: {
@@ -209,6 +221,22 @@ RSpec.describe 'Admin Companies Edit', type: :request do
 
       expect(response).to redirect_to(admin_company_path(created_company))
       expect(created_company.cnpj).to be_blank
+    end
+
+    it 'defaults status to pending when omitted' do
+      expect do
+        post admin_companies_path, params: {
+          company: {
+            name: 'Empresa Sem Status via Admin',
+            description: 'Cadastro inicial sem preencher o status'
+          }
+        }
+      end.to change(Company, :count).by(1)
+
+      created_company = Company.order(:id).last
+
+      expect(response).to redirect_to(admin_company_path(created_company))
+      expect(created_company.status).to eq('pending')
     end
   end
 end

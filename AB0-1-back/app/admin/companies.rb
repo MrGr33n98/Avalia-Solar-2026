@@ -1218,6 +1218,12 @@ ActiveAdmin.register Company do
       super.includes(:categories, :plan)
     end
 
+    def build_new_resource
+      super.tap do |company|
+        apply_creation_defaults(company)
+      end
+    end
+
     def find_resource
       param_id = params[:id].to_s
       if param_id.match?(/\A\d+\z/)
@@ -1225,6 +1231,11 @@ ActiveAdmin.register Company do
       else
         scoped_collection.find_by(slug: param_id) || scoped_collection.find_by(id: param_id)
       end
+    end
+
+    def create
+      apply_pending_status_param!
+      super
     end
 
     def update
@@ -1286,6 +1297,22 @@ ActiveAdmin.register Company do
     rescue StandardError => e
       Rails.logger.error("[Admin::Companies] Unexpected destroy error for company_id=#{params[:id]}: #{e.class} #{e.message}")
       redirect_to collection_path, alert: 'Erro inesperado ao excluir a empresa.'
+    end
+
+    private
+
+    def apply_creation_defaults(company)
+      return unless company.new_record?
+
+      company.status = 'pending' if company.status.blank? || company.status == 'active'
+      company.moderation_status ||= 'draft' if company.respond_to?(:moderation_status)
+    end
+
+    def apply_pending_status_param!
+      company_params = params[:company]
+      return unless company_params.respond_to?(:[]=)
+
+      company_params[:status] = 'pending' if company_params[:status].blank?
     end
   end
 
