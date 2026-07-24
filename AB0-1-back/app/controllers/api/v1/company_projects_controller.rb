@@ -5,6 +5,7 @@ module Api
     class CompanyProjectsController < BaseController
       skip_before_action :capture_edge_location, raise: false
       before_action :set_company
+      rescue_from StandardError, with: :handle_error
 
       def index
         return render json: { projects: [] } if @company.nil?
@@ -16,9 +17,6 @@ module Api
         projects = projects.where(technology: params[:technology]) if params[:technology].present?
 
         render json: { projects: projects.limit(60).map { |project| serialize(project) } }
-      rescue StandardError => e
-        Rails.logger.warn("[CompanyProjectsController] Error fetching projects: #{e.message}")
-        render json: { projects: [] }
       end
 
       def show
@@ -30,6 +28,11 @@ module Api
       end
 
       private
+
+      def handle_error(exception)
+        Rails.logger.warn("[CompanyProjectsController] Error: #{exception.class} - #{exception.message}")
+        render json: { projects: [] }
+      end
 
       def set_company
         raw_id = params[:company_id]

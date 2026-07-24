@@ -4,6 +4,7 @@ module Api
   module V1
     class CompanyMaterialsController < BaseController
       before_action :set_company
+      rescue_from StandardError, with: :handle_error
 
       def index
         return render json: { materials: [] } if @company.nil?
@@ -11,9 +12,6 @@ module Api
 
         materials = @company.company_materials.published.order(published_at: :desc).limit(60)
         render json: { materials: materials.map { |material| serialize(material) } }
-      rescue StandardError => e
-        Rails.logger.warn("[CompanyMaterialsController] Error fetching materials: #{e.message}")
-        render json: { materials: [] }
       end
 
       def show
@@ -25,6 +23,11 @@ module Api
       end
 
       private
+
+      def handle_error(exception)
+        Rails.logger.warn("[CompanyMaterialsController] Error: #{exception.class} - #{exception.message}")
+        render json: { materials: [] }
+      end
 
       def set_company
         raw_id = params[:company_id]
