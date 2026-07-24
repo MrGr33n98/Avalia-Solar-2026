@@ -15,7 +15,7 @@ module Analytics
       }
 
       # XADD - Adiciona evento na Stream do Redis. O ID '*' gera um auto-id baseado em timestamp
-      Redis.current.xadd(STREAM_KEY, event_data)
+      REDIS.xadd(STREAM_KEY, event_data)
 
       # Agenda o worker para consumo em lote (ex: a cada N minutos/horas ou volume)
       # Em um cenário real de alta escala isso seria agendado via cron/cron-job,
@@ -29,7 +29,7 @@ module Analytics
     def self.flush_already_scheduled?
       # Lógica simplificada de debounce/lock para evitar enfileirar múltiplos jobs de flush
       # Usando uma chave com TTL no redis de 5 minutos
-      return true unless Redis.current.set('analytics:flush_lock', '1', nx: true, ex: 5.minutes.to_i)
+      return true unless REDIS.set('analytics:flush_lock', '1', nx: true, ex: 5.minutes.to_i)
 
       false
     end

@@ -49,7 +49,7 @@ module Analytics
     end
 
     def redis
-      Redis.current
+      REDIS
     end
   end
 end

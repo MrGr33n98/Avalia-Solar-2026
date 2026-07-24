@@ -451,6 +451,7 @@ jobs:
 
             echo "?? Atualizando $WORKER_SERVICE somente apos os health checks..."
             docker compose up -d --no-deps --no-build "$WORKER_SERVICE"
+            docker compose logs --tail=100 "$WORKER_SERVICE" || true
             sleep 3
             WORKER_CID=$(docker compose ps -q "$WORKER_SERVICE")
             if [ -z "$WORKER_CID" ]; then
@@ -469,7 +470,7 @@ jobs:
                 echo "!! ERRO: worker nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
                 docker inspect "$WORKER_CID" --format '{{json .State}}' || true
                 docker logs --tail=200 "$WORKER_CID" || true
-                docker compose logs --tail=200 worker || true
+                docker compose logs --tail=200 "$WORKER_SERVICE" || true
                 STABLE=0
                 break
               fi
