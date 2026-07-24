@@ -113,13 +113,7 @@ export default function RecommendedCompanyCard({ company, rank, meta }: Recommen
             )}
           </div>
 
-          {reasonLabel ? (
-            <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md w-fit">
-              <Sparkles className="h-3 w-3 shrink-0 text-blue-600" aria-hidden="true" />
-              <span className="truncate">{reasonLabel}</span>
-            </p>
-          ) : null}
-        </div>
+</div>
       </div>
 
       {/* 3 Metric Columns: Avaliação | Resposta Média | Projetos */}
