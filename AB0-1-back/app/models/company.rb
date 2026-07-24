@@ -122,7 +122,7 @@ end
   # integrator  → app.avaliasolar.com.br (integrador/EPC)
   # distributor → app.avaliasolar.com.br (distribuidor)
   # finance     → app.avaliasolar.com.br (parceiro financeiro)
-  SEGMENTS = %w[installer supplier integrator distributor finance].freeze
+  SEGMENTS = %w[installer supplier integrator distributor finance mobility].freeze
   validates :segment, inclusion: { in: SEGMENTS }
 
   scope :installers,   -> { where(segment: 'installer') }
@@ -130,6 +130,7 @@ end
   scope :integrators,  -> { where(segment: 'integrator') }
   scope :distributors, -> { where(segment: 'distributor') }
   scope :finances,     -> { where(segment: 'finance') }
+  scope :mobility,     -> { where(segment: 'mobility') }
   scope :app_segment,  -> { where.not(segment: 'installer') }
 
   # =========================

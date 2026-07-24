@@ -23,7 +23,7 @@ const TABS: TabOption[] = [
   { id: 'installer', label: 'Instaladores', segment: 'installer' },
   { id: 'supplier', label: 'Equipamentos', segment: 'supplier' },
   { id: 'finance', label: 'Financiamento', segment: 'finance' },
-  { id: 'integrator', label: 'Mobilidade', segment: 'integrator' },
+  { id: 'mobility', label: 'Mobilidade', segment: 'mobility' },
 ];
 
 type RecommendedCompaniesSectionProps = {

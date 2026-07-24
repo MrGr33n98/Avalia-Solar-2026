@@ -4,29 +4,34 @@ module Recommendation
   class CtaResolver
     CTA_MAPPING = {
       'installer' => {
-        type: 'request_quote',
-        label: 'Solicitar orçamento',
-        action: 'open_quote_form'
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
       },
       'integrator' => {
-        type: 'request_quote',
-        label: 'Solicitar orçamento',
-        action: 'open_quote_form'
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
+      },
+      'mobility' => {
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
       },
       'supplier' => {
-        type: 'find_installers',
-        label: 'Encontrar integradores',
-        action: 'open_partner_search'
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
       },
       'distributor' => {
-        type: 'check_stock',
-        label: 'Consultar disponibilidade',
-        action: 'open_catalog'
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
       },
       'finance' => {
-        type: 'simulate_financing',
-        label: 'Simular financiamento',
-        action: 'open_financing_flow'
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form'
       }
     }.freeze
 

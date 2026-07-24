@@ -74,7 +74,7 @@ export default function RecommendedCompanyCard({ company, rank, meta }: Recommen
   const responseLabel = company.response_time?.value || company.response_time?.label || 'Tempo de resposta não informado';
   const projectsLabel = company.projects?.count ? `${company.projects.count}` : (company.projects?.label || 'Não informado');
 
-  const primaryCtaText = company.primary_cta?.label || 'Ver perfil';
+  const primaryCtaText = company.primary_cta?.label || 'Avaliar essa empresa';
   const primaryCtaUrl = company.primary_cta?.url || href;
 
   return (
