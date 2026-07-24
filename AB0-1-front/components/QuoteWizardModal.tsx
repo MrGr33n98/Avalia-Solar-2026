@@ -464,8 +464,11 @@ type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
   <button type="button" className={cn(
-    'w-full rounded-2xl border-2 px-4 py-4 text-sm font-black transition-all text-left uppercase tracking-tight',
-    selected ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-[1.02]' : 'border-slate-100 bg-white text-slate-600 hover:border-blue-200 hover:bg-slate-50',
+    'w-full border px-4 py-3 text-[14px] font-[700] transition-all text-left uppercase tracking-tight',
+    'max-md:rounded-none md:rounded-2xl md:border-2',
+    selected 
+      ? 'border-[#1268E8] bg-[#F3F5F7] text-[#0B1B36] shadow-none md:scale-[1.02]' 
+      : 'border-[#E5E7EB] bg-white text-[#0B1B36] hover:border-[#1268E8]/50 hover:bg-[#F3F5F7]',
     className
   )} aria-pressed={selected} {...props}>
     <div className="flex items-center justify-between">

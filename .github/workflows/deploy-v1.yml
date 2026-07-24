@@ -163,6 +163,7 @@ jobs:
           GIT_SHA: ${{ env.RELEASE_SHA }}
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+          WORKER_SERVICE: ${{ vars.WORKER_SERVICE || 'worker' }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -170,7 +171,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
           script_stop: false
-          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE
           script: |
             set -Eeuo pipefail
 
@@ -412,8 +413,17 @@ jobs:
             wait_for_health db 60
             wait_for_health redis 60
 
-            echo "?? Parando worker para liberar memoria e drenar jobs..."
-            docker compose stop -t 60 worker || true
+            WORKER_SERVICE="${WORKER_SERVICE:-worker}"
+            echo "?? Verificando existencia do servico de worker: $WORKER_SERVICE"
+            if ! docker compose config --services | grep -qx "$WORKER_SERVICE"; then
+              echo "!! ERRO: servico '$WORKER_SERVICE' nao existe no docker compose."
+              echo "Servicos disponiveis:"
+              docker compose config --services
+              exit 1
+            fi
+
+            echo "?? Parando $WORKER_SERVICE para liberar memoria e drenar jobs..."
+            docker compose stop -t 60 "$WORKER_SERVICE" || true
 
             echo "?? Executando migrations uma unica vez com a nova imagem..."
             if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate --trace"; then
@@ -439,14 +449,14 @@ jobs:
               exit 1
             fi
 
-            echo "?? Atualizando worker somente apos os health checks..."
-            docker compose up -d --no-deps --no-build worker
+            echo "?? Atualizando $WORKER_SERVICE somente apos os health checks..."
+            docker compose up -d --no-deps --no-build "$WORKER_SERVICE"
             sleep 3
-            WORKER_CID=$(docker compose ps -q worker)
+            WORKER_CID=$(docker compose ps -q "$WORKER_SERVICE")
             if [ -z "$WORKER_CID" ]; then
-              echo "!! ERRO: container ID do worker nao encontrado"
+              echo "!! ERRO: container ID do $WORKER_SERVICE nao encontrado"
               docker compose ps
-              docker compose logs --tail=200 worker || true
+              docker compose logs --tail=200 "$WORKER_SERVICE" || true
               rollback_apps
               exit 1
             fi
