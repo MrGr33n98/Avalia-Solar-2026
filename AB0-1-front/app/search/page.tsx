@@ -532,42 +532,6 @@ function SearchPageContent() {
                   <SearchEmptyState onReset={resetFilters} />
                 ) : (
                   <div className="space-y-10">
-                    {showProducts && filteredProducts.length > 0 ? (
-                      <ResultSection
-                        icon={<Package className="h-5 w-5 text-blue-600" />}
-                        title="Produtos"
-                        count={filteredProducts.length}
-                        action={
-                          activeTab === 'all' ? (
-                            <button
-                              onClick={() => handleTabChange('products')}
-                              className="text-sm font-bold text-blue-700"
-                            >
-                              Ver todos os produtos
-                            </button>
-                          ) : undefined
-                        }
-                      >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                          {filteredProducts.map((product) => (
-                            <ProductCardEnhanced
-                              key={product.id}
-                              product={product}
-                              favorite={productFavorites.has(product.id)}
-                              onToggleFavorite={() =>
-                                toggleFavorite(
-                                  'product',
-                                  product.id,
-                                  productFavorites,
-                                  setProductFavorites
-                                )
-                              }
-                            />
-                          ))}
-                        </div>
-                      </ResultSection>
-                    ) : null}
-
                     {showCompanies && filteredCompanies.length > 0 ? (
                       <ResultSection
                         icon={<Building2 className="h-5 w-5 text-blue-600" />}
@@ -640,6 +604,42 @@ function SearchPageContent() {
                             </Pagination>
                           </div>
                         )}
+                      </ResultSection>
+                    ) : null}
+
+                    {showProducts && filteredProducts.length > 0 ? (
+                      <ResultSection
+                        icon={<Package className="h-5 w-5 text-blue-600" />}
+                        title="Produtos"
+                        count={filteredProducts.length}
+                        action={
+                          activeTab === 'all' ? (
+                            <button
+                              onClick={() => handleTabChange('products')}
+                              className="text-sm font-bold text-blue-700"
+                            >
+                              Ver todos os produtos
+                            </button>
+                          ) : undefined
+                        }
+                      >
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                          {filteredProducts.map((product) => (
+                            <ProductCardEnhanced
+                              key={product.id}
+                              product={product}
+                              favorite={productFavorites.has(product.id)}
+                              onToggleFavorite={() =>
+                                toggleFavorite(
+                                  'product',
+                                  product.id,
+                                  productFavorites,
+                                  setProductFavorites
+                                )
+                              }
+                            />
+                          ))}
+                        </div>
                       </ResultSection>
                     ) : null}
 

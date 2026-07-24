@@ -27,9 +27,9 @@ export function SearchResultsHeader({
           {query ? `“${query}”` : 'todos os resultados'}
         </h2>
         <p className="mt-2 text-sm text-slate-600" aria-live="polite">
-          {productsCount} produto{productsCount === 1 ? '' : 's'} encontrado
-          {productsCount === 1 ? '' : 's'} <span aria-hidden="true">•</span> {companiesCount}{' '}
-          empresa{companiesCount === 1 ? '' : 's'} encontrada{companiesCount === 1 ? '' : 's'}{' '}
+          {companiesCount} empresa{companiesCount === 1 ? '' : 's'} encontrada
+          {companiesCount === 1 ? '' : 's'} <span aria-hidden="true">•</span> {productsCount}{' '}
+          produto{productsCount === 1 ? '' : 's'} encontrado{productsCount === 1 ? '' : 's'}{' '}
           <span aria-hidden="true">•</span> {reviewsCount} avaliações
         </p>
       </div>

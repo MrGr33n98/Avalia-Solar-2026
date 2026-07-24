@@ -12,8 +12,8 @@ interface SearchTabsProps {
 
 const tabs: Array<{ value: SearchTab; label: string }> = [
   { value: 'all', label: 'Todos' },
-  { value: 'products', label: 'Produtos' },
   { value: 'companies', label: 'Empresas' },
+  { value: 'products', label: 'Produtos' },
   { value: 'reviews', label: 'Avaliações' },
 ];
 
