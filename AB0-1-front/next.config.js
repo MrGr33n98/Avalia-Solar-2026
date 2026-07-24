@@ -315,13 +315,13 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/produtos',
-        destination: '/products',
+        source: '/produtos/:path*',
+        destination: '/products/:path*',
         permanent: true,
       },
       {
-        source: '/empresas',
-        destination: '/companies',
+        source: '/empresas/:path*',
+        destination: '/companies/:path*',
         permanent: true,
       },
     ];
