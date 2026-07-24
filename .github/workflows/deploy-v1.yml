@@ -416,8 +416,11 @@ jobs:
             docker compose stop -t 60 worker || true
 
             echo "?? Executando migrations uma unica vez com a nova imagem..."
-            if ! docker compose run --rm --no-deps --entrypoint bundle backend exec rails db:migrate; then
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate --trace"; then
               echo "!! Migration falhou; mantendo a aplicacao anterior"
+              echo "?? Estado da migration:"
+              docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate:status || true"
+              docker compose logs --tail=300 backend || true
               docker start ab0-worker >/dev/null 2>&1 || true
               exit 1
             fi
