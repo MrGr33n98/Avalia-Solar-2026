@@ -7,7 +7,8 @@ module Api
       before_action :set_company
 
       def index
-        return render json: { projects: [] } unless @company.feature_enabled?('projects_showcase')
+        return render json: { projects: [] } if @company.nil?
+        return render json: { projects: [] } unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('projects_showcase')
 
         projects = @company.company_projects.published.ordered
         projects = projects.where(project_type: params[:project_type]) if params[:project_type].present?
@@ -15,10 +16,14 @@ module Api
         projects = projects.where(technology: params[:technology]) if params[:technology].present?
 
         render json: { projects: projects.limit(60).map { |project| serialize(project) } }
+      rescue StandardError => e
+        Rails.logger.warn("[CompanyProjectsController] Error fetching projects: #{e.message}")
+        render json: { projects: [] }
       end
 
       def show
-        return render json: { error: 'Not found' }, status: :not_found unless @company.feature_enabled?('projects_showcase')
+        return render json: { error: 'Not found' }, status: :not_found if @company.nil?
+        return render json: { error: 'Not found' }, status: :not_found unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('projects_showcase')
 
         project = @company.company_projects.published.find_by!(slug: params[:id])
         render json: { project: serialize(project) }
@@ -27,16 +32,23 @@ module Api
       private
 
       def set_company
-        @company = Company.find(params[:company_id])
+        raw_id = params[:company_id]
+        @company = Company.find_by(id: raw_id) || Company.find_by(slug: raw_id)
       end
 
       def serialize(project)
-        project.as_json(only: %i[id title slug summary project_type segment technology city state capacity_value capacity_unit completion_date published_at]).merge(
-          assets: project.digital_assets.published.map do |asset|
+        assets = begin
+          project.digital_assets.published.map do |asset|
             asset.as_json(only: %i[id kind title alt_text caption external_url provider position metadata]).merge(
               file_url: asset.file.attached? ? Rails.application.routes.url_helpers.rails_blob_url(asset.file, only_path: true) : nil
             )
           end
+        rescue StandardError
+          []
+        end
+
+        project.as_json(only: %i[id title slug summary project_type segment technology city state capacity_value capacity_unit completion_date published_at]).merge(
+          assets: assets
         )
       end
     end

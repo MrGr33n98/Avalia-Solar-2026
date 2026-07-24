@@ -6,14 +6,19 @@ module Api
       before_action :set_company
 
       def index
-        return render json: { materials: [] } unless @company.feature_enabled?('downloadable_materials')
+        return render json: { materials: [] } if @company.nil?
+        return render json: { materials: [] } unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('downloadable_materials')
 
         materials = @company.company_materials.published.order(published_at: :desc).limit(60)
         render json: { materials: materials.map { |material| serialize(material) } }
+      rescue StandardError => e
+        Rails.logger.warn("[CompanyMaterialsController] Error fetching materials: #{e.message}")
+        render json: { materials: [] }
       end
 
       def show
-        return render json: { error: 'Not found' }, status: :not_found unless @company.feature_enabled?('downloadable_materials')
+        return render json: { error: 'Not found' }, status: :not_found if @company.nil?
+        return render json: { error: 'Not found' }, status: :not_found unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('downloadable_materials')
 
         material = @company.company_materials.published.find_by!(slug: params[:id])
         render json: { material: serialize(material) }
@@ -22,16 +27,24 @@ module Api
       private
 
       def set_company
-        @company = Company.find(params[:company_id])
+        raw_id = params[:company_id]
+        @company = Company.find_by(id: raw_id) || Company.find_by(slug: raw_id)
       end
 
       def serialize(material)
-        document = material.digital_assets.published.document.first
+        document = begin
+          material.digital_assets.published.document.first
+        rescue StandardError
+          nil
+        end
+
         material.as_json(only: %i[id title slug description material_type gate_mode published_at expires_at download_count]).merge(
           gated: material.gated?,
           file_available: document.present?,
           lead_form: public_form_payload(material.content_lead_form)
         )
+      rescue StandardError
+        material.as_json(only: %i[id title slug description])
       end
 
       def public_form_payload(form)
