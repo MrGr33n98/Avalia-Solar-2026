@@ -242,7 +242,10 @@ export default function MediaGallery({
           variant: 'destructive',
         });
       } else {
-        toast({ title: 'Upload iniciado', description: 'Arquivos enviados para processamento.' });
+        toast({
+          title: '📋 Imagem enviada para avaliação',
+          description: 'Nossa equipe vai analisar e publicar em breve no seu perfil.',
+        });
       }
     } catch {
       toast({ title: 'Falha no upload', variant: 'destructive' });
@@ -265,7 +268,10 @@ export default function MediaGallery({
         });
         return;
       }
-      toast({ title: 'Vídeo adicionado', description: 'O vídeo foi enviado para processamento.' });
+      toast({
+        title: '📋 Vídeo enviado para avaliação',
+        description: 'Nossa equipe vai analisar e publicar em breve no seu perfil.',
+      });
       setShowVideoDialog(false);
       setVideoUrl('');
     } catch {
@@ -374,12 +380,12 @@ export default function MediaGallery({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1"
                 >
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton
                       key={i}
-                      className="w-full aspect-square rounded-[2rem] bg-slate-100 dark:bg-white/5"
+                      className="w-full aspect-square rounded-none bg-slate-100 dark:bg-white/5"
                     />
                   ))}
                 </motion.div>
@@ -388,17 +394,17 @@ export default function MediaGallery({
                   key="photos-grid"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1"
                 >
                   {gallery.photos.map((photo, index) => (
                     <motion.div
                       key={photo.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.04 }}
                     >
                       <button
-                        className="w-full rounded-[2rem] overflow-hidden group relative aspect-square clay-precision bg-card dark:bg-[#0F172A] border-none"
+                        className="w-full rounded-none overflow-hidden group relative aspect-square bg-card dark:bg-[#0F172A] border-none"
                         onClick={() => openPhotoLightbox(photo.url, index)}
                       >
                         <Image
@@ -409,7 +415,7 @@ export default function MediaGallery({
                           className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                         />
                         <div className="absolute inset-0 bg-brand-blue/0 group-hover:bg-brand-blue/20 transition-all duration-500 flex items-center justify-center">
-                          <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-500 border border-white/20">
+                          <div className="h-12 w-12 rounded-none bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-500 border border-white/20">
                             <Maximize2 className="h-5 w-5 text-white" />
                           </div>
                         </div>
@@ -422,9 +428,9 @@ export default function MediaGallery({
                   key="empty-photos"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex flex-col items-center justify-center py-32 rounded-[3.5rem] bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
+                  className="flex flex-col items-center justify-center py-32 rounded-none bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
                 >
-                  <div className="h-24 w-24 rounded-[2rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+                  <div className="h-24 w-24 rounded-none bg-brand-blue/10 flex items-center justify-center mb-8">
                     <ImageIcon className="h-10 w-10 text-brand-blue" />
                   </div>
                   <h3 className="mb-2 text-xl font-black tracking-tight">
@@ -436,7 +442,7 @@ export default function MediaGallery({
                   {controlsVisible && (
                     <Button
                       onClick={handleUpload}
-                      className="h-12 rounded-2xl bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10"
+                      className="h-12 rounded-none bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10"
                     >
                       Enviar primeiro arquivo
                     </Button>
@@ -456,12 +462,12 @@ export default function MediaGallery({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1"
                 >
                   {Array.from({ length: 6 }).map((_, i) => (
                     <Skeleton
                       key={i}
-                      className="w-full aspect-video rounded-[2rem] bg-slate-100 dark:bg-white/5"
+                      className="w-full aspect-video rounded-none bg-slate-100 dark:bg-white/5"
                     />
                   ))}
                 </motion.div>
@@ -470,7 +476,7 @@ export default function MediaGallery({
                   key="videos-grid"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1"
                 >
                   {gallery.videos.map((v, idx) => (
                     <motion.div
@@ -480,7 +486,7 @@ export default function MediaGallery({
                       transition={{ delay: idx * 0.1 }}
                     >
                       <button
-                        className="w-full group relative aspect-video clay-precision rounded-[2.5rem] bg-card dark:bg-[#0F172A] border-none overflow-hidden"
+                        className="w-full group relative aspect-video rounded-none bg-card dark:bg-[#0F172A] border-none overflow-hidden"
                         onClick={() => {
                           flushPhotoView();
                           setLightboxItem({ type: 'video', url: v.url, video_id: v.video_id });
@@ -495,11 +501,11 @@ export default function MediaGallery({
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60 group-hover:opacity-100"
                         />
                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-8 group-hover:bg-brand-blue/20 transition-all duration-500">
-                          <div className="h-20 w-20 rounded-[1.5rem] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-blue transition-all duration-500 shadow-2xl">
+                          <div className="h-20 w-20 rounded-none bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-blue transition-all duration-500 shadow-2xl">
                             <Play className="h-8 w-8 text-white fill-white" />
                           </div>
                         </div>
-                        <div className="absolute top-6 right-6 h-10 w-10 rounded-2xl bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10">
+                        <div className="absolute top-6 right-6 h-10 w-10 rounded-none bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10">
                           <FileVideo className="h-4 w-4 text-white/60" />
                         </div>
                       </button>
@@ -511,9 +517,9 @@ export default function MediaGallery({
                   key="empty-videos"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex flex-col items-center justify-center py-32 rounded-[3.5rem] bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
+                  className="flex flex-col items-center justify-center py-32 rounded-none bg-slate-50 dark:bg-black/20 border border-dashed border-slate-200 dark:border-white/5"
                 >
-                  <div className="h-24 w-24 rounded-[2rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+                  <div className="h-24 w-24 rounded-none bg-brand-blue/10 flex items-center justify-center mb-8">
                     <Video className="h-10 w-10 text-brand-blue" />
                   </div>
                   <h3 className="mb-2 text-xl font-black tracking-tight">
@@ -525,7 +531,7 @@ export default function MediaGallery({
                   {controlsVisible && (
                     <Button
                       onClick={() => setShowVideoDialog(true)}
-                      className="h-12 rounded-2xl bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10"
+                      className="h-12 rounded-none bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10"
                     >
                       Adicionar primeiro vídeo
                     </Button>
@@ -541,7 +547,7 @@ export default function MediaGallery({
       <Dialog open={showVideoDialog && controlsVisible} onOpenChange={setShowVideoDialog}>
         <DialogContent className="!fixed !left-1/2 !top-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto border-none bg-card p-6 shadow-2xl dark:bg-[#0F172A] sm:rounded-[2.5rem] sm:p-10">
           <DialogHeader className="items-center text-center">
-            <div className="h-20 w-20 rounded-[1.5rem] bg-brand-blue/10 flex items-center justify-center mb-8">
+            <div className="h-20 w-20 rounded-none bg-brand-blue/10 flex items-center justify-center mb-8">
               <Video className="h-10 w-10 text-brand-blue" />
             </div>
             <DialogTitle className="mb-2 text-3xl font-black tracking-tight">
@@ -558,7 +564,7 @@ export default function MediaGallery({
                 placeholder="https://youtube.com/watch?v=..."
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
-                className="h-14 pl-12 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs font-bold focus-visible:ring-brand-blue/30"
+                className="h-14 pl-12 rounded-none bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-xs font-bold focus-visible:ring-brand-blue/30"
               />
             </div>
           </div>
@@ -566,14 +572,14 @@ export default function MediaGallery({
             <Button
               onClick={onAddVideo}
               disabled={!videoUrl}
-              className="h-14 w-full rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
+              className="h-14 w-full rounded-none bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
             >
               Salvar vídeo
             </Button>
             <Button
               variant="ghost"
               onClick={() => setShowVideoDialog(false)}
-              className="h-12 w-full rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground"
+              className="h-12 w-full rounded-none text-[10px] font-black uppercase tracking-widest text-muted-foreground"
             >
               Cancelar
             </Button>
@@ -589,10 +595,10 @@ export default function MediaGallery({
           setLightboxOpen(open);
         }}
       >
-        <DialogContent className="max-w-5xl bg-black/95 border-none p-0 overflow-hidden rounded-[3rem] shadow-[0_0_100px_rgba(37,99,235,0.2)]">
+        <DialogContent className="max-w-5xl bg-black/95 border-none p-0 overflow-hidden rounded-none shadow-[0_0_100px_rgba(37,99,235,0.2)]">
           <DialogHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between gap-4 space-y-0">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-brand-blue/10 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-none bg-brand-blue/10 flex items-center justify-center">
                 <Eye className="h-5 w-5 text-brand-blue" />
               </div>
               <DialogTitle className="text-xl font-black tracking-tight text-white">
@@ -601,7 +607,7 @@ export default function MediaGallery({
             </div>
             <Badge
               variant="outline"
-              className="h-8 rounded-xl bg-white/5 border-white/10 text-white/60 font-black text-[9px] tracking-widest uppercase px-4"
+              className="h-8 rounded-none bg-white/5 border-white/10 text-white/60 font-black text-[9px] tracking-widest uppercase px-4"
             >
               {lightboxItem?.type === 'photo' ? 'Imagem' : 'Vídeo'}
             </Badge>
@@ -614,11 +620,11 @@ export default function MediaGallery({
                 animate={{ opacity: 1, scale: 1 }}
                 src={lightboxItem.url}
                 alt=""
-                className="max-w-full max-h-[70vh] object-contain rounded-[2rem] shadow-2xl"
+                className="max-w-full max-h-[70vh] object-contain rounded-none shadow-2xl"
               />
             )}
             {lightboxItem?.type === 'video' && lightboxItem?.video_id && (
-              <div className="aspect-video w-full rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10">
+              <div className="aspect-video w-full rounded-none overflow-hidden shadow-2xl ring-1 ring-white/10">
                 <iframe
                   className="w-full h-full"
                   src={`https://www.youtube.com/embed/${lightboxItem.video_id}?autoplay=1&mute=0`}
@@ -640,7 +646,7 @@ export default function MediaGallery({
             <Button
               variant="ghost"
               onClick={() => setLightboxOpen(false)}
-              className="rounded-xl text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest"
+              className="rounded-none text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest"
             >
               Fechar
             </Button>
