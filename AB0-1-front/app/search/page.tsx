@@ -521,8 +521,8 @@ function SearchPageContent() {
               </Sheet>
             </div>
 
-            <div className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="min-w-0">
+            <div className="mt-7 flex flex-col gap-7 lg:grid lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="w-full min-w-0">
                 {activeTab === 'reviews' ? (
                   <SearchEmptyState
                     title="Nenhuma avaliação encontrada"
@@ -548,7 +548,7 @@ function SearchPageContent() {
                           ) : undefined
                         }
                       >
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           {filteredCompanies.map((company) => (
                             <CompanyCard
                               key={company.id}
