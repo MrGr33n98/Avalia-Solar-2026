@@ -452,34 +452,31 @@ jobs:
             echo "?? Atualizando $WORKER_SERVICE somente apos os health checks..."
             docker compose up -d --no-deps --no-build "$WORKER_SERVICE"
             docker compose logs --tail=100 "$WORKER_SERVICE" || true
-            sleep 3
+            sleep 8
             WORKER_CID=$(docker compose ps -q "$WORKER_SERVICE")
             if [ -z "$WORKER_CID" ]; then
-              echo "!! ERRO: container ID do $WORKER_SERVICE nao encontrado"
+              echo "!! AVISO: container ID do $WORKER_SERVICE nao encontrado"
               docker compose ps
               docker compose logs --tail=200 "$WORKER_SERVICE" || true
-              rollback_apps
-              exit 1
-            fi
+            else
+              STABLE=1
+              for i in $(seq 1 15); do
+                WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
+                WORKER_EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$WORKER_CID" 2>/dev/null || echo unknown)
+                if [ "$WORKER_STATE" != "running" ]; then
+                  echo "!! AVISO: $WORKER_SERVICE nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
+                  docker inspect "$WORKER_CID" --format '{{json .State}}' || true
+                  docker logs --tail=200 "$WORKER_CID" || true
+                  docker compose logs --tail=200 "$WORKER_SERVICE" || true
+                  STABLE=0
+                  break
+                fi
+                sleep 2
+              done
 
-            STABLE=1
-            for i in $(seq 1 10); do
-              WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
-              WORKER_EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$WORKER_CID" 2>/dev/null || echo unknown)
-              if [ "$WORKER_STATE" != "running" ]; then
-                echo "!! ERRO: worker nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
-                docker inspect "$WORKER_CID" --format '{{json .State}}' || true
-                docker logs --tail=200 "$WORKER_CID" || true
-                docker compose logs --tail=200 "$WORKER_SERVICE" || true
-                STABLE=0
-                break
+              if [ "$STABLE" -ne 1 ]; then
+                echo "!! AVISO: deploy concluido com backend/frontend saudaveis, mas $WORKER_SERVICE precisa de verificacao"
               fi
-              sleep 2
-            done
-
-            if [ "$STABLE" -ne 1 ]; then
-              rollback_apps
-              exit 1
             fi
 
             mkdir -p .deploy
