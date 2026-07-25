@@ -20,10 +20,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
   const [isSharing, setIsSharing] = useState(false);
   const wizardCategoryId = resolveWizardCategoryId(company);
 
-  const quoteDisabled = !canRequestQuote;
-
   const handleRequestQuote = async () => {
-    if (quoteDisabled) return;
     await trackCTAClick({
       ctaType: 'quote',
       ctaLocation: 'hero',
@@ -69,26 +66,15 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
   return (
     <div
       id="company-cta-group"
-      className="grid w-full grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_48px] gap-2 max-[360px]:grid-cols-[minmax(0,1.35fr)_minmax(0,0.8fr)_44px] max-[360px]:gap-1.5"
+      className="flex w-full flex-wrap items-center gap-2 max-[360px]:gap-1.5"
     >
-      {/* Solicitar orçamento — feature paga */}
-      {quoteDisabled ? (
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          title="Esta empresa ainda não recebe solicitações de orçamento pela plataforma"
-          className="inline-flex h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-2 text-[13px] font-semibold text-slate-400 whitespace-nowrap cursor-not-allowed max-[360px]:text-[11px] max-[360px]:px-1"
-        >
-          <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="truncate">Solicitar orçamento</span>
-        </button>
-      ) : (
+      {/* Solicitar orçamento — feature paga, só renderiza quando ativa */}
+      {canRequestQuote && (
         <Button
           type="button"
           size="default"
           onClick={handleRequestQuote}
-          className="h-11 min-w-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-2 text-[13px] font-semibold text-white shadow-none transition-colors hover:bg-blue-700 max-[360px]:text-[11px] max-[360px]:px-1"
+          className="h-11 flex-1 min-w-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-2 text-[13px] font-semibold text-white shadow-none transition-colors hover:bg-blue-700 sm:flex-initial sm:min-w-[150px] max-[360px]:text-[11px] max-[360px]:px-1"
         >
           <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="truncate">Solicitar orçamento</span>
@@ -99,7 +85,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
       <Link
         href={reviewPath}
         aria-label={company.name ? `Avaliar essa empresa: ${company.name}` : 'Avaliar essa empresa'}
-        className="inline-flex h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white px-2 text-[13px] font-semibold text-blue-700 whitespace-nowrap transition-colors hover:bg-blue-50 max-[360px]:text-[11px] max-[360px]:px-1"
+        className="inline-flex h-11 flex-1 min-w-0 items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white px-2 text-[13px] font-semibold text-blue-700 whitespace-nowrap transition-colors hover:bg-blue-50 sm:flex-initial sm:min-w-[110px] max-[360px]:text-[11px] max-[360px]:px-1"
       >
         <Star className="h-4 w-4 shrink-0 fill-blue-700 text-blue-700" aria-hidden="true" />
         <span>Avaliar</span>
@@ -112,7 +98,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         disabled={isSharing}
         aria-label="Compartilhar empresa"
         title="Compartilhar empresa"
-        className="inline-flex h-11 w-12 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 max-[360px]:w-11"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 max-[360px]:w-10"
       >
         <Share2 className="h-5 w-5" aria-hidden="true" />
       </button>

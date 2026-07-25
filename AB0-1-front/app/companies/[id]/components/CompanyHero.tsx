@@ -168,7 +168,7 @@ export default function CompanyHero({
 
       <div className="!rounded-none border border-slate-200/80 bg-white/80 p-0 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-4 md:p-5">
         <div className="relative overflow-hidden !rounded-none border border-slate-200/70 bg-slate-950">
-          <div className="relative h-[160px] sm:h-[205px] lg:h-[230px] w-full flex items-center justify-center overflow-hidden">
+          <div className="relative h-[128px] md:h-[165px] w-full flex items-center justify-center overflow-hidden">
             {/* Background Blur Fill Layer */}
             <OptimizedImage
               src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -304,14 +304,14 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              <div className="w-full border-t border-slate-100 pt-2 lg:w-auto lg:min-w-[520px] lg:border-t-0 lg:pt-0">
-                <div className="grid w-full grid-cols-[44px_minmax(120px,1fr)_minmax(132px,1.25fr)] gap-2 sm:grid-cols-[minmax(130px,0.7fr)_repeat(2,minmax(150px,1fr))] sm:gap-3">
+              <div className="w-full border-t border-slate-100 pt-2 lg:w-auto lg:border-t-0 lg:pt-0">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     title="Compartilhar perfil"
                     aria-label="Compartilhar perfil"
-                    className="h-10 rounded-xl border border-transparent bg-transparent px-0 text-sm font-semibold text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-900 sm:h-11 sm:px-4"
+                    className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white px-0 text-sm font-semibold text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-900 sm:h-11 sm:w-auto sm:px-4"
                     onClick={handleShare}
                     disabled={isSharing}
                   >
@@ -320,12 +320,12 @@ export default function CompanyHero({
                   </Button>
 
                   {ctaEnabled && ctaUrl && (
-                    <div className="contents" {...heroWhatsappHoverIntent}>
+                    <div className="flex-1 sm:flex-initial" {...heroWhatsappHoverIntent}>
                       <WhatsappButton
                         size="default"
                         enabled
                         href={ctaUrl}
-                        className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-3 text-sm font-semibold text-emerald-700 shadow-none hover:bg-emerald-50"
+                        className="h-11 w-full rounded-xl border border-emerald-500 bg-transparent px-3 text-sm font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:w-auto sm:min-w-[130px]"
                         label="WhatsApp"
                         companyId={company.id}
                         requireSignup
@@ -339,7 +339,7 @@ export default function CompanyHero({
                   {directChatVisible && (
                     <Button
                       size="default"
-                      className="relative group overflow-hidden h-11 w-full rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-sm font-extrabold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30"
+                      className="relative group overflow-hidden h-11 flex-1 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-sm font-extrabold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:flex-initial sm:min-w-[130px]"
                       onClick={() => {
                         track('company_direct_chat_click', {
                           company_id: company.id,
@@ -372,7 +372,7 @@ export default function CompanyHero({
                   {quoteEnabled ? (
                     <Button
                       size="default"
-                      className="h-10 min-w-0 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:h-11 sm:px-5"
+                      className="h-10 flex-1 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800 sm:h-11 sm:flex-initial sm:min-w-[150px] sm:px-5"
                       onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                       onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                       onClick={async () => {
@@ -398,7 +398,7 @@ export default function CompanyHero({
                     <ReviewCompanyButton
                       company={company}
                       compactLabel="Avaliar"
-                      className="h-10 min-w-0 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:h-11 sm:px-5"
+                      className="h-10 flex-1 rounded-xl border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:bg-blue-50 sm:h-11 sm:flex-initial sm:min-w-[130px] sm:px-5"
                     />
                   )}
                 </div>
