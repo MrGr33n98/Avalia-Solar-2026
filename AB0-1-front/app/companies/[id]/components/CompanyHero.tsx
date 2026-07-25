@@ -2,8 +2,7 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
-import PremiumBadge from '@/components/PremiumBadge';
+import { MessageCircle, Share2, ArrowLeft, MapPin, Star, BadgeCheck } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -178,17 +177,17 @@ export default function CompanyHero({
         </Button>
       </div>
 
-      {/* Container unificado: Banner + Identidade + Abas */}
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-transparent shadow-sm">
-        {/* 1. Hero Banner */}
-        <div className="relative h-[190px] w-full bg-slate-950 sm:h-[230px] lg:h-[300px] xl:h-[320px]">
+      {/* Container principal: banner + identidade + tabs */}
+      <section className="rounded-2xl border border-slate-200 bg-transparent shadow-sm">
+        {/* 1. HERO BANNER */}
+        <div className="relative h-[190px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[230px] lg:h-[300px] xl:h-[320px]">
           {/* Background Blur Fill Layer */}
           <OptimizedImage
             src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
             alt=""
             fill
             aria-hidden="true"
-            className="object-cover filter blur-xl opacity-40 scale-110"
+            className="object-cover opacity-40 blur-xl scale-110"
             containerClassName="absolute inset-0 h-full w-full pointer-events-none"
             unoptimized={!bannerUrl || bannerError}
           />
@@ -214,24 +213,24 @@ export default function CompanyHero({
             onError={() => setBannerError(true)}
           />
 
-          {/* Gradient overlay sutil para contraste */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+          {/* Gradient overlay */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/5" />
 
           {(!bannerUrl || bannerError) && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
-              <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
+              <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
                 Imagem ilustrativa
               </span>
             </div>
           )}
         </div>
 
-        {/* 2. Identidade da Empresa (logo atravessa a linha) */}
-        <div className="relative z-20 bg-transparent px-5 pb-5 pt-0 sm:px-6 sm:pb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
+        {/* 2. IDENTIDADE DA EMPRESA - logo atravessa a borda do banner */}
+        <div className="relative px-4 pb-4 pt-0 sm:px-5 sm:pb-5 lg:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex min-w-0 items-start gap-4">
-              {/* Logo atravessando a linha do banner (~30% acima) */}
+            <div className="flex items-start gap-4 min-w-0">
+              {/* Logo - atravessa a linha inferior do banner (~30% acima) */}
               <div className="relative -mt-8 shrink-0 overflow-visible sm:-mt-9 lg:-mt-10">
                 <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 shadow-sm sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
                   <OptimizedImage
@@ -250,10 +249,10 @@ export default function CompanyHero({
                   />
                 </div>
 
-                {/* Selo de conquista — fundo transparente, fora do container recortado */}
+                {/* Selo de conquista sobre a logo */}
                 {heroBadgeUrl && !badgeImageError && (
                   <div
-                    className="absolute -right-1.5 -top-2 z-30 h-9 w-9 overflow-visible drop-shadow-md transition-transform duration-200 hover:scale-105 sm:h-10 sm:w-10"
+                    className="absolute -right-1.5 -top-2 z-30 h-9 w-9 overflow-visible sm:h-10 sm:w-10"
                     title="Selo de conquista"
                   >
                     <OptimizedImage
@@ -268,56 +267,32 @@ export default function CompanyHero({
                     />
                   </div>
                 )}
-
-                {/* Verificação — ícone de check sobre a logo */}
-                {company.verified && (
-                  <div
-                    className="absolute -right-2 -top-3 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 border-2 border-white shadow-md transition-transform duration-200 hover:scale-105 sm:h-7 sm:w-7"
-                    title="Empresa Verificada"
-                  >
-                    <svg
-                      className="h-3 w-3 text-white sm:h-4 sm:w-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                )}
               </div>
 
-              {/* Informações da Empresa — texto escuro fora do banner */}
+              {/* Informações da Empresa */}
               <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate text-xl font-bold leading-tight text-slate-950 sm:text-2xl">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h1 className="truncate text-xl font-bold text-slate-950 sm:text-2xl">
                     {company.name}
                   </h1>
                   {company.verified && (
-                    <span
-                      className="inline-flex shrink-0 text-emerald-500"
-                      title="Empresa Verificada"
-                    >
-                      <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </span>
+                    <BadgeCheck
+                      className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-6 sm:w-6"
+                      aria-label="Empresa verificada"
+                    />
                   )}
                 </div>
 
                 {locationLabel && (
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 sm:text-sm">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                     <span className="truncate">{locationLabel}</span>
                   </div>
                 )}
 
                 <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
                   <div className="flex items-center gap-1 font-bold text-slate-950">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} />
+                    <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" strokeWidth={0} />
                     <span>{ratingLabel}</span>
                   </div>
                   <span className="text-slate-300">|</span>
@@ -326,10 +301,10 @@ export default function CompanyHero({
                   </span>
 
                   {directChatVisible && (
-                    <span className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    <span className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
                       <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-100" />
                       </span>
                       Chat Online
                     </span>
@@ -339,17 +314,18 @@ export default function CompanyHero({
             </div>
 
             {/* Lado Direito: Premium + Botões */}
-            <div className="ml-auto flex w-full shrink-0 flex-col items-start gap-3 sm:w-auto sm:items-end">
+            <div className="ml-auto flex shrink-0 flex-col items-end gap-3">
               {/* Badge PREMIUM */}
               {company.verified && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-3 py-1.5 shadow-lg border border-purple-300/50 animate-in fade-in slide-in-from-top-2 duration-700 hover:shadow-xl hover:shadow-purple-500/25 transition-all">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-3 py-1.5 shadow-lg border border-purple-300/50">
                   <svg className="h-3.5 w-3.5 text-purple-100" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  <span className="text-xs font-bold text-white tracking-wide drop-shadow-sm">PREMIUM</span>
+                  <span className="text-xs font-bold tracking-wide text-white drop-shadow-sm">PREMIUM</span>
                 </div>
               )}
 
+              {/* Botões de ação */}
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                 {ctaEnabled && ctaUrl && (
                   <div {...heroWhatsappHoverIntent}>
@@ -357,7 +333,7 @@ export default function CompanyHero({
                       size="default"
                       enabled
                       href={ctaUrl}
-                      className="h-9 rounded-xl border border-emerald-500 bg-transparent px-4 text-xs font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:text-sm"
+                      className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
                       label="WhatsApp"
                       companyId={company.id}
                       requireSignup
@@ -371,7 +347,7 @@ export default function CompanyHero({
                 {directChatVisible && (
                   <Button
                     size="default"
-                    className="relative group overflow-hidden h-9 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-4 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
+                    className="relative group h-9 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
                     onClick={() => {
                       track('company_direct_chat_click', {
                         company_id: company.id,
@@ -391,7 +367,7 @@ export default function CompanyHero({
                       });
                     }}
                   >
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                    <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
                     <MessageCircle className="mr-1.5 h-4 w-4 text-emerald-200" />
                     Chat
                   </Button>
@@ -400,18 +376,18 @@ export default function CompanyHero({
                 <Button
                   variant="outline"
                   size="default"
-                  className="h-9 rounded-xl border-slate-200 bg-slate-50/50 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:text-sm"
+                  className="h-9 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 sm:text-sm"
                   onClick={handleShare}
                   disabled={isSharing}
                 >
-                  <Share2 className="mr-1.5 h-4 w-4 text-slate-500" />
+                  <Share2 className="mr-1.5 h-4 w-4 text-slate-400" />
                   Compartilhar
                 </Button>
 
                 {canRequestQuote ? (
                   <Button
                     size="default"
-                    className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                    className="h-9 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
                     onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                     onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                     onClick={async () => {
@@ -436,7 +412,7 @@ export default function CompanyHero({
                   <ReviewCompanyButton
                     company={company}
                     compactLabel="Avaliar empresa"
-                    className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                    className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
                   />
                 )}
               </div>
@@ -444,11 +420,11 @@ export default function CompanyHero({
           </div>
         </div>
 
-        {/* 3. Navegação por Abas (imediatamente abaixo) */}
+        {/* 3. NAVEGAÇÃO POR ABAS */}
         {tabs.length > 0 && onTabChange && (
           <div className="border-t border-slate-200 bg-transparent">
             <ScrollArea className="w-full">
-              <TabsList className="h-auto min-w-max justify-start gap-5 rounded-none bg-transparent p-0 px-5 text-slate-500 sm:px-6">
+              <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 px-4 text-slate-500 sm:px-5 lg:px-6">
                 {tabs.map((tab) => {
                   const TabIcon = tab.icon;
                   return (
@@ -456,7 +432,7 @@ export default function CompanyHero({
                       key={tab.id}
                       value={tab.id}
                       className={cn(
-                        'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none whitespace-nowrap',
+                        'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
                         'text-slate-500 hover:bg-transparent hover:text-slate-900',
                         'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
                       )}

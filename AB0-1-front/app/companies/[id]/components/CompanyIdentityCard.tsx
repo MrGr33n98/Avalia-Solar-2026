@@ -52,7 +52,7 @@ export default function CompanyIdentityCard({
     <section
       id="company-identity-card"
       aria-label="Card da empresa com ações"
-      className="relative rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 lg:p-7 shadow-sm"
+      className="relative rounded-2xl bg-transparent p-5 sm:p-6 lg:p-7"
     >
       {/* Selo Premium no canto superior direito */}
       <div className="absolute right-5 top-5 z-10 sm:right-6 sm:top-6">
@@ -64,7 +64,7 @@ export default function CompanyIdentityCard({
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
           {/* Box da Logo */}
           <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-visible">
-            <div className="h-full w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
+            <div className="h-full w-full overflow-hidden rounded-xl border border-slate-200">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -74,9 +74,9 @@ export default function CompanyIdentityCard({
                   imageContext="company-logo"
                   entityName={company.name}
                   locationLabel={locationLabel}
-                  objectFit="contain"
-                  className="p-1"
-                  containerClassName="h-full w-full"
+                  objectFit="cover"
+                  className="p-0"
+                  containerClassName="absolute inset-0 h-full w-full"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
                 />

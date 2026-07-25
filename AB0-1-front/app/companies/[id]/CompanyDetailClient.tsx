@@ -463,7 +463,7 @@ export default function CompanyDetailClient({
     <div className="min-h-screen bg-[#f3f4f6] pb-20 md:pb-0">
       <BreadcrumbJsonLd items={jsonLdItems} />
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <header className="border-b border-slate-200 bg-[#f3f4f6]">
+        <header className="bg-[#f3f4f6]">
           <div className="mx-auto max-w-[1280px] px-4 py-2 md:px-6 md:py-3">
             <AppBreadcrumb items={breadcrumbItems} compact className="mb-2" />
             {localSolarPage ? (
