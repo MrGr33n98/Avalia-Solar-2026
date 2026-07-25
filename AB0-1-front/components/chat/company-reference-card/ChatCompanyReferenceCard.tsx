@@ -188,7 +188,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
       {/* ================================================================ */}
       {/*  Linha de ações: Comparar | Reviews | Orçamento                   */}
       {/* ================================================================ */}
-      <div className="mt-2.5 grid w-full grid-cols-[1fr_1fr_1.1fr] gap-1.5 max-[360px]:grid-cols-[0.9fr_0.9fr_1fr] max-[360px]:gap-1">
+      <div className="mt-2 grid w-full grid-cols-[1fr_1fr_1.1fr] gap-1 max-[360px]:grid-cols-[0.9fr_0.9fr_1fr] max-[360px]:gap-0.5">
         {/* Comparar */}
         {compareEnabled && (
           <button
@@ -201,7 +201,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
                 : `Adicionar ${company.name} à comparação`
             }
             className={cn(
-              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border px-1.5 text-[11px] font-semibold leading-none transition-colors',
+              'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border px-1.5 text-[11px] font-semibold leading-none transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               isSelectedForComparison
                 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
@@ -235,7 +235,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             onClick={onReviews}
             aria-label="Ver avaliações"
             className={cn(
-              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border border-zinc-200 bg-white px-1.5 text-[11px] font-semibold leading-none text-zinc-700 transition-colors',
+              'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border border-zinc-200 bg-white px-1.5 text-[11px] font-semibold leading-none text-zinc-700 transition-colors',
               'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950',
@@ -254,7 +254,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             disabled={isBudgetLoading}
             aria-label="Solicitar orçamento"
             className={cn(
-              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg bg-[#2563EB] px-1.5 text-[11px] font-semibold leading-none text-white transition-colors',
+              'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg bg-[#2563EB] px-1.5 text-[11px] font-semibold leading-none text-white transition-colors',
               'hover:bg-[#1D4ED8]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               'disabled:cursor-not-allowed disabled:opacity-70',

@@ -226,20 +226,13 @@ export default function CompanyHero({
         </div>
 
         {/* 2. Card de Identidade da Empresa (integrado ao banner, sem margem) */}
-        <div className="relative border-t border-slate-200 bg-white px-4 pb-4 pt-2 sm:px-5 sm:pb-4 sm:pt-3">
-          {/* Selo Premium no canto superior direito */}
-          {company.verified && (
-            <div className="absolute right-4 top-3.5 z-10 sm:right-5 sm:top-4">
-              <PremiumBadge className="h-6 px-3 sm:h-7 sm:px-4" />
-            </div>
-          )}
-
-          <div className="flex min-h-[105px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative border-t border-slate-200 bg-white px-5 pb-5 pt-4">
+          <div className="flex items-center justify-between gap-5">
             {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 min-w-0">
+            <div className="flex min-w-0 items-center gap-4">
               {/* Box da Logo — sobreposição LinkedIn */}
-              <div className="relative -mt-6 sm:-mt-7 shrink-0 overflow-visible">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl">
+              <div className="relative -mt-12 shrink-0 overflow-visible">
+                <div className="h-24 w-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   <OptimizedImage
                     src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                     alt={company.name}
@@ -275,8 +268,8 @@ export default function CompanyHero({
               </div>
 
               {/* Informações da Empresa */}
-              <div className="space-y-1 min-w-0 pt-2 sm:pt-3">
-                <div className="flex items-center gap-2 pr-24 sm:pr-0">
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
                   <h1 className="text-lg font-bold leading-tight text-slate-950 sm:text-xl truncate">
                     {company.name}
                   </h1>
@@ -319,96 +312,102 @@ export default function CompanyHero({
               </div>
             </div>
 
-            {/* Lado Direito: Grupo de Ações (Botões) */}
-            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-              {ctaEnabled && ctaUrl && (
-                <div {...heroWhatsappHoverIntent}>
-                  <WhatsappButton
+            {/* Lado Direito: Premium + Botões */}
+            <div className="flex shrink-0 flex-col items-end gap-3">
+              {company.verified && (
+                <PremiumBadge className="h-6 px-3 sm:h-7 sm:px-4" />
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+                {ctaEnabled && ctaUrl && (
+                  <div {...heroWhatsappHoverIntent}>
+                    <WhatsappButton
+                      size="default"
+                      enabled
+                      href={ctaUrl}
+                      className="h-9 rounded-xl border border-emerald-500 bg-transparent px-4 text-xs font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:text-sm"
+                      label="WhatsApp"
+                      companyId={company.id}
+                      requireSignup
+                      signupGateSource="contact_reveal"
+                      signupGateTitle="Crie sua conta para falar no WhatsApp"
+                      signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
+                    />
+                  </div>
+                )}
+
+                {directChatVisible && (
+                  <Button
                     size="default"
-                    enabled
-                    href={ctaUrl}
-                    className="h-9 rounded-xl border border-emerald-500 bg-transparent px-4 text-xs font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:text-sm"
-                    label="WhatsApp"
-                    companyId={company.id}
-                    requireSignup
-                    signupGateSource="contact_reveal"
-                    signupGateTitle="Crie sua conta para falar no WhatsApp"
-                    signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
+                    className="relative group overflow-hidden h-9 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-4 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
+                    onClick={() => {
+                      track('company_direct_chat_click', {
+                        company_id: company.id,
+                        company_name: company.name,
+                        authenticated: isAuthenticated,
+                      });
+                      if (directChatEnabled) {
+                        router.push(directChatReturnTo);
+                        return;
+                      }
+                      openSignupGate({
+                        source: 'direct_chat',
+                        returnTo: directChatReturnTo,
+                        title: 'Crie sua conta para falar com esta empresa',
+                        description:
+                          'O chat direto fica disponível para usuários compradores cadastrados.',
+                      });
+                    }}
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                    <MessageCircle className="mr-1.5 h-4 w-4 text-emerald-200" />
+                    Chat
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="h-9 rounded-xl border-slate-200 bg-slate-50/50 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:text-sm"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
+                  <Share2 className="mr-1.5 h-4 w-4 text-slate-500" />
+                  Compartilhar
+                </Button>
+
+                {canRequestQuote ? (
+                  <Button
+                    size="default"
+                    className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
+                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
+                    onClick={async () => {
+                      await trackCTAClick({
+                        ctaType: 'quote',
+                        ctaLocation: 'hero',
+                        companyId: String(company.id),
+                        companyName: company.name,
+                      });
+                      openLeadModal({
+                        preferredCompanyId: company.id,
+                        categoryId: wizardCategoryId,
+                        source: 'company-hero',
+                        type: 'wizard',
+                      });
+                    }}
+                  >
+                    <Star className="mr-1.5 h-4 w-4 fill-white" />
+                    Solicitar orçamento
+                  </Button>
+                ) : (
+                  <ReviewCompanyButton
+                    company={company}
+                    compactLabel="Avaliar empresa"
+                    className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
                   />
-                </div>
-              )}
-
-              {directChatVisible && (
-                <Button
-                  size="default"
-                  className="relative group overflow-hidden h-9 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-4 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
-                  onClick={() => {
-                    track('company_direct_chat_click', {
-                      company_id: company.id,
-                      company_name: company.name,
-                      authenticated: isAuthenticated,
-                    });
-                    if (directChatEnabled) {
-                      router.push(directChatReturnTo);
-                      return;
-                    }
-                    openSignupGate({
-                      source: 'direct_chat',
-                      returnTo: directChatReturnTo,
-                      title: 'Crie sua conta para falar com esta empresa',
-                      description:
-                        'O chat direto fica disponível para usuários compradores cadastrados.',
-                    });
-                  }}
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
-                  <MessageCircle className="mr-1.5 h-4 w-4 text-emerald-200" />
-                  Chat
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                size="default"
-                className="h-9 rounded-xl border-slate-200 bg-slate-50/50 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:text-sm"
-                onClick={handleShare}
-                disabled={isSharing}
-              >
-                <Share2 className="mr-1.5 h-4 w-4 text-slate-500" />
-                Compartilhar
-              </Button>
-
-              {canRequestQuote ? (
-                <Button
-                  size="default"
-                  className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
-                  onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
-                  onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
-                  onClick={async () => {
-                    await trackCTAClick({
-                      ctaType: 'quote',
-                      ctaLocation: 'hero',
-                      companyId: String(company.id),
-                      companyName: company.name,
-                    });
-                    openLeadModal({
-                      preferredCompanyId: company.id,
-                      categoryId: wizardCategoryId,
-                      source: 'company-hero',
-                      type: 'wizard',
-                    });
-                  }}
-                >
-                  <Star className="mr-1.5 h-4 w-4 fill-white" />
-                  Solicitar orçamento
-                </Button>
-              ) : (
-                <ReviewCompanyButton
-                  company={company}
-                  compactLabel="Avaliar empresa"
-                  className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
-                />
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
