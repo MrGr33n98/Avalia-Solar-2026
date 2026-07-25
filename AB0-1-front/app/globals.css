@@ -218,6 +218,7 @@
     --border-radius-md: 0.875rem;
     --border-radius-lg: 1rem;
   }
+}
 
 @layer base {
   * {
