@@ -156,6 +156,14 @@ export default function ComparisonFloatingBar() {
     };
   }, [count]);
 
+  // Reexibe o botão minimizado quando empresas são adicionadas com o dock fechado
+  useEffect(() => {
+    if (count > 0 && dockState === 'hidden') {
+      setDockState('minimized');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count]);
+
   if (count === 0 && !isForcedOpen) return null;
 
   if (dockState === 'hidden') return null;
@@ -186,11 +194,7 @@ export default function ComparisonFloatingBar() {
 
   const closeDock = () => {
     setIsForcedOpen(false);
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
-      setDockState('minimized');
-    } else {
-      setDockState('hidden');
-    }
+    setDockState('hidden');
     track('compare_popover_closed', { comparison_count: count });
   };
 
@@ -298,22 +302,22 @@ export default function ComparisonFloatingBar() {
                     Compare lado a lado com os mesmos critérios para todas.
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     type="button"
                     onClick={minimizeDock}
                     aria-label="Minimizar comparação"
-                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    <Minus className="h-3 w-3" aria-hidden="true" />
+                    <Minus className="h-4 w-4" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={closeDock}
                     aria-label="Fechar comparação"
-                    className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    <X className="h-3 w-3" aria-hidden="true" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>
