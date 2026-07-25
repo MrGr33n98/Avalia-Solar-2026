@@ -159,28 +159,34 @@ export function PremiumBannerCarousel({
             </div>
 
             {/* Progress Indicators */}
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full z-10">
-              {scrollSnaps.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => api?.scrollTo(index)}
-                  className="relative group/indicator h-4 w-8 md:w-12 transition-all p-0 flex items-center justify-center bg-transparent"
-                  aria-label={`Ir para slide ${index + 1}`}
-                >
-                  <div className={cn(
-                    "h-1 w-full rounded-full bg-white/30 transition-all",
-                    index === selectedIndex ? "h-1.5 bg-white/50" : "group-hover/indicator:bg-white/50"
-                  )}>
-                    {index === selectedIndex && (
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full z-10">
+              {scrollSnaps.map((_, index) => {
+                const active = index === selectedIndex;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => api?.scrollTo(index)}
+                    className="relative flex h-8 w-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+                    aria-label={`Ir para slide ${index + 1}`}
+                    aria-current={active ? 'true' : undefined}
+                  >
+                    <span
+                      className={cn(
+                        'block h-[7px] rounded-full transition-all duration-300 ease-out',
+                        active ? 'w-5 bg-white' : 'w-[7px] bg-white/40 hover:bg-white/60'
+                      )}
+                    />
+                    {active && (
                       <motion.div
                         animate={controls}
-                        className="absolute inset-y-0 left-0 bg-white rounded-full"
+                        className="absolute left-1.5 top-1/2 h-[7px] -translate-y-1/2 rounded-full bg-white/70"
                         style={{ width: "0%" }}
                       />
                     )}
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </>
         )}

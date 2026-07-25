@@ -11,6 +11,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  CarouselIndicators,
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { Category } from '@/lib/api';
 
-const AUTOPLAY_DELAY_MS = 2500;
+const AUTOPLAY_DELAY_MS = 6000;
 
 interface HomeCategoryCarouselProps {
   categories: Category[];
@@ -26,7 +27,6 @@ interface HomeCategoryCarouselProps {
 
 export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
-  const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -35,7 +35,7 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
       delay: AUTOPLAY_DELAY_MS,
       playOnInit: false,
       stopOnFocusIn: true,
-      stopOnInteraction: false,
+      stopOnInteraction: true,
       stopOnMouseEnter: true,
     })
   );
@@ -45,7 +45,6 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
 
     const updateSelectedSlide = () => {
       setCount(api.scrollSnapList().length);
-      setCurrent(api.selectedScrollSnap() + 1);
     };
 
     updateSelectedSlide();
@@ -117,22 +116,7 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
 
       {/* Progress Indicators */}
       <div className="flex flex-col items-center gap-4">
-        <div className="flex gap-1.5">
-          {Array.from({ length: count }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => api?.scrollTo(i)}
-              className={`h-1.5 transition-all duration-300 rounded-full ${
-                current === i + 1 
-                  ? 'w-8 bg-brand-blue' 
-                  : 'w-2 bg-slate-200 hover:bg-slate-300'
-              }`}
-              aria-label={`Ir para slide ${i + 1}`}
-              aria-current={current === i + 1 ? 'true' : undefined}
-            />
-          ))}
-        </div>
+        {count > 1 && <CarouselIndicators api={undefined} />}
 
         <Button asChild variant="outline" className="clay-chip rounded-full border-brand-blue/30 text-brand-blue hover:bg-brand-blue/5">
           <Link href="/categories" className="group flex items-center">

@@ -177,7 +177,7 @@ const CarouselContent = React.forwardRef<
   const { carouselRef, orientation } = useCarousel();
 
   return (
-    <div ref={carouselRef} className="overflow-hidden">
+    <div ref={carouselRef} className="overflow-hidden touch-pan-y">
       <div
         ref={ref}
         className={cn(
@@ -204,7 +204,7 @@ const CarouselItem = React.forwardRef<
       role="group"
       aria-roledescription="slide"
       className={cn(
-        'min-w-0 shrink-0 grow-0 basis-full',
+        'min-w-0 shrink-0 grow-0 basis-full select-none',
         orientation === 'horizontal' ? 'pl-4' : 'pt-4',
         className
       )}
@@ -227,7 +227,7 @@ const CarouselPrevious = React.forwardRef<
       variant={variant}
       size={size}
       className={cn(
-        'absolute  h-8 w-8 rounded-full',
+        'absolute h-8 w-8 rounded-full border-slate-200 bg-white/90 text-slate-600 shadow-sm backdrop-blur transition-all hover:border-blue-300 hover:text-blue-600 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
         orientation === 'horizontal'
           ? '-left-12 top-1/2 -translate-y-1/2'
           : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
@@ -235,6 +235,7 @@ const CarouselPrevious = React.forwardRef<
       )}
       disabled={!canScrollPrev}
       onClick={scrollPrev}
+      aria-label="Slide anterior"
       {...props}
     >
       <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -257,7 +258,7 @@ const CarouselNext = React.forwardRef<
       variant={variant}
       size={size}
       className={cn(
-        'absolute h-8 w-8 rounded-full',
+        'absolute h-8 w-8 rounded-full border-slate-200 bg-white/90 text-slate-600 shadow-sm backdrop-blur transition-all hover:border-blue-300 hover:text-blue-600 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
         orientation === 'horizontal'
           ? '-right-12 top-1/2 -translate-y-1/2'
           : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
@@ -265,6 +266,7 @@ const CarouselNext = React.forwardRef<
       )}
       disabled={!canScrollNext}
       onClick={scrollNext}
+      aria-label="Próximo slide"
       {...props}
     >
       <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -299,9 +301,9 @@ const CarouselIndicators = React.forwardRef<
         >
           <span
             className={cn(
-              'block h-[7px] rounded-full transition-all duration-200',
+              'block h-[7px] rounded-full transition-all duration-300 ease-out',
               index === selectedIndex
-                ? 'w-[18px] bg-blue-600'
+                ? 'w-5 bg-blue-600'
                 : 'w-[7px] bg-slate-300 hover:bg-slate-400'
             )}
           />
