@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Company } from '@/lib/api';
 import ErrorBoundary from '../ErrorBoundary';
 
 const MOBIVOLT_SPONSORED_CARDS_ENABLED = true;
@@ -39,19 +40,23 @@ const normalizeCompanyRecommendation = (company: any) => {
 
 export interface ChatCompanyRecommendationsProps {
   metadata: any;
-  comparedCompanyIds: number[];
+  comparisonList: Company[];
   onCompanyClick: (companyId: number, type: 'profile' | 'whatsapp') => void;
   onRequestQuote: (companyId: number) => void;
-  onCompare: (companyId: number) => void;
+  onAddToComparison: (company: Company) => void;
+  onRemoveFromComparison: (companyId: number) => void;
+  maxComparison: number;
   onRequestPersonalizedSearch: () => void;
 }
 
 const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
   metadata,
-  comparedCompanyIds,
+  comparisonList,
   onCompanyClick,
   onRequestQuote,
-  onCompare,
+  onAddToComparison,
+  onRemoveFromComparison,
+  maxComparison,
   onRequestPersonalizedSearch
 }) => {
   // Defensive guard against malformed metadata
@@ -84,6 +89,47 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
       {rawCompanies.map((rawCompany: any, companyIndex: number) => {
         const company = normalizeCompanyRecommendation(rawCompany);
         const trackableCompanyId = company.id;
+        const isSelected = trackableCompanyId !== null && comparisonList.some((c) => c.id === trackableCompanyId);
+        const selectedPosition = isSelected
+          ? comparisonList.findIndex((c) => c.id === trackableCompanyId) + 1
+          : null;
+
+        const handleCompareClick = () => {
+          if (trackableCompanyId === null) return;
+
+          if (isSelected) {
+            onRemoveFromComparison(trackableCompanyId);
+            return;
+          }
+
+          const companyPayload: Company = {
+            id: trackableCompanyId,
+            slug: company.slug || String(trackableCompanyId),
+            name: company.name,
+            city: company.city,
+            state: company.state,
+            status: 'active',
+            verified: company.verified,
+            category: '',
+            description: '',
+            website: '',
+            phone: '',
+            address: '',
+            created_at: '',
+            updated_at: '',
+            logo_url: company.logo_url,
+            rating_avg: company.rating_avg,
+            rating_count: company.rating_count,
+            services: company.services,
+            warranty_years: company.warranty_years,
+            post_sales_support: company.post_sales_support,
+            has_financing: company.has_financing,
+            years_in_business: company.years_in_business,
+            sponsored: company.sponsored,
+          } as Company;
+
+          onAddToComparison(companyPayload);
+        };
 
         return (
           <div
@@ -191,20 +237,21 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
                 {MOBIVOLT_COMPARE_BUTTON_ENABLED && trackableCompanyId !== null ? (
                   <button
                     type="button"
-                    onClick={() => onCompare(trackableCompanyId)}
-                    aria-pressed={comparedCompanyIds.includes(trackableCompanyId)}
+                    onClick={handleCompareClick}
+                    aria-pressed={isSelected}
+                    aria-label={isSelected ? `${company.name} selecionada para comparação na posição ${selectedPosition}` : `Adicionar ${company.name} à comparação`}
                     className={`inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-[11px] font-semibold leading-none whitespace-nowrap transition-colors ${
-                      comparedCompanyIds.includes(trackableCompanyId)
+                      isSelected
                         ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
                         : 'border-zinc-200 bg-white text-zinc-700 hover:border-blue-300 hover:bg-blue-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950'
                     }`}
                   >
                     <span aria-hidden="true">
-                      {comparedCompanyIds.includes(trackableCompanyId) ? '✓' : '+'}
+                      {isSelected ? '✓' : '+'}
                     </span>
                     <span className="truncate">
-                      {comparedCompanyIds.includes(trackableCompanyId)
-                        ? 'Selecionada'
+                      {isSelected
+                        ? `Selecionada ${selectedPosition}/${maxComparison}`
                         : 'Comparar'}
                     </span>
                   </button>

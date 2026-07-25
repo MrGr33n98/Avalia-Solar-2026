@@ -4,9 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
+import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
 import {
   OPEN_COMPARISON_DOCK_EVENT,
+  openComparisonDock,
 } from '@/lib/floating-widget-events';
 
 // Feature flags para controle do comportamento dos cards e CTAs
@@ -89,8 +91,18 @@ export default function ChatWidget() {
   // Estados locais para telemetria de cliques comerciais e comparação
   const [clickedCompanyId, setClickedCompanyId] = useState<number | null>(null);
   const [selectedCompanyForQuote, setSelectedCompanyForQuote] = useState<number | null>(null);
-  const [comparedCompanyIds, setComparedCompanyIds] = useState<number[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // Estado global de comparação (compartilhado com ComparisonFloatingBar)
+  const {
+    comparisonList,
+    addToComparison,
+    removeFromComparison,
+    count: comparisonCount,
+    maxComparison,
+    getCompanyPosition,
+  } = useComparison();
+  const comparedCompanyIds = comparisonList.map((c) => c.id);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
   const [showCompactHelp, setShowCompactHelp] = useState(false);
@@ -368,23 +380,35 @@ export default function ChatWidget() {
     }
   };
 
-  // Ao clicar no botão "Comparar"
-  const handleCompare = (companyId: number) => {
-    setComparedCompanyIds(prev => {
-      return prev.includes(companyId)
-        ? prev.filter(id => id !== companyId)
-        : [...prev, companyId];
-    });
-
+  // Ações de comparação agora vêm do estado global useComparison
+  const handleAddToComparison = (company: Parameters<typeof addToComparison>[0]) => {
+    addToComparison(company);
     try {
       track('mobivolt_compare_clicked', {
         session_id: messages[0]?.id,
-        company_id: companyId,
-        is_comparing: !comparedCompanyIds.includes(companyId)
+        company_id: company.id,
+        is_comparing: true,
       });
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleRemoveFromComparison = (companyId: number) => {
+    removeFromComparison(companyId);
+    try {
+      track('mobivolt_compare_clicked', {
+        session_id: messages[0]?.id,
+        company_id: companyId,
+        is_comparing: false,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleOpenComparisonDock = () => {
+    openComparisonDock();
   };
 
   const handleQualificationSubmit = async (submission: ChatLeadQualificationSubmission) => {
@@ -687,10 +711,12 @@ export default function ChatWidget() {
                     {MOBIVOLT_COMPANY_CARDS_ENABLED && msg.role === 'assistant' && msg.metadata?.type === 'company_recommendations' && (
                       <ChatCompanyRecommendations
                         metadata={msg.metadata}
-                        comparedCompanyIds={comparedCompanyIds}
+                        comparisonList={comparisonList}
                         onCompanyClick={handleCompanyClick}
                         onRequestQuote={handleRequestQuote}
-                        onCompare={handleCompare}
+                        onAddToComparison={handleAddToComparison}
+                        onRemoveFromComparison={handleRemoveFromComparison}
+                        maxComparison={maxComparison}
                         onRequestPersonalizedSearch={() => {
                           setSelectedCompanyForQuote(null);
                           openLeadQualification();
@@ -824,12 +850,12 @@ export default function ChatWidget() {
                       </span>
                     </div>
                   </div>
-                  {comparedCompanyIds.length > 0 && (
+                  {comparisonCount > 0 && (
                     <div className="flex items-start space-x-2">
                       <span className="text-zinc-400 mt-0.5">🏢</span>
                       <div>
                         <span className="block text-zinc-500 dark:text-zinc-400 text-[10px]">Empresas selecionadas</span>
-                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{comparedCompanyIds.length} empresa(s) selecionada(s)</span>
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{comparisonCount} empresa(s) selecionada(s)</span>
                       </div>
                     </div>
                   )}
@@ -921,15 +947,16 @@ export default function ChatWidget() {
             </button>
           </form>
 
-          {/* Floating Compare Button when 2+ companies selected */}
-          {comparedCompanyIds.length >= 2 && !showLeadForm && !hasLeadCaptured && (
+          {/* Floating Compare Button when 1+ companies selected - opens global comparison dock */}
+          {comparisonCount >= 1 && !showLeadForm && !hasLeadCaptured && (
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-40 animate-in slide-in-from-bottom-2 fade-in">
               <button
-                onClick={() => setShowComparisonModal(true)}
+                type="button"
+                onClick={handleOpenComparisonDock}
                 className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold px-4 py-2.5 rounded-full shadow-xl text-xs flex items-center space-x-2 hover:scale-105 transition-transform"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
-                <span>Ver Comparação ({comparedCompanyIds.length})</span>
+                <span>Ver Comparação ({comparisonCount}/{maxComparison})</span>
               </button>
             </div>
           )}
