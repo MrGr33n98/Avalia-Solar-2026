@@ -389,12 +389,17 @@ export default function CompanyCard({
 
   // ── Variante 1: Compact ──
   if (variant === 'compact') {
+    // Check if company has badges for layout adjustments
+    const hasBadges = company.badges && company.badges.length > 0;
+    
     return (
       <Card
         itemScope
         itemType="https://schema.org/Organization"
         className={cn(
-          'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
+          'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
+          // Add extra top padding when badges are present to prevent overlap
+          hasBadges ? 'pt-6 px-4 pb-4' : 'p-4',
           className
         )}
         onClick={handleCardClick}
@@ -402,11 +407,18 @@ export default function CompanyCard({
         onMouseLeave={onMouseLeave}
       >
         <div className="flex items-start gap-3">
-          <div data-testid="company-logo">
+          <div data-testid="company-logo" className="relative">
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 itemProp="name" className="truncate text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+            <h3 
+              itemProp="name" 
+              className={cn(
+                "text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors",
+                // Adjust truncation to account for badge overflow on the right side
+                hasBadges ? "truncate pr-3" : "truncate"
+              )}
+            >
               {name}
             </h3>
             <div 
@@ -467,6 +479,9 @@ export default function CompanyCard({
 
   // ── Variante 2: Standard ──
   if (variant === 'standard') {
+    // Check if company has badges for layout adjustments
+    const hasBadges = company.badges && company.badges.length > 0;
+    
     return (
       <Card
         className={cn(
@@ -489,7 +504,11 @@ export default function CompanyCard({
           />
         </div>
 
-        <div className="relative px-5 pb-5 pt-10 flex-1 flex flex-col">
+        <div className={cn(
+          "relative flex-1 flex flex-col",
+          // Adjust padding to accommodate badges - more top padding when badges are present
+          hasBadges ? "px-5 pb-5 pt-12" : "px-5 pb-5 pt-10"
+        )}>
           <div className="absolute -top-6 left-5 z-20" data-testid="company-logo">
             <CompanyLogo
               logoUrl={company.logo_url}
@@ -502,7 +521,11 @@ export default function CompanyCard({
 
           <div className="flex flex-col flex-1">
             <div className="flex items-start justify-between gap-2 mt-1">
-              <h3 className="font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-blue-700 transition-colors">
+              <h3 className={cn(
+                "font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-blue-700 transition-colors",
+                // Add right margin when badges are present to prevent overlap
+                hasBadges ? "mr-8" : ""
+              )}>
                 {name}
               </h3>
               {company.trust.verification_status === 'verified' && (

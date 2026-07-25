@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { track } from '@/lib/analytics/lazy';
-import { getFloatingWidgetZIndex, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
+import { getFloatingWidgetZIndex, getFloatingWidgetSizeClasses, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 
 interface MobiVoltInviteBubbleProps {
   onActionSelect: (action: InviteAction) => void;
@@ -113,7 +113,7 @@ export default function MobiVoltInviteBubble({
 
   return (
     <div 
-      className={`fixed right-4 sm:right-6 max-w-[calc(100vw-2rem)] sm:max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${MOBILE_POSITION_CLASSES.mobivolt}`}
+      className={`fixed right-4 sm:right-6 animate-in slide-in-from-bottom-5 fade-in duration-300 ${getFloatingWidgetSizeClasses('mobivolt')} ${MOBILE_POSITION_CLASSES.mobivolt}`}
       style={{
         zIndex: getFloatingWidgetZIndex('mobivolt')
       }}
