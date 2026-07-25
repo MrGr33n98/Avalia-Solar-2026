@@ -616,10 +616,15 @@ export default function CompanyCard({
       ? circumference - (recommendationRate / 100) * circumference
       : circumference;
 
+  // Check if company has badges for layout adjustments
+  const hasBadges = company.badges && company.badges.length > 0;
+
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:shadow-xl cursor-pointer',
+        'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-xl cursor-pointer',
+        // Add extra top padding when badges are present
+        hasBadges ? 'pt-6 px-4 pb-4' : 'p-4',
         className
       )}
       onClick={handleCardClick}
@@ -630,12 +635,16 @@ export default function CompanyCard({
       <div className="flex justify-between items-start gap-4">
         {/* Esquerda: Logo + Identidade */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <div data-testid="company-logo" className="shrink-0">
+          <div data-testid="company-logo" className="shrink-0 relative">
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
           <div className="min-w-0 space-y-0.5">
             <div className="flex flex-wrap items-center gap-1.5">
-              <h3 className="text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1 truncate">
+              <h3 className={cn(
+                "text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1",
+                // Adjust truncation to account for badge overflow
+                hasBadges ? "truncate pr-3" : "truncate"
+              )}>
                 {name}
                 {company.trust.verification_status === 'verified' && (
                   <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
