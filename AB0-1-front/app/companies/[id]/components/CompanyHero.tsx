@@ -235,7 +235,7 @@ export default function CompanyHero({
 
         {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
         <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             {/* Lado Esquerdo: Logo + Informações */}
             <div className="flex min-w-0 items-start gap-4 sm:gap-5">
               {/* Logo — atravessa ~30% da borda do banner */}
