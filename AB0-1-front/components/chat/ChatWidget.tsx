@@ -7,9 +7,7 @@ import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
 import {
   OPEN_COMPARISON_DOCK_EVENT,
-  openComparisonDock,
 } from '@/lib/floating-widget-events';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 
 // Feature flags para controle do comportamento dos cards e CTAs
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
