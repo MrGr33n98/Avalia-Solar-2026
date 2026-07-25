@@ -14,10 +14,8 @@ import {
 } from 'lucide-react';
 import { useComparison } from '@/hooks/useComparison';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -37,7 +35,7 @@ import analyticsApi, {
   CompanyAnalyticsSettings,
 } from '@/lib/api-analytics';
 
-import { cn } from '@/lib/utils';
+
 
 import CompanyHero from './components/CompanyHero';
 import CompanySidebar from './components/CompanySidebar';
@@ -490,29 +488,10 @@ export default function CompanyDetailClient({
               canRequestQuote={canRequestQuote}
               ctaEnabled={ctaEnabled}
               ctaUrl={ctaUrl}
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
             />
-
-            <div className="mt-3 border-b border-slate-200">
-              <ScrollArea className="w-full">
-                <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 text-slate-500">
-                  {tabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className={cn(
-                        'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
-                        'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                        'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
-                      )}
-                    >
-                      <tab.icon className="mr-2 h-4 w-4" />
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </div>
           </div>
         </header>
 

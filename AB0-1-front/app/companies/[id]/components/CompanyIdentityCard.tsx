@@ -63,7 +63,7 @@ export default function CompanyIdentityCard({
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
           {/* Box da Logo */}
-          <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-sm flex items-center justify-center p-1">
+          <div className="relative h-16 w-16 sm:h-[76px] sm:w-[76px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white flex items-center justify-center p-1">
             {badgeImageUrl && (
               <div
                 className="absolute -right-1.5 -top-1.5 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm sm:h-7 sm:w-7"
