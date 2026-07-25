@@ -180,69 +180,71 @@ export default function CompanyHero({
 
       {/* Container unificado: Banner + Card de Identidade + Abas */}
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        {/* 1. Hero Banner */}
+        {/* 1. Hero Banner + Identidade flutuante */}
         <div className="overflow-hidden rounded-t-2xl">
-          <div className="relative h-[150px] w-full bg-slate-950 sm:h-[170px] lg:h-[210px] xl:h-[220px]">
-          {/* Background Blur Fill Layer */}
-          <OptimizedImage
-            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
-            alt=""
-            fill
-            aria-hidden="true"
-            className="object-cover filter blur-xl opacity-40 scale-110"
-            containerClassName="absolute inset-0 h-full w-full pointer-events-none"
-            unoptimized={!bannerUrl || bannerError}
-          />
+          <div className="relative h-[260px] w-full bg-slate-950 sm:h-[280px] lg:h-[320px] xl:h-[340px]">
+            {/* Background Blur Fill Layer */}
+            <OptimizedImage
+              src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
+              alt=""
+              fill
+              aria-hidden="true"
+              className="object-cover filter blur-xl opacity-40 scale-110"
+              containerClassName="absolute inset-0 h-full w-full pointer-events-none"
+              unoptimized={!bannerUrl || bannerError}
+            />
 
-          {/* Banner Image */}
-          <OptimizedImage
-            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
-            alt={company.name}
-            fill
-            priority
-            quality={90}
-            imageContext="company-banner"
-            entityName={company.name}
-            locationLabel={locationLabel}
-            className="object-cover object-center"
-            containerClassName="h-full w-full"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-            fallbackSrc="/images/banner-avalia-solar.png"
-            useAspectRatio={false}
-            width={1600}
-            height={900}
-            unoptimized={!bannerUrl || bannerError}
-            onError={() => setBannerError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5 pointer-events-none" />
-          {(!bannerUrl || bannerError) && (
-            <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
-              <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
-                Imagem ilustrativa
-              </span>
-            </div>
-          )}
-          </div>
-        </div>
+            {/* Banner Image */}
+            <OptimizedImage
+              src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
+              alt={company.name}
+              fill
+              priority
+              quality={90}
+              imageContext="company-banner"
+              entityName={company.name}
+              locationLabel={locationLabel}
+              className="object-cover object-center"
+              containerClassName="h-full w-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              fallbackSrc="/images/banner-avalia-solar.png"
+              useAspectRatio={false}
+              width={1600}
+              height={900}
+              unoptimized={!bannerUrl || bannerError}
+              onError={() => setBannerError(true)}
+            />
 
-        {/* 2. Card de Identidade da Empresa (integrado ao banner, sem margem) */}
-        <div className="relative border-t border-slate-200 bg-white px-5 pb-5 pt-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
-            {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex min-w-0 items-start gap-4">
-              {/* Box da Logo — sobreposição LinkedIn */}
-              <div className="relative -mt-8 shrink-0 overflow-visible sm:-mt-9">
-                <div
-                  className="
-                    relative
-                    h-20 w-20
-                    overflow-hidden
-                    rounded-xl
-                    border border-slate-200
-                    shadow-sm
-                    sm:h-24 sm:w-24
-                  "
-                >
+            {/* Gradient overlay para legibilidade do conteúdo flutuante */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 pointer-events-none" />
+
+            {(!bannerUrl || bannerError) && (
+              <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
+                <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
+                  Imagem ilustrativa
+                </span>
+              </div>
+            )}
+
+            {/* Conteúdo flutuante: logo, dados e botões */}
+            <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-5 pt-12 sm:px-6 sm:pb-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
+                {/* Lado Esquerdo: Logo + Dados */}
+                <div className="flex min-w-0 items-end gap-4">
+                  {/* Box da Logo */}
+                  <div className="relative shrink-0 overflow-visible">
+                    <div
+                      className="
+                        relative
+                        h-20 w-20
+                        overflow-hidden
+                        rounded-xl
+                        border border-white/20
+                        bg-white
+                        shadow-lg
+                        sm:h-24 sm:w-24
+                      "
+                    >
                   <OptimizedImage
                     src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                     alt={company.name}
