@@ -1,3 +1,19 @@
+## 22. Ajuste do Widget de IA para abrir o Wizard Mobile
+
+### 22.1. Causa raiz
+- O clique no FAB mobile do MobiVolt AI era tratado em `components/chat/ChatWidget.tsx` por `handleToggle`.
+- Nesse fluxo, o mobile abria apenas `showCompactHelp`, um painel compacto independente, e nao disparava o evento `open-quote-wizard`.
+- O modal principal do wizard em `components/QuoteWizardModal.tsx` escuta esse evento em `handleOpenRequest`, portanto o estado visual esperado nunca era aplicado quando o usuario tocava no widget de IA em telas pequenas.
+
+### 22.2. Alteracao implementada
+- O handler mobile do FAB agora abre diretamente o `QuoteWizardModal` via `openQuoteWizard({ source: 'mobivolt-mobile-fab' })`.
+- O `QuoteWizardModal` recebeu ajuste de container mobile para assumir o comportamento de modal compacto ancorado na base da tela, com `safe-area`, cabecalho compacto, conteudo rolavel e rodape fixo.
+- As etapas mantiveram a logica existente de negocio, mas passaram a usar hierarquia visual mais forte no mobile para corresponder ao estado esperado do questionario.
+
+### 22.3. Validacao esperada
+- Tocar no widget de IA em mobile deve abrir imediatamente o wizard.
+- O wizard nao deve depender do painel compacto anterior para aparecer.
+- O modal deve respeitar a largura disponivel, nao colidir com a navegacao inferior e manter a acao principal sempre visivel no rodape.
 
 ## 21. Visão "OLX do Mercado Solar" (Evolução C2B)
 

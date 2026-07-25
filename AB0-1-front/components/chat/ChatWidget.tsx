@@ -231,15 +231,16 @@ export default function ChatWidget() {
   // Start session on first open
   const handleToggle = () => {
     if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
-      const nextOpen = !showCompactHelp;
       setShowInviteBubble(false);
-      setShowCompactHelp(nextOpen);
+      setShowCompactHelp(false);
       if (isOpen) setIsOpen(false);
-      if (nextOpen) {
-        notifyAssistantCompactOpen();
-        track('ai_fab_clicked', {});
-        track('ai_panel_opened', {});
-      }
+
+      // No mobile o FAB deve abrir o questionario principal, nao apenas o painel
+      // compacto. Isso garante que o clique leve o usuario diretamente ao wizard.
+      notifyAssistantCompactOpen();
+      track('ai_fab_clicked', { surface: 'mobile', destination: 'quote_wizard' });
+      track('ai_panel_opened', { surface: 'mobile', destination: 'quote_wizard' });
+      openQuoteWizard({ source: 'mobivolt-mobile-fab' });
       return;
     }
 

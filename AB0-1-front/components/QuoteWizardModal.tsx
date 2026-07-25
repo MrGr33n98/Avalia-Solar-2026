@@ -61,6 +61,17 @@ type QuoteWizardOpenDetail = {
   categoryId?: number;
 };
 
+const STEP_KICKERS: Record<number, string> = {
+  1: '01 - Categoria',
+  2: '02 - Perfil',
+  3: '03 - Orcamento',
+  4: '04 - Sistema',
+  5: '05 - Prazo',
+  6: '06 - Endereco',
+  7: '07 - Contato',
+  8: '08 - Validacao',
+};
+
 export default function QuoteWizardModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -238,26 +249,37 @@ export default function QuoteWizardModal() {
         if (!v) resetWizard();
       }}
     >
-      <DialogContent className="max-w-xl p-0 overflow-hidden max-h-[90vh] flex flex-col z-[10000] rounded-2xl border-none">
+      <DialogContent
+        overlayClassName="bg-[#0B1B36]/55 backdrop-blur-[2px]"
+        className={cn(
+          'z-[10000] flex max-h-[90vh] max-w-xl flex-col overflow-hidden border-none p-0 md:rounded-2xl',
+          'max-md:left-1/2 max-md:top-auto max-md:w-[calc(100%-32px)] max-md:max-w-[420px]',
+          'max-md:max-h-[min(76dvh,680px)] max-md:translate-x-[-50%] max-md:translate-y-0',
+          'max-md:bottom-[calc(16px+env(safe-area-inset-bottom))] max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
+          'max-md:gap-0 max-md:border max-md:border-[#0B1B36] max-md:bg-white',
+          'max-md:shadow-[8px_8px_0_rgba(11,27,54,0.18)] max-md:rounded-none',
+          '[&>button]:max-md:right-3 [&>button]:max-md:top-3 [&>button]:max-md:rounded-none [&>button]:max-md:border [&>button]:max-md:border-[#0B1B36] [&>button]:max-md:bg-white [&>button]:max-md:opacity-100'
+        )}
+      >
         {/* Progress Header */}
-        <div className="bg-slate-900 text-white px-6 py-4">
-          <div className="flex items-center justify-between mb-3">
-             <DialogTitle className="text-xs font-black uppercase tracking-widest text-slate-400">
+        <div className="bg-[#0B1B36] px-4 py-3 text-white md:px-6 md:py-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+             <DialogTitle className="text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
                {step < 9 ? `Etapa ${step} de ${TOTAL_STEPS}` : 'Concluído'}
              </DialogTitle>
-             <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs">
+             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#16A34A]">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 100% SEGURO
              </div>
           </div>
-          <Progress value={progressValue} className="h-1.5 bg-slate-800" />
+          <Progress value={progressValue} className="h-1.5 rounded-none bg-[#19315E]" />
         </div>
 
-        <div className="px-6 py-8 md:px-10 space-y-6 flex-grow overflow-y-auto">
+        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-10 md:py-8">
           {step === 1 && (
-            <div className="space-y-6">
-              <WizardHeading title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
-              <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[1]} title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
+              <div className="grid grid-cols-1 gap-2 md:gap-3">
                 {['Energia Solar e/ou Baterias', 'Bombas de Calor', 'Carregadores Veiculares (EV)'].map(v => (
                   <OptionButton key={v} selected={form.productVertical === v} onClick={() => { updateForm({ productVertical: v }); handleNext(); }}>
                     {v}
@@ -268,9 +290,9 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
-              <WizardHeading title="Qual o tipo de projeto?" subtitle="Selecione o perfil da instalação." />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[2]} title="Qual o tipo de projeto?" subtitle="Selecione o perfil da instalação." />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Residencial', 'Condominio', 'Comercial'].map(v => (
                   <OptionButton key={v} selected={form.projectProfile === v} onClick={() => { updateForm({ projectProfile: v }); handleNext(); }}>
                     {v}
@@ -281,9 +303,9 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 3 && (
-            <div className="space-y-6">
-              <WizardHeading title="Tipo de Orçamento" subtitle="Escolha o que deseja cotar." />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[3]} title="Tipo de Orçamento" subtitle="Escolha o que deseja cotar." />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Energia Solar', 'Solar + Bateria', 'Apenas Bateria'].map(v => (
                   <OptionButton key={v} selected={form.quoteType === v} onClick={() => { updateForm({ quoteType: v }); handleNext(); }}>
                     {v}
@@ -294,9 +316,9 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 4 && (
-            <div className="space-y-6">
-              <WizardHeading title="Tamanho do Sistema" subtitle="Você já sabe a potência necessária?" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[4]} title="Tamanho do Sistema" subtitle="Você já sabe a potência necessária?" />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Ate 7 kWp', '8 kWp ou mais', 'unknown'].map(v => (
                   <OptionButton key={v} selected={form.systemSizeChoice === v} onClick={() => updateForm({ systemSizeChoice: v })}>
                     {v === 'unknown' ? 'Não sei' : v}
@@ -323,9 +345,9 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 5 && (
-            <div className="space-y-6">
-              <WizardHeading title="Quando pretende decidir?" subtitle="Ajude as empresas a priorizarem seu contato." />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[5]} title="Quando pretende decidir?" subtitle="Ajude as empresas a priorizarem seu contato." />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Agora', 'Em ate 6 meses', 'Mais de 6 meses'].map(v => (
                   <OptionButton key={v} selected={form.decisionTimeline === v} onClick={() => { updateForm({ decisionTimeline: v }); handleNext(); }}>
                     {v}
@@ -336,8 +358,8 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 6 && (
-            <div className="space-y-6">
-              <WizardHeading title="Onde será a instalação?" subtitle="Informe o endereço completo." />
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[6]} title="Onde será a instalação?" subtitle="Informe o endereço completo." />
               <div className="space-y-1.5">
                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Endereço Completo</Label>
                 <Input value={form.addressFull} onChange={(e) => updateForm({ addressFull: e.target.value })} placeholder="Rua, número - Cidade/UF" className="h-12 rounded-xl" />
@@ -346,8 +368,8 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 7 && (
-            <div className="space-y-6">
-              <WizardHeading title="Seus Dados de Contato" subtitle="Quase lá! Como as empresas podem falar com você?" />
+            <div className="space-y-5 md:space-y-6">
+              <WizardHeading kicker={STEP_KICKERS[7]} title="Seus Dados de Contato" subtitle="Quase lá! Como as empresas podem falar com você?" />
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nome Completo</Label>
@@ -375,7 +397,7 @@ export default function QuoteWizardModal() {
 
           {step === 8 && (
             <div className="space-y-8 py-4 text-center">
-              <WizardHeading title="Validação de Segurança" subtitle={`Digitie o código enviado para ${verificationHint || form.email}`} center />
+              <WizardHeading kicker={STEP_KICKERS[8]} title="Validação de Segurança" subtitle={`Digitie o código enviado para ${verificationHint || form.email}`} center />
               <div className="flex flex-col items-center gap-6">
                 <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
                   <InputOTPGroup className="gap-2">
@@ -425,24 +447,24 @@ export default function QuoteWizardModal() {
         </div>
 
         {/* Action Footer */}
-        <div className="px-6 pb-6 md:px-10 flex items-center justify-between border-t pt-6 bg-slate-50/50">
+        <div className="flex items-center justify-between gap-3 border-t border-[#D9E0EA] bg-white px-4 py-3 md:px-10 md:pt-6 md:pb-6">
           {step <= TOTAL_STEPS ? (
             <>
-              <Button variant="ghost" className="font-bold text-slate-400 hover:text-slate-900" onClick={handleBack} disabled={step === 1 || submitting}>
+              <Button variant="ghost" className="h-10 rounded-none px-0 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-transparent hover:text-[#1268E8] disabled:text-slate-300 md:h-12" onClick={handleBack} disabled={step === 1 || submitting}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> VOLTAR
               </Button>
               {step < 8 ? (
-                <Button onClick={handleNext} disabled={submitting} className="bg-blue-600 hover:bg-blue-700 font-black px-8 h-12 rounded-xl shadow-lg shadow-blue-100">
+                <Button onClick={handleNext} disabled={submitting} className="h-10 rounded-none border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-none hover:bg-[#0F56C6] md:h-12 md:px-8">
                   AVANÇAR <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleVerifyOtp} disabled={submitting} className="bg-blue-600 hover:bg-blue-700 font-black px-8 h-12 rounded-xl shadow-lg">
+                <Button onClick={handleVerifyOtp} disabled={submitting} className="h-10 rounded-none border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-none hover:bg-[#0F56C6] md:h-12 md:px-8">
                   VALIDAR AGORA
                 </Button>
               )}
             </>
           ) : (
-            <Button onClick={() => setOpen(false)} className="w-full h-12 bg-slate-900 font-black rounded-xl">CONCLUÍDO</Button>
+            <Button onClick={() => setOpen(false)} className="h-10 w-full rounded-none bg-[#0B1B36] text-xs font-black tracking-[0.16em] md:h-12">CONCLUÍDO</Button>
           )}
         </div>
       </DialogContent>
@@ -450,10 +472,23 @@ export default function QuoteWizardModal() {
   );
 }
 
-const WizardHeading = ({ title, subtitle, center }: { title: string; subtitle: string; center?: boolean }) => (
+const WizardHeading = ({
+  title,
+  subtitle,
+  center,
+  kicker,
+}: {
+  title: string;
+  subtitle: string;
+  center?: boolean;
+  kicker?: string;
+}) => (
   <div className={cn("space-y-1", center && "text-center")}>
-    <h2 className="text-2xl font-black text-slate-950 tracking-tight leading-tight uppercase">{title}</h2>
-    <p className="text-sm text-slate-500 font-medium">{subtitle}</p>
+    {kicker ? (
+      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1268E8]">{kicker}</p>
+    ) : null}
+    <h2 className="text-[24px] font-[800] leading-[1.1] tracking-[-0.02em] text-[#0B1B36] uppercase">{title}</h2>
+    <p className="max-w-[32ch] text-[14px] leading-[1.4] text-slate-500 font-medium">{subtitle}</p>
   </div>
 );
 
@@ -464,11 +499,11 @@ type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
   <button type="button" className={cn(
-    'w-full border px-4 py-3 text-[14px] font-[700] transition-all text-left uppercase tracking-tight',
-    'max-md:rounded-none md:rounded-2xl md:border-2',
+    'w-full border px-4 py-3 text-left text-[14px] font-[700] uppercase tracking-tight transition-all',
+    'rounded-none border-[#B8C4D6] bg-white text-[#0B1B36] shadow-none',
     selected 
-      ? 'border-[#1268E8] bg-[#F3F5F7] text-[#0B1B36] shadow-none md:scale-[1.02]' 
-      : 'border-[#E5E7EB] bg-white text-[#0B1B36] hover:border-[#1268E8]/50 hover:bg-[#F3F5F7]',
+      ? 'border-[#1268E8] bg-[#F3F5F7] text-[#0B1B36]' 
+      : 'hover:border-[#1268E8]/60 hover:bg-[#F8FAFC]',
     className
   )} aria-pressed={selected} {...props}>
     <div className="flex items-center justify-between">
