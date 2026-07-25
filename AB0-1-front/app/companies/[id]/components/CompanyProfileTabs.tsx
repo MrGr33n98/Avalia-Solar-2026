@@ -55,7 +55,9 @@ export default function CompanyProfileTabs({
                   className={cn(
                     'h-14 rounded-none border-b-2 border-transparent px-0 pb-0 pt-1 text-[13px] font-medium shadow-none transition-all duration-200',
                     'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                    'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow
+                    'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none data-[state=active]:font-bold'
+                  )}
+                >
                   <tab.icon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span className="whitespace-nowrap">{tab.label}</span>
                   {tab.id === 'products' && uniqueCategories.length > 0 && (
