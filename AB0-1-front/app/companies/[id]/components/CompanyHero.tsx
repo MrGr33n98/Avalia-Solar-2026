@@ -2,7 +2,16 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Share2, ArrowLeft, MapPin, Star, BadgeCheck } from 'lucide-react';
+import {
+  MessageCircle,
+  Share2,
+  ArrowLeft,
+  MapPin,
+  Star,
+  BadgeCheck,
+  Diamond,
+  ClipboardList,
+} from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -80,7 +89,7 @@ export default function CompanyHero({
   const directChatReturnTo = `/chat?company_id=${company.id}`;
   const wizardCategoryId = resolveWizardCategoryId(company);
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
-  const ratingLabel = `${Number(companyStats.rating).toFixed(1)}/5.0`;
+  const ratingLabel = Number(companyStats.rating).toFixed(1);
   const intentCompanyId = String(company.id);
   const heroWhatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
     signalCategory: 'contact_intent',
@@ -120,7 +129,6 @@ export default function CompanyHero({
   useEffect(() => {
     setBadgeImageError(false);
 
-    // Track company profile view on mount
     trackCompanyProfileView(
       String(company.id),
       company.name,
@@ -178,7 +186,7 @@ export default function CompanyHero({
       </div>
 
       {/* Container principal: banner + identidade + tabs */}
-      <section className="rounded-2xl border border-slate-200 bg-transparent shadow-sm">
+      <section className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
         {/* 1. HERO BANNER */}
         <div className="relative h-[190px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[230px] lg:h-[300px] xl:h-[320px]">
           {/* Background Blur Fill Layer */}
@@ -213,8 +221,8 @@ export default function CompanyHero({
             onError={() => setBannerError(true)}
           />
 
-          {/* Gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/5" />
+          {/* Overlay sutil — apenas para transição visual, sem texto sobreposto */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
 
           {(!bannerUrl || bannerError) && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
@@ -225,14 +233,14 @@ export default function CompanyHero({
           )}
         </div>
 
-        {/* 2. IDENTIDADE DA EMPRESA - logo atravessa a borda do banner */}
-        <div className="relative px-4 pb-4 pt-0 sm:px-5 sm:pb-5 lg:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex items-start gap-4 min-w-0">
-              {/* Logo - atravessa a linha inferior do banner (~30% acima) */}
-              <div className="relative -mt-8 shrink-0 overflow-visible sm:-mt-9 lg:-mt-10">
-                <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 shadow-sm sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
+        {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
+        <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            {/* Lado Esquerdo: Logo + Informações */}
+            <div className="flex min-w-0 items-start gap-4 sm:gap-5">
+              {/* Logo — atravessa ~30% da borda do banner */}
+              <div className="relative -mt-9 shrink-0 overflow-visible sm:-mt-10 lg:-mt-11">
+                <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-2 border-slate-950 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
                   <OptimizedImage
                     src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                     alt={company.name}
@@ -249,91 +257,122 @@ export default function CompanyHero({
                   />
                 </div>
 
-                {/* Selo de conquista sobre a logo */}
+                {/* Selo de conquista — formato original preservado */}
                 {heroBadgeUrl && !badgeImageError && (
                   <div
-                    className="absolute -right-1.5 -top-2 z-30 h-9 w-9 overflow-visible sm:h-10 sm:w-10"
+                    className="absolute -right-3 -top-3 z-30 h-12 w-12 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)]"
                     title="Selo de conquista"
                   >
                     <OptimizedImage
                       src={heroBadgeUrl}
                       alt="Selo de conquista"
                       fill
-                      sizes="40px"
+                      sizes="48px"
                       objectFit="contain"
-                      className="drop-shadow-sm"
-                      containerClassName="h-full w-full bg-transparent"
+                      className="p-0"
+                      containerClassName="h-full w-full overflow-visible bg-transparent"
                       onError={() => setBadgeImageError(true)}
                     />
                   </div>
                 )}
               </div>
 
-              {/* Informações da Empresa */}
-              <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
+              {/* Informações da empresa */}
+              <div className="min-w-0 pt-1 sm:pt-2">
+                {/* Nome + verificado */}
                 <div className="flex min-w-0 items-center gap-2">
-                  <h1 className="truncate text-xl font-bold text-slate-950 sm:text-2xl">
+                  <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl lg:text-[26px]">
                     {company.name}
                   </h1>
                   {company.verified && (
                     <BadgeCheck
-                      className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-6 sm:w-6"
+                      className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-[22px] sm:w-[22px]"
                       aria-label="Empresa verificada"
                     />
                   )}
                 </div>
 
+                {/* Localização */}
                 {locationLabel && (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 sm:text-sm">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
+                    <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
                     <span className="truncate">{locationLabel}</span>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
-                  <div className="flex items-center gap-1 font-bold text-slate-950">
-                    <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" strokeWidth={0} />
-                    <span>{ratingLabel}</span>
-                  </div>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-slate-500">
-                    {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
+                {/* Nota + avaliações */}
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="inline-flex items-center gap-1 font-bold text-slate-950">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                    {ratingLabel}
                   </span>
-
-                  {directChatVisible && (
-                    <span className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-100" />
-                      </span>
-                      Chat Online
-                    </span>
-                  )}
+                  <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
+                  <span className="text-slate-500">
+                    {companyStats.reviewCount}{' '}
+                    {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
+                  </span>
                 </div>
+
+                {/* Indicador de atendimento online — linha separada, discreto */}
+                {directChatVisible && (
+                  <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
+                    Atendimento online
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Lado Direito: Premium + Botões */}
-            <div className="ml-auto flex shrink-0 flex-col items-end gap-3">
-              {/* Badge PREMIUM */}
+            {/* Lado Direito: Premium + Ações */}
+            <div className="flex w-full flex-col gap-3 lg:w-auto lg:shrink-0 lg:items-end">
+              {/* Badge PREMIUM — sutil, violeta claro, elemento de status */}
               {company.verified && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-3 py-1.5 shadow-lg border border-purple-300/50">
-                  <svg className="h-3.5 w-3.5 text-purple-100" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="text-xs font-bold tracking-wide text-white drop-shadow-sm">PREMIUM</span>
+                <div className="inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700">
+                  <Diamond className="h-3.5 w-3.5" />
+                  PREMIUM
                 </div>
               )}
 
-              {/* Botões de ação */}
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
+              {/* Botões de ação — Orçamento primeiro, depois WhatsApp, Chat, Avaliar, Compartilhar */}
+              <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap lg:justify-end">
+                {/* CTA Primário: Solicitar orçamento */}
+                {canRequestQuote ? (
+                  <Button
+                    size="default"
+                    className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
+                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
+                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
+                    onClick={async () => {
+                      await trackCTAClick({
+                        ctaType: 'quote',
+                        ctaLocation: 'hero',
+                        companyId: String(company.id),
+                        companyName: company.name,
+                      });
+                      openLeadModal({
+                        preferredCompanyId: company.id,
+                        categoryId: wizardCategoryId,
+                        source: 'company-hero',
+                        type: 'wizard',
+                      });
+                    }}
+                  >
+                    <ClipboardList className="mr-1.5 h-4 w-4" />
+                    Solicitar orçamento
+                  </Button>
+                ) : null}
+
+                {/* WhatsApp */}
                 {ctaEnabled && ctaUrl && (
                   <div {...heroWhatsappHoverIntent}>
                     <WhatsappButton
                       size="default"
                       enabled
                       href={ctaUrl}
-                      className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
+                      className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                       label="WhatsApp"
                       companyId={company.id}
                       requireSignup
@@ -344,10 +383,11 @@ export default function CompanyHero({
                   </div>
                 )}
 
+                {/* Chat — botão verde simples */}
                 {directChatVisible && (
                   <Button
                     size="default"
-                    className="relative group h-10 shrink-0 items-center justify-center whitespace-nowrap overflow-hidden rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
+                    className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
                     onClick={() => {
                       track('company_direct_chat_click', {
                         company_id: company.id,
@@ -367,54 +407,32 @@ export default function CompanyHero({
                       });
                     }}
                   >
-                    <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
-                    <MessageCircle className="mr-1.5 h-4 w-4 text-emerald-200" />
+                    <MessageCircle className="mr-1.5 h-4 w-4" />
                     Chat
                   </Button>
                 )}
 
-                <Button
-                  variant="outline"
-                  size="default"
-                  className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 sm:text-sm"
-                  onClick={handleShare}
-                  disabled={isSharing}
-                >
-                  <Share2 className="mr-1.5 h-4 w-4 text-slate-400" />
-                  Compartilhar
-                </Button>
-
-                {canRequestQuote ? (
-                  <Button
-                    size="default"
-                    className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
-                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
-                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
-                    onClick={async () => {
-                      await trackCTAClick({
-                        ctaType: 'quote',
-                        ctaLocation: 'hero',
-                        companyId: String(company.id),
-                        companyName: company.name,
-                      });
-                      openLeadModal({
-                        preferredCompanyId: company.id,
-                        categoryId: wizardCategoryId,
-                        source: 'company-hero',
-                        type: 'wizard',
-                      });
-                    }}
-                  >
-                    <Star className="mr-1.5 h-4 w-4 fill-white" />
-                    Solicitar orçamento
-                  </Button>
-                ) : (
+                {/* Avaliar empresa (quando não pode solicitar orçamento) */}
+                {!canRequestQuote && (
                   <ReviewCompanyButton
                     company={company}
                     compactLabel="Avaliar empresa"
-                    className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
+                    className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                   />
                 )}
+
+                {/* Compartilhar — ícone em mobile, label em desktop */}
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  aria-label="Compartilhar empresa"
+                >
+                  <Share2 className="h-4 w-4 text-slate-400 lg:mr-1.5" />
+                  <span className="hidden lg:inline">Compartilhar</span>
+                </Button>
               </div>
             </div>
           </div>
@@ -422,9 +440,9 @@ export default function CompanyHero({
 
         {/* 3. NAVEGAÇÃO POR ABAS */}
         {tabs.length > 0 && onTabChange && (
-          <div className="border-t border-slate-200 bg-transparent">
+          <div className="border-t border-slate-200 bg-white">
             <ScrollArea className="w-full">
-              <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 px-4 text-slate-500 sm:px-5 lg:px-6">
+              <TabsList className="h-14 min-w-max justify-start gap-6 rounded-none bg-transparent px-4 sm:px-6 lg:px-7">
                 {tabs.map((tab) => {
                   const TabIcon = tab.icon;
                   return (
@@ -432,9 +450,11 @@ export default function CompanyHero({
                       key={tab.id}
                       value={tab.id}
                       className={cn(
-                        'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
-                        'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                        'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
+                        'relative h-14 rounded-none border-0 bg-transparent px-0 text-sm font-medium shadow-none',
+                        'text-slate-500 hover:text-slate-900',
+                        'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-blue-600 after:transition-transform',
+                        'data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none',
+                        'data-[state=active]:after:scale-x-100'
                       )}
                     >
                       <TabIcon className="mr-2 h-4 w-4" />
