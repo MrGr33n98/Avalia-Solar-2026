@@ -2,14 +2,12 @@
 
 import { useMemo } from 'react';
 import { ReactNode } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Star, BadgeCheck } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Company } from '@/lib/api';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
-import CompanyVerificationBadge from './CompanyVerificationBadge';
 import PremiumHighlightBadge from './PremiumHighlightBadge';
-import CompanyRatingBadge from './CompanyRatingBadge';
 
 interface CompanyIdentityCardProps {
   company: Company;
@@ -42,18 +40,27 @@ export default function CompanyIdentityCard({
     return company.name ? company.name.charAt(0).toUpperCase() : 'A';
   }, [company.name]);
 
+  const isVerified = Boolean(
+    company.verified || company.trust?.verification_status === 'verified'
+  );
+
+  const numericRating = Number.parseFloat(companyStats.rating);
+  const ratingFormatted =
+    Number.isNaN(numericRating) || numericRating <= 0 ? '5.0' : numericRating.toFixed(1);
+
   return (
-    <div
+    <section
       id="company-identity-card"
-      className="relative flex w-full flex-col gap-2 rounded-none border border-slate-200 bg-white pb-3 pl-3 pr-3 pt-12 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.22)] sm:gap-3 sm:p-4"
+      aria-label="Card da empresa com ações"
+      className="relative overflow-hidden rounded-2xl rounded-t-none border border-slate-200 border-t-0 bg-white pb-4 shadow-sm"
     >
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-        {/* Logo Container com Fallback */}
-        <div className="absolute left-4 top-0 -translate-y-1/2 sm:static sm:translate-y-0">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-[1px] shadow-sm sm:h-[72px] sm:w-[72px]">
+      <div className="relative px-4 pb-0 pt-14">
+        {/* Logo sobreposta à esquerda, parcialmente sobre o banner */}
+        <div className="absolute left-4 top-[-38px] z-20">
+          <div className="relative h-20 w-20 overflow-hidden rounded-xl border-4 border-white bg-white shadow-md sm:h-[84px] sm:w-[84px]">
             {badgeImageUrl && (
-              <div 
-                className="absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center w-[30px] h-[30px] -right-2 -top-2 sm:w-[38px] sm:h-[38px] sm:-right-3 sm:-top-3 transition-transform hover:scale-110"
+              <div
+                className="absolute -right-2 -top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm sm:h-9 sm:w-9"
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image
@@ -61,12 +68,12 @@ export default function CompanyIdentityCard({
                   alt={badgeToRender?.name || 'Selo'}
                   width={48}
                   height={48}
-                  className="object-contain w-full h-full rounded-full"
+                  className="h-full w-full rounded-full object-contain"
                   unoptimized
                 />
               </div>
             )}
-            <div className="relative w-full h-full overflow-hidden rounded-lg">
+            <div className="relative h-full w-full overflow-hidden rounded-lg">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -77,8 +84,8 @@ export default function CompanyIdentityCard({
                   entityName={company.name}
                   locationLabel={locationLabel}
                   objectFit="contain"
-                  className="rounded-md bg-white p-0.5"
-                  containerClassName="h-full w-full rounded-md bg-white"
+                  className="bg-white p-0.5"
+                  containerClassName="h-full w-full bg-white"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
                 />
@@ -91,36 +98,47 @@ export default function CompanyIdentityCard({
           </div>
         </div>
 
-        {/* Info Content */}
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="absolute right-4 top-4 z-20 sm:right-5 sm:top-5">
-            <CompanyVerificationBadge company={company} />
-          </div>
+        {/* Selo Premium ancorado à direita, abaixo do banner */}
+        <div className="absolute right-4 top-4 z-10">
+          <PremiumHighlightBadge company={company} />
+        </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h1 className="max-w-full truncate text-xl font-black tracking-tight text-slate-950 md:text-[1.45rem]">
+        {/* Informações da empresa */}
+        <div className="space-y-3">
+          {/* Nome + verificado na mesma linha */}
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="truncate text-[1.45rem] font-bold leading-tight tracking-tight text-slate-950 sm:text-[1.6rem]">
               {company.name}
             </h1>
-            <PremiumHighlightBadge company={company} />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <CompanyRatingBadge
-              rating={companyStats.rating}
-              reviewCount={companyStats.reviewCount}
-            />
-
-            {locationLabel && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                {locationLabel}
-              </span>
+            {isVerified && (
+              <BadgeCheck className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-6 sm:w-6" aria-label="Empresa verificada" />
             )}
           </div>
+
+          {/* Localização */}
+          {locationLabel && (
+            <div className="flex items-center gap-1.5 text-sm text-slate-500 sm:text-base">
+              <MapPin className="h-4 w-4 text-slate-400" aria-hidden="true" />
+              <span>{locationLabel}</span>
+            </div>
+          )}
+
+          {/* Nota + avaliações em linha compacta */}
+          <div className="flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-1.5">
+              <Star className="h-5 w-5 fill-amber-400 text-amber-400" strokeWidth={0} aria-hidden="true" />
+              <span className="font-bold text-slate-950">{ratingFormatted}</span>
+            </div>
+            <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+            <span className="text-slate-500">
+              {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
+            </span>
+          </div>
+
+          {/* Ações: Solicitar orçamento, Avaliar, Compartilhar */}
+          {children && <div className="pt-2">{children}</div>}
         </div>
       </div>
-
-      {children && <div className="border-t border-slate-100 pt-2">{children}</div>}
-    </div>
+    </section>
   );
 }

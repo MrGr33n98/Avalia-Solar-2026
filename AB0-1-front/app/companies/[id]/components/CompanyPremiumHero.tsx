@@ -21,9 +21,9 @@ export default function CompanyPremiumHero({
   return (
     <div
       id="company-premium-hero"
-      className="relative w-full overflow-hidden rounded-none border border-slate-200 bg-slate-900 shadow-lg"
+      className="relative w-full overflow-hidden rounded-t-2xl border border-slate-200 border-b-0 bg-slate-900 shadow-sm"
     >
-      <div className="relative h-[170px] w-full sm:h-[220px] lg:h-[250px]">
+      <div className="relative h-[155px] w-full sm:h-[180px] lg:h-[250px]">
         <OptimizedImage
           src={
             !bannerUrl || bannerError ? '/images/avalia-solar-banner-placeholder-v1.png' : bannerUrl

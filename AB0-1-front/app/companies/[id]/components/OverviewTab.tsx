@@ -50,16 +50,14 @@ export default function OverviewTab({
       {/* 1. Diferenciais Rápidos (Highlights Grid) - Removido a pedido do usuário */}
 
       {/* 2. Sobre a Empresa */}
-      <Card className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-lg font-black tracking-tight text-slate-950">Sobre a Empresa</h3>
-              <p className="text-xs text-slate-500">História, atuação e valores institucionais.</p>
-            </div>
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-xl font-bold tracking-tight text-slate-950">Sobre a Empresa</h3>
+            <p className="mt-1 text-[13px] text-slate-500">História, atuação e valores institucionais.</p>
           </div>
-          
-          <div className="prose prose-slate max-w-none text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+
+          <div className="max-w-none text-[15px] leading-7 text-slate-600 whitespace-pre-line">
             {description ? (
               <p>{displayDescription}</p>
             ) : (
@@ -69,12 +67,12 @@ export default function OverviewTab({
 
           {isLongDescription && (
             <Button
-              variant="outline"
+              variant="link"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="self-start rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs shadow-sm h-8"
+              className="self-start p-0 text-sm font-bold text-blue-700 hover:text-blue-800 h-auto"
             >
-              {isExpanded ? "Ver menos" : "Ver mais"}
+              {isExpanded ? "Ver menos" : "Ler mais"}
             </Button>
           )}
         </div>

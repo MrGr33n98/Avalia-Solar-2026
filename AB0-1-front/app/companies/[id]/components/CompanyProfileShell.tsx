@@ -88,10 +88,10 @@ export default function CompanyProfileShell({
   // Checagem de entitlements para abas e blocos (showFaq is passed via props)
 
   return (
-    <div id="company-profile-shell" className="min-h-screen bg-[#f8fafc] text-slate-900 pb-16">
+    <div id="company-profile-shell" className="min-h-screen bg-slate-50/40 text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
-        <div className="mx-auto max-w-[1240px] px-4 pt-4 md:px-6">
+        <div className="mx-auto w-full max-w-[430px] px-4 pt-4 md:max-w-[1240px] md:px-6">
           <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
           <div className="flex flex-col gap-3">
@@ -104,7 +104,7 @@ export default function CompanyProfileShell({
             />
 
             {/* Identidade da Empresa e CTAs */}
-            <div className="relative z-20 -mt-16 px-0 sm:-mt-20 md:-mt-24">
+            <div className="relative z-20 -mt-14 px-0 sm:-mt-18 md:-mt-24">
               <CompanyIdentityCard
                 company={company}
                 companyStats={companyStats}
@@ -115,9 +115,6 @@ export default function CompanyProfileShell({
                 <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
               </CompanyIdentityCard>
             </div>
-
-            {/* Banners Estratégicos Placeholder */}
-            <div className="h-px w-full bg-slate-200/50" />
 
             {/* Navegação por Abas Responsiva */}
             <CompanyProfileTabs
@@ -140,9 +137,9 @@ export default function CompanyProfileShell({
       </header>
 
       {/* Grid Principal responsivo de 12 colunas */}
-      <main className="mx-auto max-w-[1240px] px-4 py-8 md:px-6">
+      <main className="mx-auto w-full max-w-[430px] px-4 py-6 md:max-w-[1240px] md:px-6 md:py-8">
         <Tabs value={activeTab} className="w-full">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}
             <div className="lg:col-span-8 space-y-6">
               {/* ABA 1: VISÃO GERAL */}
