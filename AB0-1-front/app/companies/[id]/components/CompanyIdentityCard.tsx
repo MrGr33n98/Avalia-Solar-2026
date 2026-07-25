@@ -142,5 +142,4 @@ export default function CompanyIdentityCard({
       </div>
     </section>
   );
-  );
 }
