@@ -239,7 +239,7 @@ export default function CompanyHero({
             <div className="flex flex-col sm:flex-row items-start gap-4 min-w-0">
               {/* Box da Logo — sobreposição LinkedIn */}
               <div className="relative -mt-6 sm:-mt-7 shrink-0 overflow-visible">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl">
                   <OptimizedImage
                     src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                     alt={company.name}
@@ -257,7 +257,7 @@ export default function CompanyHero({
                 </div>
                 {heroBadgeUrl && !badgeImageError && (
                   <div
-                    className="absolute -right-2 -top-2 z-30 h-10 w-10 sm:h-11 sm:w-11"
+                    className="absolute -right-2 -top-2 z-30 h-10 w-10 transition-transform duration-200 hover:scale-110 sm:h-11 sm:w-11"
                     title="Selo de conquista"
                   >
                     <OptimizedImage
