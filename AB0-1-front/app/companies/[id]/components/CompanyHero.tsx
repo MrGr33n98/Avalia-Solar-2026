@@ -235,205 +235,207 @@ export default function CompanyHero({
 
         {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
         <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            {/* Lado Esquerdo: Logo + Informações */}
-            <div className="flex min-w-0 items-start gap-4 sm:gap-5">
-              {/* Logo — atravessa ~30% da borda do banner */}
-              <div className="relative -mt-9 shrink-0 overflow-visible sm:-mt-10 lg:-mt-11">
-                <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-2 border-slate-950 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
-                  <OptimizedImage
-                    src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
-                    alt={company.name}
-                    fill
-                    priority
-                    imageContext="company-logo"
-                    entityName={company.name}
-                    locationLabel={locationLabel}
-                    objectFit="cover"
-                    className="p-0"
-                    containerClassName="absolute inset-0 h-full w-full"
-                    fallbackSrc="/images/logo-placeholder.svg"
-                    onError={() => setLogoError(true)}
-                  />
-                </div>
-
-                {/* Selo de conquista — formato original preservado */}
-                {heroBadgeUrl && !badgeImageError && (
-                  <div
-                    className="absolute -right-3 -top-3 z-30 h-12 w-12 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)]"
-                    title="Selo de conquista"
-                  >
+          <div className="flex flex-col gap-4">
+            {/* Linha 1 — Logo + Nome/Info + Selo Premium (sem os botões) */}
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              {/* Lado Esquerdo: Logo + Informações */}
+              <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
+                {/* Logo — atravessa ~30% da borda do banner */}
+                <div className="relative -mt-9 shrink-0 overflow-visible sm:-mt-10 lg:-mt-11">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-[3px] border-slate-950 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.2)] sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
                     <OptimizedImage
-                      src={heroBadgeUrl}
-                      alt="Selo de conquista"
+                      src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
+                      alt={company.name}
                       fill
-                      sizes="48px"
-                      objectFit="contain"
+                      priority
+                      imageContext="company-logo"
+                      entityName={company.name}
+                      locationLabel={locationLabel}
+                      objectFit="cover"
                       className="p-0"
-                      containerClassName="h-full w-full overflow-visible bg-transparent"
-                      onError={() => setBadgeImageError(true)}
+                      containerClassName="absolute inset-0 h-full w-full"
+                      fallbackSrc="/images/logo-placeholder.svg"
+                      onError={() => setLogoError(true)}
                     />
                   </div>
-                )}
-              </div>
 
-              {/* Informações da empresa */}
-              <div className="min-w-0 pt-1 sm:pt-2">
-                {/* Nome + verificado */}
-                <div className="flex min-w-0 items-center gap-2">
-                  <h1 className="truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl lg:text-[26px]">
-                    {company.name}
-                  </h1>
-                  {company.verified && (
-                    <BadgeCheck
-                      className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-[22px] sm:w-[22px]"
-                      aria-label="Empresa verificada"
-                    />
+                  {/* Selo de conquista — fundo 100% transparente */}
+                  {heroBadgeUrl && !badgeImageError && (
+                    <div
+                      className="absolute -right-3 -top-3 z-30 h-12 w-12 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)]"
+                      style={{ background: 'transparent' }}
+                      title="Selo de conquista"
+                    >
+                      <OptimizedImage
+                        src={heroBadgeUrl}
+                        alt="Selo de conquista"
+                        fill
+                        sizes="48px"
+                        objectFit="contain"
+                        className="bg-transparent p-0"
+                        containerClassName="h-full w-full overflow-visible bg-transparent"
+                        style={{ background: 'transparent' }}
+                        onError={() => setBadgeImageError(true)}
+                      />
+                    </div>
                   )}
                 </div>
 
-                {/* Localização */}
-                {locationLabel && (
-                  <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
-                    <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="truncate">{locationLabel}</span>
+                {/* Informações da empresa */}
+                <div className="min-w-0 flex-1 pt-1 sm:pt-2">
+                  {/* Nome + verificado */}
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <h1 className="min-w-0 truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl lg:text-[26px]">
+                      {company.name}
+                    </h1>
+                    {company.verified && (
+                      <BadgeCheck
+                        className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-[22px] sm:w-[22px]"
+                        aria-label="Empresa verificada"
+                      />
+                    )}
                   </div>
-                )}
 
-                {/* Nota + avaliações */}
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="inline-flex items-center gap-1 font-bold text-slate-950">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
-                    {ratingLabel}
-                  </span>
-                  <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
-                  <span className="text-slate-500">
-                    {companyStats.reviewCount}{' '}
-                    {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
-                  </span>
-                </div>
+                  {/* Localização */}
+                  {locationLabel && (
+                    <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
+                      <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="truncate">{locationLabel}</span>
+                    </div>
+                  )}
 
-                {/* Indicador de atendimento online — linha separada, discreto */}
-                {directChatVisible && (
-                  <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  {/* Nota + avaliações */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="inline-flex items-center gap-1 font-bold text-slate-950">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" strokeWidth={0} />
+                      {ratingLabel}
                     </span>
-                    Atendimento online
-                  </span>
-                )}
-              </div>
-            </div>
+                    <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
+                    <span className="text-slate-500">
+                      {companyStats.reviewCount}{' '}
+                      {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
+                    </span>
+                  </div>
 
-            {/* Lado Direito: Premium + Ações */}
-            <div className="flex w-full flex-col gap-3 lg:w-auto lg:shrink-0 lg:items-end">
+                  {/* Indicador de atendimento online — linha separada, discreto */}
+                  {directChatVisible && (
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                      </span>
+                      Atendimento online
+                    </span>
+                  )}
+                </div>
+              </div>
+
               {/* Badge PREMIUM — sutil, violeta claro, elemento de status */}
               {company.verified && (
-                <div className="inline-flex h-7 w-fit items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700">
+                <div className="inline-flex h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700">
                   <Diamond className="h-3.5 w-3.5" />
                   PREMIUM
                 </div>
               )}
+            </div>
 
-              {/* Botões de ação — Orçamento primeiro, depois WhatsApp, Chat, Avaliar, Compartilhar */}
-              <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap lg:justify-end">
-                {/* CTA Primário: Solicitar orçamento */}
-                {canRequestQuote ? (
-                  <Button
-                    size="default"
-                    className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
-                    onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
-                    onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
-                    onClick={async () => {
-                      await trackCTAClick({
-                        ctaType: 'quote',
-                        ctaLocation: 'hero',
-                        companyId: String(company.id),
-                        companyName: company.name,
-                      });
-                      openLeadModal({
-                        preferredCompanyId: company.id,
-                        categoryId: wizardCategoryId,
-                        source: 'company-hero',
-                        type: 'wizard',
-                      });
-                    }}
-                  >
-                    <ClipboardList className="mr-1.5 h-4 w-4" />
-                    Solicitar orçamento
-                  </Button>
-                ) : null}
-
-                {/* WhatsApp */}
-                {ctaEnabled && ctaUrl && (
-                  <div {...heroWhatsappHoverIntent}>
-                    <WhatsappButton
-                      size="default"
-                      enabled
-                      href={ctaUrl}
-                      className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                      label="WhatsApp"
-                      companyId={company.id}
-                      requireSignup
-                      signupGateSource="contact_reveal"
-                      signupGateTitle="Crie sua conta para falar no WhatsApp"
-                      signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
-                    />
-                  </div>
-                )}
-
-                {/* Chat — botão verde simples */}
-                {directChatVisible && (
-                  <Button
-                    size="default"
-                    className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                    onClick={() => {
-                      track('company_direct_chat_click', {
-                        company_id: company.id,
-                        company_name: company.name,
-                        authenticated: isAuthenticated,
-                      });
-                      if (directChatEnabled) {
-                        router.push(directChatReturnTo);
-                        return;
-                      }
-                      openSignupGate({
-                        source: 'direct_chat',
-                        returnTo: directChatReturnTo,
-                        title: 'Crie sua conta para falar com esta empresa',
-                        description:
-                          'O chat direto fica disponível para usuários compradores cadastrados.',
-                      });
-                    }}
-                  >
-                    <MessageCircle className="mr-1.5 h-4 w-4" />
-                    Chat
-                  </Button>
-                )}
-
-                {/* Avaliar empresa (quando não pode solicitar orçamento) */}
-                {!canRequestQuote && (
-                  <ReviewCompanyButton
-                    company={company}
-                    compactLabel="Avaliar empresa"
-                    className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                  />
-                )}
-
-                {/* Compartilhar — ícone em mobile, label em desktop */}
+            {/* Linha 2 — Ações, sempre em linha própria abaixo da identidade */}
+            <div className="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-4 lg:justify-end">
+              {/* CTA Primário: Solicitar orçamento */}
+              {canRequestQuote ? (
                 <Button
-                  variant="outline"
                   size="default"
-                  className="h-10 shrink-0 whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                  onClick={handleShare}
-                  disabled={isSharing}
-                  aria-label="Compartilhar empresa"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
+                  onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
+                  onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
+                  onClick={async () => {
+                    await trackCTAClick({
+                      ctaType: 'quote',
+                      ctaLocation: 'hero',
+                      companyId: String(company.id),
+                      companyName: company.name,
+                    });
+                    openLeadModal({
+                      preferredCompanyId: company.id,
+                      categoryId: wizardCategoryId,
+                      source: 'company-hero',
+                      type: 'wizard',
+                    });
+                  }}
                 >
-                  <Share2 className="h-4 w-4 text-slate-400 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Compartilhar</span>
+                  <ClipboardList className="mr-1.5 h-4 w-4" />
+                  Solicitar orçamento
                 </Button>
-              </div>
+              ) : null}
+
+              {/* WhatsApp */}
+              {ctaEnabled && ctaUrl && (
+                <div {...heroWhatsappHoverIntent}>
+                  <WhatsappButton
+                    size="default"
+                    enabled
+                    href={ctaUrl}
+                    className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                    label="WhatsApp"
+                    companyId={company.id}
+                    requireSignup
+                    signupGateSource="contact_reveal"
+                    signupGateTitle="Crie sua conta para falar no WhatsApp"
+                    signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
+                  />
+                </div>
+              )}
+
+              {/* Chat — botão verde simples */}
+              {directChatVisible && (
+                <Button
+                  size="default"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                  onClick={() => {
+                    track('company_direct_chat_click', {
+                      company_id: company.id,
+                      company_name: company.name,
+                      authenticated: isAuthenticated,
+                    });
+                    if (directChatEnabled) {
+                      router.push(directChatReturnTo);
+                      return;
+                    }
+                    openSignupGate({
+                      source: 'direct_chat',
+                      returnTo: directChatReturnTo,
+                      title: 'Crie sua conta para falar com esta empresa',
+                      description:
+                        'O chat direto fica disponível para usuários compradores cadastrados.',
+                    });
+                  }}
+                >
+                  <MessageCircle className="mr-1.5 h-4 w-4" />
+                  Chat
+                </Button>
+              )}
+
+              {/* Avaliar empresa (quando não pode solicitar orçamento) */}
+              {!canRequestQuote && (
+                <ReviewCompanyButton
+                  company={company}
+                  compactLabel="Avaliar empresa"
+                  className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                />
+              )}
+
+              {/* Compartilhar — ícone em mobile, label em desktop */}
+              <Button
+                variant="outline"
+                size="default"
+                className="h-10 shrink-0 whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                onClick={handleShare}
+                disabled={isSharing}
+                aria-label="Compartilhar empresa"
+              >
+                <Share2 className="h-4 w-4 text-slate-400 lg:mr-1.5" />
+                <span className="hidden lg:inline">Compartilhar</span>
+              </Button>
             </div>
           </div>
         </div>
