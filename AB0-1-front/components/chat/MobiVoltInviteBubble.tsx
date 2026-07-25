@@ -115,8 +115,8 @@ export default function MobiVoltInviteBubble({
   return (
     <div 
       className={cn(
-        'fixed right-4 sm:right-6 animate-in slide-in-from-bottom-5 fade-in duration-300',
-        getFloatingWidgetSizeClasses('mobivolt'),
+        'fixed right-4 animate-in slide-in-from-bottom-5 fade-in duration-300',
+        'max-w-[320px] sm:max-w-[360px]',
         MOBILE_POSITION_CLASSES.mobivolt
       )}
       style={{

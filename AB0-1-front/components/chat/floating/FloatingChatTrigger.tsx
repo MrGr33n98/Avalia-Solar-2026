@@ -26,12 +26,10 @@ export function FloatingChatTrigger({
     <div
       onClick={onExpand}
       className={cn(
-        'fixed right-4 sm:right-8 cursor-pointer items-center justify-center md:justify-between',
-        'rounded-full md:rounded-t-2xl md:rounded-b-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 md:px-4 md:py-2.5 shadow-lg md:shadow-[0_-4px_20px_rgba(0,0,0,0.12)]',
-        'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-[0_-6px_24px_rgba(0,0,0,0.16)]',
-        'flex md:w-[290px] sm:md:w-[320px]',
-        // Use responsive size classes for mobile
-        getFloatingWidgetSizeClasses('chat'),
+        'fixed right-4 cursor-pointer items-center justify-center',
+        'rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg',
+        'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-xl',
+        'flex h-11 w-11 md:w-[290px] sm:md:w-[320px] md:rounded-t-2xl md:rounded-b-none md:px-4 md:py-2.5 md:justify-between',
         MOBILE_POSITION_CLASSES.chat,
         className
       )}
@@ -40,22 +38,25 @@ export function FloatingChatTrigger({
       }}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <ChatAvatar
-          name={user?.name || 'Usuário'}
-          src={user?.avatar_url}
-          status="online"
-          size="sm"
-        />
+        <div className="md:hidden flex items-center justify-center w-full h-full">
+          <MessageSquare className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+        </div>
+        <div className="hidden md:flex items-center gap-2.5 min-w-0">
+          <ChatAvatar
+            name={user?.name || 'Usuário'}
+            src={user?.avatar_url}
+            status="online"
+            size="sm"
+          />
+          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+            Mensagens
+          </span>
+        </div>
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 md:hidden flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-extrabold text-white shadow-xs animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-        <div className="hidden md:flex items-center gap-2 truncate">
-          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-            Mensagens
-          </span>
-        </div>
       </div>
 
       <div className="hidden md:flex items-center gap-2 shrink-0">

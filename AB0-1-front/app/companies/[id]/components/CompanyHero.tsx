@@ -182,7 +182,7 @@ export default function CompanyHero({
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* 1. Hero Banner + Identidade flutuante */}
         <div className="overflow-hidden rounded-t-2xl">
-          <div className="relative h-[260px] w-full bg-slate-950 sm:h-[280px] lg:h-[320px] xl:h-[340px]">
+          <div className="relative h-[320px] w-full bg-slate-950 sm:h-[380px] lg:h-[420px] xl:h-[460px]">
             {/* Background Blur Fill Layer */}
             <OptimizedImage
               src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -227,7 +227,7 @@ export default function CompanyHero({
             )}
 
             {/* Conteúdo flutuante: logo, dados e botões */}
-            <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-5 pt-12 sm:px-6 sm:pb-6">
+            <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-4 pt-8 sm:px-4 sm:pb-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
                 {/* Lado Esquerdo: Logo + Dados */}
                 <div className="flex min-w-0 items-end gap-4">
@@ -245,64 +245,116 @@ export default function CompanyHero({
                         sm:h-24 sm:w-24
                       "
                     >
-                  <OptimizedImage
-                    src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
-                    alt={company.name}
-                    fill
-                    priority
-                    imageContext="company-logo"
-                    entityName={company.name}
-                    locationLabel={locationLabel}
-                    objectFit="cover"
-                    className="p-0"
-                    containerClassName="absolute inset-0 h-full w-full"
-                    fallbackSrc="/images/logo-placeholder.svg"
-                    onError={() => setLogoError(true)}
-                  />
-                </div>
-                {heroBadgeUrl && !badgeImageError && (
-                  <div
-                    className="
-                      absolute
-                      -right-1.5
-                      -top-2
-                      z-30
-                      h-9 w-9
-                      overflow-visible
-                      drop-shadow-sm
-                      transition-transform
-                      duration-200
-                      hover:scale-105
-                      sm:h-10 sm:w-10
-                    "
-                    title="Selo de conquista"
-                  >
-                    <OptimizedImage
-                      src={heroBadgeUrl}
-                      alt="Selo de conquista"
-                      fill
-                      sizes="44px"
-                      objectFit="contain"
-                      className="drop-shadow-sm"
-                      containerClassName="h-full w-full"
-                      onError={() => setBadgeImageError(true)}
-                    />
+                      <OptimizedImage
+                        src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
+                        alt={company.name}
+                        fill
+                        priority
+                        imageContext="company-logo"
+                        entityName={company.name}
+                        locationLabel={locationLabel}
+                        objectFit="cover"
+                        className="p-0"
+                        containerClassName="absolute inset-0 h-full w-full"
+                        fallbackSrc="/images/logo-placeholder.svg"
+                        onError={() => setLogoError(true)}
+                      />
+                    </div>
+                    
+                    {/* Selo sem fundo branco - apenas a imagem */}
+                    {heroBadgeUrl && !badgeImageError && (
+                      <div
+                        className="
+                          absolute
+                          -right-1
+                          -top-1
+                          z-30
+                          h-8 w-8
+                          overflow-visible
+                          drop-shadow-lg
+                          transition-all
+                          duration-300
+                          hover:scale-110
+                          hover:drop-shadow-xl
+                          sm:h-9 sm:w-9
+                          animate-in
+                          zoom-in-75
+                          fade-in
+                        "
+                        style={{ animationDelay: '200ms' }}
+                        title="Selo de conquista"
+                      >
+                        <OptimizedImage
+                          src={heroBadgeUrl}
+                          alt="Selo de conquista"
+                          fill
+                          sizes="36px"
+                          objectFit="contain"
+                          className="drop-shadow-lg"
+                          containerClassName="h-full w-full"
+                          onError={() => setBadgeImageError(true)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Verification badge with emerald green background and white check icon */}
+                    {company.verified && (
+                      <div
+                        className="
+                          absolute
+                          -right-2
+                          -top-3
+                          z-40
+                          flex h-6 w-6
+                          items-center
+                          justify-center
+                          rounded-full
+                          bg-gradient-to-br from-emerald-500 to-emerald-600
+                          border-2 border-white
+                          shadow-lg
+                          animate-in
+                          zoom-in-50
+                          fade-in
+                          duration-500
+                          hover:scale-110
+                          hover:shadow-xl
+                          hover:shadow-emerald-500/25
+                          transition-all
+                          sm:h-7 sm:w-7
+                        "
+                        style={{ animationDelay: '400ms' }}
+                        title="Empresa Verificada"
+                      >
+                        <svg 
+                          className="h-3 w-3 text-white sm:h-4 sm:w-4 drop-shadow-sm" 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path 
+                            fillRule="evenodd" 
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                            clipRule="evenodd" 
+                          />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
               {/* Informações da Empresa */}
               <div className="min-w-0 space-y-1 pb-1 sm:pb-2">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold leading-tight text-white sm:text-xl truncate drop-shadow">
+                  <h1 className="text-lg font-bold leading-tight text-white sm:text-xl truncate drop-shadow-lg">
                     {company.name}
                   </h1>
                   {company.verified && (
-                    <span className="inline-flex items-center justify-center text-emerald-400 shrink-0" title="Empresa Verificada">
-                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    <div 
+                      className="inline-flex items-center justify-center rounded-full bg-emerald-500 p-1 border-2 border-white/90 shadow-lg shrink-0 animate-in zoom-in-50 duration-300" 
+                      title="Empresa Verificada"
+                    >
+                      <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
-                    </span>
+                    </div>
                   )}
                 </div>
 
@@ -338,8 +390,14 @@ export default function CompanyHero({
 
             {/* Lado Direito: Premium + Botões */}
             <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end sm:gap-3">
+              {/* Premium badge with purple gradient and compact text */}
               {company.verified && (
-                <PremiumBadge className="h-6 px-3 sm:h-7 sm:px-4" />
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-3 py-1.5 shadow-lg border border-purple-300/50 animate-in fade-in slide-in-from-top-2 duration-700 hover:shadow-xl hover:shadow-purple-500/25 transition-all">
+                  <svg className="h-3.5 w-3.5 text-purple-100" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-xs font-bold text-white tracking-wide drop-shadow-sm">PREMIUM</span>
+                </div>
               )}
 
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
