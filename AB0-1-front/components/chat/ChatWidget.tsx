@@ -6,16 +6,12 @@ import { X } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
-import {
-  OPEN_COMPARISON_DOCK_EVENT,
-  openComparisonDock,
-} from '@/lib/floating-widget-events';
+import { OPEN_COMPARISON_DOCK_EVENT } from '@/lib/floating-widget-events';
 
 // Feature flags para controle do comportamento dos cards e CTAs
 const MOBIVOLT_COMPANY_CARDS_ENABLED = true;
 
 import ChatCompanyRecommendations from './ChatCompanyRecommendations';
-import ChatComparisonModal from './ChatComparisonModal';
 import ChatLeadQualificationWizard, {
   ChatLeadQualificationSubmission,
   ChatLeadVertical
@@ -91,7 +87,6 @@ export default function ChatWidget() {
   // Estados locais para telemetria de cliques comerciais e comparação
   const [clickedCompanyId, setClickedCompanyId] = useState<number | null>(null);
   const [selectedCompanyForQuote, setSelectedCompanyForQuote] = useState<number | null>(null);
-  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   // Estado global de comparação (compartilhado com ComparisonFloatingBar)
   const {
@@ -405,10 +400,6 @@ export default function ChatWidget() {
     } catch (e) {
       console.error(e);
     }
-  };
-
-  const handleOpenComparisonDock = () => {
-    openComparisonDock();
   };
 
   const handleQualificationSubmit = async (submission: ChatLeadQualificationSubmission) => {
@@ -947,28 +938,7 @@ export default function ChatWidget() {
             </button>
           </form>
 
-          {/* Floating Compare Button when 1+ companies selected - opens global comparison dock */}
-          {comparisonCount >= 1 && !showLeadForm && !hasLeadCaptured && (
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-40 animate-in slide-in-from-bottom-2 fade-in">
-              <button
-                type="button"
-                onClick={handleOpenComparisonDock}
-                className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold px-4 py-2.5 rounded-full shadow-xl text-xs flex items-center space-x-2 hover:scale-105 transition-transform"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
-                <span>Ver Comparação ({comparisonCount}/{maxComparison})</span>
-              </button>
-            </div>
-          )}
-
-          <ChatComparisonModal
-            isOpen={showComparisonModal}
-            onClose={() => setShowComparisonModal(false)}
-            companies={allCompanies}
-            comparedCompanyIds={comparedCompanyIds}
-            onRequestQuote={handleRequestQuote}
-          />
-        </div>
+          </div>
       )}
 
       {!isOpen && canShowInvite && showInviteBubble && (
