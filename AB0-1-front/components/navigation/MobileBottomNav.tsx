@@ -29,8 +29,8 @@ export default function MobileBottomNav() {
   if (isInternalProfile) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.25rem,var(--safe-area-inset-bottom))] pt-1 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4">
+    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-4 gap-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active =
@@ -43,14 +43,19 @@ export default function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[10px] font-bold transition-colors',
-                active ? 'text-blue-700' : 'text-slate-500 hover:text-slate-900'
+                'relative flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[11px] font-bold transition-all',
+                active
+                  ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               )}
             >
-              <span className="relative">
-                <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
+              <span className="relative flex h-7 w-7 items-center justify-center">
+                <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.5 : 2} />
+                {active && (
+                  <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-blue-600" />
+                )}
               </span>
-              <span className="truncate">{item.label}</span>
+              <span className="truncate tracking-tight">{item.label}</span>
             </Link>
           );
         })}

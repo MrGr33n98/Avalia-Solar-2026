@@ -6,13 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import {
-  LayoutDashboard,
-  Package,
-  ImageIcon,
   BarChart3,
-  Banknote,
-  Edit,
-  MessageCircle,
   HelpCircle,
   AlertCircle,
   Scale,
@@ -31,6 +25,7 @@ import { Company, Product, Review } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { productsApiSafe, reviewsApiSafe } from '@/lib/api-client';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { getCompanyProfileTabs } from './components/companyProfileTabsConfig';
 
 // GTM Tracking
 import { usePageTracking } from '@/hooks/usePageTracking';
@@ -313,21 +308,12 @@ export default function CompanyDetailClient({
   });
 
   const tabs = useMemo(() => {
-    const baseTabs = [
-      { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
-      { id: 'products', label: 'Produtos', icon: Package },
-      { id: 'reviews', label: 'Avaliações', icon: MessageCircle },
-      { id: 'financing', label: 'Financiamento', icon: Banknote },
-      { id: 'gallery', label: 'Galeria', icon: ImageIcon },
-      { id: 'faq', label: 'FAQ', icon: HelpCircle },
-    ].filter((tab) => {
-      if (tab.id === 'financing') return showFinancing;
-      if (tab.id === 'gallery') return showGallery;
-      if (tab.id === 'faq') return showFaq;
-      return true;
+    return getCompanyProfileTabs({
+      showFinancing,
+      showGallery,
+      showFaq,
+      canEdit,
     });
-    if (canEdit) baseTabs.push({ id: 'edit', label: 'Editar', icon: Edit });
-    return baseTabs;
   }, [canEdit, showFaq, showFinancing, showGallery]);
 
   const companyStats = useMemo(() => {

@@ -250,32 +250,32 @@ export default function QuoteWizardModal() {
       }}
     >
       <DialogContent
-        overlayClassName="bg-[rgba(5,12,24,0.78)] backdrop-blur-none"
+        overlayClassName="bg-black/65 backdrop-blur-md"
         className={cn(
-          'z-[10000] flex max-h-[90vh] max-w-xl flex-col overflow-hidden border-none p-0 md:rounded-2xl',
-          'max-md:left-1/2 max-md:top-auto max-md:w-[calc(100%-32px)] max-md:max-w-[420px]',
-          'max-md:max-h-[min(76dvh,680px)] max-md:translate-x-[-50%] max-md:translate-y-0',
-          'max-md:bottom-[calc(16px+env(safe-area-inset-bottom))] max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
-          'max-md:gap-0 max-md:border max-md:border-[#0B1B36] max-md:bg-white',
-          'max-md:shadow-[8px_8px_0_rgba(11,27,54,0.18)] max-md:rounded-none',
-          '[&>button]:max-md:right-3 [&>button]:max-md:top-3 [&>button]:max-md:rounded-none [&>button]:max-md:border [&>button]:max-md:border-[#0B1B36] [&>button]:max-md:bg-white [&>button]:max-md:opacity-100'
+          'z-[10000] flex max-h-[90dvh] max-w-xl flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
+          'max-md:left-1/2 max-md:top-1/2 max-md:translate-x-[-50%] max-md:translate-y-[-50%] max-md:w-[min(calc(100vw-32px),420px)]',
+          'max-md:max-h-[min(86dvh,720px)]',
+          'max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
+          'max-md:gap-0 max-md:border max-md:border-slate-200 max-md:bg-white',
+          'max-md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45),0_12px_30px_-6px_rgba(0,0,0,0.15)]',
+          '[&>button]:max-md:right-3 [&>button]:max-md:top-3 [&>button]:max-md:rounded-full [&>button]:max-md:border [&>button]:max-md:border-slate-200 [&>button]:max-md:bg-white [&>button]:max-md:opacity-100 [&>button]:max-md:shadow-md [&>button]:max-md:p-2'
         )}
       >
         {/* Progress Header */}
-        <div className="bg-[#0B1B36] px-4 py-3 text-white md:px-6 md:py-4">
+        <div className="bg-[#0B1B36] px-4 py-3 md:px-6 md:py-4 text-white rounded-t-2xl pt-[calc(0.75rem+var(--sat))] safe-x">
           <div className="mb-3 flex items-center justify-between gap-3">
              <DialogTitle className="text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
                {step < 9 ? `Etapa ${step} de ${TOTAL_STEPS}` : 'Concluído'}
              </DialogTitle>
-             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#16A34A]">
+             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 100% SEGURO
              </div>
           </div>
-          <Progress value={progressValue} className="h-1.5 rounded-none bg-[#19315E]" />
+          <Progress value={progressValue} className="h-1.5 rounded-full bg-[#19315E]" />
         </div>
 
-        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-10 md:py-8">
+        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-10 md:py-8 overscroll-contain safe-x">
           {step === 1 && (
             <div className="space-y-5 md:space-y-6">
               <WizardHeading kicker={STEP_KICKERS[1]} title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
@@ -447,24 +447,24 @@ export default function QuoteWizardModal() {
         </div>
 
         {/* Action Footer */}
-        <div className="flex items-center justify-between gap-3 border-t border-[#D9E0EA] bg-white px-4 py-3 md:px-10 md:pt-6 md:pb-6">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 md:px-10 md:pt-5 md:pb-5 rounded-b-2xl safe-x pb-[calc(0.75rem+var(--sab))]">
           {step <= TOTAL_STEPS ? (
             <>
-              <Button variant="ghost" className="h-10 rounded-none px-0 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-transparent hover:text-[#1268E8] disabled:text-slate-300 md:h-12" onClick={handleBack} disabled={step === 1 || submitting}>
+              <Button variant="ghost" className="h-12 min-h-[48px] rounded-xl px-3 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-slate-50 hover:text-[#1268E8] disabled:text-slate-300" onClick={handleBack} disabled={step === 1 || submitting}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> VOLTAR
               </Button>
               {step < 8 ? (
-                <Button onClick={handleNext} disabled={submitting} className="h-10 rounded-none border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-none hover:bg-[#0F56C6] md:h-12 md:px-8">
+                <Button onClick={handleNext} disabled={submitting} className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]">
                   AVANÇAR <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleVerifyOtp} disabled={submitting} className="h-10 rounded-none border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-none hover:bg-[#0F56C6] md:h-12 md:px-8">
+                <Button onClick={handleVerifyOtp} disabled={submitting} className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]">
                   VALIDAR AGORA
                 </Button>
               )}
             </>
           ) : (
-            <Button onClick={() => setOpen(false)} className="h-10 w-full rounded-none bg-[#0B1B36] text-xs font-black tracking-[0.16em] md:h-12">CONCLUÍDO</Button>
+            <Button onClick={() => setOpen(false)} className="h-12 min-h-[48px] w-full rounded-xl bg-[#0B1B36] text-xs font-black tracking-[0.16em] shadow-lg active:scale-[0.98]">CONCLUÍDO</Button>
           )}
         </div>
       </DialogContent>
@@ -499,16 +499,16 @@ type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
   <button type="button" className={cn(
-    'w-full border px-4 py-3 text-left text-[14px] font-[700] uppercase tracking-tight transition-all',
-    'rounded-none border-[#B8C4D6] bg-white text-[#0B1B36] shadow-none',
+    'w-full border px-4 min-h-[48px] py-3 text-left text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
+    'rounded-xl border-slate-200 bg-white text-[#0B1B36] shadow-sm',
     selected 
-      ? 'border-[#1268E8] bg-[#F3F5F7] text-[#0B1B36]' 
-      : 'hover:border-[#1268E8]/60 hover:bg-[#F8FAFC]',
+      ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md' 
+      : 'hover:border-blue-300 hover:bg-slate-50 hover:shadow',
     className
   )} aria-pressed={selected} {...props}>
     <div className="flex items-center justify-between">
       {children}
-      {selected && <CheckCircle2 className="w-5 h-5 text-blue-600" />}
+      {selected && <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />}
     </div>
   </button>
 );

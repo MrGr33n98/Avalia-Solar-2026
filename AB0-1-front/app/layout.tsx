@@ -31,9 +31,13 @@ export const metadata: Metadata = {
   authors: [{ name: 'Avalia Solar' }],
   creator: 'Avalia Solar',
   publisher: 'Avalia Solar',
+  applicationName: 'Avalia Solar',
+  category: 'business',
   icons: {
     icon: '/favicon.ico',
+    apple: [{ url: '/favicon.ico', sizes: '180x180' }],
   },
+  manifest: '/manifest.webmanifest',
   metadataBase: new URL(SITE.url),
   alternates: {
     canonical: '/',
@@ -73,12 +77,28 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Avalia Solar',
+  },
+  formatDetection: {
+    telephone: true,
+    email: true,
+    address: true,
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b1b36' },
+  ],
+  colorScheme: 'light dark',
 };
 
 import { ThemeProvider } from '@/components/theme-provider';

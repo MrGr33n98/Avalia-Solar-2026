@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Company } from '@/lib/api';
 import { toast } from 'sonner';
+import { CheckCircle2, Info, AlertTriangle, Trash2 } from 'lucide-react';
 
 const STORAGE_KEY = 'ab01_comparison_list';
 const MAX_COMPARISON = 4;
@@ -89,16 +90,20 @@ export function useComparison() {
     setComparisonList((prev) => {
       // Check if already exists
       if (prev.find((c) => c.id === company.id)) {
-        toast.info(`${company.name} já está na lista de comparação.`, {
-          description: 'Esta empresa já foi adicionada à sua comparação.',
+        toast.info('Empresa já adicionada', {
+          description: `${company.name} já está na sua lista de comparação.`,
+          duration: 3500,
+          icon: <Info className="h-5 w-5 text-blue-600" />,
         });
         return prev;
       }
 
       // Check limit
       if (prev.length >= MAX_COMPARISON) {
-        toast.warning(`Você só pode comparar até ${MAX_COMPARISON} empresas.`, {
-          description: 'Remova uma empresa primeiro para adicionar outra.',
+        toast.warning('Limite atingido', {
+          description: `Você só pode comparar até ${MAX_COMPARISON} empresas. Remova uma antes.`,
+          duration: 4500,
+          icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
         });
         return prev;
       }
@@ -106,15 +111,37 @@ export function useComparison() {
       // Add company
       const newList = [...prev, company];
 
-      // Success message with action
-      toast.success(`${company.name} adicionada à comparação.`, {
-        description: `${newList.length}/${MAX_COMPARISON} empresas selecionadas`,
+      // Success message with green check icon AND "Ver Comparação" CTA
+      toast.success('Empresa adicionada à comparação', {
+        description: `${company.name} • ${newList.length}/${MAX_COMPARISON} selecionadas`,
+        duration: 4000,
+        icon: (
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 ring-2 ring-emerald-500/20">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+        ),
         action: {
-          label: 'Ver Comparação',
+          label: 'Ver comparação',
           onClick: () => {
-            // This could trigger the modal or navigate to comparison page
+            // 1. Abre o dock expandido
             comparisonEvents.dispatchEvent(new CustomEvent('open-comparison-modal'));
+            // 2. Dispara evento global usado pelo ComparisonFloatingBar
+            if (typeof window !== 'undefined') {
+              try {
+                window.dispatchEvent(new CustomEvent('open-comparison-dock'));
+              } catch {
+                // noop
+              }
+            }
           },
+        },
+        cancel: {
+          label: 'Fechar',
+          onClick: () => {},
+        },
+        classNames: {
+          toast:
+            '!rounded-2xl !border-emerald-100 !shadow-xl !shadow-emerald-500/5',
         },
       });
 
@@ -128,8 +155,9 @@ export function useComparison() {
       const newList = prev.filter((c) => c.id !== companyId);
 
       if (company) {
-        toast.info(`${company.name} removida da comparação.`, {
-          description: `${newList.length}/${MAX_COMPARISON} empresas restantes`,
+        toast.info('Empresa removida', {
+          description: `${company.name} foi removida • ${newList.length}/${MAX_COMPARISON} restantes`,
+          duration: 3000,
         });
       }
 
@@ -139,8 +167,14 @@ export function useComparison() {
 
   const clearComparison = useCallback(() => {
     setComparisonList([]);
-    toast.success('Lista de comparação limpa.', {
-      description: 'Todas as empresas foram removidas da comparação.',
+    toast.success('Lista de comparação limpa', {
+      description: 'Todas as empresas foram removidas.',
+      duration: 3000,
+      icon: (
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 ring-2 ring-slate-500/20">
+          <Trash2 className="h-5 w-5 text-slate-600" />
+        </div>
+      ),
     });
   }, []);
 

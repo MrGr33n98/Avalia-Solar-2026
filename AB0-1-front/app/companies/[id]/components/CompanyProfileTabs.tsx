@@ -4,23 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import {
-  LayoutDashboard,
-  Package,
-  MessageCircle,
-  ImageIcon,
-  HelpCircle,
-  LucideIcon,
   ChevronDown,
-  Banknote,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-
-interface TabItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-}
+import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 
 interface CompanyProfileTabsProps {
   activeTab: string;
@@ -41,20 +29,10 @@ export default function CompanyProfileTabs({
   showGallery,
   showFaq,
 }: CompanyProfileTabsProps) {
-  const tabs = useMemo(() => {
-    const list: TabItem[] = [
-      { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
-      { id: 'products', label: 'Produtos e Serviços', icon: Package },
-      { id: 'reviews', label: 'Avaliações', icon: MessageCircle },
-      { id: 'projects', label: 'Projetos', icon: ImageIcon },
-      { id: 'contact', label: 'Contato', icon: HelpCircle },
-      { id: 'faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle },
-    ];
-    if (showFinancing) {
-      list.splice(3, 0, { id: 'financing', label: 'Financiamento', icon: Banknote });
-    }
-    return list;
-  }, [showFinancing]);
+  const tabs = useMemo(
+    () => getCompanyProfileTabs({ showFinancing, showGallery, showFaq }),
+    [showFaq, showFinancing, showGallery]
+  );
 
   const uniqueCategories = useMemo(
     () => Array.from(new Map(categories.map((category) => [category.id, category])).values()),
