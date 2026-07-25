@@ -326,14 +326,14 @@ export default function CompanyHero({
               )}
 
               {/* Botões de ação */}
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
                 {ctaEnabled && ctaUrl && (
                   <div {...heroWhatsappHoverIntent}>
                     <WhatsappButton
                       size="default"
                       enabled
                       href={ctaUrl}
-                      className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
+                      className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
                       label="WhatsApp"
                       companyId={company.id}
                       requireSignup
@@ -347,7 +347,7 @@ export default function CompanyHero({
                 {directChatVisible && (
                   <Button
                     size="default"
-                    className="relative group h-9 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
+                    className="relative group h-10 shrink-0 items-center justify-center whitespace-nowrap overflow-hidden rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 border border-emerald-400/30 sm:text-sm"
                     onClick={() => {
                       track('company_direct_chat_click', {
                         company_id: company.id,
@@ -376,7 +376,7 @@ export default function CompanyHero({
                 <Button
                   variant="outline"
                   size="default"
-                  className="h-9 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 sm:text-sm"
+                  className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 sm:text-sm"
                   onClick={handleShare}
                   disabled={isSharing}
                 >
@@ -387,7 +387,7 @@ export default function CompanyHero({
                 {canRequestQuote ? (
                   <Button
                     size="default"
-                    className="h-9 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                    className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
                     onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                     onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                     onClick={async () => {
@@ -412,7 +412,7 @@ export default function CompanyHero({
                   <ReviewCompanyButton
                     company={company}
                     compactLabel="Avaliar empresa"
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
+                    className="h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 sm:text-sm"
                   />
                 )}
               </div>
