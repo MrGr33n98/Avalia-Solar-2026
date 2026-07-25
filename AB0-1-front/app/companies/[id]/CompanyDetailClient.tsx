@@ -466,14 +466,14 @@ export default function CompanyDetailClient({
       <BreadcrumbJsonLd items={jsonLdItems} />
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <header className="border-b border-slate-200 bg-[#f3f4f6]">
-          <div className="mx-auto max-w-[1280px] px-4 py-3 md:px-6 md:py-5">
-            <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
+          <div className="mx-auto max-w-[1280px] px-4 py-2 md:px-6 md:py-3">
+            <AppBreadcrumb items={breadcrumbItems} compact className="mb-2" />
             {localSolarPage ? (
               <Link
                 href={localSolarPage.href}
-                className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
+                className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-medium text-blue-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
               >
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-3.5 w-3.5" />
                 Ver outras empresas de energia solar em {localSolarPage.city}/{localSolarPage.state}
               </Link>
             ) : null}
@@ -492,7 +492,7 @@ export default function CompanyDetailClient({
               ctaUrl={ctaUrl}
             />
 
-            <div className="mt-5 border-b border-slate-200">
+            <div className="mt-3 border-b border-slate-200">
               <ScrollArea className="w-full">
                 <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 text-slate-500">
                   {tabs.map((tab) => (
@@ -516,7 +516,7 @@ export default function CompanyDetailClient({
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1280px] px-4 py-8 md:px-6 md:py-10">
+        <main className="mx-auto max-w-[1280px] px-4 py-5 md:px-6 md:py-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
             <div className="space-y-6 lg:col-span-8">
               <AnimatePresence mode="wait">
