@@ -292,13 +292,13 @@ export default function CompanyHero({
               </div>
 
               {/* Informações da Empresa */}
-              <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
+              <div className="min-w-0 space-y-1 pb-1 sm:pb-2">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold leading-tight text-slate-950 sm:text-xl truncate">
+                  <h1 className="text-lg font-bold leading-tight text-white sm:text-xl truncate drop-shadow">
                     {company.name}
                   </h1>
                   {company.verified && (
-                    <span className="inline-flex items-center justify-center text-emerald-500 shrink-0" title="Empresa Verificada">
+                    <span className="inline-flex items-center justify-center text-emerald-400 shrink-0" title="Empresa Verificada">
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                       </svg>
@@ -307,27 +307,27 @@ export default function CompanyHero({
                 </div>
 
                 {locationLabel && (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 sm:text-sm">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{locationLabel}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-white/90 sm:text-sm">
+                    <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
+                    <span className="truncate drop-shadow">{locationLabel}</span>
                   </div>
                 )}
 
                 <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
-                  <div className="flex items-center gap-1 font-bold text-slate-900">
+                  <div className="flex items-center gap-1 font-bold text-white">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} />
-                    <span>{ratingLabel}</span>
+                    <span className="drop-shadow">{ratingLabel}</span>
                   </div>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-slate-500">
+                  <span className="text-white/50">|</span>
+                  <span className="text-white/80 drop-shadow">
                     {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
                   </span>
 
                   {directChatVisible && (
-                    <span className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    <span className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/90 border border-emerald-300/40 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm backdrop-blur">
                       <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-100" />
                       </span>
                       Chat Online
                     </span>
@@ -349,7 +349,7 @@ export default function CompanyHero({
                       size="default"
                       enabled
                       href={ctaUrl}
-                      className="h-9 rounded-xl border border-emerald-500 bg-transparent px-4 text-xs font-semibold text-emerald-700 shadow-none hover:bg-emerald-50 sm:text-sm"
+                      className="h-9 rounded-xl border border-white/30 bg-white/10 px-4 text-xs font-semibold text-white shadow-none backdrop-blur hover:bg-white/20 sm:text-sm"
                       label="WhatsApp"
                       companyId={company.id}
                       requireSignup
@@ -392,11 +392,11 @@ export default function CompanyHero({
                 <Button
                   variant="outline"
                   size="default"
-                  className="h-9 rounded-xl border-slate-200 bg-slate-50/50 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:text-sm"
+                  className="h-9 rounded-xl border-white/30 bg-white/10 px-4 text-xs font-semibold text-white backdrop-blur hover:bg-white/20 hover:text-white sm:text-sm"
                   onClick={handleShare}
                   disabled={isSharing}
                 >
-                  <Share2 className="mr-1.5 h-4 w-4 text-slate-500" />
+                  <Share2 className="mr-1.5 h-4 w-4 text-white/80" />
                   Compartilhar
                 </Button>
 
@@ -428,39 +428,39 @@ export default function CompanyHero({
                   <ReviewCompanyButton
                     company={company}
                     compactLabel="Avaliar empresa"
-                    className="h-9 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 sm:text-sm"
+                    className="h-9 rounded-xl bg-white px-4 text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100 sm:text-sm"
                   />
                 )}
               </div>
             </div>
           </div>
         </div>
-
-        {/* 3. Navegação por Abas (integrada ao bloco) */}
-        {tabs.length > 0 && onTabChange && (
-          <div className="rounded-b-2xl border-t border-slate-200 bg-white">
-            <ScrollArea className="w-full">
-              <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 px-4 text-slate-500 sm:px-5">
-                {tabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className={cn(
-                      'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
-                      'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                      'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
-                    )}
-                  >
-                    <tab.icon className="mr-2 h-4 w-4" />
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </div>
-        )}
       </section>
+
+      {/* 2. Navegação por Abas (abaixo do banner) */}
+      {tabs.length > 0 && onTabChange && (
+        <section className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <ScrollArea className="w-full">
+            <TabsList className="h-auto min-w-full justify-start gap-5 rounded-2xl bg-transparent p-0 px-4 text-slate-500 sm:px-5">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={cn(
+                    'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
+                    'text-slate-500 hover:bg-transparent hover:text-slate-900',
+                    'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
+                  )}
+                >
+                  <tab.icon className="mr-2 h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </section>
+      )}
     </div>
   );
 }
