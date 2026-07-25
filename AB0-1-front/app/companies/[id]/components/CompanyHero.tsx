@@ -234,15 +234,16 @@ export default function CompanyHero({
         </div>
 
         {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
-        <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 lg:px-7">
-          <div className="flex flex-col gap-4">
+        <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pt-5">
+          {/* Sem gap no wrapper: o espaçamento entre linha 1 e linha 2 vem só do pt-4 do divisor (item 1) */}
+          <div className="flex flex-col">
             {/* Linha 1 — Logo + Nome/Info + Selo Premium (sem os botões) */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              {/* Lado Esquerdo: Logo + Informações */}
-              <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              {/* Lado Esquerdo: Logo + Informações — items-center alinha com a logo independente de quantas linhas de texto existem (item 4) */}
+              <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo — atravessa ~30% da borda do banner */}
-                <div className="relative -mt-9 shrink-0 overflow-visible sm:-mt-10 lg:-mt-11">
-                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-[3px] border-slate-950 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.2)] sm:h-24 sm:w-24 lg:h-[104px] lg:w-[104px]">
+                <div className="relative -mt-9 shrink-0 self-start overflow-visible sm:-mt-10">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-[3px] border-slate-950 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.2)] sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
@@ -263,7 +264,6 @@ export default function CompanyHero({
                   {heroBadgeUrl && !badgeImageError && (
                     <div
                       className="absolute -right-3 -top-3 z-30 h-12 w-12 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)]"
-                      style={{ background: 'transparent' }}
                       title="Selo de conquista"
                     >
                       <OptimizedImage
@@ -274,7 +274,6 @@ export default function CompanyHero({
                         objectFit="contain"
                         className="bg-transparent p-0"
                         containerClassName="h-full w-full overflow-visible bg-transparent"
-                        style={{ background: 'transparent' }}
                         onError={() => setBadgeImageError(true)}
                       />
                     </div>
@@ -282,10 +281,10 @@ export default function CompanyHero({
                 </div>
 
                 {/* Informações da empresa */}
-                <div className="min-w-0 flex-1 pt-1 sm:pt-2">
-                  {/* Nome + verificado */}
+                <div className="min-w-0 flex-1">
+                  {/* Nome + verificado + premium (mobile, inline) */}
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <h1 className="min-w-0 truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl lg:text-[26px]">
+                    <h1 className="min-w-0 line-clamp-2 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl">
                       {company.name}
                     </h1>
                     {company.verified && (
@@ -294,13 +293,20 @@ export default function CompanyHero({
                         aria-label="Empresa verificada"
                       />
                     )}
+                    {/* Premium inline — só no mobile, pra não ficar órfão abaixo da logo (item 2) */}
+                    {company.verified && (
+                      <div className="inline-flex h-6 w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2 text-[10px] font-bold tracking-[0.04em] text-violet-700 sm:hidden">
+                        <Diamond className="h-3 w-3" />
+                        PREMIUM
+                      </div>
+                    )}
                   </div>
 
                   {/* Localização */}
                   {locationLabel && (
                     <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
                       <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
-                      <span className="truncate">{locationLabel}</span>
+                      <span>{locationLabel}</span>
                     </div>
                   )}
 
@@ -330,17 +336,17 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              {/* Badge PREMIUM — sutil, violeta claro, elemento de status */}
+              {/* Badge PREMIUM — desktop/tablet, canto direito (item 2: escondido no mobile, a versão inline acima assume) */}
               {company.verified && (
-                <div className="inline-flex h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700">
+                <div className="hidden h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700 sm:inline-flex">
                   <Diamond className="h-3.5 w-3.5" />
                   PREMIUM
                 </div>
               )}
             </div>
 
-            {/* Linha 2 — Ações, sempre em linha própria abaixo da identidade */}
-            <div className="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-4 lg:justify-end">
+            {/* Linha 2 — Ações, sempre em linha própria abaixo da identidade, sempre alinhadas à esquerda (item 6) */}
+            <div className="flex w-full flex-wrap items-center justify-start gap-2 border-t border-slate-100 pt-4">
               {/* CTA Primário: Solicitar orçamento */}
               {canRequestQuote ? (
                 <Button
