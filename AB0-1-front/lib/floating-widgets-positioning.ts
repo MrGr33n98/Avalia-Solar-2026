@@ -6,7 +6,7 @@
 export const FLOATING_WIDGET_POSITIONS = {
   // Z-index hierarchy
   Z_INDEX: {
-    COMPARISON: 9020,
+    COMPARISON: 9030,
     MOBIVOLT: 60, 
     CHAT: 70,
     EXPANDED_BUBBLE: 80,
@@ -62,7 +62,7 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
  * Uses CSS custom properties for responsive positioning with improved spacing
  */
 export const MOBILE_POSITION_CLASSES = {
-  comparison: 'bottom-[calc(9.5rem+env(safe-area-inset-bottom))] md:bottom-28',
+  comparison: 'bottom-[calc(10.25rem+env(safe-area-inset-bottom))] md:bottom-28',
   mobivolt: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+84px)]',
   chat: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+152px)] md:bottom-0'
 } as const;

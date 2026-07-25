@@ -241,18 +241,16 @@ export default function ComparisonFloatingBar() {
               zIndex: getFloatingWidgetZIndex('comparison')
             }}
           >
-            {/* Mobile: Direct compact button without white wrapper */}
+            {/* Mobile: Botão compacto discreto */}
             <button
               type="button"
               onClick={handleOpenDock}
               aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-              className={cn(
-                "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:hidden"
-              )}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-none border border-blue-200 bg-white px-3 text-[12px] font-medium text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:hidden"
             >
               <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
               Comparar
-              <span className="rounded-full bg-blue-800 px-1.5 py-0.5 text-[10px] text-white ring-1 ring-white/35" aria-hidden="true">
+              <span className="text-[11px] font-semibold text-blue-500" aria-hidden="true">
                 {count}/{maxComparison}
               </span>
             </button>

@@ -111,37 +111,13 @@ export function useComparison() {
       // Add company
       const newList = [...prev, company];
 
-      // Success message with green check icon AND "Ver Comparação" CTA
+      // Success message - compacta, sem botões, auto-dismiss 2s
       toast.success('Empresa adicionada à comparação', {
-        description: `${company.name} • ${newList.length}/${MAX_COMPARISON} selecionadas`,
-        duration: 4000,
-        icon: (
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 ring-2 ring-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-        ),
-        action: {
-          label: 'Ver comparação',
-          onClick: () => {
-            // 1. Abre o dock expandido
-            comparisonEvents.dispatchEvent(new CustomEvent('open-comparison-modal'));
-            // 2. Dispara evento global usado pelo ComparisonFloatingBar
-            if (typeof window !== 'undefined') {
-              try {
-                window.dispatchEvent(new CustomEvent('open-comparison-dock'));
-              } catch {
-                // noop
-              }
-            }
-          },
-        },
-        cancel: {
-          label: 'Fechar',
-          onClick: () => {},
-        },
+        description: `${company.name} • ${newList.length}/${MAX_COMPARISON}`,
+        duration: 2000,
+        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
         classNames: {
-          toast:
-            '!rounded-2xl !border-emerald-100 !shadow-xl !shadow-emerald-500/5',
+          toast: '!rounded-lg !border-emerald-100 !shadow-sm',
         },
       });
 
