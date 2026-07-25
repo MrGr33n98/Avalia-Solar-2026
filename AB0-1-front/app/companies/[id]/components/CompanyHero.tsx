@@ -442,20 +442,23 @@ export default function CompanyHero({
         <section className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
           <ScrollArea className="w-full">
             <TabsList className="h-auto min-w-full justify-start gap-5 rounded-2xl bg-transparent p-0 px-4 text-slate-500 sm:px-5">
-              {tabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className={cn(
-                    'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
-                    'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                    'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
-                  )}
-                >
-                  <tab.icon className="mr-2 h-4 w-4" />
-                  {tab.label}
-                </TabsTrigger>
-              ))}
+              {tabs.map((tab) => {
+                const TabIcon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className={cn(
+                      'h-auto rounded-none border-b-2 border-transparent px-0 pb-3 pt-1 text-sm font-medium shadow-none',
+                      'text-slate-500 hover:bg-transparent hover:text-slate-900',
+                      'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none'
+                    )}
+                  >
+                    <TabIcon className="mr-2 h-4 w-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
