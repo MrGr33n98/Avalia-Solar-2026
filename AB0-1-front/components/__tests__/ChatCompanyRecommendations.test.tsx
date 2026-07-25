@@ -14,10 +14,12 @@ afterAll(() => {
 
 describe('ChatCompanyRecommendations', () => {
   const defaultProps = {
-    comparedCompanyIds: [],
+    comparisonList: [],
     onCompanyClick: jest.fn(),
     onRequestQuote: jest.fn(),
-    onCompare: jest.fn(),
+    onAddToComparison: jest.fn(),
+    onRemoveFromComparison: jest.fn(),
+    maxComparison: 4,
     onRequestPersonalizedSearch: jest.fn(),
   };
 
@@ -35,10 +37,8 @@ describe('ChatCompanyRecommendations', () => {
     expect(screen.getByText('Não foi possível carregar as recomendações no momento.')).toBeInTheDocument();
   });
 
-  it('renderiza fallback do ErrorBoundary se metadata.companies não for array (e falhar em array operations, mas no caso temos fallback textual para empty array se não crashar)', () => {
-    // Com o código atual, se metadata.companies é string, Array.isArray(rawCompanies) é falso.
-    // Assim hasCompanies = false, o que renderiza o estado vazio, sem quebrar! (Graças à nossa checagem).
-    render(<ChatCompanyRecommendations {...defaultProps} metadata={{ companies: "not-an-array" }} />);
+  it('renderiza estado vazio quando metadata.companies não é array', () => {
+    render(<ChatCompanyRecommendations {...defaultProps} metadata={{ companies: 'not-an-array' }} />);
     expect(screen.getByText(/Não encontramos empresas cadastradas para esse perfil na sua região/i)).toBeInTheDocument();
   });
 
@@ -59,30 +59,64 @@ describe('ChatCompanyRecommendations', () => {
           rating_count: 100,
           sponsored: true,
           verified: true,
-        }
-      ]
+        },
+      ],
     };
 
     render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
-    
+
     // Verifica elementos do card
     expect(screen.getByText('Solar Tech BR')).toBeInTheDocument();
     expect(screen.getByText('São Paulo, SP')).toBeInTheDocument();
-    expect(screen.getByText('Destaque')).toBeInTheDocument(); // Tag sponsored
+    expect(screen.getByText('Destaque')).toBeInTheDocument();
+    expect(screen.getByText('4.8')).toBeInTheDocument();
+    expect(screen.getByText('(100)')).toBeInTheDocument();
   });
-  
+
   it('permite solicitar orçamento e chama callback correto', () => {
     const validMetadata = {
-      companies: [
-        { id: 42, name: 'Energia Boa' }
-      ]
+      companies: [{ id: 42, name: 'Energia Boa' }],
     };
 
     render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
-    
-    const quoteBtn = screen.getByRole('button', { name: /Quero Orçamento/i });
+
+    const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
     fireEvent.click(quoteBtn);
-    
+
     expect(defaultProps.onRequestQuote).toHaveBeenCalledWith(42);
+  });
+
+  it('renderiza múltiplos cards quando há várias empresas', () => {
+    const validMetadata = {
+      companies: [
+        { id: 1, name: 'Empresa A' },
+        { id: 2, name: 'Empresa B' },
+        { id: 3, name: 'Empresa C' },
+      ],
+    };
+
+    render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
+
+    expect(screen.getByText('Empresa A')).toBeInTheDocument();
+    expect(screen.getByText('Empresa B')).toBeInTheDocument();
+    expect(screen.getByText('Empresa C')).toBeInTheDocument();
+  });
+
+  it('chama onAddToComparison ao clicar em Comparar em empresa não selecionada', () => {
+    const validMetadata = {
+      companies: [{ id: 10, name: 'Solar Prime', slug: 'solar-prime' }],
+    };
+
+    render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
+
+    const compareBtn = screen.getByRole('button', {
+      name: /Adicionar Solar Prime à comparação/i,
+    });
+    fireEvent.click(compareBtn);
+
+    expect(defaultProps.onAddToComparison).toHaveBeenCalledTimes(1);
+    const payload = defaultProps.onAddToComparison.mock.calls[0][0];
+    expect(payload.id).toBe(10);
+    expect(payload.name).toBe('Solar Prime');
   });
 });
