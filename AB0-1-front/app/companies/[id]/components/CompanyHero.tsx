@@ -229,9 +229,9 @@ export default function CompanyHero({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
               {/* Lado Esquerdo: Logo + Dados */}
               <div className="flex min-w-0 items-end gap-4">
-                {/* Box da Logo */}
+                {/* Box da Logo - sem fundo branco */}
                 <div className="relative shrink-0 overflow-visible">
-                  <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/20 bg-white shadow-lg sm:h-24 sm:w-24">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/20 shadow-lg sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
@@ -248,10 +248,10 @@ export default function CompanyHero({
                     />
                   </div>
 
-                  {/* Selo de conquista — apenas a imagem, sem fundo/borda */}
+                  {/* Selo de conquista — fundo transparente e posição ajustada */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute -right-1 -top-1 z-30 h-8 w-8 overflow-visible drop-shadow-md transition-transform duration-200 hover:scale-105 sm:h-9 sm:w-9"
+                      className="absolute -right-1 -top-1 z-30 h-8 w-8 overflow-visible transition-transform duration-200 hover:scale-105 sm:h-9 sm:w-9"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
@@ -261,7 +261,7 @@ export default function CompanyHero({
                         sizes="36px"
                         objectFit="contain"
                         className="drop-shadow-sm"
-                        containerClassName="h-full w-full"
+                        containerClassName="h-full w-full bg-transparent"
                         onError={() => setBadgeImageError(true)}
                       />
                     </div>
