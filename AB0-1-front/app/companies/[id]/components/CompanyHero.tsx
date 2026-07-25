@@ -179,9 +179,10 @@ export default function CompanyHero({
       </div>
 
       {/* Container unificado: Banner + Card de Identidade + Abas */}
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* 1. Hero Banner */}
-        <div className="relative h-[150px] w-full overflow-hidden bg-slate-950 sm:h-[170px] lg:h-[210px] xl:h-[220px]">
+        <div className="overflow-hidden rounded-t-2xl">
+          <div className="relative h-[150px] w-full bg-slate-950 sm:h-[170px] lg:h-[210px] xl:h-[220px]">
           {/* Background Blur Fill Layer */}
           <OptimizedImage
             src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -221,10 +222,11 @@ export default function CompanyHero({
               </span>
             </div>
           )}
+          </div>
         </div>
 
         {/* 2. Card de Identidade da Empresa (integrado ao banner, sem margem) */}
-        <div className="relative border-t border-slate-200 bg-white px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className="relative border-t border-slate-200 bg-white px-4 pb-4 pt-2 sm:px-5 sm:pb-4 sm:pt-3">
           {/* Selo Premium no canto superior direito */}
           {company.verified && (
             <div className="absolute right-4 top-3.5 z-10 sm:right-5 sm:top-4">
@@ -234,44 +236,46 @@ export default function CompanyHero({
 
           <div className="flex min-h-[105px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
-              {/* Box da Logo */}
-              <div className="relative h-16 w-16 sm:h-[76px] sm:w-[76px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white flex items-center justify-center p-1">
+            <div className="flex flex-col sm:flex-row items-start gap-4 min-w-0">
+              {/* Box da Logo — sobreposição LinkedIn */}
+              <div className="relative -mt-6 sm:-mt-7 shrink-0 overflow-visible">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
+                  <OptimizedImage
+                    src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
+                    alt={company.name}
+                    fill
+                    priority
+                    imageContext="company-logo"
+                    entityName={company.name}
+                    locationLabel={locationLabel}
+                    objectFit="contain"
+                    className="p-1"
+                    containerClassName="h-full w-full"
+                    fallbackSrc="/images/logo-placeholder.svg"
+                    onError={() => setLogoError(true)}
+                  />
+                </div>
                 {heroBadgeUrl && !badgeImageError && (
                   <div
-                    className="absolute -right-1.5 -top-1.5 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm"
+                    className="absolute -right-2 -top-2 z-30 h-10 w-10 sm:h-11 sm:w-11"
                     title="Selo de conquista"
                   >
                     <OptimizedImage
                       src={heroBadgeUrl}
                       alt="Selo de conquista"
                       fill
-                      sizes="24px"
+                      sizes="44px"
                       objectFit="contain"
-                      className="rounded-full"
+                      className="drop-shadow-sm"
                       containerClassName="h-full w-full"
                       onError={() => setBadgeImageError(true)}
                     />
                   </div>
                 )}
-                <OptimizedImage
-                  src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
-                  alt={company.name}
-                  fill
-                  priority
-                  imageContext="company-logo"
-                  entityName={company.name}
-                  locationLabel={locationLabel}
-                  objectFit="contain"
-                  className="p-1"
-                  containerClassName="h-full w-full"
-                  fallbackSrc="/images/logo-placeholder.svg"
-                  onError={() => setLogoError(true)}
-                />
               </div>
 
               {/* Informações da Empresa */}
-              <div className="space-y-1 min-w-0">
+              <div className="space-y-1 min-w-0 pt-2 sm:pt-3">
                 <div className="flex items-center gap-2 pr-24 sm:pr-0">
                   <h1 className="text-lg font-bold leading-tight text-slate-950 sm:text-xl truncate">
                     {company.name}
@@ -411,7 +415,7 @@ export default function CompanyHero({
 
         {/* 3. Navegação por Abas (integrada ao bloco) */}
         {tabs.length > 0 && onTabChange && (
-          <div className="border-t border-slate-200 bg-white">
+          <div className="rounded-b-2xl border-t border-slate-200 bg-white">
             <ScrollArea className="w-full">
               <TabsList className="h-auto min-w-full justify-start gap-5 rounded-none bg-transparent p-0 px-4 text-slate-500 sm:px-5">
                 {tabs.map((tab) => (

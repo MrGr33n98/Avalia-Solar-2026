@@ -63,23 +63,8 @@ export default function CompanyIdentityCard({
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
           {/* Box da Logo */}
-          <div className="relative h-16 w-16 sm:h-[76px] sm:w-[76px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white flex items-center justify-center p-1">
-            {badgeImageUrl && (
-              <div
-                className="absolute -right-1.5 -top-1.5 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm sm:h-7 sm:w-7"
-                title={badgeToRender?.name || 'Selo de conquista'}
-              >
-                <Image
-                  src={badgeImageUrl}
-                  alt={badgeToRender?.name || 'Selo'}
-                  width={28}
-                  height={28}
-                  className="h-full w-full rounded-full object-contain"
-                  unoptimized
-                />
-              </div>
-            )}
-            <div className="relative h-full w-full overflow-hidden rounded-xl">
+          <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-visible">
+            <div className="h-full w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -101,6 +86,21 @@ export default function CompanyIdentityCard({
                 </div>
               )}
             </div>
+            {badgeImageUrl && (
+              <div
+                className="absolute -right-2 -top-2 z-30 h-10 w-10 sm:h-11 sm:w-11"
+                title={badgeToRender?.name || 'Selo de conquista'}
+              >
+                <Image
+                  src={badgeImageUrl}
+                  alt={badgeToRender?.name || 'Selo'}
+                  fill
+                  className="object-contain drop-shadow-sm"
+                  sizes="44px"
+                  unoptimized
+                />
+              </div>
+            )}
           </div>
 
           {/* Informações da empresa */}
