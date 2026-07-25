@@ -250,7 +250,7 @@ export default function QuoteWizardModal() {
       }}
     >
       <DialogContent
-        overlayClassName="bg-[#0B1B36]/55 backdrop-blur-[2px]"
+        overlayClassName="bg-[rgba(5,12,24,0.78)] backdrop-blur-none"
         className={cn(
           'z-[10000] flex max-h-[90vh] max-w-xl flex-col overflow-hidden border-none p-0 md:rounded-2xl',
           'max-md:left-1/2 max-md:top-auto max-md:w-[calc(100%-32px)] max-md:max-w-[420px]',
