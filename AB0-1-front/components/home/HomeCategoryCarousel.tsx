@@ -116,7 +116,7 @@ export function HomeCategoryCarousel({ categories }: HomeCategoryCarouselProps) 
 
       {/* Progress Indicators */}
       <div className="flex flex-col items-center gap-4">
-        {count > 1 && <CarouselIndicators api={undefined} />}
+        {count > 1 && <CarouselIndicators />}
 
         <Button asChild variant="outline" className="clay-chip rounded-full border-brand-blue/30 text-brand-blue hover:bg-brand-blue/5">
           <Link href="/categories" className="group flex items-center">
