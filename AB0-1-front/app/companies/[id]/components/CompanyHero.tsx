@@ -227,12 +227,22 @@ export default function CompanyHero({
 
         {/* 2. Card de Identidade da Empresa (integrado ao banner, sem margem) */}
         <div className="relative border-t border-slate-200 bg-white px-5 pb-5 pt-4">
-          <div className="flex items-center justify-between gap-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
             {/* Lado Esquerdo: Logo + Dados */}
-            <div className="flex min-w-0 items-center gap-4">
+            <div className="flex min-w-0 items-start gap-4">
               {/* Box da Logo — sobreposição LinkedIn */}
-              <div className="relative -mt-12 shrink-0 overflow-visible">
-                <div className="h-24 w-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative -mt-8 shrink-0 overflow-visible sm:-mt-9">
+                <div
+                  className="
+                    relative
+                    h-20 w-20
+                    overflow-hidden
+                    rounded-xl
+                    border border-slate-200
+                    shadow-sm
+                    sm:h-24 sm:w-24
+                  "
+                >
                   <OptimizedImage
                     src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                     alt={company.name}
@@ -241,16 +251,28 @@ export default function CompanyHero({
                     imageContext="company-logo"
                     entityName={company.name}
                     locationLabel={locationLabel}
-                    objectFit="contain"
-                    className="p-1"
-                    containerClassName="h-full w-full"
+                    objectFit="cover"
+                    className="p-0"
+                    containerClassName="absolute inset-0 h-full w-full"
                     fallbackSrc="/images/logo-placeholder.svg"
                     onError={() => setLogoError(true)}
                   />
                 </div>
                 {heroBadgeUrl && !badgeImageError && (
                   <div
-                    className="absolute -right-2 -top-2 z-30 h-10 w-10 transition-transform duration-200 hover:scale-110 sm:h-11 sm:w-11"
+                    className="
+                      absolute
+                      -right-1.5
+                      -top-2
+                      z-30
+                      h-9 w-9
+                      overflow-visible
+                      drop-shadow-sm
+                      transition-transform
+                      duration-200
+                      hover:scale-105
+                      sm:h-10 sm:w-10
+                    "
                     title="Selo de conquista"
                   >
                     <OptimizedImage
@@ -268,7 +290,7 @@ export default function CompanyHero({
               </div>
 
               {/* Informações da Empresa */}
-              <div className="min-w-0 space-y-1">
+              <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-bold leading-tight text-slate-950 sm:text-xl truncate">
                     {company.name}
@@ -313,12 +335,12 @@ export default function CompanyHero({
             </div>
 
             {/* Lado Direito: Premium + Botões */}
-            <div className="flex shrink-0 flex-col items-end gap-3">
+            <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end sm:gap-3">
               {company.verified && (
                 <PremiumBadge className="h-6 px-3 sm:h-7 sm:px-4" />
               )}
 
-              <div className="flex flex-wrap items-center gap-2 justify-end">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                 {ctaEnabled && ctaUrl && (
                   <div {...heroWhatsappHoverIntent}>
                     <WhatsappButton
