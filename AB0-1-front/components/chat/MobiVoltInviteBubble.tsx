@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/lazy';
 import { getFloatingWidgetZIndex, getFloatingWidgetSizeClasses, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 

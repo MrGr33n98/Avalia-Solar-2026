@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Minus, Scale, ShieldCheck, Star, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
 import {
-  notifyAssistantCompactOpen,
   OPEN_COMPARISON_DOCK_EVENT,
   openComparisonDock,
 } from '@/lib/floating-widget-events';
@@ -96,7 +95,6 @@ export default function ChatWidget() {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
-  const [showCompactHelp, setShowCompactHelp] = useState(false);
   const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
 
   // Estados para Fase 4A - Discovery Guiado
@@ -108,7 +106,6 @@ export default function ChatWidget() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [canShowInvite, setCanShowInvite] = useState(false);
-  const compactHelpId = 'mobivolt-ai-compact-help';
 
   const allCompanies = messages
     .filter(msg => msg.metadata?.type === 'company_recommendations')
@@ -228,19 +225,17 @@ export default function ChatWidget() {
     track('mobivolt_session_reset_confirmed', {});
   }, [clearSession, setIsOpen]);
 
-  // Start session on first open
   const handleToggle = () => {
     if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
+      if (isOpen) {
+        setIsOpen(false);
+        track('ai_chat_closed', { surface: 'mobile' });
+        return;
+      }
       setShowInviteBubble(false);
       setShowCompactHelp(false);
-      if (isOpen) setIsOpen(false);
-
-      // No mobile o FAB deve abrir o questionario principal, nao apenas o painel
-      // compacto. Isso garante que o clique leve o usuario diretamente ao wizard.
-      notifyAssistantCompactOpen();
-      track('ai_fab_clicked', { surface: 'mobile', destination: 'quote_wizard' });
-      track('ai_panel_opened', { surface: 'mobile', destination: 'quote_wizard' });
-      openQuoteWizard({ source: 'mobivolt-mobile-fab' });
+      setIsOpen(true);
+      track('ai_chat_opened', { surface: 'mobile' });
       return;
     }
 
@@ -248,24 +243,6 @@ export default function ChatWidget() {
       setShowInviteBubble(false);
     }
     setIsOpen(!isOpen);
-  };
-
-  const handleCompactComparison = () => {
-    setShowCompactHelp(false);
-    openComparisonDock();
-    track('mobivolt_compact_comparison_opened', { source: 'mobile_help_popup' });
-  };
-
-  const handleCompactReviews = () => {
-    setShowCompactHelp(false);
-    track('mobivolt_compact_reviews_clicked', { source: 'mobile_help_popup' });
-    router.push('/search?tab=reviews&sort=rating');
-  };
-
-  const handleCompactQuote = () => {
-    setShowCompactHelp(false);
-    track('mobivolt_compact_quote_clicked', { source: 'mobile_help_popup' });
-    openQuoteWizard({ source: 'mobivolt-mobile-help' });
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -487,13 +464,12 @@ export default function ChatWidget() {
 
   return (
     <div
-      className={`fixed bottom-[calc(4.5rem+var(--safe-area-inset-bottom))] right-4 font-sans flex flex-col items-end pointer-events-none sm:bottom-20 sm:right-6 ${
-        isOpen || showCompactHelp ? 'z-[9010]' : 'z-[9000]'
+      className={`fixed right-0 left-0 sm:left-auto bottom-0 sm:bottom-20 sm:right-6 font-sans flex flex-col items-end pointer-events-none ${
+        isOpen ? 'z-[9010]' : 'z-[9000]'
       }`}
     >
-      {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto flex w-full max-w-[360px] flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 sm:ml-auto sm:h-[650px] sm:max-h-[700px] sm:w-[420px] sm:max-w-none max-sm:max-h-[70vh] max-sm:w-[calc(100vw-2rem)] mb-4">
+        <div className="pointer-events-auto flex w-full flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 sm:ml-auto sm:h-[650px] sm:max-h-[700px] sm:w-[420px] max-sm:max-h-[72%] max-sm:mx-0 mb-0 sm:mb-4">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
@@ -540,11 +516,9 @@ export default function ChatWidget() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                aria-label="Minimizar chat"
+                aria-label="Fechar chat"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 12H6" />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -970,89 +944,13 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {!isOpen && showCompactHelp && (
-        <section
-          id={compactHelpId}
-          aria-label="Ajuda rápida do MobiVolt AI"
-          className="pointer-events-auto mb-3 max-h-[45vh] w-[calc(100vw-2rem)] max-w-[360px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 animate-in fade-in slide-in-from-bottom-3 duration-200 sm:hidden"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-[15px] font-semibold text-slate-950">Olá! Precisa de ajuda?</h2>
-              <p className="mt-1 text-[13px] leading-5 text-slate-600">
-                Posso ajudar você a configurar seu perfil, ver métricas e melhorar sua reputação.
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCompactHelp(false);
-                  track('ai_panel_minimized', {});
-                }}
-                aria-label="Minimizar ajuda"
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                <Minus className="h-3 w-3" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCompactHelp(false);
-                  track('ai_panel_closed', {});
-                }}
-                aria-label="Fechar ajuda"
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                <X className="h-3 w-3" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-3 grid gap-2">
-            <button
-              type="button"
-              onClick={handleCompactReviews}
-              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
-            >
-              <Star className="h-4 w-4" aria-hidden="true" />
-              <span className="flex-1">Ver avaliações</span>
-              <span aria-hidden="true">→</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCompactComparison}
-              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
-            >
-              <Scale className="h-4 w-4" aria-hidden="true" />
-              <span className="flex-1">Comparar empresas</span>
-              <span aria-hidden="true">→</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCompactQuote}
-              className="flex h-10 items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-700 hover:bg-blue-100"
-            >
-              <FileText className="h-4 w-4" aria-hidden="true" />
-              <span className="flex-1">Pedir orçamento</span>
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-
-          <p className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
-            Patrocínios não alteram sua comparação.
-          </p>
-        </section>
-      )}
-
       {!isOpen && canShowInvite && showInviteBubble && (
-        <div className="pointer-events-auto mb-3 hidden w-full max-w-[360px] rounded-lg border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300 sm:block">
+        <div className="pointer-events-auto w-full max-w-[360px] rounded-2xl border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300 sm:mb-3 sm:max-w-[360px] sm:block">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Posso ajudar você a configurar seu perfil, ver métricas e melhorar sua reputação.
+                Posso ajudar você a encontrar empresas de energia solar ou mobilidade elétrica, comparar avaliações e pedir orçamento com segurança.
               </p>
             </div>
             <button
@@ -1081,14 +979,12 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Floating Launcher Button */}
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-12 sm:w-12"
-          aria-label={showCompactHelp ? 'Fechar assistente de IA (inteligência artificial)' : 'Abrir assistente de IA (inteligência artificial)'}
-          aria-expanded={showCompactHelp}
-          aria-controls={showCompactHelp ? compactHelpId : undefined}
+          className="group pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-12 sm:w-12"
+          aria-label="Abrir assistente de IA (inteligência artificial)"
+          aria-expanded={false}
           aria-haspopup="dialog"
         >
           {/* Notification Pulsing Badge */}
