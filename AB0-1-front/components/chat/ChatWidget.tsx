@@ -486,7 +486,7 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 w-[calc(100vw-24px)] max-w-[340px] h-[56dvh] min-h-[420px] max-h-[520px] sm:w-[420px] sm:h-[650px] sm:max-h-[700px] sm:max-w-none mb-0 sm:mb-4">
           {/* Header */}
-          <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
+          <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white h-[76px] sm:h-[80px] flex items-center justify-between px-3 py-2 shadow-md">
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
@@ -501,7 +501,8 @@ export default function ChatWidget() {
               </div>
               <div>
                 <h3 className="font-semibold text-sm tracking-wide">MobiVolt AI</h3>
-                <span className="text-xs text-white/80">Online • Assistente Avalia Solar</span>
+                <span className="text-xs text-white/80 truncate max-[360px]:hidden">Online • Assistente Avalia Solar</span>
+              <span className="text-xs text-white/80 truncate hidden max-[360px]:inline">Assistente Avalia Solar</span>
               </div>
             </div>
             <div className="flex items-center space-x-1">
@@ -518,11 +519,11 @@ export default function ChatWidget() {
                       clearSession();
                     }
                   }}
-                  className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   aria-label="Nova conversa"
                   title="Nova conversa"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
@@ -530,10 +531,10 @@ export default function ChatWidget() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label="Fechar chat"
               >
-                <X className="w-5 h-5" />
+                <X className="w-[18px] h-[18px]" />
               </button>
             </div>
           </div>

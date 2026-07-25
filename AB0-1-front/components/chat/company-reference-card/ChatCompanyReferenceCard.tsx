@@ -82,10 +82,10 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
   return (
     <div
       className={cn(
-        'relative w-full rounded-[14px] border border-[#E5E7EB] bg-white',
+        'relative w-full min-w-0 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white',
         'shadow-[0_4px_12px_rgba(15,23,42,0.06)]',
         'border-l-[3px] border-l-[#2563EB]',
-        'px-[14px] py-[14px]',
+        'p-3',
         'dark:border-zinc-700 dark:bg-zinc-900 dark:border-l-[#2563EB]',
         'transition-colors duration-200',
       )}
@@ -93,9 +93,9 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
       {/* ================================================================ */}
       {/*  Linha 1: Logo + Nome + Selos                                     */}
       {/* ================================================================ */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         {/* Logo */}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
           {hasLogo ? (
             <img
               src={logoUrl}
@@ -114,7 +114,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <h4
-              className="truncate text-[15px] font-bold leading-[1.2] text-[#111827] dark:text-zinc-100"
+              className="truncate text-sm font-bold leading-[1.2] text-[#111827] dark:text-zinc-100"
               title={company.name}
             >
               {company.name}
@@ -122,7 +122,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
 
             {/* Selo Destaque */}
             {isFeatured && (
-              <span className="inline-flex shrink-0 items-center rounded-[4px] bg-[#F97316] px-[6px] text-[10px] font-bold uppercase leading-[18px] text-white tracking-wide">
+              <span className="inline-flex h-[18px] shrink-0 items-center rounded-[4px] bg-[#F97316] px-1.5 text-[9px] font-bold leading-none text-white tracking-wide">
                 Destaque
               </span>
             )}
@@ -134,7 +134,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
                 title="Empresa verificada"
                 aria-label="Empresa verificada"
               >
-                <VerifiedIcon />
+                <VerifiedIcon className="h-4 w-4" />
               </span>
             )}
           </div>
@@ -142,7 +142,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
           {/* ============================================================ */}
           {/*  Linha 2: Rating + Localização                                */}
           {/* ============================================================ */}
-          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             {hasRating ? (
               <>
                 <StarIcon className="fill-amber-400 text-amber-400" />
@@ -188,7 +188,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
       {/* ================================================================ */}
       {/*  Linha de ações: Comparar | Reviews | Orçamento                   */}
       {/* ================================================================ */}
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-2.5 grid w-full grid-cols-[1fr_1fr_1.1fr] gap-1.5 max-[360px]:grid-cols-[0.9fr_0.9fr_1fr] max-[360px]:gap-1">
         {/* Comparar */}
         {compareEnabled && (
           <button
@@ -201,7 +201,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
                 : `Adicionar ${company.name} à comparação`
             }
             className={cn(
-              'inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-lg border px-[10px] text-xs font-semibold leading-none transition-colors',
+              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border px-1.5 text-[11px] font-semibold leading-none transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               isSelectedForComparison
                 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
@@ -213,7 +213,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
                 <CheckIcon className="text-blue-600 dark:text-blue-400" />
                 <span className="whitespace-nowrap">
                   {selectedPosition
-                    ? `Selecionada ${selectedPosition}/${maxComparison}`
+                    ? `${selectedPosition}/${maxComparison}`
                     : 'Selecionada'}
                 </span>
               </>
@@ -235,14 +235,14 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             onClick={onReviews}
             aria-label="Ver avaliações"
             className={cn(
-              'inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-lg border border-zinc-200 bg-white px-[10px] text-xs font-semibold leading-none text-zinc-700 transition-colors',
+              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border border-zinc-200 bg-white px-1.5 text-[11px] font-semibold leading-none text-zinc-700 transition-colors',
               'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950',
             )}
           >
             <MessageIcon className="text-zinc-400" />
-            <span className="whitespace-nowrap max-[360px]:hidden">Reviews</span>
+            <span className="whitespace-nowrap">Reviews</span>
           </button>
         )}
 
@@ -254,7 +254,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             disabled={isBudgetLoading}
             aria-label="Solicitar orçamento"
             className={cn(
-              'inline-flex h-9 min-w-[105px] flex-1 items-center justify-center gap-1 rounded-lg bg-[#2563EB] px-[10px] text-xs font-semibold leading-none text-white transition-colors',
+              'inline-flex h-[34px] min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg bg-[#2563EB] px-1.5 text-[11px] font-semibold leading-none text-white transition-colors',
               'hover:bg-[#1D4ED8]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               'disabled:cursor-not-allowed disabled:opacity-70',
