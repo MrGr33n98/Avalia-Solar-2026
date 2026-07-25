@@ -292,14 +292,20 @@ const CarouselIndicators = React.forwardRef<
         <button
           type="button"
           key={index}
-          className={cn(
-            'h-1.5 rounded-full transition-all duration-300',
-            index === selectedIndex ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
-          )}
+          className="relative flex h-8 w-8 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
           onClick={() => scrollTo(index)}
           aria-label={`Ir para o slide ${index + 1}`}
           aria-current={index === selectedIndex ? 'true' : undefined}
-        />
+        >
+          <span
+            className={cn(
+              'block h-[7px] rounded-full transition-all duration-200',
+              index === selectedIndex
+                ? 'w-[18px] bg-blue-600'
+                : 'w-[7px] bg-slate-300 hover:bg-slate-400'
+            )}
+          />
+        </button>
       ))}
     </div>
   );
