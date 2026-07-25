@@ -180,7 +180,7 @@ export default function CompanyHero({
 
       {/* 1. Hero Banner com identidade flutuante */}
       <section className="overflow-hidden rounded-2xl">
-        <div className="relative h-[320px] w-full bg-slate-950 sm:h-[380px] lg:h-[420px] xl:h-[460px]">
+        <div className="relative h-[320px] w-full bg-slate-950 sm:h-[400px] lg:h-[480px] xl:h-[520px]">
           {/* Background Blur Fill Layer */}
           <OptimizedImage
             src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
@@ -251,8 +251,7 @@ export default function CompanyHero({
                   {/* Selo de conquista — apenas a imagem, sem fundo/borda */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute -right-1 -top-1 z-30 h-8 w-8 overflow-visible drop-shadow-lg transition-all duration-300 hover:scale-110 hover:drop-shadow-xl sm:h-9 sm:w-9 animate-in zoom-in-75 fade-in"
-                      style={{ animationDelay: '200ms' }}
+                      className="absolute -right-1 -top-1 z-30 h-8 w-8 overflow-visible drop-shadow-md transition-transform duration-200 hover:scale-105 sm:h-9 sm:w-9"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
@@ -261,22 +260,21 @@ export default function CompanyHero({
                         fill
                         sizes="36px"
                         objectFit="contain"
-                        className="drop-shadow-lg"
+                        className="drop-shadow-sm"
                         containerClassName="h-full w-full"
                         onError={() => setBadgeImageError(true)}
                       />
                     </div>
                   )}
 
-                  {/* Verificação — ícone de check com fundo verde gradiente */}
+                  {/* Verificação — apenas o ícone, sem fundo branco */}
                   {company.verified && (
                     <div
-                      className="absolute -right-2 -top-3 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 border-2 border-white shadow-lg animate-in zoom-in-50 fade-in duration-500 hover:scale-110 hover:shadow-xl hover:shadow-emerald-500/25 transition-all sm:h-7 sm:w-7"
-                      style={{ animationDelay: '400ms' }}
+                      className="absolute -right-2 -top-3 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 border-2 border-white shadow-md transition-transform duration-200 hover:scale-105 sm:h-7 sm:w-7"
                       title="Empresa Verificada"
                     >
                       <svg
-                        className="h-3 w-3 text-white drop-shadow-sm sm:h-4 sm:w-4"
+                        className="h-3 w-3 text-white sm:h-4 sm:w-4"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
