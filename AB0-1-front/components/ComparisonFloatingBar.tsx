@@ -27,6 +27,7 @@ import {
   OPEN_COMPARISON_DOCK_EVENT,
   openComparisonDock,
 } from '@/lib/floating-widget-events';
+import { getFloatingWidgetZIndex, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 import { cn } from '@/lib/utils';
 
 const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'), {
@@ -231,14 +232,32 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className="fixed bottom-[calc(6.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-4 z-[8900] md:bottom-28 md:right-6"
+            className={cn("fixed right-4 md:right-6", MOBILE_POSITION_CLASSES.comparison)}
+            style={{
+              zIndex: getFloatingWidgetZIndex('comparison')
+            }}
           >
-            <div className="flex items-center gap-1 rounded-full border border-blue-200 bg-white p-1.5 shadow-xl shadow-blue-500/10 md:gap-2 md:rounded-lg md:border-blue-400 md:p-2">
+            {/* Mobile: Direct compact button without white wrapper */}
+            <button
+              type="button"
+              onClick={handleOpenDock}
+              aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
+              className="inline-flex h-11 min-w-[132px] max-w-[156px] items-center gap-2 rounded-full bg-blue-600 px-4 text-[13px] font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:hidden"
+            >
+              <Maximize2 className="h-4 w-4" aria-hidden="true" />
+              Comparar
+              <span className="rounded-full bg-blue-800 px-1.5 py-0.5 text-[10px] text-white ring-1 ring-white/35" aria-hidden="true">
+                {count}/{maxComparison}
+              </span>
+            </button>
+            
+            {/* Desktop: Original design with white wrapper */}
+            <div className="hidden items-center gap-2 rounded-lg border border-blue-400 bg-white p-2 shadow-xl shadow-blue-500/10 md:flex">
               <button
                 type="button"
                 onClick={handleOpenDock}
                 aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-                className="inline-flex h-11 md:h-10 items-center gap-2 rounded-full md:rounded-md bg-blue-600 px-4 text-[13px] md:text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:font-bold"
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 <Maximize2 className="h-4 w-4" aria-hidden="true" />
                 Comparar
@@ -251,7 +270,7 @@ export default function ComparisonFloatingBar() {
                 onClick={closeDock}
                 aria-label="Fechar comparador"
                 title="Fechar"
-                className="hidden h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:inline-flex"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>

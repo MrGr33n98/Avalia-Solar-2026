@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { track } from '@/lib/analytics/lazy';
+import { getFloatingWidgetZIndex, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 
 interface MobiVoltInviteBubbleProps {
   onActionSelect: (action: InviteAction) => void;
@@ -111,7 +112,12 @@ export default function MobiVoltInviteBubble({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-[max(5rem,var(--safe-area-inset-bottom))] right-4 sm:right-6 z-40 max-w-[calc(100vw-2rem)] sm:max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div 
+      className={`fixed right-4 sm:right-6 max-w-[calc(100vw-2rem)] sm:max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${MOBILE_POSITION_CLASSES.mobivolt}`}
+      style={{
+        zIndex: getFloatingWidgetZIndex('mobivolt')
+      }}
+    >
       {/* Balão de Convite Principal */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden">
         {/* Header com avatar e mensagem */}
