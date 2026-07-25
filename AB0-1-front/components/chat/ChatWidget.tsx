@@ -95,6 +95,7 @@ export default function ChatWidget() {
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
+  const [showCompactHelp, setShowCompactHelp] = useState(false);
   const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
 
   // Estados para Fase 4A - Discovery Guiado
@@ -106,6 +107,7 @@ export default function ChatWidget() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [canShowInvite, setCanShowInvite] = useState(false);
+  const compactHelpId = 'mobivolt-ai-compact-help';
 
   const allCompanies = messages
     .filter(msg => msg.metadata?.type === 'company_recommendations')

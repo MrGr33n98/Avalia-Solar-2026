@@ -88,7 +88,7 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
         return (
           <div
             key={company.id ?? `${company.name}-${companyIndex}`}
-            className={`p-3.5 rounded-xl border transition-all duration-200 bg-white dark:bg-zinc-900 ${
+            className={`flex h-full flex-col p-3.5 rounded-xl border transition-all duration-200 bg-white dark:bg-zinc-900 ${
               company.sponsored && MOBIVOLT_SPONSORED_CARDS_ENABLED
                 ? 'border-amber-400 dark:border-amber-500 shadow-md relative overflow-hidden bg-gradient-to-br from-amber-50/10 to-transparent dark:from-amber-950/10'
                 : 'border-zinc-200/80 dark:border-zinc-800 shadow-sm'
@@ -186,49 +186,68 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
             )}
 
             {/* Ações Comerciais do Card */}
-            <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
-              <a
-                href={company.profile_url || (company.slug ? `/companies/${company.slug}` : '/companies')}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackableCompanyId !== null && onCompanyClick(trackableCompanyId, 'profile')}
-                className="flex items-center justify-center text-[10px] font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 py-1.5 rounded-lg transition-colors cursor-pointer text-center"
-              >
-                Ler reviews
-              </a>
-              {trackableCompanyId !== null && (
-                <button
-                  type="button"
-                  onClick={() => onRequestQuote(trackableCompanyId)}
-                  className="flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-r from-brand-blue to-brand-cyan hover:from-brand-blue-dark hover:to-brand-blue py-1.5 rounded-lg shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                >
-                  Quero Orçamento
-                </button>
-              )}
+            <div className="mt-auto border-t border-zinc-100 pt-3 dark:border-zinc-800">
+              <div className="grid grid-cols-2 gap-2">
+                {MOBIVOLT_COMPARE_BUTTON_ENABLED && trackableCompanyId !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => onCompare(trackableCompanyId)}
+                    aria-pressed={comparedCompanyIds.includes(trackableCompanyId)}
+                    className={`inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-[11px] font-semibold leading-none whitespace-nowrap transition-colors ${
+                      comparedCompanyIds.includes(trackableCompanyId)
+                        ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:border-blue-300 hover:bg-blue-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950'
+                    }`}
+                  >
+                    <span aria-hidden="true">
+                      {comparedCompanyIds.includes(trackableCompanyId) ? '✓' : '+'}
+                    </span>
+                    <span className="truncate">
+                      {comparedCompanyIds.includes(trackableCompanyId)
+                        ? 'Selecionada'
+                        : 'Comparar'}
+                    </span>
+                  </button>
+                ) : (
+                  <div aria-hidden="true" className="h-9" />
+                )}
 
-              {MOBIVOLT_CARD_WHATSAPP_ENABLED && trackableCompanyId !== null && company.whatsapp && (
-                <button
-                  type="button"
-                  onClick={() => onCompanyClick(trackableCompanyId, 'whatsapp')}
-                  className="col-span-2 flex items-center justify-center text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 py-1.5 rounded-lg transition-colors shadow-sm"
+                <a
+                  href={company.profile_url || (company.slug ? `/companies/${company.slug}` : '/companies')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackableCompanyId !== null && onCompanyClick(trackableCompanyId, 'profile')}
+                  className="inline-flex h-9 min-w-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[11px] font-semibold leading-none text-zinc-700 whitespace-nowrap transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950"
                 >
-                  WhatsApp
-                </button>
-              )}
+                  <span className="truncate">Ler reviews</span>
+                </a>
+              </div>
 
-              {MOBIVOLT_COMPARE_BUTTON_ENABLED && trackableCompanyId !== null && (
-                <button
-                  type="button"
-                  onClick={() => onCompare(trackableCompanyId)}
-                  className={`col-span-2 flex items-center justify-center text-[10px] font-bold border py-1.5 rounded-lg transition-colors ${
-                    comparedCompanyIds.includes(trackableCompanyId)
-                      ? 'border-brand-blue text-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10 dark:border-brand-blue'
-                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
-                  }`}
-                >
-                  {comparedCompanyIds.includes(trackableCompanyId) ? '✓ Comparando' : 'Comparar Instalador'}
-                </button>
-              )}
+              <div className="mt-2 grid min-h-9 grid-cols-2 gap-2">
+                {trackableCompanyId !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => onRequestQuote(trackableCompanyId)}
+                    className="inline-flex h-9 min-w-0 items-center justify-center rounded-lg bg-blue-600 px-2 text-[11px] font-semibold leading-none text-white whitespace-nowrap transition-colors hover:bg-blue-700"
+                  >
+                    <span className="truncate">Quero orçamento</span>
+                  </button>
+                ) : (
+                  <div aria-hidden="true" className="h-9" />
+                )}
+
+                {MOBIVOLT_CARD_WHATSAPP_ENABLED && trackableCompanyId !== null && company.whatsapp ? (
+                  <button
+                    type="button"
+                    onClick={() => onCompanyClick(trackableCompanyId, 'whatsapp')}
+                    className="inline-flex h-9 min-w-0 items-center justify-center rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold leading-none text-white whitespace-nowrap transition-colors hover:bg-emerald-700"
+                  >
+                    <span className="truncate">WhatsApp</span>
+                  </button>
+                ) : (
+                  <div aria-hidden="true" className="h-9" />
+                )}
+              </div>
             </div>
           </div>
         );
