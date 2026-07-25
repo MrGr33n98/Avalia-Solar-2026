@@ -357,7 +357,7 @@ export default function GlobalChatWidget() {
 
   // ESTADO EXPANDIDO (Painel Flutuante estilo LinkedIn)
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex h-[540px] w-[360px] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-5">
+    <div className="fixed bottom-[calc(4.5rem+var(--sab))] right-4 z-[9010] flex h-[65vh] max-h-[540px] w-[calc(100vw-2rem)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-5 md:bottom-4 md:h-[540px]">
       <FloatingChatHeader
         currentUser={user}
         activeConversation={

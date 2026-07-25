@@ -493,7 +493,7 @@ export default function ChatWidget() {
     >
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto hidden w-full max-w-[360px] flex-col overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 sm:ml-auto sm:flex sm:h-[650px] sm:max-h-[700px] sm:w-[420px] sm:max-w-none">
+        <div className="pointer-events-auto flex w-full max-w-[360px] flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 sm:ml-auto sm:h-[650px] sm:max-h-[700px] sm:w-[420px] sm:max-w-none max-sm:max-h-[70vh] max-sm:w-[calc(100vw-2rem)] mb-4">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
@@ -599,22 +599,22 @@ export default function ChatWidget() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-lg">MobiVolt AI</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base md:text-lg">MobiVolt AI</h3>
+                  <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
                     Compare empresas, veja avaliações e peça orçamento com segurança.
                   </p>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-blue pt-2">O que você procura?</p>
+                  <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.18em] text-brand-blue pt-2">O que você procura?</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 w-full mt-2">
                   {discoveryActions.map((action) => (
                     <button
                       type="button"
                       key={action.label}
                       onClick={() => executeInviteAction(action)}
-                      className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-3.5 px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
+                      className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-2.5 md:py-3.5 px-3 md:px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
                     >
-                      <span className="block text-sm">{action.label}</span>
+                      <span className="block text-xs md:text-sm">{action.label}</span>
                       <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                       </svg>

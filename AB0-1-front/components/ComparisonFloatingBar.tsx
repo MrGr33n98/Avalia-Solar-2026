@@ -231,14 +231,14 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className="fixed bottom-[calc(7.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-3 z-[8900] md:bottom-28 md:right-6 max-sm:w-[calc(100vw-1.5rem)] max-sm:left-3 max-sm:right-auto"
+            className="fixed bottom-[calc(6.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-4 z-[8900] md:bottom-28 md:right-6"
           >
-            <div className="flex items-center gap-1 rounded-xl border border-blue-200 bg-white p-1.5 shadow-lg shadow-blue-500/10 md:gap-2 md:rounded-lg md:border-blue-400 md:p-2">
+            <div className="flex items-center gap-1 rounded-full border border-blue-200 bg-white p-1.5 shadow-xl shadow-blue-500/10 md:gap-2 md:rounded-lg md:border-blue-400 md:p-2">
               <button
                 type="button"
                 onClick={handleOpenDock}
                 aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:h-10 md:rounded-md md:px-4 md:text-sm md:font-bold"
+                className="inline-flex h-11 md:h-10 items-center gap-2 rounded-full md:rounded-md bg-blue-600 px-4 text-[13px] md:text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:font-bold"
               >
                 <Maximize2 className="h-4 w-4" aria-hidden="true" />
                 Comparar
@@ -265,7 +265,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-[calc(9.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-4 left-4 z-[8900] w-auto mx-auto max-w-[380px] md:bottom-6 md:left-[100px] md:right-[100px] md:max-w-[1120px]"
+            className="pointer-events-none fixed bottom-[calc(9.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-4 left-4 z-[9050] w-auto mx-auto max-w-[380px] md:bottom-6 md:left-[100px] md:right-[100px] md:max-w-[1120px]"
           >
             <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">

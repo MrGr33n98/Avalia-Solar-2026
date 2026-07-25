@@ -25,8 +25,8 @@ export function FloatingChatTrigger({
     <div
       onClick={onExpand}
       className={cn(
-        'fixed bottom-0 right-4 sm:right-8 z-50 flex h-14 w-[290px] sm:w-[320px] cursor-pointer items-center justify-between',
-        'rounded-t-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]',
+        'fixed bottom-[calc(4.5rem+var(--sab))] md:bottom-0 right-4 sm:right-8 z-[9000] flex h-14 w-14 md:w-[290px] sm:w-[320px] cursor-pointer items-center justify-center md:justify-between',
+        'rounded-full md:rounded-t-2xl md:rounded-b-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 md:px-4 md:py-2.5 shadow-xl md:shadow-[0_-4px_20px_rgba(0,0,0,0.12)]',
         'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-[0_-6px_24px_rgba(0,0,0,0.16)]',
         className
       )}
@@ -38,14 +38,19 @@ export function FloatingChatTrigger({
           status="online"
           size="sm"
         />
-        <div className="flex items-center gap-2 truncate">
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 md:hidden flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-extrabold text-white shadow-xs animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+        <div className="hidden md:flex items-center gap-2 truncate">
           <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
             Mensagens
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="hidden md:flex items-center gap-2 shrink-0">
         {unreadCount > 0 && (
           <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-extrabold text-white shadow-xs animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}

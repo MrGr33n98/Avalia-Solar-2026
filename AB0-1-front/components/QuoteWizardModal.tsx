@@ -254,7 +254,7 @@ export default function QuoteWizardModal() {
         className={cn(
           'z-[10000] flex max-h-[90dvh] max-w-xl flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
           'max-md:left-1/2 max-md:top-1/2 max-md:translate-x-[-50%] max-md:translate-y-[-50%] max-md:w-[min(calc(100vw-32px),420px)]',
-          'max-md:max-h-[min(86dvh,720px)]',
+          'max-md:max-h-[min(72dvh,720px)]',
           'max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
           'max-md:gap-0 max-md:border max-md:border-slate-200 max-md:bg-white',
           'max-md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45),0_12px_30px_-6px_rgba(0,0,0,0.15)]',
@@ -262,13 +262,13 @@ export default function QuoteWizardModal() {
         )}
       >
         {/* Progress Header */}
-        <div className="bg-[#0B1B36] px-4 py-3 md:px-6 md:py-4 text-white rounded-t-2xl pt-[calc(0.75rem+var(--sat))] safe-x">
-          <div className="mb-3 flex items-center justify-between gap-3">
-             <DialogTitle className="text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
+        <div className="bg-[#0B1B36] px-4 py-3 md:px-6 md:py-4 text-white rounded-t-2xl pt-[calc(0.5rem+var(--sat))] safe-x">
+          <div className="mb-2 md:mb-3 flex items-center justify-between gap-3">
+             <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
                {step < 9 ? `Etapa ${step} de ${TOTAL_STEPS}` : 'Concluído'}
              </DialogTitle>
-             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
-                <ShieldCheck className="w-3.5 h-3.5" />
+             <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
+                <ShieldCheck className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 100% SEGURO
              </div>
           </div>
@@ -485,10 +485,10 @@ const WizardHeading = ({
 }) => (
   <div className={cn("space-y-1", center && "text-center")}>
     {kicker ? (
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1268E8]">{kicker}</p>
+      <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-[#1268E8]">{kicker}</p>
     ) : null}
-    <h2 className="text-[24px] font-[800] leading-[1.1] tracking-[-0.02em] text-[#0B1B36] uppercase">{title}</h2>
-    <p className="max-w-[32ch] text-[14px] leading-[1.4] text-slate-500 font-medium">{subtitle}</p>
+    <h2 className="text-[18px] md:text-[24px] font-[800] leading-[1.15] tracking-[-0.02em] text-[#0B1B36] uppercase">{title}</h2>
+    <p className="max-w-[32ch] text-[13px] md:text-[14px] leading-[1.4] text-slate-500 font-medium">{subtitle}</p>
   </div>
 );
 
@@ -499,7 +499,7 @@ type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
   <button type="button" className={cn(
-    'w-full border px-4 min-h-[48px] py-3 text-left text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
+    'w-full border px-3 md:px-4 min-h-[48px] py-2 md:py-3 text-left text-[12px] md:text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
     'rounded-xl border-slate-200 bg-white text-[#0B1B36] shadow-sm',
     selected 
       ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md' 
