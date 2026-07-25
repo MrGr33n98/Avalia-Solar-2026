@@ -23,7 +23,7 @@ export const FLOATING_WIDGET_POSITIONS = {
     md: {
       chat: 'h-11 w-11',
       mobivolt: 'max-w-[320px]',
-      comparison: 'h-11 min-w-[132px] max-w-[156px] text-[13px]'
+      comparison: 'h-11 min-w-[132px] max-w-[156px] text-sm'
     },
     // Large mobile screens (430px+)
     lg: {
@@ -63,8 +63,8 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
  */
 export const MOBILE_POSITION_CLASSES = {
   comparison: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+16px)] md:bottom-28',
-  mobivolt: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+72px)]',
-  chat: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+128px)] md:bottom-0'
+  mobivolt: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+84px)]',
+  chat: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+152px)] md:bottom-0'
 } as const;
 
 /**

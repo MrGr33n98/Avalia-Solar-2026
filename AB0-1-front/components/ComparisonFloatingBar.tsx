@@ -242,7 +242,10 @@ export default function ComparisonFloatingBar() {
               type="button"
               onClick={handleOpenDock}
               aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-              className={`inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:hidden ${getFloatingWidgetSizeClasses('comparison')}`}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:hidden",
+                getFloatingWidgetSizeClasses('comparison')
+              )}
             >
               <Maximize2 className="h-4 w-4" aria-hidden="true" />
               Comparar
