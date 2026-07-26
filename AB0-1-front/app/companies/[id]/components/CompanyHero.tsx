@@ -186,7 +186,10 @@ export default function CompanyHero({
       </div>
 
       {/* Container principal: banner + identidade + tabs */}
-      <section className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+      <section
+        data-company-layout="standard-hero"
+        className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+      >
         {/* 1. HERO BANNER */}
         <div className="relative h-[190px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[230px] lg:h-[300px] xl:h-[320px]">
           {/* Background Blur Fill Layer */}

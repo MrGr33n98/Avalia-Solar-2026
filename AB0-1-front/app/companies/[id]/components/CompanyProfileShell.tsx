@@ -88,7 +88,7 @@ export default function CompanyProfileShell({
   // Checagem de entitlements para abas e blocos (showFaq is passed via props)
 
   return (
-    <div id="company-profile-shell" className="min-h-screen bg-slate-50/40 text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
+    <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-slate-50/40 text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
         <div className="mx-auto w-full max-w-[430px] px-4 pt-4 md:max-w-[1240px] md:px-6">
