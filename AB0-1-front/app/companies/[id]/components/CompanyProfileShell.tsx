@@ -104,7 +104,7 @@ export default function CompanyProfileShell({
             />
 
             {/* Identidade da Empresa e CTAs */}
-            <div className="relative z-20 -mt-14 px-0 sm:-mt-18 md:-mt-24">
+            <div className="relative z-20 mt-0 px-0 pt-2">
               <CompanyIdentityCard
                 company={company}
                 companyStats={companyStats}

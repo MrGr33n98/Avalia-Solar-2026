@@ -82,7 +82,8 @@ export default function CompanyHero({
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const directChatAvailable =
     company.p2p_chat_enabled === true ||
-    (company as any)?.actions?.p2p_chat_enabled === true ||
+    (company as Company & { actions?: { p2p_chat_enabled?: boolean } }).actions
+      ?.p2p_chat_enabled === true ||
     (Boolean(company.feature_access) && isFeatureEnabled(company.feature_access, 'p2p_chat'));
   const directChatVisible = directChatAvailable;
   const directChatEnabled = canUseBuyerChat;
@@ -241,12 +242,12 @@ export default function CompanyHero({
           {/* Sem gap no wrapper: o espaçamento entre linha 1 e linha 2 vem só do pt-4 do divisor (item 1) */}
           <div className="flex flex-col">
             {/* Linha 1 — Logo + Nome/Info + Selo Premium (sem os botões) */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               {/* Lado Esquerdo: Logo + Informações — items-center alinha com a logo independente de quantas linhas de texto existem (item 4) */}
               <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo — atravessa ~30% da borda do banner */}
-                <div className="relative -mt-9 shrink-0 self-start overflow-visible sm:-mt-10">
-                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-[3px] border-slate-950 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.2)] sm:h-24 sm:w-24">
+                <div className="relative -mt-9 shrink-0 self-center overflow-visible sm:-mt-10">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-[3px] border-slate-950 bg-transparent shadow-[0_4px_18px_rgba(15,23,42,0.2)] sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
@@ -255,9 +256,9 @@ export default function CompanyHero({
                       imageContext="company-logo"
                       entityName={company.name}
                       locationLabel={locationLabel}
-                      objectFit="cover"
-                      className="p-0"
-                      containerClassName="absolute inset-0 h-full w-full"
+                      objectFit="contain"
+                      className="bg-transparent p-0"
+                      containerClassName="absolute inset-0 h-full w-full bg-transparent"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
                     />
@@ -266,14 +267,14 @@ export default function CompanyHero({
                   {/* Selo de conquista — fundo 100% transparente */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute -right-3 -top-3 z-30 h-12 w-12 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)]"
+                      className="absolute -right-2 -top-2 z-30 h-10 w-10 overflow-visible bg-transparent p-0 drop-shadow-[0_3px_5px_rgba(15,23,42,0.22)] sm:h-11 sm:w-11"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
                         src={heroBadgeUrl}
                         alt="Selo de conquista"
                         fill
-                        sizes="48px"
+                        sizes="44px"
                         objectFit="contain"
                         className="bg-transparent p-0"
                         containerClassName="h-full w-full overflow-visible bg-transparent"
@@ -341,7 +342,7 @@ export default function CompanyHero({
 
               {/* Badge PREMIUM — desktop/tablet, canto direito (item 2: escondido no mobile, a versão inline acima assume) */}
               {company.verified && (
-                <div className="hidden h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700 sm:inline-flex">
+                <div className="hidden h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700 lg:inline-flex">
                   <Diamond className="h-3.5 w-3.5" />
                   PREMIUM
                 </div>
@@ -349,7 +350,7 @@ export default function CompanyHero({
             </div>
 
             {/* Linha 2 — Ações, sempre em linha própria abaixo da identidade, sempre alinhadas à esquerda (item 6) */}
-            <div className="flex w-full flex-wrap items-center justify-start gap-2 border-t border-slate-100 pt-4">
+            <div className="flex w-full flex-wrap items-center justify-start gap-2 border-t border-slate-100 pt-4 lg:justify-end lg:border-0 lg:pt-0">
               {/* CTA Primário: Solicitar orçamento */}
               {canRequestQuote ? (
                 <Button
