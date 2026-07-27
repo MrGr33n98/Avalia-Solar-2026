@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Building2, ChevronDown, ImageIcon, Play } from 'lucide-react';
+import { Building2, ChevronDown, ImageIcon, Play, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { fetchApi } from '@/lib/api';
@@ -33,6 +33,11 @@ type Project = {
   assets: ProjectAsset[];
 };
 
+type PublishedMedia = {
+  photos: string[];
+  videos: Array<{ id: number | string; url: string; thumbnail_url?: string | null; provider?: string | null }>;
+};
+
 const SelectFilter = ({ label, value, values, onChange }: { label: string; value: string; values: string[]; onChange: (value: string) => void }) => (
   <label className="relative inline-flex">
     <span className="sr-only">Filtrar por {label}</span>
@@ -46,6 +51,7 @@ const SelectFilter = ({ label, value, values, onChange }: { label: string; value
 
 export default function ProjectsGallery({ companyId, companyName }: { companyId: number | string; companyName: string }) {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [publishedMedia, setPublishedMedia] = useState<PublishedMedia>({ photos: [], videos: [] });
   const [loading, setLoading] = useState(true);
   const [media, setMedia] = useState<'all' | 'image' | 'video'>('all');
   const [projectType, setProjectType] = useState('');
@@ -70,6 +76,20 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
       .then((response) => active && setProjects(response.projects || []))
       .catch(() => active && setProjects([]))
       .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [companyId]);
+
+  useEffect(() => {
+    let active = true;
+    fetchApi<{ company?: { media_urls?: string[]; videos?: PublishedMedia['videos'] } }>(`/companies/${companyId}`)
+      .then((response) => {
+        if (!active) return;
+        setPublishedMedia({
+          photos: response.company?.media_urls || [],
+          videos: response.company?.videos || [],
+        });
+      })
+      .catch(() => active && setPublishedMedia({ photos: [], videos: [] }));
     return () => { active = false; };
   }, [companyId]);
 
@@ -103,8 +123,16 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
     video: projects.filter((project) => project.assets.some((asset) => asset.kind === 'video')).length,
   }), [projects]);
 
+  const mediaItems = useMemo(
+    () => [
+      ...publishedMedia.photos.map((url, index) => ({ id: `photo-${index}`, type: 'photo' as const, url, thumbnail: url })),
+      ...publishedMedia.videos.map((video) => ({ id: `video-${video.id}`, type: 'video' as const, url: video.url, thumbnail: video.thumbnail_url || null })),
+    ],
+    [publishedMedia]
+  );
+
   if (loading) return <div className="grid grid-cols-1 gap-4 md:grid-cols-3">{[1, 2, 3].map((key) => <div key={key} className="h-72 animate-pulse rounded-xl bg-slate-200" />)}</div>;
-  if (!projects.length) return <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center"><Building2 className="mx-auto mb-3 h-9 w-9 text-slate-300" /><p className="font-semibold text-slate-700">Esta empresa ainda não publicou projetos.</p></div>;
+  if (!projects.length && !mediaItems.length) return <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center"><Building2 className="mx-auto mb-3 h-9 w-9 text-slate-300" /><p className="font-semibold text-slate-700">Esta empresa ainda não publicou projetos ou mídias.</p></div>;
 
   return <section aria-label={`Projetos da ${companyName}`} className="space-y-5">
     <div><h2 className="text-2xl font-black tracking-tight text-slate-950">Projetos</h2><p className="mt-1 text-sm text-slate-500">Fotos e vídeos dos projetos realizados pela {companyName}.</p></div>
@@ -115,6 +143,20 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
       <SelectFilter label="Segmento" value={segment} values={options.segments} onChange={setSegment} />
       <SelectFilter label="Tecnologia" value={technology} values={options.technologies} onChange={setTechnology} />
     </div>
+    {mediaItems.length > 0 && (
+      <section className="space-y-3" aria-label={`Galeria de mídia da ${companyName}`}>
+        <div><h3 className="text-lg font-black text-slate-950">Galeria de mídia</h3><p className="text-sm text-slate-500">Imagens e vídeos publicados pela empresa.</p></div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {mediaItems.map((item) => (
+            <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="group relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              {item.thumbnail ? <Image src={item.thumbnail} alt={item.type === 'video' ? `Vídeo de ${companyName}` : `Imagem de ${companyName}`} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition group-hover:scale-105" unoptimized /> : <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-700 to-slate-800"><Video className="h-10 w-10 text-white/80" /></div>}
+              <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white">{item.type === 'video' ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}{item.type === 'video' ? 'Vídeo' : 'Imagem'}</span>
+              {item.type === 'video' && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90"><Play className="ml-0.5 h-5 w-5 fill-slate-900 text-slate-900" /></span></span>}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {filtered.map((project) => {
         const cover = project.assets.find((asset) => asset.kind === 'image') || project.assets[0];

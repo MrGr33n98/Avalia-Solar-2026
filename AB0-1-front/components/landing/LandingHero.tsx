@@ -58,7 +58,7 @@ export default function LandingHero(props: LandingHeroProps) {
        */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 hidden h-full w-[50%] lg:block"
+        className="pointer-events-none absolute bottom-0 right-[max(0px,calc((100vw-1320px)/2))] hidden h-full w-[50%] lg:block"
         style={{ zIndex: 1 }}
       >
         <Image
@@ -81,7 +81,7 @@ export default function LandingHero(props: LandingHeroProps) {
       </div>
 
       {/* ── Conteúdo principal: título + formulário ── */}
-      <div className="relative z-10 mx-auto w-full max-w-[1180px] px-4 sm:px-5 lg:px-6">
+      <div className="relative z-10 mx-auto w-full max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
           {/* Coluna de conteúdo — 7 colunas no desktop para dar mais respiro */}
           <div className="flex w-full min-w-0 flex-col items-start text-left lg:col-span-7">

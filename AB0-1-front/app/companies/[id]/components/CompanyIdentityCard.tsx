@@ -83,15 +83,16 @@ export default function CompanyIdentityCard({
             </div>
             {badgeImageUrl && (
               <div
-                className="absolute -right-2 -top-2 z-30 h-10 w-10 sm:h-11 sm:w-11"
+                className="absolute right-0 top-0 z-30 h-12 w-10 translate-x-[18%] -translate-y-[18%] overflow-hidden drop-shadow-[0_3px_6px_rgba(15,23,42,0.2)] sm:h-14 sm:w-11"
+                style={{ clipPath: 'polygon(7% 13%, 93% 13%, 87% 30%, 80% 34%, 80% 73%, 50% 100%, 20% 73%, 20% 34%, 13% 30%)' }}
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image
                   src={badgeImageUrl}
                   alt={badgeToRender?.name || 'Selo'}
                   fill
-                  className="object-contain drop-shadow-sm"
-                  sizes="44px"
+                  className="object-contain mix-blend-multiply"
+                  sizes="(max-width: 640px) 40px, 44px"
                   unoptimized
                 />
               </div>
