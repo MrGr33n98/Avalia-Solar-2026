@@ -54,17 +54,12 @@ export default function CompanyIdentityCard({
       aria-label="Card da empresa com ações"
       className="relative rounded-2xl bg-transparent p-5 sm:p-6 lg:p-7"
     >
-      {/* Selo Premium no canto superior direito */}
-      <div className="absolute right-5 top-5 z-10 sm:right-6 sm:top-6">
-        <PremiumHighlightBadge company={company} />
-      </div>
-
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
           {/* Box da Logo */}
-          <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-visible">
-            <div className="h-full w-full overflow-hidden rounded-xl border border-slate-200">
+          <div className="relative h-20 w-20 shrink-0 overflow-visible sm:h-24 sm:w-24">
+            <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-slate-950 bg-white">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -74,8 +69,8 @@ export default function CompanyIdentityCard({
                   imageContext="company-logo"
                   entityName={company.name}
                   locationLabel={locationLabel}
-                  objectFit="cover"
-                  className="p-0"
+                  objectFit="contain"
+                  className="rounded-[14px] p-2"
                   containerClassName="absolute inset-0 h-full w-full"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
@@ -104,15 +99,16 @@ export default function CompanyIdentityCard({
           </div>
 
           {/* Informações da empresa */}
-          <div className="space-y-1.5 min-w-0">
+          <div className="min-w-0 space-y-1.5">
             {/* Nome + verificado na mesma linha */}
-            <div className="flex items-center gap-2 pr-24 sm:pr-0">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-xl font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
                 <BadgeCheck className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-6 sm:w-6" aria-label="Empresa verificada" />
               )}
+              <PremiumHighlightBadge company={company} />
             </div>
 
             {/* Localização */}

@@ -432,7 +432,7 @@ export default function CompanyDetailClient({
   // ===================================================
   // FEATURE FLAG PARA REFACTOR PREMIUM LEVE (FASE 2)
   // ===================================================
-  const ENABLE_PREMIUM_PROFILE = process.env.NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE === 'true';
+  const ENABLE_PREMIUM_PROFILE = true;
 
   if (ENABLE_PREMIUM_PROFILE) {
     return (
