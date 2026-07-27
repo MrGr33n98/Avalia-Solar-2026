@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { BadgeCheck, Briefcase, Clock, MapPin, Star, Sparkles, Megaphone } from 'lucide-react';
+import { BadgeCheck, Briefcase, Clock, Star, Megaphone } from 'lucide-react';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
@@ -13,11 +13,10 @@ import {
 
 type RecommendedCompanyCardProps = {
   company: RecommendationItem;
-  rank?: number;
   meta?: RecommendationMeta | null;
 };
 
-export default function RecommendedCompanyCard({ company, rank, meta }: RecommendedCompanyCardProps) {
+export default function RecommendedCompanyCard({ company, meta }: RecommendedCompanyCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const impressionTracked = useRef<boolean>(false);
 
@@ -66,10 +65,8 @@ export default function RecommendedCompanyCard({ company, rank, meta }: Recommen
   } as Company;
 
   const isSponsored = Boolean(company.sponsored);
-  const reasonLabel = company.recommendation_reason?.label;
   const ratingAvg = company.rating?.average;
   const ratingCount = company.rating?.count ?? 0;
-  const ratingLabel = company.rating?.label || (ratingAvg && ratingAvg > 0 ? `${ratingAvg.toFixed(1).replace('.', ',')}` : 'Sem avaliações');
 
   const responseLabel = company.response_time?.value || company.response_time?.label || 'Tempo de resposta não informado';
   const projectsLabel = company.projects?.count ? `${company.projects.count}` : (company.projects?.label || 'Não informado');
@@ -98,7 +95,6 @@ export default function RecommendedCompanyCard({ company, rank, meta }: Recommen
           <div className="flex items-center gap-1.5 flex-wrap">
             <Link href={primaryCtaUrl} className="min-w-0">
               <h3 className="truncate text-base font-bold text-slate-950 transition group-hover:text-blue-700">
-                {rank ? `${rank}. ` : null}
                 {company.name}
               </h3>
             </Link>

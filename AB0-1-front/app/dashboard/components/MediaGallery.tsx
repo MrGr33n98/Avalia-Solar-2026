@@ -45,7 +45,7 @@ interface MediaGalleryProps {
   showControls?: boolean;
   showHeader?: boolean;
   mode?: 'all' | 'photos' | 'videos' | 'downloads';
-  planFeatures?: any;
+  planFeatures?: unknown;
 }
 
 const MEDIA_COPY = {
@@ -130,7 +130,10 @@ export default function MediaGallery({
       try {
         dispatchGallery({ type: 'loading', loading: true });
         try {
-          const photosResp = await fetchApi<{ photos: string[] }>('/company_dashboard/media');
+          const photosResp = showControls
+            ? await fetchApi<{ photos: string[] }>('/company_dashboard/media')
+            : await fetchApi<{ company?: { media_urls?: string[] } }>(`/companies/${companyId}`)
+                .then((response) => ({ photos: response?.company?.media_urls || [] }));
           const photoItems = (photosResp?.photos || []).map((url, idx) => {
             const normalized = getFullImageUrl(url) || url;
             return { id: `${idx}`, url: normalized };
@@ -140,9 +143,10 @@ export default function MediaGallery({
           dispatchGallery({ type: 'set_photos', photos: [] });
         }
         try {
-          const videosResp = await fetchApi<{ videos: DashboardVideo[] }>(
-            '/company_dashboard/videos'
-          );
+          const videosResp = showControls
+            ? await fetchApi<{ videos: DashboardVideo[] }>('/company_dashboard/videos')
+            : await fetchApi<{ company?: { videos?: DashboardVideo[] } }>(`/companies/${companyId}`)
+                .then((response) => ({ videos: response?.company?.videos || [] }));
           const videoItems = (videosResp?.videos || []).map((v) => ({
             id: String(v.id),
             url: v.url,
@@ -159,7 +163,7 @@ export default function MediaGallery({
       }
     };
     load();
-  }, [companyId, dispatchGallery]);
+  }, [companyId, dispatchGallery, showControls]);
 
   const isSuperAdmin = user?.role === 'admin';
   const isCompanyMember = user?.role === 'company' && Number(user.company_id) === Number(companyId);
@@ -230,7 +234,7 @@ export default function MediaGallery({
     try {
       const form = new FormData();
       Array.from(files).forEach((f) => form.append('images[]', f));
-      const resp = await fetchApi<ApiErrorResponse>('/company_dashboard/upload_media', {
+      const resp = await fetchApi<ApiErrorResponse & { photos?: string[] }>('/company_dashboard/upload_media', {
         method: 'POST',
         body: form,
       });
@@ -243,9 +247,11 @@ export default function MediaGallery({
         });
       } else {
         toast({
-          title: '📋 Imagem enviada para avaliação',
-          description: 'Nossa equipe vai analisar e publicar em breve no seu perfil.',
+          title: 'Imagem publicada',
+          description: 'A imagem já está disponível na galeria do seu perfil.',
         });
+        const photoItems = (resp.photos || []).map((url, idx) => ({ id: `${idx}`, url: getFullImageUrl(url) || url }));
+        dispatchGallery({ type: 'set_photos', photos: photoItems });
       }
     } catch {
       toast({ title: 'Falha no upload', variant: 'destructive' });
@@ -255,7 +261,7 @@ export default function MediaGallery({
   const onAddVideo = async () => {
     if (!videoUrl || !controlsVisible) return;
     try {
-      const resp = await fetchApi<ApiErrorResponse>('/company_dashboard/add_video', {
+      const resp = await fetchApi<ApiErrorResponse & { video?: DashboardVideo }>('/company_dashboard/add_video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: videoUrl }),
@@ -269,9 +275,19 @@ export default function MediaGallery({
         return;
       }
       toast({
-        title: '📋 Vídeo enviado para avaliação',
-        description: 'Nossa equipe vai analisar e publicar em breve no seu perfil.',
+        title: 'Vídeo publicado',
+        description: 'O vídeo já está disponível na galeria do seu perfil.',
       });
+      if (resp.video) {
+        dispatchGallery({
+          type: 'set_videos',
+          videos: [...gallery.videos, {
+            ...resp.video,
+            id: String(resp.video.id),
+            thumbnail_url: getFullImageUrl(resp.video.thumbnail_url) || resp.video.thumbnail_url,
+          }],
+        });
+      }
       setShowVideoDialog(false);
       setVideoUrl('');
     } catch {

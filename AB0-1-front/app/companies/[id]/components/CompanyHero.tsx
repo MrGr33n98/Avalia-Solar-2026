@@ -239,10 +239,9 @@ export default function CompanyHero({
 
         {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
         <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pt-5">
-          {/* Sem gap no wrapper: o espaçamento entre linha 1 e linha 2 vem só do pt-4 do divisor (item 1) */}
-          <div className="flex flex-col">
-            {/* Linha 1 — Logo + Nome/Info + Selo Premium (sem os botões) */}
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            {/* Identidade: logo, nome, sinais de confiança, localização e nota */}
+            <div className="min-w-0 flex-1">
               {/* Lado Esquerdo: Logo + Informações — items-center alinha com a logo independente de quantas linhas de texto existem (item 4) */}
               <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
@@ -297,9 +296,9 @@ export default function CompanyHero({
                         aria-label="Empresa verificada"
                       />
                     )}
-                    {/* Premium inline — só no mobile, pra não ficar órfão abaixo da logo (item 2) */}
+                    {/* Premium é um atributo do perfil e permanece junto ao nome. */}
                     {company.verified && (
-                      <div className="inline-flex h-6 w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2 text-[10px] font-bold tracking-[0.04em] text-violet-700 sm:hidden">
+                      <div className="inline-flex h-6 w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2 text-[10px] font-bold tracking-[0.04em] text-violet-700">
                         <Diamond className="h-3 w-3" />
                         PREMIUM
                       </div>
@@ -340,22 +339,15 @@ export default function CompanyHero({
                 </div>
               </div>
 
-              {/* Badge PREMIUM — desktop/tablet, canto direito (item 2: escondido no mobile, a versão inline acima assume) */}
-              {company.verified && (
-                <div className="hidden h-7 w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-violet-200 bg-violet-50 px-2.5 text-[11px] font-bold tracking-[0.04em] text-violet-700 lg:inline-flex">
-                  <Diamond className="h-3.5 w-3.5" />
-                  PREMIUM
-                </div>
-              )}
             </div>
 
-            {/* Linha 2 — Ações, sempre em linha própria abaixo da identidade, sempre alinhadas à esquerda (item 6) */}
-            <div className="flex w-full flex-wrap items-center justify-start gap-2 border-t border-slate-100 pt-4 lg:justify-end lg:border-0 lg:pt-0">
+            {/* Ações principais no mesmo eixo visual da identidade. */}
+            <div className="flex w-full flex-wrap items-center justify-start gap-3 border-t border-slate-100 pt-4 lg:w-auto lg:flex-nowrap lg:justify-end lg:border-0 lg:pt-0">
               {/* CTA Primário: Solicitar orçamento */}
               {canRequestQuote ? (
                 <Button
                   size="default"
-                  className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
+                  className="h-12 shrink-0 whitespace-nowrap rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
                   onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                   onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                   onClick={async () => {
@@ -378,6 +370,13 @@ export default function CompanyHero({
                 </Button>
               ) : null}
 
+              {/* Avaliar empresa */}
+              <ReviewCompanyButton
+                company={company}
+                compactLabel="Avaliar empresa"
+                className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50"
+              />
+
               {/* WhatsApp */}
               {ctaEnabled && ctaUrl && (
                 <div {...heroWhatsappHoverIntent}>
@@ -385,7 +384,7 @@ export default function CompanyHero({
                     size="default"
                     enabled
                     href={ctaUrl}
-                    className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                    className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                     label="WhatsApp"
                     companyId={company.id}
                     requireSignup
@@ -400,7 +399,7 @@ export default function CompanyHero({
               {directChatVisible && (
                 <Button
                   size="default"
-                  className="h-10 shrink-0 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                  className="h-12 shrink-0 whitespace-nowrap rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
                   onClick={() => {
                     track('company_direct_chat_click', {
                       company_id: company.id,
@@ -425,26 +424,16 @@ export default function CompanyHero({
                 </Button>
               )}
 
-              {/* Avaliar empresa (quando não pode solicitar orçamento) */}
-              {!canRequestQuote && (
-                <ReviewCompanyButton
-                  company={company}
-                  compactLabel="Avaliar empresa"
-                  className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                />
-              )}
-
-              {/* Compartilhar — ícone em mobile, label em desktop */}
+              {/* Compartilhar — ação compacta, sem competir com os CTAs */}
               <Button
                 variant="outline"
                 size="default"
-                className="h-10 shrink-0 whitespace-nowrap rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                className="h-12 w-12 shrink-0 rounded-xl border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                 onClick={handleShare}
                 disabled={isSharing}
                 aria-label="Compartilhar empresa"
               >
-                <Share2 className="h-4 w-4 text-slate-400 lg:mr-1.5" />
-                <span className="hidden lg:inline">Compartilhar</span>
+                <Share2 className="h-5 w-5 text-slate-600" />
               </Button>
             </div>
           </div>

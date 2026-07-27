@@ -869,15 +869,14 @@ module Api
 
         return render json: { error: 'Falha ao processar arquivos' }, status: :unprocessable_entity if signed_ids.empty?
 
-        pending_change = create_idempotent_pending_change(
-          change_type: 'media',
-          data: { signed_ids: signed_ids }
-        )
+        signed_ids.each do |signed_id|
+          @company.media_assets.attach(ActiveStorage::Blob.find_signed!(signed_id))
+        end
 
         render json: {
-          message: 'Mídia enviada para aprovação',
-          pending_change: pending_change
-        }, status: pending_change.previously_persisted? ? :ok : :created
+          message: 'Mídia publicada com sucesso',
+          photos: @company.media_urls
+        }, status: :created
       end
 
       # POST /api/v1/company_dashboard/add_video
@@ -894,21 +893,19 @@ module Api
         result = Videos::YouTubeExtractor.extract(url)
         return render json: { error: result[:error] }, status: :unprocessable_entity unless result[:valid]
 
-        pending_change = create_idempotent_pending_change(
-          change_type: 'video',
-          data: {
-            url: url,
-            provider: result[:provider],
-            video_id: result[:video_id],
-            thumbnail_url: result[:thumbnail_url],
-            action: 'add'
-          }
+        video = @company.company_videos.create!(
+          url: url,
+          provider: result[:provider],
+          video_id: result[:video_id],
+          thumbnail_url: result[:thumbnail_url],
+          status: 'published'
         )
 
         render json: {
-          message: 'Vídeo enviado para aprovação',
-          pending_change: pending_change
-        }, status: pending_change.previously_persisted? ? :ok : :created
+          message: 'Vídeo publicado com sucesso',
+          video: { id: video.id, url: video.url, thumbnail_url: video.thumbnail_url,
+                   provider: video.provider, video_id: video.video_id }
+        }, status: :created
       end
 
       # DELETE /api/v1/company_dashboard/remove_video

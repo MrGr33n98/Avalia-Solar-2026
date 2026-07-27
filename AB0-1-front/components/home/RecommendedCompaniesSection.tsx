@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { MapPin, ArrowRight, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import RecommendedCompanyCard from '@/components/company/RecommendedCompanyCard';
-import PublicCompanyCard from '@/components/company/PublicCompanyCard';
+import PublicCompanyCard, { type PublicCompanyCardData } from '@/components/company/PublicCompanyCard';
 import { publicCompaniesApi } from '@/lib/api-public';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
 import {
@@ -27,7 +27,7 @@ const TABS: TabOption[] = [
 ];
 
 type RecommendedCompaniesSectionProps = {
-  initialCompanies?: any[];
+  initialCompanies?: PublicCompanyCardData[];
 };
 
 export default function RecommendedCompaniesSection({ initialCompanies }: RecommendedCompaniesSectionProps) {
@@ -193,8 +193,8 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
           ) : (
             /* Cards Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {items.map((company, idx) => (
-                <RecommendedCompanyCard key={company.id} company={company} rank={idx + 1} meta={meta} />
+              {items.map((company) => (
+                <RecommendedCompanyCard key={company.id} company={company} meta={meta} />
               ))}
             </div>
           )}
