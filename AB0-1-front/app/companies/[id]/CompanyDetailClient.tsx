@@ -556,7 +556,7 @@ export default function CompanyDetailClient({
                     <CompanyFinancing company={currentCompany} companyId={companyId} />
                   </TabsContent>
 
-                  <TabsContent value="gallery" className="mt-0 focus-visible:outline-none">
+                  <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
                     <MediaGallery
                       companyId={companyId.toString()}
                       showControls={canManageMedia}

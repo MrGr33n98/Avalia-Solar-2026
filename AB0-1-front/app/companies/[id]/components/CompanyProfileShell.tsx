@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -24,6 +25,8 @@ import CompanyFinancing from './CompanyFinancing';
 import FaqSection from './FaqSection';
 import ProjectsGallery from './ProjectsGallery';
 import MaterialsLibrary from './MaterialsLibrary';
+
+const MapProvider = dynamic(() => import('@/components/search/MapProvider'), { ssr: false });
 
 interface CompanyProfileShellProps {
   company: Company;
@@ -229,13 +232,7 @@ export default function CompanyProfileShell({
                         </div>
                       )}
                     </div>
-                    {/* Placeholder Mapa */}
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-center p-6 text-center text-xs text-slate-400 select-none">
-                      <div>
-                        <MapPin className="h-6 w-6 text-slate-300 mx-auto mb-2" />
-                        {company.address ? company.address : `${company.city}, ${company.state}`}
-                      </div>
-                    </div>
+                    <ContactCoverageMap company={company} />
                   </div>
                 </Card>
 
@@ -255,6 +252,41 @@ export default function CompanyProfileShell({
           </div>
         </Tabs>
       </main>
+    </div>
+  );
+}
+
+function ContactCoverageMap({ company }: { company: Company }) {
+  const latitude = Number(company.latitude);
+  const longitude = Number(company.longitude);
+  const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
+  const serviceAreas = company.service_areas || [];
+  const radiusKm = serviceAreas.find((area) => area.coverage_type === 'radius')?.radius_km || undefined;
+  const national = serviceAreas.some((area) => area.coverage_type === 'national');
+  const states = serviceAreas.filter((area) => area.coverage_type === 'state').map((area) => area.state_code).filter(Boolean);
+  const cities = serviceAreas.filter((area) => area.coverage_type === 'city').map((area) => area.city_name).filter(Boolean);
+  const coverageLabel = national
+    ? 'Atendimento em todo o Brasil'
+    : radiusKm
+      ? `Atende em até ${radiusKm} km da sede`
+      : cities.length || states.length
+        ? `Atende ${[...cities, ...states].join(', ')}`
+        : 'Atendimento na localidade da empresa';
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+      {hasCoordinates ? (
+        <MapProvider
+          companies={[{ id: String(company.id), name: company.name, slug: company.slug, latitude, longitude, city: company.city, state: company.state, logo_url: company.logo_url || undefined }]}
+          center={{ lat: latitude, lng: longitude }}
+          zoom={radiusKm ? 11 : 13}
+          radiusKm={radiusKm}
+          className="h-52 w-full"
+        />
+      ) : (
+        <div className="flex h-52 flex-col items-center justify-center p-6 text-center text-xs text-slate-400"><MapPin className="mb-2 h-6 w-6 text-slate-300" />Localização ainda não geocodificada</div>
+      )}
+      <div className="border-t border-slate-100 bg-white px-4 py-3 text-sm font-medium text-slate-700">{coverageLabel}</div>
     </div>
   );
 }
