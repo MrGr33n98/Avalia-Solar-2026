@@ -70,7 +70,7 @@ export default function CompanyIdentityCard({
                   entityName={company.name}
                   locationLabel={locationLabel}
                   objectFit="contain"
-                  className="rounded-[14px] p-2"
+                  className="rounded-[14px] p-0"
                   containerClassName="absolute inset-0 h-full w-full"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
