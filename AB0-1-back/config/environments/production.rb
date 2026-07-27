@@ -35,15 +35,25 @@ Rails.application.configure do
   
   # --- CONFIGURAÇÃO UNIFICADA DE URL ---
   # Usa APP_HOST com esquema; extrai host e protocolo corretamente
-  app_host = ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')
+  app_host = ENV.fetch('APP_HOST', 'https://api.avaliasolar.com.br')
   uri = URI(app_host)
   host = uri.host || app_host
   protocol = uri.scheme || 'https'
 
+  # Active Storage is served by the Rails API, which may live on a different
+  # host from the public Next.js application. Configure it explicitly so URLs
+  # serialized into public company profiles never point at the frontend.
+  active_storage_host = ENV.fetch('ACTIVE_STORAGE_HOST', app_host)
+  active_storage_uri = URI(active_storage_host)
+  active_storage_options = {
+    host: active_storage_uri.host || active_storage_host,
+    protocol: active_storage_uri.scheme || protocol
+  }
+
   # Usar o host vindo do APP_HOST, mas permitir que o Rails use o host atual da requisição se disponível
   Rails.application.routes.default_url_options = { host: host, protocol: protocol }
   config.action_controller.default_url_options = { host: host, protocol: protocol }
-  config.active_storage.default_url_options = { host: host, protocol: protocol }
+  config.active_storage.default_url_options = active_storage_options
   config.action_mailer.default_url_options = { host: host, protocol: protocol }
 
   config.assume_ssl = true

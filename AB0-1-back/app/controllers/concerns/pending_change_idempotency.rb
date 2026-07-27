@@ -52,13 +52,10 @@ module PendingChangeIdempotency
 
   def create_idempotent_pending_change(change_type:, data:)
     # Try to find an existing pending change with the same idempotency key
-    existing = @company.pending_changes.find_by(
-      idempotency_key: @idempotency_key,
-      status: 'pending'
-    )
+    existing = existing_idempotent_pending_change
 
     # If exists and is pending, mark it as previously persisted and return
-    if existing&.pending?
+    if existing&.status == 'pending'
       # Rails helper to identify if record was already persisted before this request
       existing.define_singleton_method(:previously_persisted?) { true }
       return existing
@@ -83,7 +80,21 @@ module PendingChangeIdempotency
         status: 'pending'
       )
       retry_pending&.define_singleton_method(:previously_persisted?) { true }
-      retry_pending
+      return retry_pending if retry_pending
+
+      raise
     end
+  end
+
+  def existing_idempotent_pending_change
+    @company.pending_changes.find_by(
+      idempotency_key: @idempotency_key,
+      status: 'pending'
+    )
+  end
+
+  def mark_as_previously_persisted!(pending_change)
+    pending_change.define_singleton_method(:previously_persisted?) { true }
+    pending_change
   end
 end

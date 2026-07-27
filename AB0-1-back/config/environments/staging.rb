@@ -29,9 +29,16 @@ Rails.application.configure do
   host = uri.host || app_host
   protocol = uri.scheme || 'https'
 
+  active_storage_host = ENV.fetch('ACTIVE_STORAGE_HOST', app_host)
+  active_storage_uri = URI(active_storage_host)
+  active_storage_options = {
+    host: active_storage_uri.host || active_storage_host,
+    protocol: active_storage_uri.scheme || protocol
+  }
+
   Rails.application.routes.default_url_options = { host: host, protocol: protocol }
   config.action_controller.default_url_options = { host: host, protocol: protocol }
-  config.active_storage.default_url_options = { host: host, protocol: protocol }
+  config.active_storage.default_url_options = active_storage_options
   config.action_mailer.default_url_options = { host: host, protocol: protocol }
 
   config.assume_ssl = true

@@ -1,9 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe 'Company Dashboard Idempotency', type: :request do
-  let(:user) { create(:user) }
-  let(:company) { create(:company) }
-  let(:token) { user.tokens.create.token }
+  let(:user) { create(:user, status: :active, role: :company) }
+  let(:company) { create(:company, status: :active, featured: true) }
+  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
 
   before do
     create(:company_member, user: user, company: company, role: 'owner')
@@ -171,13 +171,14 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
 
   describe 'upload_media idempotency' do
     it 'prevents duplicate media uploads on double-click' do
-      file1 = fixture_file_upload('spec/fixtures/test_image.jpg', 'image/jpeg')
-      file2 = fixture_file_upload('spec/fixtures/test_image.jpg', 'image/jpeg')
+      file1 = fixture_file_upload('banner_test.png', 'image/png')
+      file2 = fixture_file_upload('banner_test.png', 'image/png')
+      headers = { 'Authorization' => "Bearer #{token}", 'Idempotency-Key' => 'media-upload-retry-1' }
 
       # First request
       post "/api/v1/company_dashboard/upload_media",
            params: { images: [file1] },
-           headers: { 'Authorization' => "Bearer #{token}" }
+           headers: headers
       
       # Skip if uploads not supported in test environment
       if response.status == 422 || response.status == 400
@@ -187,11 +188,14 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
       expect(response).to have_http_status(:created)
       first_response = JSON.parse(response.body)
       first_id = first_response['pending_change']['id']
+      blob_count_after_first_upload = ActiveStorage::Blob.count
 
       # Second identical request
-      post "/api/v1/company_dashboard/upload_media",
-           params: { images: [file2] },
-           headers: { 'Authorization' => "Bearer #{token}" }
+      expect do
+        post "/api/v1/company_dashboard/upload_media",
+             params: { images: [file2] },
+             headers: headers
+      end.not_to change(ActiveStorage::Blob, :count)
       
       expect(response).to have_http_status(:ok)
       second_response = JSON.parse(response.body)
@@ -199,12 +203,13 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
 
       # Should return same pending_change_id
       expect(first_id).to eq(second_id)
+      expect(ActiveStorage::Blob.count).to eq(blob_count_after_first_upload)
     end
   end
 
   describe 'add_video idempotency' do
     it 'prevents duplicate video additions on double-click' do
-      allow(Videos::YouTubeExtractor).to receive(:extract).and_return({
+      allow(Videos::YoutubeExtractor).to receive(:extract).and_return({
         valid: true,
         provider: 'youtube',
         video_id: 'dQw4w9WgXcQ',
@@ -242,17 +247,17 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
       params = { video_id: 'dQw4w9WgXcQ' }
 
       # First request
-      post "/api/v1/company_dashboard/remove_video",
-           params: params,
-           headers: { 'Authorization' => "Bearer #{token}" }
+      delete "/api/v1/company_dashboard/remove_video",
+             params: params,
+             headers: { 'Authorization' => "Bearer #{token}" }
       expect(response).to have_http_status(:created)
       first_response = JSON.parse(response.body)
       first_id = first_response['pending_change']['id']
 
       # Second identical request
-      post "/api/v1/company_dashboard/remove_video",
-           params: params,
-           headers: { 'Authorization' => "Bearer #{token}" }
+      delete "/api/v1/company_dashboard/remove_video",
+             params: params,
+             headers: { 'Authorization' => "Bearer #{token}" }
       expect(response).to have_http_status(:ok)
       second_response = JSON.parse(response.body)
       second_id = second_response['pending_change']['id']

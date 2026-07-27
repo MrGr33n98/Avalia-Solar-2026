@@ -116,6 +116,7 @@ export default function MediaGallery({
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const photoViewRef = useRef<{ startedAt: number; photoIndex: number } | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -132,7 +133,10 @@ export default function MediaGallery({
         try {
           const photosResp = showControls
             ? await fetchApi<{ photos: string[] }>('/company_dashboard/media')
-            : await fetchApi<{ company?: { media_urls?: string[] } }>(`/companies/${companyId}`)
+            : await fetchApi<{ company?: { media_urls?: string[] } }>(`/companies/${companyId}`, {
+                noCache: true,
+                cache: 'no-store',
+              })
                 .then((response) => ({ photos: response?.company?.media_urls || [] }));
           const photoItems = (photosResp?.photos || []).map((url, idx) => {
             const normalized = getFullImageUrl(url) || url;
@@ -145,7 +149,10 @@ export default function MediaGallery({
         try {
           const videosResp = showControls
             ? await fetchApi<{ videos: DashboardVideo[] }>('/company_dashboard/videos')
-            : await fetchApi<{ company?: { videos?: DashboardVideo[] } }>(`/companies/${companyId}`)
+            : await fetchApi<{ company?: { videos?: DashboardVideo[] } }>(`/companies/${companyId}`, {
+                noCache: true,
+                cache: 'no-store',
+              })
                 .then((response) => ({ videos: response?.company?.videos || [] }));
           const videoItems = (videosResp?.videos || []).map((v) => ({
             id: String(v.id),
@@ -211,6 +218,7 @@ export default function MediaGallery({
   };
 
   const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isSubmitting) return;
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -232,11 +240,13 @@ export default function MediaGallery({
     }
 
     try {
+      setIsSubmitting(true);
       const form = new FormData();
       Array.from(files).forEach((f) => form.append('images[]', f));
-      const resp = await fetchApi<ApiErrorResponse & { photos?: string[] }>('/company_dashboard/upload_media', {
+      const resp = await fetchApi<ApiErrorResponse>('/company_dashboard/upload_media', {
         method: 'POST',
         body: form,
+        headers: { 'Idempotency-Key': crypto.randomUUID() },
       });
 
       if (resp?.error) {
@@ -247,23 +257,25 @@ export default function MediaGallery({
         });
       } else {
         toast({
-          title: 'Imagem publicada',
-          description: 'A imagem já está disponível na galeria do seu perfil.',
+          title: 'Imagem enviada para aprovação',
+          description: 'Ela aparecerá no perfil assim que for aprovada.',
         });
-        const photoItems = (resp.photos || []).map((url, idx) => ({ id: `${idx}`, url: getFullImageUrl(url) || url }));
-        dispatchGallery({ type: 'set_photos', photos: photoItems });
       }
     } catch {
       toast({ title: 'Falha no upload', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+      e.target.value = '';
     }
   };
 
   const onAddVideo = async () => {
-    if (!videoUrl || !controlsVisible) return;
+    if (!videoUrl || !controlsVisible || isSubmitting) return;
     try {
-      const resp = await fetchApi<ApiErrorResponse & { video?: DashboardVideo }>('/company_dashboard/add_video', {
+      setIsSubmitting(true);
+      const resp = await fetchApi<ApiErrorResponse>('/company_dashboard/add_video', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
         body: JSON.stringify({ url: videoUrl }),
       });
       if (resp?.error) {
@@ -275,23 +287,15 @@ export default function MediaGallery({
         return;
       }
       toast({
-        title: 'Vídeo publicado',
-        description: 'O vídeo já está disponível na galeria do seu perfil.',
+        title: 'Vídeo enviado para aprovação',
+        description: 'Ele aparecerá no perfil assim que for aprovado.',
       });
-      if (resp.video) {
-        dispatchGallery({
-          type: 'set_videos',
-          videos: [...gallery.videos, {
-            ...resp.video,
-            id: String(resp.video.id),
-            thumbnail_url: getFullImageUrl(resp.video.thumbnail_url) || resp.video.thumbnail_url,
-          }],
-        });
-      }
       setShowVideoDialog(false);
       setVideoUrl('');
     } catch {
       toast({ title: 'Erro ao adicionar vídeo', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -324,7 +328,7 @@ export default function MediaGallery({
               {showPhotoTab && (
                 <Button
                   onClick={handleUpload}
-                  disabled={!canUpload}
+                  disabled={!canUpload || isSubmitting}
                   className="h-11 rounded-2xl bg-brand-blue px-5 text-xs font-bold text-white shadow-lg shadow-brand-blue/20 hover:bg-blue-700"
                 >
                   <Upload className="mr-2 h-4 w-4" />
@@ -335,7 +339,7 @@ export default function MediaGallery({
                 <Button
                   variant="ghost"
                   onClick={() => setShowVideoDialog(true)}
-                  disabled={!canUpload}
+                  disabled={!canUpload || isSubmitting}
                   className="h-11 rounded-2xl px-5 text-xs font-bold text-muted-foreground hover:bg-white/70"
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -458,6 +462,7 @@ export default function MediaGallery({
                   {controlsVisible && (
                     <Button
                       onClick={handleUpload}
+                      disabled={isSubmitting}
                       className="h-12 rounded-none bg-brand-blue px-10 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/10"
                     >
                       Enviar primeiro arquivo
@@ -587,10 +592,10 @@ export default function MediaGallery({
           <DialogFooter className="flex flex-col gap-4 mt-8">
             <Button
               onClick={onAddVideo}
-              disabled={!videoUrl}
+              disabled={!videoUrl || isSubmitting}
               className="h-14 w-full rounded-none bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
             >
-              Salvar vídeo
+              {isSubmitting ? 'Salvando...' : 'Salvar vídeo'}
             </Button>
             <Button
               variant="ghost"
@@ -661,7 +666,10 @@ export default function MediaGallery({
             </div>
             <Button
               variant="ghost"
-              onClick={() => setLightboxOpen(false)}
+              onClick={() => {
+                flushPhotoView();
+                setLightboxOpen(false);
+              }}
               className="rounded-none text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest"
             >
               Fechar

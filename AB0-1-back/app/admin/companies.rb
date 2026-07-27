@@ -1214,6 +1214,8 @@ ActiveAdmin.register Company do
   end
 
   controller do
+    after_action :invalidate_public_profile_after_visual_asset_update, only: :update
+
     def scoped_collection
       super.includes(:categories, :plan)
     end
@@ -1243,6 +1245,7 @@ ActiveAdmin.register Company do
       has_file_uploads = params[:company] && (
         params[:company][:banner].present? ||
         params[:company][:logo].present? ||
+        params[:company][:verified_badge].present? ||
         params[:company][:media_assets].present?
       )
 
@@ -1313,6 +1316,16 @@ ActiveAdmin.register Company do
       return unless company_params.respond_to?(:[]=)
 
       company_params[:status] = 'pending' if company_params[:status].blank?
+    end
+
+    def invalidate_public_profile_after_visual_asset_update
+      visual_asset_uploaded = params[:company]&.slice(:banner, :logo, :verified_badge, :media_assets)&.values&.any?(&:present?)
+      return unless visual_asset_uploaded
+      return if flash[:error].present?
+
+      PublicProfileRevalidationJob.perform_later(resource.id)
+    rescue StandardError => e
+      Rails.logger.error("[Admin::Companies] Failed to enqueue public profile revalidation company_id=#{resource&.id}: #{e.message}")
     end
   end
 

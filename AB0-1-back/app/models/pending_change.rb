@@ -27,6 +27,10 @@ class PendingChange < ApplicationRecord
 
   validates :change_type, inclusion: { in: CHANGE_TYPES }
 
+  after_commit :enqueue_rejected_media_cleanup,
+               on: :update,
+               if: :rejected_media_change?
+
   def self.change_types
     CHANGE_TYPES.index_with { |value| value }
   end
@@ -57,29 +61,33 @@ class PendingChange < ApplicationRecord
   # Aplica as mudanças ao modelo principal
   def apply_changes!
     return unless status == 'approved'
+    return if applied_at.present?
 
-    case change_type
-    when 'company_info'
-      apply_company_info_changes
-    when 'categories'
-      apply_category_changes
-    when 'banner'
-      apply_banner_changes
-    when 'logo'
-      apply_logo_changes
-    when 'product'
-      apply_product_changes
-    when 'media'
-      apply_media_changes
-    when 'video'
-      apply_video_changes
-    when 'cta_config'
-      apply_cta_changes
-    when 'access_request'
-      apply_access_request
+    transaction do
+      case change_type
+      when 'company_info'
+        apply_company_info_changes
+      when 'categories'
+        apply_category_changes
+      when 'banner'
+        apply_banner_changes
+      when 'logo'
+        apply_logo_changes
+      when 'product'
+        apply_product_changes
+      when 'media'
+        apply_media_changes
+      when 'video'
+        apply_video_changes
+      when 'cta_config'
+        apply_cta_changes
+      when 'access_request'
+        apply_access_request
+      end
+
+      company.touch
+      update!(applied_at: Time.current)
     end
-
-    update!(applied_at: Time.current)
   end
 
   private
@@ -129,32 +137,51 @@ class PendingChange < ApplicationRecord
 
   def apply_media_changes
     signed_ids = Array(data['signed_ids'])
-    return if signed_ids.empty?
+    raise ArgumentError, 'signed_ids ausente para alteração de mídia' if signed_ids.empty?
 
     signed_ids.each do |sid|
       blob = ActiveStorage::Blob.find_signed!(sid)
+      next if company.media_assets.blobs.exists?(id: blob.id)
+
       company.media_assets.attach(blob)
     rescue StandardError => e
-      Rails.logger.error "Failed to attach media blob: #{e.message}"
+      Rails.logger.error "Failed to attach media blob for pending_change=#{id}: #{e.message}"
+      raise
     end
   end
 
   def apply_video_changes
     action = data['action']
     if action == 'add'
-      CompanyVideo.create!(
+      raise ArgumentError, 'video_id ausente para alteração de vídeo' if data['video_id'].blank?
+
+      CompanyVideo.find_or_initialize_by(
         company: company,
-        url: data['url'],
         provider: data['provider'] || 'youtube',
-        video_id: data['video_id'],
-        title: data['title'],
-        thumbnail_url: data['thumbnail_url'],
-        status: 'published'
-      )
+        video_id: data['video_id']
+      ).tap do |video|
+        video.assign_attributes(
+          url: data['url'],
+          title: data['title'],
+          thumbnail_url: data['thumbnail_url'],
+          status: 'published'
+        )
+        video.save!
+      end
     elsif action == 'remove'
       vid = data['video_id']
       CompanyVideo.where(company: company, video_id: vid).delete_all
+    else
+      raise ArgumentError, "ação de vídeo inválida: #{action.inspect}"
     end
+  end
+
+  def enqueue_rejected_media_cleanup
+    PendingMediaBlobCleanupJob.perform_later(id)
+  end
+
+  def rejected_media_change?
+    saved_change_to_status? && status == 'rejected' && change_type == 'media'
   end
 
   def apply_cta_changes

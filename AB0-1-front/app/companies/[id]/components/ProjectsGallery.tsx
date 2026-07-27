@@ -81,7 +81,12 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
 
   useEffect(() => {
     let active = true;
-    fetchApi<{ company?: { media_urls?: string[]; videos?: PublishedMedia['videos'] } }>(`/companies/${companyId}`)
+    // Publication is moderated and can change immediately after the visitor
+    // opens the profile. Do not reuse the generic five-minute browser cache.
+    fetchApi<{ company?: { media_urls?: string[]; videos?: PublishedMedia['videos'] } }>(`/companies/${companyId}`, {
+      noCache: true,
+      cache: 'no-store',
+    })
       .then((response) => {
         if (!active) return;
         setPublishedMedia({
@@ -117,12 +122,6 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
     return hasMedia && (!projectType || project.project_type === projectType) && (!segment || project.segment === segment) && (!technology || project.technology === technology);
   }), [projects, media, projectType, segment, technology]);
 
-  const counts = useMemo(() => ({
-    all: projects.length,
-    image: projects.filter((project) => project.assets.some((asset) => asset.kind === 'image')).length,
-    video: projects.filter((project) => project.assets.some((asset) => asset.kind === 'video')).length,
-  }), [projects]);
-
   const mediaItems = useMemo(
     () => [
       ...publishedMedia.photos.map((url, index) => ({ id: `photo-${index}`, type: 'photo' as const, url, thumbnail: url })),
@@ -130,6 +129,16 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
     ],
     [publishedMedia]
   );
+
+  const counts = useMemo(() => ({
+    all: projects.length + mediaItems.length,
+    image: projects.filter((project) => project.assets.some((asset) => asset.kind === 'image')).length + publishedMedia.photos.length,
+    video: projects.filter((project) => project.assets.some((asset) => asset.kind === 'video')).length + publishedMedia.videos.length,
+  }), [mediaItems.length, projects, publishedMedia.photos.length, publishedMedia.videos.length]);
+
+  const visibleMediaItems = media === 'all'
+    ? mediaItems
+    : mediaItems.filter((item) => item.type === (media === 'image' ? 'photo' : 'video'));
 
   if (loading) return <div className="grid grid-cols-1 gap-4 md:grid-cols-3">{[1, 2, 3].map((key) => <div key={key} className="h-72 animate-pulse rounded-xl bg-slate-200" />)}</div>;
   if (!projects.length && !mediaItems.length) return <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center"><Building2 className="mx-auto mb-3 h-9 w-9 text-slate-300" /><p className="font-semibold text-slate-700">Esta empresa ainda não publicou projetos ou mídias.</p></div>;
@@ -143,11 +152,11 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
       <SelectFilter label="Segmento" value={segment} values={options.segments} onChange={setSegment} />
       <SelectFilter label="Tecnologia" value={technology} values={options.technologies} onChange={setTechnology} />
     </div>
-    {mediaItems.length > 0 && (
+    {visibleMediaItems.length > 0 && (
       <section className="space-y-3" aria-label={`Galeria de mídia da ${companyName}`}>
         <div><h3 className="text-lg font-black text-slate-950">Galeria de mídia</h3><p className="text-sm text-slate-500">Imagens e vídeos publicados pela empresa.</p></div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {mediaItems.map((item) => (
+          {visibleMediaItems.map((item) => (
             <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className="group relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               {item.thumbnail ? <Image src={item.thumbnail} alt={item.type === 'video' ? `Vídeo de ${companyName}` : `Imagem de ${companyName}`} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition group-hover:scale-105" unoptimized /> : <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-700 to-slate-800"><Video className="h-10 w-10 text-white/80" /></div>}
               <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white">{item.type === 'video' ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}{item.type === 'video' ? 'Vídeo' : 'Imagem'}</span>

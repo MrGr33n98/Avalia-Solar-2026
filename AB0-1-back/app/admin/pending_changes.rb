@@ -68,14 +68,18 @@ ActiveAdmin.register PendingChange do
   end
 
   member_action :approve, method: :patch do
-    resource.update!(
-      status: 'approved',
-      approved_at: Time.current,
-      approved_by: current_admin_user,
-      approved_ip: request.remote_ip,
-      approved_user_agent: request.user_agent
-    )
-    resource.apply_changes!
+    resource.with_lock do
+      resource.transaction do
+        resource.update!(
+          status: 'approved',
+          approved_at: Time.current,
+          approved_by: current_admin_user,
+          approved_ip: request.remote_ip,
+          approved_user_agent: request.user_agent
+        )
+        resource.apply_changes!
+      end
+    end
     redirect_to resource_path, notice: 'Mudança aprovada e aplicada.'
   end
 

@@ -1,9 +1,15 @@
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import MediaGallery from '@/app/dashboard/components/MediaGallery';
 import { Context7Provider } from '@/app/context7/provider';
 
 const mockTrackGalleryDwell = jest.fn();
+
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({ fill: _fill, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => <img {...props} />,
+}));
 
 jest.mock('@/lib/api', () => ({
   fetchApi: jest.fn(async (endpoint: string) => {
@@ -12,6 +18,9 @@ jest.mock('@/lib/api', () => ({
     }
     if (endpoint.includes('/company_dashboard/videos')) {
       return { videos: [] };
+    }
+    if (endpoint.startsWith('/companies/')) {
+      return { company: { media_urls: [], videos: [] } };
     }
     return {};
   }),
@@ -22,6 +31,7 @@ jest.mock('@/lib/api', () => ({
       featured: false,
       verified: false,
     })),
+    getFeatureAccess: jest.fn(async () => ({ feature_access: {} })),
   },
 }));
 
@@ -50,28 +60,21 @@ describe('MediaGallery', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Galeria de Mídia')).toBeInTheDocument();
-      expect(screen.getByText('Nenhuma foto adicionada')).toBeInTheDocument();
+      expect(screen.getByText('Biblioteca de mídia')).toBeInTheDocument();
+      expect(screen.getByText('Nenhuma imagem cadastrada')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('Upload de Fotos')).not.toBeInTheDocument();
-    expect(screen.queryByText('Adicionar Vídeo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enviar imagens')).not.toBeInTheDocument();
+    expect(screen.queryByText('Adicionar vídeo')).not.toBeInTheDocument();
   });
 
   it('dispara dwell tracking ao fechar lightbox depois de mais de 5 segundos', async () => {
-    jest.useFakeTimers();
-
     const { fetchApi } = jest.requireMock('@/lib/api') as {
       fetchApi: jest.Mock;
     };
 
     fetchApi.mockImplementation(async (endpoint: string) => {
-      if (endpoint.includes('/company_dashboard/media')) {
-        return { photos: ['/uploads/photo-1.jpg'] };
-      }
-      if (endpoint.includes('/company_dashboard/videos')) {
-        return { videos: [] };
-      }
+      if (endpoint.startsWith('/companies/')) return { company: { media_urls: ['/uploads/photo-1.jpg'], videos: [] } };
       return {};
     });
 
@@ -91,21 +94,17 @@ describe('MediaGallery', () => {
     const photoButton = galleryPhoto?.closest('button');
     expect(photoButton).not.toBeNull();
 
+    jest.useFakeTimers();
     fireEvent.click(photoButton as HTMLButtonElement);
 
-    await waitFor(() => {
-      expect(screen.getByText('Visualização')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Visualização da mídia')).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(6001);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
-
-    await waitFor(() => {
-      expect(mockTrackGalleryDwell).toHaveBeenCalledTimes(1);
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(mockTrackGalleryDwell).toHaveBeenCalledTimes(1);
 
     expect(mockTrackGalleryDwell).toHaveBeenCalledWith(expect.any(Number), 0);
     expect(mockTrackGalleryDwell.mock.calls[0][0]).toBeGreaterThan(5000);

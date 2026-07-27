@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'uri'
 
 class Company < ApplicationRecord
   include SeoStandardizable
@@ -939,7 +940,7 @@ end
 
   def explicit_feature_value_from_plan?(*keys)
     value = explicit_feature_value_from_plan(*keys)
-    return false if value.nil?
+    return nil if value.nil?
 
     ActiveModel::Type::Boolean.new.cast(value)
   end
@@ -1052,6 +1053,10 @@ end
 
   after_update_commit :track_activation_event, if: :saved_change_to_status?
   after_update_commit :track_plan_change_event, if: :saved_change_to_plan_id?
+  # Active Storage attaches assets by updating this record. Scheduling cache
+  # invalidation here covers both moderated dashboard uploads and direct
+  # ActiveAdmin uploads, and happens only after the database transaction commits.
+  after_update_commit :schedule_public_profile_revalidation
 
   private
 
@@ -1068,6 +1073,14 @@ end
     )
   rescue StandardError => e
     Rails.logger.error("[Analytics] Failed to enqueue plan change tracking: #{e.message}")
+  end
+
+  def schedule_public_profile_revalidation
+    return if slug.blank?
+
+    PublicProfileRevalidationJob.perform_later(id)
+  rescue StandardError => e
+    Rails.logger.error("[Company] Failed to enqueue public profile revalidation for company_id=#{id}: #{e.message}")
   end
 
   def track_activation_event
@@ -1188,7 +1201,20 @@ end
 
     begin
       # Use rails_storage_proxy_url to serve images through the app
-      options = Rails.application.routes.default_url_options.dup
+      storage_options = Rails.application.config.active_storage.respond_to?(:default_url_options) ?
+        Rails.application.config.active_storage.default_url_options : nil
+      options = (storage_options.presence || Rails.application.routes.default_url_options).dup
+
+      # A serializer can run outside an HTTP request (jobs, tests and cached
+      # pages), where Rails has no request host. Always return a usable public
+      # URL instead of silently omitting an approved gallery image.
+      if options[:host].blank?
+        fallback_origin = ENV['ACTIVE_STORAGE_HOST'].presence || ENV['APP_HOST'].presence ||
+                          (Rails.env.test? ? 'http://www.example.com' : 'https://api.avaliasolar.com.br')
+        fallback_uri = URI.parse(fallback_origin)
+        options[:host] = fallback_uri.host || fallback_origin
+        options[:protocol] ||= fallback_uri.scheme || 'https'
+      end
 
       # For development, ensure port is correct if using localhost
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'

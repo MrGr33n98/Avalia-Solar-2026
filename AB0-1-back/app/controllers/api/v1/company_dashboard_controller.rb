@@ -858,6 +858,16 @@ module Api
         images = params[:images]
         return render json: { error: 'Nenhum arquivo enviado' }, status: :unprocessable_entity if images.blank?
 
+        # Multipart temporary-file metadata is not stable enough to generate a
+        # safe retry key. Check an explicit Idempotency-Key before uploading
+        # blobs so a client retry cannot leave duplicate unattached blobs.
+        if (existing = existing_idempotent_pending_change)
+          return render json: {
+            message: 'Mídia já enviada para aprovação',
+            pending_change: mark_as_previously_persisted!(existing)
+          }, status: :ok
+        end
+
         signed_ids = []
         Array(images).each do |io|
           blob = ActiveStorage::Blob.create_and_upload!(io: io, filename: io.original_filename,
@@ -867,16 +877,29 @@ module Api
           Rails.logger.error "Erro ao criar blob: #{e.message}"
         end
 
-        return render json: { error: 'Falha ao processar arquivos' }, status: :unprocessable_entity if signed_ids.empty?
-
-        signed_ids.each do |signed_id|
-          @company.media_assets.attach(ActiveStorage::Blob.find_signed!(signed_id))
+        if signed_ids.empty?
+          purge_unattached_media_blobs(signed_ids)
+          return render json: { error: 'Falha ao processar arquivos' }, status: :unprocessable_entity
         end
 
+        pending_change = create_idempotent_pending_change(
+          change_type: 'media',
+          data: { signed_ids: signed_ids }
+        )
+
+        # A concurrent request can pass the first lookup, upload its blobs and
+        # then lose the unique-key race. In that case it must return the
+        # original pending change without leaving its newly uploaded blobs
+        # orphaned in storage.
+        purge_unattached_media_blobs(signed_ids) if pending_change.previously_persisted?
+
         render json: {
-          message: 'Mídia publicada com sucesso',
-          photos: @company.media_urls
-        }, status: :created
+          message: pending_change.previously_persisted? ? 'Mídia já enviada para aprovação' : 'Mídia enviada para aprovação',
+          pending_change: pending_change
+        }, status: pending_change.previously_persisted? ? :ok : :created
+      rescue StandardError
+        purge_unattached_media_blobs(signed_ids || [])
+        raise
       end
 
       # POST /api/v1/company_dashboard/add_video
@@ -890,22 +913,24 @@ module Api
         end
 
         url = params[:url].to_s
-        result = Videos::YouTubeExtractor.extract(url)
+        result = Videos::YoutubeExtractor.extract(url)
         return render json: { error: result[:error] }, status: :unprocessable_entity unless result[:valid]
 
-        video = @company.company_videos.create!(
-          url: url,
-          provider: result[:provider],
-          video_id: result[:video_id],
-          thumbnail_url: result[:thumbnail_url],
-          status: 'published'
+        pending_change = create_idempotent_pending_change(
+          change_type: 'video',
+          data: {
+            url: url,
+            provider: result[:provider],
+            video_id: result[:video_id],
+            thumbnail_url: result[:thumbnail_url],
+            action: 'add'
+          }
         )
 
         render json: {
-          message: 'Vídeo publicado com sucesso',
-          video: { id: video.id, url: video.url, thumbnail_url: video.thumbnail_url,
-                   provider: video.provider, video_id: video.video_id }
-        }, status: :created
+          message: pending_change.previously_persisted? ? 'Vídeo já enviado para aprovação' : 'Vídeo enviado para aprovação',
+          pending_change: pending_change
+        }, status: pending_change.previously_persisted? ? :ok : :created
       end
 
       # DELETE /api/v1/company_dashboard/remove_video
@@ -1235,6 +1260,17 @@ module Api
         return false unless @company
 
         @company.media_upload_allowed?
+      end
+
+      def purge_unattached_media_blobs(signed_ids)
+        Array(signed_ids).each do |signed_id|
+          blob = ActiveStorage::Blob.find_signed!(signed_id)
+          blob.purge if blob.attachments.none?
+        rescue ActiveSupport::MessageVerifier::InvalidSignature, ActiveRecord::RecordNotFound
+          next
+        rescue StandardError => e
+          Rails.logger.warn("[CompanyDashboard#upload_media] orphan blob cleanup failed: #{e.class}: #{e.message}")
+        end
       end
 
       def company_params

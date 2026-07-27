@@ -1301,6 +1301,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100001) do
     t.check_constraint "score >= 0::numeric AND score <= 100::numeric", name: "check_trust_score"
   end
 
+  create_table "company_upload_limits", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.integer "monthly_limit_mb"
+    t.integer "images_count", default: 0, null: false
+    t.integer "videos_count", default: 0, null: false
+    t.integer "projects_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_company_upload_limits_on_company_id", unique: true
+  end
+
   create_table "company_utm_attributions", force: :cascade do |t|
     t.bigint "company_id", null: false
     t.string "utm_source", limit: 100
@@ -1338,6 +1349,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100001) do
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["company_id", "provider", "video_id"], name: "idx_company_videos_unique_provider_video", unique: true
     t.index ["company_id", "status"], name: "index_company_videos_on_company_id_and_status"
     t.index ["company_id"], name: "index_company_videos_on_company_id"
     t.index ["video_id"], name: "index_company_videos_on_video_id"
@@ -3055,6 +3067,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100001) do
   add_foreign_key "company_service_areas", "companies", on_delete: :cascade
   add_foreign_key "company_services", "categories"
   add_foreign_key "company_services", "companies"
+  add_foreign_key "company_upload_limits", "companies"
   add_foreign_key "company_utm_attributions", "companies"
   add_foreign_key "company_videos", "companies"
   add_foreign_key "company_webhooks", "companies"
