@@ -249,6 +249,12 @@ export interface Company {
   partner_brands?: string;
   coverage_states?: string | string[];
   coverage_cities?: string | string[];
+  service_areas?: Array<{
+    coverage_type: 'city' | 'state' | 'national' | 'radius';
+    state_code?: string | null;
+    city_name?: string | null;
+    radius_km?: number | null;
+  }>;
   local_solar_path?: string | null;
   latitude?: number;
   longitude?: number;

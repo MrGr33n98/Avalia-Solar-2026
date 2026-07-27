@@ -4,8 +4,8 @@ class CompanySerializer < ActiveModel::Serializer
 
   attributes :id, :name, :description, :website,
              :slug, :seo_title, :seo_description, :meta_description, :seo_keywords,
-             :state, :city, :address, :phone, :whatsapp,
-             :coverage_states, :coverage_cities, :local_solar_path,
+             :state, :city, :address, :phone, :whatsapp, :latitude, :longitude,
+             :coverage_states, :coverage_cities, :service_areas, :local_solar_path,
              :email_public, :featured, :verified,
              :media_upload_allowed,
              :rating_avg, :rating_count,
@@ -198,6 +198,17 @@ class CompanySerializer < ActiveModel::Serializer
 
   def coverage_cities
     object.respond_to?(:coverage_city_list) ? object.coverage_city_list : []
+  end
+
+  def service_areas
+    object.company_service_areas.active.order(:coverage_type, :state_code, :city_name).map do |area|
+      {
+        coverage_type: area.coverage_type,
+        state_code: area.state_code,
+        city_name: area.city_name,
+        radius_km: area.radius_km
+      }
+    end
   end
 
   def local_solar_path

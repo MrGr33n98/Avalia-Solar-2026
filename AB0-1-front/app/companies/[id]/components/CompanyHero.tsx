@@ -246,7 +246,7 @@ export default function CompanyHero({
               <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
                 <div className="relative shrink-0 overflow-visible">
-                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-2 border-slate-950 bg-white shadow-sm sm:h-24 sm:w-24">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-2xl border-2 border-slate-950 bg-white shadow-sm sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
@@ -256,7 +256,7 @@ export default function CompanyHero({
                       entityName={company.name}
                       locationLabel={locationLabel}
                       objectFit="contain"
-                      className="p-2"
+                      className="rounded-[14px] p-2"
                       containerClassName="absolute inset-0 h-full w-full"
                       fallbackSrc="/images/logo-placeholder.svg"
                       onError={() => setLogoError(true)}
