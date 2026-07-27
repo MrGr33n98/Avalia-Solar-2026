@@ -247,7 +247,7 @@ export default function CompanyHero({
               <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
                 <div className="relative shrink-0 overflow-visible">
-                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:h-24 sm:w-24">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-xl border-2 border-slate-950 bg-white shadow-sm sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
                       alt={company.name}
@@ -267,7 +267,7 @@ export default function CompanyHero({
                   {/* Selo preso ao canto da moldura, com sobreposição discreta */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute right-1 top-1 z-30 h-10 w-10 translate-x-[28%] -translate-y-[28%] overflow-visible bg-transparent p-0 drop-shadow-[0_2px_5px_rgba(15,23,42,0.16)] sm:h-11 sm:w-11"
+                      className="absolute right-1 top-1 z-30 h-10 w-10 translate-x-[18%] -translate-y-[18%] overflow-visible rounded-full bg-transparent p-0 ring-2 ring-white/90 drop-shadow-[0_3px_7px_rgba(15,23,42,0.2)] sm:h-11 sm:w-11"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
@@ -276,7 +276,7 @@ export default function CompanyHero({
                         fill
                         sizes="44px"
                         objectFit="contain"
-                        className="p-0"
+                        className="mix-blend-multiply p-0"
                         containerClassName="h-full w-full overflow-visible bg-transparent"
                         onError={() => setBadgeImageError(true)}
                       />
