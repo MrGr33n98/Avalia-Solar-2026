@@ -34,6 +34,7 @@ export type ProductInput = {
   price: number;
   stock?: number;
   status: 'draft' | 'active' | 'archived' | 'disabled';
+  featured?: boolean;
   category_ids: string[];
   image_url?: string;
   images?: File[];
