@@ -33,6 +33,37 @@ interface BannerContainerProps {
 
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
 
+/**
+ * Shared by the banner renderer and its loading state so the slot never
+ * changes height when API data arrives.
+ */
+export function getBannerAspectRatio(position?: string) {
+  switch (position) {
+    case 'navbar': return 'aspect-[10/1]';
+    case 'sidebar': return 'aspect-[1/1]';
+    case 'categories_top': return 'aspect-[12/5] sm:aspect-[6/1]';
+    case 'compare_hero': return 'aspect-[16/7] md:aspect-[40/7]';
+    case 'compare_page_sidebar': return 'aspect-[1/2]';
+    case 'compare_page_top': return 'h-[88px] sm:h-[104px]';
+    case 'compare_page_inline':
+    case 'compare_page_bottom':
+      return 'aspect-[3/1] sm:aspect-[15/2]';
+    case 'search_top': return 'aspect-[200/21]';
+    case 'home_top':
+    case 'companies_top':
+      return 'aspect-[12/5] sm:aspect-[40/7]';
+    case 'search_mid': return 'aspect-[15/2]';
+    case 'categories_filter_sidebar': return 'aspect-[6/5]';
+    case 'categories_right_rail':
+    case 'companies_right_rail':
+      return 'aspect-[1/2]';
+    case 'companies_footer':
+    case 'article_footer_cta':
+      return 'aspect-[3/1] sm:aspect-[21/5]';
+    default: return 'aspect-[21/5] sm:aspect-[4/1]';
+  }
+}
+
 function BannerImage({
   banner,
   sizes,
@@ -174,34 +205,7 @@ export function BannerContainer({
   }
 
   try {
-    const getAspectRatio = (pos?: string) => {
-      switch (pos) {
-        case 'navbar': return 'aspect-[10/1]';
-        case 'sidebar': return 'aspect-[1/1]';
-        case 'categories_top': return 'aspect-[12/5] sm:aspect-[6/1]';
-        case 'compare_hero': return 'aspect-[16/7] md:aspect-[40/7]';
-        case 'compare_page_sidebar': return 'aspect-[1/2]';
-        case 'compare_page_top': return 'h-[88px] sm:h-[104px]';
-        case 'compare_page_inline':
-        case 'compare_page_bottom':
-          return 'aspect-[3/1] sm:aspect-[15/2]';
-        case 'search_top': return 'aspect-[200/21]';
-        case 'home_top':
-        case 'companies_top':
-          return 'aspect-[12/5] sm:aspect-[40/7]';
-        case 'search_mid': return 'aspect-[15/2]';
-        case 'categories_filter_sidebar': return 'aspect-[6/5]';
-        case 'categories_right_rail':
-        case 'companies_right_rail':
-          return 'aspect-[1/2]';
-        case 'companies_footer': 
-        case 'article_footer_cta':
-          return 'aspect-[3/1] sm:aspect-[21/5]';
-        default: return 'aspect-[21/5] sm:aspect-[4/1]';
-      }
-    };
-
-    const aspectRatio = getAspectRatio(position);
+    const aspectRatio = getBannerAspectRatio(position);
     const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
 
     const getSizes = (pos?: string) => {

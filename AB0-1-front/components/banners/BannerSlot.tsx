@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
-import { BannerContainer } from '@/components/BannerContainer';
+import { BannerContainer, getBannerAspectRatio } from '@/components/BannerContainer';
 import { cn } from '@/lib/utils';
 
 interface BannerSlotProps {
@@ -32,15 +32,17 @@ export function BannerSlot({
   // Renderiza um skeleton suave de carregamento
   if (isLoading) {
     return (
-      <div 
-        className={cn(
-          "w-full animate-pulse bg-slate-100 rounded-3xl min-h-[160px] sm:min-h-[160px] flex items-center justify-center border border-slate-200/50",
-          className
-        )}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
-          <span className="text-xs font-bold text-slate-600">Carregando anúncio...</span>
+      <div className={cn('w-full py-2', className)}>
+        <div
+          className={cn(
+            'flex w-full items-center justify-center rounded-3xl border border-slate-200/50 bg-slate-100 animate-pulse',
+            getBannerAspectRatio(placement)
+          )}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
+            <span className="text-[11px] font-bold text-slate-600">Carregando anúncio...</span>
+          </div>
         </div>
       </div>
     );

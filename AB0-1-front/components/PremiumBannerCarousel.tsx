@@ -151,15 +151,15 @@ export function PremiumBannerCarousel({
         {items.length > 1 && (
           <>
             {/* Arrows: Always visible on mobile, hover on desktop */}
-            <div className="absolute inset-y-0 left-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselPrevious className="relative left-0 h-10 w-10 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
+            <div className="absolute inset-y-0 left-0 flex items-center px-1.5 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+              <CarouselPrevious className="relative left-0 h-9 w-9 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselNext className="relative right-0 h-10 w-10 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
+            <div className="absolute inset-y-0 right-0 flex items-center px-1.5 md:px-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+              <CarouselNext className="relative right-0 h-9 w-9 md:h-12 md:w-12 border-none bg-white/30 backdrop-blur-md text-white hover:bg-white/50" />
             </div>
 
             {/* Progress Indicators */}
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full z-10">
+            <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/20 px-2 py-1 backdrop-blur-sm md:bottom-4 md:gap-2 md:px-3 md:py-1.5">
               {scrollSnaps.map((_, index) => {
                 const active = index === selectedIndex;
                 return (
@@ -167,20 +167,20 @@ export function PremiumBannerCarousel({
                     key={index}
                     type="button"
                     onClick={() => api?.scrollTo(index)}
-                    className="relative flex h-8 w-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+                    className="relative flex h-7 w-7 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 md:h-8 md:w-8"
                     aria-label={`Ir para slide ${index + 1}`}
                     aria-current={active ? 'true' : undefined}
                   >
                     <span
                       className={cn(
-                        'block h-[7px] rounded-full transition-all duration-300 ease-out',
-                        active ? 'w-5 bg-white' : 'w-[7px] bg-white/40 hover:bg-white/60'
+                        'block h-[5px] rounded-full transition-all duration-300 ease-out md:h-[7px]',
+                        active ? 'w-4 bg-white md:w-5' : 'w-[5px] bg-white/40 hover:bg-white/60 md:w-[7px]'
                       )}
                     />
                     {active && (
                       <motion.div
                         animate={controls}
-                        className="absolute left-1.5 top-1/2 h-[7px] -translate-y-1/2 rounded-full bg-white/70"
+                        className="absolute left-1.5 top-1/2 h-[5px] -translate-y-1/2 rounded-full bg-white/70 md:h-[7px]"
                         style={{ width: "0%" }}
                       />
                     )}

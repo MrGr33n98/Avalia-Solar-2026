@@ -79,7 +79,7 @@ export default function OverviewTab({
       </Card>
 
       {/* Banner Inline após Sobre a Empresa */}
-      <div className="mt-6 mb-6">
+      <div className="mb-3 mt-3 md:mb-6 md:mt-6">
         <BannerSlot 
           placement="company_profile_about_inline" 
           companyId={Number(company.id)}
@@ -104,7 +104,7 @@ export default function OverviewTab({
       <ProjectsPreview company={company} onTabChange={onTabChange} />
 
       {/* Banner de Carrossel antes de Empresas Relacionadas */}
-      <div className="mt-6">
+      <div className="mt-3 md:mt-6">
         <BannerSlot 
           placement="company_profile_related_carousel" 
           companyId={Number(company.id)}
