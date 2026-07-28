@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronUp, MessageSquare } from 'lucide-react';
 import { ChatAvatar } from './ChatAvatar';
-import { getFloatingWidgetZIndex, getFloatingWidgetSizeClasses, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
+import { getFloatingWidgetZIndex, getFloatingWidgetSizeClasses, WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 import { cn } from '@/lib/utils';
 
 interface FloatingChatTriggerProps {
@@ -30,7 +30,7 @@ export function FloatingChatTrigger({
         'rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg',
         'transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-850 hover:shadow-xl',
         'flex h-11 w-11 md:w-[290px] sm:md:w-[320px] md:rounded-t-2xl md:rounded-b-none md:px-4 md:py-2.5 md:justify-between',
-        MOBILE_POSITION_CLASSES.chat,
+        WIDGET_POSITION_CLASSES.chat,
         className
       )}
       style={{
