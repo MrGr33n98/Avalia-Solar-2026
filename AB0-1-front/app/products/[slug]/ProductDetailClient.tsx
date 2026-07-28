@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useProductTracking } from './useProductTracking';
 import PremiumBadge from '@/components/PremiumBadge';
 import { ProductReviewModal } from './components/ProductReviewModal';
+import ProjectsGallery from '@/app/companies/[id]/components/ProjectsGallery';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -816,10 +817,23 @@ export default function ProductDetailClient({
                 ) : null}
 
                 {activeTab === 'projects' ? (
-                  <div className="space-y-4">
-                    {projects.length ? (
-                      projects.map((project) => <ProjectCard key={project.id} project={project} />)
-                    ) : (
+                  <div className="space-y-6">
+                    {projects.length > 0 && (
+                      <div className="space-y-4">
+                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                          Projetos com este produto
+                        </p>
+                        {projects.map((project) => (
+                          <ProjectCard key={project.id} project={project} />
+                        ))}
+                      </div>
+                    )}
+
+                    {company ? (
+                      <div className={cn(surfaceClass, 'p-6')}>
+                        <ProjectsGallery companyId={company.id} companyName={company.name} />
+                      </div>
+                    ) : !projects.length ? (
                       <div className={cn(surfaceClass, 'p-6')}>
                         <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
                           Nenhum projeto registrado ainda
@@ -828,7 +842,7 @@ export default function ProductDetailClient({
                           Assim que integradores registrarem campanhas ou projetos com este produto, eles aparecerão aqui.
                         </p>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 ) : null}
               </div>
