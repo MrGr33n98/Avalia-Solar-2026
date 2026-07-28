@@ -101,7 +101,7 @@ export function CompanyLogo({
         <div
           data-testid="company-achievement-badge"
           className={cn(
-            'absolute z-20 rounded-full border border-slate-100 bg-white p-[1px] shadow-sm flex items-center justify-center transition-transform hover:scale-110',
+            'absolute z-20 flex items-center justify-center transition-transform hover:scale-110 drop-shadow-[0_0_1.5px_rgba(15,23,42,0.7)] drop-shadow-[0_2px_4px_rgba(15,23,42,0.2)]',
             badgeSizeClasses[size],
             badgeClassName
           )}
@@ -112,7 +112,7 @@ export function CompanyLogo({
             alt={badgeTitle}
             width={48}
             height={48}
-            className="object-contain w-full h-full rounded-full"
+            className="object-contain w-full h-full"
             unoptimized
           />
         </div>
