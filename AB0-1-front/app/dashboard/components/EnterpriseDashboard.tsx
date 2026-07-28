@@ -455,6 +455,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   featureAccess={featureAccess}
                   themeMode={themeMode}
                   onNavigateToReviews={() => handleTabChange('reviews')}
+                  onNavigateToTab={handleTabChange}
                 />
               </TabsContent>
 

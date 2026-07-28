@@ -1,55 +1,48 @@
 'use client';
 
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Eye,
-  Star,
-  TrendingUp,
-  Copy,
-  ShieldCheck,
-  CheckCircle2,
-  Users,
-  Zap,
-  ArrowUpRight,
-  Globe,
+  ArrowRight,
   BarChart3,
-  PieChart as PieChartIcon,
-  Activity,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  CircleHelp,
+  Clock3,
+  Download,
+  Eye,
+  FileText,
+  Lightbulb,
+  MessageCircle,
   MousePointerClick,
+  PackageOpen,
+  PhoneCall,
+  Star,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  UserRound,
+  UsersRound,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { fetchApi, type FeatureAccessEntry } from '@/lib/api';
-import { subscribeCompanyDashboard } from '@/lib/cable';
-import { isFeatureEnabled } from '@/lib/feature-access';
-import MetricCard from './MetricCard';
-import OpportunityBoard from './OpportunityBoard';
-import NPSDetailedCard from '@/components/ui/NPSDetailedCard';
-import RankingTable, { type RankingRow } from '@/components/ui/RankingTable';
-import dynamic from 'next/dynamic';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import {
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
-
-const AdvancedAnalytics = dynamic(() => import('./AdvancedAnalytics'), {
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-black/[0.03] dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl" />,
-  ssr: false
-});
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { companyDashboardApi, fetchApi, type FeatureAccessEntry } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 type OverviewTabProps = {
   companyId: string;
@@ -57,463 +50,408 @@ type OverviewTabProps = {
   featureAccess?: Record<string, FeatureAccessEntry>;
   themeMode?: 'light' | 'dark';
   onNavigateToReviews?: () => void;
+  onNavigateToTab?: (tab: string) => void;
 };
 
-/* ─── Animated Rolling Number ─── */
-function RollingNumber({ value, className }: { value: number | string; className?: string }) {
-  const displayValue = typeof value === 'number' ? value.toLocaleString('pt-BR') : value;
-  return (
-    <motion.span
-      key={displayValue}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-      className={cn('tabular-nums font-mono', className)}
-    >
-      {displayValue}
-    </motion.span>
-  );
+type Period = 7 | 30 | 90;
+
+type SeriesPoint = {
+  date: string;
+  views: number;
+  clicks: number;
+  leads: number;
+};
+
+type LeadRow = {
+  id: string | number;
+  name?: string;
+  city?: string;
+  state?: string;
+  product_vertical?: string;
+  project_profile?: string;
+  message?: string;
+  wizard_status?: string;
+  created_at?: string;
+  utm_source?: string;
+  referrer_host?: string;
+};
+
+const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: 7, label: 'Últimos 7 dias' },
+  { value: 30, label: 'Últimos 30 dias' },
+  { value: 90, label: 'Últimos 90 dias' },
+];
+
+const SOURCE_COLORS = ['#2563eb', '#10b981', '#8b5cf6', '#f59e0b', '#fb7185', '#ec4899'];
+
+function number(value: unknown) {
+  return Number(value || 0);
 }
 
-/* ─── Figma-style Stat Card (AS-EDS Clay Precision) ─── */
-function StatCard({
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('pt-BR').format(value);
+}
+
+function formatDate(date?: string) {
+  if (!date) return '—';
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime())
+    ? '—'
+    : parsed.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+}
+
+function formatRelativeDate(date?: string) {
+  if (!date) return '—';
+  const difference = Date.now() - new Date(date).getTime();
+  if (Number.isNaN(difference)) return '—';
+  const minutes = Math.max(0, Math.round(difference / 60_000));
+  if (minutes < 60) return `Há ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `Há ${hours} h`;
+  return `Há ${Math.round(hours / 24)} d`;
+}
+
+function formatRange(days: number) {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days + 1);
+  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
+  return `${start.toLocaleDateString('pt-BR', options).replace('.', '')} — ${end.toLocaleDateString('pt-BR', options).replace('.', '')} ${end.getFullYear()}`;
+}
+
+function normalizeSeries(payload: any): SeriesPoint[] {
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
+  return rows
+    .map((row: any) => ({
+      date: row.date,
+      views: number(row.views ?? row.profile_views),
+      clicks: number(row.clicks ?? row.cta_clicks),
+      leads: number(row.leads),
+    }))
+    .filter((row: SeriesPoint) => Boolean(row.date));
+}
+
+function sum(rows: SeriesPoint[], key: keyof Omit<SeriesPoint, 'date'>) {
+  return rows.reduce((total, row) => total + row[key], 0);
+}
+
+function trend(current: number, previous: number) {
+  if (!previous) return current ? null : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function statusLabel(status?: string) {
+  const labels: Record<string, string> = {
+    draft: 'Novo',
+    pending_otp: 'Em validação',
+    verified: 'Qualificado',
+    distributed: 'Distribuído',
+    proposal_submitted: 'Proposta recebida',
+    proposal_processing: 'Em atendimento',
+    proposal_sent: 'Proposta enviada',
+    proposal_failed: 'Atenção',
+  };
+  return labels[status || ''] || 'Novo';
+}
+
+function statusTone(status?: string) {
+  if (status === 'proposal_sent') return 'bg-emerald-50 text-emerald-700';
+  if (status === 'verified' || status === 'proposal_processing') return 'bg-violet-50 text-violet-700';
+  if (status === 'proposal_failed') return 'bg-rose-50 text-rose-700';
+  return 'bg-blue-50 text-blue-700';
+}
+
+function MetricCard({
+  icon: Icon,
   title,
   value,
-  change,
-  changeType = 'positive',
-  icon: Icon,
-  delay = 0,
+  comparison,
+  available = true,
+  href,
 }: {
+  icon: typeof Eye;
   title: string;
   value: string | number;
-  change: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
-  icon?: any;
-  delay?: number;
+  comparison?: number | null;
+  available?: boolean;
+  href?: () => void;
 }) {
+  const isPositive = (comparison || 0) > 0;
+  const isNegative = (comparison || 0) < 0;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay, ease: [0.23, 1, 0.32, 1] }}
-    >
-      <div className={cn(
-        'relative flex flex-col justify-between gap-3 p-5 rounded-xl transition-all duration-300',
-        'bg-white dark:bg-slate-900',
-        'border border-slate-200 dark:border-slate-800',
-        'shadow-sm hover:shadow-md',
-        'hover:border-slate-300 dark:hover:border-slate-700',
-        'group cursor-default min-h-[112px]'
-      )}>
-        {/* Inset highlight */}
-
-
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] font-medium text-slate-500 dark:text-white/50 leading-tight">
-            {title}
-          </p>
-          {Icon && (
-            <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <Icon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-            </div>
-          )}
-        </div>
-        <div className="flex items-end justify-between gap-2 flex-wrap">
-          <RollingNumber
-            value={value}
-            className="text-[26px] font-semibold text-slate-900 dark:text-white leading-none tracking-tight"
-          />
-          <div className={cn(
-            'flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md',
-            changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10',
-            changeType === 'negative' && 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10',
-            changeType === 'neutral' && 'text-slate-500 dark:text-white/40',
-          )}>
-            <span>{change}</span>
-            {changeType === 'positive' && (
-              <ArrowUpRight className="h-3 w-3" />
-            )}
-          </div>
-        </div>
+    <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-xs font-semibold text-slate-700">{title}</p>
       </div>
-    </motion.div>
-  );
-}
-
-/* ─── Chart Tooltip (Figma-style) ─── */
-function ChartTooltipContent({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3 text-xs shadow-lg backdrop-blur-xl">
-      <p className="font-medium text-slate-500 dark:text-white/50 mb-2">{label}</p>
-      {payload.map((entry: any, i: number) => (
-        <div key={i} className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-slate-600 dark:text-white/60">{entry.name}</span>
-          </div>
-          <span className="font-semibold text-slate-900 dark:text-white tabular-nums">{entry.value?.toLocaleString('pt-BR')}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ─── Traffic Source Bar (Figma horizontal bar adaptation) ─── */
-function TrafficSourceBar({ label, segments, maxValue }: {
-  label: string;
-  segments: { value: number; color: string }[];
-  maxValue: number;
-}) {
-  const total = segments.reduce((a, b) => a + b.value, 0);
-  return (
-    <div className="flex items-center gap-4 py-2">
-      <span className="text-xs font-medium text-slate-600 dark:text-white/60 w-20 shrink-0 truncate">{label}</span>
-      <div className="flex-1 flex gap-0.5 h-2 items-center">
-        {segments.map((seg, i) => (
-          <motion.div
-            key={i}
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.max((seg.value / maxValue) * 100, 2)}%` }}
-            transition={{ duration: 0.8, delay: i * 0.1, ease: 'easeOut' }}
-            className="h-full rounded-full"
-            style={{ backgroundColor: seg.color }}
-          />
-        ))}
+      <div className="mt-4 flex items-end gap-2">
+        <strong className="text-3xl leading-none tracking-tight text-slate-950">{available ? value : '—'}</strong>
+        {available && comparison !== undefined && comparison !== null && (
+          <span className={cn('mb-0.5 inline-flex items-center gap-0.5 text-xs font-semibold', isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-slate-400')}>
+            {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : isNegative ? <TrendingDown className="h-3.5 w-3.5" /> : null}
+            {comparison > 0 ? '+' : ''}{comparison}%
+          </span>
+        )}
       </div>
-    </div>
-  );
-}
-
-/* ─── Donut Chart Legend Row ─── */
-function DonutLegendRow({ color, label, value }: { color: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-1">
-      <div className="flex items-center gap-2">
-        <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-        <span className="text-xs font-medium text-slate-600 dark:text-white/60">{label}</span>
+      <div className="mt-2 flex min-h-4 items-center justify-between gap-2">
+        <p className="text-[11px] text-slate-500">{available ? 'vs. período anterior' : 'Ainda não mensurado'}</p>
+        {href && available && <button type="button" onClick={href} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700">Ver detalhes</button>}
       </div>
-      <span className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">{value}</span>
-    </div>
+    </section>
   );
 }
 
-/* ─── Clay Panel Styles (AS-EDS Precision) ─── */
-const CLAY_PANEL = [
-  'bg-white dark:bg-slate-900',
-  'border border-slate-200 dark:border-slate-800',
-  'shadow-sm',
-].join(' ');
+function EmptyChart({ children }: { children: React.ReactNode }) {
+  return <div className="grid h-[242px] place-items-center text-center text-sm text-slate-500">{children}</div>;
+}
 
-/* ─── Main Component ─── */
-export default function OverviewTab({ companyId, company, featureAccess, themeMode, onNavigateToReviews }: OverviewTabProps) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [reviewLink, setReviewLink] = useState('');
+export default function OverviewTab({ companyId, company, onNavigateToTab }: OverviewTabProps) {
+  const { user } = useAuth();
+  const [period, setPeriod] = useState<Period>(30);
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: 'Copiado!',
-        description: `${type} copiado com sucesso para a área de transferência.`,
-      });
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
+  const analyticsQuery = useQuery({
+    queryKey: ['overview-analytics', companyId],
+    queryFn: () => companyDashboardApi.getAnalyticsOverview(companyId),
+    enabled: Boolean(companyId),
+  });
+  const seriesQuery = useQuery({
+    queryKey: ['overview-series', companyId, period],
+    queryFn: () => companyDashboardApi.getAnalyticsTimeseries(companyId, Math.min(period * 2, 180)),
+    enabled: Boolean(companyId),
+  });
+  const campaignsQuery = useQuery({
+    queryKey: ['overview-campaigns', companyId],
+    queryFn: () => fetchApi<{ campaigns?: any[] }>('/company_dashboard/analytics/top_campaigns', { params: { company_id: companyId, limit: 20 } }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const leadsQuery = useQuery({
+    queryKey: ['overview-recent-leads', companyId],
+    queryFn: () => fetchApi<LeadRow[]>('/leads', { params: { company_id: companyId } }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const intentQuery = useQuery({
+    queryKey: ['overview-intent', companyId],
+    queryFn: () => companyDashboardApi.getIntentSummary(companyId),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+
+  const series = useMemo(() => normalizeSeries(seriesQuery.data), [seriesQuery.data]);
+  const currentRows = useMemo(() => series.slice(-period), [period, series]);
+  const previousRows = useMemo(() => series.slice(-period * 2, -period), [period, series]);
+  const overview = analyticsQuery.data;
+  const detailedAnalyticsAvailable = overview?.is_premium_analytics !== false;
+
+  const calculated = useMemo(() => ({
+    views: sum(currentRows, 'views'),
+    clicks: sum(currentRows, 'clicks'),
+    leads: sum(currentRows, 'leads'),
+    previousViews: sum(previousRows, 'views'),
+    previousClicks: sum(previousRows, 'clicks'),
+    previousLeads: sum(previousRows, 'leads'),
+  }), [currentRows, previousRows]);
+
+  const metrics = useMemo(() => {
+    const useOverview = period === 30 && Boolean(overview);
+    const views = useOverview ? number(overview?.views_30d) : calculated.views;
+    const clicks = useOverview ? number(overview?.cta_clicks_30d) : calculated.clicks;
+    const leads = useOverview ? number(overview?.leads_30d) : calculated.leads;
+    return {
+      views,
+      clicks,
+      leads,
+      conversion: views ? (leads / views) * 100 : 0,
+      viewsTrend: trend(views, calculated.previousViews),
+      clicksTrend: trend(clicks, calculated.previousClicks),
+      leadsTrend: trend(leads, calculated.previousLeads),
+    };
+  }, [calculated, overview, period]);
+
+  const profileHealth = useMemo(() => {
+    const requirements = [
+      Boolean(company?.name),
+      Boolean(company?.description),
+      Boolean(company?.logo?.url || company?.logo_url),
+      Boolean(company?.banner?.url || company?.banner_url),
+      Boolean(company?.city && company?.state),
+      Boolean(company?.website || company?.website_url),
+      Boolean(company?.phone || company?.whatsapp),
+      Boolean(company?.categories?.length),
+    ];
+    return Math.round((requirements.filter(Boolean).length / requirements.length) * 100);
+  }, [company]);
+
+  const actions = useMemo(() => {
+    const list: Array<{ title: string; description: string; icon: typeof PackageOpen; tab: string; color: string }> = [];
+    if (!company?.logo?.url && !company?.logo_url) list.push({ title: 'Adicione a logo da empresa', description: 'Um perfil reconhecível transmite mais confiança.', icon: UserRound, tab: 'info', color: 'text-blue-600 bg-blue-50' });
+    if (!company?.description) list.push({ title: 'Complete as informações básicas', description: 'Perfis completos ajudam clientes a decidir.', icon: FileText, tab: 'info', color: 'text-blue-600 bg-blue-50' });
+    if (!company?.website && !company?.website_url && !company?.whatsapp && !company?.phone) list.push({ title: 'Ative um canal de orçamento', description: 'Assim visitantes poderão entrar em contato.', icon: PhoneCall, tab: 'info', color: 'text-amber-600 bg-amber-50' });
+    if (number(company?.reviews_count) < 5) list.push({ title: 'Convide clientes para avaliar', description: 'Avaliações reforçam confiança e conversão.', icon: Star, tab: 'reviews', color: 'text-violet-600 bg-violet-50' });
+    if (number(metrics.leads) > 0) list.push({ title: `Faça follow-up de ${metrics.leads} lead${metrics.leads === 1 ? '' : 's'}`, description: 'Responder cedo aumenta a chance de conversão.', icon: Clock3, tab: 'leads', color: 'text-emerald-600 bg-emerald-50' });
+    if (!list.length) list.push({ title: 'Seu perfil está em dia', description: 'Continue acompanhando seus dados e oportunidades.', icon: CheckCircle2, tab: 'analytics', color: 'text-emerald-600 bg-emerald-50' });
+    return list.slice(0, 4);
+  }, [company, metrics.leads]);
+
+  const sources = useMemo(() => {
+    const grouped = new Map<string, number>();
+    (campaignsQuery.data?.campaigns || []).forEach((campaign: any) => {
+      const source = campaign.utm_source || 'Não identificado';
+      grouped.set(source, (grouped.get(source) || 0) + number(campaign.total_visits));
+    });
+    const total = Array.from(grouped.values()).reduce((acc, value) => acc + value, 0);
+    return Array.from(grouped.entries())
+      .map(([name, visits], index) => ({ name, visits, percentage: total ? Math.round((visits / total) * 100) : 0, color: SOURCE_COLORS[index % SOURCE_COLORS.length] }))
+      .sort((a, b) => b.visits - a.visits);
+  }, [campaignsQuery.data]);
+
+  const recentLeads = useMemo(() => (Array.isArray(leadsQuery.data) ? leadsQuery.data.slice(0, 6) : []), [leadsQuery.data]);
+  const intentInsights = useMemo(() => {
+    const data: any = intentQuery.data;
+    const insights: Array<{ title: string; description: string; icon: typeof Target; color: string }> = [];
+    const hot = number(data?.intent_distribution?.hot) + number(data?.intent_distribution?.boiling) + number(data?.intent_distribution?.immediate);
+    if (hot) insights.push({ title: `${hot} contato${hot === 1 ? '' : 's'} com alta intenção`, description: 'Priorize uma resposta rápida para esses sinais.', icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50' });
+    if (number(data?.total_signals)) insights.push({ title: `${data.total_signals} sinais de intenção capturados`, description: 'Dados agregados do comportamento recente.', icon: Target, color: 'text-violet-600 bg-violet-50' });
+    return insights.slice(0, 3);
+  }, [intentQuery.data]);
+
+  const exportDashboard = () => {
+    const rows = [
+      ['Métrica', 'Valor'],
+      ['Período', formatRange(period)],
+      ['Visualizações do perfil', String(metrics.views)],
+      ['Interações (CTAs)', detailedAnalyticsAvailable ? String(metrics.clicks) : 'Indisponível no plano'],
+      ['Leads', detailedAnalyticsAvailable ? String(metrics.leads) : 'Indisponível no plano'],
+      ['Taxa de conversão', detailedAnalyticsAvailable ? `${metrics.conversion.toFixed(2)}%` : 'Indisponível no plano'],
+    ];
+    const csv = rows.map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(',')).join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = `visao-geral_${company?.slug || companyId}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
-  useEffect(() => {
-    setReviewLink(`${window.location.origin}/companies/${companyId}/review`);
-  }, [companyId]);
+  const displayName = user?.name?.split(' ')[0] || 'você';
+  const isLoading = analyticsQuery.isLoading || seriesQuery.isLoading;
 
-  // ─── Data Queries ───
-  const statsQuery = useQuery({
-    queryKey: ['company-analytics-overview', companyId],
-    queryFn: async () => {
-      const data = await fetchApi<any>('/company_dashboard/analytics/overview', { params: { company_id: companyId } });
-
-      const profileFields = [
-        company?.name, company?.description,
-        company?.logo?.url || company?.logo_url,
-        company?.banner?.url || company?.banner_url,
-        company?.city, company?.state,
-        company?.website_url || company?.website,
-        company?.phone || company?.whatsapp,
-      ];
-      const filledFields = profileFields.filter(Boolean).length;
-      const profileCompletion = Math.round((filledFields / profileFields.length) * 100);
-
-      return {
-        profileViews: data.views_30d ?? 0,
-        ctaClicks: data.cta_clicks_30d ?? 0,
-        whatsappClicks: data.whatsapp_clicks_30d ?? 0,
-        leadsReceived: data.leads_30d ?? 0,
-        conversionRate: data.conversion_rate ?? 0,
-        marketplacePotential: data.marketplace_potential,
-        activeCategories: data.active_categories,
-        reviewsCount: company?.reviews_count ?? 0,
-        averageRating: company?.rating_avg ?? 0,
-        profileCompletion,
-      };
-    },
-    enabled: Boolean(companyId),
-  });
-
-  const timeseriesQuery = useQuery({
-    queryKey: ['company-analytics-timeseries', companyId, 30],
-    queryFn: async () => fetchApi<{ data: any[] }>('/company_dashboard/analytics/timeseries', { params: { company_id: companyId, days: 30 } }),
-    enabled: Boolean(companyId),
-  });
-
-  const assetsQuery = useQuery({
-    queryKey: ['company-analytics-assets', companyId],
-    queryFn: async () => fetchApi<any>('/company_dashboard/assets', { params: { company_id: companyId } }),
-    enabled: Boolean(companyId),
-  });
-
-  useEffect(() => {
-    if (!companyId) return;
-    const subscription = subscribeCompanyDashboard(companyId, () => {
-      queryClient.invalidateQueries({ queryKey: ['company-analytics-overview', companyId] });
-      queryClient.invalidateQueries({ queryKey: ['company-analytics-timeseries', companyId, 30] });
-    });
-    return () => {
-      if (subscription && typeof (subscription as any).unsubscribe === 'function') {
-        subscription.unsubscribe();
-      }
-    };
-  }, [companyId, queryClient]);
-
-  const stats = statsQuery.data;
-  const isPremium = isFeatureEnabled(featureAccess, 'leads_marketplace');
-  void isPremium;
+  if (isLoading) {
+    return <OverviewSkeleton />;
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* NPS / Ranking (Figma: 432x280) */}
-        <motion.div
-          className="lg:col-span-5"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.45 }}
-        >
-          <div className={cn(
-            'rounded-xl overflow-hidden h-full',
-            CLAY_PANEL,
-          )}>
-            <NPSDetailedCard
-              averageRating={Number(stats?.averageRating || 0)}
-              reviewsCount={Number(stats?.reviewsCount || 0)}
-            />
-          </div>
-        </motion.div>
-
-        {/* Gráfico Principal de Tendências */}
-        <motion.div
-          className="lg:col-span-7"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} layout="main-only" />
-        </motion.div>
-      </div>
-
-      {/* ═══ ROW 5: Gráficos Secundários do Analytics (Funil & Fontes de Tráfego) ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.55 }}
-      >
-        <AdvancedAnalytics themeMode={themeMode || 'dark'} companyId={companyId} layout="secondary-only" />
-      </motion.div>
-
-      {/* ═══ ROW 6: Operational Cards (Profile + Conversion + Status) ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Profile Completion */}
-        <div className={cn(
-          'flex items-center gap-5 p-5 rounded-xl',
-          CLAY_PANEL,
-        )}>
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20">
-            <ShieldCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="flex-1 min-w-0 space-y-2">
-            <p className="text-xs font-medium text-slate-500 dark:text-white/40">Integridade do Perfil</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-white">{stats?.profileCompletion || 0}%</p>
-            <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${stats?.profileCompletion || 0}%` }}
-                transition={{ duration: 1.2, ease: 'easeOut' }}
-                className="bg-emerald-500 h-full rounded-full"
-              />
-            </div>
-          </div>
+    <div className="space-y-4 pb-10 text-slate-900">
+      <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Olá, {displayName}! <span aria-hidden>👋</span></h1>
+          <p className="mt-1 text-sm text-slate-500">Veja o desempenho do seu perfil e as oportunidades que precisam da sua atenção.</p>
         </div>
-
-        {/* Conversion Rate */}
-        <div className={cn(
-          'flex items-center gap-5 p-5 rounded-xl',
-          CLAY_PANEL,
-        )}>
-          <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-200 dark:border-blue-500/20">
-            <Zap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-slate-500 dark:text-white/40">Eficiência do Funil</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-white">{stats?.conversionRate?.toFixed(1) || 0}%</p>
-            <p className="text-[11px] text-blue-500 dark:text-blue-400 font-medium mt-1 flex items-center gap-1">
-              <div className="w-1 h-1 rounded-full bg-current animate-pulse" />
-              Distribuição ativa
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700">
+            <CalendarDays className="h-4 w-4 text-slate-500" />
+            <span className="hidden sm:inline">Período:</span>
+            <select value={period} onChange={(event) => setPeriod(Number(event.target.value) as Period)} className="bg-transparent text-xs font-semibold outline-none">
+              {PERIODS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          <Button type="button" variant="outline" onClick={exportDashboard} className="h-10 gap-2 border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            <Download className="h-4 w-4" /> Exportar relatório
+          </Button>
         </div>
+      </header>
 
-        {/* Active Status */}
-        <div className={cn(
-          'flex items-center gap-5 p-5 rounded-xl',
-          CLAY_PANEL,
-        )}>
-          <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 rounded-2xl border border-cyan-200 dark:border-cyan-500/20">
-            <Eye className="h-6 w-6 text-cyan-600 dark:text-cyan-400" strokeWidth={2} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <MetricCard icon={Eye} title="Visualizações do perfil" value={formatNumber(metrics.views)} comparison={metrics.viewsTrend} href={() => onNavigateToTab?.('analytics')} />
+            <MetricCard icon={MousePointerClick} title="Interações (CTAs)" value={formatNumber(metrics.clicks)} comparison={metrics.clicksTrend} available={detailedAnalyticsAvailable} href={() => onNavigateToTab?.('analytics')} />
+            <MetricCard icon={UsersRound} title="Leads" value={formatNumber(metrics.leads)} comparison={metrics.leadsTrend} available={detailedAnalyticsAvailable} href={() => onNavigateToTab?.('leads')} />
+            <MetricCard icon={TrendingUp} title="Taxa de conversão" value={`${metrics.conversion.toFixed(2).replace('.', ',')}%`} comparison={trend(metrics.conversion, calculated.previousViews ? (calculated.previousLeads / calculated.previousViews) * 100 : 0)} available={detailedAnalyticsAvailable} href={() => onNavigateToTab?.('analytics')} />
+            <MetricCard icon={Clock3} title="Tempo médio de resposta" value="—" available={false} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-slate-500 dark:text-white/40">Status de Visibilidade</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-white">Ativo</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="flex gap-0.5">
-                {[1, 2, 3].map(i => <div key={i} className="w-1 h-2.5 rounded-full bg-emerald-400/50" />)}
-              </div>
-              <p className="text-[11px] text-emerald-500 dark:text-emerald-400 font-medium">Sincronizado</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ═══ ROW 7: Growth Assets ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.55 }}
-      >
-        <div className={cn(
-          'rounded-xl overflow-hidden',
-          CLAY_PANEL,
-        )}>
-          <div className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-blue-500" />
-                  Ativos de Crescimento
-                </p>
-                <p className="text-xs text-slate-500 dark:text-white/40 mt-0.5">Links rastreáveis e selos de confiança</p>
-              </div>
-              <Badge variant="outline" className="text-[10px] border-slate-300 dark:border-white/10 text-slate-500 dark:text-white/40">
-                PRONTO
-              </Badge>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-0">
-            {/* UTM Asset */}
-            <div className="p-6 md:border-r border-b md:border-b-0 border-slate-200/50 dark:border-white/[0.06]">
-              <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">Link com UTM</p>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-white dark:bg-white/[0.04] rounded-xl px-4 py-3 border border-slate-200 dark:border-white/10">
-                  <span className="text-xs font-mono text-blue-600 dark:text-blue-400 truncate block">
-                    {assetsQuery.data?.utm_ready_link || 'Carregando...'}
-                  </span>
+          <section className="flex flex-col gap-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 py-3 sm:flex-row sm:items-center">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-blue-600 shadow-sm"><Lightbulb className="h-5 w-5" /></span>
+            <p className="flex-1 text-sm text-slate-700"><strong className="text-blue-600">Dica personalizada:</strong> {actions[0]?.description}</p>
+            <Button type="button" variant="outline" onClick={() => onNavigateToTab?.(actions[0]?.tab || 'info')} className="h-9 shrink-0 border-blue-200 bg-white text-xs font-semibold text-blue-600 hover:bg-blue-50">Ver recomendações</Button>
+          </section>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.9fr)]">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold">Desempenho ao longo do tempo</h2>
+                  <p className="mt-1 text-xs text-slate-500">Visualizações e interações no período selecionado.</p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(assetsQuery.data?.utm_ready_link || '', 'Link')}
-                  className="h-11 w-11 rounded-xl border-slate-200 dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-500/10"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
+                <span className="rounded-md bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500">{formatRange(period)}</span>
               </div>
-            </div>
-            {/* Badge Asset */}
-            <div className="p-6">
-              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-2">Selo de Confiança (HTML)</p>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-white dark:bg-white/[0.04] rounded-xl px-4 py-3 border border-slate-200 dark:border-white/10">
-                  <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 truncate block">
-                    {assetsQuery.data?.badge_embed_code || 'Carregando...'}
-                  </span>
+              {currentRows.length ? (
+                <div className="h-[242px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={currentRows.map((row) => ({ ...row, label: formatDate(row.date) }))} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                      <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} minTickGap={26} />
+                      <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
+                      <Tooltip contentStyle={{ borderRadius: 10, borderColor: '#e2e8f0', fontSize: 12 }} labelStyle={{ fontWeight: 700 }} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                      <Line type="monotone" dataKey="views" name="Visualizações" stroke="#2563eb" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="clicks" name="Interações (CTAs)" stroke="#8b5cf6" strokeWidth={2.25} dot={false} activeDot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(assetsQuery.data?.badge_embed_code || '', 'Selo')}
-                  className="h-11 w-11 rounded-xl border-slate-200 dark:border-white/10 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+              ) : <EmptyChart>Os dados diários ainda estão sendo processados para este período.</EmptyChart>}
+            </section>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="relative mt-8 group"
-        >
-          <div className="absolute -inset-[1px] bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-xl blur-sm opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-          <div className={cn(
-            'relative rounded-xl overflow-hidden p-8',
-            CLAY_PANEL,
-            'bg-blue-50/50 dark:bg-blue-500/[0.04]',
-            'border border-blue-200/50 dark:border-blue-500/10',
-          )}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-amber-100 dark:bg-amber-500/10 rounded-xl">
-                <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Checklist de Ativação</p>
-                <p className="text-xs text-slate-500 dark:text-white/40">Execute estes passos para maximizar seus resultados</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { label: 'Completar Perfil', done: (stats?.profileCompletion || 0) >= 80, impact: '+ ranking local' },
-                { label: 'Configurar CTAs', done: Boolean(company?.website || company?.whatsapp), impact: '+ conversão' },
-                { label: 'Obter 5 Avaliações', done: (stats?.reviewsCount || 0) >= 5, impact: '+ confiança' },
-                { label: 'Instalar Selo', done: false, impact: '+ cliques orgânicos' },
-              ].map((item, i) => (
-                <div key={i} className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl',
-                  'bg-white/80 dark:bg-white/[0.03]',
-                  'border border-slate-200/60 dark:border-white/[0.06]',
-                )}>
-                  <div className={cn(
-                    'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                    item.done ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/20'
-                  )}>
-                    {item.done ? <CheckCircle2 className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-current" />}
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+              <div className="flex items-center gap-2"><h2 className="text-sm font-bold">Fontes rastreadas</h2><CircleHelp className="h-3.5 w-3.5 text-slate-400" /></div>
+              <p className="mt-1 text-xs text-slate-500">Origem baseada em campanhas UTM registradas.</p>
+              {sources.length ? (
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="h-32 w-32 shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart><Pie data={sources} dataKey="visits" nameKey="name" cx="50%" cy="50%" innerRadius={38} outerRadius={58} paddingAngle={2}>{sources.map((source) => <Cell key={source.name} fill={source.color} />)}</Pie><Tooltip /></PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="min-w-0">
-                    <span className={cn(
-                      'text-sm font-medium block',
-                      item.done ? 'text-slate-400 dark:text-white/30 line-through' : 'text-slate-900 dark:text-white'
-                    )}>{item.label}</span>
-                    <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-                      {item.impact}
-                    </span>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    {sources.slice(0, 5).map((source) => <div key={source.name} className="flex items-center justify-between gap-2 text-[11px]"><span className="flex min-w-0 items-center gap-1.5 truncate text-slate-600"><i className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: source.color }} />{source.name}</span><strong className="shrink-0 text-slate-800">{source.percentage}%</strong></div>)}
                   </div>
                 </div>
-              ))}
-            </div>
+              ) : <EmptyChart>Nenhuma campanha UTM com visitas registradas ainda.</EmptyChart>}
+            </section>
           </div>
-        </motion.div>
+
+          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+              <div className="flex items-center gap-2"><h2 className="text-sm font-bold">Oportunidades recentes</h2>{recentLeads.length > 0 && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">{recentLeads.length} recente{recentLeads.length === 1 ? '' : 's'}</span>}</div>
+              <Button type="button" variant="ghost" onClick={() => onNavigateToTab?.('leads')} className="h-auto px-1 text-xs font-semibold text-blue-600 hover:bg-transparent hover:text-blue-700">Ver todas <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button>
+            </div>
+            {leadsQuery.isLoading ? <div className="space-y-3 p-4">{[1, 2, 3].map((key) => <Skeleton key={key} className="h-12 w-full" />)}</div> : recentLeads.length ? (
+              <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left"><thead className="bg-slate-50/70 text-[10px] font-semibold uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-2.5">Interessado</th><th className="px-3 py-2.5">Origem</th><th className="px-3 py-2.5">Interesse</th><th className="px-3 py-2.5">Recebido em</th><th className="px-3 py-2.5">Status</th><th className="px-3 py-2.5 text-right">Ação</th></tr></thead><tbody className="divide-y divide-slate-100">{recentLeads.map((lead) => <tr key={lead.id} className="text-xs"><td className="px-4 py-3"><div className="flex items-center gap-2"><span className="grid h-7 w-7 place-items-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-700">{(lead.name || '?').slice(0, 2).toUpperCase()}</span><div><p className="font-semibold text-slate-800">{lead.name || 'Contato sem nome'}</p><p className="text-[10px] text-slate-500">{[lead.city, lead.state].filter(Boolean).join(', ') || 'Local não informado'}</p></div></div></td><td className="px-3 py-3"><span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{lead.utm_source || lead.referrer_host || 'Portal'}</span></td><td className="max-w-[180px] px-3 py-3"><p className="truncate text-slate-600" title={lead.product_vertical || lead.project_profile || lead.message}>{lead.product_vertical || lead.project_profile || lead.message || 'Solicitação de orçamento'}</p></td><td className="px-3 py-3 text-slate-500">{formatRelativeDate(lead.created_at)}</td><td className="px-3 py-3"><span className={cn('rounded-md px-2 py-1 text-[10px] font-semibold', statusTone(lead.wizard_status))}>{statusLabel(lead.wizard_status)}</span></td><td className="px-3 py-3 text-right"><Button type="button" variant="outline" size="icon" onClick={() => onNavigateToTab?.('leads')} className="h-7 w-7 border-slate-200"><MessageCircle className="h-3.5 w-3.5" /></Button></td></tr>)}</tbody></table></div>
+            ) : <div className="grid min-h-[190px] place-items-center px-5 text-center"><div><PackageOpen className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-700">{leadsQuery.isError ? 'Não foi possível carregar as oportunidades' : 'Nenhuma oportunidade recebida no momento'}</p><p className="mt-1 text-xs text-slate-500">{leadsQuery.isError ? 'Verifique o acesso ao módulo de leads e tente novamente.' : 'Quando uma solicitação for atribuída à empresa, ela aparecerá aqui.'}</p></div></div>}
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <h2 className="text-sm font-bold">Status do perfil</h2>
+            <div className="mt-4 flex items-center gap-4"><div className="grid h-20 w-20 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#10b981 ${profileHealth * 3.6}deg, #e2e8f0 0deg)` }}><div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-white text-lg font-bold">{profileHealth}%</div></div><div><p className="flex items-center gap-1 text-sm font-bold text-emerald-600"><Star className="h-4 w-4 fill-current" /> {profileHealth >= 80 ? 'Muito bom' : profileHealth >= 60 ? 'Em evolução' : 'Precisa de atenção'}</p><p className="mt-1 text-xs leading-relaxed text-slate-500">Complete os itens do perfil para melhorar a presença da empresa.</p></div></div>
+            <Button type="button" variant="outline" onClick={() => onNavigateToTab?.('info')} className="mt-4 h-9 w-full border-blue-200 text-xs font-semibold text-blue-600">Ver checklist</Button>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]"><div className="border-b border-slate-100 px-4 py-3"><h2 className="text-sm font-bold">Próximas ações recomendadas</h2></div><div className="space-y-1 p-2">{actions.map((action) => { const Icon = action.icon; return <button key={action.title} type="button" onClick={() => onNavigateToTab?.(action.tab)} className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-slate-50"><span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', action.color)}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><strong className="block text-xs text-slate-800">{action.title}</strong><small className="mt-0.5 block text-[10px] leading-snug text-slate-500">{action.description}</small></span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></button>; })}</div><button type="button" onClick={() => onNavigateToTab?.('info')} className="flex w-full items-center justify-center gap-2 border-t border-slate-100 py-3 text-xs font-semibold text-blue-600">Ver todas as ações <ArrowRight className="h-3.5 w-3.5" /></button></section>
+
+          <section className="rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]"><div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3"><h2 className="text-sm font-bold">Insights de intenção</h2><span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-600">Beta</span></div>{intentQuery.isLoading ? <div className="space-y-3 p-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div> : intentInsights.length ? <div className="space-y-2 p-2">{intentInsights.map((insight) => { const Icon = insight.icon; return <div key={insight.title} className="flex gap-3 rounded-lg p-2.5"><span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', insight.color)}><Icon className="h-4 w-4" /></span><div><strong className="block text-xs text-slate-800">{insight.title}</strong><p className="mt-0.5 text-[10px] leading-snug text-slate-500">{insight.description}</p></div></div>; })}</div> : <div className="px-4 py-7 text-center"><BarChart3 className="mx-auto h-6 w-6 text-slate-300" /><p className="mt-2 text-xs text-slate-500">Ainda não há sinais suficientes para gerar insights.</p></div>}<button type="button" onClick={() => onNavigateToTab?.('leads')} className="flex w-full items-center justify-center gap-2 border-t border-slate-100 py-3 text-xs font-semibold text-blue-600">Ver oportunidades <ArrowRight className="h-3.5 w-3.5" /></button></section>
+        </aside>
+      </div>
+
+      <footer className="flex flex-wrap items-center justify-center gap-3 pt-1 text-[11px] text-slate-500"><span>Dados atualizados em {overview?.last_aggregated_at ? new Date(overview.last_aggregated_at).toLocaleString('pt-BR') : 'tempo real ou última consolidação disponível'}</span><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /><span>Dados da plataforma</span></footer>
     </div>
   );
+}
+
+function OverviewSkeleton() {
+  return <div className="space-y-4"><Skeleton className="h-16 w-full" /><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-40" />)}</div><Skeleton className="h-16 w-full" /><div className="grid gap-4 lg:grid-cols-2"><Skeleton className="h-80" /><Skeleton className="h-80" /></div><Skeleton className="h-72 w-full" /></div>;
 }
