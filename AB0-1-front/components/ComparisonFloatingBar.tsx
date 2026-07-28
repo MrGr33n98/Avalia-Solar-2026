@@ -211,22 +211,6 @@ export default function ComparisonFloatingBar() {
 
   return (
     <>
-      <svg aria-hidden="true" className="pointer-events-none absolute h-0 w-0" focusable="false">
-        <defs>
-          <filter id="comparison-electric-distortion" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.018 0.22"
-              numOctaves="2"
-              seed="7"
-              result="electricNoise"
-            >
-              <animate attributeName="seed" values="2;9;4;12;2" dur="1.4s" repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="electricNoise" scale="13" xChannelSelector="R" yChannelSelector="B" />
-          </filter>
-        </defs>
-      </svg>
       <AnimatePresence>
         {dockState === 'minimized' ? (
           <div 
@@ -296,7 +280,7 @@ export default function ComparisonFloatingBar() {
               transition={{ type: 'spring', damping: 30, stiffness: 320 }}
               aria-label="Empresas selecionadas para comparação"
             >
-            <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
+            <section className="pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold tracking-tight text-slate-950">
@@ -391,7 +375,7 @@ export default function ComparisonFloatingBar() {
               </div>
             </section>
 
-            <section className="comparison-modal-led-border pointer-events-auto hidden overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)] md:block">
+            <section className="pointer-events-auto hidden overflow-hidden rounded-lg border border-blue-300 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)] md:block">
               <div className="relative border-b border-slate-200 px-4 py-4 pr-20 md:px-5 md:pr-24">
                 <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
                   <div className="min-w-0">
