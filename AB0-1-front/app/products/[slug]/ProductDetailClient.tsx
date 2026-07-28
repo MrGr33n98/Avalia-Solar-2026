@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -28,6 +29,7 @@ import { openQuoteWizard } from '@/lib/quote-wizard';
 import { cn } from '@/lib/utils';
 import { useProductTracking } from './useProductTracking';
 import PremiumBadge from '@/components/PremiumBadge';
+import { ProductReviewModal } from './components/ProductReviewModal';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -377,7 +379,14 @@ export default function ProductDetailClient({
   projects,
   relatedProducts,
 }: ProductDetailClientProps) {
-  const [activeTab, setActiveTab] = useState<ProductTab>('description');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [activeTab, setActiveTab] = useState<ProductTab>(
+    (searchParams.get('tab') as ProductTab) || 'description'
+  );
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const galleryImages = useMemo(() => {
     const allImages = [...(product.image_urls || []), product.image_url].filter(Boolean) as string[];
     return Array.from(new Set(allImages));
@@ -474,6 +483,10 @@ export default function ProductDetailClient({
   const handleTabChange = (tab: ProductTab) => {
     setActiveTab(tab);
     trackTabChange(tab);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleQuoteRequest = () => {
@@ -722,7 +735,16 @@ export default function ProductDetailClient({
                     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                       <div className={cn(surfaceClass, 'p-4')}>
                         <div className="space-y-3">
-                          <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
+                        <div className="flex justify-between items-start">
+                            <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
+                            <button
+                              type="button"
+                              onClick={() => setIsReviewModalOpen(true)}
+                              className="text-[13px] font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                            >
+                              Avaliar produto
+                            </button>
+                          </div>
                           <div className="flex items-end gap-3">
                             <span className="text-[28px] font-medium leading-none text-[#f5a623]">
                               {(summary?.average_rating || 0).toFixed(1)}
@@ -772,7 +794,7 @@ export default function ProductDetailClient({
                         <p className={cn(labelClass, 'mt-2')}>
                           Ainda não existem avaliações públicas vinculadas a este item.
                         </p>
-                        <div className="mt-4">
+                        <div className="mt-4 flex flex-wrap gap-3">
                           <Link
                             href={companyPath}
                             onClick={trackCompanyProfile}
@@ -780,6 +802,13 @@ export default function ProductDetailClient({
                           >
                             Ver perfil da empresa
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => setIsReviewModalOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
+                          >
+                            Avaliar este produto
+                          </button>
                         </div>
                       </div>
                     )}
@@ -891,8 +920,7 @@ export default function ProductDetailClient({
                 <button
                   type="button"
                   onClick={handleQuoteRequest}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--border-radius-md)] px-4 py-[11px] text-[13px] font-medium text-white transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: AMBER }}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Solicitar orçamento
@@ -999,8 +1027,7 @@ export default function ProductDetailClient({
           <button
             type="button"
             onClick={handleQuoteRequest}
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--border-radius-md)] px-4 py-[11px] text-[13px] font-medium text-white"
-            style={{ backgroundColor: AMBER }}
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
           >
             <MessageSquare className="h-4 w-4" />
             Solicitar orçamento
@@ -1049,6 +1076,12 @@ export default function ProductDetailClient({
             })),
           }),
         }}
+      />
+
+      <ProductReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        product={product}
       />
     </div>
   );
