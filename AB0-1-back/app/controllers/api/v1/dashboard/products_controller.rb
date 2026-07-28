@@ -46,14 +46,20 @@ module Api
 
         private
 
+        def accessible_products
+          ::Product.left_joins(:company_products)
+                   .where('company_products.company_id = :company_id OR products.company_id = :company_id', company_id: current_company.id)
+                   .distinct
+        end
+
         def set_product
-          @product = current_company.products.find(params[:id])
+          @product = accessible_products.find(params[:id])
         end
 
         def filtered_products
-          scope = current_company.products
-                                 .includes(:brand, :categories, :product_specifications, images_attachments: :blob)
-                                 .order(updated_at: :desc)
+          scope = accessible_products
+                  .includes(:brand, :categories, :product_specifications, images_attachments: :blob)
+                  .order(updated_at: :desc)
 
           scope = scope.where(status: params[:status]) if params[:status].in?(Product.statuses.keys)
           scope = scope.joins(:categories).where(categories: { id: params[:category_id] }).distinct if params[:category_id].present?
@@ -83,7 +89,7 @@ module Api
         end
 
         def catalog_stats
-          products = current_company.products.includes(:product_specifications, images_attachments: :blob)
+          products = accessible_products.includes(:product_specifications, images_attachments: :blob)
           product_list = products.to_a
 
           {
