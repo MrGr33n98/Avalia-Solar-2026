@@ -262,9 +262,9 @@ export function ProductReviewModal({ isOpen, onClose, product, categoryId, compa
               </div>
             </div>
 
-            {submitError && (
+            {error && (
               <div className="text-sm font-medium text-red-600 bg-red-50 p-4 rounded-md border border-red-100">
-                {submitError}
+                {error}
               </div>
             )}
           </div>
