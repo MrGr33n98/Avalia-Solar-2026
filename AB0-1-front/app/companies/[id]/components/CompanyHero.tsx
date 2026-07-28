@@ -245,7 +245,7 @@ export default function CompanyHero({
               {/* Lado Esquerdo: Logo + Informações — items-center alinha com a logo independente de quantas linhas de texto existem (item 4) */}
               <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
-                <div className="relative shrink-0 -translate-y-14 overflow-visible sm:-translate-y-16">
+                <div className="relative shrink-0 -translate-y-10 overflow-visible sm:-translate-y-12">
                   <div className="relative h-[84px] w-[84px] overflow-hidden rounded-2xl bg-white shadow-sm sm:h-24 sm:w-24">
                     <OptimizedImage
                       src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
