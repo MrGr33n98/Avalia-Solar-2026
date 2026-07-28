@@ -60,7 +60,7 @@ export function ProductReviewModal({ isOpen, onClose, product, categoryId, compa
     e.preventDefault();
 
     if (!user) {
-      router.push(`/login?return_to=/products/${product.slug}`);
+      router.push(`/login?return_to=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
