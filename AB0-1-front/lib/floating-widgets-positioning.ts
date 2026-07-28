@@ -58,13 +58,16 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
 }
 
 /**
- * CSS classes for mobile floating widget positions
- * Uses CSS custom properties for responsive positioning with improved spacing
+ * CSS classes for responsive floating widget positions (Mobile + Desktop)
+ * Prevents overlap by explicitly stacking widgets vertically.
  */
-export const MOBILE_POSITION_CLASSES = {
-  chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)]',
-  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_110px)]',
-  mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_170px)]'
+export const WIDGET_POSITION_CLASSES = {
+  // Chat / MobiVolt always sit at the very bottom right corner
+  chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
+  mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
+  
+  // Comparison dock stacks above the chat widgets on mobile, and centers on desktop to avoid collision
+  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_96px)] right-4 md:bottom-6 md:right-auto md:left-1/2 md:-translate-x-1/2',
 } as const;
 
 /**

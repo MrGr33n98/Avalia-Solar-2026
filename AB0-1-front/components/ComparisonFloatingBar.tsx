@@ -27,7 +27,7 @@ import {
   OPEN_COMPARISON_DOCK_EVENT,
   openComparisonDock,
 } from '@/lib/floating-widget-events';
-import { getFloatingWidgetZIndex, MOBILE_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
+import { getFloatingWidgetZIndex, WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 import { cn } from '@/lib/utils';
 
 const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'), {
@@ -236,7 +236,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className={cn("fixed right-4", MOBILE_POSITION_CLASSES.comparison, "md:right-6 md:bottom-6")}
+            className={cn("fixed z-[50]", WIDGET_POSITION_CLASSES.comparison)}
             style={{
               zIndex: getFloatingWidgetZIndex('comparison')
             }}
@@ -289,8 +289,8 @@ export default function ComparisonFloatingBar() {
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
             className={cn(
-              "pointer-events-none fixed right-4 left-4 z-[9050] w-auto mx-auto max-w-[380px] md:left-[100px] md:right-[100px] md:max-w-[1120px] md:bottom-6",
-              MOBILE_POSITION_CLASSES.comparison
+              "pointer-events-none fixed z-[9050] w-auto mx-auto max-w-[380px] left-4 right-4 md:w-[calc(100vw-64px)] md:max-w-[1120px]",
+              WIDGET_POSITION_CLASSES.comparison
             )}
           >
             <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">

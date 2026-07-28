@@ -5,6 +5,8 @@ import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
 import { startDashboardTour } from '@/lib/tour';
 import MarkdownRenderer from './MarkdownRenderer';
+import { cn } from '@/lib/utils';
+import { WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 
 const CHAT_SUCCESS_INVITE_DISMISSED_KEY = 'mobivolt_success_invite_dismissed';
 const CHAT_SUCCESS_INVITE_DELAY_MS = 2000;
@@ -126,9 +128,11 @@ export default function MobiVoltSuccessWidget() {
 
   return (
     <div
-      className={`fixed bottom-[calc(5.5rem+var(--safe-area-inset-bottom))] right-3 font-sans flex flex-col items-end pointer-events-none sm:bottom-5 sm:right-5 ${
+      className={cn(
+        "fixed font-sans flex flex-col items-end pointer-events-none",
+        WIDGET_POSITION_CLASSES.mobivolt,
         isOpen ? 'z-[9010]' : 'z-[9000]'
-      }`}
+      )}
     >
       
       {/* Chat Window */}
