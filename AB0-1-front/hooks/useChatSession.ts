@@ -4,6 +4,7 @@ import { fetchApiSafe } from '../lib/api-client';
 import { buildApiUrl } from '../lib/api-config';
 import { getCurrentUTMs } from '../lib/analytics/utm';
 import { track } from '../lib/analytics/lazy';
+import { isRealtimeEnabled } from '../lib/cable';
 
 export interface ChatMessage {
   id: number;
@@ -58,7 +59,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
   } | null>(null);
 
   useEffect(() => {
-    if (!session?.id || !session.realtime_token) return;
+    if (!session?.id || !session.realtime_token || !isRealtimeEnabled()) return;
 
     const apiOrigin = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     const cableUrl = `${apiOrigin.replace(/^http/, 'ws').replace(/\/api\/v1\/?$/, '')}/cable`;

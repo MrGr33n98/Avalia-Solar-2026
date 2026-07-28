@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
-import { resolveCableUrl } from '@/lib/cable';
+import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
 import { RichLinkPreview } from '@/components/chat/RichLinkPreview';
@@ -309,6 +309,11 @@ export default function ChatClient() {
 
   const setupActionCable = useCallback(
     (conversationId: number) => {
+      if (!isRealtimeEnabled()) {
+        setRealtimeStatus('disconnected');
+        return;
+      }
+
       channelRef.current?.unsubscribe();
       setRealtimeStatus('connecting');
 
@@ -439,7 +444,7 @@ export default function ChatClient() {
   }, [authLoading, canUseP2PChat, isAuthenticated, loadConversations]);
 
   useEffect(() => {
-    if (!canUseP2PChat) {
+    if (!canUseP2PChat || !isRealtimeEnabled()) {
       listChannelRef.current?.unsubscribe();
       listChannelRef.current = null;
       return;

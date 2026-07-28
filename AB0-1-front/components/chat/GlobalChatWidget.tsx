@@ -4,7 +4,7 @@ import { createConsumer } from '@rails/actioncable';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
-import { resolveCableUrl } from '@/lib/cable';
+import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -186,7 +186,10 @@ export default function GlobalChatWidget() {
 
   // Subscrição ActionCable para Lista de Conversas
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !isRealtimeEnabled()) {
+      setRealtimeStatus('disconnected');
+      return;
+    }
     const cableUrl = resolveCableUrl();
     if (!cableUrl) return;
 

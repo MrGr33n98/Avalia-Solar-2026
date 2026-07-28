@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createConsumer, type Cable } from '@rails/actioncable';
-import { resolveCableUrl } from '@/lib/cable';
+import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import type { InboxMessage, InboxSession } from '@/lib/inbox-api';
 
 export type InboxRealtimeEvent =
@@ -28,7 +28,10 @@ export function useActionCableInbox(
   }, [onEvent]);
 
   useEffect(() => {
-    if (!companyId) return;
+    if (!companyId || !isRealtimeEnabled()) {
+      setConnected(false);
+      return;
+    }
 
     const cable: Cable = createConsumer(resolveCableUrl());
     const subscription = cable.subscriptions.create(

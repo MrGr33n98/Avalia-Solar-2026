@@ -1483,6 +1483,9 @@ export interface CompanyAnalyticsOverview {
   leads_30d: number;
   conversion_rate: number;
   data_source: string;
+  /** Timestamp da última consolidação disponível no pipeline de analytics. */
+  last_aggregated_at?: string | null;
+  data_freshness_seconds?: number | null;
   is_premium_analytics?: boolean;
   engagement?: {
     avgTimeOnPage: number;

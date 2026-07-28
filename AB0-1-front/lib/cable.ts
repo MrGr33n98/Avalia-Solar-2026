@@ -80,10 +80,21 @@ export function resolveCableUrl(): string {
   return appendQueryParam('ws://localhost:3001/cable', 'token', token)
 }
 
-function isRealtimeEnabled(): boolean {
-  const realtimeFlag = process.env.NEXT_PUBLIC_ENABLE_REALTIME_DASHBOARD
+/**
+ * A broken WebSocket endpoint makes ActionCable retry forever. Keep realtime
+ * opt-in in production so HTTP features retain their polling/API fallback
+ * until the deployment proxy has passed the `/cable` handshake check.
+ */
+export function isRealtimeEnabled(): boolean {
+  const realtimeFlag = process.env.NEXT_PUBLIC_ENABLE_REALTIME
   if (realtimeFlag === 'true') return true
   if (realtimeFlag === 'false') return false
+
+  // Backwards-compatible flag used by the dashboard before chat/inbox shared
+  // the same ActionCable transport.
+  const legacyDashboardFlag = process.env.NEXT_PUBLIC_ENABLE_REALTIME_DASHBOARD
+  if (legacyDashboardFlag === 'true') return true
+  if (legacyDashboardFlag === 'false') return false
 
   if (typeof window === 'undefined') return false
 

@@ -285,10 +285,12 @@
     const request = (async () => {
       let cities = [];
       try {
-        cities = await fetchCitiesFromIbge(key, { signal });
-      } catch {
-        // Fallback to backend endpoint (useful if external access is blocked)
+        // A API interna evita que o formulário do admin dependa de CORS,
+        // disponibilidade ou latência do IBGE para liberar o campo Cidade.
         cities = await fetchCitiesFromBackend(key, { signal });
+      } catch {
+        // Mantém o IBGE como contingência caso a API esteja indisponível.
+        cities = await fetchCitiesFromIbge(key, { signal });
       }
 
       const unique = Array.from(new Set(cities));
@@ -469,6 +471,23 @@
       setSelectionToStorage(state, '');
       citySelect.value = '';
       loadAndApplyCities({ preselectCity: '' });
+    });
+
+    // Alguns navegadores e integrações de Select2 atualizam o valor antes
+    // de disparar `change`. Escutar `input` garante a liberação da cidade
+    // também nesse fluxo, sem recarregar o formulário.
+    stateSelect.addEventListener('input', () => {
+      const state = String(stateSelect.value || '').trim();
+      if (!state || citySelect.getAttribute('aria-busy') === 'true') return;
+      loadAndApplyCities({ preselectCity: '' });
+    });
+
+    // Se uma requisição anterior falhou ou foi cancelada, uma nova interação
+    // com a área de Cidade tenta recuperar a lista para o estado já escolhido.
+    cityContainer?.addEventListener('pointerdown', () => {
+      const state = String(stateSelect.value || '').trim();
+      if (!state || !citySelect.disabled || citySelect.getAttribute('aria-busy') === 'true') return;
+      loadAndApplyCities({ preselectCity: '', forceRefresh: true });
     });
 
     citySelect.addEventListener('change', () => {

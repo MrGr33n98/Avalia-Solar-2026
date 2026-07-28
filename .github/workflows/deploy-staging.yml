@@ -74,6 +74,7 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://avaliasolar.com.br' }}
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+          NEXT_PUBLIC_ENABLE_REALTIME: "false"
           NEXT_PUBLIC_GTM_ID: ""
           NEXT_PUBLIC_BETTER_AUTH_URL: "https://avaliasolar.com.br"
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'staging-placeholder-secret' }}
@@ -178,6 +179,7 @@ jobs:
             NEXT_PUBLIC_API_BASE_URL=${{ vars.STAGING_API_BASE_URL || vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
             NEXT_PUBLIC_ENABLE_ANALYTICS=false
+            NEXT_PUBLIC_ENABLE_REALTIME=${{ vars.STAGING_ENABLE_REALTIME || 'false' }}
             NEXT_PUBLIC_GTM_ID=
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || '' }}

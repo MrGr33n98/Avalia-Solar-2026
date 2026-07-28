@@ -68,6 +68,7 @@ const customJestConfig = {
     '^@/public/(.*)$': '<rootDir>/public/$1',
     '^@/context/(.*)$': '<rootDir>/context/$1',
     '^@/contexts/(.*)$': '<rootDir>/contexts/$1',
+    '^@/store/(.*)$': '<rootDir>/store/$1',
     '^@/utils/(.*)$': '<rootDir>/utils/$1',
     '^@/types$': '<rootDir>/types',
     '^better-auth/client$': '<rootDir>/__mocks__/better-auth-client.js',
