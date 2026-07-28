@@ -8,6 +8,8 @@ import {
   ChevronRight,
   FileText,
   ImageIcon,
+  ImagePlus,
+  Link as LinkIcon,
   Loader2,
   Package,
   Pencil,
@@ -44,7 +46,9 @@ type ProductEditorValues = {
   stock: string;
   status: ProductStatus;
   category_id: string;
+  image_url: string;
   images: File[];
+  previewUrls: string[];
 };
 
 const EMPTY_EDITOR: ProductEditorValues = {
@@ -56,7 +60,9 @@ const EMPTY_EDITOR: ProductEditorValues = {
   stock: '0',
   status: 'draft',
   category_id: '',
+  image_url: '',
   images: [],
+  previewUrls: [],
 };
 
 const STATUS_META: Record<ProductStatus, { label: string; className: string }> = {
@@ -154,6 +160,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
 
   const openEdit = (product: Product) => {
     setSelectedProduct(product);
+    const existingUrls = product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : [];
     setEditor({
       name: product.name || '',
       sku: product.sku || '',
@@ -163,7 +170,9 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       stock: String(product.stock ?? 0),
       status: (product.status as ProductStatus) || 'draft',
       category_id: product.categories?.[0] ? String(product.categories[0].id) : '',
+      image_url: product.image_url || '',
       images: [],
+      previewUrls: existingUrls,
     });
     setDialogOpen(true);
   };
@@ -173,7 +182,26 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
   };
 
   const handleFiles = (event: ChangeEvent<HTMLInputElement>) => {
-    setEditorField('images', Array.from(event.target.files || []));
+    const files = Array.from(event.target.files || []);
+    const filePreviews = files.map((file) => URL.createObjectURL(file));
+    setEditor((previous) => ({
+      ...previous,
+      images: [...previous.images, ...files],
+      previewUrls: [...previous.previewUrls, ...filePreviews],
+    }));
+  };
+
+  const handleRemovePreview = (index: number) => {
+    setEditor((previous) => {
+      const isNewFile = index >= (selectedProduct?.image_urls?.length || (selectedProduct?.image_url ? 1 : 0));
+      const nextPreviews = previous.previewUrls.filter((_, idx) => idx !== index);
+      if (isNewFile) {
+        const fileIndex = index - (previous.previewUrls.length - previous.images.length);
+        const nextImages = previous.images.filter((_, idx) => idx !== fileIndex);
+        return { ...previous, previewUrls: nextPreviews, images: nextImages };
+      }
+      return { ...previous, previewUrls: nextPreviews };
+    });
   };
 
   const saveProduct = async () => {
@@ -195,7 +223,8 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       stock: Number(editor.stock || 0),
       status: editor.status,
       category_ids: [editor.category_id],
-      images: editor.images,
+      image_url: editor.image_url.trim() || (editor.previewUrls[0] || ''),
+      images: editor.images.length > 0 ? editor.images : undefined,
     };
     try {
       setSaving(true);
@@ -301,7 +330,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
               {!loading && products.map((product) => {
                 const status = statusMeta(product.status);
                 return <TableRow key={product.id} className="border-slate-100">
-                  <TableCell className="min-w-[270px]"><div className="flex items-center gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">{product.image_url ? <Image src={product.image_url} alt="" width={44} height={44} unoptimized className="h-full w-full object-contain" /> : <Package className="h-5 w-5 text-slate-400" />}</div><div><p className="font-semibold text-slate-900">{product.name}</p><p className="max-w-[220px] truncate text-xs text-slate-500">{product.short_description || product.description}</p></div></div></TableCell>
+                  <TableCell className="min-w-[270px]"><div className="flex items-center gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-xs">{product.image_url ? <Image src={product.image_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-contain p-1" /> : <button type="button" onClick={() => openEdit(product)} title="Adicionar imagem do produto" className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-bold leading-none">+ Foto</span></button>}</div><div><p className="font-semibold text-slate-900">{product.name}</p><p className="max-w-[220px] truncate text-xs text-slate-500">{product.short_description || product.description}</p></div></div></TableCell>
                   <TableCell className="font-mono text-xs text-slate-600">{product.sku || '—'}</TableCell>
                   <TableCell><span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">{product.categories?.[0]?.name || 'Não informada'}</span></TableCell>
                   <TableCell className="text-sm text-slate-600">{product.brand?.name || 'Não informada'}</TableCell>
@@ -332,7 +361,72 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
             <div className="space-y-2"><Label htmlFor="product-price">Preço base (R$) *</Label><Input id="product-price" min="0.01" step="0.01" type="number" value={editor.price} onChange={(event) => setEditorField('price', event.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="product-stock">Estoque disponível</Label><Input id="product-stock" min="0" step="1" type="number" value={editor.stock} onChange={(event) => setEditorField('stock', event.target.value)} /></div>
             <div className="space-y-2"><Label>Status</Label><Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Rascunho</SelectItem><SelectItem value="active">Publicado</SelectItem><SelectItem value="archived">Arquivado</SelectItem><SelectItem value="disabled">Desativado</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="product-images">Imagens do produto</Label><Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={handleFiles} /><p className="text-xs text-slate-500">PNG, JPG ou WebP. Limite aplicado pelo plano da empresa.</p>{editor.images.length > 0 && <p className="text-xs font-medium text-emerald-700">{editor.images.length} imagem(ns) selecionada(s)</p>}</div>
+            <div className="space-y-3 sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                    <ImageIcon className="h-4 w-4 text-blue-600" />
+                    Mídia e Imagens do Produto
+                  </Label>
+                  <p className="text-xs text-slate-500 mt-0.5">Faça upload de fotos direto do dispositivo (JPG, PNG, WebP) ou informe a URL do fabricante/WEG.</p>
+                </div>
+                {editor.images.length > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {editor.images.length} foto(s) para envio
+                  </span>
+                )}
+              </div>
+
+              {editor.previewUrls.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 pt-2">
+                  {editor.previewUrls.map((url, idx) => (
+                    <div key={idx} className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="Thumbnail do produto" className="max-h-full max-w-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePreview(idx)}
+                        title="Remover imagem"
+                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white opacity-85 transition hover:opacity-100"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <label htmlFor="product-images-add" className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                    <Plus className="h-5 w-5 text-slate-400 mb-1" />
+                    <span className="text-[11px] font-semibold text-slate-600">Adicionar mais</span>
+                    <Input id="product-images-add" type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={handleFiles} />
+                  </label>
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="product-images" className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-6 py-8 transition-colors hover:border-blue-500 hover:bg-blue-50/40">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 mb-2 text-blue-600">
+                      <ImagePlus className="h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-800">Clique para escolher arquivos ou arraste suas fotos aqui</p>
+                    <p className="text-xs text-slate-500 mt-1">Imagens nos formatos JPG, PNG ou WebP (até 5MB)</p>
+                  </label>
+                  <Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={handleFiles} />
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-200">
+                <Label htmlFor="product-image-url" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">
+                  <LinkIcon className="h-3 w-3 text-slate-500" />
+                  URL da Imagem Externa (Opcional - Catálogo WEG ou Fornecedor)
+                </Label>
+                <Input
+                  id="product-image-url"
+                  value={editor.image_url}
+                  onChange={(event) => setEditorField('image_url', event.target.value)}
+                  placeholder="https://exemplo.com/imagem-do-produto.png"
+                  className="h-9 text-xs bg-white"
+                />
+              </div>
+            </div>
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-description">Descrição *</Label><Textarea id="product-description" value={editor.description} onChange={(event) => setEditorField('description', event.target.value)} rows={5} placeholder="Descreva o produto, aplicações e diferenciais." /></div>
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-short-description">Descrição curta</Label><Input id="product-short-description" value={editor.short_description} onChange={(event) => setEditorField('short_description', event.target.value)} placeholder="Resumo exibido nas listagens" /></div>
           </div>

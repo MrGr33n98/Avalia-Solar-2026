@@ -34,8 +34,8 @@ export type ProductInput = {
   price: number;
   stock?: number;
   status: 'draft' | 'active' | 'archived' | 'disabled';
-  featured?: boolean;
   category_ids: string[];
+  image_url?: string;
   images?: File[];
 };
 
@@ -64,8 +64,10 @@ function toFormData(input: ProductInput) {
   payload.append('product[short_description]', input.short_description || '');
   payload.append('product[price]', String(input.price));
   payload.append('product[stock]', String(input.stock ?? 0));
-  payload.append('product[status]', input.status);
   payload.append('product[featured]', String(Boolean(input.featured)));
+  if (input.image_url !== undefined) {
+    payload.append('product[image_url]', input.image_url);
+  }
   input.category_ids.forEach((id) => payload.append('product[category_ids][]', id));
   input.images?.forEach((image) => payload.append('product[images][]', image));
   return payload;
