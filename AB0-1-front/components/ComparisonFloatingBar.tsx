@@ -288,7 +288,10 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             aria-label="Empresas selecionadas para comparação"
-            className="pointer-events-none fixed bottom-[calc(9.5rem+var(--sab,var(--safe-area-inset-bottom)))] right-4 left-4 z-[9050] w-auto mx-auto max-w-[380px] md:bottom-6 md:left-[100px] md:right-[100px] md:max-w-[1120px]"
+            className={cn(
+              "pointer-events-none fixed right-4 left-4 z-[9050] w-auto mx-auto max-w-[380px] md:left-[100px] md:right-[100px] md:max-w-[1120px] md:bottom-6",
+              MOBILE_POSITION_CLASSES.comparison
+            )}
           >
             <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">

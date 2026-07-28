@@ -62,9 +62,9 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
  * Uses CSS custom properties for responsive positioning with improved spacing
  */
 export const MOBILE_POSITION_CLASSES = {
-  comparison: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+16px)]',
-  mobivolt: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+72px)]',
-  chat: 'bottom-[calc(var(--mobile-nav-height,4rem)+env(safe-area-inset-bottom)+128px)]'
+  comparison: 'bottom-[calc(var(--mobile-nav-height,4rem)_+_env(safe-area-inset-bottom)_+_16px)]',
+  mobivolt: 'bottom-[calc(var(--mobile-nav-height,4rem)_+_env(safe-area-inset-bottom)_+_72px)]',
+  chat: 'bottom-[calc(var(--mobile-nav-height,4rem)_+_env(safe-area-inset-bottom)_+_128px)]'
 } as const;
 
 /**
