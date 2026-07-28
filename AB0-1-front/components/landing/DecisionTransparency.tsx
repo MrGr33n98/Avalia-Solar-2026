@@ -82,7 +82,6 @@ export default function DecisionTransparency() {
                 fill
                 sizes="(max-width: 768px) 100vw, 40vw"
                 className="object-cover hover:scale-[1.01] transition-transform duration-500"
-                priority
               />
             </div>
           </div>
@@ -108,7 +107,6 @@ export default function DecisionTransparency() {
                         fill
                         sizes="(max-width: 640px) 100vw, 55vw"
                         className="object-cover"
-                        priority={index === 0}
                       />
                     </div>
 

@@ -84,7 +84,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
       {/* Avaliar */}
       <Link
         href={reviewPath}
-        aria-label={company.name ? `Avaliar essa empresa: ${company.name}` : 'Avaliar essa empresa'}
+        aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
         className="inline-flex h-12 flex-1 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 sm:flex-initial sm:min-w-[180px] lg:flex-none"
       >
         <Star className="h-4 w-4 shrink-0 fill-blue-700 text-blue-700" aria-hidden="true" />

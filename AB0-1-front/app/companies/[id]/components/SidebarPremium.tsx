@@ -63,7 +63,7 @@ export default function SidebarPremium({
         company.badges && company.badges.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
                 Selos e Reconhecimentos
               </span>
             </div>
@@ -93,7 +93,7 @@ export default function SidebarPremium({
                           {badge.name}
                         </p>
                         {badge.year && (
-                          <p className="text-[8.5px] font-bold text-slate-400">
+                          <p className="text-[8.5px] font-bold text-slate-600">
                             {badge.year}
                           </p>
                         )}

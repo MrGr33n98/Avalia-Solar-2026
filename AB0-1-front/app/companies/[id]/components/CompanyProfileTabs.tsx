@@ -6,7 +6,6 @@ import { useMemo } from 'react';
 import {
   ChevronDown,
 } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 
@@ -45,17 +44,20 @@ export default function CompanyProfileTabs({
       className="relative z-30 mt-5 w-full border-b border-slate-200 bg-transparent"
     >
       <div className="w-full overflow-x-auto md:overflow-visible">
-        <Tabs value={activeTab} onValueChange={onTabChange}>
-          <TabsList className="h-auto min-w-full justify-start gap-6 rounded-none bg-transparent p-0 text-slate-500">
+        <nav aria-label="Seções do perfil da empresa">
+          <div className="flex h-auto min-w-full justify-start gap-6 text-slate-500">
             {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
               const trigger = (
-                <TabsTrigger
+                <button
                   key={tab.id}
-                  value={tab.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => onTabChange(tab.id)}
                   className={cn(
                     'h-14 rounded-none border-b-2 border-transparent px-0 pb-0 pt-1 text-[13px] font-medium shadow-none transition-all duration-200',
                     'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                    'data-[state=active]:border-blue-700 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none data-[state=active]:font-bold'
+                    isActive && 'border-blue-700 bg-transparent text-slate-950 shadow-none font-bold'
                   )}
                 >
                   <tab.icon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -66,7 +68,7 @@ export default function CompanyProfileTabs({
                       aria-hidden="true"
                     />
                   )}
-                </TabsTrigger>
+                </button>
               );
 
               if (tab.id !== 'products' || uniqueCategories.length === 0) return trigger;
@@ -102,8 +104,8 @@ export default function CompanyProfileTabs({
                 </div>
               );
             })}
-          </TabsList>
-        </Tabs>
+          </div>
+        </nav>
       </div>
     </div>
   );

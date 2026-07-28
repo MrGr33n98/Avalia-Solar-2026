@@ -78,16 +78,16 @@ export default function Footer({ compact: _compact = false }: FooterProps) {
 
         <TrustStrip />
 
-        <div className="mt-8 flex flex-col gap-5 border-t border-slate-800 pt-7 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-5 border-t border-slate-800 pt-7 text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between">
           <span>© 2026 Avalia Solar. Todos os direitos reservados.</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link href="/about" className="transition-colors hover:text-white">
+            <Link href="/about" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
               Sobre a Avalia Solar
             </Link>
-            <Link href="/metodologia" className="transition-colors hover:text-white">
+            <Link href="/metodologia" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
               Metodologia
             </Link>
-            <Link href="/contact" className="transition-colors hover:text-white">
+            <Link href="/contact" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
               Contato
             </Link>
           </div>
@@ -171,7 +171,7 @@ function FooterSection({
   return (
     <>
       <details className="group border-t border-slate-800 lg:hidden">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F5B800] [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F5B800] [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2">
             <span className="text-[#F5B800]">{icon}</span>
             {title}
@@ -215,7 +215,7 @@ function FooterLinks({
         <li key={link.href}>
           <Link
             href={link.href}
-            className={`${mobile ? 'min-h-11' : 'py-1.5'} flex items-center text-sm leading-5 text-slate-300 transition-colors hover:text-[#F5B800] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
+            className={`${mobile ? 'min-h-11 py-2' : 'py-1.5'} flex items-center text-sm leading-5 text-slate-200 transition-colors hover:text-[#F5B800] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
           >
             {link.label}
           </Link>
@@ -263,7 +263,7 @@ function TrustStrip() {
           {CONTACT.phone.display}
         </a>
       </div>
-      <span className="flex items-center gap-2 text-xs text-slate-400">
+      <span className="flex items-center gap-2 text-xs text-slate-300">
         <Clock3 className="h-4 w-4" aria-hidden="true" />
         {CONTACT.hours}
       </span>

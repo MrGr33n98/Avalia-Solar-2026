@@ -6,6 +6,8 @@
       "startServerReadyTimeout": 60000,
       "url": [
         "http://localhost:3000",
+        "http://localhost:3000/companies/weg",
+        "http://localhost:3000/categories/energia-solar",
         "http://localhost:3000/login",
         "http://localhost:3000/dashboard"
       ],

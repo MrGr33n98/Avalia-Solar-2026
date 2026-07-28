@@ -55,6 +55,7 @@ export function useComparison() {
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
+      window.dispatchEvent(new Event('avalia:comparison-updated'));
       comparisonEvents.dispatchEvent(
         new CustomEvent('comparison-updated', {
           detail: { companies: comparisonList },

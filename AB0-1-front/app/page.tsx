@@ -7,14 +7,12 @@ import { cookies } from 'next/headers';
 
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import FAQSection from '@/components/seo/FAQSection';
+import DeferredHomeSections from '@/components/home/DeferredHomeSections';
 import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
-import HowItWorks from '@/components/landing/HowItWorks';
-import DecisionTransparency from '@/components/landing/DecisionTransparency';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingHero from '@/components/landing/LandingHero';
-import SavingsCalculator from '@/components/landing/SavingsCalculator';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
 import { Button } from '@/components/ui/button';
@@ -207,9 +205,7 @@ export default async function Home() {
         />
       </Suspense>
 
-      <DecisionTransparency />
-      <HowItWorks />
-      <SavingsCalculator />
+      <DeferredHomeSections />
 
       <Suspense fallback={<div className="h-[520px] animate-pulse bg-slate-50" />}>
         <CategoriesSectionWrapper dataPromise={categoriesDataPromise} />

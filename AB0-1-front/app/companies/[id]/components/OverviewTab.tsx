@@ -53,7 +53,7 @@ export default function OverviewTab({
       <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-xl font-bold tracking-tight text-slate-950">Sobre a Empresa</h3>
+            <h2 className="text-xl font-bold tracking-tight text-slate-950">Sobre a Empresa</h2>
             <p className="mt-1 text-[13px] text-slate-500">História, atuação e valores institucionais.</p>
           </div>
 

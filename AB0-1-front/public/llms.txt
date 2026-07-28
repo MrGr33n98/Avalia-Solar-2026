@@ -4,7 +4,7 @@
 
 Canonical site: https://www.avaliasolar.com.br
 Primary language: pt-BR
-Last updated: 2026-07-15
+Last updated: 2026-07-28
 
 ## Purpose
 
@@ -14,31 +14,31 @@ Avalia Solar does not sell, install, finance, intermediate, or guarantee third-p
 
 ## Canonical public pages
 
-- Home: https://www.avaliasolar.com.br/
-- Companies directory: https://www.avaliasolar.com.br/companies
-- Products: https://www.avaliasolar.com.br/products
-- Blog: https://www.avaliasolar.com.br/blog
-- Help center: https://www.avaliasolar.com.br/help
-- Contact: https://www.avaliasolar.com.br/contact
-- About: https://www.avaliasolar.com.br/about
+- [Home](https://www.avaliasolar.com.br/): main platform entry point.
+- [Companies directory](https://www.avaliasolar.com.br/companies): searchable public company directory.
+- [Products](https://www.avaliasolar.com.br/products): products and solutions directory.
+- [Blog](https://www.avaliasolar.com.br/blog): educational articles and updates.
+- [Help center](https://www.avaliasolar.com.br/help): support and platform guidance.
+- [Contact](https://www.avaliasolar.com.br/contact): official contact channels.
+- [About](https://www.avaliasolar.com.br/about): platform background and editorial purpose.
 
 ## Trust, methodology, and transparency
 
-- Methodology: https://www.avaliasolar.com.br/metodologia
-- How ranking works: https://www.avaliasolar.com.br/como-funciona-o-ranking
-- Verified companies: https://www.avaliasolar.com.br/empresas-verificadas
-- Evaluation criteria: https://www.avaliasolar.com.br/criterios-de-avaliacao
-- Sector data and insights: https://www.avaliasolar.com.br/dados-do-setor
-- Capital coverage report: https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais
-- Capital coverage CSV: https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais/dados.csv
+- [Methodology](https://www.avaliasolar.com.br/metodologia): public methodology and limitations.
+- [How ranking works](https://www.avaliasolar.com.br/como-funciona-o-ranking): ranking explanation.
+- [Verified companies](https://www.avaliasolar.com.br/empresas-verificadas): verification information.
+- [Evaluation criteria](https://www.avaliasolar.com.br/criterios-de-avaliacao): public evaluation criteria.
+- [Sector data and insights](https://www.avaliasolar.com.br/dados-do-setor): sector data hub.
+- [Capital coverage report](https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais): coverage report.
+- [Capital coverage CSV](https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais/dados.csv): machine-readable coverage data.
 
 ## Main category examples
 
-- Residential solar energy: https://www.avaliasolar.com.br/categories/energia-solar-residencial
-- Solar inverters: https://www.avaliasolar.com.br/categories/inversores-solares
-- Batteries and storage: https://www.avaliasolar.com.br/categories/baterias-armazenamento-energia
-- Solar carports: https://www.avaliasolar.com.br/categories/carport-solar
-- Rural solar energy: https://www.avaliasolar.com.br/categories/energia-solar-rural
+- [Residential solar energy](https://www.avaliasolar.com.br/categories/energia-solar-residencial)
+- [Solar inverters](https://www.avaliasolar.com.br/categories/inversores-solares)
+- [Batteries and storage](https://www.avaliasolar.com.br/categories/baterias-armazenamento-energia)
+- [Solar carports](https://www.avaliasolar.com.br/categories/carport-solar)
+- [Rural solar energy](https://www.avaliasolar.com.br/categories/energia-solar-rural)
 
 ## Local and programmatic SEO
 
@@ -46,10 +46,10 @@ Avalia Solar publishes local pages and category pages when they can be useful to
 
 Important local examples:
 
-- Solar companies in Sao Paulo: https://www.avaliasolar.com.br/companies/energia-solar/sp/sao-paulo
-- Solar companies in Rio de Janeiro: https://www.avaliasolar.com.br/companies/energia-solar/rj/rio-de-janeiro
-- Solar companies in Belo Horizonte: https://www.avaliasolar.com.br/companies/energia-solar/mg/belo-horizonte
-- Solar companies in Florianopolis: https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis
+- [Solar companies in Sao Paulo](https://www.avaliasolar.com.br/companies/energia-solar/sp/sao-paulo)
+- [Solar companies in Rio de Janeiro](https://www.avaliasolar.com.br/companies/energia-solar/rj/rio-de-janeiro)
+- [Solar companies in Belo Horizonte](https://www.avaliasolar.com.br/companies/energia-solar/mg/belo-horizonte)
+- [Solar companies in Florianopolis](https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis)
 
 ## Structured data and interpretation guidance
 
@@ -59,13 +59,13 @@ Category, local, and listing pages may include ItemList and BreadcrumbList struc
 
 ## Sitemaps
 
-- Sitemap index: https://www.avaliasolar.com.br/sitemap-index.xml
-- Legacy sitemap endpoint: https://www.avaliasolar.com.br/sitemap.xml
+- [Sitemap index](https://www.avaliasolar.com.br/sitemap-index.xml)
+- [Legacy sitemap endpoint](https://www.avaliasolar.com.br/sitemap.xml)
 
 ## Contact and editorial
 
-- Founder/editorial contact: felipe@avaliasolar.com.br
-- Official contact page: https://www.avaliasolar.com.br/contact
+- Founder/editorial contact: [felipe@avaliasolar.com.br](mailto:felipe@avaliasolar.com.br)
+- [Official contact page](https://www.avaliasolar.com.br/contact)
 - Public help center: https://www.avaliasolar.com.br/help
 
 ## Do not use for training or citation

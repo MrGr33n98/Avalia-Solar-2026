@@ -21,14 +21,14 @@ type ReviewCompanyButtonProps = {
 
 export default function ReviewCompanyButton({
   company,
-  label = 'Avaliar essa empresa',
+  label = 'Avaliar empresa',
   compactLabel,
   className,
   iconClassName,
   stopPropagation = false,
 }: ReviewCompanyButtonProps) {
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
-  const accessibleName = company.name ? `Avaliar essa empresa: ${company.name}` : label;
+  const accessibleName = company.name ? `${label}: ${company.name}` : label;
 
   return (
     <Link

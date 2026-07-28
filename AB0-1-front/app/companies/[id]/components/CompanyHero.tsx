@@ -27,7 +27,6 @@ import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const IMAGE_FILE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?|#|$)/i;
@@ -375,6 +374,7 @@ export default function CompanyHero({
               {/* Avaliar empresa */}
               <ReviewCompanyButton
                 company={company}
+                label="Avaliar empresa"
                 compactLabel="Avaliar empresa"
                 className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50"
               />
@@ -445,27 +445,33 @@ export default function CompanyHero({
         {tabs.length > 0 && onTabChange && (
           <div className="border-t border-slate-200 bg-white">
             <ScrollArea className="w-full">
-              <TabsList className="h-14 min-w-max justify-start gap-6 rounded-none bg-transparent px-4 sm:px-6 lg:px-7">
+              <div
+                className="flex h-14 min-w-max items-stretch justify-start gap-6 px-4 sm:px-6 lg:px-7"
+                role="navigation"
+                aria-label="Seções do perfil da empresa"
+              >
                 {tabs.map((tab) => {
                   const TabIcon = tab.icon;
+                  const isActive = _activeTab === tab.id;
                   return (
-                    <TabsTrigger
+                    <button
                       key={tab.id}
-                      value={tab.id}
+                      type="button"
+                      onClick={() => onTabChange(tab.id)}
+                      aria-pressed={isActive}
                       className={cn(
                         'relative h-14 rounded-none border-0 bg-transparent px-0 text-sm font-medium shadow-none',
                         'text-slate-500 hover:text-slate-900',
                         'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-center after:scale-x-0 after:bg-blue-600 after:transition-transform',
-                        'data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none',
-                        'data-[state=active]:after:scale-x-100'
+                        isActive && 'bg-transparent text-slate-950 shadow-none after:scale-x-100'
                       )}
                     >
                       <TabIcon className="mr-2 h-4 w-4" />
                       {tab.label}
-                    </TabsTrigger>
+                    </button>
                   );
                 })}
-              </TabsList>
+              </div>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </div>

@@ -2,7 +2,6 @@ import './globals.css';
 import '@/lib/env'; // Validate environment variables
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
 
 import AppContentFrame from '@/components/layout/AppContentFrame';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
@@ -13,15 +12,9 @@ import UtmProvider from '@/components/UtmProvider';
 import Providers from '@/components/Providers';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
-import PwaOfflineController from '@/components/PwaOfflineController';
-import ClipboardTracker from '@/components/ClipboardTracker';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
-import { TabNotificationNotifier } from '@/components/notifications/TabNotificationNotifier';
-import NewRelicBrowser from '@/components/observability/NewRelicBrowser';
+import DeferredClientRuntime from '@/components/performance/DeferredClientRuntime';
 import { SITE } from '@/lib/site';
-
-const ComparisonFloatingBar = dynamic(() => import('@/components/ComparisonFloatingBar'), { ssr: false });
-const GlobalChatWidget = dynamic(() => import('@/components/chat/GlobalChatWidget'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'Avalia Solar | Compare Empresas de Energia Solar',
@@ -177,15 +170,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <UtmProvider>
             <Providers>
-              <NewRelicBrowser />
-              <TabNotificationNotifier />
-              <PwaOfflineController />
               <Navbar />
               <AppContentFrame>{children}</AppContentFrame>
-              <ComparisonFloatingBar />
-              <GlobalChatWidget />
               <ConditionalFooter />
               <MobileBottomNav />
+              <DeferredClientRuntime />
             </Providers>
           </UtmProvider>
         </ThemeProvider>
@@ -200,15 +189,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
 
-        {/* Web Vitals Tracking - Non-blocking, after consent */}
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
 
-        {/* Clipboard Tracking - Micro-interactions */}
-        <Suspense fallback={null}>
-          <ClipboardTracker />
-        </Suspense>
       </body>
     </html>
   );
