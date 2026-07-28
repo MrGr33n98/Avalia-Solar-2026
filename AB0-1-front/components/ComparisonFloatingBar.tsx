@@ -236,7 +236,7 @@ export default function ComparisonFloatingBar() {
             exit={{ y: 32, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             aria-label="Comparação minimizada"
-            className={cn("fixed right-4 md:right-6", MOBILE_POSITION_CLASSES.comparison)}
+            className={cn("fixed right-4", MOBILE_POSITION_CLASSES.comparison, "md:right-6 md:bottom-6")}
             style={{
               zIndex: getFloatingWidgetZIndex('comparison')
             }}

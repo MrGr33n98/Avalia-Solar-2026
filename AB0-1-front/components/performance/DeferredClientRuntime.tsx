@@ -36,8 +36,6 @@ export default function DeferredClientRuntime() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isReady) return;
-
     const readComparison = () => {
       try {
         const saved = JSON.parse(localStorage.getItem('ab01_comparison_list') || '[]');
@@ -55,7 +53,7 @@ export default function DeferredClientRuntime() {
       window.removeEventListener('avalia:comparison-updated', readComparison);
       window.removeEventListener('avalia:open-comparison-dock', openComparisonDock);
     };
-  }, [isReady]);
+  }, []);
 
   useEffect(() => {
     const markReady = () => setIsReady(true);
@@ -80,16 +78,20 @@ export default function DeferredClientRuntime() {
     };
   }, []);
 
-  if (!isReady) return null;
+  if (!isReady && !hasComparison) return null;
 
   return (
     <>
-      <ClipboardTracker />
-      <NewRelicBrowser />
-      {isAuthenticated ? <TabNotificationNotifier /> : null}
-      {process.env.NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE === 'true' ? <PwaOfflineController /> : null}
+      {isReady ? (
+        <>
+          <ClipboardTracker />
+          <NewRelicBrowser />
+          {isAuthenticated ? <TabNotificationNotifier /> : null}
+          {process.env.NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE === 'true' ? <PwaOfflineController /> : null}
+          {isAuthenticated ? <GlobalChatWidget /> : null}
+        </>
+      ) : null}
       {hasComparison ? <ComparisonFloatingBar /> : null}
-      {isAuthenticated ? <GlobalChatWidget /> : null}
     </>
   );
 }

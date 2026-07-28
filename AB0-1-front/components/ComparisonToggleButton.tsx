@@ -9,6 +9,7 @@ import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
 import { useComparisonIntent } from '@/lib/analytics/hooks/useIntentTracking';
+import { openComparisonDock } from '@/lib/floating-widget-events';
 import { cn } from '@/lib/utils';
 
 interface ComparisonToggleButtonProps {
@@ -79,6 +80,7 @@ export default function ComparisonToggleButton({
           return;
         }
         addToComparison(company);
+        openComparisonDock();
         track('comparison_add', {
           company_id: company.id,
           company_name: company.name,

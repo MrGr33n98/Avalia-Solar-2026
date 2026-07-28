@@ -6,7 +6,7 @@
 export const FLOATING_WIDGET_POSITIONS = {
   // Z-index hierarchy
   Z_INDEX: {
-    COMPARISON: 50,
+    COMPARISON: 75,
     MOBIVOLT: 60, 
     CHAT: 70,
     EXPANDED_BUBBLE: 80,
