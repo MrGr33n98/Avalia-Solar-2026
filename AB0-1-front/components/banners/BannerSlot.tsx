@@ -36,7 +36,8 @@ export function BannerSlot({
         <div
           className={cn(
             'flex w-full items-center justify-center rounded-3xl border border-slate-200/50 bg-slate-100 animate-pulse',
-            getBannerAspectRatio(placement)
+            getBannerAspectRatio(placement),
+            'mb-[26px] md:mb-0'
           )}
         >
           <div className="flex flex-col items-center gap-2">
