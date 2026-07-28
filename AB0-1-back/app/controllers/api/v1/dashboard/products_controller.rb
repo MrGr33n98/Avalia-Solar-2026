@@ -83,7 +83,7 @@ module Api
         end
 
         def catalog_stats
-          products = current_company.products.includes(images_attachments: :blob, :product_specifications)
+          products = current_company.products.includes(:product_specifications, images_attachments: :blob)
           product_list = products.to_a
 
           {
