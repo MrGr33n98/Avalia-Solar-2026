@@ -1120,6 +1120,8 @@ export default function ProductDetailClient({
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
         product={product}
+        categoryId={category?.id}
+        companyId={company?.id}
       />
     </div>
   );

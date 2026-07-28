@@ -284,8 +284,8 @@ export default function ComparisonFloatingBar() {
         ) : (
           <div
             className={cn(
-              "pointer-events-none fixed z-[9050] w-auto mx-auto max-w-[380px] left-4 right-4 md:w-[calc(100vw-64px)] md:max-w-[1120px]",
-              WIDGET_POSITION_CLASSES.comparison
+              "pointer-events-none fixed z-[9050] w-auto mx-auto max-w-[380px] left-4 right-4 md:w-[calc(100vw-64px)] md:max-w-[1120px] md:left-1/2 md:-translate-x-1/2 md:bottom-6",
+              "bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_96px)]"
             )}
           >
             <motion.aside

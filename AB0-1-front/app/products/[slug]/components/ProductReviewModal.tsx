@@ -25,48 +25,63 @@ interface ProductReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product;
+  categoryId?: number;
+  companyId?: number;
 }
 
-export function ProductReviewModal({ isOpen, onClose, product }: ProductReviewModalProps) {
-  const { user } = useAuth();
-  const router = useRouter();
-
+export function ProductReviewModal({ isOpen, onClose, product, categoryId, companyId }: ProductReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [headline, setHeadline] = useState('');
   const [comment, setComment] = useState('');
   const [pros, setPros] = useState('');
   const [cons, setCons] = useState('');
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
+
+  // Reset form when opened
+  useEffect(() => {
+    if (isOpen) {
+      setRating(0);
+      setHeadline('');
+      setComment('');
+      setPros('');
+      setCons('');
+      setError(null);
+      setShowConfirm(false);
+    }
+  }, [isOpen]);
+
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      setSubmitError('Você precisa estar logado para avaliar.');
+      router.push(`/login?return_to=/products/${product.slug}`);
       return;
     }
 
     if (rating === 0) {
-      setSubmitError('Por favor, selecione uma nota de 1 a 5 estrelas.');
+      setError('Por favor, selecione uma nota');
       return;
     }
 
     if (comment.trim().length < 10) {
-      setSubmitError('O relato detalhado deve ter pelo menos 10 caracteres.');
+      setError('O relato detalhado deve ter pelo menos 10 caracteres.');
       return;
     }
 
     setIsSubmitting(true);
-    setSubmitError(null);
+    setError(null);
 
     try {
       const reviewPayload = {
         product_id: product.id,
-        category_id: product.category_id || product.category?.id,
-        company_id: product.company_id || product.company?.id,
+        category_id: categoryId || product.category_id || product.category?.id,
+        company_id: companyId || product.company_id || product.company?.id,
         rating,
         headline: headline.trim(),
         comment: comment.trim(),
