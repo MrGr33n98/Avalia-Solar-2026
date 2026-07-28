@@ -85,7 +85,7 @@ export default function CompanyIdentityCard({
             </div>
             {badgeImageUrl && (
               <div
-                className="pointer-events-none absolute left-0 top-0 z-30 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible bg-transparent shadow-none sm:h-11 sm:w-9"
+                className="pointer-events-none absolute left-0 top-0 z-30 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible rounded-[3px] bg-transparent p-px ring-1 ring-slate-900/80 shadow-none sm:h-11 sm:w-9"
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image

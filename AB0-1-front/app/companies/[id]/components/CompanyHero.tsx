@@ -1,6 +1,7 @@
 'use client';
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import { useRouter } from 'next/navigation';
 import {
   MessageCircle,
@@ -77,6 +78,7 @@ export default function CompanyHero({
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
+  const showBannerPlaceholder = !bannerUrl || bannerError;
   const { user, isAuthenticated } = useAuth();
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const directChatAvailable =
@@ -193,41 +195,45 @@ export default function CompanyHero({
         {/* 1. HERO BANNER */}
         <div className="relative h-[190px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[230px] lg:h-[300px] xl:h-[320px]">
           {/* Background Blur Fill Layer */}
-          <OptimizedImage
-            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
-            alt=""
-            fill
-            aria-hidden="true"
-            className="object-cover opacity-40 blur-xl scale-110"
-            containerClassName="absolute inset-0 h-full w-full pointer-events-none"
-            unoptimized={!bannerUrl || bannerError}
-          />
+          {!showBannerPlaceholder && (
+            <OptimizedImage
+              src={bannerUrl}
+              alt=""
+              fill
+              aria-hidden="true"
+              className="object-cover opacity-40 blur-xl scale-110"
+              containerClassName="absolute inset-0 h-full w-full pointer-events-none"
+            />
+          )}
 
           {/* Banner Image */}
-          <OptimizedImage
-            src={!bannerUrl || bannerError ? '/images/banner-avalia-solar.png' : bannerUrl}
-            alt={company.name}
-            fill
-            priority
-            quality={90}
-            imageContext="company-banner"
-            entityName={company.name}
-            locationLabel={locationLabel}
-            className="object-cover object-center"
-            containerClassName="h-full w-full"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-            fallbackSrc="/images/banner-avalia-solar.png"
-            useAspectRatio={false}
-            width={1600}
-            height={900}
-            unoptimized={!bannerUrl || bannerError}
-            onError={() => setBannerError(true)}
-          />
+          {showBannerPlaceholder ? (
+            <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
+          ) : (
+            <OptimizedImage
+              src={bannerUrl}
+              alt={company.name}
+              fill
+              priority
+              quality={90}
+              imageContext="company-banner"
+              entityName={company.name}
+              locationLabel={locationLabel}
+              className="object-cover object-center"
+              containerClassName="h-full w-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+              useAspectRatio={false}
+              width={1600}
+              height={900}
+              onError={() => setBannerError(true)}
+            />
+          )}
 
           {/* Overlay sutil — apenas para transição visual, sem texto sobreposto */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
 
-          {(!bannerUrl || bannerError) && (
+          {showBannerPlaceholder && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
               <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
                 Imagem ilustrativa
@@ -267,7 +273,7 @@ export default function CompanyHero({
                   {/* Selo preso ao canto superior esquerdo da logo, como na referência. */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="pointer-events-none absolute left-0 top-0 z-30 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible bg-transparent p-0 shadow-none sm:h-11 sm:w-9"
+                      className="pointer-events-none absolute left-0 top-0 z-30 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible rounded-[3px] bg-transparent p-px ring-1 ring-slate-900/80 shadow-none sm:h-11 sm:w-9"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
