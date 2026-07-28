@@ -103,11 +103,16 @@ export interface Product {
   short_description?: string;
   sku?: string;
   stock?: number;
-  status: 'active' | 'pending' | 'inactive';
+  status: 'draft' | 'active' | 'archived' | 'disabled';
   featured?: boolean;
   seo_title?: string;
   seo_description?: string;
   image_url?: string;
+  image_urls?: string[];
+  images_count?: number;
+  specifications_count?: number;
+  completeness?: number;
+  categories?: Array<{ id: number | string; name: string; seo_url?: string }>;
   created_at?: string;
   updated_at?: string;
 }

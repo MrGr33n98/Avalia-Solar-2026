@@ -16,6 +16,7 @@ import {
   MessageCircle,
   QrCode,
   Grid2X2,
+  Package,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -136,6 +137,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         label: 'Categorias',
         icon: Grid2X2,
         context: ['operational', 'admin'],
+      },
+      {
+        id: 'product-catalog',
+        label: 'Catálogo de Produtos',
+        icon: Package,
+        context: ['operational', 'admin'],
+        description: 'Cadastrar, publicar e organizar produtos da empresa',
       },
       {
         id: 'product-pricing',

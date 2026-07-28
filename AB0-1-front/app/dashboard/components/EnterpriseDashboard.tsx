@@ -604,12 +604,18 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                         Descrição patrocinada
                       </h2>
                       <p className="text-sm text-white/40">
-                        Ajuste o conteúdo e a apresentação do seu produto.
+                        Ajuste o conteúdo patrocinado exibido no perfil da empresa.
                       </p>
                     </div>
-                    <ProductsManagement companyId={companyId} />
+                    <p className="rounded-lg border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
+                      O catálogo de produtos é gerenciado na seção “Catálogo de Produtos”.
+                    </p>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="product-catalog" className="mt-0 focus-visible:outline-none">
+                <ProductsManagement companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
@@ -625,11 +631,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Funcionalidades
                     </h2>
-                    <p className="text-sm text-white/40">
-                      Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
-                    </p>
-                  </div>
-                  <ProductsManagement companyId={companyId} />
+                      <p className="text-sm text-white/40">
+                        Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
+                      </p>
+                    </div>
+                  <p className="rounded-lg border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
+                    Vincule produtos e categorias pelo Catálogo de Produtos. A edição de funcionalidades específicas será disponibilizada nesta seção.
+                  </p>
                 </div>
               </TabsContent>
 

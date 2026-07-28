@@ -1,587 +1,344 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
-  Package,
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Loader2,
-  ImageIcon,
-  Box,
-  BarChart3,
-  TrendingUp,
-  AlertCircle,
+  Archive,
   CheckCircle2,
-  Layers,
-  Star,
-  Settings2,
-  ArrowRight,
-  Filter,
-  DollarSign,
+  ChevronRight,
+  FileText,
+  ImageIcon,
+  Loader2,
+  Package,
+  Pencil,
+  Plus,
+  Search,
   Tag,
-  ShieldCheck
+  X,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// shadcn/ui components
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { toast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
-import MetricCard from './MetricCard';
-
-// Types
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
+import { fetchApi } from '@/lib/api';
+import { cn } from '../utils';
 import type { Product } from '../types';
-import { useProducts } from '../hooks/useProducts';
-import { cn, formatCurrency } from '../utils';
+import { type CatalogFilters, type ProductInput, useProducts } from '../hooks/useProducts';
 
-// Validation schema
-const productSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(200),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  short_description: z.string().max(500).optional(),
-  price: z.coerce.number().positive('Preço deve ser positivo'),
-  sku: z.string().optional(),
-  stock: z.coerce.number().int().nonnegative('Estoque não pode ser negativo').optional(),
-  featured: z.boolean().optional(),
-  status: z.enum(['active', 'pending', 'inactive']),
-  seo_title: z.string().max(60).optional(),
-  seo_description: z.string().max(160).optional(),
-});
+type Category = { id: string; name: string };
+type ProductStatus = ProductInput['status'];
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type ProductEditorValues = {
+  name: string;
+  sku: string;
+  description: string;
+  short_description: string;
+  price: string;
+  stock: string;
+  status: ProductStatus;
+  category_id: string;
+  images: File[];
+};
+
+const EMPTY_EDITOR: ProductEditorValues = {
+  name: '',
+  sku: '',
+  description: '',
+  short_description: '',
+  price: '',
+  stock: '0',
+  status: 'draft',
+  category_id: '',
+  images: [],
+};
+
+const STATUS_META: Record<ProductStatus, { label: string; className: string }> = {
+  active: { label: 'Publicado', className: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  draft: { label: 'Rascunho', className: 'bg-slate-100 text-slate-600 ring-slate-200' },
+  archived: { label: 'Arquivado', className: 'bg-amber-50 text-amber-700 ring-amber-200' },
+  disabled: { label: 'Desativado', className: 'bg-rose-50 text-rose-700 ring-rose-200' },
+};
+
+function formatCurrency(value?: number | string | null) {
+  const amount = Number(value || 0);
+  return Number.isFinite(amount)
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)
+    : '—';
+}
+
+function formatDate(value?: string) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+}
+
+function statusMeta(status?: string) {
+  return STATUS_META[status as ProductStatus] || STATUS_META.draft;
+}
+
+function MetricCard({ label, value, icon: Icon, tone, onClick }: {
+  label: string;
+  value: number;
+  icon: typeof Package;
+  tone: 'emerald' | 'blue' | 'slate' | 'amber' | 'rose';
+  onClick?: () => void;
+}) {
+  const tones = {
+    emerald: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-blue-50 text-blue-600',
+    slate: 'bg-slate-100 text-slate-600',
+    amber: 'bg-amber-50 text-amber-600',
+    rose: 'bg-rose-50 text-rose-600',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'min-h-[116px] rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md',
+        !onClick && 'cursor-default hover:border-slate-200 hover:shadow-sm',
+      )}
+    >
+      <span className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+        <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg', tones[tone])}><Icon className="h-4 w-4" /></span>
+        {label}
+      </span>
+      <strong className="mt-4 block text-3xl font-bold tracking-tight text-slate-950">{value}</strong>
+      {onClick && <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-blue-600">Ver produtos <ChevronRight className="h-3 w-3" /></span>}
+    </button>
+  );
+}
 
 interface ProductsManagementProps {
   companyId: string;
 }
 
 export default function ProductsManagement({ companyId }: ProductsManagementProps) {
-  // Hook
-  const { products, loading, addProduct, updateProduct, deleteProduct } = useProducts(companyId);
-
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showDialog, setShowDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { products, stats, loading, filters, applyFilters, addProduct, updateProduct, archiveProduct } = useProducts(companyId);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [filtersDraft, setFiltersDraft] = useState<CatalogFilters>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [editor, setEditor] = useState<ProductEditorValues>(EMPTY_EDITOR);
+  const [saving, setSaving] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
 
-  // Form
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      short_description: '',
-      price: 0,
-      sku: '',
-      stock: 0,
-      featured: false,
-      status: 'pending',
-      seo_title: '',
-      seo_description: '',
-    },
-  });
+  useEffect(() => {
+    let active = true;
+    fetchApi<{ data?: Category[] } | Category[]>('/categories', { params: { view: 'cards', limit: 200 } })
+      .then((response) => {
+        if (!active) return;
+        const list = Array.isArray(response) ? response : response?.data || [];
+        setCategories(list.map((category) => ({ id: String(category.id), name: category.name })));
+      })
+      .catch(() => active && setCategories([]));
+    return () => { active = false; };
+  }, []);
 
-  // Analytics Calculation
-  const stats = useMemo(() => {
-    const total = products.length;
-    const active = products.filter(p => p.status === 'active').length;
-    const featured = products.filter(p => p.featured).length;
-    const stockValue = products.reduce((acc, p) => {
-      const price = typeof p.price === 'string' ? parseFloat(p.price.replace(/[^\d.,]/g, '').replace(',', '.')) : p.price;
-      return acc + (price * (p.stock || 0));
-    }, 0);
+  useEffect(() => setFiltersDraft(filters), [filters]);
 
-    return { total, active, featured, stockValue };
-  }, [products]);
+  const hasFilters = useMemo(() => Object.values(filtersDraft).some(Boolean), [filtersDraft]);
 
-  // Handlers
-  const openCreateDialog = () => {
+  const openCreate = () => {
     setSelectedProduct(null);
-    form.reset({
-      name: '',
-      description: '',
-      short_description: '',
-      price: 0,
-      sku: '',
-      stock: 0,
-      featured: false,
-      status: 'pending',
-      seo_title: '',
-      seo_description: '',
-    });
-    setShowDialog(true);
+    setEditor(EMPTY_EDITOR);
+    setDialogOpen(true);
   };
 
-  const openEditDialog = (product: Product) => {
+  const openEdit = (product: Product) => {
     setSelectedProduct(product);
-    form.reset({
-      name: product.name,
-      description: product.description,
-      short_description: product.short_description || '',
-      price: typeof product.price === 'string' ? parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.')) : product.price,
+    setEditor({
+      name: product.name || '',
       sku: product.sku || '',
-      stock: product.stock || 0,
-      featured: product.featured || false,
-      status: product.status,
-      seo_title: product.seo_title || '',
-      seo_description: product.seo_description || '',
+      description: product.description || '',
+      short_description: product.short_description || '',
+      price: String(product.price ?? ''),
+      stock: String(product.stock ?? 0),
+      status: (product.status as ProductStatus) || 'draft',
+      category_id: product.categories?.[0] ? String(product.categories[0].id) : '',
+      images: [],
     });
-    setShowDialog(true);
+    setDialogOpen(true);
   };
 
-  const onSubmit = async (data: ProductFormValues) => {
+  const setEditorField = <K extends keyof ProductEditorValues>(key: K, value: ProductEditorValues[K]) => {
+    setEditor((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const handleFiles = (event: ChangeEvent<HTMLInputElement>) => {
+    setEditorField('images', Array.from(event.target.files || []));
+  };
+
+  const saveProduct = async () => {
+    if (!editor.name.trim() || !editor.sku.trim() || !editor.description.trim() || !editor.price || !editor.category_id) {
+      toast({ title: 'Preencha os campos obrigatórios', description: 'Nome, SKU, descrição, preço e categoria são necessários.', variant: 'destructive' });
+      return;
+    }
+    if (Number(editor.price) <= 0 || Number(editor.stock) < 0) {
+      toast({ title: 'Confira os dados comerciais', description: 'Preço deve ser maior que zero e estoque não pode ser negativo.', variant: 'destructive' });
+      return;
+    }
+
+    const payload: ProductInput = {
+      name: editor.name.trim(),
+      sku: editor.sku.trim(),
+      description: editor.description.trim(),
+      short_description: editor.short_description.trim(),
+      price: Number(editor.price),
+      stock: Number(editor.stock || 0),
+      status: editor.status,
+      category_ids: [editor.category_id],
+      images: editor.images,
+    };
     try {
+      setSaving(true);
       if (selectedProduct) {
-        await updateProduct(selectedProduct.id, data);
-        toast({ title: "Produto Atualizado", description: "Sincronização com o catálogo concluída." });
+        await updateProduct(selectedProduct.id, payload);
+        toast({ title: 'Produto atualizado', description: 'As alterações foram salvas no catálogo.' });
       } else {
-        await addProduct(data);
-        toast({ title: "Produto Cadastrado", description: "Novo ativo adicionado ao inventário." });
+        await addProduct(payload);
+        toast({ title: payload.status === 'active' ? 'Produto publicado' : 'Rascunho criado', description: 'O catálogo foi atualizado com dados da empresa.' });
       }
-      setShowDialog(false);
+      setDialogOpen(false);
     } catch (error) {
-      toast({ title: "Erro na Operação", variant: "destructive" });
+      toast({ title: 'Não foi possível salvar o produto', description: error instanceof Error ? error.message : 'Tente novamente.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedProduct) return;
+  const handleArchive = async (product: Product) => {
+    if (!window.confirm(`Arquivar “${product.name}”? Ele deixará de aparecer no catálogo público, mas seus dados serão preservados.`)) return;
     try {
-      await deleteProduct(selectedProduct.id);
-      setShowDeleteDialog(false);
-      toast({ title: "Produto Excluído", description: "Ativo removido permanentemente." });
-    } catch (error) {
-      toast({ title: "Erro na Exclusão", variant: "destructive" });
+      setArchivingId(product.id);
+      await archiveProduct(product.id);
+      toast({ title: 'Produto arquivado', description: 'O item continua disponível para consulta e pode ser reeditado.' });
+    } catch {
+      toast({ title: 'Não foi possível arquivar o produto', variant: 'destructive' });
+    } finally {
+      setArchivingId(null);
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const applyMetricFilter = (next: CatalogFilters) => {
+    setFiltersDraft(next);
+    applyFilters(next);
+  };
+
+  const clearFilters = () => {
+    setFiltersDraft({});
+    applyFilters({});
+  };
 
   return (
-    <div className="space-y-12 max-w-[1400px] mx-auto pb-24">
-      {/* Supply Chain Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+    <section className="mx-auto w-full max-w-[1600px] space-y-4 pb-16">
+      <header className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Box className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Gestão de Inventário
-            </h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium max-w-lg leading-relaxed">
-            Orquestração de ativos, precificação e gestão de estoque para o ecossistema solar.
-          </p>
+          <p className="mb-1 text-xs font-medium text-slate-500">{companyId ? 'Empresa ativa' : 'Catálogo da empresa'}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">Catálogo de Produtos</h1>
+          <p className="mt-1 text-sm text-slate-500">Gerencie os produtos cadastrados pela sua empresa e o status de publicação.</p>
         </div>
-        <div className="flex gap-4">
-          <Button 
-            onClick={openCreateDialog}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Produto
-          </Button>
-        </div>
+        <Button onClick={openCreate} className="h-10 gap-2 bg-blue-600 px-4 font-semibold hover:bg-blue-700">
+          <Plus className="h-4 w-4" /> Cadastrar produto
+        </Button>
+      </header>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <MetricCard label="Publicados" value={stats.published} icon={CheckCircle2} tone="emerald" onClick={() => applyMetricFilter({ status: 'active' })} />
+        <MetricCard label="Rascunhos" value={stats.drafts} icon={FileText} tone="blue" onClick={() => applyMetricFilter({ status: 'draft' })} />
+        <MetricCard label="Arquivados" value={stats.archived} icon={Archive} tone="slate" onClick={() => applyMetricFilter({ status: 'archived' })} />
+        <MetricCard label="Desativados" value={stats.disabled} icon={X} tone="rose" onClick={() => applyMetricFilter({ status: 'disabled' })} />
+        <MetricCard label="Sem imagem" value={stats.without_images} icon={ImageIcon} tone="amber" onClick={() => applyMetricFilter({ media: 'without_images' })} />
+        <MetricCard label="Sem especificações" value={stats.without_specifications} icon={FileText} tone="amber" />
+        <MetricCard label="Sem preço" value={stats.without_price} icon={Tag} tone="amber" />
+        <MetricCard label="Estoque indisponível" value={stats.unavailable_stock} icon={Package} tone="rose" onClick={() => applyMetricFilter({ stock: 'unavailable' })} />
       </div>
 
-      {/* Analytics Matrix */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard 
-          title="Total Inventory"
-          value={stats.total}
-          icon={Layers}
-          change="+12%"
-          changeType="positive"
-          color="indigo"
-        />
-        <MetricCard 
-          title="Active Assets"
-          value={stats.active}
-          icon={CheckCircle2}
-          change="+5%"
-          changeType="positive"
-          color="emerald"
-        />
-        <MetricCard 
-          title="Featured Logic"
-          value={stats.featured}
-          icon={Star}
-          change="+2"
-          changeType="positive"
-          color="amber"
-        />
-        <MetricCard 
-          title="Inventory Value"
-          value={formatCurrency(stats.stockValue)}
-          icon={BarChart3}
-          change="+8.4%"
-          changeType="positive"
-          color="rose"
-        />
-      </div>
-
-      {/* Control Bar */}
-      <Card className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden rounded-xl">
-        <CardContent className="p-3 flex flex-col md:flex-row items-center gap-3">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              placeholder="Buscar produtos por nome, SKU ou descrição..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500/30 text-sm"
-            />
+      <Card className="overflow-hidden border-slate-200 shadow-sm">
+        <CardContent className="border-b border-slate-100 p-3">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.8fr)_repeat(4,minmax(130px,1fr))_auto_auto]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input value={filtersDraft.q || ''} onChange={(event) => setFiltersDraft((current) => ({ ...current, q: event.target.value }))} className="h-10 pl-9" placeholder="Buscar por nome, SKU ou descrição" />
+            </div>
+            <Select value={filtersDraft.status || 'all'} onValueChange={(value) => setFiltersDraft((current) => ({ ...current, status: value === 'all' ? undefined : value }))}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Todos os status</SelectItem><SelectItem value="active">Publicados</SelectItem><SelectItem value="draft">Rascunhos</SelectItem><SelectItem value="archived">Arquivados</SelectItem><SelectItem value="disabled">Desativados</SelectItem></SelectContent>
+            </Select>
+            <Select value={filtersDraft.category_id || 'all'} onValueChange={(value) => setFiltersDraft((current) => ({ ...current, category_id: value === 'all' ? undefined : value }))}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Categoria" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Todas as categorias</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={filtersDraft.media || 'all'} onValueChange={(value) => setFiltersDraft((current) => ({ ...current, media: value === 'all' ? undefined : value as CatalogFilters['media'] }))}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Mídia" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Todas as mídias</SelectItem><SelectItem value="with_images">Com imagens</SelectItem><SelectItem value="without_images">Sem imagens</SelectItem></SelectContent>
+            </Select>
+            <Select value={filtersDraft.stock || 'all'} onValueChange={(value) => setFiltersDraft((current) => ({ ...current, stock: value === 'all' ? undefined : value as CatalogFilters['stock'] }))}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Estoque" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Todo o estoque</SelectItem><SelectItem value="available">Disponível</SelectItem><SelectItem value="unavailable">Indisponível</SelectItem></SelectContent>
+            </Select>
+            <Button variant="outline" onClick={clearFilters} disabled={!hasFilters} className="h-10">Limpar</Button>
+            <Button onClick={() => applyFilters(filtersDraft)} className="h-10 bg-blue-600 hover:bg-blue-700">Filtrar</Button>
           </div>
-          <Button variant="outline" className="h-10 rounded-lg px-4 text-xs font-semibold text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
         </CardContent>
+
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1200px]">
+            <TableHeader className="bg-slate-50/80">
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Produto</TableHead><TableHead>SKU</TableHead><TableHead>Categoria principal</TableHead><TableHead>Marca</TableHead><TableHead>Status</TableHead><TableHead>Completude</TableHead><TableHead>Imagens</TableHead><TableHead>Especificações</TableHead><TableHead>Preço</TableHead><TableHead>Estoque</TableHead><TableHead>Atualizado em</TableHead><TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && Array.from({ length: 6 }).map((_, index) => <TableRow key={index}>{Array.from({ length: 12 }).map((__, column) => <TableCell key={column}><Skeleton className="h-6 w-full" /></TableCell>)}</TableRow>)}
+              {!loading && products.map((product) => {
+                const status = statusMeta(product.status);
+                return <TableRow key={product.id} className="border-slate-100">
+                  <TableCell className="min-w-[270px]"><div className="flex items-center gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">{product.image_url ? <Image src={product.image_url} alt="" width={44} height={44} unoptimized className="h-full w-full object-contain" /> : <Package className="h-5 w-5 text-slate-400" />}</div><div><p className="font-semibold text-slate-900">{product.name}</p><p className="max-w-[220px] truncate text-xs text-slate-500">{product.short_description || product.description}</p></div></div></TableCell>
+                  <TableCell className="font-mono text-xs text-slate-600">{product.sku || '—'}</TableCell>
+                  <TableCell><span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">{product.categories?.[0]?.name || 'Não informada'}</span></TableCell>
+                  <TableCell className="text-sm text-slate-600">{product.brand?.name || 'Não informada'}</TableCell>
+                  <TableCell><span className={cn('inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset', status.className)}>{status.label}</span></TableCell>
+                  <TableCell className="min-w-[110px]"><span className="mb-1 block text-xs font-semibold text-slate-700">{product.completeness ?? 0}%</span><Progress value={product.completeness ?? 0} className="h-1.5" /></TableCell>
+                  <TableCell className="text-center text-sm text-slate-700">{product.images_count ?? product.image_urls?.length ?? 0}</TableCell>
+                  <TableCell className="text-center text-sm text-slate-700">{product.specifications_count ?? 0}</TableCell>
+                  <TableCell className="font-semibold text-slate-900">{formatCurrency(product.price)}</TableCell>
+                  <TableCell><span className={cn('font-semibold', Number(product.stock || 0) > 0 ? 'text-emerald-700' : 'text-rose-700')}>{product.stock ?? 0}</span></TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-slate-500">{formatDate(product.updated_at)}</TableCell>
+                  <TableCell className="text-right"><div className="flex justify-end gap-1"><Button aria-label={`Editar ${product.name}`} size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(product)}><Pencil className="h-3.5 w-3.5" /></Button><Button aria-label={`Arquivar ${product.name}`} size="icon" variant="outline" className="h-8 w-8 text-slate-600" disabled={archivingId === product.id || product.status === 'archived'} onClick={() => handleArchive(product)}>{archivingId === product.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}</Button></div></TableCell>
+                </TableRow>;
+              })}
+              {!loading && products.length === 0 && <TableRow><TableCell colSpan={12} className="py-16 text-center"><div className="mx-auto flex max-w-sm flex-col items-center"><span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50"><Package className="h-6 w-6 text-blue-600" /></span><p className="font-semibold text-slate-900">Nenhum produto encontrado</p><p className="mt-1 text-sm text-slate-500">{hasFilters ? 'Ajuste ou limpe os filtros para ver outros produtos.' : 'Cadastre o primeiro produto para publicá-lo no catálogo.'}</p>{!hasFilters && <Button className="mt-4 bg-blue-600 hover:bg-blue-700" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Cadastrar produto</Button>}</div></TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </div>
+        <CardContent className="flex items-center justify-between border-t border-slate-100 py-3 text-xs text-slate-500"><span>Mostrando {products.length} de {stats.total} produtos cadastrados</span><span>Dados do catálogo da empresa</span></CardContent>
       </Card>
 
-      {/* Asset Grid */}
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-              <Card key={i} className="clay-precision bg-transparent border-none overflow-hidden">
-                <Skeleton className="aspect-square w-full rounded-xl" />
-                <CardContent className="p-6 space-y-4">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <div className="flex justify-between pt-4">
-                    <Skeleton className="h-8 w-1/3" />
-                    <Skeleton className="h-8 w-1/4" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </motion.div>
-        ) : filteredProducts.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
-          >
-            <div className="h-24 w-24 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-8">
-              <Package className="h-10 w-10 text-indigo-500" />
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-widest mb-2">Zero Assets Detected</h3>
-            <p className="text-sm text-muted-foreground font-medium mb-8">Nenhum ativo localizado no banco de dados para os critérios atuais.</p>
-            <Button onClick={openCreateDialog} className="h-12 rounded-xl bg-indigo-600 px-8 text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/10">
-              Initialize First Command
-            </Button>
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-          >
-            {filteredProducts.map((product, idx) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Card className="group h-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer">
-                  <div className="aspect-square relative bg-slate-100 dark:bg-black/30 overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:scale-110 transition-transform duration-700">
-                      <ImageIcon className="h-16 w-16" />
-                    </div>
-                    
-                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-                      <Badge className={cn(
-                        "h-6 rounded-md font-semibold text-[10px] uppercase tracking-wider border-none px-2",
-                        product.status === 'active' ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" : 
-                        product.status === 'pending' ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" : "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400"
-                      )}>
-                        {product.status === 'active' ? 'Ativo' : product.status === 'pending' ? 'Pendente' : 'Inativo'}
-                      </Badge>
-                      {product.featured && (
-                        <div className="h-8 w-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center shadow-sm border border-amber-100 dark:border-amber-500/20">
-                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                       <Button size="icon" onClick={() => openEditDialog(product)} className="h-10 w-10 rounded-lg bg-white/90 hover:bg-white text-slate-900 border-none shadow-sm">
-                         <Edit className="h-4 w-4" />
-                       </Button>
-                       <Button size="icon" onClick={() => { setSelectedProduct(product); setShowDeleteDialog(true); }} className="h-10 w-10 rounded-lg bg-white/90 hover:bg-rose-50 text-rose-500 border-none shadow-sm">
-                         <Trash2 className="h-4 w-4" />
-                       </Button>
-                    </div>
-                  </div>
-
-                  <CardContent className="p-5 space-y-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{product.sku || 'SEM SKU'}</p>
-                      <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                        {product.name}
-                      </h3>
-                    </div>
-
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2 h-8">
-                      {product.description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                       <div className="space-y-0.5">
-                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Preço Unitário</p>
-                         <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">
-                            {formatCurrency(typeof product.price === 'string' ? parseFloat(product.price.replace(/[^\d.,]/g, '').replace(',', '.')) : product.price)}
-                         </p>
-                       </div>
-                       <div className="text-right space-y-0.5">
-                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Estoque</p>
-                         <div className="flex items-center gap-1.5 justify-end">
-                            <Box className="h-3 w-3 text-slate-400" />
-                            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{product.stock || 0}</p>
-                         </div>
-                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Deploy Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-4xl clay-precision bg-card dark:bg-[#0F172A] border-none rounded-xl p-0 overflow-hidden animate-in zoom-in-95 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-3 min-h-[600px]">
-                        <div className="bg-slate-900 p-12 text-white flex flex-col justify-between overflow-hidden relative">
-              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-              <div className="relative z-10">
-                <Box className="h-10 w-10 mb-6 text-indigo-400" />
-                <h2 className="text-2xl font-bold tracking-tight mb-4">
-                  Protocolo de Ativos
-                </h2>
-                <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  Defina as especificações técnicas, parâmetros de custo e metadados de mercado.
-                </p>
-              </div>
-              <div className="relative z-10 space-y-6">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Status de Compliance</p>
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                    <span className="text-xs font-semibold text-slate-300">Integridade Solar v2.4</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Logic */}
-            <div className="md:col-span-2 p-12 max-h-[90vh] overflow-y-auto">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500">Global Specifications</h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 block">System Identifier</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: Fotovoltaico Industrial Gen 4" {...field} className="h-14 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 text-xs font-bold" />
-                          </FormControl>
-                          <FormMessage className="text-[10px] font-black" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 block">Economic Unit (BRL)</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-500" />
-                                <Input type="number" step="0.01" {...field} className="h-14 pl-12 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 text-xs font-mono font-bold" />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-[10px] font-black" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 block">Cycle Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="h-14 rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 text-xs font-black uppercase">
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="clay-precision bg-card border-none rounded-xl shadow-2xl">
-                                <SelectItem value="active" className="text-[10px] font-black uppercase">Active Operation</SelectItem>
-                                <SelectItem value="pending" className="text-[10px] font-black uppercase">Approval Stage</SelectItem>
-                                <SelectItem value="inactive" className="text-[10px] font-black uppercase">Archived Asset</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage className="text-[10px] font-black" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 block">Deep Repository Description</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} className="min-h-[120px] rounded-xl bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/10 text-xs font-medium leading-relaxed" />
-                          </FormControl>
-                          <FormMessage className="text-[10px] font-black" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="p-6 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                         <div className="h-12 w-12 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                            <Star className="h-6 w-6 text-indigo-500" />
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Catalog Priority</p>
-                            <p className="text-[11px] font-bold text-muted-foreground">Destacar ativo no topo da listagem técnica</p>
-                         </div>
-                       </div>
-                       <FormField
-                        control={form.control}
-                        name="featured"
-                        render={({ field }) => (
-                          <FormControl>
-                            <Switch id="featured-switch" aria-label="Destacar produto" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-indigo-600" />
-                          </FormControl>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 pt-8">
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      onClick={() => setShowDialog(false)}
-                      className="h-14 flex-1 rounded-xl text-[11px] font-black uppercase tracking-widest text-muted-foreground"
-                    >
-                      Abort Mission
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      className="h-14 flex-[2] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/20 text-[11px] font-black uppercase tracking-widest transition-all"
-                    >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-                      Execute Protocol
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader><DialogTitle>{selectedProduct ? 'Editar produto' : 'Cadastrar produto'}</DialogTitle><DialogDescription>Os campos marcados são necessários para salvar um produto no catálogo da empresa.</DialogDescription></DialogHeader>
+          <div className="grid gap-4 py-2 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-name">Nome *</Label><Input id="product-name" value={editor.name} onChange={(event) => setEditorField('name', event.target.value)} placeholder="Ex.: Inversor solar trifásico" /></div>
+            <div className="space-y-2"><Label htmlFor="product-sku">SKU *</Label><Input id="product-sku" value={editor.sku} onChange={(event) => setEditorField('sku', event.target.value)} placeholder="Código único do produto" /></div>
+            <div className="space-y-2"><Label>Categoria principal *</Label><Select value={editor.category_id || undefined} onValueChange={(value) => setEditorField('category_id', value)}><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger><SelectContent>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="product-price">Preço base (R$) *</Label><Input id="product-price" min="0.01" step="0.01" type="number" value={editor.price} onChange={(event) => setEditorField('price', event.target.value)} /></div>
+            <div className="space-y-2"><Label htmlFor="product-stock">Estoque disponível</Label><Input id="product-stock" min="0" step="1" type="number" value={editor.stock} onChange={(event) => setEditorField('stock', event.target.value)} /></div>
+            <div className="space-y-2"><Label>Status</Label><Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Rascunho</SelectItem><SelectItem value="active">Publicado</SelectItem><SelectItem value="archived">Arquivado</SelectItem><SelectItem value="disabled">Desativado</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="product-images">Imagens do produto</Label><Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={handleFiles} /><p className="text-xs text-slate-500">PNG, JPG ou WebP. Limite aplicado pelo plano da empresa.</p>{editor.images.length > 0 && <p className="text-xs font-medium text-emerald-700">{editor.images.length} imagem(ns) selecionada(s)</p>}</div>
+            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-description">Descrição *</Label><Textarea id="product-description" value={editor.description} onChange={(event) => setEditorField('description', event.target.value)} rows={5} placeholder="Descreva o produto, aplicações e diferenciais." /></div>
+            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-short-description">Descrição curta</Label><Input id="product-short-description" value={editor.short_description} onChange={(event) => setEditorField('short_description', event.target.value)} placeholder="Resumo exibido nas listagens" /></div>
           </div>
+          <DialogFooter><Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancelar</Button><Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={saveProduct} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{selectedProduct ? 'Salvar alterações' : editor.status === 'active' ? 'Cadastrar e publicar' : 'Salvar rascunho'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Security Check Alert */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="clay-precision bg-card dark:bg-[#0F172A] border-none rounded-xl p-8 max-w-sm">
-          <AlertDialogHeader className="items-center text-center">
-            <div className="h-20 w-20 rounded-xl bg-rose-500/10 flex items-center justify-center mb-6">
-               <AlertCircle className="h-10 w-10 text-rose-500" />
-            </div>
-            <AlertDialogTitle className="text-2xl font-black uppercase tracking-tighter">Security Alert</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm font-medium leading-relaxed">
-              Tentativa de remoção de ativo detectada. Esta ação causará a <span className="text-rose-500 font-bold">destruição imediata</span> dos metadados associados.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex flex-col gap-2 mt-6">
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="h-11 w-full rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-all"
-            >
-              Confirmar Exclusão
-            </AlertDialogAction>
-            <AlertDialogCancel className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 m-0">
-              Cancelar
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </section>
   );
 }

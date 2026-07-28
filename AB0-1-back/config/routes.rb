@@ -391,7 +391,9 @@ Rails.application.routes.draw do
         get 'me', to: 'me#show'
         get 'analytics', to: 'analytics#index'
         resources :leads, only: [:index]
-        resources :products, only: [:index]
+        # Catálogo privado da empresa. As rotas públicas de produtos continuam
+        # estritamente de leitura; criação e edição exigem autenticação do painel.
+        resources :products, only: %i[index create update destroy]
         resource :company, only: [:update]
       end
 
