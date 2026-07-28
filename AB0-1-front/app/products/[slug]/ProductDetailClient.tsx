@@ -31,6 +31,11 @@ import { useProductTracking } from './useProductTracking';
 import PremiumBadge from '@/components/PremiumBadge';
 import { ProductReviewModal } from './components/ProductReviewModal';
 import ProjectsGallery from '@/app/companies/[id]/components/ProjectsGallery';
+import {
+  useCopyIntent,
+  useHoverIntent,
+  useIntersectionDwellTime,
+} from '@/lib/analytics/hooks/useIntentTracking';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -459,6 +464,12 @@ export default function ProductDetailClient({
     reviewsData,
   });
 
+  const companyIdToTrack = company?.id || product.company?.id || product.company_id || 'unknown';
+  const { onCopy: onCopySku } = useCopyIntent(companyIdToTrack, 'product_sku');
+  const { onCopy: onCopyTitle } = useCopyIntent(companyIdToTrack, 'product_title');
+  const { onMouseEnter: onSpecsEnter, onMouseLeave: onSpecsLeave } = useHoverIntent(companyIdToTrack, 'product_specs', 5000);
+  const reviewsDwellRef = useIntersectionDwellTime(companyIdToTrack, 'review_deep_read', 8000) as React.MutableRefObject<HTMLDivElement | null>;
+
   useEffect(() => {
     setSelectedImage(galleryImages[0] || null);
   }, [galleryImages]);
@@ -584,12 +595,15 @@ export default function ProductDetailClient({
                     <SemanticBadge tone={isActive ? 'success' : 'danger'}>
                       {isActive ? 'Disponível' : 'Inativo'}
                     </SemanticBadge>
-                    {product.sku ? <SemanticBadge>SKU {product.sku}</SemanticBadge> : null}
+                    {product.sku ? <span onCopy={onCopySku}><SemanticBadge>SKU {product.sku}</SemanticBadge></span> : null}
                     {category ? <SemanticBadge>{category.name}</SemanticBadge> : null}
                   </div>
 
                   <div className="space-y-3">
-                    <h1 className="text-[20px] font-medium leading-[1.35] text-[var(--color-text-primary)]">
+                    <h1 
+                      className="text-[20px] font-medium leading-[1.35] text-[var(--color-text-primary)]"
+                      onCopy={onCopyTitle}
+                    >
                       {product.name}
                     </h1>
                     {product.short_description ? <p className={labelClass}>{product.short_description}</p> : null}
@@ -709,7 +723,11 @@ export default function ProductDetailClient({
                 ) : null}
 
                 {activeTab === 'specifications' ? (
-                  <div className="overflow-hidden rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-tertiary)]">
+                  <div 
+                    className="overflow-hidden rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-tertiary)]"
+                    onMouseEnter={onSpecsEnter} 
+                    onMouseLeave={onSpecsLeave}
+                  >
                     {product.specs?.length ? (
                       product.specs.map((spec) => (
                         <div
@@ -732,7 +750,13 @@ export default function ProductDetailClient({
                 ) : null}
 
                 {activeTab === 'reviews' ? (
-                  <div ref={reviewsSectionRef} className="space-y-4">
+                  <div 
+                    ref={(node) => {
+                      reviewsSectionRef.current = node;
+                      if (reviewsDwellRef) reviewsDwellRef.current = node;
+                    }} 
+                    className="space-y-4"
+                  >
                     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                       <div className={cn(surfaceClass, 'p-4')}>
                         <div className="space-y-3">

@@ -997,3 +997,63 @@ export const useBlogIntentTracking = (
     trackRelatedPostClick,
   };
 };
+
+/**
+ * Tracks if an element stays visible on screen for a specified amount of time.
+ * Dispares the intent signal only if the user dwells on it continuously without scrolling away.
+ */
+export const useIntersectionDwellTime = (
+  companyId: string | number,
+  signalType: IntentSignalType,
+  thresholdMs = 8000,
+  options: IntentSignalOptions = {}
+) => {
+  const targetRef = useRef<HTMLElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (!companyId || !targetRef.current || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          if (firedRef.current || timerRef.current) return;
+          
+          timerRef.current = setTimeout(() => {
+            if (firedRef.current) return;
+            firedRef.current = true;
+            
+            sendIntentSignal({
+              company_id: companyId,
+              signal_type: signalType,
+              signal_category: options.signalCategory || 'research_intent',
+              element_type: 'content_section',
+              element_selector: options.elementSelector,
+              duration_ms: thresholdMs,
+              metadata: options.metadata,
+            });
+          }, thresholdMs);
+        } else {
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+          }
+        }
+      },
+      { threshold: 0.5 } // Require 50% visibility to start dwell timer
+    );
+
+    observer.observe(targetRef.current);
+
+    return () => {
+      observer.disconnect();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [companyId, options.elementSelector, options.metadata, options.signalCategory, signalType, thresholdMs]);
+
+  return targetRef;
+};
+
