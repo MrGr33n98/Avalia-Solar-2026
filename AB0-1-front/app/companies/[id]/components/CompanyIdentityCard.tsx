@@ -52,14 +52,15 @@ export default function CompanyIdentityCard({
     <section
       id="company-identity-card"
       aria-label="Card da empresa com ações"
-      className="relative rounded-2xl bg-transparent p-5 sm:p-6 lg:p-7"
+      className="relative overflow-visible rounded-b-2xl border-x border-b border-slate-200 bg-white px-4 pb-5 pt-0 shadow-[0_8px_30px_rgba(15,23,42,0.06)] sm:px-6 lg:px-7"
     >
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 pt-4 sm:gap-5 sm:pt-5 lg:flex-row lg:items-center lg:justify-between lg:pt-6">
         {/* Lado Esquerdo: Logo + Dados */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0">
+        <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           {/* Box da Logo */}
-          <div className="relative h-20 w-20 shrink-0 overflow-visible sm:h-24 sm:w-24">
-            <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-slate-950 bg-white">
+          <div className="relative shrink-0 -translate-y-8 overflow-visible sm:-translate-y-10 lg:-translate-y-12">
+            <div className="relative h-[88px] w-[88px] rounded-[18px] border border-slate-300 bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-[104px] sm:w-[104px] sm:rounded-[20px]">
+              <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-white sm:rounded-[16px]">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -70,29 +71,29 @@ export default function CompanyIdentityCard({
                   entityName={company.name}
                   locationLabel={locationLabel}
                   objectFit="contain"
-                  className="rounded-[14px] p-0"
+                  className="p-0"
                   containerClassName="absolute inset-0 h-full w-full"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="flex h-full w-full select-none items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-2xl font-black text-white">
+                <div className="flex h-full w-full select-none items-center justify-center rounded-[14px] bg-gradient-to-br from-blue-600 to-indigo-600 text-2xl font-black text-white sm:rounded-[16px]">
                   {initialLetter}
                 </div>
               )}
+              </div>
             </div>
             {badgeImageUrl && (
               <div
-                className="absolute right-0 top-0 z-30 h-12 w-10 translate-x-[18%] -translate-y-[18%] overflow-hidden drop-shadow-[0_3px_6px_rgba(15,23,42,0.2)] sm:h-14 sm:w-11"
-                style={{ clipPath: 'polygon(7% 13%, 93% 13%, 87% 30%, 80% 34%, 80% 73%, 50% 100%, 20% 73%, 20% 34%, 13% 30%)' }}
+                className="absolute left-0 top-0 z-30 h-11 w-9 -translate-x-[22%] -translate-y-[22%] overflow-visible bg-transparent drop-shadow-[0_3px_6px_rgba(15,23,42,0.18)] sm:h-[52px] sm:w-[42px]"
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image
                   src={badgeImageUrl}
                   alt={badgeToRender?.name || 'Selo'}
                   fill
-                  className="object-contain mix-blend-multiply"
-                  sizes="(max-width: 640px) 40px, 44px"
+                  className="object-contain"
+                  sizes="(max-width: 640px) 36px, 42px"
                   unoptimized
                 />
               </div>
@@ -100,7 +101,7 @@ export default function CompanyIdentityCard({
           </div>
 
           {/* Informações da empresa */}
-          <div className="min-w-0 space-y-1.5">
+          <div className="min-w-0 space-y-1.5 pt-1 sm:pt-2">
             {/* Nome + verificado na mesma linha */}
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-xl font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl">
@@ -135,7 +136,7 @@ export default function CompanyIdentityCard({
         </div>
 
         {/* Ações: Solicitar orçamento, Avaliar, Compartilhar */}
-        {children && <div className="pt-2 lg:pt-0">{children}</div>}
+        {children && <div className="w-full pt-0 lg:w-auto lg:self-center">{children}</div>}
       </div>
     </section>
   );

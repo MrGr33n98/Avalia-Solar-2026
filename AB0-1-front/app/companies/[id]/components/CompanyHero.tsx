@@ -238,44 +238,46 @@ export default function CompanyHero({
         </div>
 
         {/* 2. IDENTIDADE DA EMPRESA — logo atravessa a borda do banner */}
-        <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-4 sm:px-6 sm:pt-5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative border-t border-slate-200 bg-white px-4 pb-5 pt-0 sm:px-6">
+          <div className="flex flex-col gap-4 pt-4 sm:gap-5 sm:pt-5 lg:flex-row lg:items-center lg:justify-between lg:pt-6">
             {/* Identidade: logo, nome, sinais de confiança, localização e nota */}
             <div className="min-w-0 flex-1">
               {/* Lado Esquerdo: Logo + Informações — items-center alinha com a logo independente de quantas linhas de texto existem (item 4) */}
-              <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
+              <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
-                <div className="relative shrink-0 -translate-y-10 overflow-visible sm:-translate-y-12">
-                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-2xl bg-white shadow-sm sm:h-24 sm:w-24">
-                    <OptimizedImage
-                      src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
-                      alt={company.name}
-                      fill
-                      priority
-                      imageContext="company-logo"
-                      entityName={company.name}
-                      locationLabel={locationLabel}
-                      objectFit="contain"
-                      className="p-0"
-                      containerClassName="absolute inset-0 h-full w-full"
-                      fallbackSrc="/images/logo-placeholder.svg"
-                      onError={() => setLogoError(true)}
-                    />
+                <div className="relative shrink-0 -translate-y-8 overflow-visible sm:-translate-y-10 lg:-translate-y-12">
+                  <div className="relative h-[88px] w-[88px] rounded-[18px] border border-slate-300 bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-[104px] sm:w-[104px] sm:rounded-[20px]">
+                    <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-white sm:rounded-[16px]">
+                      <OptimizedImage
+                        src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
+                        alt={company.name}
+                        fill
+                        priority
+                        imageContext="company-logo"
+                        entityName={company.name}
+                        locationLabel={locationLabel}
+                        objectFit="contain"
+                        className="p-0"
+                        containerClassName="absolute inset-0 h-full w-full"
+                        fallbackSrc="/images/logo-placeholder.svg"
+                        onError={() => setLogoError(true)}
+                      />
+                    </div>
                   </div>
 
-                  {/* Selo recortado, preso ao canto superior direito da logo. */}
+                  {/* Selo preso ao canto superior esquerdo da logo, como na referência. */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute right-1 top-1 z-30 h-10 w-10 translate-x-[28%] -translate-y-[28%] overflow-visible bg-transparent p-0 drop-shadow-[0_2px_5px_rgba(15,23,42,0.16)] sm:h-11 sm:w-11"
+                      className="absolute left-0 top-0 z-30 h-11 w-9 -translate-x-[22%] -translate-y-[22%] overflow-visible bg-transparent p-0 drop-shadow-[0_3px_6px_rgba(15,23,42,0.18)] sm:h-[52px] sm:w-[42px]"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
                         src={heroBadgeUrl}
                         alt="Selo de conquista"
                         fill
-                        sizes="44px"
+                        sizes="(max-width: 640px) 36px, 42px"
                         objectFit="contain"
-                        className="mix-blend-multiply p-0"
+                        className="p-0"
                         containerClassName="h-full w-full overflow-visible bg-transparent"
                         onError={() => setBadgeImageError(true)}
                       />
@@ -284,7 +286,7 @@ export default function CompanyHero({
                 </div>
 
                 {/* Informações da empresa */}
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pt-1 sm:pt-2">
                   {/* Nome + verificado + premium (mobile, inline) */}
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <h1 className="min-w-0 line-clamp-2 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl">
