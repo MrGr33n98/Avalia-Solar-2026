@@ -229,18 +229,18 @@ export default function ComparisonFloatingBar() {
       </svg>
       <AnimatePresence>
         {dockState === 'minimized' ? (
-          <motion.aside
-            key="comparison-dock-minimized"
-            initial={{ y: 32, opacity: 0, scale: 0.96 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 32, opacity: 0, scale: 0.96 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 340 }}
-            aria-label="Comparação minimizada"
+          <div 
             className={cn("fixed z-[50]", WIDGET_POSITION_CLASSES.comparison)}
-            style={{
-              zIndex: getFloatingWidgetZIndex('comparison')
-            }}
+            style={{ zIndex: getFloatingWidgetZIndex('comparison') }}
           >
+            <motion.aside
+              key="comparison-dock-minimized"
+              initial={{ y: 32, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 32, opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+              aria-label="Comparação minimizada"
+            >
             {/* Mobile: Botão compacto sem wrapper branco */}
             <button
               type="button"
@@ -279,20 +279,23 @@ export default function ComparisonFloatingBar() {
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-          </motion.aside>
+            </motion.aside>
+          </div>
         ) : (
-          <motion.aside
-            key="comparison-dock-expanded"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-            aria-label="Empresas selecionadas para comparação"
+          <div
             className={cn(
               "pointer-events-none fixed z-[9050] w-auto mx-auto max-w-[380px] left-4 right-4 md:w-[calc(100vw-64px)] md:max-w-[1120px]",
               WIDGET_POSITION_CLASSES.comparison
             )}
           >
+            <motion.aside
+              key="comparison-dock-expanded"
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+              aria-label="Empresas selecionadas para comparação"
+            >
             <section className="comparison-modal-led-border pointer-events-auto flex max-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 md:hidden">
               <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
                 <div className="min-w-0">
@@ -510,7 +513,8 @@ export default function ComparisonFloatingBar() {
                 />
               </div>
             </section>
-          </motion.aside>
+            </motion.aside>
+          </div>
         )}
       </AnimatePresence>
 
