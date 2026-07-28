@@ -102,7 +102,7 @@ export function ProductReviewModal({ isOpen, onClose, product, categoryId, compa
       console.error('Error submitting review:', error);
       const fallback = 'Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.';
       const message = getApiErrorMessage(error, fallback).replace(/^\[\d{3}\]\s*/, '').trim();
-      setSubmitError(message || fallback);
+      setError(message || fallback);
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +117,7 @@ export function ProductReviewModal({ isOpen, onClose, product, categoryId, compa
       setPros('');
       setCons('');
       setIsSuccess(false);
-      setSubmitError(null);
+      setError(null);
       if (isSuccess) {
         router.refresh();
       }
