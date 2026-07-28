@@ -268,16 +268,16 @@ export default function CompanyHero({
                   {/* Selo preso ao canto superior esquerdo da logo, como na referência. */}
                   {heroBadgeUrl && !badgeImageError && (
                     <div
-                      className="absolute left-0 top-0 z-30 h-11 w-9 -translate-x-[22%] -translate-y-[22%] overflow-visible bg-transparent p-0 drop-shadow-[0_3px_6px_rgba(15,23,42,0.18)] sm:h-[52px] sm:w-[42px]"
+                      className="pointer-events-none absolute left-0 top-0 z-30 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible bg-transparent p-0 shadow-none sm:h-11 sm:w-9"
                       title="Selo de conquista"
                     >
                       <OptimizedImage
                         src={heroBadgeUrl}
                         alt="Selo de conquista"
                         fill
-                        sizes="(max-width: 640px) 36px, 42px"
+                        sizes="(max-width: 640px) 32px, 36px"
                         objectFit="contain"
-                        className="p-0"
+                        className="bg-transparent p-0"
                         containerClassName="h-full w-full overflow-visible bg-transparent"
                         onError={() => setBadgeImageError(true)}
                       />
