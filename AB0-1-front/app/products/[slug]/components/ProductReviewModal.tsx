@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -109,18 +110,20 @@ export function ProductReviewModal({ isOpen, onClose, product }: ProductReviewMo
   if (isSuccess) {
     return (
       <Dialog open={isOpen} onOpenChange={resetAndClose}>
-        <DialogContent className="sm:max-w-[425px] text-center">
-          <div className="flex flex-col items-center justify-center py-6 space-y-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+        <DialogContent className="sm:max-w-[425px] text-center p-8">
+          <div className="flex flex-col items-center justify-center space-y-5">
+            <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
             <DialogTitle className="text-xl">Avaliação enviada!</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base">
               Obrigado por avaliar o produto {product.name}. Sua opinião ajuda outros compradores e integradores a tomarem decisões melhores.
             </DialogDescription>
-            <Button onClick={resetAndClose} className="w-full mt-4">
-              Concluir
-            </Button>
+            <div className="w-full pt-4">
+              <Button onClick={resetAndClose} className="w-full">
+                Concluir
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -129,117 +132,122 @@ export function ProductReviewModal({ isOpen, onClose, product }: ProductReviewMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Avaliar {product.name}</DialogTitle>
+          <DialogTitle className="text-xl">Avaliar {product.name}</DialogTitle>
           <DialogDescription>
             Compartilhe sua experiência técnica ou de uso com este produto.
           </DialogDescription>
         </DialogHeader>
 
         {!user && (
-          <div className="bg-amber-50 text-amber-800 p-3 rounded-md text-sm mb-4">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md text-sm my-2">
             Você precisa fazer login para enviar uma avaliação.
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
-          <div className="space-y-2">
-            <Label>Sua nota geral <span className="text-red-500">*</span></Label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={(e) => {
-                    const stars = e.currentTarget.parentElement?.children;
-                    if (!stars) return;
-                    for (let i = 0; i < stars.length; i++) {
-                      if (i < star) stars[i].classList.add('text-amber-400');
-                      else stars[i].classList.remove('text-amber-400');
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    const stars = e.currentTarget.parentElement?.children;
-                    if (!stars) return;
-                    for (let i = 0; i < stars.length; i++) {
-                      if (i < rating) stars[i].classList.add('text-amber-400');
-                      else stars[i].classList.remove('text-amber-400');
-                    }
-                  }}
-                  className={cn(
-                    "transition-colors p-1 rounded hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    rating >= star ? "text-amber-400" : "text-slate-300"
-                  )}
-                >
-                  <Star className="h-8 w-8 fill-current" />
-                </button>
-              ))}
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-3">
+              <Label className="text-sm font-semibold text-slate-700">Sua nota geral <span className="text-red-500">*</span></Label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={(e) => {
+                      const stars = e.currentTarget.parentElement?.children;
+                      if (!stars) return;
+                      for (let i = 0; i < stars.length; i++) {
+                        if (i < star) stars[i].classList.add('text-amber-400', 'scale-110');
+                        else stars[i].classList.remove('text-amber-400', 'scale-110');
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      const stars = e.currentTarget.parentElement?.children;
+                      if (!stars) return;
+                      for (let i = 0; i < stars.length; i++) {
+                        if (i < rating) stars[i].classList.add('text-amber-400');
+                        else stars[i].classList.remove('text-amber-400', 'scale-110');
+                      }
+                    }}
+                    className={cn(
+                      "transition-all duration-200 p-1 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                      rating >= star ? "text-amber-400 scale-110" : "text-slate-200"
+                    )}
+                  >
+                    <Star className="h-9 w-9 fill-current" />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="headline">Resumo da avaliação</Label>
-            <Input
-              id="headline"
-              placeholder="Ex: Excelente inversor, muito silencioso"
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="comment">Relato detalhado <span className="text-red-500">*</span></Label>
-            <Textarea
-              id="comment"
-              placeholder="Conte mais sobre a instalação, eficiência, suporte do fabricante..."
-              className="min-h-[100px] resize-y"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="pros" className="text-emerald-700">Prós (separados por vírgula)</Label>
+            <div className="grid gap-3">
+              <Label htmlFor="headline" className="text-sm font-semibold text-slate-700">Resumo da avaliação</Label>
               <Input
-                id="pros"
-                placeholder="Ex: Silencioso, App bom"
-                value={pros}
-                onChange={(e) => setPros(e.target.value)}
+                id="headline"
+                placeholder="Ex: Excelente inversor, muito silencioso"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                disabled={isSubmitting}
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid gap-3">
+              <Label htmlFor="comment" className="text-sm font-semibold text-slate-700">Relato detalhado <span className="text-red-500">*</span></Label>
+              <Textarea
+                id="comment"
+                placeholder="Conte mais sobre a instalação, eficiência, suporte do fabricante..."
+                className="min-h-[120px] resize-y p-3"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
                 disabled={isSubmitting}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="cons" className="text-red-700">Contras (separados por vírgula)</Label>
-              <Input
-                id="cons"
-                placeholder="Ex: Suporte lento"
-                value={cons}
-                onChange={(e) => setCons(e.target.value)}
-                disabled={isSubmitting}
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="grid gap-3">
+                <Label htmlFor="pros" className="text-sm font-semibold text-emerald-700">Prós (separados por vírgula)</Label>
+                <Input
+                  id="pros"
+                  placeholder="Ex: Silencioso, App bom"
+                  value={pros}
+                  onChange={(e) => setPros(e.target.value)}
+                  disabled={isSubmitting}
+                  className="h-11 border-emerald-200 focus-visible:ring-emerald-500"
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="cons" className="text-sm font-semibold text-red-700">Contras (separados por vírgula)</Label>
+                <Input
+                  id="cons"
+                  placeholder="Ex: Suporte lento"
+                  value={cons}
+                  onChange={(e) => setCons(e.target.value)}
+                  disabled={isSubmitting}
+                  className="h-11 border-red-200 focus-visible:ring-red-500"
+                />
+              </div>
             </div>
+
+            {submitError && (
+              <div className="text-sm font-medium text-red-600 bg-red-50 p-4 rounded-md border border-red-100">
+                {submitError}
+              </div>
+            )}
           </div>
 
-          {submitError && (
-            <div className="text-sm font-medium text-red-600 bg-red-50 p-3 rounded-md">
-              {submitError}
-            </div>
-          )}
-
-          <div className="pt-4 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <DialogFooter className="pt-4 mt-2 border-t border-slate-100">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting} className="sm:mr-2">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || !user} className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" disabled={isSubmitting || !user} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Enviar Avaliação
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
