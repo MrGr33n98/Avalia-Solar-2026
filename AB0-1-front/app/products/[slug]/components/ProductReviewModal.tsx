@@ -65,6 +65,8 @@ export function ProductReviewModal({ isOpen, onClose, product }: ProductReviewMo
     try {
       const reviewPayload = {
         product_id: product.id,
+        category_id: product.category_id || product.category?.id,
+        company_id: product.company_id || product.company?.id,
         rating,
         headline: headline.trim(),
         comment: comment.trim(),
