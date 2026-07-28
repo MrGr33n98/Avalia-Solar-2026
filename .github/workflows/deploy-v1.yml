@@ -414,9 +414,11 @@ jobs:
             wait_for_health db 60
             wait_for_health redis 60
 
-            WORKER_SERVICE="${WORKER_SERVICE:-worker}"
+            # Variáveis do GitHub podem carregar CR/LF ou espaços residuais.
+            # Sem normalização, `grep -x` falha mesmo com `worker` listado pelo Compose.
+            WORKER_SERVICE="$(printf '%s' "${WORKER_SERVICE:-worker}" | tr -d '\r\n' | xargs)"
             echo "?? Verificando existencia do servico de worker: $WORKER_SERVICE"
-            if ! docker compose config --services | grep -qx "$WORKER_SERVICE"; then
+            if ! docker compose config --services | tr -d '\r' | grep -Fqx -- "$WORKER_SERVICE"; then
               echo "!! ERRO: servico '$WORKER_SERVICE' nao existe no docker compose."
               echo "Servicos disponiveis:"
               docker compose config --services
