@@ -38,12 +38,62 @@ export default function CompanyProfileTabs({
     [categories]
   );
 
+  // Mobile begins with the same four actions shown in the product reference.
+  // Extra entitlements remain reachable by swiping the tab rail horizontally.
+  const mobileTabs = useMemo(() => {
+    const primaryIds = ['overview', 'products', 'reviews', 'contact'];
+    const primary = primaryIds
+      .map((id) => tabs.find((tab) => tab.id === id))
+      .filter((tab): tab is (typeof tabs)[number] => Boolean(tab));
+    const extra = tabs.filter((tab) => !primaryIds.includes(tab.id));
+
+    return [...primary, ...extra];
+  }, [tabs]);
+
   return (
-    <div
-      id="company-profile-tabs"
-      className="relative z-30 mt-5 w-full border-b border-slate-200 bg-transparent"
-    >
-      <div className="w-full overflow-x-auto md:overflow-visible">
+    <>
+      <div
+        id="company-profile-tabs"
+        className="relative z-30 mt-5 w-full overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] md:hidden"
+      >
+        <nav aria-label="Seções do perfil da empresa">
+          <div className="flex min-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {mobileTabs.map((tab, index) => {
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => onTabChange(tab.id)}
+                  className={cn(
+                    'relative flex h-[100px] basis-1/4 shrink-0 snap-start flex-col items-center justify-center gap-2 px-1 text-center transition-colors',
+                    index > 0 && 'border-l border-slate-100',
+                    isActive
+                      ? 'text-blue-600'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                  )}
+                >
+                  <tab.icon className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span className="max-w-[82px] text-[11px] font-semibold leading-[1.2]">
+                    {tab.label}
+                  </span>
+                  {isActive ? (
+                    <span
+                      className="absolute bottom-0 h-[3px] w-[62%] rounded-t-full bg-blue-600"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
+      <div className="relative z-30 mt-5 hidden w-full border-b border-slate-200 bg-transparent md:block">
+        <div className="w-full overflow-x-auto md:overflow-visible">
         <nav aria-label="Seções do perfil da empresa">
           <div className="flex h-auto min-w-full justify-start gap-6 text-slate-500">
             {tabs.map((tab) => {
@@ -107,7 +157,8 @@ export default function CompanyProfileTabs({
           </div>
         </nav>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
