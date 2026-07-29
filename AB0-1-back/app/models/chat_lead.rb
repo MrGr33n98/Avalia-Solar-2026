@@ -20,7 +20,7 @@ class ChatLead < ApplicationRecord
   validates :lead_temperature, inclusion: { in: TEMPERATURES }
 
   before_validation :sanitize_contact_fields
-  before_save :calculate_score
+  before_validation :calculate_score, if: :scoring_inputs_changed?
   after_commit :notify_slack_new_lead, on: :create
   after_commit :log_status_change_activity, on: :update, if: :saved_change_to_sales_status?
 
@@ -67,6 +67,22 @@ class ChatLead < ApplicationRecord
     end
   end
 
+  SCORING_ATTRIBUTES = %w[
+    vertical
+    city
+    state
+    name
+    phone
+    consent_given
+    intent
+    metadata
+    monthly_bill
+    urgency
+    decision_timeline
+    property_type
+    vehicle_count
+  ].freeze
+
   private
 
   def sanitize_contact_fields
@@ -75,11 +91,22 @@ class ChatLead < ApplicationRecord
     self.phone = phone.to_s.gsub(/\D/, '') if phone.present?
   end
 
-  def calculate_score
-    self.lead_score = Chat::LeadScoringService.calculate(self)
-    self.lead_temperature = Chat::LeadScoringService.temperature_for(lead_score)
+  def scoring_inputs_changed?
+    new_record? ||
+      SCORING_ATTRIBUTES.any? do |attribute|
+        will_save_change_to_attribute?(attribute)
+      end
   end
 
+  def calculate_score
+    calculated_score = Chat::LeadScoringService.calculate(self)
+    calculated_temperature = Chat::LeadScoringService.temperature_for(calculated_score)
+
+    self.lead_score = calculated_score
+    self.lead_temperature = Chat::LeadTemperature.normalize(calculated_temperature)
+  end
+
+  # rubocop:disable Metrics/CyclomaticComplexity
   def notify_slack_new_lead
     SlackNotificationService.notify(
       "🤖 *Novo Lead via Chat IA!* #{temperature_emoji}",
@@ -102,6 +129,7 @@ class ChatLead < ApplicationRecord
   rescue StandardError => e
     Rails.logger.warn("[ChatLead] Slack notification failed: #{e.message}")
   end
+  # rubocop:enable Metrics/CyclomaticComplexity
 
   def log_status_change_activity
     old_status, new_status = saved_change_to_sales_status
