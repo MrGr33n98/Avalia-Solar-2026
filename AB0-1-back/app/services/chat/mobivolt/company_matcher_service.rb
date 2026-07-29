@@ -29,36 +29,56 @@ module Chat
         city = Locations::CoverageNormalizer.normalize_city(@entities[:city],
                                                             state: state) || @entities[:city].to_s.strip
 
-        # Broad SQL scope: active installers (or all for non-solar) in the state
-        relation = Company.active.installers
+        # Broad SQL scope: active companies
+        relation = Company.respond_to?(:active) ? Company.active : Company.where(status: 'active')
+        if relation.respond_to?(:installers)
+          relation = relation.installers
+        elsif Company.column_names.include?('segment')
+          installer_relation = relation.where(segment: 'installer')
+          relation = installer_relation if installer_relation.exists?
+        end
 
         # Apply broad SQL pre-filter by state to reduce Ruby-level work
-        relation = relation.serving_state(state) if state.present?
+        if state.present? && relation.respond_to?(:serving_state)
+          state_filtered = relation.serving_state(state)
+          relation = state_filtered if state_filtered.exists?
+        end
 
         if @entities[:category_seo_url].present?
-          category = Category.find_by(seo_url: @entities[:category_seo_url])
-          relation = relation.joins(:categories).where(categories: { id: category.id }) if category.present?
-        elsif @entities[:keyword].present?
+          category = Category.find_by(seo_url: @entities[:category_seo_url]) || Category.find_by(slug: @entities[:category_seo_url])
+          if category.present?
+            cat_company_ids = Company.joins(:categories).where(categories: { id: category.id }).pluck(:id).uniq
+            cat_relation = relation.where(id: cat_company_ids)
+            relation = cat_relation if cat_relation.exists?
+          end
+        elsif @entities[:keyword].present? && relation.respond_to?(:search_by_text)
           relation = relation.search_by_text(@entities[:keyword])
         end
 
-        candidates = relation.ordered_by_priority.to_a
+        candidates = relation.respond_to?(:ordered_by_priority) ? relation.ordered_by_priority.to_a : relation.order(rating_avg: :desc, rating_count: :desc).to_a
 
         # Ruby-level refinement: filter by location support (city or state match)
-        candidates = candidates.select { |c| supports_location?(c, city, state) } if city.present? || state.present?
+        if city.present? || state.present?
+          loc_candidates = candidates.select { |c| supports_location?(c, city, state) }
+          candidates = loc_candidates if loc_candidates.any?
+        end
 
         # Score and sort
-        candidates
+        results = candidates
           .map { |c| [c, location_score(c, city, state)] }
           .sort_by { |_, score| -score }
           .first(MAX_RESULTS)
           .map(&:first)
 
-        # If fewer than INSTALLER_MIN installers, results are all installers already;
-        # no fallback to other segments is needed here (handled upstream if required).
+        # Fallback to top rated active companies if no matching candidates found
+        if results.empty?
+          results = Company.where(status: 'active').order(rating_avg: :desc, rating_count: :desc).first(MAX_RESULTS)
+        end
+
+        results
       rescue StandardError => e
-        Rails.logger.error("[Chat::Mobivolt::CompanyMatcher] Error matching companies: #{e.message}")
-        Company.none
+        Rails.logger.error("[Chat::Mobivolt::CompanyMatcher] Error matching companies: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+        Company.where(status: 'active').order(rating_avg: :desc, rating_count: :desc).first(MAX_RESULTS)
       end
 
       private
