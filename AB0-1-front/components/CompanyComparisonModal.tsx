@@ -17,11 +17,13 @@ import {
   X, 
   ShieldCheck,
   Building2,
+  Minimize2,
 } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { getFullImageUrl } from '@/utils/image';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 
 const getCoverageCount = (company: Company) => {
@@ -68,13 +70,38 @@ export default function CompanyComparisonModal({
   }, companies[0])?.id;
 
   useEffect(() => {
-    if (isOpen) {
-      track('comparison_modal_opened', { companies_count: companies.length });
+    if (isOpen && companies.length > 0) {
+      track('comparison_modal_opened', { 
+        companies_count: companies.length,
+        company_ids: companies.map(c => c.id),
+        company_names: companies.map(c => c.name)
+      });
+
+      // Dispara sinal de intenção de compra (Buyer Intent) para cada empresa comparada
+      companies.forEach(company => {
+        sendIntentSignal({
+          company_id: company.id,
+          signal_type: companies.length >= 3 ? 'comparison_third_added' : 'comparison_view',
+          signal_category: 'research_intent',
+          element_type: 'comparison_modal',
+          metadata: {
+            compared_with_ids: companies.filter(c => c.id !== company.id).map(c => c.id),
+            total_compared: companies.length
+          }
+        });
+      });
     }
-  }, [isOpen, companies.length]);
+  }, [isOpen, companies]);
 
   const handleQuoteClick = (companyId: number) => {
     track('comparison_modal_quote_click', { company_id: companyId });
+    sendIntentSignal({
+      company_id: companyId,
+      signal_type: 'contact_info_reveal',
+      signal_category: 'contact_intent',
+      element_type: 'comparison_quote_button',
+      metadata: { source: 'comparison-modal' }
+    });
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-modal', type: 'quick' });
   };
 
@@ -87,9 +114,21 @@ export default function CompanyComparisonModal({
         
         {/* Swiss Design Header */}
         <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-slate-200 bg-white px-3 py-3 pr-12 md:px-8 md:py-4 md:pr-14">
-          <div className="text-left md:mb-3 md:hidden">
-            <DialogTitle className="text-sm font-semibold text-slate-950">Comparar empresas</DialogTitle>
-            <DialogDescription className="mt-1 text-xs text-slate-500">{companies.length} de 4 empresas selecionadas</DialogDescription>
+          <div className="flex items-center justify-between md:hidden mb-2">
+            <div className="text-left">
+              <DialogTitle className="text-sm font-semibold text-slate-950">Comparar empresas</DialogTitle>
+              <DialogDescription className="mt-0.5 text-xs text-slate-500">{companies.length} de 4 empresas selecionadas</DialogDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 rounded-lg border border-blue-200 bg-blue-50 px-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-all"
+              title="Minimizar modal para o balão flutuante"
+            >
+              <Minimize2 className="h-3.5 w-3.5 mr-1 stroke-[2.5]" />
+              Minimizar
+            </Button>
           </div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="hidden flex-wrap items-center gap-3 md:flex">
@@ -143,15 +182,28 @@ export default function CompanyComparisonModal({
               )}
             </div>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onClearAll}
-              className="hidden h-9 w-full rounded-none border border-slate-200 bg-white px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-600 transition-all hover:bg-red-50 hover:text-red-600 md:inline-flex md:w-auto"
-            >
-              <X className="h-3.5 w-3.5 mr-2" />
-              Limpar Análise
-            </Button>
+            <div className="hidden md:flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose}
+                className="h-9 rounded-lg border border-blue-200 bg-blue-50/80 px-3.5 text-xs font-bold text-blue-700 transition-all hover:bg-blue-100 hover:text-blue-800 shadow-xs"
+                title="Minimizar para o balão flutuante"
+              >
+                <Minimize2 className="h-4 w-4 mr-1.5 stroke-[2.5]" />
+                Minimizar
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClearAll}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                Limpar Análise
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
