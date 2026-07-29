@@ -58,7 +58,7 @@ class SlackNotificationService
       {
         color: '#ffcc00',
         fields: [
-          { title: 'Empresa',    value: review.company.name,          short: true },
+          { title: 'Empresa',    value: review.company&.name || 'Geral (Produto/Plataforma)', short: true },
           { title: 'Usuário',    value: review.user&.name || review.metadata['reviewer_name'] || 'Cliente', short: true },
           { title: 'Nota',       value: "#{stars} (#{review.rating}/5)", short: true },
           { title: 'Status',     value: '⏳ Pendente',                 short: true },
