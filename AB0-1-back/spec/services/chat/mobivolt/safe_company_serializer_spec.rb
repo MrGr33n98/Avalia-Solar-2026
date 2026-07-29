@@ -39,6 +39,34 @@ RSpec.describe Chat::Mobivolt::SafeCompanySerializer, type: :service do
       expect(serialized[:nichos]).to eq(['Baterias e Off-Grid'])
     end
 
+    it 'retorna false ou nil adequadamente para flags booleanas' do
+      # Teste com valores explicitamente falsos
+      false_company = build(:company,
+        sponsored: false,
+        verified: false,
+        financing_enabled: false,
+        post_sales_support: false
+      )
+      false_serialized = described_class.serialize(false_company)
+      expect(false_serialized[:patrocinada]).to be(false)
+      expect(false_serialized[:verificada]).to be(false)
+      expect(false_serialized[:has_financing]).to be(false)
+      expect(false_serialized[:post_sales_support]).to be(false)
+
+      # Teste com valores nil
+      nil_company = build(:company,
+        sponsored: nil,
+        verified: nil,
+        financing_enabled: nil,
+        post_sales_support: nil
+      )
+      nil_serialized = described_class.serialize(nil_company)
+      expect(nil_serialized[:patrocinada]).to be(false)
+      expect(nil_serialized[:verificada]).to be(false)
+      expect(nil_serialized[:has_financing]).to be(false)
+      expect(nil_serialized[:post_sales_support]).to be(false)
+    end
+
     it 'não inclui chaves ou campos privados sensíveis de LGPD/Negócio' do
       expect(serialized.keys).not_to include(:cnpj)
       expect(serialized.keys).not_to include(:api_key)
