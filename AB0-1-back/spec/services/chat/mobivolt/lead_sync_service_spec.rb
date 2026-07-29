@@ -52,16 +52,16 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
   describe '.sync!' do
     context 'quando o consentimento da LGPD não foi dado' do
       it 'não cria o lead principal e retorna nil' do
-        expect {
+        expect do
           result = described_class.sync!(chat_lead_without_consent)
           expect(result).to be_nil
-        }.not_to change(Lead, :count)
+        end.not_to change(Lead, :count)
       end
     end
 
     context 'quando o lead é válido' do
       it 'sincroniza o ChatLead criando um Lead principal com source mobivolt_ai' do
-        expect {
+        expect do
           lead = described_class.sync!(chat_lead_valid)
           expect(lead).to be_a(Lead)
           expect(lead.name).to eq('João Silva')
@@ -77,7 +77,7 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
             'need' => 'new_installation',
             'profile' => 'residential'
           )
-        }.to change(Lead, :count).by(1)
+        end.to change(Lead, :count).by(1)
       end
 
       it 'rastreia o evento no Posthog' do
@@ -96,22 +96,22 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
         lead1 = described_class.sync!(chat_lead_valid)
 
         # Tenta sincronizar novamente o mesmo chat lead
-        expect {
+        expect do
           lead2 = described_class.sync!(chat_lead_valid)
           expect(lead2.id).to eq(lead1.id)
-        }.not_to change(Lead, :count)
+        end.not_to change(Lead, :count)
       end
 
       it 'permite criar um novo lead se passar da janela de 5 minutos' do
         lead1 = described_class.sync!(chat_lead_valid)
-        
+
         # Retrocede a data de criação do Lead criado
         lead1.update_columns(created_at: 10.minutes.ago)
 
         # Nova tentativa de sync
-        expect {
+        expect do
           described_class.sync!(chat_lead_valid)
-        }.to change(Lead, :count).by(1)
+        end.to change(Lead, :count).by(1)
       end
     end
 
@@ -122,11 +122,12 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
 
       it 'não apaga o ChatLead original e propaga o erro' do
         lead_to_sync = chat_lead_valid # Avalia aqui para criar no banco antes do expect
-        expect {
-          expect {
+        # ChatLead não é apagado
+        expect do
+          expect do
             described_class.sync!(lead_to_sync)
-          }.to raise_error(ActiveRecord::RecordInvalid)
-        }.not_to change(ChatLead, :count) # ChatLead não é apagado
+          end.to raise_error(ActiveRecord::RecordInvalid)
+        end.not_to change(ChatLead, :count)
       end
     end
   end
