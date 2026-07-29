@@ -66,8 +66,8 @@ export const WIDGET_POSITION_CLASSES = {
   chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
   mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
   
-  // Comparison dock sits on the left on desktop, and above chat on mobile
-  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_96px)] left-4 md:bottom-6 md:left-6 md:right-auto',
+  // Comparison dock sits on the right, above the chat on both mobile and desktop
+  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_80px)] right-4 md:bottom-24 md:right-6 md:left-auto',
 } as const;
 
 /**
