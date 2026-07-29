@@ -42,13 +42,28 @@ class CompanyCardSerializer < ActiveModel::Serializer
     nps_avg = nil
     recommendation_rate = nil
     
+    total_recommendations = 0
+    total_recommendation_responses = 0
+
     if nps_responses > 0
       promoters = object.reviews.published.where(nps_score: 9..10).count
       detractors = object.reviews.published.where(nps_score: 0..6).count
       nps_avg = (((promoters - detractors).to_f / nps_responses) * 100).round(1)
       
       recommenders = object.reviews.published.where(nps_score: 7..10).count
-      recommendation_rate = ((recommenders.to_f / nps_responses) * 100).round(1)
+      total_recommendations += recommenders
+      total_recommendation_responses += nps_responses
+    end
+
+    would_recommend_true_count = object.reviews.published.where("metadata->>'would_recommend' = ?", 'true').count
+    would_recommend_false_count = object.reviews.published.where("metadata->>'would_recommend' = ?", 'false').count
+    total_would_recommend_responses = would_recommend_true_count + would_recommend_false_count
+
+    total_recommendations += would_recommend_true_count
+    total_recommendation_responses += total_would_recommend_responses
+
+    if total_recommendation_responses > 0
+      recommendation_rate = ((total_recommendations.to_f / total_recommendation_responses) * 100).round(1)
     end
 
     # Sentiment calculations based on review scores distribution (4-5: positive, 3: neutral, 1-2: negative)

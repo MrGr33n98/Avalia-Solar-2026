@@ -1004,7 +1004,7 @@ export default function CompanyCard({
           className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 px-3 inline-flex items-center gap-1"
           onClick={(e) => {
             e.stopPropagation();
-            router.push(companyReviewPath);
+            router.push(`${companyPath}?tab=reviews`);
           }}
         >
           Ver avaliações

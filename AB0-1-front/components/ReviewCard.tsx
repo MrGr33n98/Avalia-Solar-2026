@@ -161,9 +161,13 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   const displayName = isCompany
     ? companyObj?.name || (typeof review.company === 'string' ? review.company : `Empresa ${review.company_id}`)
     : (review.user?.name || `Usuário ${review.user_id}`);
-  const displayImage = isCompany
+  let displayImage = isCompany
     ? companyObj?.logo_url
     : review.user?.avatar_url;
+
+  if (!displayImage && !isCompany && displayName) {
+    displayImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff&size=128`;
+  }
 
   return (
     <>

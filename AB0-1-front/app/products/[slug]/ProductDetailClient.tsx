@@ -910,13 +910,15 @@ export default function ProductDetailClient({
                     const itemImage = item.image_url || item.image_urls?.[0] || null;
 
                     return (
-                      <Link
+                      <div
                         key={item.id}
-                        href={itemPath}
-                        onClick={() => trackRelatedProduct(item.id, index)}
-                        className={cn(surfaceClass, 'overflow-hidden transition-colors hover:border-[var(--color-border-secondary)]')}
+                        className={cn(surfaceClass, 'overflow-hidden transition-colors hover:border-[var(--color-border-secondary)] flex flex-col')}
                       >
-                        <div className="relative aspect-[4/3] bg-[var(--color-background-secondary)]">
+                        <Link 
+                          href={itemPath}
+                          onClick={() => trackRelatedProduct(item.id, index)}
+                          className="relative aspect-[4/3] bg-[var(--color-background-secondary)] block"
+                        >
                           {itemImage ? (
                             <Image
                               src={itemImage}
@@ -930,21 +932,26 @@ export default function ProductDetailClient({
                               Imagem indisponível
                             </div>
                           )}
-                        </div>
-                        <div className="space-y-3 p-4">
-                          <div className="space-y-2">
-                            <p className="text-[15px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
-                              {item.name}
-                            </p>
-                            <p className={labelClass}>
+                        </Link>
+                        <div className="space-y-3 p-4 flex-1 flex flex-col">
+                          <div className="space-y-2 flex-1">
+                            <Link href={itemPath} onClick={() => trackRelatedProduct(item.id, index)} className="block group">
+                              <p className="text-[15px] font-medium leading-[1.5] text-[var(--color-text-primary)] group-hover:text-blue-600 transition-colors">
+                                {item.name}
+                              </p>
+                            </Link>
+                            <Link 
+                              href={item.categories?.[0] ? buildCategoryPath(item.categories[0].seo_url || item.categories[0].slug || '', item.categories[0].id) : categoryPath}
+                              className={cn(labelClass, "hover:text-blue-600 transition-colors inline-block")}
+                            >
                               {item.categories?.[0]?.name || item.category?.name || categoryName}
-                            </p>
+                            </Link>
                           </div>
                           <p className="text-[15px] font-medium text-[#f5a623]">
                             {itemPriceAvailable ? formatCurrency(itemPrice) : 'Consultar preço'}
                           </p>
                         </div>
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>

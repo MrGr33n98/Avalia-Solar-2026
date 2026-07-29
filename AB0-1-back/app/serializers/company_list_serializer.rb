@@ -82,7 +82,15 @@ class CompanyListSerializer < ActiveModel::Serializer
 
     recommendation_rate = aggregate&.recommendation_rate&.to_f
     if recommendation_rate.nil? && rating_count > 0
-      recommendation_rate = total > 0 ? ((positive_count.to_f / total) * 100).round : (rating_avg >= 3.5 ? 100 : 80)
+      would_recommend_true = object.reviews.published.where("metadata->>'would_recommend' = ?", 'true').count
+      would_recommend_false = object.reviews.published.where("metadata->>'would_recommend' = ?", 'false').count
+      total_would_recommend = would_recommend_true + would_recommend_false
+      
+      if total_would_recommend > 0
+        recommendation_rate = ((would_recommend_true.to_f / total_would_recommend) * 100).round
+      else
+        recommendation_rate = total > 0 ? ((positive_count.to_f / total) * 100).round : (rating_avg >= 3.5 ? 100 : 80)
+      end
     end
 
     # Load up to 3 recent reviewer avatars
@@ -109,8 +117,8 @@ class CompanyListSerializer < ActiveModel::Serializer
     {
       rating_avg:          rating_avg,
       rating_count:        rating_count,
-      nps_score:           nil,
-      nps_responses:       0,
+      nps_score:           nps_avg,
+      nps_responses:       nps_responses,
       recommendation_rate: recommendation_rate,
       sentiment:           sentiment,
       recent_reviewer_avatars: recent_reviewer_avatars
