@@ -11,11 +11,13 @@ import {
   Package,
   Search,
   SlidersHorizontal,
+  Star,
   Tag,
   X,
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import CompanyCard from '@/components/CompanyCard';
+import ReviewCard from '@/components/ReviewCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
 import {
   defaultSearchFilters,
@@ -394,8 +396,11 @@ function SearchPageContent() {
 
   const showProducts = activeTab === 'all' || activeTab === 'products';
   const showCompanies = activeTab === 'all' || activeTab === 'companies';
+  const showReviews = activeTab === 'all' || activeTab === 'reviews';
   const visibleCount =
-    (showProducts ? filteredProducts.length : 0) + (showCompanies ? filteredCompanies.length : 0);
+    (showProducts ? filteredProducts.length : 0) +
+    (showCompanies ? filteredCompanies.length : 0) +
+    (showReviews ? (results.reviews?.length || 0) : 0);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -523,12 +528,7 @@ function SearchPageContent() {
 
             <div className="mt-7 flex flex-col gap-7 lg:grid lg:grid-cols-[minmax(0,1fr)_280px]">
               <div className="w-full min-w-0">
-                {activeTab === 'reviews' ? (
-                  <SearchEmptyState
-                    title="Nenhuma avaliação encontrada"
-                    description="A busca atual não retornou avaliações publicadas. Explore empresas para consultar suas avaliações verificadas."
-                  />
-                ) : visibleCount === 0 ? (
+                {visibleCount === 0 ? (
                   <SearchEmptyState onReset={resetFilters} />
                 ) : (
                   <div className="space-y-10">
@@ -638,6 +638,30 @@ function SearchPageContent() {
                                 )
                               }
                             />
+                          ))}
+                        </div>
+                      </ResultSection>
+                    ) : null}
+
+                    {showReviews && results.reviews && results.reviews.length > 0 ? (
+                      <ResultSection
+                        icon={<Star className="h-5 w-5 text-amber-500 fill-amber-400" />}
+                        title="Avaliações"
+                        count={results.reviews.length}
+                        action={
+                          activeTab === 'all' ? (
+                            <button
+                              onClick={() => handleTabChange('reviews')}
+                              className="text-sm font-bold text-blue-700"
+                            >
+                              Ver todas as avaliações
+                            </button>
+                          ) : undefined
+                        }
+                      >
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          {results.reviews.map((review) => (
+                            <ReviewCard key={review.id} review={review} />
                           ))}
                         </div>
                       </ResultSection>

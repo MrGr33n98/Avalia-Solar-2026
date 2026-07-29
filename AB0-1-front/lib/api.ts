@@ -823,18 +823,7 @@ export interface SearchAllResponse {
   products: Product[];
   categories: Category[];
   articles: Article[];
-  reviews?: Array<{
-    id: number;
-    company_id?: number | null;
-    category_id?: number | null;
-    rating?: number | null;
-    comment?: string | null;
-    headline?: string | null;
-    created_at?: string;
-    updated_at?: string;
-    display_reviewer_name?: string;
-    anonymized_reviewer_name?: string;
-  }>;
+  reviews?: Review[];
   meta?: {
     total_count?: number | Record<string, number>;
     page?: number;
