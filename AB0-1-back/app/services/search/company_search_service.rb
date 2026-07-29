@@ -421,16 +421,17 @@ module Search
 
       scope = scope.where('rating_avg >= ?', @min_rating.to_f) if @min_rating.present?
 
-      scope = apply_postgresql_sort(scope)
-
       # Computa facetas baseadas no escopo filtrado antes da paginação
       facets = compute_postgresql_facets(scope)
 
-      total_count = scope.count
+      company_ids = scope.unscope(:order).pluck('companies.id').uniq
+      total_count = company_ids.size
       total_pages = (total_count.to_f / @limit).ceil
       total_pages = 1 if total_pages.zero?
 
-      nodes = scope.offset((@page - 1) * @limit).limit(@limit).to_a
+      paged_ids = company_ids.slice((@page - 1) * @limit, @limit) || []
+      paged_scope = Company.active.includes(:categories, badges: { image_attachment: :blob }).where(id: paged_ids)
+      nodes = apply_postgresql_sort(paged_scope).to_a
 
       # Calcula distance_km via Haversine em Ruby quando busca por raio
       if has_geo_filter? && @latitude.present? && @longitude.present?
