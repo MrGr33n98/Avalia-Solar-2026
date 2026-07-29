@@ -550,6 +550,8 @@ export interface Product {
   updated_at: string;
   image_url?: string;
   image_urls?: string[];
+  cover_url?: string;
+  banner_url?: string;
   sku?: string;
   stock?: number | null;
   company?: Partial<
@@ -559,6 +561,7 @@ export interface Product {
       | 'name'
       | 'slug'
       | 'logo_url'
+      | 'banner_url'
       | 'city'
       | 'state'
       | 'verified'

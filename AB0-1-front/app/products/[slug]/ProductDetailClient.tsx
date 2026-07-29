@@ -536,6 +536,20 @@ export default function ProductDetailClient({
         </div>
       </div>
 
+      {/* Product Cover/Banner */}
+      {(product.cover_url || product.banner_url || product.company?.banner_url) && (
+        <div className="mx-auto max-w-[1335px] px-5 pt-4">
+          <div className="relative w-full h-[230px] overflow-hidden rounded-xl border border-[var(--color-border-tertiary)] bg-slate-100">
+            <Image
+              src={product.cover_url || product.banner_url || product.company?.banner_url || ''}
+              alt={`${product.name} cover`}
+              fill
+              className="object-cover"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-[1280px] px-5 py-4 pb-24 lg:pb-4">
         <div className="mb-4">
           <Link
@@ -735,7 +749,9 @@ export default function ProductDetailClient({
                           ) : (
                             <p className={labelClass}>Ainda não há compatibilidades confirmadas para este produto.</p>
                           )}
+                        </div>
                       </div>
+
                     <div 
                       ref={(node) => {
                         reviewsSectionRef.current = node;
