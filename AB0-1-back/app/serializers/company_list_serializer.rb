@@ -53,6 +53,9 @@ class CompanyListSerializer < ActiveModel::Serializer
                   object.review_aggregates.find_by(category_id: nil)
                 end
 
+    nps_avg       = aggregate&.try(:nps_score)&.to_f
+    nps_responses = aggregate&.try(:nps_count)&.to_i || 0
+
     dist           = aggregate&.scores_distribution || {}
     total          = dist.values.map(&:to_i).sum
     positive_count = dist['4'].to_i + dist['5'].to_i
