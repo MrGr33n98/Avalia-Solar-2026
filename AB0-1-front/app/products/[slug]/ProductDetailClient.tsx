@@ -163,9 +163,11 @@ function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
 function SemanticBadge({
   children,
   tone = 'neutral',
+  className,
 }: {
   children: ReactNode;
   tone?: 'neutral' | 'success' | 'danger';
+  className?: string;
 }) {
   const toneClass =
     tone === 'success'
@@ -178,7 +180,8 @@ function SemanticBadge({
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-[10px] py-[3px] text-[11px] font-medium leading-none',
-        toneClass
+        toneClass,
+        className
       )}
     >
       {children}
@@ -194,9 +197,9 @@ function AvatarBadge({
   logoUrl?: string | null;
 }) {
   return (
-    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--color-background-info)] text-[13px] font-medium text-[var(--color-text-info)]">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-background-info)] text-[13px] font-medium text-[var(--color-text-info)]">
       {logoUrl ? (
-        <Image src={logoUrl} alt={name || 'Empresa'} width={40} height={40} className="h-10 w-10 object-cover" />
+        <img src={logoUrl} alt={name || 'Usuário'} width={40} height={40} className="h-10 w-10 object-cover" />
       ) : (
         <span>{getInitials(name)}</span>
       )}
@@ -596,7 +599,21 @@ export default function ProductDetailClient({
                       {isActive ? 'Disponível' : 'Inativo'}
                     </SemanticBadge>
                     {product.sku ? <span onCopy={onCopySku}><SemanticBadge>SKU {product.sku}</SemanticBadge></span> : null}
-                    {category ? <SemanticBadge>{category.name}</SemanticBadge> : null}
+                    {product.categories && product.categories.length > 0 ? (
+                      product.categories.map((cat) => (
+                        <Link key={cat.id} href={buildCategoryPath(cat.seo_url || cat.slug || '', cat.id)}>
+                          <SemanticBadge className="hover:bg-[var(--color-border-secondary)] transition-colors cursor-pointer">
+                            {cat.name}
+                          </SemanticBadge>
+                        </Link>
+                      ))
+                    ) : category ? (
+                      <Link href={categoryPath}>
+                        <SemanticBadge className="hover:bg-[var(--color-border-secondary)] transition-colors cursor-pointer">
+                          {category.name}
+                        </SemanticBadge>
+                      </Link>
+                    ) : null}
                   </div>
 
                   <div className="space-y-3">
