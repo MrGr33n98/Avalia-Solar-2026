@@ -565,14 +565,26 @@ module Api
           @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
 
           if params[:category_id].present?
-            @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
+            cat_param = params[:category_id].to_s.strip
+            target_cat_id = if cat_param.match?(/^\d+$/)
+                              cat_param.to_i
+                            else
+                              ::Category.find_by(slug: cat_param)&.id || ::Category.find_by(seo_url: cat_param)&.id
+                            end
+            if target_cat_id.present?
+              cat_company_ids = ::Company.joins(:categories).where(categories: { id: target_cat_id }).pluck(:id).uniq
+              @companies = @companies.where(id: cat_company_ids)
+            end
           end
 
           if params[:category_ids].present?
             category_ids = Array(params[:category_ids]).flat_map do |v|
               v.to_s.split(',')
             end.map(&:to_i).select(&:positive?)
-            @companies = @companies.joins(:categories).where(categories: { id: category_ids }) if category_ids.any?
+            if category_ids.any?
+              cats_company_ids = ::Company.joins(:categories).where(categories: { id: category_ids }).pluck(:id).uniq
+              @companies = @companies.where(id: cats_company_ids)
+            end
           end
 
           # Apply manual limit only if not using pagination
