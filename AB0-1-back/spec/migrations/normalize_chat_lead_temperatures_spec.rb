@@ -7,7 +7,7 @@ RSpec.describe NormalizeChatLeadTemperatures, type: :migration do
   subject(:migration) { described_class.new }
 
   def run_migration
-    migration.version = 2026_08_02_100003
+    migration.version = 20260802100003 # rubocop:disable Style/NumericLiterals
     migration.exec_migration(ActiveRecord::Base.connection, :up)
   end
 
