@@ -663,7 +663,6 @@ export default function ProductDetailClient({
                 {[
                   { id: 'description', label: 'Descrição' },
                   { id: 'specifications', label: 'Especificações' },
-                  { id: 'reviews', label: 'Avaliações' },
                   { id: 'projects', label: 'Projetos' },
                 ].map((tab) => {
                   const isSelected = activeTab === tab.id;
@@ -687,11 +686,10 @@ export default function ProductDetailClient({
               </div>
 
               <div className="pt-4">
-                {activeTab === 'description' || activeTab === 'reviews' ? (
+                {activeTab === 'description' ? (
                   <div className="space-y-8">
-                    {activeTab === 'description' && (
-                      <div className="space-y-4">
-                        <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-[var(--color-text-secondary)]">
+                    <div className="space-y-4">
+                      <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-[var(--color-text-secondary)]">
                           {product.description || 'Sem descrição disponível no momento.'}
                         </p>
 
@@ -737,16 +735,13 @@ export default function ProductDetailClient({
                           ) : (
                             <p className={labelClass}>Ainda não há compatibilidades confirmadas para este produto.</p>
                           )}
-                        </div>
                       </div>
-                    )}
-
                     <div 
                       ref={(node) => {
                         reviewsSectionRef.current = node;
                         if (reviewsDwellRef) reviewsDwellRef.current = node;
                       }} 
-                      className={cn("space-y-4", activeTab === 'description' ? "pt-8 border-t border-[var(--color-border-tertiary)]" : "")}
+                      className="space-y-4 pt-8 border-t border-[var(--color-border-tertiary)]"
                     >
                       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                         <div className={cn(surfaceClass, 'p-4')}>

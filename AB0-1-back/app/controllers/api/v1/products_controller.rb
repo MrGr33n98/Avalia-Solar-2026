@@ -78,7 +78,12 @@ class Api::V1::ProductsController < Api::V1::BaseController
 
     scoped_reviews = if category_id.present?
                        category_reviews = scope.where(category_id: category_id)
-                       category_reviews.exists? ? category_reviews : scope.where(category_id: nil)
+                       if category_reviews.exists?
+                         category_reviews
+                       else
+                         general_reviews = scope.where(category_id: nil)
+                         general_reviews.exists? ? general_reviews : scope
+                       end
                      else
                        scope
                      end
