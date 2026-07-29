@@ -399,18 +399,19 @@ export default function CompanyCard({
         className={cn(
           'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
           // Add extra top padding when badges are present to prevent overlap
-          hasBadges ? 'pt-6 px-4 pb-4' : 'p-4',
+          hasBadges ? 'pt-6 pb-4' : 'pt-4 pb-4',
           className
         )}
         onClick={handleCardClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className="flex items-start gap-3">
-          <div data-testid="company-logo" className="relative">
+        {/* TOP SECTION: Logo & Title */}
+        <div className="flex items-center gap-3 px-4">
+          <div data-testid="company-logo" className="relative shrink-0">
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 flex items-center gap-1.5">
             <h3 
               itemProp="name" 
               className={cn(
@@ -421,57 +422,73 @@ export default function CompanyCard({
             >
               {name}
             </h3>
-            <div 
-              itemProp="aggregateRating" 
-              itemScope 
-              itemType="https://schema.org/AggregateRating"
-              className="flex items-center gap-1.5 mt-1"
-            >
-              <meta itemProp="ratingValue" content={company.reputation.rating_avg.toString()} />
-              <meta itemProp="reviewCount" content={company.reputation.rating_count.toString()} />
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-bold text-slate-800">
-                {company.reputation.rating_avg > 0
-                  ? company.reputation.rating_avg.toFixed(1)
-                  : 'S/N'}
-              </span>
-              <span className="text-[10px] font-medium text-slate-600">
-                ({company.reputation.rating_count})
-              </span>
-            </div>
-            {company.identity.city && (
-              <span className="mt-1 block truncate text-[10px] font-medium text-slate-600">
-                {company.identity.city}, {company.identity.state}
-              </span>
+            {company.trust.verification_status === 'verified' && (
+              <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
             )}
           </div>
         </div>
 
-        <div className="mt-4">
-          {canRequestQuote ? (
-            <Button
-              size="sm"
-              className="w-full h-8 text-[11px] font-bold rounded-lg bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                openLeadModal({
-                  preferredCompanyId: id,
-                  source: 'company-card-compact',
-                  type: 'quick',
-                });
-              }}
-            >
-              Orçamento
-            </Button>
-          ) : (
-            <ReviewCompanyButton
-              company={company}
-              label="Avaliar"
-              className="h-8 w-full rounded-lg bg-blue-600 text-[11px] text-white hover:bg-blue-700"
-              iconClassName="h-3.5 w-3.5 fill-white text-white"
-              stopPropagation
-            />
-          )}
+        {/* MIDDLE SECTION: 3-Column Stats */}
+        <div className="mt-4 border-y border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
+          {/* Rating */}
+          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span>
+                {company.reputation.rating_avg > 0
+                  ? company.reputation.rating_avg.toFixed(1)
+                  : 'S/N'}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-2 leading-tight">
+              {company.reputation.rating_count > 0 ? `${company.reputation.rating_count} avaliações` : 'Sem avaliações'}
+            </span>
+          </div>
+          {/* Response Time */}
+          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
+              <Clock3Icon className="h-3 w-3 text-slate-400" />
+              <span className="truncate max-w-[50px]">{company.operations.sla_label || '24h'}</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
+              Resposta
+            </span>
+          </div>
+          {/* Projects */}
+          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
+            <div className="font-bold text-slate-800 text-xs">
+              {company.operations.delivered_projects > 0 ? company.operations.delivered_projects : 'S/N'}
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
+              Projetos
+            </span>
+          </div>
+        </div>
+
+        {/* BOTTOM SECTION: Buttons */}
+        <div className="mt-4 px-4 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCompareClick}
+            disabled={!selectedInComparison && !canAddMore}
+            className={cn(
+              'h-9 flex-1 font-semibold text-[11px] rounded-lg shadow-none justify-center px-1',
+              selectedInComparison
+                ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+            )}
+          >
+            {selectedInComparison ? '✓ Selecionada' : '+ Comparar'}
+          </Button>
+
+          <ReviewCompanyButton
+            company={company}
+            label="Avaliar essa empresa"
+            className="h-9 flex-[1.5] rounded-lg bg-blue-600 text-[11px] font-semibold text-white hover:bg-blue-700 px-1"
+            iconClassName="hidden"
+            stopPropagation
+          />
         </div>
       </Card>
     );
