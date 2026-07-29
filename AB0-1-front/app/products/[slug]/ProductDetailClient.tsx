@@ -687,173 +687,148 @@ export default function ProductDetailClient({
               </div>
 
               <div className="pt-4">
-                {activeTab === 'description' ? (
-                  <div className="space-y-4">
-                    <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-[var(--color-text-secondary)]">
-                      {product.description || 'Sem descrição disponível no momento.'}
-                    </p>
+                {activeTab === 'description' || activeTab === 'reviews' ? (
+                  <div className="space-y-8">
+                    {activeTab === 'description' && (
+                      <div className="space-y-4">
+                        <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-[var(--color-text-secondary)]">
+                          {product.description || 'Sem descrição disponível no momento.'}
+                        </p>
 
-                    <div className="space-y-3">
-                      <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Compatibilidade</p>
-                      {compatibilityCompanies.length ? (
-                        <div className="flex flex-wrap gap-2">
-                          {compatibilityCompanies.map((chip) => {
-                            const chipClass = chip.verified
-                              ? 'bg-[var(--color-background-success)] text-[var(--color-text-success)]'
-                              : 'bg-[var(--color-background-secondary)] text-[var(--color-text-secondary)]';
+                        <div className="space-y-3">
+                          <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Compatibilidade</p>
+                          {compatibilityCompanies.length ? (
+                            <div className="flex flex-wrap gap-2">
+                              {compatibilityCompanies.map((chip) => {
+                                const chipClass = chip.verified
+                                  ? 'bg-[var(--color-background-success)] text-[var(--color-text-success)]'
+                                  : 'bg-[var(--color-background-secondary)] text-[var(--color-text-secondary)]';
 
-                            if (chip.path) {
-                              return (
-                                <Link
-                                  key={chip.label}
-                                  href={chip.path}
-                                  onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
-                                  className={cn(
-                                    'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] transition-opacity hover:opacity-85',
-                                    chipClass
-                                  )}
-                                >
-                                  {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
-                                  {chip.label}
-                                </Link>
-                              );
-                            }
+                                if (chip.path) {
+                                  return (
+                                    <Link
+                                      key={chip.label}
+                                      href={chip.path}
+                                      onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
+                                      className={cn(
+                                        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] transition-opacity hover:opacity-85',
+                                        chipClass
+                                      )}
+                                    >
+                                      {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
+                                      {chip.label}
+                                    </Link>
+                                  );
+                                }
 
-                            return (
-                              <button
-                                key={chip.label}
-                                type="button"
-                                onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
-                                className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px]', chipClass)}
-                              >
-                                {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
-                                {chip.label}
-                              </button>
-                            );
-                          })}
+                                return (
+                                  <button
+                                    key={chip.label}
+                                    type="button"
+                                    onClick={() => trackCompatibilityChip(chip.label, chip.verified)}
+                                    className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px]', chipClass)}
+                                  >
+                                    {chip.verified ? <Check className="h-3.5 w-3.5" /> : null}
+                                    {chip.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className={labelClass}>Ainda não há compatibilidades confirmadas para este produto.</p>
+                          )}
                         </div>
-                      ) : (
-                        <p className={labelClass}>Ainda não há compatibilidades confirmadas para este produto.</p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {activeTab === 'specifications' ? (
-                  <div 
-                    className="overflow-hidden rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-tertiary)]"
-                    onMouseEnter={onSpecsEnter} 
-                    onMouseLeave={onSpecsLeave}
-                  >
-                    {product.specs?.length ? (
-                      product.specs.map((spec) => (
-                        <div
-                          key={spec.key}
-                          className="grid gap-2 border-b-[0.5px] border-[var(--color-border-tertiary)] px-4 py-3 last:border-b-0 md:grid-cols-[220px_minmax(0,1fr)]"
-                        >
-                          <div className="text-[13px] text-[var(--color-text-secondary)]">{spec.label}</div>
-                          <div className="text-[13px] font-medium text-[var(--color-text-primary)]">
-                            {normalizeSpecValue(spec.value)}
-                            {spec.unit ? ` ${spec.unit}` : ''}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6">
-                        <p className={labelClass}>Nenhuma especificação cadastrada ainda.</p>
                       </div>
                     )}
-                  </div>
-                ) : null}
 
-                {activeTab === 'reviews' ? (
-                  <div 
-                    ref={(node) => {
-                      reviewsSectionRef.current = node;
-                      if (reviewsDwellRef) reviewsDwellRef.current = node;
-                    }} 
-                    className="space-y-4"
-                  >
-                    <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-                      <div className={cn(surfaceClass, 'p-4')}>
-                        <div className="space-y-3">
-                        <div className="flex justify-between items-start">
-                            <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
+                    <div 
+                      ref={(node) => {
+                        reviewsSectionRef.current = node;
+                        if (reviewsDwellRef) reviewsDwellRef.current = node;
+                      }} 
+                      className={cn("space-y-4", activeTab === 'description' ? "pt-8 border-t border-[var(--color-border-tertiary)]" : "")}
+                    >
+                      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+                        <div className={cn(surfaceClass, 'p-4')}>
+                          <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                              <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
+                              <button
+                                type="button"
+                                onClick={() => setIsReviewModalOpen(true)}
+                                className="text-[13px] font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                              >
+                                Avaliar produto
+                              </button>
+                            </div>
+                            <div className="flex items-end gap-3">
+                              <span className="text-[28px] font-medium leading-none text-[#f5a623]">
+                                {(summary?.average_rating || 0).toFixed(1)}
+                              </span>
+                              <div className="space-y-1">
+                                <Stars rating={summary?.average_rating || 0} size={14} />
+                                <p className={hintClass}>{formatNumber(summary?.total_reviews || 0)} avaliações</p>
+                              </div>
+                            </div>
+                            <ReviewDistribution summary={summary} />
+                          </div>
+                        </div>
+
+                        <div className={cn(surfaceClass, 'p-4')}>
+                          <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Critérios avaliados</p>
+                          {criteriaEntries.length ? (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {criteriaEntries.map(([criterion, value]) => (
+                                <span
+                                  key={criterion}
+                                  className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-1.5 text-[11px] text-[var(--color-text-secondary)]"
+                                >
+                                  <span>{criterion}</span>
+                                  <span className="font-medium text-[var(--color-text-primary)]">
+                                    {Number(value).toFixed(1)}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className={cn(labelClass, 'mt-3')}>Os critérios detalhados ainda não foram consolidados.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {reviewsData?.reviews?.length ? (
+                        <div className="space-y-4">
+                          {reviewsData.reviews.map((review) => (
+                            <ReviewCard key={review.id} review={review} />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={cn(surfaceClass, 'p-6')}>
+                          <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
+                            Seja o primeiro a avaliar este produto
+                          </p>
+                          <p className={cn(labelClass, 'mt-2')}>
+                            Ainda não existem avaliações públicas vinculadas a este item.
+                          </p>
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <Link
+                              href={companyPath}
+                              onClick={trackCompanyProfile}
+                              className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-secondary)] px-4 py-[11px] text-[13px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-background-secondary)]"
+                            >
+                              Ver perfil da empresa
+                            </Link>
                             <button
                               type="button"
                               onClick={() => setIsReviewModalOpen(true)}
-                              className="text-[13px] font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                              className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
                             >
-                              Avaliar produto
+                              Avaliar este produto
                             </button>
                           </div>
-                          <div className="flex items-end gap-3">
-                            <span className="text-[28px] font-medium leading-none text-[#f5a623]">
-                              {(summary?.average_rating || 0).toFixed(1)}
-                            </span>
-                            <div className="space-y-1">
-                              <Stars rating={summary?.average_rating || 0} size={14} />
-                              <p className={hintClass}>{formatNumber(summary?.total_reviews || 0)} avaliações</p>
-                            </div>
-                          </div>
-                          <ReviewDistribution summary={summary} />
                         </div>
-                      </div>
-
-                      <div className={cn(surfaceClass, 'p-4')}>
-                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Critérios avaliados</p>
-                        {criteriaEntries.length ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {criteriaEntries.map(([criterion, value]) => (
-                              <span
-                                key={criterion}
-                                className="inline-flex items-center gap-2 rounded-full bg-[var(--color-background-secondary)] px-3 py-1.5 text-[11px] text-[var(--color-text-secondary)]"
-                              >
-                                <span>{criterion}</span>
-                                <span className="font-medium text-[var(--color-text-primary)]">
-                                  {Number(value).toFixed(1)}
-                                </span>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className={cn(labelClass, 'mt-3')}>Os critérios detalhados ainda não foram consolidados.</p>
-                        )}
-                      </div>
+                      )}
                     </div>
-
-                    {reviewsData?.reviews?.length ? (
-                      <div className="space-y-4">
-                        {reviewsData.reviews.map((review) => (
-                          <ReviewCard key={review.id} review={review} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className={cn(surfaceClass, 'p-6')}>
-                        <p className="text-[15px] font-medium text-[var(--color-text-primary)]">
-                          Seja o primeiro a avaliar este produto
-                        </p>
-                        <p className={cn(labelClass, 'mt-2')}>
-                          Ainda não existem avaliações públicas vinculadas a este item.
-                        </p>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          <Link
-                            href={companyPath}
-                            onClick={trackCompanyProfile}
-                            className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] border-[0.5px] border-[var(--color-border-secondary)] px-4 py-[11px] text-[13px] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-background-secondary)]"
-                          >
-                            Ver perfil da empresa
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => setIsReviewModalOpen(true)}
-                            className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
-                          >
-                            Avaliar este produto
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : null}
 
