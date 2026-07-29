@@ -413,6 +413,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
       replied_at: review.active_replied_at,
       project_context: review.project_context,
       would_recommend: review.metadata&.[]('would_recommend'),
+      recommendation_reason: review.metadata&.[]('recommendation_reason'),
       useful_count: review.review_votes.where(vote_type: 'useful').count,
       unhelpful_count: review.review_votes.where(vote_type: 'unhelpful').count,
       photo_urls: review.photos.map { |photo| url_for(photo) },

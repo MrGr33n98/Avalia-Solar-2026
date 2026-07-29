@@ -11,6 +11,7 @@ class Review < ApplicationRecord
   has_many :review_criterion_scores, dependent: :destroy
   accepts_nested_attributes_for :review_criterion_scores, allow_destroy: true
 
+  has_many :review_votes, dependent: :destroy
   has_many_attached :photos
 
   MAX_FEATURED_PER_COMPANY = 5
@@ -36,7 +37,7 @@ class Review < ApplicationRecord
   # Columns: headline (string), pros (jsonb), cons (jsonb), buyer_tip (text), project_context (jsonb)
   # category_id (fk), is_legacy (boolean), granular_scores_snapshot (jsonb)
 
-  store_accessor :metadata, :cta_clicks, :read_count, :last_aggregated_at, :backfill_method, :backfill_at, :would_recommend
+  store_accessor :metadata, :cta_clicks, :read_count, :last_aggregated_at, :backfill_method, :backfill_at, :would_recommend, :recommendation_reason
 
   # Scopes
   scope :approved_only, -> { where(status: statuses[:approved]) }
