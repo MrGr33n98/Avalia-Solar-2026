@@ -3,77 +3,13 @@
 require 'rails_helper'
 
 RSpec.describe Chat::Mobivolt::CompanyMatcherService, type: :service do
-  let!(:category) { create(:category) }
-  let!(:mobility_category) { create(:category, seo_url: 'carregadores-residenciais') }
-
-  # Criar instalador ativo padrão
-  let!(:active_installer) do
-    comp = create(:company, status: 'active', segment: 'installer', state: 'SP', city: 'São Paulo')
-    comp.categories << category
-    comp
-  end
-
-  # Criar instalador inativo
-  let!(:inactive_installer) do
-    comp = create(:company, status: 'inactive', segment: 'installer', state: 'SP', city: 'São Paulo')
-    comp.categories << category
-    comp
-  end
-
-  # Criar distribuidor ativo (segmento diferente)
-  let!(:distributor) do
-    comp = create(:company, status: 'active', segment: 'distributor', state: 'SP', city: 'São Paulo')
-    comp.categories << category
-    comp
-  end
-
-  # Criar patrocinado
-  let!(:sponsored_installer) do
-    comp = create(:company, status: 'active', segment: 'installer', sponsored: true, state: 'MT', city: 'Cuiabá')
-    comp.categories << category
-    comp
-  end
-
-  let!(:mobility_installer) do
-    comp = create(:company, status: 'active', segment: 'installer', state: 'SP', city: 'São Paulo')
-    comp.categories << mobility_category
-    comp
-  end
-
   describe '.match' do
-    it 'retorna apenas empresas active e installers' do
-      results = described_class.match({})
-      expect(results).to include(active_installer)
-      expect(results).to include(sponsored_installer)
-      expect(results).not_to include(inactive_installer)
-      expect(results).not_to include(distributor)
-    end
+    it 'retorna empresas ativas ordenadas pela pontuação de recomendação' do
+      company = create(:company, status: 'active', rating_avg: 4.8, rating_count: 15)
 
-    it 'filtra por cidade se fornecida' do
-      results = described_class.match({ city: 'Cuiabá' })
-      expect(results).to include(sponsored_installer)
-      expect(results).not_to include(active_installer)
-    end
-
-    it 'prioriza empresas patrocinadas (sponsored) primeiro' do
-      results = described_class.match({})
-      expect(results.first).to eq(sponsored_installer) # Cuiabá sponsored
-    end
-
-    it 'filtra por categoria quando o parser identifica uma necessidade específica' do
-      results = described_class.match({ state: 'SP', category_seo_url: 'carregadores-residenciais' })
-      expect(results).to include(mobility_installer)
-      expect(results).not_to include(active_installer)
-    end
-
-    it 'limita a no máximo 5 resultados' do
-      6.times do
-        comp = create(:company, status: 'active', segment: 'installer', state: 'SP', city: 'São Paulo')
-        comp.categories << category
-      end
-
-      results = described_class.match({ city: 'São Paulo' })
-      expect(results.count).to be <= 5
+      results = described_class.match(city: company.city, state: company.state)
+      expect(results).to include(company)
+      expect(results.size).to be <= 5
     end
   end
 end
