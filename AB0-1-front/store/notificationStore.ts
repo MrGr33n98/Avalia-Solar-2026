@@ -122,36 +122,44 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   fetchUnreadCount: async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const response = await fetch('/api/v1/notifications/unread_count', {
+      if (!token) return;
+
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
+      const response = await fetch(`${baseUrl}/api/v1/notifications/unread_count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch unread count');
+      if (!response.ok) return;
 
       const data = await response.json();
       set({ unreadCount: data.unread_count || 0 });
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+    } catch {
+      // Silent catch for network or auth polling errors
     }
   },
 
   fetchUnreadMessagesCount: async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const response = await fetch('/api/v1/conversations/unread_count', {
+      if (!token) return;
+
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
+      const response = await fetch(`${baseUrl}/api/v1/conversations/unread_count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch unread messages count');
+      if (!response.ok) return;
 
       const data = await response.json();
       set({ unreadMessagesCount: data.unread_count || 0 });
-    } catch (error) {
-      console.error('Failed to fetch unread messages count:', error);
+    } catch {
+      // Silent catch for network or auth polling errors
     }
   },
 
