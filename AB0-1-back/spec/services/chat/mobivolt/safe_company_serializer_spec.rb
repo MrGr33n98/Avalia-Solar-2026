@@ -5,21 +5,20 @@ require 'rails_helper'
 RSpec.describe Chat::Mobivolt::SafeCompanySerializer, type: :service do
   let(:company) do
     build(:company,
-      name: 'Instalador Premium',
-      cnpj: '12.345.678/0001-90',
-      api_key: 'confidencial_api_key_123',
-      email: 'interno@empresa.com.br',
-      email_public: 'contato@empresa.com.br',
-      city: 'São Paulo',
-      state: 'SP',
-      sponsored: true,
-      verified: true,
-      rating_avg: 4.8,
-      rating_count: 10,
-      slug: 'instalador-premium',
-      services_offered: ['Instalação', 'Projeto'],
-      niche_tags: ['Baterias e Off-Grid']
-    )
+          name: 'Instalador Premium',
+          cnpj: '12.345.678/0001-90',
+          api_key: 'confidencial_api_key_123',
+          email: 'interno@empresa.com.br',
+          email_public: 'contato@empresa.com.br',
+          city: 'São Paulo',
+          state: 'SP',
+          sponsored: true,
+          verified: true,
+          rating_avg: 4.8,
+          rating_count: 10,
+          slug: 'instalador-premium',
+          services_offered: %w[Instalação Projeto],
+          niche_tags: ['Baterias e Off-Grid'])
   end
 
   describe '.serialize' do
@@ -35,36 +34,31 @@ RSpec.describe Chat::Mobivolt::SafeCompanySerializer, type: :service do
       expect(serialized[:link_perfil]).to eq('https://www.avaliasolar.com.br/companies/instalador-premium')
       expect(serialized[:patrocinada]).to be true
       expect(serialized[:verificada]).to be true
-      expect(serialized[:servicos]).to eq(['Instalação', 'Projeto'])
+      expect(serialized[:servicos]).to eq(%w[Instalação Projeto])
       expect(serialized[:nichos]).to eq(['Baterias e Off-Grid'])
     end
 
-    it 'retorna false ou nil adequadamente para flags booleanas' do
-      # Teste com valores explicitamente falsos
-      false_company = build(:company,
-        sponsored: false,
-        verified: false,
-        financing_enabled: false,
-        post_sales_support: false
-      )
-      false_serialized = described_class.serialize(false_company)
-      expect(false_serialized[:patrocinada]).to be(false)
-      expect(false_serialized[:verificada]).to be(false)
-      expect(false_serialized[:has_financing]).to be(false)
-      expect(false_serialized[:post_sales_support]).to be(false)
+    describe 'boolean flags' do
+      {
+        sponsored: :patrocinada,
+        verified: :verificada,
+        financing_enabled: :has_financing,
+        post_sales_support: :post_sales_support
+      }.each do |attribute, serialized_key|
+        {
+          true => true,
+          false => false,
+          nil => false
+        }.each do |input, expected|
+          it "serializa #{attribute}=#{input.inspect} como #{expected}" do
+            company = build(:company, attribute => input)
 
-      # Teste com valores nil
-      nil_company = build(:company,
-        sponsored: nil,
-        verified: nil,
-        financing_enabled: nil,
-        post_sales_support: nil
-      )
-      nil_serialized = described_class.serialize(nil_company)
-      expect(nil_serialized[:patrocinada]).to be(false)
-      expect(nil_serialized[:verificada]).to be(false)
-      expect(nil_serialized[:has_financing]).to be(false)
-      expect(nil_serialized[:post_sales_support]).to be(false)
+            payload = described_class.serialize(company)
+
+            expect(payload[serialized_key]).to be(expected)
+          end
+        end
+      end
     end
 
     it 'não inclui chaves ou campos privados sensíveis de LGPD/Negócio' do
