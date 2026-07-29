@@ -74,12 +74,13 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
   const timeAgo = formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: ptBR });
   const formattedDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(review.created_at));
   
-  const projectTypeLabel = {
+  const projectTypeMap: Record<string, string> = {
     residential: 'Residencial',
     commercial: 'Comercial',
     industrial: 'Industrial',
     rural: 'Rural'
-  }[review.project_type || ''] || 'Projeto';
+  };
+  const projectTypeLabel = projectTypeMap[review.project_type || ''] || 'Projeto';
 
   const avatarSrc = review.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'A')}&background=random`;
 
@@ -152,14 +153,14 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           )}
 
           {/* Criteria Grid */}
-          {(review.granular_scores || review.review_criterion_scores)?.length > 0 && (
+          {((review.granular_scores || review.review_criterion_scores || []) as any[]).length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <h4 className="font-bold text-slate-900">Avaliação por critérios</h4>
                 <div className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 text-xs">i</div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                {(review.granular_scores || review.review_criterion_scores).map((score: any, idx: number) => (
+                {((review.granular_scores || review.review_criterion_scores || []) as any[]).map((score: any, idx: number) => (
                   <div key={idx} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
                     <span className="text-xs text-slate-500 font-medium mb-2 text-center h-8">{score.title}</span>
                     {getCriteriaIcon(score.title)}

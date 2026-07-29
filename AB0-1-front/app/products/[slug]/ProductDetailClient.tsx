@@ -601,7 +601,7 @@ export default function ProductDetailClient({
                     {product.sku ? <span onCopy={onCopySku}><SemanticBadge>SKU {product.sku}</SemanticBadge></span> : null}
                     {product.categories && product.categories.length > 0 ? (
                       product.categories.map((cat) => (
-                        <Link key={cat.id} href={buildCategoryPath(cat.seo_url || cat.slug || '', cat.id)}>
+                        <Link key={cat.id} href={buildCategoryPath(cat.seo_url || (cat as any).slug || '', cat.id)}>
                           <SemanticBadge className="hover:bg-[var(--color-border-secondary)] transition-colors cursor-pointer">
                             {cat.name}
                           </SemanticBadge>
@@ -941,7 +941,7 @@ export default function ProductDetailClient({
                               </p>
                             </Link>
                             <Link 
-                              href={item.categories?.[0] ? buildCategoryPath(item.categories[0].seo_url || item.categories[0].slug || '', item.categories[0].id) : categoryPath}
+                              href={item.categories?.[0] ? buildCategoryPath(item.categories[0].seo_url || (item.categories[0] as any).slug || '', item.categories[0].id) : categoryPath}
                               className={cn(labelClass, "hover:text-blue-600 transition-colors inline-block")}
                             >
                               {item.categories?.[0]?.name || item.category?.name || categoryName}
