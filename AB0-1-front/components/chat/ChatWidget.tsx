@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Minimize2, RotateCcw } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
@@ -490,7 +490,7 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 w-[calc(100vw-24px)] max-w-[340px] h-[56dvh] min-h-[420px] max-h-[520px] sm:w-[420px] sm:h-[650px] sm:max-h-[700px] sm:max-w-none mb-0 sm:mb-4">
           {/* Header */}
-          <div className="bg-gradient-to-r from-brand-blue to-brand-cyan text-white h-[76px] sm:h-[80px] flex items-center justify-between px-3 py-2 shadow-md">
+          <div className="bg-blue-600 dark:bg-blue-700 text-white h-[76px] sm:h-[80px] flex items-center justify-between px-4 py-2 shadow-md">
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
@@ -504,9 +504,9 @@ export default function ChatWidget() {
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full" aria-hidden="true"></span>
               </div>
               <div>
-                <h3 className="font-semibold text-sm tracking-wide">MobiVolt AI</h3>
-                <span className="text-xs text-white/80 truncate max-[360px]:hidden">Online • Assistente Avalia Solar</span>
-              <span className="text-xs text-white/80 truncate hidden max-[360px]:inline">Assistente Avalia Solar</span>
+                <h3 className="font-semibold text-sm tracking-wide text-white">MobiVolt AI</h3>
+                <span className="text-xs text-white/90 truncate max-[360px]:hidden">Online • Assistente Avalia Solar</span>
+                <span className="text-xs text-white/90 truncate hidden max-[360px]:inline">Assistente Avalia Solar</span>
               </div>
             </div>
             <div className="flex items-center space-x-1">
@@ -523,22 +523,30 @@ export default function ChatWidget() {
                       clearSession();
                     }
                   }}
-                  className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/15 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   aria-label="Nova conversa"
                   title="Nova conversa"
                 >
-                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  <RotateCcw className="w-4 h-4 text-white" />
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/10 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                aria-label="Fechar chat"
+                className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/15 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Minimizar chat"
+                title="Minimizar"
               >
-                <X className="w-[18px] h-[18px]" />
+                <Minimize2 className="w-4 h-4 text-white stroke-[2.5]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-white/80 hover:text-white transition-colors p-0 h-8 w-8 flex items-center justify-center hover:bg-white/15 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Fechar chat"
+                title="Fechar"
+              >
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
           </div>
