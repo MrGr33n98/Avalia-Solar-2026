@@ -407,6 +407,10 @@ class Api::V1::ProductsController < Api::V1::BaseController
       reply: review.active_reply,
       replied_at: review.active_replied_at,
       project_context: review.project_context,
+      would_recommend: review.metadata&.[]('would_recommend'),
+      useful_count: review.review_votes.where(vote_type: 'useful').count,
+      unhelpful_count: review.review_votes.where(vote_type: 'unhelpful').count,
+      photo_urls: review.photos.map { |photo| url_for(photo) },
       granular_scores: review.granular_scores_snapshot.presence || serialize_review_scores(review),
       user: {
         id: review.user_id,

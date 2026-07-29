@@ -1,7 +1,7 @@
 # app/controllers/api/v1/reviews_controller.rb
 class Api::V1::ReviewsController < Api::V1::BaseController
-  before_action :set_review, only: %i[show update destroy]
-  before_action :authenticate_api_user, only: %i[create update destroy mine]
+  before_action :set_review, only: %i[show update destroy vote]
+  before_action :authenticate_api_user, only: %i[create update destroy mine vote]
   before_action :ensure_owner, only: %i[destroy]
 
   def index
@@ -118,6 +118,28 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     head :no_content
   end
 
+  def vote
+    vote_type = params[:vote_type]
+    unless %w[useful unhelpful].include?(vote_type)
+      return render json: { error: 'Invalid vote type' }, status: :unprocessable_entity
+    end
+
+    vote = @review.review_votes.find_or_initialize_by(user_id: current_user.id)
+    
+    if vote.persisted? && vote.vote_type == vote_type
+      # Remove vote if toggling the same one
+      vote.destroy
+      render json: serialize_review(@review.reload)
+    else
+      vote.vote_type = vote_type
+      if vote.save
+        render json: serialize_review(@review.reload)
+      else
+        render json: { errors: vote.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+  end
+
   private
 
   def serialize_review(review)
@@ -149,6 +171,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       featured: review.featured,
       display_order: review.display_order,
       verified: review.verified,
+      would_recommend: review.metadata&.[]('would_recommend'),
+      useful_count: review.review_votes.where(vote_type: 'useful').count,
+      unhelpful_count: review.review_votes.where(vote_type: 'unhelpful').count,
+      photo_urls: review.photos.map { |photo| url_for(photo) },
       user: serialize_user(review),
       company: serialize_company(review.company),
       granular_scores: serialize_granular_scores(review)

@@ -299,6 +299,9 @@ Rails.application.routes.draw do
         collection do
           get :mine
         end
+        member do
+          post :vote
+        end
       end
 
       resources :faqs, only: %i[index create show update destroy] do

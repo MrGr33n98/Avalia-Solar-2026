@@ -617,6 +617,10 @@ export interface Review {
   helpful_count?: number;
   headline?: string;
   display_headline?: string;
+  would_recommend?: boolean;
+  useful_count?: number;
+  unhelpful_count?: number;
+  photo_urls?: string[];
   project_type?: 'residential' | 'commercial' | 'industrial' | 'rural';
   installation_status?: 'completed' | 'in_progress' | 'waiting';
   estimated_power?: number;

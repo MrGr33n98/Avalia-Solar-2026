@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
+import { ReviewDetailModal } from '@/components/ReviewDetailModal';
 
 interface ReviewCardProps {
   review: Review;
@@ -23,6 +24,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   const { user } = useAuth();
   const [hasTrackedRead, setHasTrackedRead] = useState(false);
   const [hasTrackedClick, setHasTrackedClick] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const dwellTimerRef = useRef<any>(null);
 
   // Derivação de badges públicas para exibição de reputação
@@ -164,9 +166,11 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
     : review.user?.avatar_url;
 
   return (
+    <>
     <motion.div
       ref={cardRef}
-      className={`bg-white rounded-xl shadow-md border border-gray-200 p-6 ${className}`}
+      onClick={() => setIsModalOpen(true)}
+      className={`bg-white rounded-xl shadow-md border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-shadow ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -378,5 +382,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
         </div>
       </div>
     </motion.div>
+    <ReviewDetailModal review={review} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>
   );
 }
