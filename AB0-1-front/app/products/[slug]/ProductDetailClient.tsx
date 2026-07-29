@@ -991,6 +991,17 @@ export default function ProductDetailClient({
                         <PremiumBadge />
                       ) : null}
                       {company?.plan_status === 'active' ? <SemanticBadge>Parceiro premium</SemanticBadge> : null}
+                      {(company?.badges || product.company?.badges)?.map((badge, idx) => (
+                        <span
+                          key={badge.id || idx}
+                          className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200/60"
+                        >
+                          {badge.image_url ? (
+                            <img src={badge.image_url} alt={badge.name} className="h-3.5 w-3.5 object-contain" />
+                          ) : null}
+                          {badge.name}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>

@@ -570,6 +570,7 @@ export interface Product {
       | 'rating_avg'
       | 'reviews_count'
       | 'review_aggregates'
+      | 'badges'
     >
   > | null;
   category?: Partial<Pick<Category, 'id' | 'name' | 'seo_url'>> | null;
