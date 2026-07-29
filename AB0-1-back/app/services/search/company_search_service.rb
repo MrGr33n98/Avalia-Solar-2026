@@ -238,8 +238,7 @@ module Search
           { category_names: :word_start },
           { city: :word_start },
           { city_normalized: :word_start },
-          :description,
-          :short_description
+          :description
         ],
         misspellings: { below: 5 },
         load: true
@@ -351,7 +350,6 @@ module Search
               <<~SQL.squish,
                 unaccent(companies.name) ILIKE unaccent(:q) OR
                 unaccent(COALESCE(companies.description, '')) ILIKE unaccent(:q) OR
-                unaccent(COALESCE(companies.short_description, '')) ILIKE unaccent(:q) OR
                 unaccent(COALESCE(companies.state, '')) ILIKE unaccent(:q) OR
                 unaccent(COALESCE(companies.city, '')) ILIKE unaccent(:q) OR
                 unaccent(COALESCE(companies.address, '')) ILIKE unaccent(:q) OR
@@ -365,7 +363,6 @@ module Search
               <<~SQL.squish,
                 companies.name ILIKE :q OR
                 COALESCE(companies.description, '') ILIKE :q OR
-                COALESCE(companies.short_description, '') ILIKE :q OR
                 COALESCE(companies.state, '') ILIKE :q OR
                 COALESCE(companies.city, '') ILIKE :q OR
                 COALESCE(companies.address, '') ILIKE :q OR

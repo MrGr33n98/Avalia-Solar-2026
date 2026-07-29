@@ -36,7 +36,6 @@ class SearchService
           LOWER(companies.name) LIKE :q OR
           LOWER(COALESCE(companies.slug, '')) LIKE :q OR
           LOWER(COALESCE(companies.description, '')) LIKE :q OR
-          LOWER(COALESCE(companies.short_description, '')) LIKE :q OR
           LOWER(COALESCE(companies.state, '')) LIKE :q OR
           LOWER(COALESCE(companies.city, '')) LIKE :q OR
           LOWER(COALESCE(companies.address, '')) LIKE :q OR
@@ -51,7 +50,6 @@ class SearchService
           companies.name ILIKE :q OR
           COALESCE(companies.slug, '') ILIKE :q OR
           COALESCE(companies.description, '') ILIKE :q OR
-          COALESCE(companies.short_description, '') ILIKE :q OR
           COALESCE(companies.state, '') ILIKE :q OR
           COALESCE(companies.city, '') ILIKE :q OR
           COALESCE(companies.address, '') ILIKE :q OR
