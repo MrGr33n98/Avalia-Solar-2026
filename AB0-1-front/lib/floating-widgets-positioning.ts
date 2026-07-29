@@ -62,12 +62,14 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
  * Prevents overlap by explicitly stacking widgets vertically.
  */
 export const WIDGET_POSITION_CLASSES = {
-  // Chat / MobiVolt always sit at the very bottom right corner
+  // 3º Base: Mensagens (Chat Trigger)
   chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
-  mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
-  
-  // Comparison dock sits on the right, above the chat on both mobile and desktop
-  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_80px)] right-4 md:bottom-24 md:right-6 md:left-auto',
+
+  // 2º Meio: Assistente IA (MobiVolt)
+  mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_76px)] right-4 md:bottom-[84px] md:right-6',
+
+  // 1º Topo: Expandir / Recolher (Comparação / Minimizar)
+  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_136px)] right-4 md:bottom-[144px] md:right-6 md:left-auto',
 } as const;
 
 /**

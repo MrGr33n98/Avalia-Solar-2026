@@ -230,13 +230,13 @@ export default function ComparisonFloatingBar() {
               type="button"
               onClick={handleOpenDock}
               aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-              className="group pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-12 sm:w-12"
+              className="group pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border border-blue-200/80 bg-white shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none dark:bg-slate-900 dark:border-slate-800"
             >
-              <span className="absolute -right-1 -top-1 z-10 flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-blue-600 px-1 text-[10px] font-bold text-white dark:border-zinc-900" aria-hidden="true">
+              <span className="absolute -top-1 -right-1 z-10 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-black text-white shadow-xs ring-2 ring-white dark:ring-slate-900" aria-hidden="true">
                 {count}
               </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                <Maximize2 className="h-4 w-4" aria-hidden="true" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-full text-blue-600">
+                <Maximize2 className="h-5 w-5 stroke-[2.5]" aria-hidden="true" />
               </div>
             </button>
             </motion.aside>

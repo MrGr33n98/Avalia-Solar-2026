@@ -483,7 +483,7 @@ export default function ChatWidget() {
     <div
       className={cn(
         "fixed font-sans flex flex-col items-end pointer-events-none",
-        WIDGET_POSITION_CLASSES.chat,
+        WIDGET_POSITION_CLASSES.mobivolt,
         isOpen ? 'z-[9010]' : 'z-[9000]'
       )}
     >
