@@ -46,6 +46,7 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
 
   before do
     allow(Chat::PosthogTrackingService).to receive(:track)
+    allow(EventDispatcher).to receive(:dispatch)
   end
 
   describe '.sync!' do
@@ -115,14 +116,15 @@ RSpec.describe Chat::Mobivolt::LeadSyncService, type: :service do
     end
 
     context 'quando a criação do lead principal falha' do
-      it 'não apaga o ChatLead original e propaga o erro' do
-        # Simulamos uma falha de validação forçando o email a ser nulo em um campo que exija email no Lead principal
-        # Ou simplesmente fazendo mock do Lead.create! para lançar um erro do Active Record
+      before do
         allow(Lead).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Lead.new))
+      end
 
+      it 'não apaga o ChatLead original e propaga o erro' do
+        lead_to_sync = chat_lead_valid # Avalia aqui para criar no banco antes do expect
         expect {
           expect {
-            described_class.sync!(chat_lead_valid)
+            described_class.sync!(lead_to_sync)
           }.to raise_error(ActiveRecord::RecordInvalid)
         }.not_to change(ChatLead, :count) # ChatLead não é apagado
       end
