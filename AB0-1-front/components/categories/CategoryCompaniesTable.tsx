@@ -5,6 +5,8 @@ import { Company } from '@/lib/api';
 import Link from 'next/link';
 import { BadgeCheck, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyBadge } from '@/components/CompanyBadges';
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -206,16 +208,19 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                     )}
                   </td>
 
-                  {/* Button Link */}
+                  {/* Button Link & Comparison */}
                   <td className="py-4 px-4 text-right">
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg text-[11px] font-bold h-8 border-slate-200 text-slate-700 hover:bg-slate-50 shadow-none"
-                    >
-                      <Link href={href}>Ver perfil</Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg text-[11px] font-bold h-8 border-slate-200 text-slate-700 hover:bg-slate-50 shadow-none"
+                      >
+                        <Link href={href}>Ver perfil</Link>
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );

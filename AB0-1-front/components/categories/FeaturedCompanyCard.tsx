@@ -7,6 +7,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import CompanyViewCounter from '@/app/companies/[id]/components/CompanyViewCounter';
+import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
 
 interface FeaturedCompanyCardProps {
@@ -44,6 +45,11 @@ export default function FeaturedCompanyCard({
         isFirst && "border-amber-200 bg-gradient-to-b from-amber-50/10 to-white"
       )}
     >
+      {/* Compare Button */}
+      <div className="absolute top-3 right-3 z-20">
+        <ComparisonToggleButton company={company as any} variant="floating" size="sm" />
+      </div>
+
       {/* Ribbon "Destaque" only if isFirst or explicitly sponsored */}
       {isFirst && (
         <div className="absolute left-0 top-0 overflow-hidden w-24 h-24 pointer-events-none z-10">
