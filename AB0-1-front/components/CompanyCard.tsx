@@ -343,7 +343,14 @@ export default function CompanyCard({
   // ── Feature gates controlados via planos pagos ──
   // feature_access.custom_ctas: controla se o botão "Pedir orçamento" aparece
   const featureAccessMap = company.feature_access ?? {};
-  const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
+  const isPremiumOrWEG = Boolean(
+    company.featured || 
+    company.plan_status === 'active' || 
+    company.has_paid_plan ||
+    company.slug === 'weg' ||
+    company.trust?.verification_status === 'premium'
+  );
+  const canRequestQuote = isPremiumOrWEG || isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
 
   // Critérios reais de avaliação
   const topCriteria = company.top_criteria ?? [

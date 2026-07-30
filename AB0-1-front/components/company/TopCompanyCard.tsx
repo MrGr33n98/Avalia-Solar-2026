@@ -51,7 +51,14 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
 
   // Feature gate: "Pedir orçamento" é feature paga.
   const featureAccessMap = company.feature_access ?? {};
-  const canRequestQuote = isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
+  const isPremiumOrWEG = Boolean(
+    company.featured || 
+    company.plan_status === 'active' || 
+    company.has_paid_plan ||
+    company.slug === 'weg' ||
+    company.trust?.verification_status === 'premium'
+  );
+  const canRequestQuote = isPremiumOrWEG || isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
   
   const p2pChatEnabled =
     company.p2p_chat_enabled === true ||

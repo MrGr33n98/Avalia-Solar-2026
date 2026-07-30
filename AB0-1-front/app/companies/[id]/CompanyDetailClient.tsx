@@ -260,9 +260,16 @@ export default function CompanyDetailClient({
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
-  const canRequestQuote = currentCompany.feature_access
+  const isPremiumOrWEG = Boolean(
+    currentCompany.featured || 
+    currentCompany.plan_status === 'active' || 
+    currentCompany.has_paid_plan ||
+    currentCompany.slug === 'weg' ||
+    currentCompany.trust?.verification_status === 'premium'
+  );
+  const canRequestQuote = isPremiumOrWEG || (currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
-    : false;
+    : false);
   const showFaq = true;
   const showGallery = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'media_gallery')
