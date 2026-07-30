@@ -8,6 +8,7 @@ import {
   type Availability,
   type PricingFeatureRow,
 } from '@/lib/pricing/catalog';
+import { Button } from '@/components/ui/button';
 import { CompactComparison } from './CompactComparison';
 
 // ─── Variants ─────────────────────────────────────────────────────────────
