@@ -300,14 +300,17 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                               </div>
                             </div>
                             
-                            {/* Mock Map */}
-                            <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 flex items-center justify-center">
-                              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#0056d2_1px,transparent_1px)] [background-size:12px_12px]" />
-                              <div className="relative flex flex-col items-center">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 shadow-sm">
-                                  <MapPin className="w-4 h-4 text-blue-600" />
-                                </div>
-                              </div>
+                            {/* Google Map Iframe */}
+                            <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 shadow-inner">
+                              <iframe
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                loading="lazy"
+                                allowFullScreen
+                                referrerPolicy="no-referrer-when-downgrade"
+                                src={`https://maps.google.com/maps?q=${encodeURIComponent(location || 'Brasil')}&t=&z=12&ie=UTF8&iwloc=&output=embed`}
+                              />
                             </div>
 
                             <div className="text-[11px] text-slate-500 leading-normal">
