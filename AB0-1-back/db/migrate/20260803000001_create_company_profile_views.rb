@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateCompanyProfileViews < ActiveRecord::Migration[7.1]
+class CreateCompanyProfileViews < ActiveRecord::Migration[7.0]
   def change
     create_table :company_profile_views do |t|
       t.bigint   :company_id,           null: false
