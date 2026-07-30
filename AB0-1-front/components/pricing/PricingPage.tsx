@@ -91,6 +91,7 @@ export default function PricingPage() {
   const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Estados locais
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [plans, setPlans] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -353,52 +354,54 @@ export default function PricingPage() {
                 </Badge>
               </motion.div>
 
-      <motion.h1
+       <motion.h1
                 variants={fadeUp}
                 className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.25rem] leading-[1.1]"
               >
-                Escolha o plano ideal para sua empresa se destacar no{' '}
-                <span className="text-brand-blue bg-gradient-to-r from-brand-blue to-brand-blue-light bg-clip-text text-transparent">mercado solar</span>
+                O plano certo para destacar sua empresa no{' '}
+                <span className="text-amber-500 bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">mercado solar</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeUp}
                 className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 font-medium max-w-xl"
               >
-                Do perfil gratuito à vitrine comercial premium com mais conversão, menos concorrência e inteligência de mercado.
+                Mais visibilidade, mais confiança e mais clientes. Escolha o plano ideal para o momento da sua empresa.
               </motion.p>
 
               <motion.div
                 variants={fadeUp}
                 className="mt-8 flex flex-col items-center gap-3 sm:flex-row"
               >
-                <Button asChild size="lg" className="bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-lg shadow-brand-blue/20 h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm">
+                <Button asChild size="lg" className="bg-slate-950 hover:bg-slate-900 text-white border-0 shadow-lg h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm">
                   <Link href={isAuthenticated ? '/dashboard' : '/register'}>
-                    {isAuthenticated ? 'Acessar painel' : 'Começar gratuitamente'}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    Começar agora
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-slate-300 hover:bg-slate-50 h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm bg-white"
+                  className="border-slate-350 hover:bg-slate-50 h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm bg-white gap-2"
                 >
-                  <Link href="/contact">Falar com vendas</Link>
+                  <Link href="/contact" className="flex items-center gap-1">
+                    Falar com vendas
+                    <ArrowRight className="h-4 w-4 text-slate-700" />
+                  </Link>
                 </Button>
               </motion.div>
 
               {/* Microbadges */}
               <motion.div variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {[
-                  { icon: ShieldCheck, label: 'Sem fidelidade' },
-                  { icon: Zap, label: 'Ative em minutos' },
-                  { icon: Check, label: 'Pagamento seguro' },
-                  { icon: MessageSquare, label: 'Cancele quando quiser' },
-                ].map((mb) => (
-                  <span key={mb.label} className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <mb.icon className="h-3.5 w-3.5 text-emerald-500" />
-                    {mb.label}
+                  'Sem fidelidade',
+                  'Ative em minutos',
+                  'Cancele quando quiser',
+                  'Suporte humano'
+                ].map((label) => (
+                  <span key={label} className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 text-[10px] font-bold">✓</span>
+                    {label}
                   </span>
                 ))}
               </motion.div>
@@ -583,6 +586,39 @@ export default function PricingPage() {
             />
           </div>
 
+          {/* Monthly / Annual Toggle Selector */}
+          <div className="flex items-center justify-center gap-3 mb-12">
+            <div className="inline-flex items-center rounded-full bg-slate-950 p-1 border border-slate-950 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setBillingCycle('monthly')}
+                className={cn(
+                  "rounded-full px-6 py-1.5 text-xs font-bold transition-all duration-200",
+                  billingCycle === 'monthly'
+                    ? "bg-white text-slate-950 shadow-sm"
+                    : "text-white bg-transparent"
+                )}
+              >
+                Mensal
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle('yearly')}
+                className={cn(
+                  "rounded-full px-6 py-1.5 text-xs font-bold transition-all duration-200",
+                  billingCycle === 'yearly'
+                    ? "bg-white text-slate-950 shadow-sm"
+                    : "text-white bg-transparent"
+                )}
+              >
+                Anual
+              </button>
+            </div>
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full animate-pulse">
+              Economize até 17%
+            </span>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
             {loading ? (
               <>
@@ -614,15 +650,33 @@ export default function PricingPage() {
                   }
                 }
 
-                // Preço anual e economia do mockup
-                let yearlyPrice;
-                let savingText;
-                if (plan.slug === 'essential') {
-                  yearlyPrice = 'ou R$ 629 à vista no plano anual';
-                  savingText = 'ECONOMIZE R$ 79';
+                // Determinação dinâmica de preço e etiquetas baseado no billingCycle do mockup
+                let priceLabel = plan.priceLabel;
+                let yearlyPrice = undefined;
+                let savingText = undefined;
+
+                if (plan.slug === 'free') {
+                  priceLabel = 'R$ 0';
+                } else if (plan.slug === 'essential') {
+                  if (billingCycle === 'monthly') {
+                    priceLabel = 'R$ 59';
+                    yearlyPrice = 'ou R$ 49/mês no plano anual';
+                    savingText = 'ECONOMIZE 17%';
+                  } else {
+                    priceLabel = 'R$ 49';
+                    yearlyPrice = 'cobrado anualmente (R$ 588/ano)';
+                  }
                 } else if (plan.slug === 'pro') {
-                  yearlyPrice = 'ou R$ 1.600 à vista no plano anual';
-                  savingText = 'ECONOMIZE R$ 200';
+                  if (billingCycle === 'monthly') {
+                    priceLabel = 'R$ 150';
+                    yearlyPrice = 'ou R$ 125/mês no plano anual';
+                    savingText = 'ECONOMIZE 17%';
+                  } else {
+                    priceLabel = 'R$ 125';
+                    yearlyPrice = 'cobrado anualmente (R$ 1.500/ano)';
+                  }
+                } else if (plan.slug === 'enterprise') {
+                  priceLabel = 'Sob consulta';
                 }
 
                 return (
@@ -630,7 +684,7 @@ export default function PricingPage() {
                     key={plan.slug}
                     slug={plan.slug as PlanSlug}
                     name={plan.name}
-                    priceLabel={plan.priceLabel}
+                    priceLabel={priceLabel}
                     billingNote={plan.billingNote || ''}
                     summary={plan.summary}
                     badge={plan.badge}
