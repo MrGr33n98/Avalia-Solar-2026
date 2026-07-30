@@ -8,6 +8,8 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { isFeatureEnabled } from '@/lib/feature-access';
+import { openLeadModal } from '@/lib/lead-engine';
 import {
   Select,
   SelectContent,
@@ -135,6 +137,17 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
               const isVerified = Boolean(company.verified || (company as any).trust?.verification_status === 'verified');
 
+              const isPremiumOrWEG = Boolean(
+                company.featured || 
+                (company as any).plan_status === 'active' || 
+                (company as any).has_paid_plan ||
+                company.slug === 'weg' ||
+                (company as any).trust?.verification_status === 'premium'
+              );
+              const canRequestQuote = isPremiumOrWEG || ((company as any).feature_access
+                ? isFeatureEnabled((company as any).feature_access, 'custom_ctas')
+                : false);
+
               return (
                 <tr
                   key={company.id}
@@ -211,6 +224,22 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
+                      {canRequestQuote && (
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openLeadModal({
+                              preferredCompanyId: company.id,
+                              source: 'category-table',
+                              type: 'quick',
+                            });
+                          }}
+                          className="rounded-lg text-[11px] font-bold h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+                        >
+                          Solicitar orçamento
+                        </Button>
+                      )}
                       <Button
                         asChild
                         variant="outline"
