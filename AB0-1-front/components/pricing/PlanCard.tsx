@@ -38,47 +38,47 @@ interface PlanVisualConfig {
 
 const planConfig: Record<PlanSlug, PlanVisualConfig> = {
   free: {
-    topBar: 'bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200',
-    iconBg: 'bg-slate-900',
+    topBar: 'bg-transparent',
+    iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
     topBadgeCls: '',
-    ringCls: '',
-    shadowCls: 'shadow-[0_4px_24px_-8px_rgba(15,23,42,0.10)]',
-    ctaCls: 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-800',
-    checkBg: 'bg-slate-100',
-    checkText: 'text-slate-500',
+    ringCls: 'border border-slate-200/80',
+    shadowCls: 'shadow-sm',
+    ctaCls: 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-0 font-bold shadow-none',
+    checkBg: 'bg-slate-50',
+    checkText: 'text-slate-400',
     priceCls: 'text-slate-900',
   },
   essential: {
-    topBar: 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400',
-    iconBg: 'bg-emerald-500',
-    topBadgeCls: 'bg-emerald-500 text-white',
-    ringCls: 'ring-2 ring-emerald-400/40',
-    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(16,185,129,0.22)]',
-    ctaCls: 'bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)]',
-    checkBg: 'bg-emerald-50',
-    checkText: 'text-emerald-500',
-    priceCls: 'text-emerald-600',
+    topBar: 'bg-slate-950',
+    iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
+    topBadgeCls: 'bg-slate-950 text-white',
+    ringCls: 'border-2 border-slate-950',
+    shadowCls: 'shadow-md',
+    ctaCls: 'bg-slate-950 hover:bg-slate-900 text-white border-0 font-bold shadow-sm',
+    checkBg: 'bg-slate-50',
+    checkText: 'text-slate-600',
+    priceCls: 'text-slate-900',
   },
   pro: {
-    topBar: 'bg-gradient-to-r from-brand-blue-dark via-brand-blue to-brand-blue-light',
-    iconBg: 'bg-brand-blue',
-    topBadgeCls: 'bg-brand-blue text-white',
-    ringCls: 'ring-2 ring-brand-blue/40 border-brand-blue/30',
-    shadowCls: 'shadow-[0_24px_64px_-12px_rgba(0,86,210,0.28)]',
-    ctaCls: 'bg-brand-blue hover:bg-brand-blue-light text-white border-0 shadow-[0_8px_24px_-8px_rgba(0,86,210,0.6)]',
-    checkBg: 'bg-brand-blue/10',
-    checkText: 'text-brand-blue',
-    priceCls: 'text-brand-blue',
+    topBar: 'bg-slate-950',
+    iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
+    topBadgeCls: 'bg-slate-950 text-white',
+    ringCls: 'border-2 border-slate-950',
+    shadowCls: 'shadow-md',
+    ctaCls: 'bg-slate-950 hover:bg-slate-900 text-white border-0 font-bold shadow-sm',
+    checkBg: 'bg-slate-50',
+    checkText: 'text-slate-600',
+    priceCls: 'text-slate-900',
   },
   enterprise: {
-    topBar: 'bg-gradient-to-r from-slate-900 via-brand-cyan-dark to-brand-blue',
-    iconBg: 'bg-slate-900',
+    topBar: 'bg-transparent',
+    iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
     topBadgeCls: '',
-    ringCls: 'ring-1 ring-slate-950/10',
-    shadowCls: 'shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)]',
-    ctaCls: 'border border-slate-300 bg-white hover:bg-slate-50 text-slate-900',
-    checkBg: 'bg-slate-100',
-    checkText: 'text-slate-700',
+    ringCls: 'border border-slate-200/80',
+    shadowCls: 'shadow-sm',
+    ctaCls: 'border border-slate-250 bg-white hover:bg-slate-50 text-slate-800 font-bold shadow-sm',
+    checkBg: 'bg-slate-50',
+    checkText: 'text-slate-600',
     priceCls: 'text-slate-950',
   },
 };
@@ -128,9 +128,9 @@ export function PlanCard({
     <motion.div
       variants={cardVariant}
       className={[
-        'relative flex flex-col overflow-hidden rounded-[24px] border border-slate-200/70 h-full',
+        'relative flex flex-col overflow-hidden rounded-[24px] h-full',
         'bg-white transition-all duration-300',
-        slug === 'pro' ? 'z-10' : 'hover:shadow-md',
+        slug === 'pro' || slug === 'essential' ? 'z-10' : 'hover:shadow-md',
         cfg.ringCls,
         cfg.shadowCls,
         isCurrentPlan ? 'ring-2 ring-brand-blue/30' : '',
@@ -138,7 +138,7 @@ export function PlanCard({
     >
       {/* Badge superior destacado (MAIS ESCOLHIDO / MAIS VENDIDO) */}
       {showTopBadge && (
-        <div className={`w-full py-2 text-center text-[11px] font-black uppercase tracking-[0.2em] ${cfg.topBadgeCls}`}>
+        <div className={`w-full py-2 text-center text-[10px] font-black uppercase tracking-[0.2em] ${cfg.topBadgeCls}`}>
           {badge}
         </div>
       )}
@@ -149,7 +149,7 @@ export function PlanCard({
       <div className="flex flex-1 flex-col p-7">
         {/* Ícone + Nome + Subtítulo */}
         <div className="flex items-center gap-3 mb-5">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconBg} text-white shadow-md`}>
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconBg}`}>
             <Icon className="h-5 w-5" />
           </div>
           <div>
