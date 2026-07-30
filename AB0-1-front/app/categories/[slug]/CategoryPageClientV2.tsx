@@ -2,14 +2,13 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
-import CategoryFilterSidebar from '@/components/categories/CategoryFilterSidebar';
-import CompaniesGrid from '@/components/categories/CompaniesGrid';
-import TopRankingSection from '@/components/categories/TopRankingSection';
-import SponsoredSection from '@/components/categories/SponsoredSection';
+import CategoryCompaniesTable from '@/components/categories/CategoryCompaniesTable';
+import FeaturedCompanyCard from '@/components/categories/FeaturedCompanyCard';
 import {
   HeroSkeleton,
   ChipsSkeleton,
@@ -316,124 +315,101 @@ export default function CategoryPageClient({
           />
 
           {/* Main Layout Container */}
-          <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-7">
-            <div className="flex flex-col lg:flex-row gap-6 items-start">
-              {/* Sidebar - Fixed width 280px */}
-              <CategoryFilterSidebar
-                filters={sidebarFilters}
-                onFilterChange={handleSidebarFilterChange}
-                onClearFilters={handleClearFilters}
-                hasActiveFilters={hasActiveFilters}
-              />
-
-              {/* Content Column - Fluid */}
-              <main className="flex-1 w-full space-y-7 md:space-y-8">
-                {/* 🏆 Top Ranking Section - Inside the column */}
-                {!hasActiveFilters && filteredCompanies.length > 0 && (
-                  <TopRankingSection
-                    companies={filteredCompanies.slice(0, 3)}
-                    category={slug}
-                    onMethodologyClick={() =>
-                      track('category_methodology_click', {
-                        category: slug,
-                        placement: 'sponsored-ranking',
-                      })
-                    }
-                  />
-                )}
-
-                {/* ✨ Sponsored Section - Inside the column */}
-                <div className="hidden md:block">
-                  <SponsoredSection
-                    companies={initialCompanies
-                      .filter((c) => {
-                        const sponsoredCompany = c as Company & { sponsored?: boolean };
-                        return (
-                          sponsoredCompany.sponsored ||
-                          initialBanners.some((b) => b.company_id === c.id)
-                        );
-                      })
-                      .slice(0, 4)}
-                    category={slug}
-                  />
+          <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-8">
+            <div className="space-y-12">
+              
+              {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                      Empresas em destaque
+                    </h2>
+                  </div>
+                  <Link
+                    href="/categories"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1"
+                  >
+                    Ver todas as empresas em destaque →
+                  </Link>
                 </div>
 
-                {/* Toolbar & Grid */}
-                <div className="space-y-4 md:space-y-6">
-                  {/* Toolbar */}
-                  <div className="sticky top-24 z-10 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
-                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                      <div className="relative w-full sm:max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                          aria-label="Buscar empresas nesta categoria"
-                          placeholder="Buscar empresas..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        <Select value={sortBy} onValueChange={handleSortChange}>
-                          <SelectTrigger
-                            aria-label="Ordenar empresas"
-                            className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
-                            <SelectItem value="reviews_desc">Mais Avaliadas</SelectItem>
-                            <SelectItem value="name_asc">A-Z</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {hasActiveFilters && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleClearFilters}
-                            aria-label="Limpar filtros da categoria"
-                            className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600"
-                            title="Limpar filtros"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Results Header */}
-                  <div className="flex items-center justify-between gap-3 px-1">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h2 className="truncate text-base font-bold tracking-tight text-slate-950 md:text-xl md:font-black md:uppercase">
-                          {hasActiveFilters ? 'Resultados filtrados' : 'Empresas da categoria'}
-                        </h2>
-                        <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 md:bg-transparent md:p-0 md:text-sm md:text-slate-600">
-                          {filteredCompanies.length} empresas
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[11px] text-slate-500 md:hidden">
-                        Compare avaliações e opções para esta solução.
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[11px] font-semibold text-blue-600 md:hidden">
-                      Arraste →
-                    </span>
-                  </div>
-
-                  {/* Companies Grid */}
-                  <CompaniesGrid companies={filteredCompanies} category={slug} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {(initialCompanies
+                    .filter((c) => {
+                      const sponsoredCompany = c as Company & { sponsored?: boolean };
+                      return (
+                        sponsoredCompany.sponsored ||
+                        initialBanners.some((b) => b.company_id === c.id)
+                      );
+                    })
+                    .slice(0, 4).length > 0 
+                      ? initialCompanies.filter((c) => {
+                          const sponsoredCompany = c as Company & { sponsored?: boolean };
+                          return sponsoredCompany.sponsored || initialBanners.some((b) => b.company_id === c.id);
+                        }).slice(0, 4)
+                      : initialCompanies.slice(0, 4)
+                  ).map((company, index) => (
+                    <FeaturedCompanyCard
+                      key={company.id}
+                      company={company}
+                      category={slug}
+                      isFirst={index === 0}
+                    />
+                  ))}
                 </div>
-              </main>
+              </section>
 
-              {/* Right Sidebar Banner */}
-              <aside className="hidden xl:block w-[300px] shrink-0 sticky top-24">
-                <BannerByLocation location="sidebar" />
-              </aside>
+              {/* Toolbar & Listing Table */}
+              <div className="space-y-6">
+                {/* Search and Sort Toolbar */}
+                <div className="sticky top-24 z-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="relative w-full sm:max-w-md">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        aria-label="Buscar empresas nesta categoria"
+                        placeholder="Buscar empresas..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Select value={sortBy} onValueChange={handleSortChange}>
+                        <SelectTrigger
+                          aria-label="Ordenar empresas"
+                          className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
+                          <SelectItem value="reviews_desc">Mais Avaliadas</SelectItem>
+                          <SelectItem value="name_asc">A-Z</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleClearFilters}
+                          aria-label="Limpar filtros da categoria"
+                          className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600"
+                          title="Limpar filtros"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 📋 Section 2: More Companies Table */}
+                <CategoryCompaniesTable companies={filteredCompanies} />
+              </div>
             </div>
           </div>
         </>

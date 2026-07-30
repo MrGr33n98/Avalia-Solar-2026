@@ -44,8 +44,10 @@ export default function CategoryHero({
   const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
   const heroDescription =
     description?.trim() ||
-    `Compare empresas, avaliações e sinais de confiança para contratar ${name} com mais segurança.`;
+    `Compare empresas, avaliações e soluções para escolher a melhor para o seu projeto.`;
   const visualUrl = resolvedBannerUrl || FALLBACK_BANNER_SRC;
+
+  const displayTitle = name.toLowerCase().startsWith('empresas') ? name : `Empresas de ${name}`;
 
   return (
     <section className="bg-white pb-3 pt-4 md:pb-5 md:pt-5">
@@ -56,12 +58,12 @@ export default function CategoryHero({
           </Link>
           <ChevronRight className="h-3 w-3 opacity-50" />
           <Link href="/categories" className="transition-colors hover:text-blue-600">
-            Categorias
+            Empresas
           </Link>
           {parentCategory && (
             <>
               <ChevronRight className="h-3 w-3 opacity-50" />
-              <Link
+               <Link
                 href={`/categories/${parentCategory.seo_url || parentCategory.slug}`}
                 className="transition-colors hover:text-blue-600"
               >
@@ -97,7 +99,7 @@ export default function CategoryHero({
         <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-5">
           <div className="max-w-[46rem]">
             <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
-              {name}
+              {displayTitle}
             </h1>
 
             <p className="mt-1.5 line-clamp-2 max-w-[38rem] text-sm font-medium leading-relaxed text-slate-600 md:text-[15px]">
