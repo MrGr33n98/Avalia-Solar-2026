@@ -96,6 +96,8 @@ Rails.application.routes.draw do
           get :categories
           get :catalog
           get :social_proof
+          get  :views_count
+          post :track_view
         end
 
         resources :sector_ratings, only: [:create]

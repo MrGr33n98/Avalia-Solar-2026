@@ -6,7 +6,7 @@ module Api
 
       before_action :set_company,
                     only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories catalog
-                             feature_access social_proof]
+                             feature_access social_proof views_count track_view]
       before_action :authenticate_api_user,
                     only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
                              analytics_traffic mine]
@@ -1132,6 +1132,39 @@ module Api
 
         company
       end
+    end
+
+    # ── Profile View Counter ─────────────────────────────────────────────────
+
+    # GET /api/v1/companies/:id/views_count
+    # Público — sem autenticação. Resultado em cache Redis por 5 minutos.
+    def views_count
+      count = Rails.cache.fetch(
+        "company_profile_views:#{@company.id}",
+        expires_in: Analytics::CompanyProfileViewTracker::CACHE_TTL
+      ) do
+        CompanyProfileView.for_company(@company.id).count
+      end
+
+      render json: { views_count: count }
+    rescue StandardError => e
+      Rails.logger.error("[CompaniesController#views_count] #{e.message}")
+      render json: { views_count: 0 }
+    end
+
+    # POST /api/v1/companies/:id/track_view
+    # Público — sem autenticação. Registra visualização com deduplicação.
+    def track_view
+      result = Analytics::CompanyProfileViewTracker.track(
+        company_id:   @company.id,
+        request:      request,
+        current_user: current_user
+      )
+
+      render json: { tracked: result.tracked, reason: result.reason }
+    rescue StandardError => e
+      Rails.logger.error("[CompaniesController#track_view] #{e.message}")
+      render json: { tracked: false, reason: 'error' }
     end
   end
 end

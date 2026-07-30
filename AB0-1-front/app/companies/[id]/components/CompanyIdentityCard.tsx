@@ -8,6 +8,7 @@ import { Company } from '@/lib/api';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
 import PremiumHighlightBadge from './PremiumHighlightBadge';
+import CompanyViewCounter from './CompanyViewCounter';
 
 interface CompanyIdentityCardProps {
   company: Company;
@@ -121,8 +122,8 @@ export default function CompanyIdentityCard({
               </div>
             )}
 
-            {/* Nota + avaliações em linha compacta */}
-            <div className="flex items-center gap-2 pt-0.5 text-xs sm:text-sm">
+            {/* Nota + avaliações + visualizações em linha compacta */}
+            <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
               <div className="flex items-center gap-1 font-bold text-slate-950">
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
                 <span>{ratingFormatted}</span>
@@ -131,6 +132,8 @@ export default function CompanyIdentityCard({
               <span className="text-slate-500">
                 {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
               </span>
+              <span className="text-slate-300" aria-hidden="true">·</span>
+              <CompanyViewCounter companyId={company.id} />
             </div>
           </div>
         </div>
