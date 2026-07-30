@@ -373,10 +373,12 @@ module Api
       end
 
       def serialize_reviews(reviews)
-        reviews.as_json(
-          only: %i[id company_id category_id rating comment headline created_at updated_at],
-          methods: %i[display_reviewer_name anonymized_reviewer_name]
-        )
+        reviews.filter_map do |review|
+          ::ReviewSerializer.new(review).as_json
+        rescue StandardError => e
+          record_search_error('review_serialization', e, review_id: review&.id)
+          nil
+        end
       rescue StandardError => e
         record_search_error('review_serialization', e)
         []
