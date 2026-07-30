@@ -152,6 +152,8 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           logoUrl={company.logo_url}
                           name={company.name}
                           size="sm"
+                          badges={company.badges}
+                          verifiedBadgeUrl={company.verified_badge_image_url || company.verified_badge_url}
                           className="border border-slate-200/80 bg-white"
                         />
                       </Link>

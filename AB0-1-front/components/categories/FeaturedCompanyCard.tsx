@@ -61,6 +61,8 @@ export default function FeaturedCompanyCard({
               logoUrl={company.logo_url}
               name={company.name}
               size="md"
+              badges={company.badges}
+              verifiedBadgeUrl={company.verified_badge_image_url || company.verified_badge_url}
               className="border border-slate-200 shadow-sm bg-white p-1 rounded-xl"
             />
           </Link>
