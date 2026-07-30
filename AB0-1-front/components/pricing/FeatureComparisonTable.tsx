@@ -90,7 +90,10 @@ export function CompareRow({ row }: CompareRowProps) {
 // ─── Main Comparison Table Component ─────────────────────────────────────────
 
 export function FeatureComparisonTable() {
-  // Accordion state
+  // Main toggle state to show/hide the detailed features
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
+
+  // Accordion state for subgroups
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     'public-profile': true, // Primeiro grupo aberto por padrão
   });
@@ -127,100 +130,129 @@ export function FeatureComparisonTable() {
           </motion.p>
         </motion.div>
 
-        {/* 1. Comparativo Compacto (Primeiro Diferencial Rápido) */}
+        {/* 1. Comparativo Compacto (Primeiro Diferencial Rápido com as Melhores Features) */}
         <CompactComparison />
 
-        {/* Cabeçalho da tabela de detalhes */}
-        <div className="mb-6">
-          <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
-            Comparativo Detalhado de Funcionalidades
-          </h4>
+        {/* Botão Dropdown Principal para mostrar as demais features */}
+        <div className="flex justify-center mb-8">
+          <Button
+            onClick={() => setShowAllFeatures(!showAllFeatures)}
+            variant="outline"
+            className="rounded-full px-6 py-5 font-bold border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all duration-300 gap-2 shadow-sm"
+          >
+            <span>{showAllFeatures ? 'Ocultar comparativo completo' : 'Ver comparativo de todas as funcionalidades'}</span>
+            <motion.div
+              animate={{ rotate: showAllFeatures ? 180 : 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </motion.div>
+          </Button>
         </div>
 
-        {/* 2. Feature groups como Accordions */}
-        <motion.div
-          className="space-y-4"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          variants={stagger}
-        >
-          {pricingFeatureGroups.map((group) => {
-            const isExpanded = !!expandedGroups[group.id];
+        {/* 2. Comparativo Detalhado (As Demais Features) */}
+        <AnimatePresence initial={false}>
+          {showAllFeatures && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              {/* Cabeçalho da tabela de detalhes */}
+              <div className="mb-6 mt-4">
+                <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
+                  Comparativo Detalhado de Funcionalidades
+                </h4>
+              </div>
 
-            return (
+              {/* Feature groups como Accordions */}
               <motion.div
-                key={group.id}
-                variants={fadeUp}
-                className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md shadow-sm transition-all duration-300"
+                className="space-y-4"
+                initial="hidden"
+                animate="visible"
+                variants={stagger}
               >
-                {/* Clickable Accordion Header */}
-                <button
-                  onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between border-b border-slate-100/50 px-6 py-5 bg-slate-50/40 hover:bg-slate-100/40 transition-colors duration-200 text-left"
-                >
-                  <h3 className="text-base font-black tracking-tight text-slate-900">
-                    {group.title}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-400 hidden sm:inline uppercase tracking-wider">
-                      {isExpanded ? 'Ocultar tabela' : 'Expandir tabela'}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      className="text-slate-400"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </motion.div>
-                  </div>
-                </button>
+                {pricingFeatureGroups.map((group) => {
+                  const isExpanded = !!expandedGroups[group.id];
 
-                {/* Smooth Expandable Content */}
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
+                  return (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.24, ease: 'easeInOut' }}
-                      className="overflow-hidden"
+                      key={group.id}
+                      variants={fadeUp}
+                      className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md shadow-sm transition-all duration-300"
                     >
-                      <div className="overflow-x-auto">
-                        <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
-                          <thead>
-                            <tr>
-                              <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">
-                                Funcionalidade
-                              </th>
-                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                                Gratuito
-                              </th>
-                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">
-                                Essencial
-                              </th>
-                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-brand-blue">
-                                Pro
-                              </th>
-                              <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-900">
-                                Enterprise
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {group.rows.map((row) => (
-                              <CompareRow key={row.key} row={row} />
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      {/* Clickable Accordion Header */}
+                      <button
+                        onClick={() => toggleGroup(group.id)}
+                        className="w-full flex items-center justify-between border-b border-slate-100/50 px-6 py-5 bg-slate-50/40 hover:bg-slate-100/40 transition-colors duration-200 text-left"
+                      >
+                        <h3 className="text-base font-black tracking-tight text-slate-900">
+                          {group.title}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-400 hidden sm:inline uppercase tracking-wider">
+                            {isExpanded ? 'Ocultar tabela' : 'Expandir tabela'}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                            className="text-slate-400"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </motion.div>
+                        </div>
+                      </button>
+
+                      {/* Smooth Expandable Content */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.24, ease: 'easeInOut' }}
+                            className="overflow-hidden"
+                          >
+                            <div className="overflow-x-auto">
+                              <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
+                                <thead>
+                                  <tr>
+                                    <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">
+                                      Funcionalidade
+                                    </th>
+                                    <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                                      Gratuito
+                                    </th>
+                                    <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">
+                                      Essencial
+                                    </th>
+                                    <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-brand-blue">
+                                      Pro
+                                    </th>
+                                    <th className="pb-1 px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-slate-900">
+                                      Enterprise
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {group.rows.map((row) => (
+                                    <CompareRow key={row.key} row={row} />
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  );
+                })}
               </motion.div>
-            );
-          })}
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
