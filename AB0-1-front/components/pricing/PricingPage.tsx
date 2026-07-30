@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { billingApi, type BillingPlan, type BillingSubscription } from '@/lib/api/billing';
 import { pricingPlans, type PlanSlug } from '@/lib/pricing/catalog';
