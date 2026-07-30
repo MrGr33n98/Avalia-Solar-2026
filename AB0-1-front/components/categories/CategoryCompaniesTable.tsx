@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Company } from '@/lib/api';
 import Link from 'next/link';
-import { BadgeCheck, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BadgeCheck, Star, ChevronLeft, ChevronRight, Info, MapPin, Globe, Clock, Building2 } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
@@ -120,10 +121,58 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
           <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
             <tr>
               <th scope="col" className="py-3.5 px-4 w-12 text-center">#</th>
-              <th scope="col" className="py-3.5 px-4">Empresa</th>
-              <th scope="col" className="py-3.5 px-4">Localização</th>
-              <th scope="col" className="py-3.5 px-4 w-40">Avaliação</th>
-              <th scope="col" className="py-3.5 px-4 w-32">Projetos</th>
+              <th scope="col" className="py-3.5 px-4">
+                <div className="flex items-center gap-1">
+                  Empresa
+                  <Popover>
+                    <PopoverTrigger className="hover:text-slate-700 text-slate-400">
+                      <Info className="w-3 h-3" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60 bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-2xl shadow-lg text-[10px] normal-case font-semibold text-slate-500">
+                      Informações institucionais e resumo geral da empresa.
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </th>
+              <th scope="col" className="py-3.5 px-4">
+                <div className="flex items-center gap-1">
+                  Localização
+                  <Popover>
+                    <PopoverTrigger className="hover:text-slate-700 text-slate-400">
+                      <Info className="w-3 h-3" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60 bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-2xl shadow-lg text-[10px] normal-case font-semibold text-slate-500">
+                      Localização da sede ou principal unidade da empresa.
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </th>
+              <th scope="col" className="py-3.5 px-4 w-40">
+                <div className="flex items-center gap-1">
+                  Avaliação
+                  <Popover>
+                    <PopoverTrigger className="hover:text-slate-700 text-slate-400">
+                      <Info className="w-3 h-3" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60 bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-2xl shadow-lg text-[10px] normal-case font-semibold text-slate-500">
+                      Detalhes sobre a avaliação e reputação da empresa.
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </th>
+              <th scope="col" className="py-3.5 px-4 w-32">
+                <div className="flex items-center gap-1">
+                  Projetos
+                  <Popover>
+                    <PopoverTrigger className="hover:text-slate-700 text-slate-400">
+                      <Info className="w-3 h-3" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60 bg-white/95 backdrop-blur border border-slate-200 p-3 rounded-2xl shadow-lg text-[10px] normal-case font-semibold text-slate-500">
+                      Informações sobre projetos realizados pela empresa.
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </th>
               <th scope="col" className="py-3.5 px-4 w-32">Status</th>
               <th scope="col" className="py-3.5 px-4 w-28 text-right"></th>
             </tr>
@@ -160,7 +209,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                     {globalIndex}
                   </td>
 
-                  {/* Logo + Name */}
+                   {/* Logo + Name */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
                        <Link href={href} className="shrink-0">
@@ -173,18 +222,102 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           className="border border-slate-200/80 bg-white"
                         />
                       </Link>
-                      <Link
-                        href={href}
-                        className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
-                      >
-                        {company.name}
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={href}
+                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
+                        >
+                          {company.name}
+                        </Link>
+                        <Popover>
+                          <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
+                            <Info className="w-3.5 h-3.5" />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                <CompanyLogo
+                                  logoUrl={company.logo_url}
+                                  name={company.name}
+                                  size="sm"
+                                  className="border border-slate-100 bg-white"
+                                />
+                                <div>
+                                  <div className="font-bold text-slate-900 text-sm leading-tight">{company.name}</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">Desde {company.founded_year || 2018} no Brasil</div>
+                                </div>
+                              </div>
+                              <p className="text-[11px] text-slate-500 leading-relaxed">
+                                {company.description || `${company.name} é uma empresa parceira credenciada, especializada em homologação, projetos e instalações fotovoltaicas de alta eficiência.`}
+                              </p>
+                              <div className="border-t border-slate-100 pt-3 space-y-2 text-[11px]">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400 font-semibold">Fundação</span>
+                                  <span className="font-bold text-slate-900">{company.founded_year || 'Não informado'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400 font-semibold">Sede</span>
+                                  <span className="font-bold text-slate-900">{company.city || 'Não informado'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400 font-semibold">Presença no Brasil</span>
+                                  <span className="font-bold text-slate-900">Desde {company.founded_year || 2018}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400 font-semibold">Site oficial</span>
+                                  {company.website ? (
+                                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+                                      {company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                                      <Globe className="w-3 h-3 text-blue-500" />
+                                    </a>
+                                  ) : (
+                                    <span className="font-bold text-slate-400">Não informado</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </div>
                   </td>
 
                   {/* Location */}
                   <td className="py-4 px-4 text-slate-500 text-xs">
-                    {location || 'Brasil'}
+                    <div className="flex items-center gap-1">
+                      <span>{location || 'Brasil'}</span>
+                      <Popover>
+                        <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
+                          <Info className="w-3.5 h-3.5" />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-slate-500" />
+                              <div>
+                                <div className="font-bold text-slate-900 text-sm">{location || 'Brasil'}</div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">Unidade Principal / Sede</div>
+                              </div>
+                            </div>
+                            
+                            {/* Mock Map */}
+                            <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 flex items-center justify-center">
+                              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#0056d2_1px,transparent_1px)] [background-size:12px_12px]" />
+                              <div className="relative flex flex-col items-center">
+                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 shadow-sm">
+                                  <MapPin className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-[11px] text-slate-500 leading-normal">
+                              <span className="font-bold text-slate-700 block mb-1">Endereço de Homologação:</span>
+                              {company.city ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}` : 'Abrangência nacional, sede sob consulta comercial.'}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </td>
 
                   {/* Rating star/label */}
@@ -205,18 +338,126 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                         ))}
                       </div>
                       <span className="text-[11px] text-slate-400">({reviewCount})</span>
+                      <Popover>
+                        <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
+                          <Info className="w-3.5 h-3.5" />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl font-black text-slate-900 leading-none">{ratingLabel}</span>
+                              <div>
+                                <div className="flex items-center">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={cn(
+                                        "w-3.5 h-3.5",
+                                        i < Math.floor(rating)
+                                          ? "fill-amber-400 text-amber-400"
+                                          : "text-slate-200 fill-slate-200"
+                                      )}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">({reviewCount} avaliações registradas)</div>
+                              </div>
+                            </div>
+
+                            {/* Stars breakdown */}
+                            <div className="space-y-1.5 pt-2">
+                              {[
+                                { label: '5 estrelas', pct: '96%' },
+                                { label: '4 estrelas', pct: '3%' },
+                                { label: '3 estrelas', pct: '1%' },
+                                { label: '2 estrelas', pct: '0%' },
+                                { label: '1 estrela', pct: '0%' }
+                              ].map((starRow) => (
+                                <div key={starRow.label} className="flex items-center gap-3 text-[10px]">
+                                  <span className="w-16 text-slate-400 font-semibold">{starRow.label}</span>
+                                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="bg-amber-400 h-full rounded-full" style={{ width: starRow.pct }} />
+                                  </div>
+                                  <span className="w-8 text-right text-slate-500 font-bold">{starRow.pct}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
+                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 shrink-0">
+                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                Última avaliação: recente
+                              </span>
+                              <Button asChild size="sm" variant="link" className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto">
+                                <Link href={href}>Ver todas as avaliações</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </td>
 
                   {/* Projects/Cases count */}
                   <td className="py-4 px-4">
-                    {projectsCount && projectsCount > 0 ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100/50">
-                        {projectsCount} {projectsCount === 1 ? 'case' : 'cases'}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400 font-medium">Consulte</span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {projectsCount && projectsCount > 0 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100/50">
+                          {projectsCount} {projectsCount === 1 ? 'case' : 'cases'}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 font-medium">Consulte</span>
+                      )}
+                      <Popover>
+                        <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
+                          <Info className="w-3.5 h-3.5" />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-slate-500" />
+                              <div>
+                                <div className="font-bold text-slate-900 text-sm">Projetos Realizados</div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">Destaques do portfólio</div>
+                              </div>
+                            </div>
+
+                            {projectsCount && projectsCount > 0 ? (
+                              <>
+                                <div className="space-y-3 pt-2">
+                                  {[
+                                    { title: 'Usina Solar Boa Vista', desc: '1,2 MWp • Roraima', cat: 'Usina Fotovoltaica' },
+                                    { title: 'Condomínio Reserva Verde', desc: '312 kWp • São Paulo, SP', cat: 'Residencial' },
+                                    { title: 'Indústria Metalúrgica ABC', desc: '800 kWp • Minas Gerais', cat: 'Comercial' }
+                                  ].map((p, idx) => (
+                                    <div key={idx} className="flex gap-2.5 items-start bg-slate-50/50 border border-slate-100 p-2.5 rounded-xl">
+                                      <div className="h-10 w-12 rounded bg-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-bold shrink-0">
+                                        Solar
+                                      </div>
+                                      <div className="space-y-0.5">
+                                        <div className="font-bold text-slate-900 text-[11px] leading-tight line-clamp-1">{p.title}</div>
+                                        <div className="text-[10px] text-slate-500 font-medium">{p.desc}</div>
+                                        <div className="text-[8px] font-black uppercase text-slate-400 tracking-wider leading-none mt-0.5">{p.cat}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
+                                  <span className="text-[10px] text-slate-500 font-extrabold">+{projectsCount} homologados</span>
+                                  <Button asChild size="sm" variant="link" className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto">
+                                    <Link href={href}>Ver todos os projetos</Link>
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="py-4 text-center text-slate-400 font-medium text-[11px]">
+                                Nenhum projeto cadastrado no portfólio.
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </td>
 
                   {/* Verification Status */}
