@@ -72,6 +72,10 @@ O deploy é automatizado via GitHub Actions na DigitalOcean.
 ---
 
 ## 📖 Mais Documentação
+
+Para uma transferência completa do projeto para outro computador, comece pelo
+[Dossiê de transferência](./DOCUMENTACAO_TRANSFERENCIA_PROJETO.md).
+
 Para guias específicos de design (Claymorphism), auditorias técnicas ou manuais de segurança, explore a pasta [`docs/`](./docs/):
 - [Introdução à Documentação](./docs/00_LEIA-ME_PRIMEIRO.md)
 - [Guia de Safe-Area](./docs/guides/safe-area-guide.md)
