@@ -148,10 +148,7 @@ export function PlanCard({
 
       <div className="flex flex-1 flex-col p-7">
         {/* Ícone + Nome + Subtítulo */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${cfg.iconBg}`}>
-            <Icon className="h-5 w-5" />
-          </div>
+        <div className="flex items-center justify-between mb-5">
           <div>
             <div className="text-lg font-black tracking-tight text-slate-950 flex items-center gap-1.5">
               {name}
@@ -159,7 +156,10 @@ export function PlanCard({
                 <span className="h-2 w-2 rounded-full bg-brand-blue animate-pulse" title="Seu plano ativo" />
               )}
             </div>
-            <div className="text-xs text-slate-500 font-medium">{billingNote}</div>
+            <div className="text-xs text-slate-500 font-medium">{summary}</div>
+          </div>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${cfg.iconBg}`}>
+            <Icon className="h-4.5 w-4.5" />
           </div>
         </div>
 
