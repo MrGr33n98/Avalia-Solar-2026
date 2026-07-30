@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import CompanyCard from '@/components/CompanyCard';
+import { SearchCompanyListCard } from '@/components/search/SearchCompanyListCard';
 import ReviewCard from '@/components/ReviewCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
 import {
@@ -548,13 +549,11 @@ function SearchPageContent() {
                           ) : undefined
                         }
                       >
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="flex flex-col gap-4">
                           {filteredCompanies.map((company) => (
-                            <CompanyCard
+                            <SearchCompanyListCard
                               key={company.id}
                               company={company}
-                              variant={companyCardVariant}
-                              compact={false}
                             />
                           ))}
                         </div>
