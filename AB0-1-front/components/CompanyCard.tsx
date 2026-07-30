@@ -344,11 +344,11 @@ export default function CompanyCard({
   // feature_access.custom_ctas: controla se o botão "Pedir orçamento" aparece
   const featureAccessMap = company.feature_access ?? {};
   const isPremiumOrWEG = Boolean(
-    company.featured || 
-    company.plan_status === 'active' || 
-    company.has_paid_plan ||
-    company.slug === 'weg' ||
-    company.trust?.verification_status === 'premium'
+    rawCompany.featured || 
+    (rawCompany as any).plan_status === 'active' || 
+    (rawCompany as any).has_paid_plan ||
+    rawCompany.slug === 'weg' ||
+    rawCompany.trust?.verification_status === 'premium'
   );
   const canRequestQuote = isPremiumOrWEG || isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
 
