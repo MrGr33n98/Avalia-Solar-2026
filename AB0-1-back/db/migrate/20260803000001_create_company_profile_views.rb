@@ -15,12 +15,9 @@ class CreateCompanyProfileViews < ActiveRecord::Migration[7.0]
     add_index :company_profile_views, :company_id
     add_index :company_profile_views, :viewed_at
 
-    # Índice único parcial: impede duplicata do mesmo fingerprint nas últimas 24h
-    # Suportado pelo PostgreSQL (usado neste projeto)
-    execute <<~SQL
-      CREATE UNIQUE INDEX idx_unique_view_per_fingerprint_24h
-        ON company_profile_views (company_id, session_fingerprint)
-        WHERE viewed_at >= NOW() - INTERVAL '24 hours';
-    SQL
+    # Note: O índice único parcial com NOW() não é suportado pelo PostgreSQL 
+    # porque a função NOW() não é IMMUTABLE. A validação de 24h deve ser
+    # feita no nível da aplicação (model).
+    add_index :company_profile_views, [:company_id, :session_fingerprint], name: 'idx_company_views_on_company_and_fingerprint'
   end
 end
