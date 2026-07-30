@@ -123,6 +123,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               <th scope="col" className="py-3.5 px-4">Empresa</th>
               <th scope="col" className="py-3.5 px-4">Localização</th>
               <th scope="col" className="py-3.5 px-4 w-40">Avaliação</th>
+              <th scope="col" className="py-3.5 px-4 w-32">Projetos</th>
               <th scope="col" className="py-3.5 px-4 w-32">Status</th>
               <th scope="col" className="py-3.5 px-4 w-28 text-right"></th>
             </tr>
@@ -136,6 +137,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               const location = [company.city, company.state].filter(Boolean).join(', ');
               const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
               const isVerified = Boolean(company.verified || (company as any).trust?.verification_status === 'verified');
+              const projectsCount = company.delivered_projects_count ?? (company as any).projects_count ?? (company as any).project_count;
 
               const isPremiumOrWEG = Boolean(
                 company.featured || 
@@ -161,7 +163,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   {/* Logo + Name */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <Link href={href} className="shrink-0">
+                       <Link href={href} className="shrink-0">
                         <CompanyLogo
                           logoUrl={company.logo_url}
                           name={company.name}
@@ -204,6 +206,17 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                       </div>
                       <span className="text-[11px] text-slate-400">({reviewCount})</span>
                     </div>
+                  </td>
+
+                  {/* Projects/Cases count */}
+                  <td className="py-4 px-4">
+                    {projectsCount && projectsCount > 0 ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100/50">
+                        {projectsCount} {projectsCount === 1 ? 'case' : 'cases'}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400 font-medium">Consulte</span>
+                    )}
                   </td>
 
                   {/* Verification Status */}
