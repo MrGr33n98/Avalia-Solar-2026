@@ -18,7 +18,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   const rating = Number(company.rating_avg || company.average_rating || company.rating || 0);
   const ratingLabel = rating > 0 ? rating.toFixed(1) : '0.0';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
-  const href = buildCompanyPath(company);
+  const href = buildCompanyPath(company.slug, company.name, company.id);
   const reviewsHref = `${href}#avaliacoes`;
 
   const location = [company.city, company.state].filter(Boolean).join(', ');
