@@ -5,7 +5,6 @@ import { Company } from '@/lib/api';
 import Link from 'next/link';
 import { BadgeCheck, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
-import { CompanyBadge } from '@/components/CompanyBadges';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
