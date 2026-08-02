@@ -76,6 +76,15 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
 
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
+  const isPaidPlan = Boolean(
+    company.featured || 
+    (company as any).plan_status === 'active' || 
+    (company as any).has_paid_plan ||
+    company.slug === 'weg' ||
+    (company as any).trust?.verification_status === 'premium'
+  );
+  const showWhatsApp = isPaidPlan && Boolean(company.phone);
+
   return (
     <div
       id="company-cta-group"
@@ -94,8 +103,8 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         </Button>
       )}
 
-      {/* WhatsApp - feature paga */}
-      {canRequestQuote && (
+      {/* WhatsApp - feature paga estrita */}
+      {showWhatsApp && (
         <Button
           type="button"
           size="default"
