@@ -53,13 +53,13 @@ export default function CompanyIdentityCard({
     <section
       id="company-identity-card"
       aria-label="Card da empresa com ações"
-      className="relative overflow-visible px-4 sm:px-6 lg:px-7"
+      className="relative overflow-visible rounded-b-2xl border-x border-b border-slate-200 bg-white px-4 pb-5 pt-0 shadow-[0_8px_30px_rgba(15,23,42,0.06)] sm:px-6 lg:px-7"
     >
       <div className="flex flex-col gap-4 pt-4 sm:gap-5 sm:pt-5 lg:flex-row lg:items-center lg:justify-between lg:pt-6">
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           {/* Box da Logo */}
-          <div className="relative shrink-0 overflow-visible">
+          <div className="relative shrink-0 -translate-y-8 overflow-visible sm:-translate-y-10 lg:-translate-y-12">
             <div className="relative h-[88px] w-[88px] rounded-[18px] border border-slate-300 bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-[104px] sm:w-[104px] sm:rounded-[20px]">
               <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-white sm:rounded-[16px]">
               {hasLogo ? (
@@ -105,7 +105,7 @@ export default function CompanyIdentityCard({
           <div className="min-w-0 space-y-1.5 pt-1 sm:pt-2">
             {/* Nome + verificado na mesma linha */}
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-2xl font-bold leading-tight tracking-tight text-white sm:text-4xl drop-shadow-md">
+              <h1 className="truncate text-xl font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
@@ -116,26 +116,24 @@ export default function CompanyIdentityCard({
 
             {/* Localização */}
             {locationLabel && (
-              <div className="flex items-center gap-1.5 text-xs text-white/80 sm:text-sm drop-shadow-sm">
-                <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" aria-hidden="true" />
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 sm:text-sm">
+                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
                 <span className="truncate">{locationLabel}</span>
               </div>
             )}
 
             {/* Nota + avaliações + visualizações em linha compacta */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
-              <div className="flex items-center gap-1 font-bold text-white drop-shadow-sm">
+              <div className="flex items-center gap-1 font-bold text-slate-950">
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
                 <span>{ratingFormatted}</span>
               </div>
-              <span className="text-white/40" aria-hidden="true">|</span>
-              <span className="text-white/80 drop-shadow-sm">
+              <span className="text-slate-300" aria-hidden="true">|</span>
+              <span className="text-slate-500">
                 {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
               </span>
-              <span className="text-white/40" aria-hidden="true">·</span>
-              <span className="text-white/80 drop-shadow-sm">
-                 <CompanyViewCounter companyId={company.id} />
-              </span>
+              <span className="text-slate-300" aria-hidden="true">·</span>
+              <CompanyViewCounter companyId={company.id} />
             </div>
           </div>
         </div>

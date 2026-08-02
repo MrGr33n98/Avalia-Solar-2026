@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ClipboardList, Share2, Star } from 'lucide-react';
+import { ClipboardList, Share2, Star, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
@@ -10,7 +10,6 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { track } from '@/lib/analytics/lazy';
 import { buildCompanySubPath } from '@/lib/slug';
-import { MessageCircle } from 'lucide-react';
 
 interface CompanyCTAGroupProps {
   company: Company;
@@ -67,9 +66,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
       company_id: company.id,
       company_name: company.name,
     });
-    // Fallback simple link for WhatsApp if ctaUrl isn't provided here
-    // In production, the actual URL should come from props or company.phone
-    const phone = company.phone ? company.phone.replace(/\D/g, '') : '';
+    const phone = company.phone ? company.phone.replace(/\\D/g, '') : '';
     if (phone) {
       window.open(`https://wa.me/55${phone}`, '_blank');
     } else {
@@ -97,7 +94,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         </Button>
       )}
 
-      {/* WhatsApp - feature paga, mesma regra do Orçamento */}
+      {/* WhatsApp - feature paga */}
       {canRequestQuote && (
         <Button
           type="button"
@@ -110,13 +107,13 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         </Button>
       )}
 
-      {/* Avaliar - público */}
+      {/* Avaliar */}
       <Link
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-        className="inline-flex h-12 flex-1 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/20 bg-slate-900/60 backdrop-blur-md px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-900/80 sm:flex-initial sm:min-w-[180px] lg:flex-none shadow-sm"
+        className="inline-flex h-12 flex-1 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 sm:flex-initial sm:min-w-[180px] lg:flex-none"
       >
-        <Star className="h-4 w-4 shrink-0 fill-white text-white" aria-hidden="true" />
+        <Star className="h-4 w-4 shrink-0 fill-blue-700 text-blue-700" aria-hidden="true" />
         <span>Avaliar empresa</span>
       </Link>
 
@@ -127,7 +124,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
         disabled={isSharing}
         aria-label="Compartilhar empresa"
         title="Compartilhar empresa"
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-slate-900/60 backdrop-blur-md text-white transition-colors hover:bg-slate-900/80 disabled:opacity-50 shadow-sm"
+        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
       >
         <Share2 className="h-5 w-5" aria-hidden="true" />
       </button>
