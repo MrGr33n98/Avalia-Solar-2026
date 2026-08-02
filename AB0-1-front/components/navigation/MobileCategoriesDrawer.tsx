@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw } from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -13,6 +14,8 @@ import {
   getPreferredCategoryIcon,
   normalizeCategoryKey,
 } from '@/lib/categoryIcons';
+import { useAuth } from '@/contexts/AuthContext';
+import { openSignupGate } from '@/lib/signup-gate';
 
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
@@ -58,9 +61,25 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
   onClose,
   id = 'mobile-categories-drawer',
 }) => {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const { categories, loading, error } = useCategoriesTree();
   const [selectedCategory, setSelectedCategory] = useState<CategoryTreeNode | null>(null);
   const [query, setQuery] = useState('');
+
+  const handleViewAllCategories = () => {
+    closeDrawer();
+    if (!isAuthenticated) {
+      openSignupGate({
+        source: 'search_results',
+        returnTo: '/categories',
+        title: 'Explore todas as categorias',
+        description: 'Crie sua conta gratuita para ver e filtrar todas as categorias disponíveis.',
+      });
+    } else {
+      router.push('/categories');
+    }
+  };
 
   const visibleCategories = useMemo(
     () => filterMainCategories(categories, query),
@@ -158,14 +177,14 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
         </div>
 
         <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
-          <Link
-            href="/categories"
-            onClick={closeDrawer}
+          <button
+            type="button"
+            onClick={handleViewAllCategories}
             className="flex h-12 w-full items-center justify-center gap-2.5 rounded-none bg-blue-700 text-sm font-semibold text-white shadow-none transition-colors hover:bg-blue-800"
           >
             <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
-            Ver todas as categorias
-          </Link>
+            {isAuthenticated ? 'Ver todas as categorias' : 'Entrar para ver categorias'}
+          </button>
         </div>
       </SheetContent>
     </Sheet>
