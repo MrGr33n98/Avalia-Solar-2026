@@ -23,9 +23,9 @@ export default function CompanyPremiumHero({
   return (
     <div
       id="company-premium-hero"
-      className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm"
+      className="absolute inset-0 z-0 h-full w-full overflow-hidden bg-slate-900"
     >
-      <div className="relative h-[160px] w-full sm:h-[190px] md:h-[230px] lg:h-[230px]">
+      <div className="relative h-full w-full">
         {showPlaceholder ? (
           <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         ) : (
@@ -55,8 +55,9 @@ export default function CompanyPremiumHero({
             </span>
           </div>
         )}
-        {/* Overlay linear sutil para contraste */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+        {/* Overlay linear para garantir leitura do texto branco */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-slate-900/90 via-slate-900/50 to-transparent" />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
       </div>
     </div>
   );

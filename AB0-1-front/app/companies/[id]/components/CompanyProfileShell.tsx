@@ -92,52 +92,55 @@ export default function CompanyProfileShell({
 
   return (
     <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-slate-50/40 text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
-      {/* Cabeçalho & Hero Premium */}
-      <header className="bg-transparent border-none">
-        <div className="mx-auto w-full max-w-[430px] px-4 pt-4 md:max-w-[1240px] md:px-6">
-          <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
-
-          <div className="flex flex-col gap-0 overflow-visible">
-            {/* Hero Banner */}
-            <CompanyPremiumHero
-              company={company}
-              bannerUrl={bannerUrl}
-              bannerError={bannerError}
-              setBannerError={setBannerError}
-            />
-
-            {/* Identidade da Empresa e CTAs */}
-            <div className="relative z-20 mt-0 px-0 pt-0">
-              <CompanyIdentityCard
-                company={company}
-                companyStats={companyStats}
-                logoUrl={logoUrl}
-                logoError={logoError}
-                setLogoError={setLogoError}
-              >
-                <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
-              </CompanyIdentityCard>
-            </div>
-
-            {/* Navegação por Abas Responsiva */}
-            <CompanyProfileTabs
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              categories={
-                company.categories?.length
-                  ? company.categories
-                  : company.category_info
-                    ? [company.category_info]
-                    : []
-              }
-              companyPath={buildCompanyPath(company.slug, company.name, company.id)}
-              showFinancing={showFinancing}
-              showGallery={showGallery}
-              showFaq={showFaq}
-            />
-          </div>
+      {/* Cabeçalho de Navegação (Breadcrumb) */}
+      <div className="w-full bg-white border-b border-slate-100">
+        <div className="mx-auto w-full max-w-[1280px] px-4 py-3 md:px-6">
+          <AppBreadcrumb items={breadcrumbItems} compact className="mb-0" />
         </div>
-      </header>
+      </div>
+
+      {/* Hero Premium Full-width */}
+      <div className="relative w-full min-h-[320px] md:min-h-[400px] flex items-end pb-8 md:pb-12 pt-20">
+        <CompanyPremiumHero
+          company={company}
+          bannerUrl={bannerUrl}
+          bannerError={bannerError}
+          setBannerError={setBannerError}
+        />
+
+        <div className="relative z-20 mx-auto w-full max-w-[1280px] px-4 md:px-6">
+          <CompanyIdentityCard
+            company={company}
+            companyStats={companyStats}
+            logoUrl={logoUrl}
+            logoError={logoError}
+            setLogoError={setLogoError}
+          >
+            <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
+          </CompanyIdentityCard>
+        </div>
+      </div>
+
+      {/* Navegação por Abas */}
+      <div className="w-full bg-white border-b border-slate-200 shadow-sm relative z-30">
+        <div className="mx-auto w-full max-w-[1280px] px-4 md:px-6">
+          <CompanyProfileTabs
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            categories={
+              company.categories?.length
+                ? company.categories
+                : company.category_info
+                  ? [company.category_info]
+                  : []
+            }
+            companyPath={buildCompanyPath(company.slug, company.name, company.id)}
+            showFinancing={showFinancing}
+            showGallery={showGallery}
+            showFaq={showFaq}
+          />
+        </div>
+      </div>
 
       {/* Grid Principal responsivo de 12 colunas */}
       <main className="mx-auto w-full max-w-[430px] px-4 py-6 md:max-w-[1240px] md:px-6 md:py-8">
