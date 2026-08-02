@@ -501,123 +501,196 @@ export default function CompanyCard({
     );
   }
 
-  // ── Variante 2: Standard ──
+  // ── Variante 2: Standard — Swiss Style (sem banner) ──
   if (variant === 'standard') {
-    // Check if company has badges for layout adjustments
-    const hasBadges = company.badges && company.badges.length > 0;
-    
+    const initials = getInitials(name);
+    const hasRating = company.reputation.rating_avg > 0 && company.reputation.rating_count > 0;
+    const coverageLabel = company.coverage.states.includes('Todos') || company.coverage.states.length > 10
+      ? 'Todo o Brasil'
+      : company.coverage.cities.length > 0
+        ? `${company.coverage.cities.length} cidades`
+        : company.coverage.states.length > 0
+          ? company.coverage.states.slice(0, 3).join(', ')
+          : 'Consulte';
+    const isVerified = company.trust.verification_status === 'verified' || company.trust.verification_status === 'premium';
+
     return (
       <Card
         className={cn(
-          'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white transition-all duration-200 hover:border-slate-300 hover:shadow-lg cursor-pointer',
+          'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white transition-all duration-200 hover:border-blue-200 hover:shadow-lg cursor-pointer',
           className
         )}
         onClick={handleCardClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className="relative h-24 bg-slate-100 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
-          <Image
-            src={COMPANY_BANNER_FALLBACK_SRC}
-            alt=""
-            fill
-            data-testid="company-banner"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            unoptimized
-          />
-        </div>
+        <div className="flex flex-col flex-1 p-4 gap-3">
 
-        <div className={cn(
-          "relative flex-1 flex flex-col",
-          // Adjust padding to accommodate badges - more top padding when badges are present
-          hasBadges ? "px-5 pb-5 pt-12" : "px-5 pb-5 pt-10"
-        )}>
-          <div className="absolute -top-6 left-5 z-20" data-testid="company-logo">
-            <CompanyLogo
-              logoUrl={company.logo_url}
-              name={name}
-              size="md"
-              className="border-2 border-white shadow-md bg-white"
-              badges={company.badges}
+          {/* Swiss Style: Cabeçalho — avatar + título + pill rating */}
+          <div className="flex items-start gap-3">
+            {/* Avatar com iniciais ou logo */}
+            <div className="shrink-0">
+              {company.logo_url ? (
+                <div className="relative h-11 w-11 rounded-lg overflow-hidden border border-slate-100 bg-white shadow-sm">
+                  <Image
+                    src={company.logo_url}
+                    alt={name}
+                    fill
+                    sizes="44px"
+                    className="object-contain p-0.5"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-sm">
+                  <span className="text-white text-sm font-black tracking-tight">{initials}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Título + verificação */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors leading-tight line-clamp-1">
+                  {name}
+                </h3>
+                {isVerified && (
+                  <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
+                )}
+              </div>
+              {company.identity.description && (
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                  {company.identity.description}
+                </p>
+              )}
+            </div>
+
+            {/* Swiss Style: Pill de rating no canto superior direito */}
+            <div className="shrink-0">
+              {hasRating ? (
+                <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-700">
+                    {company.reputation.rating_avg.toFixed(1)}
+                  </span>
+                  <span className="text-[10px] text-amber-600 font-medium">
+                    ({company.reputation.rating_count})
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[10px] text-slate-400 font-medium bg-slate-50 border border-slate-200 rounded-full px-2.5 py-1 whitespace-nowrap">
+                  Sem avaliações
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Swiss Style: Localização + Cobertura */}
+          {(company.identity.city || coverageLabel) && (
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+              <MapPin className="h-3 w-3 text-rose-400 shrink-0" />
+              <span>
+                {[company.identity.city, company.identity.state].filter(Boolean).join(', ')}
+                {coverageLabel && (
+                  <span className="text-slate-400">
+                    {company.identity.city ? ' · ' : ''}Cobertura: {coverageLabel}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+
+          {/* Swiss Style: Tags operacionais (pills) */}
+          <div className="flex flex-wrap gap-1.5">
+            {company.operations.sla_label && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5">
+                <Zap className="h-3 w-3" />
+                Resp: {company.operations.sla_label}
+              </span>
+            )}
+            {coverageLabel && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-0.5">
+                <Shield className="h-3 w-3" />
+                {coverageLabel}
+              </span>
+            )}
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2.5 py-0.5">
+                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                Verificada
+              </span>
+            )}
+          </div>
+
+          {/* Swiss Style: 3 botões horizontais — pagos com feature gate */}
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCompareClick}
+              disabled={!selectedInComparison && !canAddMore}
+              className={cn(
+                'flex-1 h-9 font-semibold rounded-xl shadow-none text-xs border transition-colors',
+                selectedInComparison
+                  ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+              )}
+            >
+              {selectedInComparison ? <Check className="h-3.5 w-3.5 mr-1" /> : '+ '}
+              {selectedInComparison ? 'Selecionada' : 'Comparar'}
+            </Button>
+
+            {canRequestQuote ? (
+              <Button
+                className="flex-1 h-9 font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-none text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openLeadModal({
+                    preferredCompanyId: id,
+                    source: 'company-card-standard',
+                    type: 'quick',
+                  });
+                }}
+              >
+                Pedir orçamento
+              </Button>
+            ) : null}
+
+            <ReviewCompanyButton
+              company={company}
+              label="Avaliar"
+              className={cn(
+                'h-9 rounded-xl text-xs shadow-none',
+                canRequestQuote ? 'flex-1' : 'flex-[2]'
+              )}
+              iconClassName="h-3.5 w-3.5"
+              stopPropagation
             />
           </div>
 
-          <div className="flex flex-col flex-1">
-            <div className="flex items-start justify-between gap-2 mt-1">
-              <h3 className={cn(
-                "font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-blue-700 transition-colors",
-                // Add right margin when badges are present to prevent overlap
-                hasBadges ? "mr-8" : ""
-              )}>
-                {name}
-              </h3>
-              {company.trust.verification_status === 'verified' && (
-                <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5 mt-2">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-semibold text-slate-800">
-                {company.reputation.rating_avg > 0
-                  ? company.reputation.rating_avg.toFixed(1)
-                  : 'S/N'}
-              </span>
-              <span className="text-[11px] text-slate-600">
-                ({company.reputation.rating_count} avaliações)
-              </span>
-            </div>
-
-            {company.identity.description && (
-              <p className="text-[12px] text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-                {company.identity.description}
-              </p>
-            )}
-
-            <div className="mt-auto pt-4 grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCompareClick}
-                disabled={!selectedInComparison && !canAddMore}
-                className={cn(
-                  'w-full font-semibold rounded-xl shadow-none h-9 text-xs inline-flex items-center justify-center gap-1',
-                  selectedInComparison
-                    ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                    : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-                )}
-              >
-                {selectedInComparison ? 'Selecionada' : 'Comparar'}
-              </Button>
-
-              {p2pChatEnabled && (
-                <CompanyChatButton companyId={id} companyName={name} variant="button" className="w-full h-9 rounded-xl text-xs" />
-              )}
-
-              {canRequestQuote ? (
-                <Button
-                  className="w-full font-semibold rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] shadow-none h-9 text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openLeadModal({
-                      preferredCompanyId: id,
-                      source: 'company-card-standard',
-                      type: 'quick',
-                    });
-                  }}
-                >
-                  Pedir orçamento
-                </Button>
-              ) : null}
-              <ReviewCompanyButton
-                company={company}
-                label="Avaliar"
-                className={cn('h-9 w-full rounded-xl text-xs', canRequestQuote ? '' : 'col-span-2')}
-                iconClassName="h-3.5 w-3.5"
-                stopPropagation
-              />
-            </div>
+          {/* Swiss Style: Footer links */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <Link
+              href={companyPath}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+            >
+              Ver perfil →
+            </Link>
+            <Link
+              href={`${companyPath}?tab=contact`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+            >
+              Contato
+            </Link>
+            <Link
+              href={companyReviewPath}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors"
+            >
+              Ver avaliações ({company.reputation.rating_count})
+            </Link>
           </div>
         </div>
       </Card>

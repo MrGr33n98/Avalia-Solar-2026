@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight, MapPin, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -463,14 +463,36 @@ export function CompaniesContent({
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50">
+      {/* Swiss Style: Barra de alerta de localização */}
       {showMobileLocationGate && (
-        <MobileLocationGate
-          loading={detectingLocation}
-          onAllow={handleAllowLocation}
-          onSkip={handleSkipLocationGate}
-        />
+        <div className="w-full bg-blue-600 text-white px-4 py-2.5 flex items-center justify-between gap-3 z-40">
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin className="h-4 w-4 shrink-0" />
+            <span className="text-sm font-medium truncate">
+              Então, você é daqui? Defina sua localização para ver empresas próximas
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleAllowLocation}
+              disabled={detectingLocation}
+              className="text-xs font-bold bg-white text-blue-700 rounded-full px-3 py-1 hover:bg-blue-50 transition-colors disabled:opacity-60"
+            >
+              {detectingLocation ? 'Detectando...' : 'Permitir localização'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSkipLocationGate}
+              aria-label="Fechar"
+              className="text-white/70 hover:text-white text-lg leading-none"
+            >
+              ×
+            </button>
+          </div>
+        </div>
       )}
-      <div className={showMobileLocationGate ? 'hidden md:block' : undefined}>
+      <div>
         {localBusinessSchema && (
           <script
             type="application/ld+json"
@@ -509,14 +531,34 @@ export function CompaniesContent({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-center">
+                <div className="flex items-center gap-3 self-start sm:self-center">
+                  {/* Swiss Style: Dropdown Ordenar por */}
+                  <div className="relative flex items-center">
+                    <select
+                      id="sort-companies"
+                      value={filters.sort || ''}
+                      onChange={(e) => {
+                        const updated = { ...filters, sort: e.target.value || undefined, page: 1 };
+                        router.replace(buildTargetUrl(updated as any), { scroll: false });
+                      }}
+                      className="appearance-none h-9 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Ordenar: Recomendadas</option>
+                      <option value="rating">Melhor avaliação</option>
+                      <option value="reviews">Mais avaliações</option>
+                      <option value="newest">Mais recentes</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2.5 h-4 w-4 text-slate-400" />
+                  </div>
+
+                  {/* Swiss Style: View Mode toggle com botão ativo dark */}
                   <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
                     <Button
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        'h-8 w-8',
-                        viewMode === 'grid' && 'bg-slate-100 text-slate-900'
+                        'h-8 w-8 transition-colors',
+                        viewMode === 'grid' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
                       )}
                       onClick={() => setViewMode('grid')}
                     >
@@ -526,8 +568,8 @@ export function CompaniesContent({
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        'h-8 w-8',
-                        viewMode === 'list' && 'bg-slate-100 text-slate-900'
+                        'h-8 w-8 transition-colors',
+                        viewMode === 'list' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
                       )}
                       onClick={() => setViewMode('list')}
                     >
@@ -536,7 +578,10 @@ export function CompaniesContent({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={cn('h-8 w-8', viewMode === 'map' && 'bg-slate-100 text-slate-900')}
+                      className={cn(
+                        'h-8 w-8 transition-colors',
+                        viewMode === 'map' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
+                      )}
                       onClick={() => setViewMode('map')}
                     >
                       <MapIcon className="h-4 w-4" />
@@ -545,31 +590,49 @@ export function CompaniesContent({
                 </div>
               </div>
 
+              {/* Swiss Style: Contador de resultados */}
+              {!loading && viewMode !== 'map' && (
+                <p className="text-xs text-slate-400 font-medium -mt-2">
+                  Mostrando {Math.min(companies.length, PAGE_SIZE)} de {totalCount} empresas
+                </p>
+              )}
+
               <section
                 className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-x-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {quickActions.map((action) => (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="flex flex-row items-center justify-center rounded-xl bg-white px-4 py-2 w-auto shrink-0 snap-start border border-slate-200 hover:border-blue-400 shadow-sm transition-all hover:bg-slate-50 group gap-2"
-                  >
-                    <div className="relative w-5 h-5 transition-transform duration-300 group-hover:scale-105">
-                      <Image
-                        src={action.imageSrc}
-                        alt={action.label}
-                        fill
-                        sizes="20px"
-                        className="object-contain"
-                        unoptimized
-                      />
-                    </div>
-                    <span className="text-[13px] font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
-                      {action.label}
-                    </span>
-                  </Link>
-                ))}
+                {quickActions.map((action) => {
+                  const isDestaques = action.label === 'Destaques';
+                  return (
+                    <Link
+                      key={action.label}
+                      href={action.href}
+                      className={cn(
+                        'flex flex-row items-center justify-center rounded-xl px-4 py-2 w-auto shrink-0 snap-start border shadow-sm transition-all group gap-2',
+                        isDestaques
+                          ? 'bg-slate-900 border-slate-900 hover:bg-slate-800'
+                          : 'bg-white border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+                      )}
+                    >
+                      <div className="relative w-5 h-5 transition-transform duration-300 group-hover:scale-105">
+                        <Image
+                          src={action.imageSrc}
+                          alt={action.label}
+                          fill
+                          sizes="20px"
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
+                      <span className={cn(
+                        'text-[13px] font-semibold transition-colors',
+                        isDestaques ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'
+                      )}>
+                        {action.label}
+                      </span>
+                    </Link>
+                  );
+                })}
               </section>
 
               <div className="space-y-4">
