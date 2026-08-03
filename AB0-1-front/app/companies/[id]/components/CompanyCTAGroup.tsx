@@ -76,19 +76,16 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
 
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
-  const isPaidPlan = Boolean(
-    company.featured || 
-    (company as any).plan_status === 'active' || 
-    (company as any).has_paid_plan ||
-    company.slug === 'weg' ||
-    (company as any).trust?.verification_status === 'premium'
-  );
-  const showWhatsApp = isPaidPlan && Boolean(company.phone);
+  // Usa o campo computado pelo servidor: cta_whatsapp_enabled já encapsula
+  // quote_feature_enabled? && whatsapp_enabled? no modelo Company do backend.
+  // Não usar heurísticas de client-side (featured, plan_status, etc.) pois
+  // featured=true não implica plano pago com WhatsApp habilitado.
+  const showWhatsApp = Boolean((company as any).cta_whatsapp_enabled);
 
   return (
     <div
       id="company-cta-group"
-      className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:flex-nowrap lg:justify-end"
+      className="flex w-full flex-nowrap items-center justify-start gap-2 sm:gap-3 lg:w-auto lg:justify-end"
     >
       {/* Solicitar orçamento — feature paga, só renderiza quando ativa */}
       {canRequestQuote && (
@@ -96,10 +93,12 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
           type="button"
           size="default"
           onClick={handleRequestQuote}
-          className="h-12 flex-1 min-w-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition-colors hover:bg-blue-700 sm:flex-initial sm:min-w-[210px] lg:flex-none"
+          className="h-11 flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition-colors hover:bg-blue-700 sm:gap-2 sm:px-4 sm:flex-initial sm:min-w-[200px] lg:flex-none"
         >
           <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="truncate">Solicitar orçamento</span>
+          {/* Texto curto no mobile, completo a partir de sm */}
+          <span className="truncate sm:hidden">Orçamento</span>
+          <span className="hidden sm:inline truncate">Solicitar orçamento</span>
         </Button>
       )}
 
@@ -109,7 +108,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
           type="button"
           size="default"
           onClick={handleWhatsApp}
-          className="h-12 flex-1 min-w-0 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white shadow-md transition-colors hover:bg-emerald-600 sm:flex-initial sm:min-w-[140px] lg:flex-none"
+          className="h-11 flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-emerald-600 sm:gap-2 sm:px-4 sm:flex-initial sm:min-w-[130px] lg:flex-none"
         >
           <MessageCircle className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
           <span className="truncate">WhatsApp</span>
@@ -120,20 +119,22 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
       <Link
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-        className="inline-flex h-12 flex-1 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 sm:flex-initial sm:min-w-[180px] lg:flex-none"
+        className="inline-flex h-11 flex-1 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-blue-300 bg-white px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 sm:gap-2 sm:px-4 sm:flex-initial sm:min-w-[160px] lg:flex-none"
       >
         <Star className="h-4 w-4 shrink-0 fill-blue-700 text-blue-700" aria-hidden="true" />
-        <span>Avaliar empresa</span>
+        {/* Texto curto no mobile, completo a partir de sm */}
+        <span className="sm:hidden">Avaliar</span>
+        <span className="hidden sm:inline">Avaliar empresa</span>
       </Link>
 
-      {/* Compartilhar — ícone apenas */}
+      {/* Compartilhar — ícone apenas, escondido no mobile para não empurrar os botões principais */}
       <button
         type="button"
         onClick={handleShare}
         disabled={isSharing}
         aria-label="Compartilhar empresa"
         title="Compartilhar empresa"
-        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
+        className="hidden sm:inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
       >
         <Share2 className="h-5 w-5" aria-hidden="true" />
       </button>
