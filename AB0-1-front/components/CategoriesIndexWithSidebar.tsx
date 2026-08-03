@@ -449,8 +449,8 @@ export default function CategoriesIndexWithSidebar() {
                       slug: cat.seo_url,
                       seo_url: cat.seo_url,
                       parent_id: null,
-                      companies_count: cat.companies_count,
-                      products_count: cat.products_count,
+                      companies_count: cat.companies_count ?? 0,
+                      products_count: cat.products_count ?? 0,
                       icon_url: cat.icon_url ?? undefined,
                       children: [],
                     };
