@@ -219,7 +219,8 @@ export default function CompanyHero({
               imageContext="company-banner"
               entityName={company.name}
               locationLabel={locationLabel}
-              className="object-cover object-center"
+              objectFit="contain"
+              className="object-center"
               containerClassName="h-full w-full"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"

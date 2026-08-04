@@ -52,26 +52,6 @@ function PostSidebarContent() {
         <BannerByLocation location="sidebar" limit={1} />
       </div>
 
-      {/* Newsletter */}
-      <Card className="bg-slate-900 text-white border-none shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Mail className="w-4 h-4 text-primary" aria-hidden="true" />
-            Newsletter Solar
-          </CardTitle>
-          <p className="text-xs text-slate-300">Receba guias, notícias e checklists exclusivos.</p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input 
-            placeholder="Seu melhor e-mail" 
-            className="bg-white/10 border-white/20 text-white placeholder:text-slate-300 focus-visible:ring-primary"
-          />
-          <Button variant="secondary" className="w-full bg-white text-slate-900 hover:bg-slate-100">
-            Inscrever-se
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Blog Categories */}
       <div className="space-y-3">
         <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider">Categorias</h4>

@@ -13,7 +13,15 @@ class Api::V1::ArticlesController < Api::V1::BaseController
     cached_json(cache_key, expires_in: 15.minutes) do
       scope = Article.includes(:category, :companies, :author).with_attached_banner
       scope = scope.published
-      scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+      category_param = params[:category_id].presence || params[:category].presence
+      if category_param.present?
+        category = if category_param.to_s.match?(/\A\d+\z/)
+                     Category.find_by(id: category_param)
+                   else
+                     Category.find_by(seo_url: category_param) || Category.find_by(slug: category_param)
+                   end
+        scope = category ? scope.where(category_id: category.id) : scope.none
+      end
       scope = scope.featured if boolean_param(:featured)
 
       scope = scope.joins(:companies).where(companies: { id: params[:company_id] }) if params[:company_id].present?

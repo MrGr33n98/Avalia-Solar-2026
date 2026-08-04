@@ -679,7 +679,7 @@ end
       blob: banner.blob,
       min_width: 800,
       min_height: 200,
-      recommendation: '1200x400px'
+      recommendation: '1920x600px (proporção 16:5)'
     )
   end
 

@@ -778,13 +778,23 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           <div className="min-w-0 space-y-4">
             <div className="relative min-h-[180px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
               {currentData.banner_url ? (
-                <Image
-                  src={currentData.banner_url}
-                  alt={`Banner da empresa ${displayText(currentData.name)}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 760px"
-                />
+                <>
+                  <Image
+                    src={currentData.banner_url}
+                    alt=""
+                    fill
+                    aria-hidden="true"
+                    className="scale-110 object-cover opacity-40 blur-xl"
+                    sizes="(max-width: 768px) 100vw, 760px"
+                  />
+                  <Image
+                    src={currentData.banner_url}
+                    alt={`Banner da empresa ${displayText(currentData.name)}`}
+                    fill
+                    className="object-contain object-center"
+                    sizes="(max-width: 768px) 100vw, 760px"
+                  />
+                </>
               ) : (
                 <div className="flex h-full min-h-[180px] flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
                   <ImageIcon className="h-8 w-8 text-brand-blue" />
@@ -796,7 +806,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               )}
             </div>
             <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-              <span>Requisitos recomendados: 1280x720px em JPG, PNG, WEBP ou SVG.</span>
+              <span>Formato recomendado: 1920x600px (16:5) em PNG ou JPG. Mantenha textos e logos afastados das bordas.</span>
               <span className="font-semibold text-brand-blue">Banner da Empresa</span>
             </div>
           </div>

@@ -23,6 +23,7 @@ import { List } from 'lucide-react';
 import { fixArticleContent } from '@/lib/content-fixer';
 import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
+import DOMPurify from 'isomorphic-dompurify';
 
 export const revalidate = 3600; // ISR - 1 hora
 
@@ -93,7 +94,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   const ogImage = article.image_url ? toCrawlableImageUrl(getFullImageUrl(article.image_url)) : undefined;
-  const authorName = article.author_name || article.author?.name || 'Avalia Solar';
+  const authorName = article.author_name || article.author?.name || 'Equipe Avalia Solar';
   const articleSlug = article.slug || String(article.id);
   const canonicalUrl = absoluteUrl(`/blog/${articleSlug}`);
   const seoTitle = article.seo_title || article.meta_title || article.title || undefined;
@@ -140,16 +141,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   }
 
   const articleSlug = article.slug || String(article.id);
-  const authorName = article.author_name || article.author?.name || 'Felipe Morais';
+  const isInstitutional = !article.author_name && !article.author?.name;
+  const authorName = article.author_name || article.author?.name || 'Equipe Avalia Solar';
   const author = article.author as (Article['author'] & { avatar_photo_url?: string | null }) | undefined;
   const authorAvatarUrl = article.author_avatar_url
     ? getFullImageUrl(article.author_avatar_url) 
     : author?.avatar_photo_url ? getFullImageUrl(author.avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
-  const schemaAuthorAvatarUrl = toCrawlableImageUrl(authorAvatarUrl) || absoluteUrl('/images/felipe-ceo-avalia-solar.png');
+  const schemaAuthorAvatarUrl = isInstitutional ? undefined : (toCrawlableImageUrl(authorAvatarUrl) || absoluteUrl('/images/felipe-ceo-avalia-solar.png'));
   const schemaArticleImage = article.image_url
     ? toCrawlableImageUrl(getFullImageUrl(article.image_url))
     : undefined;
-  const authorBio = article.author_bio || article.author?.bio || undefined;
+  const authorBio = isInstitutional ? undefined : (article.author_bio || article.author?.bio || undefined);
   const categoryName = article.category?.name;
   
   const jsonLd = {
@@ -161,9 +163,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     datePublished: article.published_at,
     dateModified: article.updated_at || article.published_at,
     author: {
-      '@type': 'Person',
+      '@type': isInstitutional ? 'Organization' : 'Person',
       name: authorName,
-      image: schemaAuthorAvatarUrl
+      image: schemaAuthorAvatarUrl || undefined,
+      url: isInstitutional ? absoluteUrl('/') : absoluteUrl(`/blog/autores/${article.author?.id || ''}`),
+      '@id': isInstitutional ? absoluteUrl('#organization') : absoluteUrl(`#author-${article.author?.id || 'default'}`)
     },
     publisher: {
       '@type': 'Organization',
@@ -171,7 +175,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       logo: {
         '@type': 'ImageObject',
         url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg')
-      }
+      },
+      '@id': absoluteUrl('#organization')
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
@@ -310,7 +315,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-8 prose-ol:text-slate-600 prose-ol:space-y-3
               prose-li:leading-loose
               prose-hr:border-slate-200 prose-hr:my-12">
-              <div dangerouslySetInnerHTML={{ __html: fixArticleContent(article.content) }} />
+              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(fixArticleContent(article.content), {
+                ALLOWED_TAGS: ['p', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'blockquote', 'img', 'figure', 'figcaption', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre'],
+                ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'id']
+              }) }} />
             </article>
 
             {/* Conversion Section (Next Step) */}

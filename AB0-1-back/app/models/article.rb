@@ -6,12 +6,14 @@ class Article < ApplicationRecord
 
   belongs_to :category
   belongs_to :product, optional: true
-  belongs_to :author, class_name: 'AdminUser', optional: true
+  belongs_to :author, class_name: 'AdminUser'
 
   # Companies relationship (Many-to-Many)
   has_and_belongs_to_many :companies
 
   has_one_attached :banner
+
+  before_validation :normalize_and_sanitize_content
 
   validates :title, presence: true
   validates :category, presence: true
@@ -22,6 +24,13 @@ class Article < ApplicationRecord
   validate :banner_file_size, if: -> { banner.attached? }
   validate :banner_dimensions, if: -> { banner.attached? }
   validates :status, inclusion: { in: %w[draft published], message: '%{value} is not a valid status' }, allow_nil: true
+  
+  validates :author, presence: true
+  validates :banner, presence: { message: 'deve ser anexado para publicação' }, if: -> { status == 'published' }
+  validate :validate_published_banner_dimensions, if: -> { status == 'published' && banner.attached? }
+  validate :validate_published_title_length, if: -> { status == 'published' }
+  validate :validate_published_description_length, if: -> { status == 'published' }
+  validate :validate_published_content_headings, if: -> { status == 'published' }
 
   # Defaults
   after_initialize :set_defaults, if: :new_record?
@@ -81,5 +90,74 @@ class Article < ApplicationRecord
     min_w = 200
     min_h = 200
     errors.add(:banner, "deve ter no mínimo #{min_w}x#{min_h}px") if width < min_w || height < min_h
+  end
+
+  def normalize_and_sanitize_content
+    return if content.blank?
+
+    # 1. Unescape if double escaped (contains &lt;p or &lt;div or &lt;h)
+    normalized = content
+    if normalized.include?('&lt;') && (normalized.include?('&lt;p') || normalized.include?('&lt;div') || normalized.include?('&lt;h'))
+      normalized = CGI.unescapeHTML(normalized)
+    end
+
+    # 2. Fix specific terms
+    replacements = {
+      'fotoforos' => 'painéis fotovoltaicos',
+      'cérebros celulares' => 'células fotovoltaicas',
+      'fotocatalisador' => 'célula fotovoltaica',
+      'Fotoforos' => 'Painéis fotovoltaicos',
+      'Cérebros celulares' => 'Células fotovoltaicas',
+      'Fotocatalisador' => 'Célula fotovoltaica'
+    }
+    replacements.each do |wrong, correct|
+      normalized = normalized.gsub(wrong, correct)
+    end
+
+    # 3. Sanitizar
+    allowed_tags = %w[p h2 h3 h4 ul ol li a strong em blockquote img figure figcaption table thead tbody tr th td code pre]
+    allowed_attributes = %w[href src alt title class target id]
+
+    self.content = ActionController::Base.helpers.sanitize(
+      normalized,
+      tags: allowed_tags,
+      attributes: allowed_attributes
+    )
+  end
+
+  def validate_published_banner_dimensions
+    return unless banner.variable?
+    width = banner.metadata[:width]
+    height = banner.metadata[:height]
+    return unless width && height
+
+    if width < 1200 || height < 630
+      errors.add(:banner, "deve ter no mínimo 1200x630px para publicação (atual: #{width}x#{height}px)")
+    end
+  end
+
+  def validate_published_title_length
+    if title.blank?
+      errors.add(:title, "não pode ficar em branco")
+    elsif title.length > 60
+      errors.add(:title, "deve ter no máximo 60 caracteres para publicação (atual: #{title.length})")
+    end
+  end
+
+  def validate_published_description_length
+    desc = seo_description.presence || meta_description.presence || excerpt.presence
+    if desc.blank?
+      errors.add(:seo_description, "deve ser preenchido para publicação")
+    elsif desc.length > 160
+      errors.add(:seo_description, "deve ter no máximo 160 caracteres para publicação (atual: #{desc.length})")
+    end
+  end
+
+  def validate_published_content_headings
+    if content.blank?
+      errors.add(:content, "não pode ficar vazio")
+    elsif !content.match?(/(<h2>|<h2\s)/i)
+      errors.add(:content, "deve conter pelo menos um cabeçalho H2 (<h2>) para organização e SEO")
+    end
   end
 end

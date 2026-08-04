@@ -400,7 +400,7 @@ ActiveAdmin.register Company do
                      hint: safe_preview.call(f.object.logo, max_width: 100, empty_text: 'PNG, JPG, SVG ou WEBP (Max 5MB)')
 
       f.input :banner, as: :file,
-                       hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1200x400 (Max 10MB)')
+                       hint: safe_preview.call(f.object.banner, max_width: 300, empty_text: 'Recomendado: 1920x600, proporção 16:5 (Max 10MB)')
 
       f.input :verified_badge, as: :file,
                                hint: safe_preview.call(f.object.verified_badge, max_width: 100, empty_text: 'PNG, JPG ou WEBP (Max 2MB). Selo customizado exibido no widget e perfil.')

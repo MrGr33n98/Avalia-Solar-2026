@@ -29,24 +29,35 @@ export default function CompanyPremiumHero({
         {showPlaceholder ? (
           <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         ) : (
-          <OptimizedImage
-            src={bannerUrl}
-            alt={company.name}
-            fill
-            priority
-            quality={95}
-            imageContext="company-banner"
-            entityName={company.name}
-            locationLabel={locationLabel}
-            className="object-cover transition-transform duration-700 hover:scale-105"
-            containerClassName="h-full w-full"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-            fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
-            useAspectRatio={false}
-            width={1600}
-            height={900}
-            onError={() => setBannerError(true)}
-          />
+          <>
+            <OptimizedImage
+              src={bannerUrl}
+              alt=""
+              fill
+              aria-hidden="true"
+              className="scale-110 object-cover opacity-40 blur-xl"
+              containerClassName="pointer-events-none absolute inset-0 h-full w-full"
+            />
+            <OptimizedImage
+              src={bannerUrl}
+              alt={company.name}
+              fill
+              priority
+              quality={95}
+              imageContext="company-banner"
+              entityName={company.name}
+              locationLabel={locationLabel}
+              objectFit="contain"
+              className="object-center"
+              containerClassName="h-full w-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+              fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+              useAspectRatio={false}
+              width={1600}
+              height={900}
+              onError={() => setBannerError(true)}
+            />
+          </>
         )}
         {showPlaceholder && (
           <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">

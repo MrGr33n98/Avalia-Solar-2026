@@ -4,12 +4,6 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
-const STATS = [
-  { value: '+1.200', label: 'empresas cadastradas' },
-  { value: '+8.000', label: 'avaliações verificadas' },
-  { value: '+50.000', label: 'leitores mensais' },
-];
-
 export function BlogHero() {
   return (
     <div className="bg-white py-10 md:py-14">
@@ -55,20 +49,6 @@ export function BlogHero() {
                 <a href="/blog?category=guias">Ver Guias</a>
               </Button>
             </div>
-          </div>
-
-          {/* Right: Stats */}
-          <div className="flex gap-8 border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-10 shrink-0">
-            {STATS.map((stat) => (
-              <div key={stat.label}>
-                <p className="text-2xl font-semibold text-gray-900 tracking-tight">
-                  {stat.value}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5 max-w-[90px] leading-snug">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>

@@ -87,39 +87,6 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
           <MessageCircle className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
           Chamar no WhatsApp
         </Button>
-
-        <p className="text-[10px] text-center text-gray-500">
-          +15.000 orçamentos realizados
-        </p>
-      </div>
-
-      {/* 2. Newsletter */}
-      <div className="border border-gray-100 bg-gray-900 p-5 space-y-3.5">
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-blue-400 shrink-0" aria-hidden="true" />
-          <div>
-            <h3 className="text-sm font-semibold text-white leading-tight">
-              Newsletter Solar
-            </h3>
-            <p className="text-[11px] text-gray-300 mt-0.5 font-normal">
-              50.000+ leitores. Dicas exclusivas toda semana.
-            </p>
-          </div>
-        </div>
-
-        <Input
-          type="email"
-          placeholder="Seu melhor e-mail"
-          className="rounded-none bg-white/10 border-white/15 text-white placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-sm h-9"
-        />
-        <Button
-          className="w-full rounded-none bg-white text-gray-900 hover:bg-gray-100 font-medium text-sm h-9 shadow-none"
-        >
-          Receber Guia Gratuito
-        </Button>
-        <p className="text-[10px] text-gray-300 text-center">
-          Zero spam. Cancele quando quiser.
-        </p>
       </div>
 
       {/* 3. Verified Companies */}
@@ -134,9 +101,6 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
           <VerifiedCompaniesMiniList companies={verifiedCompanies} />
         </div>
       </div>
-
-      {/* 4. Checklist */}
-      <ChecklistCard />
     </aside>
   );
 }
