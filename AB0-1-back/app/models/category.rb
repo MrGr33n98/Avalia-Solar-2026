@@ -15,6 +15,7 @@ class Category < ApplicationRecord
   has_many :children, class_name: 'Category', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :parent
 
   has_and_belongs_to_many :companies, join_table: :categories_companies,
+                                      validate: false,
                                       after_add: :update_metrics_on_change,
                                       after_remove: :update_metrics_on_change
 

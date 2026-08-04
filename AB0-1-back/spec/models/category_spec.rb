@@ -1,6 +1,17 @@
 require 'rails_helper'
 
 RSpec.describe Category, type: :model do
+  describe 'companies association' do
+    it 'allows associating an existing company without revalidating its legacy data' do
+      company = create(:company)
+      company.update_column(:website, 'site-legado-invalido')
+      category = build(:category, companies: [company])
+
+      expect(category.save).to be(true)
+      expect(category.reload.companies).to contain_exactly(company)
+    end
+  end
+
   describe 'hierarchy' do
     it 'allows setting a parent category' do
       parent = create(:category)
