@@ -36,13 +36,16 @@ export default function BestMatchCard({ companies, city, onQuote }: BestMatchCar
         <Button asChild size="sm" variant="outline">
           <Link href={`/companies/${company.slug || company.id}`}>Ver perfil</Link>
         </Button>
-        <Button
-          size="sm"
-          onClick={() => onQuote(company)}
-          aria-label={`Solicitar orçamento da ${company.name}`}
-        >
-          Solicitar orçamento
-        </Button>
+        {/* Botão de orçamento: apenas para empresas em plano pago */}
+        {company.premium && (
+          <Button
+            size="sm"
+            onClick={() => onQuote(company)}
+            aria-label={`Solicitar orçamento da ${company.name}`}
+          >
+            Solicitar orçamento
+          </Button>
+        )}
       </div>
     </section>
   );

@@ -16,7 +16,7 @@ import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
-import { isCardFeatureEnabled } from '@/components/CompanyCard';
+import { hasPaidPlan } from '@/lib/feature-access';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 
@@ -49,16 +49,8 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
   const rating_count = Number(topCompany.rating_count ?? topCompany.reviews_count ?? topCompany.total_reviews ?? 0);
   const average_rating = parseFloat(String(topCompany.rating_avg ?? topCompany.average_rating ?? topCompany.rating ?? 0));
 
-  // Feature gate: "Pedir orçamento" é feature paga.
-  const featureAccessMap = company.feature_access ?? {};
-  const isPremiumOrWEG = Boolean(
-    company.featured || 
-    company.plan_status === 'active' || 
-    company.has_paid_plan ||
-    company.slug === 'weg' ||
-    company.trust?.verification_status === 'premium'
-  );
-  const canRequestQuote = isPremiumOrWEG || isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
+  // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
+  const canRequestQuote = hasPaidPlan(company);
   
   const p2pChatEnabled =
     company.p2p_chat_enabled === true ||

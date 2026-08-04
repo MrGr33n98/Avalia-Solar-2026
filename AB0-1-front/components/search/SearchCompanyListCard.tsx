@@ -9,7 +9,7 @@ import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
-import { isFeatureEnabled } from '@/lib/feature-access';
+import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface SearchCompanyListCardProps {
@@ -29,16 +29,8 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   const slaLabel = (company as any).operations?.sla_label || (company as any).response_time_sla || '24h';
   const coverageLabel = 'Consulte'; // Could map from API if available
 
-  const isPremiumOrWEG = Boolean(
-    company.featured || 
-    company.plan_status === 'active' || 
-    company.has_paid_plan ||
-    company.slug === 'weg' ||
-    company.trust?.verification_status === 'premium'
-  );
-  const canRequestQuote = isPremiumOrWEG || (company.feature_access
-    ? isFeatureEnabled(company.feature_access, 'custom_ctas')
-    : false);
+  // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
+  const canRequestQuote = hasPaidPlan(company);
 
   return (
     <article

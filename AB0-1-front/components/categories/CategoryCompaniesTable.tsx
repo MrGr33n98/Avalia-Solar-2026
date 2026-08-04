@@ -9,7 +9,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isFeatureEnabled } from '@/lib/feature-access';
+import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
 import {
   Select,
@@ -188,16 +188,8 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               const isVerified = Boolean(company.verified || (company as any).trust?.verification_status === 'verified');
               const projectsCount = company.delivered_projects_count ?? (company as any).projects_count ?? (company as any).project_count;
 
-              const isPremiumOrWEG = Boolean(
-                company.featured || 
-                (company as any).plan_status === 'active' || 
-                (company as any).has_paid_plan ||
-                company.slug === 'weg' ||
-                (company as any).trust?.verification_status === 'premium'
-              );
-              const canRequestQuote = isPremiumOrWEG || ((company as any).feature_access
-                ? isFeatureEnabled((company as any).feature_access, 'custom_ctas')
-                : false);
+              // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
+              const canRequestQuote = hasPaidPlan(company as any);
 
               return (
                 <tr

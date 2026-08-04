@@ -224,15 +224,18 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                 </th>
                 {companies.map((company) => (
                   <td key={company.id} className="border-l border-slate-200 p-3">
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => onQuote(company)}
-                      aria-label={`Solicitar orçamento da ${company.name}`}
-                    >
-                      Solicitar orçamento
-                    </Button>
-                    <Button asChild size="sm" variant="ghost" className="mt-1 w-full text-blue-700">
+                    {/* Botão de orçamento: apenas para empresas em plano pago */}
+                    {company.premium && (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => onQuote(company)}
+                        aria-label={`Solicitar orçamento da ${company.name}`}
+                      >
+                        Solicitar orçamento
+                      </Button>
+                    )}
+                    <Button asChild size="sm" variant="ghost" className={`mt-1 w-full text-blue-700 ${company.premium ? '' : 'col-span-2'}`}>
                       <Link href={`/companies/${company.slug || company.id}`}>
                         Ver perfil completo
                       </Link>
@@ -240,6 +243,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   </td>
                 ))}
               </tr>
+
             </tbody>
           </table>
         </div>

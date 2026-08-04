@@ -50,7 +50,7 @@ import { track } from '@/lib/analytics/lazy';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled } from '@/lib/feature-access';
+import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
 import { openSignupGate } from '@/lib/signup-gate';
 import { useComparison } from '@/hooks/useComparison';
 
@@ -341,16 +341,9 @@ export default function CompanyCard({
   const selectedInComparison = isInComparison(id);
 
   // ── Feature gates controlados via planos pagos ──
-  // feature_access.custom_ctas: controla se o botão "Pedir orçamento" aparece
+  // hasPaidPlan: única fonte de verdade para verificar se a empresa tem plano pago.
   const featureAccessMap = company.feature_access ?? {};
-  const isPremiumOrWEG = Boolean(
-    rawCompany.featured || 
-    (rawCompany as any).plan_status === 'active' || 
-    (rawCompany as any).has_paid_plan ||
-    rawCompany.slug === 'weg' ||
-    rawCompany.trust?.verification_status === 'premium'
-  );
-  const canRequestQuote = isPremiumOrWEG || isCardFeatureEnabled(featureAccessMap, 'custom_ctas');
+  const canRequestQuote = hasPaidPlan({ ...rawCompany, feature_access: featureAccessMap });
 
   // Critérios reais de avaliação
   const topCriteria = company.top_criteria ?? [
