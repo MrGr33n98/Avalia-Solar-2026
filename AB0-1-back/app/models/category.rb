@@ -32,6 +32,9 @@ class Category < ApplicationRecord
 
   has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :category
   has_one :category_lead_wizard, dependent: :destroy, inverse_of: :category
+  has_many :category_faqs, dependent: :destroy, inverse_of: :category
+
+  accepts_nested_attributes_for :category_faqs, allow_destroy: true
 
   def latest_published_lead_wizard_version
     lead_wizard_versions.published.latest_first.first
@@ -92,7 +95,7 @@ class Category < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[companies products banner_attachment banner_blob parent children]
+    %w[companies products banner_attachment banner_blob parent children category_faqs]
   end
 
   # =========================

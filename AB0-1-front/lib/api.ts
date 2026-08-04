@@ -739,6 +739,13 @@ interface CompanyAccessContextRequestOptions {
   silentStatusCodes?: number[];
 }
 
+export interface CategoryFaq {
+  id: number;
+  question: string;
+  answer: string;
+  position?: number;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -757,6 +764,7 @@ export interface Category {
   subcategories?: Category[];
   companies?: Company[];
   products?: Product[];
+  faqs?: CategoryFaq[];
   kind: string;
   status: string;
   featured: boolean;

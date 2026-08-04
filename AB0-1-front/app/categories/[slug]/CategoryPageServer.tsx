@@ -267,7 +267,7 @@ export default async function CategoryPageServer({ params, searchParams }: Categ
             <FAQSection
               title={`Dúvidas Frequentes sobre ${category.name}`}
               subtitle={`Veja respostas rápidas para as principais dúvidas sobre ${category.name.toLowerCase()} e compare com segurança.`}
-              items={getCategoryFaqs(category.name, params.slug)}
+              items={category.faqs && category.faqs.length > 0 ? category.faqs : getCategoryFaqs(category.name, params.slug)}
             />
           </div>
         </section>

@@ -7,7 +7,7 @@ class CategorySerializer < ActiveModel::Serializer
              :average_rating, :reviews_count, :articles_count,
              :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url, :home_carousel_banner_url,
-             :parent, :subcategories
+             :parent, :subcategories, :faqs
   # :banner_sponsored, :banners  # Temporarily commented out
 
   # Remove has_many associations that cause N+1 queries and complex serialization
@@ -92,4 +92,21 @@ class CategorySerializer < ActiveModel::Serializer
   #     }
   #   end
   # end
+
+  def faqs
+    faq_list = if object.association(:category_faqs).loaded?
+                 object.category_faqs.select(&:published?).sort_by { |f| f.position || 999 }
+               else
+                 object.category_faqs.published_only.ordered
+               end
+
+    faq_list.map do |faq|
+      {
+        id: faq.id,
+        question: faq.question,
+        answer: faq.answer,
+        position: faq.position
+      }
+    end
+  end
 end

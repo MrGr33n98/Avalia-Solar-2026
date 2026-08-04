@@ -4,7 +4,8 @@ require 'English'
 
 ActiveAdmin.register Category, namespace: :admin do
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: []
+                :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: [],
+                category_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
@@ -105,6 +106,15 @@ ActiveAdmin.register Category, namespace: :admin do
               hint: 'Busque e selecione uma ou mais empresas relacionadas a esta categoria.'
     end
 
+    f.inputs 'FAQs da Categoria' do
+      f.has_many :category_faqs, allow_destroy: true, heading: false, new_record: 'Adicionar FAQ' do |cf|
+        cf.input :question
+        cf.input :answer, as: :text, input_html: { rows: 3 }
+        cf.input :status, as: :select, collection: CategoryFaq.statuses.keys
+        cf.input :position
+      end
+    end
+
     f.inputs 'Permission Settings' do
       f.input :permissions_config, as: :text, input_html: { rows: 5 }
     end
@@ -171,6 +181,22 @@ ActiveAdmin.register Category, namespace: :admin do
         end
       else
         para 'Nenhuma versão criada ainda.'
+      end
+    end
+
+    panel 'FAQs da Categoria' do
+      faqs = category.category_faqs.ordered
+      if faqs.any?
+        table_for faqs do
+          column :position
+          column :question
+          column :answer
+          column :status do |faq|
+            status_tag(faq.status)
+          end
+        end
+      else
+        para 'Nenhum FAQ cadastrado para esta categoria.'
       end
     end
   end
