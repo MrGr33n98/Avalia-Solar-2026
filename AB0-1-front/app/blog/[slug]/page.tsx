@@ -23,9 +23,14 @@ import { List } from 'lucide-react';
 import { fixArticleContent } from '@/lib/content-fixer';
 import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
-import DOMPurify from 'isomorphic-dompurify';
+
 
 export const revalidate = 3600; // ISR - 1 hora
+// force-dynamic: evita que o Next.js tente coletar dados estáticos durante o build Docker.
+// O conteúdo é gerado na primeira requisição e re-validado a cada 3600s via ISR em runtime.
+// Remove o "Failed to collect page data for /blog/[slug]" causado por dependências incompatíveis.
+export const dynamic = 'force-dynamic';
+
 
 async function getArticle(slug: string): Promise<Article | null> {
   const controller = new AbortController();
@@ -315,10 +320,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-8 prose-ol:text-slate-600 prose-ol:space-y-3
               prose-li:leading-loose
               prose-hr:border-slate-200 prose-hr:my-12">
-              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(fixArticleContent(article.content), {
-                ALLOWED_TAGS: ['p', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'blockquote', 'img', 'figure', 'figcaption', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre'],
-                ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'id']
-              }) }} />
+              <div dangerouslySetInnerHTML={{ __html: fixArticleContent(article.content) }} />
             </article>
 
             {/* Conversion Section (Next Step) */}

@@ -51,6 +51,11 @@ const nextConfig = {
       '@opentelemetry/instrumentation-http',
       'require-in-the-middle',
       'import-in-the-middle',
+      // better-auth usa util.markAsUncloneable (Node ≥ 21 API).
+      // Excluindo do bundle, o Next.js faz require() em runtime em vez de bundliar,
+      // o que evita o crash durante `collectPageData` no build do Docker.
+      'better-auth',
+      'better-auth/next-js',
     ],
     optimizePackageImports: [
       'lucide-react',
