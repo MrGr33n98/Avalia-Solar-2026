@@ -68,6 +68,7 @@ class Category < ApplicationRecord
   # Callbacks
   # =========================
   after_save :clear_query_cache!
+  after_save :update_metrics!
 
   # =========================
   # Cacheable Queries - TASK-016
@@ -206,6 +207,8 @@ class Category < ApplicationRecord
   end
 
   def update_metrics!
+    return unless persisted?
+
     active_companies = companies.where(status: 'active').count
     active_products = products.where(status: 'active')
 
