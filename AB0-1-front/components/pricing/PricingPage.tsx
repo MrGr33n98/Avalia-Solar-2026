@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
@@ -14,11 +13,6 @@ import {
   Zap,
   X,
   Compass,
-  LineChart,
-  Megaphone,
-  UserCheck,
-  HelpCircle,
-  Sparkles,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,11 +33,6 @@ import { BannerSlot } from '@/components/banners/BannerSlot';
 import { DefaultPricingAdBanner } from '@/components/banners/DefaultPricingAdBanner';
 
 // ─── Variantes de Animação ──────────────────────────────────────────────────
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.56, ease: [0.22, 1, 0.36, 1] as const } },
-};
 
 const stagger: Variants = {
   hidden: {},
@@ -87,20 +76,24 @@ function normalizePlanSlug(plan: Partial<BillingPlan> & { plan_tier?: string }, 
   return pricingPlans[fallbackIndex]?.slug || 'free';
 }
 
+interface CombinedPlan extends BillingPlan {
+  ctaLabel?: string;
+  billingNote?: string;
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Estados locais
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<CombinedPlan[]>([]);
   const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoadingPlanId, setActionLoadingPlanId] = useState<number | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [lastFailedPlan, setLastFailedPlan] = useState<any>(null);
+  const [lastFailedPlan, setLastFailedPlan] = useState<CombinedPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [heroMockupError, setHeroMockupError] = useState(false);
 
   // Estado para o Modal de Lead Enterprise
   const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
@@ -111,6 +104,15 @@ export default function PricingPage() {
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalSuccessMessage, setModalSuccessMessage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  // Estados para Calculadora de ROI
+  const [roiTicket, setRoiTicket] = useState(15000);
+  const [roiLeads, setRoiLeads] = useState(5);
+  const [roiConv, setRoiConv] = useState(20);
+
+  const roiClients = (roiLeads * roiConv) / 100;
+  const roiRevenue = roiClients * roiTicket;
+  const roiValue = roiRevenue > 0 ? ((roiRevenue / 150) - 1) * 100 : 0;
 
   // Carrega planos e assinatura
   useEffect(() => {
@@ -175,7 +177,7 @@ export default function PricingPage() {
           const sub = await billingApi.getSubscription(user.company_id);
           setSubscription(sub);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('[PricingPage] Erro ao carregar dados de faturamento:', err);
         setError('Ocorreu um erro ao carregar os planos de faturamento. Por favor, tente novamente mais tarde.');
       } finally {
@@ -187,7 +189,7 @@ export default function PricingPage() {
   }, [isAuthenticated, user?.company_id]);
 
   // Handler para os cliques em CTA de planos
-  const handlePlanCta = async (plan: any) => {
+  const handlePlanCta = async (plan: BillingPlan) => {
     if (!isAuthenticated) {
       router.push(`/register?plan=${plan.slug}`);
       return;
@@ -269,9 +271,10 @@ export default function PricingPage() {
         setModalError(null);
         setIsEnterpriseModalOpen(true);
       }
-    } catch (err: any) {
-      console.error('[PricingPage] Erro ao processar faturamento:', err);
-      setCheckoutError(err?.message || 'Falha ao processar solicitação. Por favor, tente novamente.');
+    } catch (err) {
+      const error = err as Error & { message?: string };
+      console.error('[PricingPage] Erro ao processar faturamento:', error);
+      setCheckoutError(error?.message || 'Falha ao processar solicitação. Por favor, tente novamente.');
     } finally {
       setActionLoadingPlanId(null);
     }
@@ -291,7 +294,7 @@ export default function PricingPage() {
     setModalError(null);
 
     try {
-      const payload: any = {
+      const payload: { justification: string; phone_contact: string; estimated_mrr?: number } = {
         justification,
         phone_contact: phoneContact,
       };
@@ -307,9 +310,10 @@ export default function PricingPage() {
         const sub = await billingApi.getSubscription(user.company_id);
         setSubscription(sub);
       }
-    } catch (err: any) {
-      console.error('[PricingPage] Erro ao enviar lead enterprise:', err);
-      setModalError(err?.message || 'Ocorreu um erro ao enviar sua solicitação. Por favor, tente novamente.');
+    } catch (err) {
+      const error = err as Error & { message?: string };
+      console.error('[PricingPage] Erro ao enviar lead enterprise:', error);
+      setModalError(error?.message || 'Ocorreu um erro ao enviar sua solicitação. Por favor, tente novamente.');
     } finally {
       setModalSubmitting(false);
     }
@@ -324,271 +328,314 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] pb-12">
+    <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] pb-12 font-sans antialiased text-slate-800">
       
-      {/* ── 1. HERO SECTION (2 colunas com suporte a Mockup e Fundo Solar) ────────────────── */}
-      <section className="relative pb-16 pt-20 border-b border-slate-200/50 bg-gradient-to-b from-[#EBF2FC] to-[#F5F8FC] overflow-hidden">
-        {/* Imagem de Fundo Solar discreta na lateral direita */}
-        <div 
-          className="absolute inset-y-0 right-0 w-full lg:w-1/2 opacity-20 pointer-events-none bg-cover bg-right bg-no-repeat hidden md:block"
-          style={{ backgroundImage: 'url(/images/pricing/pricing-hero-solar-bg.webp)' }}
-        />
-        {/* Overlay suave para integrar o fundo e garantir legibilidade perfeita */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#EBF2FC] via-[#EBF2FC]/80 to-transparent pointer-events-none" />
-
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
+      {/* ── 1. HERO SECTION ────────────────── */}
+      <section className="relative pb-16 pt-20 border-b border-slate-200/50 bg-[#eef4fa] overflow-hidden">
+        <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-[1160px]">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             
-            {/* Esquerda: Texto de captação */}
+            {/* Left Column: Copy & Actions */}
             <motion.div
               className="space-y-6"
               initial="hidden"
               animate="visible"
               variants={stagger}
             >
-              <motion.div variants={fadeUp}>
-                <Badge
-                  variant="outline"
-                  className="bg-brand-blue/10 text-brand-blue border-brand-blue/20 mb-2 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em]"
-                >
-                  Planos para Empresas
-                </Badge>
-              </motion.div>
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <Link href="/" className="hover:text-slate-900">Home</Link> › <span className="text-slate-800">Planos e preços</span>
+                </p>
+                <span className="block text-xs font-bold uppercase tracking-[.1em] text-amber-600">
+                  Plataforma de aquisição de clientes para energia solar
+                </span>
+              </div>
 
-       <motion.h1
-                variants={fadeUp}
-                className="text-balance text-4xl font-black tracking-tight text-slate-950 md:text-5xl lg:text-[3.25rem] leading-[1.1]"
-              >
-                O plano certo para destacar sua empresa no{' '}
-                <span className="text-amber-500 bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">mercado solar</span>
-              </motion.h1>
+              <h1 className="text-balance text-4xl font-black tracking-tight text-slate-900 md:text-5xl lg:text-[2.75rem] leading-[1.15]">
+                Mais orçamentos, mais vendas, menos CAC
+              </h1>
 
-              <motion.p
-                variants={fadeUp}
-                className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 font-medium max-w-xl"
-              >
-                Mais visibilidade, mais confiança e mais clientes. Escolha o plano ideal para o momento da sua empresa.
-              </motion.p>
+              <p className="mt-4 text-base sm:text-[17.5px] leading-relaxed text-slate-500 font-medium">
+                Todos os dias, consumidores comparam empresas na Avalia Solar antes de fechar negócio. Um plano pago coloca a sua empresa na frente deles — e transforma visitas em contatos no seu WhatsApp.
+              </p>
 
-              <motion.div
-                variants={fadeUp}
-                className="mt-8 flex flex-col items-center gap-3 sm:flex-row"
-              >
-                <Button asChild size="lg" className="bg-slate-950 hover:bg-slate-900 text-white border-0 shadow-lg h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm">
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+                <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-0 shadow-md h-12 rounded-lg px-8 w-full sm:w-auto text-sm transition-transform duration-150 active:scale-[0.98]">
                   <Link href={isAuthenticated ? '/dashboard' : '/register'}>
-                    Começar agora
+                    Criar meu perfil grátis
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-slate-350 hover:bg-slate-50 h-12 rounded-full px-8 w-full sm:w-auto font-bold text-sm bg-white gap-2"
+                  className="border-slate-300 hover:bg-slate-50 h-12 rounded-lg px-8 w-full sm:w-auto font-bold text-sm bg-white text-slate-800 shadow-sm"
                 >
-                  <Link href="/contact" className="flex items-center gap-1">
+                  <Link href="/contact?subject=commercial" className="flex items-center gap-1.5">
                     Falar com vendas
-                    <ArrowRight className="h-4 w-4 text-slate-700" />
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-              </motion.div>
+              </div>
 
               {/* Microbadges */}
-              <motion.div variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-                {[
-                  'Sem fidelidade',
-                  'Ative em minutos',
-                  'Cancele quando quiser',
-                  'Suporte humano'
-                ].map((label) => (
-                  <span key={label} className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 text-[10px] font-bold">✓</span>
-                    {label}
-                  </span>
-                ))}
-              </motion.div>
+              <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13.5px] text-slate-500 font-medium">
+                <span className="flex items-center gap-1.5"><span className="text-emerald-600 font-bold">✓</span> Sem fidelidade</span>
+                <span className="flex items-center gap-1.5"><span className="text-emerald-600 font-bold">✓</span> Ativação em minutos</span>
+                <span className="flex items-center gap-1.5"><span className="text-emerald-600 font-bold">✓</span> Cancele quando quiser</span>
+                <span className="flex items-center gap-1.5"><span className="text-emerald-600 font-bold">✓</span> Suporte humano</span>
+              </div>
             </motion.div>
 
-            {/* Direita: Mockup Real ou Simulado */}
-            <motion.div
-              className="relative w-full min-h-[320px] sm:min-h-[400px] flex items-center justify-center lg:justify-end"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.68, ease: 'easeOut' }}
-            >
-              {!heroMockupError ? (
-                <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
-                  <Image
-                    src="/images/pricing/pricing-hero-mockup.webp"
-                    alt="Mockup do Perfil Comercial"
-                    width={1200}
-                    height={800}
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="w-full h-auto object-contain drop-shadow-[0_24px_48px_rgba(0,86,210,0.18)]"
-                    onError={() => setHeroMockupError(true)}
-                  />
-
-                  {/* Micro-cards flutuantes da direita do Hero sobrepostos à imagem */}
-                  <motion.div 
-                    className="absolute top-4 left-0 sm:left-4 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
-                  >
-                    <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                      <UserCheck className="h-4 w-4" />
+            {/* Right Column: Visual Mockup */}
+            <div className="relative w-full min-h-[320px] sm:min-h-[400px] flex items-center justify-center lg:justify-end">
+              <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
+                {/* Notebook CSS Mockup */}
+                <div className="relative w-[320px] sm:w-[420px] h-[200px] sm:h-[260px] rounded-2xl border border-slate-350 bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
+                  <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
+                    <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
+                      <span className="h-2 w-2 rounded-full bg-red-400" />
+                      <span className="h-2 w-2 rounded-full bg-yellow-400" />
+                      <span className="h-2 w-2 rounded-full bg-green-400" />
+                      <span className="h-3 w-40 sm:w-60 bg-white border border-slate-200 rounded text-[7px] text-slate-400 pl-1.5 flex items-center">
+                        avaliasolar.com.br/solare-energia
+                      </span>
                     </div>
-                    <div>
-                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Empresas</div>
-                      <div className="text-[8px] font-bold text-slate-400">confiáveis</div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="absolute bottom-12 right-0 sm:right-4 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                    animate={{ y: [0, 6, 0] }}
-                    transition={{ repeat: Infinity, duration: 5.2, ease: 'easeInOut' }}
-                  >
-                    <div className="h-7 w-7 rounded-xl bg-brand-blue/10 text-brand-blue flex items-center justify-center">
-                      <LineChart className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Oportunidades</div>
-                      <div className="text-[8px] font-bold text-slate-400">de negócio</div>
-                    </div>
-                  </motion.div>
-                </div>
-              ) : (
-                /* Notebook simulado em CSS como Fallback */
-                <div className="relative w-full h-[320px] sm:h-[400px] flex items-center justify-center lg:justify-end">
-                  <div className="relative w-[340px] sm:w-[460px] h-[220px] sm:h-[280px] rounded-2xl border border-white bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
-                    {/* Tela do Notebook */}
-                    <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
-                      {/* Navegação simulada */}
-                      <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
-                        <span className="h-2 w-2 rounded-full bg-red-400" />
-                        <span className="h-2 w-2 rounded-full bg-yellow-400" />
-                        <span className="h-2 w-2 rounded-full bg-green-400" />
-                        <span className="h-3 w-40 sm:w-60 bg-white border border-slate-200 rounded text-[7px] text-slate-400 pl-1.5 flex items-center">
-                          avaliasolar.com.br/solare-energia
-                        </span>
-                      </div>
-                      {/* Conteúdo simulado */}
-                      <div className="mt-3 flex items-start gap-3">
-                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-350 shrink-0 shadow animate-pulse" />
-                        <div className="space-y-1.5 w-full">
-                          <div className="text-[11px] sm:text-xs font-black text-slate-900 flex items-center gap-1.5">
-                            Solare Energia Solar
-                            <span className="h-3 w-3 rounded-full bg-brand-blue flex items-center justify-center text-white text-[7px] font-bold">✓</span>
-                          </div>
-                          <div className="text-[8px] sm:text-[9px] text-slate-500 font-medium">96% dos usuários recomendam</div>
-                          <div className="h-8 sm:h-12 bg-white rounded-lg border border-slate-200 p-2 text-[7px] sm:text-[8px] text-slate-400 leading-relaxed overflow-hidden">
-                            Projetos residenciais e comerciais de alta eficiência com suporte e homologação inclusos...
-                          </div>
+                    <div className="mt-3 flex items-start gap-3">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-300 shrink-0 shadow animate-pulse" />
+                      <div className="space-y-1.5 w-full">
+                        <div className="text-[11px] sm:text-xs font-black text-slate-900 flex items-center gap-1.5">
+                          Solare Energia Solar
+                          <span className="h-3 w-3 rounded-full bg-[#1668e8] flex items-center justify-center text-white text-[7px] font-bold">✓</span>
+                        </div>
+                        <div className="text-[8px] sm:text-[9px] text-slate-500 font-medium">96% dos usuários recomendam</div>
+                        <div className="h-8 sm:h-12 bg-white rounded-lg border border-slate-200 p-2 text-[7px] sm:text-[8px] text-slate-400 leading-relaxed overflow-hidden">
+                          Projetos residenciais e comerciais de alta eficiência com suporte e homologação inclusos...
                         </div>
                       </div>
                     </div>
-                    {/* Base do Notebook */}
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[380px] sm:w-[500px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
                   </div>
-
-                  {/* Smartphone flutuante sobreposto em CSS */}
-                  <div className="absolute -bottom-4 right-4 sm:right-16 w-[110px] sm:w-[130px] h-[200px] sm:h-[240px] rounded-[24px] border-[5px] border-slate-900 bg-white shadow-2xl p-1.5 flex flex-col overflow-hidden z-20">
-                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-slate-900 rounded-full flex items-center justify-center" />
-                    
-                    {/* Tela do Celular */}
-                    <div className="flex-1 rounded-[16px] bg-[#F5F8FC] overflow-hidden flex flex-col p-2 pt-4 relative">
-                      <div className="h-6 w-6 rounded-lg bg-slate-350 shrink-0 mb-1.5 animate-pulse" />
-                      <div className="text-[8px] font-black text-slate-900 leading-none">Solare Energia</div>
-                      <div className="text-[5px] text-slate-500 font-bold mb-1">96% aprovação</div>
-                      <div className="h-14 bg-white rounded-md border border-slate-200 p-1 text-[5px] text-slate-400 overflow-hidden leading-snug">
-                        Ideal para começar a garantir presença no maior portal...
-                      </div>
-                      <div className="mt-auto h-4 w-full rounded bg-brand-blue flex items-center justify-center text-[5px] font-bold text-white shadow-sm">
-                        Falar no WhatsApp
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Micro-cards flutuantes da direita do Hero */}
-                  <motion.div 
-                    className="absolute top-6 left-2 sm:left-12 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
-                  >
-                    <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                      <UserCheck className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Empresas</div>
-                      <div className="text-[8px] font-bold text-slate-400">confiáveis</div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="absolute top-28 right-0 sm:right-6 bg-white/90 backdrop-blur border border-slate-200/50 shadow-lg p-2.5 rounded-2xl flex items-center gap-2 z-30"
-                    animate={{ y: [0, 6, 0] }}
-                    transition={{ repeat: Infinity, duration: 5.2, ease: 'easeInOut' }}
-                  >
-                    <div className="h-7 w-7 rounded-xl bg-brand-blue/10 text-brand-blue flex items-center justify-center">
-                      <LineChart className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black text-slate-900 leading-none">+ Oportunidades</div>
-                      <div className="text-[8px] font-bold text-slate-400">de negócio</div>
-                    </div>
-                  </motion.div>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[360px] sm:w-[460px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
                 </div>
-              )}
-            </motion.div>
+
+                {/* Smartphone CSS Mockup */}
+                <div className="absolute -bottom-4 right-4 sm:right-10 w-[100px] sm:w-[120px] h-[180px] sm:h-[220px] rounded-[24px] border-[4px] border-slate-900 bg-white shadow-2xl p-1.5 flex flex-col overflow-hidden z-20">
+                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-10 h-2 bg-slate-900 rounded-full flex items-center justify-center" />
+                  <div className="flex-1 rounded-[16px] bg-[#F5F8FC] overflow-hidden flex flex-col p-2 pt-4 relative">
+                    <div className="h-6 w-6 rounded-lg bg-slate-350 shrink-0 mb-1.5 animate-pulse" />
+                    <div className="text-[8px] font-black text-slate-900 leading-none">Solare Energia</div>
+                    <div className="text-[5px] text-slate-500 font-bold mb-1">96% aprovação</div>
+                    <div className="h-12 bg-white rounded-md border border-slate-200 p-1 text-[5px] text-slate-400 overflow-hidden leading-snug">
+                      Ideal para começar a garantir presença no maior portal...
+                    </div>
+                    <div className="mt-auto h-4 w-full rounded bg-[#1668e8] flex items-center justify-center text-[5px] font-bold text-white shadow-sm">
+                      Falar no WhatsApp
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           </div>
         </div>
       </section>
 
-      {/* ── 2. HERO BENEFIT STRIP (Benefícios rápidos abaixo do Hero) ─────────── */}
-      <section className="relative py-8 bg-white border-b border-slate-200/40">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
+      {/* ── 2. PROOF STRIP ────────────────── */}
+      <section className="bg-white border-b border-slate-200/60 py-8">
+        <div className="max-w-[1160px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="space-y-1">
+            <strong className="block text-[15.5px] font-extrabold text-slate-900">Empresas verificadas</strong>
+            <span className="text-[13px] text-slate-500 font-medium">em todo o Brasil</span>
+          </div>
+          <div className="space-y-1">
+            <strong className="block text-[15.5px] font-extrabold text-slate-900">Avaliações reais</strong>
+            <span className="text-[13px] text-slate-500 font-medium">de clientes de energia solar</span>
+          </div>
+          <div className="space-y-1">
+            <strong className="block text-[15.5px] font-extrabold text-slate-900">Cobertura nacional</strong>
+            <span className="text-[13px] text-slate-500 font-medium">presente nas principais capitais</span>
+          </div>
+          <div className="space-y-1">
+            <strong className="block text-[15.5px] font-extrabold text-slate-900">Metodologia transparente</strong>
+            <span className="text-[13px] text-slate-500 font-medium">critérios de avaliação públicos</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. FUNIL DO LEAD ────────────────── */}
+      <section className="py-20 bg-white border-b border-slate-100">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Como você ganha clientes</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Da busca ao orçamento fechado</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Seu perfil na Avalia Solar não é um cartão de visitas. É um funil completo de conversão.</p>
+          </div>
+          <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 max-w-[980px] mx-auto">
             {[
-              { label: 'Mais visibilidade', desc: 'Destaque estratégico no portal', icon: Sparkles, color: 'text-brand-blue bg-brand-blue/10' },
-              { label: 'Mais conversão', desc: 'CTAs focados no WhatsApp', icon: Zap, color: 'text-emerald-500 bg-emerald-500/10' },
-              { label: 'Menos concorrência', desc: 'Perfil limpo sem alternativas', icon: ShieldCheck, color: 'text-teal-600 bg-teal-600/10' },
-              { label: 'Inteligência de mercado', desc: 'Dados e relatórios de leads', icon: LineChart, color: 'text-indigo-600 bg-indigo-600/10' },
-            ].map((benefit, i) => (
-              <div key={i} className="flex flex-col md:flex-row items-center gap-3 p-2 group">
-                <div className={`h-10 w-10 shrink-0 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${benefit.color}`}>
-                  <benefit.icon className="h-5 w-5" />
+              { num: 1, title: 'Consumidor pesquisa', desc: 'empresas de energia solar na sua cidade' },
+              { num: 2, title: 'Encontra seu perfil', desc: 'com destaque e sem concorrentes' },
+              { num: 3, title: 'Ganha confiança', desc: 'avaliações reais, fotos, FAQ e materiais' },
+              { num: 4, title: 'Clica no WhatsApp', desc: 'e fala direto com a sua equipe' },
+              { num: 5, title: 'Vira orçamento', desc: 'e você acompanha tudo no relatório' }
+            ].map((step, idx, arr) => (
+              <div key={step.num} className="flex flex-col md:flex-row items-center flex-1">
+                <div className="flex-1 bg-slate-50 border border-slate-200/60 rounded-xl p-5 text-center flex flex-col items-center justify-start min-h-[170px] shadow-sm hover:shadow transition-shadow w-full">
+                  <div className="w-8 h-8 rounded-full bg-slate-950 text-white text-sm font-bold flex items-center justify-center mb-3">
+                    {step.num}
+                  </div>
+                  <strong className="block text-[14.5px] font-black text-slate-900 mb-1">{step.title}</strong>
+                  <span className="text-[12.5px] text-slate-500 font-medium leading-relaxed">{step.desc}</span>
                 </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-black text-slate-950">{benefit.label}</h4>
-                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium">{benefit.desc}</p>
+                {idx < arr.length - 1 && (
+                  <div className="hidden md:block text-slate-300 font-bold text-lg select-none px-2.5">
+                    →
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-center mt-8 text-[15px] text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+            Planos pagos removem as distrações desse caminho: <strong className="text-slate-950 font-bold">sem anúncios de concorrentes no seu perfil</strong>, a atenção fica 100% na sua empresa.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 4. ROI CALCULATOR ────────────────── */}
+      <section className="py-20 bg-slate-50 border-b border-slate-200/60">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Faça as contas</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Quanto vale um cliente a mais por mês?</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Arraste os valores da sua realidade e veja o que poucos contatos extras já representam.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-[980px] mx-auto items-stretch">
+            {/* Form Sliders */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-8 space-y-6 shadow-sm flex flex-col justify-center">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-900">
+                  <span>Ticket médio de uma instalação:</span>
+                  <span className="text-amber-600 text-base font-extrabold">R$ {roiTicket.toLocaleString('pt-BR')}</span>
                 </div>
+                <input
+                  type="range"
+                  min="5000"
+                  max="80000"
+                  step="1000"
+                  value={roiTicket}
+                  onChange={(e) => setRoiTicket(Number(e.target.value))}
+                  className="w-full accent-amber-500 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-900">
+                  <span>Contatos extras por mês com o plano:</span>
+                  <span className="text-amber-600 text-base font-extrabold">{roiLeads}</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="30"
+                  step="1"
+                  value={roiLeads}
+                  onChange={(e) => setRoiLeads(Number(e.target.value))}
+                  className="w-full accent-amber-500 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-900">
+                  <span>Sua taxa de fechamento:</span>
+                  <span className="text-amber-600 text-base font-extrabold">{roiConv}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="50"
+                  step="1"
+                  value={roiConv}
+                  onChange={(e) => setRoiConv(Number(e.target.value))}
+                  className="w-full accent-amber-500 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Result Display */}
+            <div className="bg-slate-950 text-white rounded-2xl p-8 flex flex-col justify-between shadow-lg">
+              <div>
+                <h3 className="text-white text-[17px] font-bold mb-6">Resultado estimado</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-baseline py-2.5 border-b border-white/10 text-[14.5px]">
+                    <span className="text-slate-400">Novos clientes por mês</span>
+                    <strong className="text-slate-100 font-bold text-base">
+                      {roiClients % 1 === 0 ? roiClients : roiClients.toFixed(1).replace('.', ',')}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between items-baseline py-2.5 border-b border-white/10 text-[14.5px]">
+                    <span className="text-slate-400">Receita adicional por mês</span>
+                    <strong className="text-slate-100 font-bold text-base">
+                      R$ {roiRevenue.toLocaleString('pt-BR')}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between items-baseline py-2.5 border-b border-white/10 text-[14.5px]">
+                    <span className="text-slate-400">Investimento (Plano Pro)</span>
+                    <strong className="text-slate-100 font-bold text-base">R$ 150/mês</strong>
+                  </div>
+                  <div className="flex justify-between items-baseline pt-4 text-[14.5px]">
+                    <span className="text-slate-400">Retorno sobre o investimento</span>
+                    <strong className="text-emerald-400 font-bold text-2xl">
+                      {roiValue > 0 ? `${Math.round(roiValue).toLocaleString('pt-BR')}%` : '0%'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed mt-6">
+                Simulação ilustrativa: o resultado real depende da sua região, do seu perfil e da sua taxa de fechamento. Mesmo fechando apenas 1 instalação a mais a cada poucos meses, o plano já se paga.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. BENEFITS ────────────────── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">O que você compra de verdade</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Não é um perfil premium. É crescimento comercial.</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Empresas de energia solar não compram banner e FAQ — compram mais vendas, mais autoridade e menos CAC.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { title: 'Mais contatos qualificados', desc: 'Botão de WhatsApp e CTAs no seu perfil, conectando você a quem já está pronto para pedir orçamento.' },
+              { title: 'Mais autoridade', desc: 'Perfil verificado, avaliações reais e destaque nas buscas — sua empresa parece (e é) a escolha segura.' },
+              { title: 'Menos CAC', desc: 'Sem comissão por lead e sem depender só de anúncios pagos. Um cliente fechado já paga o plano por anos.' },
+              { title: 'Mais inteligência', desc: 'Relatórios de visitas e contatos para você saber exatamente quanto o portal gera para o seu negócio.' }
+            ].map((b, idx) => (
+              <div key={idx} className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-start">
+                <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base mb-4 shrink-0">
+                  ✓
+                </div>
+                <h3 className="text-[16.5px] font-black text-slate-950 mb-2 leading-tight">{b.title}</h3>
+                <p className="text-[14px] text-slate-500 font-medium leading-relaxed">{b.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── 3. PRICING PLANS GRID (Grade de 4 Planos com badges) ────────────────── */}
-      <section className="relative py-16 md:py-20">
-        <div className="container mx-auto px-4 md:px-6">
-          
-          <div className="mb-10 max-w-2xl mx-auto space-y-4">
-            {error && (
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center text-sm font-semibold shadow-sm">
-                {error}
-              </div>
-            )}
-
-            <ErrorBanner 
-              error={checkoutError}
-              onRetry={() => lastFailedPlan && handlePlanCta(lastFailedPlan)}
-              onDismiss={() => setCheckoutError(null)}
-            />
+      {/* ── 6. PRICING PLANS GRID ────────────────── */}
+      <section className="py-20 bg-slate-50 border-t border-b border-slate-200/50" id="planos">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Planos e preços</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Escolha o plano ideal para o momento da sua empresa</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Comece grátis e evolua quando quiser. Todos os planos pagos removem concorrentes do seu perfil.</p>
           </div>
 
-          {/* Monthly / Annual Toggle Selector */}
-          <div className="flex items-center justify-center gap-3 mb-12">
+          {/* Monthly/Yearly Cycle Toggle Selector */}
+          <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
             <div className="inline-flex items-center rounded-full bg-slate-950 p-1 border border-slate-950 shadow-sm">
               <button
                 type="button"
@@ -615,9 +662,22 @@ export default function PricingPage() {
                 Anual
               </button>
             </div>
-            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full animate-pulse">
-              Economize até 17%
+            <span className="text-[12.5px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-250">
+              Anual: 2 meses grátis (17% off)
             </span>
+          </div>
+
+          <div className="mb-10 max-w-2xl mx-auto space-y-4">
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center text-sm font-semibold shadow-sm">
+                {error}
+              </div>
+            )}
+            <ErrorBanner 
+              error={checkoutError}
+              onRetry={() => lastFailedPlan && handlePlanCta(lastFailedPlan)}
+              onDismiss={() => setCheckoutError(null)}
+            />
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
@@ -633,8 +693,8 @@ export default function PricingPage() {
                 const Icon = planIconMap[plan.slug as PlanSlug] || Building2;
                 const isCurrent = checkIsCurrentPlan(plan.slug as PlanSlug);
                 
-                // Texto do CTA para logados
-                let ctaText = plan.ctaLabel;
+                // Texto do CTA
+                let ctaText = plan.ctaLabel || 'Assinar';
                 if (isAuthenticated) {
                   if (plan.slug === 'free') {
                     ctaText = 'Ir para o painel';
@@ -651,8 +711,8 @@ export default function PricingPage() {
                   }
                 }
 
-                // Determinação dinâmica de preço e etiquetas baseado no billingCycle do mockup
-                let priceLabel = plan.priceLabel;
+                // Preços com base na seleção do ciclo
+                let priceLabel = plan.price_label;
                 let yearlyPrice = undefined;
                 let savingText = undefined;
 
@@ -704,41 +764,168 @@ export default function PricingPage() {
               })
             )}
           </div>
+
+          <p className="text-center mt-8 text-slate-500 text-xs font-semibold">
+            <strong className="text-slate-900 font-bold">Todos os planos pagos:</strong> sem fidelidade · cancele quando quiser · ativação em minutos · pagamento seguro
+          </p>
         </div>
       </section>
 
-      {/* ── 3b. FAIXA DE BENEFÍCIOS COMERCIAIS ──────────────────────────────────── */}
-      <section className="py-8 bg-white border-b border-slate-100">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* ── 7. WHICH PLAN ────────────────── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Guia rápido</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Não sabe qual plano escolher?</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Encontre o seu cenário abaixo e vá direto ao plano certo.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: ShieldCheck, title: 'Pagamento seguro', desc: 'Ambiente 100% protegido' },
-              { icon: Zap, title: 'Ativação imediata', desc: 'Seu plano ativo em minutos' },
-              { icon: ArrowRight, title: 'Sem fidelidade', desc: 'Cancele quando quiser' },
-              { icon: MessageSquare, title: 'Suporte humano', desc: 'Atendimento especializado' },
-            ].map((b) => (
-              <div key={b.title} className="flex flex-col sm:flex-row items-center sm:items-start gap-3 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-blue/8 text-brand-blue">
-                  <b.icon className="h-4.5 w-4.5" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <div className="text-sm font-black text-slate-900">{b.title}</div>
-                  <div className="text-xs text-slate-500 font-medium">{b.desc}</div>
-                </div>
+              { scenario: '"Estou começando e quero aparecer no portal"', action: '→ Gratuito' },
+              { scenario: '"Quero me destacar nas buscas da minha cidade"', action: '→ Essencial' },
+              { scenario: '"Quero receber contatos de clientes toda semana"', action: '→ Pro' },
+              { scenario: '"Tenho equipe comercial e preciso integrar com meu CRM"', action: '→ Enterprise' }
+            ].map((card, idx) => (
+              <div key={idx} className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-5 hover:border-slate-350 transition-colors flex flex-col justify-between shadow-sm">
+                <p className="text-[14.5px] text-slate-600 font-medium leading-relaxed mb-4">{card.scenario}</p>
+                <span className="font-extrabold text-slate-900 text-[15.5px]">{card.action}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── 4. COMPARISON TABLE ──────────────────────────────────────────────── */}
-      <FeatureComparisonTable />
+      {/* ── 8. COMPARISON TABLE ────────────────── */}
+      <section className="py-12 bg-white border-t border-slate-100">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Comparativo</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Compare os recursos lado a lado</h2>
+            <p className="text-[17px] text-slate-500 font-medium">As principais diferenças que impulsionam os resultados comerciais da sua empresa.</p>
+          </div>
+          <FeatureComparisonTable />
+        </div>
+      </section>
 
-      {/* ── 5. SEÇÃO "ANUNCIE NA AVALIA SOLAR" (3 colunas com BannerSlot) ────────── */}
-      <section className="py-16 md:py-20 bg-white border-b border-slate-200/50">
-        <div className="container mx-auto px-4 md:px-6">
-          
-          {/* Cabeçalho Unificado Comercial Premium */}
+      {/* ── 9. DASHBOARD SHOWCASE ────────────────── */}
+      <section className="py-20 bg-white border-t border-slate-100">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-12 items-center">
+            {/* Copy */}
+            <div className="space-y-6">
+              <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Inteligência de mercado</span>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Saiba exatamente quanto o portal gera para você</h2>
+              <p className="text-slate-500 text-[16px] font-medium leading-relaxed">
+                Nada de investir no escuro. Acompanhe o desempenho do seu perfil e prove o retorno do seu investimento.
+              </p>
+              <ul className="space-y-3 font-medium text-slate-700">
+                <li className="flex items-start gap-2 text-[15px]">
+                  <span className="text-emerald-500 font-bold shrink-0">✓</span>
+                  <span>Visitas ao perfil e cliques no WhatsApp</span>
+                </li>
+                <li className="flex items-start gap-2 text-[15px]">
+                  <span className="text-emerald-500 font-bold shrink-0">✓</span>
+                  <span>Relatórios de desempenho do plano Pro</span>
+                </li>
+                <li className="flex items-start gap-2 text-[15px]">
+                  <span className="text-emerald-500 font-bold shrink-0">✓</span>
+                  <span>Insights avançados e sinais de intenção no Enterprise</span>
+                </li>
+              </ul>
+              <Button asChild size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full font-bold px-8 h-11 text-xs shadow-md">
+                <Link href="/register">Começar a acompanhar</Link>
+              </Button>
+            </div>
+
+            {/* Dashboard Mockup in CSS */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+              {/* Top bar */}
+              <div className="bg-slate-50 border-b border-slate-200/80 p-3.5 flex gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+              </div>
+              
+              {/* Body */}
+              <div className="p-6 space-y-6">
+                {/* KPIs */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-[11.5px] text-slate-500 font-medium">Visitas ao perfil</span>
+                    <div className="flex items-baseline gap-1">
+                      <strong className="text-[19px] font-black text-slate-900">1.284</strong>
+                      <span className="text-[10px] text-emerald-500 font-extrabold">▲</span>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-[11.5px] text-slate-500 font-medium">Cliques WhatsApp</span>
+                    <div className="flex items-baseline gap-1">
+                      <strong className="text-[19px] font-black text-slate-900">96</strong>
+                      <span className="text-[10px] text-emerald-500 font-extrabold">▲</span>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-[11.5px] text-slate-500 font-medium">Taxa de contato</span>
+                    <div className="flex items-baseline gap-1">
+                      <strong className="text-[19px] font-black text-slate-900">7,5%</strong>
+                      <span className="text-[10px] text-emerald-500 font-extrabold">▲</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart Columns */}
+                <div className="space-y-2">
+                  <div className="flex items-end gap-3 h-28 px-2 border-b border-slate-100">
+                    {[35, 48, 42, 60, 55, 78, 92].map((height, i) => (
+                      <div key={i} className="flex-1 bg-gradient-to-t from-amber-400 to-amber-500 rounded-t-sm" style={{ height: `${height}%` }} />
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 font-bold px-1">
+                    <span>Sem 1</span>
+                    <span>Sem 2</span>
+                    <span>Sem 3</span>
+                    <span>Sem 4</span>
+                    <span>Sem 5</span>
+                    <span>Sem 6</span>
+                    <span>Sem 7</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 10. GUARANTEE ────────────────── */}
+      <section className="py-20 bg-slate-50 border-t border-b border-slate-200/60">
+        <div className="max-w-[1160px] mx-auto px-6">
+          <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">Sem risco</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Teste sem medo de se arrepender</h2>
+            <p className="text-[17px] text-slate-500 font-medium">Você não precisa de contrato longo nem burocracia para começar a receber contatos.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { title: 'Sem fidelidade', desc: 'Cancele quando quiser, sem multa e sem letra miúda.' },
+              { title: 'Ativação em minutos', desc: 'Assinou, seu perfil já aparece com os recursos do plano.' },
+              { title: 'Pagamento seguro', desc: 'Ambiente 100% protegido para seus dados e cobranças.' },
+              { title: 'Suporte humano', desc: 'Atendimento especializado de gente de verdade, em português.' }
+            ].map((g, idx) => (
+              <div key={idx} className="bg-white border border-slate-200/80 rounded-2xl p-6 text-center shadow-sm">
+                <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base mb-4 mx-auto shrink-0">
+                  ✓
+                </div>
+                <h3 className="text-base font-black text-slate-950 mb-2 leading-tight">{g.title}</h3>
+                <p className="text-[13.5px] text-slate-500 font-medium leading-relaxed">{g.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 11. ADS / SPONSOR ────────────────── */}
+      <section className="py-20 bg-[#F5F8FC] border-b border-slate-200/50">
+        <div className="container mx-auto px-4 md:px-6 max-w-[1160px]">
           <div className="mb-12 text-center max-w-2xl mx-auto space-y-3">
             <Badge
               variant="outline"
@@ -755,10 +942,8 @@ export default function PricingPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr_0.9fr] items-stretch">
-            
             {/* Coluna 1: Card pitch */}
             <div className="relative overflow-hidden rounded-[2rem] border border-slate-800/10 bg-slate-950 p-6 sm:p-8 text-white shadow-xl flex flex-col justify-between">
-              {/* Glow background */}
               <div className="absolute top-0 right-0 w-36 h-36 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
               
               <div className="space-y-4">
@@ -812,7 +997,7 @@ export default function PricingPage() {
             <div className="rounded-[2rem] border border-brand-blue/15 bg-gradient-to-br from-brand-blue/5 via-white to-white p-6 sm:p-8 shadow-sm flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-blue text-white shadow-lg shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1668e8] text-white shadow-lg shrink-0">
                     <MessageSquare className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg sm:text-xl font-black text-slate-950 leading-tight">Ainda com dúvidas?</h3>
@@ -843,7 +1028,7 @@ export default function PricingPage() {
               </div>
 
               <div className="pt-6">
-                <Button asChild size="lg" className="bg-slate-950 hover:bg-slate-900 text-white font-bold border-0 shadow-lg h-11 w-full rounded-full text-xs">
+                <Button asChild size="lg" className="bg-slate-900 hover:bg-slate-800 text-white font-bold border-0 shadow-lg h-11 w-full rounded-full text-xs">
                   <Link href="/contact?subject=commercial">
                     Falar com vendas
                     <ArrowRight className="ml-2 h-3.5 w-3.5 text-white" />
@@ -856,9 +1041,31 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── 6. FAQ & AJUDA ────────────────────────────────────────────────────── */}
+      {/* ── 12. FAQ ────────────────── */}
       <PricingFaq />
 
+      {/* ── 13. FINAL CTA ────────────────── */}
+      <section className="bg-amber-500 py-16 text-center border-t border-amber-600">
+        <div className="container mx-auto px-6 max-w-[1160px] flex flex-col md:flex-row items-center justify-between gap-8">
+          <h2 className="text-white text-2xl md:text-3xl font-black text-left tracking-tight leading-tight">
+            Um cliente a mais por mês já paga o plano
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto shrink-0 justify-center">
+            <Link
+              href="/register"
+              className="px-8 py-3.5 bg-white text-slate-950 font-bold rounded-lg text-sm hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap text-center"
+            >
+              Criar meu perfil grátis
+            </Link>
+            <Link
+              href="/contact?subject=commercial"
+              className="px-8 py-3.5 border border-white text-white font-bold rounded-lg text-sm hover:bg-white/10 transition-colors whitespace-nowrap text-center"
+            >
+              Falar com vendas
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ── ENTERPRISE LEAD MODAL (Premium Glassmorphic) ───────────────────── */}
       <AnimatePresence>

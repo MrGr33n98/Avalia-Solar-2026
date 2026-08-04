@@ -390,18 +390,33 @@ export const pricingFeatureGroups: PricingFeatureGroup[] = [
 
 export const pricingFaqs: PricingFaq[] = [
   {
-    question: 'O plano pago remove concorrentes do meu perfil?',
+    question: 'O plano pago remove os concorrentes do meu perfil?',
     answer:
-      'Sim. O modelo da Avalia Solar parte da premissa de que os planos pagos devem reduzir fuga de atenção, removendo alternativas e banners de concorrentes no perfil público.',
+      'Sim. Em todos os planos pagos (Essencial, Pro e Enterprise), os anúncios de empresas concorrentes deixam de aparecer na página do seu perfil. Quem visitar sua página vê apenas a sua empresa.',
   },
   {
-    question: 'O plano Enterprise é obrigatório para usar o dashboard?',
+    question: 'Posso começar no plano Gratuito e evoluir depois?',
     answer:
-      'Não. O dashboard de gestão de perfil e avaliações existe para todos os parceiros, mas os módulos liberados variam por plano. O Enterprise concentra dados avançados, integração via webhooks, leads qualificados e governança.',
+      'Sim, e é o caminho mais comum. Você cria seu perfil grátis, conhece a plataforma e faz o upgrade para Essencial ou Pro a qualquer momento, direto no painel. Seus dados e avaliações são mantidos.',
   },
   {
-    question: 'Posso começar no gratuito e evoluir depois?',
+    question: 'Existe fidelidade ou multa de cancelamento?',
     answer:
-      'Sim. O desenho da plataforma é progressivo: o Gratuito garante presença básica no marketplace; o Essencial habilita o WhatsApp de contato e selo de destaque; o Pro amplia merchandising e conversão; o Enterprise adiciona inteligência, leads e integração.',
+      'Não. Todos os planos são sem fidelidade. Você pode cancelar quando quiser, sem multa — o plano fica ativo até o fim do período já pago.',
+  },
+  {
+    question: 'Como recebo os contatos dos clientes?',
+    answer:
+      'A partir do plano Essencial, seu perfil exibe um botão de WhatsApp. O cliente clica e fala direto com a sua equipe — sem intermediário e sem comissão por lead.',
+  },
+  {
+    question: 'Qual a vantagem do plano anual?',
+    answer:
+      'No pagamento anual você economiza 17% — o equivalente a 2 meses grátis. O Essencial sai por R$ 49/mês e o Pro por R$ 125/mês.',
+  },
+  {
+    question: 'Preciso do Enterprise para integrar com meu CRM?',
+    answer:
+      'Sim. Webhooks, sinais de intenção e integrações com CRM são recursos do plano Enterprise, desenhado para operações comerciais com equipe e processos estruturados. Fale com nosso time comercial para uma proposta.',
   },
 ];
