@@ -27,6 +27,8 @@ export interface CategoryTreeNode {
   companies_count: number;
   products_count: number;
   icon_url?: string;
+  average_rating?: number;
+  reviews_count?: number;
   children: CategoryTreeNode[];
 }
 

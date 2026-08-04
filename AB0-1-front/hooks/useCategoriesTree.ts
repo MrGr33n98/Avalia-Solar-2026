@@ -16,6 +16,8 @@ type CategoryCardLike = {
   companies_count?: number;
   products_count?: number;
   icon_url?: string | null;
+  average_rating?: number;
+  reviews_count?: number;
   children?: CategoryTreeNode[];
 };
 
@@ -49,6 +51,8 @@ const normalizeTreeNode = (item: any): CategoryTreeNode | null => {
     companies_count: Number(item.companies_count || 0),
     products_count: Number(item.products_count || 0),
     icon_url: item.icon_url ? String(item.icon_url) : undefined,
+    average_rating: item.average_rating !== undefined ? Number(item.average_rating) : undefined,
+    reviews_count: item.reviews_count !== undefined ? Number(item.reviews_count) : undefined,
     children: children as CategoryTreeNode[],
   };
 };
@@ -83,6 +87,8 @@ const normalizeCardsPayload = (payload: unknown): CategoryTreeNode[] => {
           companies_count: Number(item?.companies_count || 0),
           products_count: Number(item?.products_count || 0),
           icon_url: item?.icon_url ? String(item.icon_url) : undefined,
+          average_rating: item?.average_rating !== undefined ? Number(item.average_rating) : undefined,
+          reviews_count: item?.reviews_count !== undefined ? Number(item.reviews_count) : undefined,
           children: [],
         };
       })
