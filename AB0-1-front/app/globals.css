@@ -235,7 +235,7 @@
   /* Background mobile com a imagem */
   @media (max-width: 767px) {
     body {
-      background-image: url('/assets/avalia-solar-beckgroud-mobile.png');
+      background-image: url('/assets/avalia-solar-beckgroud-mobile.webp');
       background-size: cover;
       background-position: center top;
       background-repeat: no-repeat;
