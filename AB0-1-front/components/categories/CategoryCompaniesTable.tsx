@@ -236,11 +236,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 />
                                 <div>
                                   <div className="font-bold text-slate-900 text-sm leading-tight">{company.name}</div>
-                                  <div className="text-[10px] text-slate-400 mt-0.5">Desde {company.founded_year || 2018} no Brasil</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    {company.founded_year ? `Desde ${company.founded_year} no Brasil` : 'Empresa credenciada Avalia Solar'}
+                                  </div>
                                 </div>
                               </div>
                               <p className="text-[11px] text-slate-500 leading-relaxed">
-                                {company.description || `${company.name} é uma empresa parceira credenciada, especializada em homologação, projetos e instalações fotovoltaicas de alta eficiência.`}
+                                {company.description || `${company.name} é uma empresa parceira cadastrada na plataforma Avalia Solar.`}
                               </p>
                               <div className="border-t border-slate-100 pt-3 space-y-2 text-[11px]">
                                 <div className="flex justify-between">
@@ -253,7 +255,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400 font-semibold">Presença no Brasil</span>
-                                  <span className="font-bold text-slate-900">Desde {company.founded_year || 2018}</span>
+                                  <span className="font-bold text-slate-900">{company.founded_year ? `Desde ${company.founded_year}` : 'Não informado'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400 font-semibold">Site oficial</span>

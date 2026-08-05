@@ -24,22 +24,33 @@ export default function FeaturedCompanyCard({
 }: FeaturedCompanyCardProps) {
   const showFeaturedBadge = isFirst && company.has_paid_plan === true;
   const canRequestQuote = hasPaidPlan(company);
+  const isVerified = Boolean(
+    company.verified || (company as any).trust?.verification_status === 'verified'
+  );
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
-  const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
+  const hasRating = rating > 0 && reviewCount > 0;
   const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
   
   const location = [company.city, company.state].filter(Boolean).join(', ');
 
-  // Extract tags from services or project types
+  // Extract tags from services or project types, defaulting dynamically to category name
+  const rawCategoryTag = category ? category.replace(/-/g, ' ') : '';
+  const fallbackCategoryTag = rawCategoryTag
+    ? rawCategoryTag.charAt(0).toUpperCase() + rawCategoryTag.slice(1)
+    : 'Energia Solar';
+
   const tags = Array.isArray(company.services_offered) && company.services_offered.length > 0
     ? company.services_offered.slice(0, 3)
     : Array.isArray(company.project_types) && company.project_types.length > 0
       ? company.project_types.slice(0, 3)
-      : ['Inversores', 'Projetos Solares', 'Monitoramento'];
+      : [fallbackCategoryTag];
 
-  // SLA Label
-  const slaLabel = (company as any).operations?.sla_label || (company as any).response_time_sla || '2h';
+  // SLA Label & Coverage Label (conditional, no fake hardcoding)
+  const slaLabel = (company as any).operations?.sla_label || (company as any).response_time_sla || null;
+  const coverageLabel = (company as any).coverage?.states?.length > 0 || (company as any).coverage?.cities?.length > 0
+    ? 'Atendimento regional'
+    : (company as any).nationwide ? 'Atende todo o Brasil' : null;
 
   return (
     <article
@@ -82,10 +93,12 @@ export default function FeaturedCompanyCard({
                   {company.name}
                 </h3>
               </Link>
-              <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                <BadgeCheck className="w-3.5 h-3.5 fill-emerald-600 text-white shrink-0" />
-                Verificada
-              </span>
+              {isVerified && (
+                <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                  <BadgeCheck className="w-3.5 h-3.5 fill-emerald-600 text-white shrink-0" />
+                  Verificada
+                </span>
+              )}
             </div>
             {location && (
               <span className="text-[11px] font-medium text-slate-500 block mt-1">
@@ -97,21 +110,29 @@ export default function FeaturedCompanyCard({
 
         {/* Rating Row */}
         <div className="flex items-center gap-1 mb-4">
-          <span className="text-sm font-bold text-slate-900">{ratingLabel}</span>
-          <div className="flex items-center">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  "w-3.5 h-3.5",
-                  i < Math.floor(rating)
-                    ? "fill-amber-400 text-amber-400"
-                    : "text-slate-200 fill-slate-200"
-                )}
-              />
-            ))}
-          </div>
-          <span className="text-xs text-slate-500 font-medium">({reviewCount})</span>
+          {hasRating ? (
+            <>
+              <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
+              <div className="flex items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "w-3.5 h-3.5",
+                      i < Math.floor(rating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-slate-200 fill-slate-200"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-slate-500 font-medium">({reviewCount})</span>
+            </>
+          ) : (
+            <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+              Sem avaliações ainda
+            </span>
+          )}
         </div>
 
         {/* Tags */}
@@ -128,18 +149,22 @@ export default function FeaturedCompanyCard({
 
         {/* Operations features with icons */}
         <div className="space-y-2 border-t border-slate-100 pt-4 mb-5">
-          <div className="flex items-center gap-2 text-slate-700">
-            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="text-xs font-semibold">Responde em até {slaLabel}</span>
-          </div>
+          {slaLabel && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="text-xs font-semibold">Responde em até {slaLabel}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-slate-700">
             <FileText className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="text-xs font-semibold">Orçamento gratuito</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700">
-            <Globe className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="text-xs font-semibold">Atende todo o Brasil</span>
-          </div>
+          {coverageLabel && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <Globe className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="text-xs font-semibold">{coverageLabel}</span>
+            </div>
+          )}
         </div>
       </div>
 

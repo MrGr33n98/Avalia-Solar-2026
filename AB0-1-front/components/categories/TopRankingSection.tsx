@@ -76,8 +76,9 @@ function RankingCompanyCard({
 }) {
   const location = [company.city, company.state].filter(Boolean).join(', ');
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
-  const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
+  const hasRating = rating > 0 && reviewCount > 0;
+  const ratingLabel = hasRating ? rating.toFixed(1) : '--';
   const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
   const rankTone =
     rank === 1
