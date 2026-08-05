@@ -22,7 +22,7 @@ export function BrandLogo({
       height={345}
       sizes={sizes}
       priority={priority}
-      className={cn('h-auto w-auto object-contain', className)}
+      className={cn('h-auto w-auto aspect-[1500/345] object-contain', className)}
     />
   );
 }
