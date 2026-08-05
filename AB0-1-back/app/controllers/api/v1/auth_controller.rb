@@ -70,15 +70,6 @@ module Api
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
           )
-          Analytics::PostHogService.capture(
-            'user_logged_in',
-            {
-              login_method: 'email',
-              role: user.role,
-              companies_count: user.active_member_companies.count
-            },
-            distinct_id: user.posthog_distinct_id
-          )
 
           payload = payload_for(user)
           if user.company_user?
@@ -156,10 +147,11 @@ module Api
           Rails.logger.info "[Audit] Confirmation email sent for user ID #{user.id}"
 
           Analytics::TrackEventService.call(
-            event_type: 'registration_completed',
+            event_type: 'user_registered',
             user: user,
             company_id: user.company_id,
             metadata: request_metadata.merge(
+              role: user.role,
               city: attrs[:city],
               state: attrs[:state]
             )
@@ -168,15 +160,6 @@ module Api
           Analytics::PostHogService.identify(
             distinct_id: user.posthog_distinct_id,
             properties: user.posthog_properties
-          )
-          Analytics::PostHogService.capture(
-            'user_registered',
-            {
-              role: user.role,
-              city: attrs[:city],
-              state: attrs[:state]
-            },
-            distinct_id: user.posthog_distinct_id
           )
 
           return render json: payload_for(user), status: :created

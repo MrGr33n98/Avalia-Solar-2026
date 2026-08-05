@@ -21,8 +21,12 @@ export interface EventOptions {
 }
 
 export interface AnalyticsContext {
-  // Environment
+  // Environment & Versioning
   environment: string;
+  event_version?: string;
+  schema_version?: string;
+  frontend_version?: string;
+  api_version?: string;
   app_version: string;
   platform: 'web' | 'mobile';
   app_key?: string;
@@ -58,6 +62,8 @@ export interface AnalyticsContext {
   // User state
   is_logged_in: boolean;
   is_internal?: boolean;
+  is_admin?: boolean;
+  is_employee?: boolean;
   user_id?: string;
   company_id?: string;
   company_name?: string;

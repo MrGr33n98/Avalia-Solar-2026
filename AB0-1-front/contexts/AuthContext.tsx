@@ -59,6 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const trackedAt = new Date().toISOString();
       const stitchSignature = [String(user.id), companyId ?? '', sessionId].join(':');
 
+      if (typeof window !== 'undefined') {
+        const isAdmin = user.role === 'admin';
+        const isEmployee = user.email?.endsWith('@avaliasolar.com.br');
+        if (isAdmin) localStorage.setItem('is_admin_user', 'true');
+        if (isEmployee) localStorage.setItem('is_employee_user', 'true');
+        if (isAdmin || isEmployee) localStorage.setItem('is_internal_team', 'true');
+      }
+
       if (stitchedIdentitySignature.current !== stitchSignature) {
         stitchedIdentitySignature.current = stitchSignature;
         void handleUserIdentified({
@@ -87,6 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       stitchedIdentitySignature.current = null;
       Sentry.setUser(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('is_admin_user');
+        localStorage.removeItem('is_employee_user');
+        localStorage.removeItem('is_internal_team');
+      }
     }
   }, [user]);
 
@@ -188,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(nextUser);
       setAuthSessionHint();
-      track('Login Completed', { method: 'email' });
+      track('login_completed', { method: 'email' });
       await new Promise((resolve) => setTimeout(resolve, 100));
       await routeAfterLogin(nextUser);
     } catch (loginError) {

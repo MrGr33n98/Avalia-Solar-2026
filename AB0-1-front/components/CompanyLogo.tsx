@@ -89,6 +89,8 @@ export function CompanyLogo({
   const badgeImageUrl = rawBadgeUrl ? getFullImageUrl(rawBadgeUrl) : null;
   const badgeTitle = badgeToRender?.name || (badgeToRender as any)?.title || 'Selo de conquista';
 
+  const [badgeError, setBadgeError] = useState(false);
+
   return (
     <div
       className={cn(
@@ -97,7 +99,7 @@ export function CompanyLogo({
         className
       )}
     >
-      {badgeImageUrl && (
+      {badgeImageUrl && !badgeError && (
         <div
           data-testid="company-achievement-badge"
           className={cn(
@@ -114,6 +116,7 @@ export function CompanyLogo({
             height={48}
             className="object-contain w-full h-full"
             unoptimized
+            onError={() => setBadgeError(true)}
           />
         </div>
       )}

@@ -8,6 +8,7 @@ import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
 import { ApolloProvider } from '@apollo/client/react';
 import { getApolloClient } from '@/lib/apollo-client';
+import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 
 // Lazy load heavy client-side modals and floating components
 const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
@@ -173,7 +174,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 <SignupGateModalHost />
                 <Toaster />
                 {!isAppSurface && <CookieConsent />}
-                {process.env.NEXT_PUBLIC_CHAT_ENABLED !== 'false' &&
+                {isFeatureFlagEnabled('CHAT') &&
                   !isAppSurface &&
                   hasCookieDecision &&
                   (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}

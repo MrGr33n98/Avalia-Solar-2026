@@ -1,7 +1,27 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { ArrowRight, Award, Trophy } from 'lucide-react';
+
+function SafeBadgeImage({ src, alt, fallback }: { src: string; alt: string; fallback: React.ReactNode }) {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return <>{fallback}</>;
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="64px"
+      className="object-contain"
+      onError={() => setError(true)}
+    />
+  );
+}
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,12 +89,14 @@ export default function CompanyAwardsCard({ company }: CompanyAwardsCardProps) {
             <div className="flex items-start gap-4">
               {featuredBadgeImage ? (
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-1">
-                  <Image
+                  <SafeBadgeImage
                     src={featuredBadgeImage}
                     alt={featuredBadge?.name || 'Selo de prêmio'}
-                    fill
-                    sizes="64px"
-                    className="object-contain"
+                    fallback={
+                      <div className="flex h-full w-full items-center justify-center bg-blue-50/50 text-blue-600">
+                        <Trophy className="h-8 w-8" />
+                      </div>
+                    }
                   />
                 </div>
               ) : (
@@ -121,12 +143,14 @@ export default function CompanyAwardsCard({ company }: CompanyAwardsCardProps) {
                     <div className="flex items-start gap-3">
                       {imageUrl ? (
                         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-white">
-                          <Image
+                          <SafeBadgeImage
                             src={imageUrl}
                             alt={badge.name || 'Selo de prêmio'}
-                            fill
-                            sizes="56px"
-                            className="object-contain"
+                            fallback={
+                              <div className="flex h-full w-full items-center justify-center bg-white text-blue-600">
+                                <Trophy className="h-6 w-6" />
+                              </div>
+                            }
                           />
                         </div>
                       ) : (

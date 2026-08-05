@@ -38,14 +38,14 @@ export default function WebVitalsReporter() {
         ? crypto.randomUUID()
         : `wv-${metric.name}-${Date.now()}`);
     const trackedAt = new Date().toISOString();
-    const eventType = 'web_vital';
+    const eventType = 'web_vitals';
 
     // Guardrail: never send malformed tracking payloads
     if (!eventType || !eventId || !trackedAt) return;
 
     // Send to analytics (respects consent via lazy analytics)
     try {
-      track('web_vital', {
+      track('web_vitals', {
         event_id: eventId,
         tracked_at: trackedAt,
         metric_name: metric.name,

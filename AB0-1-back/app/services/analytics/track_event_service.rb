@@ -37,6 +37,20 @@ module Analytics
       @metadata = sanitize_metadata(metadata)
       @occurred_at = occurred_at.presence || Time.current
       @event_id = event_id || "evt_#{Time.current.to_i}_#{SecureRandom.hex(6)}"
+
+      # Enriquecimento de versionamento e ambiente
+      @metadata['event_version'] ||= '1'
+      @metadata['schema_version'] ||= '1.0.0'
+      @metadata['api_version'] ||= 'v1'
+      @metadata['environment'] ||= Rails.env.to_s
+
+      if @user
+        is_employee = @user.email.to_s.end_with?('@avaliasolar.com.br')
+        is_admin = @user.respond_to?(:admin?) ? @user.admin? : (@user.role == 'admin')
+        @metadata['is_admin'] = is_admin if @metadata['is_admin'].nil?
+        @metadata['is_employee'] = is_employee if @metadata['is_employee'].nil?
+        @metadata['is_internal'] = (is_admin || is_employee) if @metadata['is_internal'].nil?
+      end
     end
 
     def call
@@ -249,6 +263,9 @@ module Analytics
     end
 
     def forward_to_posthog
+      # Evita reenviar page_view e web_vitals do frontend para o PostHog via servidor (evita duplicidade com SDK JS)
+      return if %w[page_view page_viewed web_vital web_vitals].include?(@event_type) && @metadata['source'] != 'server'
+
       distinct_id = @user&.posthog_distinct_id || @metadata['distinct_id'] || "company_#{@company_id}"
 
       # Map internal event types to PostHog V2 Taxonomy

@@ -158,6 +158,22 @@ function flushEventQueue(): void {
   });
 }
 
+function getEnvironment(): string {
+  if (process.env.NEXT_PUBLIC_APP_ENV) {
+    return process.env.NEXT_PUBLIC_APP_ENV;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.host;
+    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes(':3000')) {
+      return 'development';
+    }
+    if (host.includes('staging') || host.includes('stage') || host.includes('dev.')) {
+      return 'staging';
+    }
+  }
+  return process.env.NODE_ENV || 'production';
+}
+
 /**
  * Get common analytics context (Matrix VAR-001 to VAR-019)
  */
@@ -165,6 +181,10 @@ export function getAnalyticsContext(): AnalyticsContext {
   if (typeof window === 'undefined') {
     return {
       environment: process.env.NODE_ENV || 'production',
+      event_version: '1',
+      schema_version: '1.0.0',
+      frontend_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+      api_version: 'v1',
       app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       platform: 'web',
       app_key: DEFAULT_APP_KEY,
@@ -173,6 +193,9 @@ export function getAnalyticsContext(): AnalyticsContext {
       source: 'server',
       session_id: '',
       is_logged_in: false,
+      is_internal: false,
+      is_admin: false,
+      is_employee: false,
     };
   }
   
@@ -194,6 +217,12 @@ export function getAnalyticsContext(): AnalyticsContext {
     }
   }
 
+  const isInternal = localStorage.getItem('is_internal_team') === 'true' ||
+    window.location.search.includes('is_internal=true') ||
+    window.location.search.includes('internal=true');
+  const isAdmin = localStorage.getItem('is_admin_user') === 'true';
+  const isEmployee = localStorage.getItem('is_employee_user') === 'true';
+
   return {
     // VAR-001, VAR-002, VAR-003
     page_url: window.location.href,
@@ -204,12 +233,18 @@ export function getAnalyticsContext(): AnalyticsContext {
     event_id: generateEventId(),
     session_id: getSessionId(),
     
-    environment: process.env.NODE_ENV || 'production',
+    environment: getEnvironment(),
+    event_version: '1',
+    schema_version: '1.0.0',
+    frontend_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+    api_version: 'v1',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     platform: 'web',
     app_key: DEFAULT_APP_KEY,
     is_logged_in: !!currentUserId,
-    is_internal: typeof window !== 'undefined' ? localStorage.getItem('is_internal_team') === 'true' || window.location.search.includes('is_internal=true') || window.location.search.includes('internal=true') : false,
+    is_internal: isInternal,
+    is_admin: isAdmin,
+    is_employee: isEmployee,
     user_id: currentUserId || undefined,
     source,
     
@@ -465,23 +500,8 @@ export function page(
     timestamp: pageProps.timestamp
   });
   
-  // PostHog — usa o singleton inicializado pelo PostHogProvider
-  const posthogBridge = getPostHogBridge();
-  if (posthogBridge?.isLoaded()) {
-    try {
-      posthogBridge.capture('page_view', {
-        page_url: window.location.href,
-        ...sanitized,
-      });
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[PostHog] Page View:', sanitized);
-      }
-    } catch (e) {
-      console.error('[Analytics] PostHog page view failed:', e);
-    }
-  }
-
-  // Notify Observers
+  // PostHog pageviews são tratados automaticamente via $pageview em PostHogProvider.tsx.
+  // Notifica apenas backend e observadores locais para evitar duplicidade no PostHog.
   notifyObservers('page_view', sanitized);
 }
 

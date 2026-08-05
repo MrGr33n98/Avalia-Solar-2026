@@ -86,6 +86,33 @@ function PostHogPageView() {
     if (!POSTHOG_KEY) return;
     if (!posthog.__loaded) return;
 
+    // Task 6: Session Replay cirúrgico (Lead, Wizard, Compare, Chat, Login). Nunca gravar Admin/Dashboard.
+    const isAllowedReplayPage =
+      pathname.startsWith('/checkout') ||
+      pathname.startsWith('/quote') ||
+      pathname.startsWith('/compare') ||
+      pathname.startsWith('/chat') ||
+      pathname === '/login' ||
+      pathname === '/signup';
+
+    const isDashboardOrAdmin =
+      pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/admin');
+
+    if (isAllowedReplayPage && !isDashboardOrAdmin && hasAnalyticsConsent()) {
+      try {
+        posthog.startSessionRecording();
+      } catch {
+        // Safe fallback se a gravação não estiver disponível
+      }
+    } else {
+      try {
+        posthog.stopSessionRecording();
+      } catch {
+        // Safe fallback
+      }
+    }
+
     // Não dispara na montagem inicial — o Provider já captura o primeiro $pageview
     if (!isMounted.current) {
       isMounted.current = true;
