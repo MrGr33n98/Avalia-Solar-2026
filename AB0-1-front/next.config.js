@@ -280,6 +280,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/entrar',
+        destination: '/login',
+        permanent: true,
+      },
+      {
         source: '/quote-wizard',
         destination: '/companies',
         permanent: true,

@@ -251,7 +251,20 @@ export default function Navbar() {
             />
           </div>
 
-          {isAuthenticated ? <UserAvatarDropdown /> : null}
+          {isAuthenticated ? (
+            <UserAvatarDropdown />
+          ) : (
+            <Button
+              asChild
+              variant="ghost"
+              className="h-[44px] rounded-lg px-2 text-xs font-semibold text-slate-700 sm:px-3 sm:text-sm hover:bg-slate-50 shadow-none border-0"
+            >
+              <Link href="/login" className="inline-flex items-center">
+                <UserIcon className="mr-1 h-4 w-4" aria-hidden="true" />
+                Entrar
+              </Link>
+            </Button>
+          )}
 
           <Button
             type="button"

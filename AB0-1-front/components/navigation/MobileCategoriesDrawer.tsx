@@ -8,6 +8,7 @@ import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw } from 'luc
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import {
   getCategoryIcon,
@@ -157,6 +158,35 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-4">
+          {!isAuthenticated && !selectedCategory && (
+            <div className="mb-4 flex flex-col gap-2.5 rounded-lg border border-blue-100 bg-blue-50/50 p-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)] backdrop-blur-sm">
+              <p className="text-xs font-semibold leading-relaxed text-slate-700">
+                Acesse sua conta para comparar propostas e acompanhar avaliações.
+              </p>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-9 flex-1 border-blue-200 bg-white text-xs font-semibold text-blue-700 shadow-none hover:bg-blue-50"
+                >
+                  <Link href="/login" onClick={closeDrawer}>
+                    Entrar
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="h-9 flex-1 bg-blue-700 text-xs font-semibold text-white shadow-none hover:bg-blue-800"
+                >
+                  <Link href="/register" onClick={closeDrawer}>
+                    Criar conta
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <LoadingList />
           ) : error && categories.length === 0 ? (
