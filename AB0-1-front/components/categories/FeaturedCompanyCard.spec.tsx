@@ -35,6 +35,7 @@ describe('FeaturedCompanyCard', () => {
     );
 
     expect(screen.getByText('Destaque')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
   });
 
   it('nao exibe o selo Destaque para empresa sem plano pago', () => {
@@ -43,5 +44,6 @@ describe('FeaturedCompanyCard', () => {
     );
 
     expect(screen.queryByText('Destaque')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
   });
 });

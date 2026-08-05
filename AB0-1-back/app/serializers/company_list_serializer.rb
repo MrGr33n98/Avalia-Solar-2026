@@ -15,9 +15,12 @@ class CompanyListSerializer < ActiveModel::Serializer
              :active_admin, :p2p_chat_enabled,
              :social_proof_enabled, :can_use_social_proof,
              :effect, :media_upload_allowed,
+             :has_paid_plan, :feature_access,
              :response_time_sla, :delivered_projects_score, :warranty_years,
              :coverage_cities, :coverage_states,
              :identity, :trust, :reputation, :badges
+
+  def has_paid_plan = object.has_paid_plan?
 
   # ─── Identidade estruturada (contrato CompanyCardData.identity) ───────────────
   def identity

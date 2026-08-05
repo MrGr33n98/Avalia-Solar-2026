@@ -9,6 +9,7 @@ import { openQuoteWizard } from '@/lib/quote-wizard';
 import CompanyViewCounter from '@/app/companies/[id]/components/CompanyViewCounter';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
+import { hasPaidPlan } from '@/lib/feature-access';
 
 interface FeaturedCompanyCardProps {
   company: Company;
@@ -22,6 +23,7 @@ export default function FeaturedCompanyCard({
   isFirst = false,
 }: FeaturedCompanyCardProps) {
   const showFeaturedBadge = isFirst && company.has_paid_plan === true;
+  const canRequestQuote = hasPaidPlan(company);
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
   const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
@@ -143,12 +145,14 @@ export default function FeaturedCompanyCard({
 
       <div>
         {/* Primary CTA */}
-        <Button
-          onClick={() => openQuoteWizard({ source: 'category-featured-card' })}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 rounded-xl transition-all shadow-none mb-3"
-        >
-          Solicitar orçamento
-        </Button>
+        {canRequestQuote && (
+          <Button
+            onClick={() => openQuoteWizard({ source: 'category-featured-card' })}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 rounded-xl transition-all shadow-none mb-3"
+          >
+            Solicitar orçamento
+          </Button>
+        )}
 
         {/* Secondary Link */}
         <div className="text-center mb-3">
