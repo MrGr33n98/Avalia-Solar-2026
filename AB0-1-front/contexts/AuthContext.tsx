@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import * as Sentry from '@sentry/nextjs';
 
 import {
@@ -18,6 +17,7 @@ import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
+import { resolvePostAuthDestination } from '@/lib/auth/post-auth-destination';
 import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
 
 interface AuthContextType {
@@ -25,7 +25,8 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  getPostLoginDestination: (user: User, returnTo?: string | null) => Promise<string>;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
@@ -39,7 +40,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,13 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const checkAuth = useCallback(async (): Promise<User | null> => {
-    if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
-      setUser(null);
-      clearRealtimeAuthToken();
-      setLoading(false);
-      return null;
-    }
-
     const requestId = nextAuthRequest();
     setLoading(true);
     setError(null);
@@ -145,14 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void checkAuth();
   }, [checkAuth]);
 
-  const routeAfterLogin = async (nextUser: User) => {
-    if (!nextUser) return;
-
-    if (nextUser.role === 'review') {
-      router.push('/review-dashboard');
-      return;
-    }
-
+  const getPostLoginDestination = async (nextUser: User, returnTo?: string | null) => {
     if (nextUser.role === 'company') {
       try {
         const context = await companyAccessApi.context(undefined, {
@@ -169,22 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // noop
           }
           setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
-          router.push(`/dashboard?company_id=${companyId}`);
-        } else {
-          router.push('/select-company');
+          return resolvePostAuthDestination({
+            user: nextUser,
+            returnTo,
+            activeCompanyId: companyId,
+          });
         }
-        return;
       } catch (routeError) {
         logError(routeError instanceof Error ? routeError : new Error(String(routeError)), {
           action: 'company_context_route_after_login_failed',
           metadata: { user_id: nextUser.id },
         });
-        router.push('/select-company');
-        return;
       }
     }
-
-    router.push('/');
+    return resolvePostAuthDestination({ user: nextUser, returnTo });
   };
 
   const login = async (email: string, password: string) => {
@@ -202,8 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextUser);
       setAuthSessionHint();
       track('login_completed', { method: 'email' });
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      await routeAfterLogin(nextUser);
+      return nextUser;
     } catch (loginError) {
       logError(loginError instanceof Error ? loginError : new Error(String(loginError)), {
         action: 'login_failed',
@@ -254,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         isAuthenticated,
         login,
+        getPostLoginDestination,
         logout,
         signInWithGoogle,
         signInWithFacebook,

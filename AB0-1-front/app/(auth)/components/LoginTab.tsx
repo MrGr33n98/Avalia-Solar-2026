@@ -25,8 +25,14 @@ type LoginError = {
 };
 
 export default function LoginTab({ onCreateAccount }: LoginTabProps) {
-  const { login, signInWithGoogle, signInWithFacebook, signInWithLinkedIn, resendConfirmation } =
-    useAuth();
+  const {
+    login,
+    getPostLoginDestination,
+    signInWithGoogle,
+    signInWithFacebook,
+    signInWithLinkedIn,
+    resendConfirmation,
+  } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -61,12 +67,9 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
     setNeedsConfirmation(false);
     setResendMessage(null);
     try {
-      await login(email, password);
-
-      const redirect = safeReturnTo || '/dashboard';
-      // Delay briefly to allow cookies and context state to settle
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      router.push(redirect);
+      const authenticatedUser = await login(email, password);
+      const destination = await getPostLoginDestination(authenticatedUser, safeReturnTo);
+      router.push(destination);
     } catch (error: unknown) {
       const err = error as LoginError;
       const code = err.context?.details?.code || err.status || 'UNKNOWN';

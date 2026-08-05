@@ -10,7 +10,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { User, Mail, Lock, LogOut, ShieldCheck, ClipboardCheck, ArrowRight, UserPlus } from 'lucide-react-native';
+import {
+  User,
+  Mail,
+  Lock,
+  LogOut,
+  ShieldCheck,
+  ClipboardCheck,
+  ArrowRight,
+  UserPlus,
+} from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -23,7 +32,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   // Estados de Sessão
-  const { user, login, register, logout, isLoading } = useAuthStore();
+  const { user, login, register, logout, isLoading, authNotice } = useAuthStore();
   const canUseP2PChat = user?.role === 'review';
 
   // Estados dos Formulários
@@ -31,23 +40,35 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [city, setCity] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [role, setRole] = useState<'review' | 'company'>('review');
-  
+
   // Tratamento de erros e loading local
   const [errorMsg, setErrorMsg] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
   const handleSubmit = async () => {
     setErrorMsg('');
-    if (!email || !password || (isRegistering && !name)) {
-      setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
+    if (!email || !password || (isRegistering && (!name || !city || !termsAccepted))) {
+      setErrorMsg('Preencha os campos obrigatórios e aceite os termos.');
+      return;
+    }
+
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
+      setErrorMsg('Use 8 ou mais caracteres, com maiúscula, minúscula e número.');
       return;
     }
 
     setFormLoading(true);
     try {
       if (isRegistering) {
-        await register(name, email, role, password);
+        await register(name, email, role, password, termsAccepted, city);
       } else {
         await login(email, password);
       }
@@ -86,10 +107,11 @@ export default function ProfileScreen() {
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            
             {/* Cabeçalho do Perfil */}
             <View style={styles.profileHeader}>
-              <View style={[styles.avatarContainer, { backgroundColor: colors.backgroundSelected }]}>
+              <View
+                style={[styles.avatarContainer, { backgroundColor: colors.backgroundSelected }]}
+              >
                 <User size={40} color={colors.tint} />
               </View>
               <ThemedText type="subtitle" style={styles.profileName}>
@@ -98,9 +120,24 @@ export default function ProfileScreen() {
               <ThemedText style={styles.profileEmail} themeColor="textSecondary">
                 {user.email}
               </ThemedText>
-              
-              <View style={[styles.roleBadge, { backgroundColor: user.role === 'company' ? colors.success + '20' : colors.tint + '20' }]}>
-                <ThemedText style={[styles.roleBadgeText, { color: user.role === 'company' ? colors.success : colors.tint }]}>
+
+              <View
+                style={[
+                  styles.roleBadge,
+                  {
+                    backgroundColor:
+                      user.role === 'company' ? colors.success + '20' : colors.tint + '20',
+                  },
+                ]}
+              >
+                <ThemedText
+                  style={[
+                    styles.roleBadgeText,
+                    {
+                      color: user.role === 'company' ? colors.success : colors.tint,
+                    },
+                  ]}
+                >
                   {user.role === 'company' ? 'Parceiro Solar' : 'Consumidor'}
                 </ThemedText>
               </View>
@@ -108,8 +145,10 @@ export default function ProfileScreen() {
 
             {/* Ações e Links rápidos */}
             <View style={styles.actionSection}>
-              <ThemedText style={[styles.sectionTitle, { color: colors.textSecondary }]}>Opções da Conta</ThemedText>
-              
+              <ThemedText style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                Opções da Conta
+              </ThemedText>
+
               {canUseP2PChat && (
                 <TouchableOpacity
                   style={[styles.menuItem, { backgroundColor: colors.backgroundElement }]}
@@ -148,11 +187,12 @@ export default function ProfileScreen() {
               ) : (
                 <>
                   <LogOut size={18} color={colors.danger} />
-                  <ThemedText style={[styles.logoutButtonText, { color: colors.danger }]}>Sair da Conta</ThemedText>
+                  <ThemedText style={[styles.logoutButtonText, { color: colors.danger }]}>
+                    Sair da Conta
+                  </ThemedText>
                 </>
               )}
             </TouchableOpacity>
-
           </ScrollView>
         </SafeAreaView>
       </ThemedView>
@@ -163,8 +203,10 @@ export default function ProfileScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.authHeader}>
             <ThemedText type="title" style={styles.authTitle}>
               {isRegistering ? 'Criar uma Conta' : 'Olá novamente!'}
@@ -178,16 +220,52 @@ export default function ProfileScreen() {
 
           {/* Form */}
           <View style={styles.formContainer}>
+            {authNotice ? (
+              <View
+                style={[
+                  styles.noticeBox,
+                  {
+                    backgroundColor: colors.success + '10',
+                    borderColor: colors.success + '30',
+                  },
+                ]}
+              >
+                <ThemedText style={[styles.errorText, { color: colors.success }]}>
+                  {authNotice}
+                </ThemedText>
+              </View>
+            ) : null}
+
             {errorMsg ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.danger + '10', borderColor: colors.danger + '20' }]}>
-                <ThemedText style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</ThemedText>
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    backgroundColor: colors.danger + '10',
+                    borderColor: colors.danger + '20',
+                  },
+                ]}
+              >
+                <ThemedText style={[styles.errorText, { color: colors.danger }]}>
+                  {errorMsg}
+                </ThemedText>
               </View>
             ) : null}
 
             {isRegistering && (
-              <View style={[styles.inputContainer, { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 }]}>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.backgroundElement,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
                 <User size={18} color={colors.textSecondary} />
                 <TextInput
+                  accessibilityLabel="Nome completo"
                   placeholder="Nome Completo"
                   placeholderTextColor={colors.textSecondary}
                   style={[styles.inputField, { color: colors.text }]}
@@ -197,9 +275,42 @@ export default function ProfileScreen() {
               </View>
             )}
 
-            <View style={[styles.inputContainer, { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 }]}>
+            {isRegistering && (
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.backgroundElement,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <User size={18} color={colors.textSecondary} />
+                <TextInput
+                  accessibilityLabel="Cidade"
+                  placeholder="Cidade"
+                  placeholderTextColor={colors.textSecondary}
+                  style={[styles.inputField, { color: colors.text }]}
+                  value={city}
+                  onChangeText={setCity}
+                />
+              </View>
+            )}
+
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor: colors.backgroundElement,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                },
+              ]}
+            >
               <Mail size={18} color={colors.textSecondary} />
               <TextInput
+                accessibilityLabel="E-mail"
                 placeholder="E-mail"
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
@@ -210,9 +321,19 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <View style={[styles.inputContainer, { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 }]}>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor: colors.backgroundElement,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                },
+              ]}
+            >
               <Lock size={18} color={colors.textSecondary} />
               <TextInput
+                accessibilityLabel="Senha"
                 placeholder="Senha"
                 placeholderTextColor={colors.textSecondary}
                 secureTextEntry
@@ -228,36 +349,76 @@ export default function ProfileScreen() {
                 style={styles.forgotPasswordContainer}
                 onPress={() => router.push('/forgot-password')}
               >
-                <ThemedText style={[styles.forgotPasswordText, { color: colors.tint }]}>Esqueceu sua senha?</ThemedText>
+                <ThemedText style={[styles.forgotPasswordText, { color: colors.tint }]}>
+                  Esqueceu sua senha?
+                </ThemedText>
               </TouchableOpacity>
             )}
 
             {/* Seletor de Tipo de Perfil (Apenas no Registro) */}
             {isRegistering && (
               <View style={styles.roleSelectorContainer}>
-                <ThemedText style={[styles.roleSelectorLabel, { color: colors.textSecondary }]}>Tipo de Conta:</ThemedText>
+                <ThemedText style={[styles.roleSelectorLabel, { color: colors.textSecondary }]}>
+                  Tipo de Conta:
+                </ThemedText>
                 <View style={styles.roleButtonsRow}>
                   <TouchableOpacity
                     style={[
                       styles.roleButton,
-                      { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 },
-                      role === 'review' && { backgroundColor: colors.tint + '15', borderColor: colors.tint, borderWidth: 1.5 },
+                      {
+                        backgroundColor: colors.backgroundElement,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                      },
+                      role === 'review' && {
+                        backgroundColor: colors.tint + '15',
+                        borderColor: colors.tint,
+                        borderWidth: 1.5,
+                      },
                     ]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: role === 'review' }}
                     onPress={() => setRole('review')}
                   >
-                    <ThemedText style={[styles.roleButtonText, { color: role === 'review' ? colors.tint : colors.textSecondary }, role === 'review' && { fontWeight: 'bold' }]}>
+                    <ThemedText
+                      style={[
+                        styles.roleButtonText,
+                        {
+                          color: role === 'review' ? colors.tint : colors.textSecondary,
+                        },
+                        role === 'review' && { fontWeight: 'bold' },
+                      ]}
+                    >
                       Consumidor
                     </ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.roleButton,
-                      { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderWidth: 1 },
-                      role === 'company' && { backgroundColor: colors.success + '15', borderColor: colors.success, borderWidth: 1.5 },
+                      {
+                        backgroundColor: colors.backgroundElement,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                      },
+                      role === 'company' && {
+                        backgroundColor: colors.success + '15',
+                        borderColor: colors.success,
+                        borderWidth: 1.5,
+                      },
                     ]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: role === 'company' }}
                     onPress={() => setRole('company')}
                   >
-                    <ThemedText style={[styles.roleButtonText, { color: role === 'company' ? colors.success : colors.textSecondary }, role === 'company' && { fontWeight: 'bold' }]}>
+                    <ThemedText
+                      style={[
+                        styles.roleButtonText,
+                        {
+                          color: role === 'company' ? colors.success : colors.textSecondary,
+                        },
+                        role === 'company' && { fontWeight: 'bold' },
+                      ]}
+                    >
                       Empresa
                     </ThemedText>
                   </TouchableOpacity>
@@ -265,8 +426,32 @@ export default function ProfileScreen() {
               </View>
             )}
 
+            {isRegistering && (
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: termsAccepted }}
+                style={styles.termsRow}
+                onPress={() => setTermsAccepted((value) => !value)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: termsAccepted ? colors.tint : colors.border,
+                      backgroundColor: termsAccepted ? colors.tint : colors.backgroundElement,
+                    },
+                  ]}
+                />
+                <ThemedText style={[styles.termsText, { color: colors.textSecondary }]}>
+                  Aceito os Termos de Uso e a Política de Privacidade.
+                </ThemedText>
+              </TouchableOpacity>
+            )}
+
             {/* Botão Submit */}
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={isRegistering ? 'Cadastrar conta' : 'Entrar'}
               style={[styles.submitButton, { backgroundColor: colors.brandActiveBlue }]}
               onPress={handleSubmit}
               disabled={formLoading}
@@ -275,10 +460,16 @@ export default function ProfileScreen() {
                 <ActivityIndicator color={colors.backgroundElement} />
               ) : (
                 <>
-                  <ThemedText style={[styles.submitButtonText, { color: colors.backgroundElement }]}>
+                  <ThemedText
+                    style={[styles.submitButtonText, { color: colors.backgroundElement }]}
+                  >
                     {isRegistering ? 'Cadastrar' : 'Entrar'}
                   </ThemedText>
-                  <ArrowRight size={18} color={colors.backgroundElement} style={{ marginLeft: 6 }} />
+                  <ArrowRight
+                    size={18}
+                    color={colors.backgroundElement}
+                    style={{ marginLeft: 6 }}
+                  />
                 </>
               )}
             </TouchableOpacity>
@@ -292,10 +483,11 @@ export default function ProfileScreen() {
               }}
             >
               <ThemedText style={[styles.switchAuthTypeText, { color: colors.tint }]}>
-                {isRegistering ? 'Já possui uma conta? Faça login' : 'Não tem conta? Cadastre-se grátis'}
+                {isRegistering
+                  ? 'Já possui uma conta? Faça login'
+                  : 'Não tem conta? Cadastre-se grátis'}
               </ThemedText>
             </TouchableOpacity>
-
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -336,15 +528,34 @@ const styles = StyleSheet.create({
   formContainer: {
     gap: Spacing.three,
   },
-  errorBox: {
-    backgroundColor: 'rgba(229, 62, 62, 0.1)',
+  noticeBox: {
     padding: Spacing.three,
     borderRadius: Spacing.two,
     borderWidth: 1,
-    borderColor: 'rgba(229, 62, 62, 0.2)',
+  },
+  termsRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  errorBox: {
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
   },
   errorText: {
-    color: colors.danger,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -368,7 +579,6 @@ const styles = StyleSheet.create({
   roleSelectorLabel: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: colors.textSecondary,
   },
   roleButtonsRow: {
     flexDirection: 'row',
@@ -395,7 +605,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
   },
   submitButtonText: {
-    color: colors.backgroundElement,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -406,7 +615,6 @@ const styles = StyleSheet.create({
   },
   switchAuthTypeText: {
     fontSize: 13,
-    color: colors.tint,
     fontWeight: '500',
   },
   profileHeader: {
@@ -445,7 +653,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: Spacing.one,
   },
@@ -475,7 +682,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   logoutButtonText: {
-    color: colors.danger,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -484,7 +690,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
   },
   forgotPasswordText: {
-    color: colors.tint,
     fontSize: 13,
     fontWeight: '600',
   },

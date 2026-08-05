@@ -994,10 +994,6 @@ export const hasPossibleAuthSession = () => {
 };
 
 const attemptRefresh = async (): Promise<boolean> => {
-  if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
-    return false;
-  }
-
   try {
     const url = buildApiUrl('/auth/refresh');
     const response = await fetch(url, {
@@ -1686,7 +1682,12 @@ export const companyDashboardApi = {
     fetchApi<CertificationProgress>('/company_dashboard/certification_progress', {
       params: companyId ? { company_id: companyId } : undefined,
     }),
-  getRanking: (companyId?: string | number, categoryId?: string | number, criterionSlug?: string, historyDays: number = 90) =>
+  getRanking: (
+    companyId?: string | number,
+    categoryId?: string | number,
+    criterionSlug?: string,
+    historyDays: number = 90
+  ) =>
     fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
       params: {
         company_id: companyId,
@@ -2272,10 +2273,6 @@ export const authApi = {
   },
   me: async (): Promise<User | null> => {
     try {
-      if (typeof window !== 'undefined' && !hasPossibleAuthSession()) {
-        return null;
-      }
-
       if (apolloClient) {
         try {
           const { data } = await apolloClient.query({

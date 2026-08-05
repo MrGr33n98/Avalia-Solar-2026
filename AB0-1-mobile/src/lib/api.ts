@@ -131,8 +131,11 @@ export interface User {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: User;
+  token?: string;
+  user?: User;
+  state?: 'authenticated' | 'confirmation_required' | 'pending_approval';
+  code?: string;
+  message?: string;
 }
 
 export interface LocalSolarPageResponse {
@@ -193,7 +196,7 @@ export async function fetchApi<T>(
   const token = await getStoredToken();
   const headers = new Headers({
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'X-Client': 'android',
     ...options.headers,
   });
@@ -212,7 +215,7 @@ export async function fetchApi<T>(
 
     const responseText = await response.text();
     let responseData: any = null;
-    
+
     if (responseText) {
       try {
         responseData = JSON.parse(responseText);
@@ -222,13 +225,17 @@ export async function fetchApi<T>(
     }
 
     if (!response.ok) {
-      const errorMessage = responseData?.error || responseData?.message || `Erro de API (${response.status})`;
-      console.error(`[API Error] <- status: ${response.status}, message: ${errorMessage}`, responseData);
+      const errorMessage =
+        responseData?.error || responseData?.message || `Erro de API (${response.status})`;
+      console.error(
+        `[API Error] <- status: ${response.status}, message: ${errorMessage}`,
+        responseData
+      );
 
       if (response.status === 401) {
-        // lazy evaluation of store state to avoid circular dependency
+        await removeStoredToken();
         const { useAuthStore } = require('../store/auth');
-        useAuthStore.getState().logout();
+        useAuthStore.setState({ user: null, token: null, isLoading: false });
       }
 
       throw {
@@ -257,17 +264,39 @@ export async function fetchApi<T>(
 // ==========================================
 
 export const authApi = {
-  login: async (credentials: { email: string; password?: string; code?: string }): Promise<AuthResponse> => {
+  login: async (credentials: {
+    email: string;
+    password?: string;
+    code?: string;
+  }): Promise<AuthResponse> => {
     return fetchApi<AuthResponse>('auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   },
-  register: async (data: { email: string; name: string; password?: string; role: string }): Promise<AuthResponse> => {
+  register: async (data: {
+    email: string;
+    name: string;
+    password: string;
+    password_confirmation: string;
+    role: 'review' | 'company';
+    terms_accepted: boolean;
+    city?: string;
+    state?: string;
+  }): Promise<AuthResponse> => {
     return fetchApi<AuthResponse>('auth/register', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ user: data, terms_accepted: data.terms_accepted }),
     });
+  },
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    return fetchApi<{ message: string }>('auth/forgot_password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+  logout: async (): Promise<void> => {
+    await fetchApi('auth/logout', { method: 'POST' });
   },
   getCurrentUser: async (): Promise<User> => {
     try {
@@ -291,7 +320,8 @@ export const authApi = {
     } catch (err) {
       console.warn('[getCurrentUser] GraphQL query failed, falling back to REST:', err);
     }
-    return fetchApi<User>('auth/me');
+    const response = await fetchApi<{ user: User }>('auth/me');
+    return response.user;
   },
 };
 
@@ -313,7 +343,7 @@ export const companiesApi = {
     if (res && Array.isArray(res.companies)) return res.companies;
     return [];
   },
-  
+
   getByIdOrSlug: async (idOrSlug: number | string): Promise<Company> => {
     const res = await fetchApi<any>(`companies/${idOrSlug}`);
     if (res && res.company) return res.company;
@@ -366,7 +396,7 @@ export const leadsApi = {
       body: JSON.stringify(leadData),
     });
   },
-  
+
   getByUser: async (): Promise<any[]> => {
     try {
       const client = require('./apolloClient').default || require('./apolloClient').apolloClient;
@@ -407,12 +437,14 @@ export const productsApi = {
   },
   getAll: async (params?: Record<string, any>): Promise<any[]> => {
     return fetchApi('products', { params });
-  }
+  },
 };
 
 export const reviewsApi = {
   getByCompany: async (companyId: number): Promise<Review[]> => {
-    const res = await fetchApi<any>('reviews', { params: { company_id: companyId } });
+    const res = await fetchApi<any>('reviews', {
+      params: { company_id: companyId },
+    });
     if (Array.isArray(res)) return res;
     if (res && Array.isArray(res.data)) return res.data;
     return [];
@@ -433,7 +465,11 @@ export const reviewsApi = {
 };
 
 export const localSolarPagesApi = {
-  get: async (state: string, city?: string | null, params?: { vertical?: string }): Promise<LocalSolarPageResponse | null> => {
+  get: async (
+    state: string,
+    city?: string | null,
+    params?: { vertical?: string }
+  ): Promise<LocalSolarPageResponse | null> => {
     const endpoint = city ? `local_solar_pages/${state}/${city}` : `local_solar_pages/${state}`;
     try {
       return await fetchApi<LocalSolarPageResponse>(endpoint, { params });
@@ -448,43 +484,61 @@ export const localSolarPagesApi = {
 
 export const conversationsApi = {
   getAll: () => fetchApi<Conversation[]>('conversations'),
-  create: (companyId: number) => fetchApi<Conversation>('conversations', {
-    method: 'POST',
-    body: JSON.stringify({ company_id: companyId })
-  }),
-  getMessages: (conversationId: number) => fetchApi<Message[]>(`conversations/${conversationId}/direct_messages`),
+  create: (companyId: number) =>
+    fetchApi<Conversation>('conversations', {
+      method: 'POST',
+      body: JSON.stringify({ company_id: companyId }),
+    }),
+  getMessages: (conversationId: number) =>
+    fetchApi<Message[]>(`conversations/${conversationId}/direct_messages`),
   sendMessage: (
     conversationId: number,
     body: string,
     attachmentBase64?: string,
     options?: {
       client_message_id?: string;
-      attachments?: Array<{ data: string; filename: string; content_type: string }>;
+      attachments?: Array<{
+        data: string;
+        filename: string;
+        content_type: string;
+      }>;
       client?: string;
     }
-  ) => fetchApi<Message>(`conversations/${conversationId}/direct_messages`, {
-    method: 'POST',
-    body: JSON.stringify({
-      body,
-      attachment: attachmentBase64,
-      ...(options || {}),
-    })
-  }),
-  markRead: (conversationId: number) => fetchApi<Conversation>(`conversations/${conversationId}/read`, {
-    method: 'POST',
-  }),
-  block: (conversationId: number, reason?: string) => fetchApi<Conversation>(`conversations/${conversationId}/block`, {
-    method: 'POST',
-    body: JSON.stringify({ reason }),
-  }),
-  report: (conversationId: number, reason: string, details?: string) => fetchApi<{ success: boolean; report_id: number; conversation: Conversation }>(`conversations/${conversationId}/report`, {
-    method: 'POST',
-    body: JSON.stringify({ reason, details }),
-  }),
+  ) =>
+    fetchApi<Message>(`conversations/${conversationId}/direct_messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        body,
+        attachment: attachmentBase64,
+        ...(options || {}),
+      }),
+    }),
+  markRead: (conversationId: number) =>
+    fetchApi<Conversation>(`conversations/${conversationId}/read`, {
+      method: 'POST',
+    }),
+  block: (conversationId: number, reason?: string) =>
+    fetchApi<Conversation>(`conversations/${conversationId}/block`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  report: (conversationId: number, reason: string, details?: string) =>
+    fetchApi<{
+      success: boolean;
+      report_id: number;
+      conversation: Conversation;
+    }>(`conversations/${conversationId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason, details }),
+    }),
 };
 
 export const pushTokensApi = {
-  register: (payload: { token: string; platform: 'ios' | 'android' | 'expo'; device_id?: string | null }) =>
+  register: (payload: {
+    token: string;
+    platform: 'ios' | 'android' | 'expo';
+    device_id?: string | null;
+  }) =>
     fetchApi<{ success: boolean; id: number }>('push_tokens', {
       method: 'POST',
       body: JSON.stringify(payload),

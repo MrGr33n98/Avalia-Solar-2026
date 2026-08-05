@@ -143,8 +143,12 @@ module Api
             Rails.logger.info "[Audit] Photo Flow: User avatar attached successfully for ID #{user.id}"
           end
 
-          user.send_confirmation_instructions
-          Rails.logger.info "[Audit] Confirmation email sent for user ID #{user.id}"
+          if user.review_user?
+            user.send_confirmation_instructions
+            Rails.logger.info "[Audit] Confirmation email sent for user ID #{user.id}"
+          else
+            Rails.logger.info "[Audit] Company registration awaiting approval: user_id=#{user.id}"
+          end
 
           Analytics::TrackEventService.call(
             event_type: 'user_registered',
@@ -162,7 +166,15 @@ module Api
             properties: user.posthog_properties
           )
 
-          return render json: payload_for(user), status: :created
+          registration_state = user.company_user? ? 'pending_approval' : 'confirmation_required'
+          return render json: {
+            code: registration_state == 'pending_approval' ? 'USER_NOT_APPROVED' : 'EMAIL_NOT_CONFIRMED',
+            message: registration_state == 'pending_approval' ?
+              'Cadastro enviado. Aguarde a aprovação administrativa.' :
+              'Cadastro enviado. Confirme seu e-mail para acessar a conta.',
+            state: registration_state,
+            user: serialized_user(user)
+          }, status: :created
         end
 
         Rails.logger.warn "[Audit] User registration failed: #{user.errors.full_messages.join(', ')}"
@@ -264,7 +276,7 @@ module Api
         end
 
         tokens = issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: refresh_token)
-        render json: { token: tokens[:access_token], user: serialized_user(user) }, status: :ok
+        render json: { token: tokens[:access_token], user: serialized_user(user), state: 'authenticated', code: 'AUTHENTICATED' }, status: :ok
       rescue StandardError => e
         Rails.logger.error("[Auth] refresh failure: #{e.class}: #{e.message}")
         render_error_response(
@@ -342,6 +354,7 @@ module Api
 
         if user.errors.empty?
           Rails.logger.info("[Auth] Password reset successfully: user_id=#{user.id}")
+          JwtBlacklistService.revoke_all_user_tokens(user.id)
 
           # Logar usuário automaticamente após reset
           tokens = issue_tokens_for(user)

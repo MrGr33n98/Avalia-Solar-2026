@@ -1,6 +1,10 @@
 class User < ApplicationRecord
   ALLOWED_AVATAR_CONTENT_TYPES = %w[image/png image/jpeg image/jpg].freeze
   MAX_AVATAR_SIZE_BYTES = 5.megabytes
+  PUBLIC_EMAIL_DOMAINS = %w[
+    gmail.com outlook.com hotmail.com yahoo.com icloud.com uol.com.br
+    terra.com.br bol.com.br ig.com.br globomail.com
+  ].freeze
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
@@ -42,6 +46,7 @@ class User < ApplicationRecord
   validates :city, presence: true, if: -> { regular_user? && provider.blank? }
   validates :state, length: { is: 2 }, allow_blank: true
   validate :password_complexity
+  validate :corporate_email_for_company, on: :create
   validate :adult_birthdate
   validate :validate_attachments
   validates :terms_accepted, acceptance: { accept: true }
@@ -346,6 +351,13 @@ class User < ApplicationRecord
       password.length >= 8
     ]
     errors.add(:password, 'deve ter ao menos 1 maiúscula, 1 minúscula, 1 número e 8+ caracteres') unless rules.all?
+  end
+
+  def corporate_email_for_company
+    return unless company_user? && email.present?
+
+    domain = email.to_s.downcase.split('@', 2).last
+    errors.add(:email, 'deve ser corporativo para contas de empresa') if PUBLIC_EMAIL_DOMAINS.include?(domain)
   end
 
   def adult_birthdate

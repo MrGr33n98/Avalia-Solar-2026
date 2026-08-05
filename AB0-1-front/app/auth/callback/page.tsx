@@ -12,7 +12,7 @@ type CallbackStatus = 'loading' | 'success' | 'pending_approval' | 'inactive' | 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, refreshAuth } = useAuth();
+  const { user, loading, refreshAuth, getPostLoginDestination } = useAuth();
 
   const [status, setStatus] = useState<CallbackStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,7 +37,9 @@ function AuthCallbackContent() {
     }
 
     if (rawStatus === 'error') {
-      setErrorMessage(rawMessage ? decodeURIComponent(rawMessage) : 'Ocorreu um erro durante o login.');
+      setErrorMessage(
+        rawMessage ? decodeURIComponent(rawMessage) : 'Ocorreu um erro durante o login.'
+      );
       setStatus('error');
       return;
     }
@@ -73,14 +75,8 @@ function AuthCallbackContent() {
     if (loading) return;
     if (!user) return;
 
-    if (user.role === 'review') {
-      router.replace('/review-dashboard');
-    } else if (user.role === 'company') {
-      router.replace('/select-company');
-    } else {
-      router.replace('/');
-    }
-  }, [status, loading, user, router]);
+    void getPostLoginDestination(user).then((destination) => router.replace(destination));
+  }, [status, loading, user, router, getPostLoginDestination]);
 
   // --- Render ---
 
@@ -100,8 +96,18 @@ function AuthCallbackContent() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center space-y-4">
           <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
-            <svg className="w-7 h-7 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-7 h-7 text-yellow-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-gray-900">Aguardando aprovação</h1>
@@ -122,8 +128,18 @@ function AuthCallbackContent() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center space-y-4">
           <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <svg className="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            <svg
+              className="w-7 h-7 text-red-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-gray-900">Conta inativa</h1>
@@ -146,8 +162,18 @@ function AuthCallbackContent() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center space-y-4">
         <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-          <svg className="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-7 h-7 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </div>
         <h1 className="text-xl font-semibold text-gray-900">Erro no login</h1>
@@ -167,14 +193,16 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-600 text-sm">Carregando...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center space-y-4">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-gray-600 text-sm">Carregando...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <AuthCallbackContent />
     </Suspense>
   );
