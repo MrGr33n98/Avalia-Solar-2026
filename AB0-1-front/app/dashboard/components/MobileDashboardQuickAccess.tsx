@@ -1,12 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
-import { ChevronRight } from 'lucide-react';
-import { CommandMenu } from './CommandMenu';
-import { Badge } from '@/components/ui/badge';
+import { Eye, QrCode, ShieldCheck, Star, TrendingUp, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getFlatNavigationByContext } from '@/config/navigation';
 
 interface MobileDashboardQuickAccessProps {
   activeTab: string;
@@ -25,156 +21,119 @@ interface MobileDashboardQuickAccessProps {
   visibleTabIds?: string[];
 }
 
-const QUICK_ACTION_COPY: Record<
-  string,
+const KPI_LIST: Array<{
+  id: string;
+  label: string;
+  icon: typeof Eye;
+  getValue: (props: MobileDashboardQuickAccessProps) => string;
+  getHref: () => string;
+}> = [
   {
-    eyebrow: string;
-    getMetric: (props: MobileDashboardQuickAccessProps) => string;
-    getDescription: (props: MobileDashboardQuickAccessProps) => string;
-  }
-> = {
-  overview: {
-    eyebrow: 'Hoje',
-    getMetric: ({ stats }) => `${formatMetric(stats?.profileViews ?? 0)} visitas`,
-    getDescription: () => 'Acompanhe o resumo do dia e destrave as próximas ações.',
+    id: 'views',
+    label: 'Visitas',
+    icon: Eye,
+    getValue: ({ stats }) => formatMetric(stats?.profileViews ?? 0),
+    getHref: () => 'analytics',
   },
-  reviews: {
-    eyebrow: 'Confiança',
-    getMetric: ({ stats }) => `${formatMetric(stats?.reviewsCount ?? 0)} avaliações`,
-    getDescription: ({ stats }) =>
-      (stats?.averageRating ?? 0) > 0
-        ? `Nota média ${Number(stats?.averageRating ?? 0).toFixed(1)}`
-        : 'Veja feedbacks recentes e responda mais rápido.',
+  {
+    id: 'reviews',
+    label: 'Avaliações',
+    icon: Star,
+    getValue: ({ stats }) => formatMetric(stats?.reviewsCount ?? 0),
+    getHref: () => 'reviews',
   },
-  leads: {
-    eyebrow: 'Pipeline',
-    getMetric: ({ stats }) => `${formatMetric(stats?.leadsReceived ?? 0)} leads`,
-    getDescription: () => 'Priorize novas oportunidades e avance negociações.',
+  {
+    id: 'leads',
+    label: 'Leads',
+    icon: UsersRound,
+    getValue: ({ stats }) => formatMetric(stats?.leadsReceived ?? 0),
+    getHref: () => 'leads',
   },
-  chat: {
-    eyebrow: 'Atendimento',
-    getMetric: () => 'Chat direto',
-    getDescription: () => 'Responda compradores e acompanhe conversas em tempo real.',
+  {
+    id: 'conversion',
+    label: 'Conversão',
+    icon: TrendingUp,
+    getValue: ({ stats }) => `${Number(stats?.conversionRate ?? 0).toFixed(1).replace('.', ',')}%`,
+    getHref: () => 'analytics',
   },
-  'ranking-performance': {
-    eyebrow: 'Ranking',
-    getMetric: ({ stats }) => `${Number(stats?.conversionRate ?? 0).toFixed(1)}% conversão`,
-    getDescription: () => 'Monitore visibilidade, cliques e posição da empresa.',
-  },
-  'trust-widget': {
-    eyebrow: 'Distribuição',
-    getMetric: ({ stats, company }) =>
-      company?.verified
-        ? 'Empresa verificada'
-        : `${formatMetric(stats?.reviewsCount ?? 0)} provas sociais`,
-    getDescription: () => 'Copie e compartilhe o selo de confiança sem sair do mobile.',
-  },
-};
+];
 
 export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAccessProps) {
-  const primaryActions = useMemo(
-    () =>
-      getFlatNavigationByContext('quick_access')
-        .filter((item) => !props.visibleTabIds || props.visibleTabIds.includes(item.id))
-        .filter((item) => QUICK_ACTION_COPY[item.id])
-        .slice(0, 5),
-    [props.visibleTabIds]
-  );
+  const { company, stats, onTabChange } = props;
+  const averageRating = Number(stats?.averageRating ?? 0);
+  const verified = Boolean(company?.verified);
 
   return (
-    <section className="lg:hidden mb-6" aria-label="Atalhos mobile do dashboard">
-      <div className="rounded-2xl border-[0.5px] border-white/10 bg-[#002B4D] p-4 shadow-none">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cyan">
-              Mobile access
-            </p>
-            <h2 className="mt-1 text-lg font-bold text-white tracking-tight">Ações prioritárias</h2>
-            <p className="mt-1 text-xs text-white/40 font-medium">
-              Leads, avaliações e performance em tempo real.
-            </p>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10"
-            onClick={props.onOpenNavigation}
-          >
-            Menu
-            <ChevronRight className="ml-1 h-[18px] w-[18px]" />
-          </Button>
-        </div>
-
-        <div className="mt-4">
-          <CommandMenu onSelectTab={props.onTabChange} visibleTabIds={props.visibleTabIds} />
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {primaryActions.map((item) => {
-            const Icon = item.icon;
-            const copy = QUICK_ACTION_COPY[item.id];
-            const isActive = props.activeTab === item.id;
-
-            return (
-              <Button
-                key={item.id}
-                type="button"
-                variant="outline"
-                className={cn(
-                  'h-auto min-h-[140px] flex-col items-start justify-start gap-3 rounded-xl px-4 py-4 text-left transition-all border-[0.5px]',
-                  isActive
-                    ? 'border-brand-blue/40 bg-brand-blue/10'
-                    : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10'
-                )}
-                onClick={() => props.onTabChange(item.id)}
-              >
-                <div className="flex w-full items-start justify-between gap-3">
-                  <div
-                    className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-lg border-[0.5px]',
-                      isActive
-                        ? 'bg-brand-blue text-white border-white/20'
-                        : 'bg-black/20 text-white/40 border-white/5'
-                    )}
-                  >
-                    <Icon className="h-[18px] w-[18px]" />
-                  </div>
-
-                  {isActive && (
-                    <Badge className="rounded-md bg-brand-blue text-white text-[9px] font-bold uppercase tracking-wider border-none px-1.5 h-4">
-                      Active
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <p
-                    className={cn(
-                      'text-[10px] font-bold uppercase tracking-widest',
-                      isActive ? 'text-brand-cyan' : 'text-white/30'
-                    )}
-                  >
-                    {copy.eyebrow}
-                  </p>
-                  <p
-                    className={cn(
-                      'text-sm font-bold tracking-tight',
-                      isActive ? 'text-white' : 'text-white/80'
-                    )}
-                  >
-                    {item.label}
-                  </p>
-                  <p className="text-[10px] font-bold text-white/40 font-mono tracking-tighter">
-                    {copy.getMetric(props)}
-                  </p>
-                </div>
-              </Button>
-            );
-          })}
-        </div>
+    <section
+      className="mb-4 rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-3 shadow-none sm:p-4 lg:hidden"
+      aria-label="Ações prioritárias"
+    >
+      {/* Header */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan">Resumo</p>
+        <h2 className="mt-0.5 text-base font-bold text-white tracking-tight">Ações prioritárias</h2>
       </div>
+
+      {/* KPIs 2×2 compactos */}
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
+        {KPI_LIST.map((kpi) => {
+          const Icon = kpi.icon;
+          const isActive = props.activeTab === kpi.getHref();
+          return (
+            <button
+              key={kpi.id}
+              type="button"
+              onClick={() => onTabChange(kpi.getHref())}
+              className={cn(
+                'flex min-h-[88px] flex-col items-start justify-between rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
+                isActive
+                  ? 'border-brand-cyan/40 bg-white/10'
+                  : 'border-white/10 bg-white/5 hover:bg-white/[0.08]'
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <div className="flex w-full items-center justify-between gap-2">
+                <span className={cn('text-[10px] font-semibold uppercase tracking-wider', isActive ? 'text-brand-cyan' : 'text-white/50')}>
+                  {kpi.label}
+                </span>
+                <Icon className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-brand-cyan' : 'text-white/30')} aria-hidden="true" />
+              </div>
+              <span className="text-lg font-bold tabular-nums tracking-tight text-white sm:text-xl">
+                {kpi.getValue(props)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Linha de confiança */}
+      <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+        {verified ? (
+          <>
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-xs font-medium text-white/90">Empresa verificada</span>
+          </>
+        ) : (
+          <>
+            <Star className={cn('h-4 w-4 shrink-0', averageRating > 0 ? 'text-amber-400' : 'text-white/30')} aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-xs font-medium text-white/90">
+              {averageRating > 0
+                ? `Nota média ${averageRating.toFixed(1).replace('.', ',')} · ${formatMetric(stats?.reviewsCount ?? 0)} avaliações`
+                : 'Ainda não há avaliações recebidas'}
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* CTA primário */}
+      <Button
+        type="button"
+        className="mt-3 h-10 w-full gap-2 rounded-xl bg-brand-cyan text-sm font-bold text-slate-900 hover:bg-brand-cyan/90"
+        onClick={() => onTabChange('review-forms')}
+      >
+        <QrCode className="h-4 w-4" aria-hidden="true" />
+        Coletar avaliações
+      </Button>
     </section>
   );
 }

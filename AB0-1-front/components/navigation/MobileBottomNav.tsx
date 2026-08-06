@@ -27,6 +27,7 @@ export default function MobileBottomNav() {
     pathname === '/review-dashboard' ||
     pathname.startsWith('/review-dashboard/');
   if (isInternalProfile) return null;
+  if (pathname?.startsWith('/dashboard')) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">

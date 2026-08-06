@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-03-10-v1';
+const SW_VERSION = '2026-08-06-v1';
 const APP_SHELL_CACHE = `avalia-app-shell-${SW_VERSION}`;
 const STATIC_CACHE = `avalia-static-${SW_VERSION}`;
 const API_CACHE = `avalia-api-${SW_VERSION}`;
@@ -7,7 +7,7 @@ const OFFLINE_MUTATION_STORE = 'mutationQueue';
 const OFFLINE_SYNC_TAG = 'avalia-offline-sync';
 const OFFLINE_FALLBACK_ROUTE = '/offline';
 const NAVIGATION_PRECACHE_TIMEOUT_MS = 5000;
-const OFFLINE_SUPPORTED_ROUTES = ['/', '/categories', '/companies', '/compare', '/blog'];
+const OFFLINE_SUPPORTED_ROUTES = ['/', '/categories', '/companies', '/compare', '/blog', '/dashboard'];
 const PRECACHE_URLS = [...OFFLINE_SUPPORTED_ROUTES, OFFLINE_FALLBACK_ROUTE, '/favicon.ico'];
 
 const normalizePath = (value) => {
@@ -130,6 +130,7 @@ const buildOfflineDocumentResponse = () =>
         </ul>
         <nav>
           <a href="/">Voltar para a home</a>
+          <a href="/dashboard">Dashboard</a>
           <a href="/categories">Explorar categorias</a>
           <a href="/companies">Ver empresas</a>
           <a href="/compare">Comparar opções</a>

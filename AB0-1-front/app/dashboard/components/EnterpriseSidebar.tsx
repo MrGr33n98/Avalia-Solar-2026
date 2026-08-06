@@ -29,6 +29,7 @@ interface EnterpriseSidebarProps {
 }
 
 const COLLAPSE_STORAGE_KEY = 'avalia:enterprise-sidebar-collapsed';
+const COMPACT_RAIL_BREAKPOINT_PX = 1180;
 
 function filterVisibleItems(items: NavigationItem[], visibleTabIds?: string[]): NavigationItem[] {
   return items
@@ -89,18 +90,28 @@ function SidebarTree({
                 )}
                 title={item.label}
                 aria-label={item.label}
+                aria-current={isGroupActive ? 'true' : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {!isCollapsed && (
-                  <>
-                    <span className="ml-3 flex-1 truncate text-sm font-medium">{item.label}</span>
-                    <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-                  </>
-                )}
+                <span
+                  className={cn(
+                    'ml-3 flex-1 truncate text-sm font-medium',
+                    isCollapsed ? 'hidden' : 'hidden dashboard:inline'
+                  )}
+                >
+                  {item.label}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    isCollapsed ? 'hidden' : 'hidden dashboard:block',
+                    isOpen && 'rotate-180'
+                  )}
+                />
               </Button>
 
               {!isCollapsed && isOpen && (
-                <div className="ml-4 space-y-1 border-l border-slate-100 pl-3">
+                <div className="ml-4 hidden space-y-1 border-l border-slate-100 pl-3 dashboard:block">
                   {item.children.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
@@ -113,6 +124,7 @@ function SidebarTree({
                         variant="ghost"
                         onClick={() => onTabChange(child.id)}
                         aria-label={child.label}
+                        aria-current={isChildActive ? 'page' : undefined}
                         className={cn(
                           'w-full h-10 rounded-lg justify-start px-3 text-left transition-all',
                           isChildActive
@@ -154,15 +166,26 @@ function SidebarTree({
             )}
             title={item.label}
             aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            {!isCollapsed && (
-              <>
-                <span className="ml-3 flex-1 truncate text-sm font-medium">{item.label}</span>
-                {badgeCount > 0 && (
-                  <Badge className="ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]">{badgeCount}</Badge>
+            <span
+              className={cn(
+                'ml-3 flex-1 truncate text-sm font-medium',
+                isCollapsed ? 'hidden' : 'hidden dashboard:inline'
+              )}
+            >
+              {item.label}
+            </span>
+            {badgeCount > 0 && (
+              <Badge
+                className={cn(
+                  'ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]',
+                  isCollapsed ? 'hidden' : 'hidden dashboard:flex'
                 )}
-              </>
+              >
+                {badgeCount}
+              </Badge>
             )}
           </Button>
         );
@@ -181,6 +204,7 @@ export default function EnterpriseSidebar({
   visibleTabIds,
 }: EnterpriseSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCompactViewport, setIsCompactViewport] = useState(true);
   const [openGroups, setOpenGroups] = useState<string[]>(['analytics-group', 'reviews-group', 'product-edit-group']);
 
   useEffect(() => {
@@ -193,16 +217,21 @@ export default function EnterpriseSidebar({
   }, []);
 
   useEffect(() => {
+    const updateCompact = () => setIsCompactViewport(window.innerWidth < COMPACT_RAIL_BREAKPOINT_PX);
+    updateCompact();
+    window.addEventListener('resize', updateCompact);
+    return () => window.removeEventListener('resize', updateCompact);
+  }, []);
+
+  useEffect(() => {
     try {
-      document.documentElement.style.setProperty(
-        '--enterprise-sidebar-width',
-        isCollapsed ? '72px' : '240px'
-      );
+      const width = isCompactViewport || isCollapsed ? '72px' : '240px';
+      document.documentElement.style.setProperty('--enterprise-sidebar-width', width);
       window.localStorage.setItem(COLLAPSE_STORAGE_KEY, isCollapsed ? '1' : '0');
     } catch {
       // noop
     }
-  }, [isCollapsed]);
+  }, [isCollapsed, isCompactViewport]);
 
   const navItems = useMemo(
     () => filterVisibleItems(filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational'), visibleTabIds),
@@ -222,9 +251,14 @@ export default function EnterpriseSidebar({
   };
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950">
+    <div className="flex h-full flex-col bg-white pb-[var(--safe-area-inset-bottom)] text-slate-900 dark:bg-slate-950">
       <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
-        <div className={cn('overflow-hidden dark:rounded-md dark:bg-white dark:px-1', isCollapsed ? 'w-9' : 'w-[156px]')}>
+        <div
+          className={cn(
+            'overflow-hidden dark:rounded-md dark:bg-white dark:px-1',
+            isCollapsed ? 'w-9' : 'w-9 dashboard:w-[156px]'
+          )}
+        >
           <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
         </div>
       </div>
@@ -242,7 +276,7 @@ export default function EnterpriseSidebar({
         />
       </div>
 
-      <div className="border-t border-slate-100 p-3">
+      <div className="hidden border-t border-slate-100 p-3 dashboard:block">
         <Button
           type="button"
           variant="ghost"
@@ -254,7 +288,14 @@ export default function EnterpriseSidebar({
           )}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          {!isCollapsed && <span className="ml-3 text-sm font-medium">Recolher menu</span>}
+          <span
+            className={cn(
+              'ml-3 text-sm font-medium',
+              isCollapsed ? 'hidden' : 'hidden dashboard:inline'
+            )}
+          >
+            Recolher menu
+          </span>
         </Button>
       </div>
     </div>
@@ -263,7 +304,7 @@ export default function EnterpriseSidebar({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-[280px] p-0 border-r border-slate-200 bg-white sm:max-w-[280px]">
+        <SheetContent side="left" className="w-[280px] p-0 border-r border-slate-200 bg-white pl-[var(--safe-area-inset-left)] sm:max-w-[280px]">
           {sidebarContent}
         </SheetContent>
       </Sheet>
@@ -272,8 +313,8 @@ export default function EnterpriseSidebar({
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white lg:block',
-          isCollapsed ? 'w-[72px]' : 'w-[240px]'
+          'fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white pl-[var(--safe-area-inset-left)] md:block',
+          isCollapsed ? 'w-[72px]' : 'w-[72px] dashboard:w-[240px]'
         )}
       >
         {sidebarContent}

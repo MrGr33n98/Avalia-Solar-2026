@@ -32,6 +32,15 @@ export default function WebVitalsReporter() {
     const pagePath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '/');
     const pageTemplate = getPageTemplateInfo(pagePath);
     const deviceClass = getDeviceClass(typeof window !== 'undefined' ? window.innerWidth : undefined);
+    const displayMode =
+      typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+        ? 'standalone'
+        : 'browser';
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : undefined;
+    const dashboardTab =
+      typeof window !== 'undefined' && pagePath.startsWith('/dashboard')
+        ? new URLSearchParams(window.location.search).get('tab') || 'overview'
+        : undefined;
     const eventId =
       metric.id ||
       (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -57,6 +66,9 @@ export default function WebVitalsReporter() {
         page_path: pagePath,
         normalized_path: pageTemplate.normalizedPath,
         device_class: deviceClass,
+        display_mode: displayMode,
+        viewport_width: viewportWidth,
+        dashboard_tab: dashboardTab,
       }, { critical: false });
     } catch (error) {
       console.warn('[WebVitals] Failed to track:', error);
@@ -72,6 +84,9 @@ export default function WebVitalsReporter() {
       pageTemplate: pageTemplate.template,
       normalizedPath: pageTemplate.normalizedPath,
       deviceClass,
+      displayMode,
+      viewportWidth,
+      dashboardTab,
       timestamp: Date.now(),
     };
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 
 interface ThemeToggleProps {
@@ -9,68 +9,40 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ onThemeChange }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // Load theme from localStorage or system preference
-    const savedTheme = localStorage.getItem('dashboard-theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      onThemeChange?.(savedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? 'dark' : 'light';
-      setTheme(systemTheme);
-      onThemeChange?.(systemTheme);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { setTheme, resolvedTheme } = useTheme();
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('dashboard-theme', newTheme);
-    onThemeChange?.(newTheme);
-    
-    // Update document class for global theming
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    onThemeChange?.(nextTheme);
   };
 
-  if (!mounted) {
-    return (
-      <Button variant="outline" size="icon" disabled>
-        <Sun className="h-5 w-5" />
-      </Button>
-    );
-  }
+  // Evitar estado intermediário enquanto next-themes resolve o tema real.
+  const isDark = resolvedTheme === 'dark';
+  const isLoading = !resolvedTheme;
 
   return (
     <Button
+      type="button"
       variant="outline"
       size="icon"
       onClick={toggleTheme}
+      disabled={isLoading}
       className="relative overflow-hidden transition-all duration-300"
-      title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+      title={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+      aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
     >
       <Sun
         className={`h-5 w-5 absolute transition-all duration-300 ${
-          theme === 'light'
-            ? 'rotate-0 scale-100 opacity-100'
-            : 'rotate-90 scale-0 opacity-0'
+          !isDark ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'
         }`}
+        aria-hidden="true"
       />
       <Moon
         className={`h-5 w-5 absolute transition-all duration-300 ${
-          theme === 'dark'
-            ? 'rotate-0 scale-100 opacity-100'
-            : '-rotate-90 scale-0 opacity-0'
+          isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
         }`}
+        aria-hidden="true"
       />
     </Button>
   );

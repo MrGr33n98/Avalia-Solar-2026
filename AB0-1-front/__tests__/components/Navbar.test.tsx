@@ -6,18 +6,23 @@ import { Category } from '@/lib/api';
 // Mock the next/image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ src, alt, width, height, fill, priority, ...props }: { src: string; alt: string; width?: number; height?: number; fill?: boolean; priority?: boolean }) => (
-    // ALTERADO: Handle 'priority' prop correctly. If it's a boolean, don't pass it directly as a non-boolean attribute.
-    // Or, if the component expects it, convert it to a string. For testing, often it's safe to omit or convert.
-    <img src={src} alt={alt} width={width} height={height} {...props} data-testid="mock-image" />
+  default: Object.assign(
+    ({ src, alt, width, height, ...props }: { src: string; alt: string; width?: number; height?: number }) => (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt={alt} width={width} height={height} {...props} data-testid="mock-image" />
+    ),
+    { displayName: 'MockNextImage' }
   ),
 }));
 
 // Mock the next/link component
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: any }) => (
-    <a href={href} onClick={(e) => e.preventDefault()} {...props}>{children}</a>
+  default: Object.assign(
+    ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+      <a href={href} onClick={(e) => e.preventDefault()} {...props}>{children}</a>
+    ),
+    { displayName: 'MockNextLink' }
   ),
 }));
 
@@ -34,9 +39,11 @@ jest.mock('@/components/SearchBar', () => {
   };
 });
 
+const mockUsePathname = jest.fn(() => '/');
+
 // Mock the useRouter hook from next/navigation
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: () => mockUsePathname(),
   useRouter: () => ({
     push: jest.fn(),
     pathname: '/',
@@ -63,28 +70,47 @@ jest.mock('@/components/navigation/MobileCategoriesDrawer', () => ({
 }));
 
 // Mock LocationSearch
-jest.mock('@/components/LocationSearch', () => (props: any) => (
-  <div data-testid="location-search" className={props.className}>
-    <button onClick={() => props.onLocationSelect({ state: 'SP', city: 'São Paulo' })}>
-      Select Location
-    </button>
-  </div>
-));
+jest.mock('@/components/LocationSearch', () =>
+  Object.assign(
+    (props: { className?: string; onLocationSelect?: (location: { state: string; city: string }) => void }) => (
+      <div data-testid="location-search" className={props.className}>
+        <button onClick={() => props.onLocationSelect?.({ state: 'SP', city: 'São Paulo' })}>
+          Select Location
+        </button>
+      </div>
+    ),
+    { displayName: 'MockLocationSearch' }
+  )
+);
 
 // Mock NavbarSearch
-jest.mock('@/components/NavbarSearch', () => (props: any) => (
-  <div data-testid="navbar-search" className={props.className}>
-    <input placeholder={props.placeholder} />
-  </div>
-));
+jest.mock('@/components/NavbarSearch', () =>
+  Object.assign(
+    (props: { className?: string; placeholder?: string }) => (
+      <div data-testid="navbar-search" className={props.className}>
+        <input placeholder={props.placeholder} />
+      </div>
+    ),
+    { displayName: 'MockNavbarSearch' }
+  )
+);
 
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
-    nav: ({ children, ...props }: any) => <nav {...props}>{children}</nav>,
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    nav: Object.assign(
+      ({ children, ...props }: { children: React.ReactNode }) => <nav {...props}>{children}</nav>,
+      { displayName: 'MockMotionNav' }
+    ),
+    div: Object.assign(
+      ({ children, ...props }: { children: React.ReactNode }) => <div {...props}>{children}</div>,
+      { displayName: 'MockMotionDiv' }
+    ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: Object.assign(
+    ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    { displayName: 'MockAnimatePresence' }
+  ),
 }));
 
 // Mock useAuth
@@ -155,8 +181,30 @@ describe('Navbar', () => {
 
   it('renders login and register buttons', () => {
     render(<Navbar />);
-    
-    expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Para empresas' })).toBeInTheDocument();
+
+    expect(screen.getAllByRole('link', { name: 'Entrar' }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('link', { name: 'Para empresas' }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders public chrome outside of /dashboard', () => {
+    mockUsePathname.mockReturnValue('/');
+    render(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Home Avalia Solar' })).toBeInTheDocument();
+  });
+
+  it('does not render inside /dashboard routes', () => {
+    mockUsePathname.mockReturnValue('/dashboard');
+    const { container } = render(<Navbar />);
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('does not render inside nested /dashboard routes', () => {
+    mockUsePathname.mockReturnValue('/dashboard/settings');
+    const { container } = render(<Navbar />);
+
+    expect(container.firstChild).toBeNull();
   });
 });

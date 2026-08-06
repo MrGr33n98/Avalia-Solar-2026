@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from 'next-themes';
 import {
   trackDashboardViewed,
   trackChurnIntent,
@@ -200,9 +201,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     featureAccess,
   } = useCompanyDashboardData(companyId);
 
+  const { setTheme, resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(resolvedTheme === 'dark' ? 'dark' : 'light');
   const dashboardCompany = company;
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;
@@ -322,6 +324,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
+    setTheme(theme);
 
     // Track using unified analytics
     track('Theme Changed', {
@@ -329,26 +332,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       company_id: companyId,
       user_id: user?.id,
     });
-
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   };
-
-  useEffect(() => {
-    // Load theme from localStorage or default to dark
-    const savedTheme = localStorage.getItem('dashboard-theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme || 'dark';
-    setThemeMode(initialTheme);
-
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
 
   // Track Checkout Success
   useEffect(() => {
@@ -376,7 +360,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-white/40">Carregando dashboard...</p>
@@ -389,7 +373,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const companyInactive = company && company.status !== 'active';
   if (notApproved || companyInactive) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold text-foreground">Acesso pendente</h2>
           <p className="text-sm text-white/40">
@@ -402,7 +386,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   if (companyError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-semibold text-foreground">{companyError}</h2>
         </div>
@@ -411,7 +395,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 transition-colors duration-300">
+    <div className="min-h-dvh bg-slate-50 transition-colors duration-300">
       {/* Sidebar (Drawer on mobile, Fixed on desktop) */}
       <EnterpriseSidebar
         activeTab={activeTab}
@@ -423,10 +407,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         visibleTabIds={visibleTabIds}
       />
 
-      <div className="lg:pl-[var(--enterprise-sidebar-width,280px)] flex flex-col min-h-screen">
+      <div className="md:pl-[var(--enterprise-sidebar-width,72px)] flex flex-col min-h-dvh">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-4 lg:pt-6">
-          <div className="max-w-[1400px] mx-auto p-4 lg:p-6 lg:pt-0">
+        <main className="flex-1 overflow-y-auto pt-0 md:pt-4 dashboard:pt-6">
+          <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-5 dashboard:p-6 dashboard:pt-0">
             <MobileDashboardQuickAccess
               activeTab={activeTab}
               company={company}
@@ -439,6 +423,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
             <DashboardToolbar
               company={company}
               onTabChange={handleTabChange}
+              onOpenNavigation={() => setSidebarOpen(true)}
               themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
             />
 

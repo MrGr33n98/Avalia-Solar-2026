@@ -100,6 +100,7 @@ export default function Navbar() {
   }, []);
 
   if (pathname?.startsWith('/f/')) return null;
+  if (pathname?.startsWith('/dashboard')) return null;
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)]">

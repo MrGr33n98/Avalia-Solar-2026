@@ -143,6 +143,20 @@
 
     --border-radius-md: 0.875rem;
     --border-radius-lg: 1rem;
+
+    /* === DASHBOARD SEMANTIC TOKENS (PWA-TASK-008) === */
+    --dashboard-ink: 222 47% 11%;
+    --dashboard-panel: 0 0% 100%;
+    --dashboard-surface: 210 40% 98%;
+    --dashboard-muted: 215 16% 47%;
+    --dashboard-accent: 221 83% 53%;
+    --dashboard-accent-foreground: 210 40% 98%;
+    --dashboard-cyan: 190 90% 50%;
+    --dashboard-positive: 142 71% 45%;
+    --dashboard-warning: 38 92% 50%;
+    --dashboard-danger: 0 84% 60%;
+    --dashboard-border: 214 32% 91%;
+    --dashboard-ring: 221 83% 53%;
   }
 
   .dark {
@@ -217,6 +231,13 @@
 
     --border-radius-md: 0.875rem;
     --border-radius-lg: 1rem;
+
+    /* === DASHBOARD SEMANTIC TOKENS — DARK MODE === */
+    --dashboard-ink: 210 40% 98%;
+    --dashboard-panel: 222 47% 11%;
+    --dashboard-surface: 222 47% 7%;
+    --dashboard-muted: 215 20% 65%;
+    --dashboard-border: 217 33% 17%;
   }
 }
 

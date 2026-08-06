@@ -45,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { dashboardApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import MobileReputationSummary from './MobileReputationSummary';
 import ReviewDetailPanel from './ReviewDetailPanel';
 
 interface ReviewsManagementProps {
@@ -623,7 +624,25 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <MobileReputationSummary
+        averageRating={stats.average_rating}
+        totalReviews={stats.total_reviews}
+        approvedReviews={stats.approved_reviews}
+        pendingReviews={stats.pending_reviews}
+        inAnalysisReviews={stats.in_analysis_reviews}
+        verifiedReviews={stats.verified_reviews}
+        verifiedRate={verifiedRate}
+        responseRate={stats.response_rate}
+        unansweredReviews={stats.unanswered_reviews}
+        npsScore={stats.nps_score}
+        npsResponses={stats.nps_responses}
+        monthlyEvolution={stats.monthly_evolution}
+        ratingDistribution={stats.rating_distribution}
+        sentimentDistribution={stats.sentiment_distribution}
+        sourceDistribution={stats.source_distribution}
+      />
+
+      <div className="hidden gap-4 lg:grid xl:grid-cols-5">
         <MetricCard
           label="Rating consolidado"
           value={stats.average_rating ? stats.average_rating.toFixed(1) : '—'}

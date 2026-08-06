@@ -19,6 +19,24 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Desktop Safari e Firefox omitidos na versão inicial para acelerar o feedback loop
+    {
+      name: 'dashboard-mobile',
+      use: {
+        ...devices['Pixel 5'],
+      },
+    },
+    {
+      name: 'dashboard-tablet',
+      use: {
+        ...devices['iPad Mini'],
+      },
+    },
+    {
+      name: 'dashboard-desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 720 },
+      },
+    },
   ],
 });
