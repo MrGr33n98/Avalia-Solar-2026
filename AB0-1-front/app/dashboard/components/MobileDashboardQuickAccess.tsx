@@ -1,7 +1,6 @@
 'use client';
 
-import { Eye, QrCode, ShieldCheck, Star, TrendingUp, UsersRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye, ShieldCheck, Star, TrendingUp, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MobileDashboardQuickAccessProps {
@@ -47,15 +46,6 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
             Convide clientes para publicar a primeira avaliação.
           </p>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          className="shrink-0"
-          onClick={() => onTabChange('review-forms')}
-        >
-          <QrCode className="mr-1.5 h-4 w-4" aria-hidden="true" />
-          Coletar
-        </Button>
       </section>
     );
   }

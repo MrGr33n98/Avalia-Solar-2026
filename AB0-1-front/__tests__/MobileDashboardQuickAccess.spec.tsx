@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import MobileDashboardQuickAccess from '@/app/dashboard/components/MobileDashboardQuickAccess';
 
 const baseProps = {
@@ -11,12 +11,11 @@ const baseProps = {
 describe('MobileDashboardQuickAccess', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renderiza estado vazio compacto e aciona coleta', () => {
+  it('renderiza estado vazio compacto sem duplicar o CTA contextual', () => {
     render(<MobileDashboardQuickAccess {...baseProps} stats={null} />);
     const state = screen.getByTestId('reputation-empty-state');
     expect(state).toHaveClass('max-h-[120px]');
-    fireEvent.click(screen.getByRole('button', { name: 'Coletar' }));
-    expect(baseProps.onTabChange).toHaveBeenCalledWith('review-forms');
+    expect(screen.queryByRole('button', { name: 'Coletar' })).not.toBeInTheDocument();
   });
 
   it('renderiza métricas reais e empresa verificada quando há avaliações', () => {

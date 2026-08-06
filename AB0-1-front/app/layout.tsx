@@ -27,8 +27,18 @@ export const metadata: Metadata = {
   applicationName: 'Avalia Solar',
   category: 'business',
   icons: {
-    icon: '/favicon.ico',
-    apple: [{ url: '/favicon.ico', sizes: '180x180' }],
+    icon: [
+      { url: '/icons/avalia-solar-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/avalia-solar-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      {
+        url: '/icons/avalia-solar-apple-touch-180x180.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+    ],
+    shortcut: ['/favicon.ico'],
   },
   manifest: '/manifest.webmanifest',
   metadataBase: new URL(SITE.url),
@@ -192,7 +202,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
-
       </body>
     </html>
   );
