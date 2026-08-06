@@ -1158,11 +1158,16 @@ module Api
           if current_user&.admin?
             ::Company.find_by(id: params[:company_id] || params[:id] || params.dig(:company, :id))
           else
-            selected_company_id = cookies.signed[:active_company_id] || current_user&.company_id
-            if selected_company_id.present? && current_user&.active_membership_for?(selected_company_id)
-              ::Company.find_by(id: selected_company_id)
+            param_company_id = params[:company_id] || params[:id] || params.dig(:company, :id)
+            if param_company_id.present? && current_user&.active_membership_for?(param_company_id)
+              ::Company.find_by(id: param_company_id)
             else
-              current_user&.active_member_companies&.first
+              selected_company_id = cookies.signed[:active_company_id] || current_user&.company_id
+              if selected_company_id.present? && current_user&.active_membership_for?(selected_company_id)
+                ::Company.find_by(id: selected_company_id)
+              else
+                current_user&.active_member_companies&.first
+              end
             end
           end
 
