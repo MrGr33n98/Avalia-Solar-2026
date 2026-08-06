@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 
 /**
  * Keeps non-essential client features out of the initial route bundle and the
@@ -34,6 +35,8 @@ export default function DeferredClientRuntime() {
   const [isReady, setIsReady] = useState(false);
   const [hasComparison, setHasComparison] = useState(false);
   const { isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith('/dashboard');
 
   useEffect(() => {
     const readComparison = () => {
@@ -87,8 +90,10 @@ export default function DeferredClientRuntime() {
           <ClipboardTracker />
           <NewRelicBrowser />
           {isAuthenticated ? <TabNotificationNotifier /> : null}
-          {process.env.NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE === 'true' ? <PwaOfflineController /> : null}
-          {isAuthenticated ? <GlobalChatWidget /> : null}
+          {process.env.NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE === 'true' ? (
+            <PwaOfflineController />
+          ) : null}
+          {isAuthenticated && !isDashboard ? <GlobalChatWidget /> : null}
         </>
       ) : null}
       {hasComparison ? <ComparisonFloatingBar /> : null}

@@ -1,9 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Search,
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 
 import {
   CommandDialog,
@@ -19,9 +17,10 @@ import { getFlatNavigationByContext } from '@/config/navigation';
 interface CommandMenuProps {
   onSelectTab: (tabId: string) => void;
   visibleTabIds?: string[];
+  compact?: boolean;
 }
 
-export function CommandMenu({ onSelectTab, visibleTabIds }: CommandMenuProps) {
+export function CommandMenu({ onSelectTab, visibleTabIds, compact = false }: CommandMenuProps) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -64,13 +63,26 @@ export function CommandMenu({ onSelectTab, visibleTabIds }: CommandMenuProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="relative inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full sm:w-64 lg:w-80"
+        className={
+          compact
+            ? 'grid h-10 w-10 place-items-center rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-[hsl(var(--dashboard-ink))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]'
+            : 'relative inline-flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-64 lg:w-80'
+        }
       >
-        <Search className="mr-2 h-[18px] w-[18px] shrink-0 opacity-50" />
-        <span className="inline-flex">Buscar no dashboard...</span>
-        <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+        <Search
+          className={compact ? 'h-[18px] w-[18px]' : 'mr-2 h-[18px] w-[18px] shrink-0 opacity-50'}
+          aria-hidden="true"
+        />
+        {compact ? (
+          <span className="sr-only">Buscar no dashboard</span>
+        ) : (
+          <span className="inline-flex">Buscar no dashboard...</span>
+        )}
+        {!compact && (
+          <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        )}
       </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Digite um comando ou pesquise..." />

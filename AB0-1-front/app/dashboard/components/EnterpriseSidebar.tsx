@@ -1,16 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import {
   DASHBOARD_NAVIGATION,
@@ -35,7 +31,9 @@ function filterVisibleItems(items: NavigationItem[], visibleTabIds?: string[]): 
   return items
     .map((item) => ({
       ...item,
-      children: item.children?.filter((child) => !visibleTabIds || visibleTabIds.includes(child.id)),
+      children: item.children?.filter(
+        (child) => !visibleTabIds || visibleTabIds.includes(child.id)
+      ),
     }))
     .filter((item) => {
       if (item.children) return item.children.length > 0;
@@ -65,7 +63,7 @@ function SidebarTree({
   setOpenGroups: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const renderedItems = isCompactRail
-    ? items.flatMap((item) => item.children?.length ? item.children : [item])
+    ? items.flatMap((item) => (item.children?.length ? item.children : [item]))
     : items;
 
   return (
@@ -88,7 +86,9 @@ function SidebarTree({
                     return;
                   }
                   setOpenGroups((prev) =>
-                    prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
+                    prev.includes(item.id)
+                      ? prev.filter((id) => id !== item.id)
+                      : [...prev, item.id]
                   );
                 }}
                 className={cn(
@@ -96,7 +96,9 @@ function SidebarTree({
                   isGroupActive
                     ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm'
                     : 'text-slate-200 hover:bg-white/10 hover:text-white',
-                  isCompactRail ? 'h-16 flex-col justify-center gap-1 px-1' : 'h-11 justify-start px-3',
+                  isCompactRail
+                    ? 'h-16 flex-col justify-center gap-1 px-1'
+                    : 'h-11 justify-start px-3',
                   isCollapsed && 'h-11 justify-center px-0'
                 )}
                 title={item.label}
@@ -123,11 +125,13 @@ function SidebarTree({
               </Button>
 
               {!isCollapsed && !isCompactRail && isOpen && (
-                <div className="ml-4 hidden space-y-1 border-l border-slate-100 pl-3 dashboard:block">
+                <div className="ml-4 space-y-1 border-l border-white/15 pl-3">
                   {item.children.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
-                    const childBadge = child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
+                    const childBadge =
+                      child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
+                    const hasMessageBadge = child.badge && child.id === 'live-inbox';
 
                     return (
                       <Button
@@ -141,7 +145,7 @@ function SidebarTree({
                           'w-full h-10 rounded-lg justify-start px-3 text-left transition-all',
                           isChildActive
                             ? 'bg-primary/5 text-primary border border-primary/10'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                            : 'text-slate-200 hover:text-white hover:bg-white/10'
                         )}
                       >
                         <ChildIcon className="h-4 w-4 shrink-0" />
@@ -150,6 +154,12 @@ function SidebarTree({
                           <Badge className="ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
                             {childBadge}
                           </Badge>
+                        )}
+                        {hasMessageBadge && (
+                          <span
+                            className="ml-2 h-2.5 w-2.5 rounded-full bg-[hsl(var(--dashboard-accent))] ring-2 ring-[hsl(var(--dashboard-panel))]"
+                            aria-label="Central de mensagens"
+                          />
                         )}
                       </Button>
                     );
@@ -219,7 +229,11 @@ export default function EnterpriseSidebar({
 }: EnterpriseSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(true);
-  const [openGroups, setOpenGroups] = useState<string[]>(['analytics-group', 'reviews-group', 'product-edit-group']);
+  const [openGroups, setOpenGroups] = useState<string[]>([
+    'analytics-group',
+    'reviews-group',
+    'product-edit-group',
+  ]);
 
   useEffect(() => {
     try {
@@ -231,7 +245,8 @@ export default function EnterpriseSidebar({
   }, []);
 
   useEffect(() => {
-    const updateCompact = () => setIsCompactViewport(window.innerWidth < COMPACT_RAIL_BREAKPOINT_PX);
+    const updateCompact = () =>
+      setIsCompactViewport(window.innerWidth < COMPACT_RAIL_BREAKPOINT_PX);
     updateCompact();
     window.addEventListener('resize', updateCompact);
     return () => window.removeEventListener('resize', updateCompact);
@@ -248,12 +263,18 @@ export default function EnterpriseSidebar({
   }, [isCollapsed, isCompactViewport]);
 
   const navItems = useMemo(
-    () => filterVisibleItems(filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational'), visibleTabIds),
+    () =>
+      filterVisibleItems(
+        filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational'),
+        visibleTabIds
+      ),
     [visibleTabIds]
   );
 
   useEffect(() => {
-    const activeParent = navItems.find((item) => item.children?.some((child) => child.id === activeTab));
+    const activeParent = navItems.find((item) =>
+      item.children?.some((child) => child.id === activeTab)
+    );
     if (!activeParent) return;
 
     setOpenGroups((prev) => (prev.includes(activeParent.id) ? prev : [...prev, activeParent.id]));
@@ -264,13 +285,13 @@ export default function EnterpriseSidebar({
     onClose();
   };
 
-  const sidebarContent = (
+  const sidebarContent = (isDrawer = false) => (
     <div className="flex h-full flex-col bg-[hsl(var(--dashboard-rail))] pb-[var(--safe-area-inset-bottom)] text-white">
       <div className="flex min-h-[72px] items-center justify-center border-b border-white/10 px-3 py-3">
         <div
           className={cn(
             'overflow-hidden rounded-md bg-white px-1',
-            isCollapsed || isCompactViewport ? 'w-10' : 'w-[156px]'
+            !isDrawer && (isCollapsed || isCompactViewport) ? 'w-10' : 'w-[156px]'
           )}
         >
           <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
@@ -284,44 +305,57 @@ export default function EnterpriseSidebar({
           onTabChange={handleTabChange}
           pendingCount={pendingCount}
           pendingReviewsCount={pendingReviewsCount}
-          isCollapsed={isCollapsed}
-          isCompactRail={isCompactViewport && !isCollapsed}
+          isCollapsed={isDrawer ? false : isCollapsed}
+          isCompactRail={isDrawer ? false : isCompactViewport && !isCollapsed}
           openGroups={openGroups}
           setOpenGroups={setOpenGroups}
         />
       </div>
 
-      <div className="border-t border-white/10 p-3">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setIsCollapsed((prev) => !prev)}
-          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-          className={cn(
-            'w-full h-11 rounded-lg justify-start px-3 text-slate-300 hover:bg-white/10 hover:text-white',
-            (isCollapsed || isCompactViewport) && 'h-14 flex-col justify-center gap-1 px-1'
-          )}
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          <span
+      {!isDrawer && (
+        <div className="border-t border-white/10 p-3">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setIsCollapsed((prev) => !prev)}
+            aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
             className={cn(
-              'font-medium whitespace-nowrap',
-              isCompactViewport ? 'ml-0 text-[10px]' : 'ml-3 text-sm',
-              isCollapsed && 'hidden'
+              'w-full h-11 rounded-lg justify-start px-3 text-slate-300 hover:bg-white/10 hover:text-white',
+              (isCollapsed || isCompactViewport) && 'h-14 flex-col justify-center gap-1 px-1'
             )}
           >
-            Recolher menu
-          </span>
-        </Button>
-      </div>
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+            <span
+              className={cn(
+                'font-medium whitespace-nowrap',
+                isCompactViewport ? 'ml-0 text-[10px]' : 'ml-3 text-sm',
+                isCollapsed && 'hidden'
+              )}
+            >
+              Recolher menu
+            </span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-[280px] p-0 border-r border-slate-200 bg-white pl-[var(--safe-area-inset-left)] sm:max-w-[280px]">
-          {sidebarContent}
+        <SheetContent
+          side="left"
+          className="w-[min(320px,calc(100vw-24px))] p-0 border-r border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] sm:max-w-[320px]"
+        >
+          <SheetTitle className="sr-only">Navegação do dashboard</SheetTitle>
+          <SheetDescription className="sr-only">
+            Escolha uma área do painel da empresa.
+          </SheetDescription>
+          {sidebarContent(true)}
         </SheetContent>
       </Sheet>
 
@@ -329,11 +363,11 @@ export default function EnterpriseSidebar({
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 block border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)]',
+          'fixed inset-y-0 left-0 z-40 hidden dashboard:block border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)]',
           isCollapsed ? 'w-[72px]' : 'w-[112px] dashboard:w-[240px]'
         )}
       >
-        {sidebarContent}
+        {sidebarContent()}
       </motion.aside>
     </>
   );

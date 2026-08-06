@@ -6,9 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface MobileDashboardQuickAccessProps {
   activeTab: string;
-  company: {
-    verified?: boolean;
-  } | null;
+  company: { verified?: boolean } | null;
   stats: {
     profileViews: number;
     leadsReceived: number;
@@ -21,123 +19,114 @@ interface MobileDashboardQuickAccessProps {
   visibleTabIds?: string[];
 }
 
-const KPI_LIST: Array<{
-  id: string;
-  label: string;
-  icon: typeof Eye;
-  getValue: (props: MobileDashboardQuickAccessProps) => string;
-  getHref: () => string;
-}> = [
-  {
-    id: 'views',
-    label: 'Visitas',
-    icon: Eye,
-    getValue: ({ stats }) => formatMetric(stats?.profileViews ?? 0),
-    getHref: () => 'analytics',
-  },
-  {
-    id: 'reviews',
-    label: 'Avaliações',
-    icon: Star,
-    getValue: ({ stats }) => formatMetric(stats?.reviewsCount ?? 0),
-    getHref: () => 'reviews',
-  },
-  {
-    id: 'leads',
-    label: 'Leads',
-    icon: UsersRound,
-    getValue: ({ stats }) => formatMetric(stats?.leadsReceived ?? 0),
-    getHref: () => 'leads',
-  },
-  {
-    id: 'conversion',
-    label: 'Conversão',
-    icon: TrendingUp,
-    getValue: ({ stats }) => `${Number(stats?.conversionRate ?? 0).toFixed(1).replace('.', ',')}%`,
-    getHref: () => 'analytics',
-  },
-];
+const KPI_LIST = [
+  { id: 'views', label: 'Visitas', icon: Eye, tab: 'analytics' },
+  { id: 'reviews', label: 'Avaliações', icon: Star, tab: 'reviews' },
+  { id: 'leads', label: 'Leads', icon: UsersRound, tab: 'leads' },
+  { id: 'conversion', label: 'Conversão', icon: TrendingUp, tab: 'analytics' },
+] as const;
 
 export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAccessProps) {
   const { company, stats, onTabChange } = props;
-  const averageRating = Number(stats?.averageRating ?? 0);
-  const verified = Boolean(company?.verified);
+  const hasReputationData =
+    Number(stats?.reviewsCount || 0) > 0 || Number(stats?.averageRating || 0) > 0;
+
+  if (!hasReputationData) {
+    return (
+      <section
+        className="mb-4 flex min-h-[88px] max-h-[120px] items-center gap-3 rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-3 text-[hsl(var(--dashboard-ink))] lg:hidden"
+        aria-label="Resumo de reputação sem avaliações"
+        data-testid="reputation-empty-state"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[hsl(var(--dashboard-accent)/0.1)] text-[hsl(var(--dashboard-accent))]">
+          <Star className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Sua reputação começa aqui</p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--dashboard-muted))]">
+            Convide clientes para publicar a primeira avaliação.
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          className="shrink-0"
+          onClick={() => onTabChange('review-forms')}
+        >
+          <QrCode className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          Coletar
+        </Button>
+      </section>
+    );
+  }
+
+  const values = {
+    views: Number(stats?.profileViews || 0).toLocaleString('pt-BR'),
+    reviews: Number(stats?.reviewsCount || 0).toLocaleString('pt-BR'),
+    leads: Number(stats?.leadsReceived || 0).toLocaleString('pt-BR'),
+    conversion: `${Number(stats?.conversionRate || 0)
+      .toFixed(1)
+      .replace('.', ',')}%`,
+  };
 
   return (
     <section
-      className="mb-4 rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-3 shadow-none sm:p-4 lg:hidden"
-      aria-label="Ações prioritárias"
+      className="mb-4 rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-3 text-[hsl(var(--dashboard-ink))] lg:hidden"
+      aria-label="Faixa de reputação"
+      data-testid="reputation-summary"
     >
-      {/* Header */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan">Resumo</p>
-        <h2 className="mt-0.5 text-base font-bold text-white tracking-tight">Ações prioritárias</h2>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Star
+            className="h-4 w-4 fill-current text-[hsl(var(--dashboard-warning))]"
+            aria-hidden="true"
+          />
+          <strong className="text-sm">
+            Nota{' '}
+            {Number(stats?.averageRating || 0)
+              .toFixed(1)
+              .replace('.', ',')}
+          </strong>
+          <span className="truncate text-xs text-[hsl(var(--dashboard-muted))]">
+            · {values.reviews} avaliações
+          </span>
+        </div>
+        {company?.verified && (
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-[hsl(var(--dashboard-positive))]">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            Verificada
+          </span>
+        )}
       </div>
-
-      {/* KPIs 2×2 compactos */}
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
-        {KPI_LIST.map((kpi) => {
-          const Icon = kpi.icon;
-          const isActive = props.activeTab === kpi.getHref();
+      <div className="grid grid-cols-4 gap-1.5">
+        {KPI_LIST.map(({ id, label, icon: Icon, tab }) => {
+          const active = props.activeTab === tab;
           return (
             <button
-              key={kpi.id}
+              key={id}
               type="button"
-              onClick={() => onTabChange(kpi.getHref())}
+              onClick={() => onTabChange(tab)}
               className={cn(
-                'flex min-h-[88px] flex-col items-start justify-between rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
-                isActive
-                  ? 'border-brand-cyan/40 bg-white/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/[0.08]'
+                'min-w-0 rounded-lg border px-1.5 py-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]',
+                active
+                  ? 'border-[hsl(var(--dashboard-accent))] bg-[hsl(var(--dashboard-accent)/0.1)]'
+                  : 'border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))]'
               )}
-              aria-current={isActive ? 'page' : undefined}
+              aria-current={active ? 'page' : undefined}
+              aria-label={`${label}: ${values[id]}`}
             >
-              <div className="flex w-full items-center justify-between gap-2">
-                <span className={cn('text-[10px] font-semibold uppercase tracking-wider', isActive ? 'text-brand-cyan' : 'text-white/50')}>
-                  {kpi.label}
-                </span>
-                <Icon className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-brand-cyan' : 'text-white/30')} aria-hidden="true" />
-              </div>
-              <span className="text-lg font-bold tabular-nums tracking-tight text-white sm:text-xl">
-                {kpi.getValue(props)}
+              <Icon
+                className="mx-auto h-3.5 w-3.5 text-[hsl(var(--dashboard-muted))]"
+                aria-hidden="true"
+              />
+              <span className="mt-1 block truncate text-[10px] text-[hsl(var(--dashboard-muted))]">
+                {label}
               </span>
+              <strong className="block truncate text-xs tabular-nums">{values[id]}</strong>
             </button>
           );
         })}
       </div>
-
-      {/* Linha de confiança */}
-      <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
-        {verified ? (
-          <>
-            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
-            <span className="min-w-0 flex-1 text-xs font-medium text-white/90">Empresa verificada</span>
-          </>
-        ) : (
-          <>
-            <Star className={cn('h-4 w-4 shrink-0', averageRating > 0 ? 'text-amber-400' : 'text-white/30')} aria-hidden="true" />
-            <span className="min-w-0 flex-1 text-xs font-medium text-white/90">
-              {averageRating > 0
-                ? `Nota média ${averageRating.toFixed(1).replace('.', ',')} · ${formatMetric(stats?.reviewsCount ?? 0)} avaliações`
-                : 'Ainda não há avaliações recebidas'}
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* CTA primário */}
-      <Button
-        type="button"
-        className="mt-3 h-10 w-full gap-2 rounded-xl bg-brand-cyan text-sm font-bold text-slate-900 hover:bg-brand-cyan/90"
-        onClick={() => onTabChange('review-forms')}
-      >
-        <QrCode className="h-4 w-4" aria-hidden="true" />
-        Coletar avaliações
-      </Button>
     </section>
   );
-}
-
-function formatMetric(value: number): string {
-  return Number(value || 0).toLocaleString('pt-BR');
 }

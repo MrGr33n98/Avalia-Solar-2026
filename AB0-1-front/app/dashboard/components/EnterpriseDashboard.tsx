@@ -24,10 +24,7 @@ import {
 } from '@/lib/analytics/consolidated';
 import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
-import {
-  getFeatureAccessEntry,
-  isFeatureHiddenEntry,
-} from '@/lib/feature-access';
+import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
 
 // Components
 import ThemeToggle from './ThemeToggle';
@@ -119,7 +116,6 @@ function DashboardTabSkeleton() {
   );
 }
 
-
 interface CompanyDashboardProps {
   companyId: string;
 }
@@ -193,25 +189,16 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const {
-    loading,
-    company,
-    companyError,
-    stats,
-    featureAccess,
-  } = useCompanyDashboardData(companyId);
+  const { loading, company, companyError, stats, featureAccess } =
+    useCompanyDashboardData(companyId);
 
-  const { setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(resolvedTheme === 'dark' ? 'dark' : 'light');
+  const themeMode: 'light' | 'dark' = resolvedTheme === 'dark' ? 'dark' : 'light';
   const dashboardCompany = company;
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;
-
-  useEffect(() => {
-    if (resolvedTheme === 'light' || resolvedTheme === 'dark') setThemeMode(resolvedTheme);
-  }, [resolvedTheme]);
 
   const tabAccessEntries = useMemo(
     () =>
@@ -327,9 +314,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   }, [activeTab, pathname, router, searchParams, visibleTabIds]);
 
   const handleThemeChange = (theme: 'light' | 'dark') => {
-    setThemeMode(theme);
-    setTheme(theme);
-
     // Track using unified analytics
     track('Theme Changed', {
       theme_mode: theme,
@@ -411,7 +395,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         visibleTabIds={visibleTabIds}
       />
 
-      <div className="flex min-h-dvh flex-col pl-[var(--enterprise-sidebar-width,112px)] transition-[padding] duration-200">
+      <div className="flex min-h-dvh flex-col pl-0 dashboard:pl-[var(--enterprise-sidebar-width,240px)] transition-[padding] duration-200">
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pt-0 md:pt-4 dashboard:pt-6">
           <div className="mx-auto w-full max-w-[1400px] min-w-0 p-2 sm:p-4 md:p-5 dashboard:p-6 dashboard:pt-0">
@@ -620,28 +604,23 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Funcionalidades
                     </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
-                      </p>
-                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie detalhes do produto e funcionalidades exibidas no Avaliasolar.
+                    </p>
+                  </div>
                   <p className="rounded-lg border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
-                    Vincule produtos e categorias pelo Catálogo de Produtos. A edição de funcionalidades específicas será disponibilizada nesta seção.
+                    Vincule produtos e categorias pelo Catálogo de Produtos. A edição de
+                    funcionalidades específicas será disponibilizada nesta seção.
                   </p>
                 </div>
               </TabsContent>
 
               <TabsContent value="product-videos" className="mt-0 focus-visible:outline-none">
-                {renderGuardedTab(
-                  'product-videos',
-                  <ProjectsMaterialsHub companyId={companyId} />
-                )}
+                {renderGuardedTab('product-videos', <ProjectsMaterialsHub companyId={companyId} />)}
               </TabsContent>
 
               <TabsContent value="product-images" className="mt-0 focus-visible:outline-none">
-                {renderGuardedTab(
-                  'product-images',
-                  <ProjectsMaterialsHub companyId={companyId} />
-                )}
+                {renderGuardedTab('product-images', <ProjectsMaterialsHub companyId={companyId} />)}
               </TabsContent>
 
               <TabsContent value="info" className="mt-0 focus-visible:outline-none">
@@ -770,7 +749,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 )}
               </TabsContent>
 
-
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
@@ -809,7 +787,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                       Configurações
                     </h2>
-                    <p className="text-sm text-muted-foreground">Ajuste as configurações da sua conta</p>
+                    <p className="text-sm text-muted-foreground">
+                      Ajuste as configurações da sua conta
+                    </p>
                   </div>
                   <CompanySettings companyId={companyId} />
                 </div>

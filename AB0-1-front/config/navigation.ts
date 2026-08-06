@@ -96,7 +96,7 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     children: [
       {
         id: 'live-inbox',
-        label: 'Atendimento ao vivo',
+        label: 'Mensagens',
         icon: MessageCircle,
         context: ['operational', 'quick_access'],
         badge: true,

@@ -158,17 +158,20 @@
     --dashboard-border: 214 32% 91%;
     --dashboard-ring: 221 83% 53%;
     --dashboard-rail: 209 100% 15%;
+    --dashboard-chart-1: 221 83% 53%;
+    --dashboard-chart-2: 262 83% 58%;
+    --dashboard-chart-grid: 214 32% 91%;
   }
 
   .dark {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11.2%;
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11.2%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11.2%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 221 83% 53.3%;
     --primary-foreground: 210 40% 98%;
@@ -176,8 +179,8 @@
     --secondary: 222 47% 11.2%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
     --accent: 162.1 76.2% 40.6%;
     --accent-foreground: 222 47% 11.2%;
@@ -185,8 +188,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 213.8 26.8% 83.7%;
-    --input: 213.8 26.8% 83.7%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
     --ring: 221 83% 53.3%;
 
     /* === AS-EDS CLAYMORPHISM DARK TOKENS === */
@@ -240,6 +243,9 @@
     --dashboard-muted: 215 20% 65%;
     --dashboard-border: 217 33% 17%;
     --dashboard-rail: 222 47% 7%;
+    --dashboard-chart-1: 213 94% 68%;
+    --dashboard-chart-2: 270 95% 75%;
+    --dashboard-chart-grid: 217 33% 24%;
   }
 }
 

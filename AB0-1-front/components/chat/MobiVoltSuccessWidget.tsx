@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useChatSession } from '@/hooks/useChatSession';
 import { track } from '@/lib/analytics/lazy';
 import { startDashboardTour } from '@/lib/tour';
@@ -27,7 +28,7 @@ export default function MobiVoltSuccessWidget() {
     startSession,
     sendMessage,
     sendFeedback,
-    clearSession
+    clearSession,
   } = useChatSession('as_success_chat_session');
 
   const [input, setInput] = useState('');
@@ -81,11 +82,11 @@ export default function MobiVoltSuccessWidget() {
   // Trata ações interativas de onboarding
   const handleActionClick = async (action: SuccessAction) => {
     dismissInviteBubble();
-    
+
     if (action.kind === 'tour') {
       setIsOpen(false); // Minimiza o chat para não cobrir a tela durante o tour
       track('mobivolt_success_tour_started', {});
-      
+
       // Delay pequeno para o fechamento do chat completar a animação
       setTimeout(() => {
         startDashboardTour();
@@ -102,52 +103,52 @@ export default function MobiVoltSuccessWidget() {
   const successActions: SuccessAction[] = [
     {
       label: '🚀 Iniciar Tour do Painel',
-      kind: 'tour'
+      kind: 'tour',
     },
     {
       label: '⚙️ Configurar Meu Perfil',
       kind: 'message',
-      message: 'Quero entender como configurar as informações gerais da minha empresa.'
+      message: 'Quero entender como configurar as informações gerais da minha empresa.',
     },
     {
       label: '🗺️ Definir Cidades de Cobertura',
       kind: 'message',
-      message: 'Como faço para configurar os estados e cidades que minha empresa atende?'
+      message: 'Como faço para configurar os estados e cidades que minha empresa atende?',
     },
     {
       label: '⭐ Gerenciar Minhas Avaliações',
       kind: 'message',
-      message: 'Como respondo e gerencio as avaliações dos meus clientes?'
+      message: 'Como respondo e gerencio as avaliações dos meus clientes?',
     },
     {
       label: '📊 Entender Minhas Métricas',
       kind: 'message',
-      message: 'Como faço para acompanhar minhas visualizações e taxa de conversão?'
-    }
+      message: 'Como faço para acompanhar minhas visualizações e taxa de conversão?',
+    },
   ];
 
   return (
     <div
       className={cn(
-        "fixed font-sans flex flex-col items-end pointer-events-none",
+        'fixed hidden font-sans flex-col items-end pointer-events-none dashboard:flex',
         WIDGET_POSITION_CLASSES.mobivolt,
         isOpen ? 'z-[9010]' : 'z-[9000]'
       )}
     >
-      
       {/* Chat Window */}
       {isOpen && (
         <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[480px] sm:h-[650px] max-h-[80vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
-          
           {/* Header com Gradiente Premium Indigo/Cyan */}
           <div className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
-                  <img
+                  <Image
                     src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt Success Avatar"
-                    className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
                   />
                 </div>
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-indigo-400 border-2 border-white dark:border-zinc-900 rounded-full animate-ping"></span>
@@ -158,12 +159,16 @@ export default function MobiVoltSuccessWidget() {
                 <span className="text-xs text-white/80">Online • Onboarding & Sucesso</span>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-1">
               {messages.length > 0 && (
                 <button
                   onClick={() => {
-                    if (window.confirm('Deseja iniciar um novo atendimento e limpar o histórico atual?')) {
+                    if (
+                      window.confirm(
+                        'Deseja iniciar um novo atendimento e limpar o histórico atual?'
+                      )
+                    ) {
                       clearSession();
                       startSession('success', window.location.href);
                     }
@@ -173,7 +178,12 @@ export default function MobiVoltSuccessWidget() {
                   title="Nova conversa"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
                   </svg>
                 </button>
               )}
@@ -183,7 +193,12 @@ export default function MobiVoltSuccessWidget() {
                 aria-label="Minimizar chat"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18 12H6" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M18 12H6"
+                  />
                 </svg>
               </button>
             </div>
@@ -194,16 +209,31 @@ export default function MobiVoltSuccessWidget() {
             {messages.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center min-h-full space-y-5 py-6 px-4 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center border-2 border-indigo-500/20 shadow-inner">
-                  <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-8 h-8 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-base">Central de Sucesso MobiVolt</h3>
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base">
+                    Central de Sucesso MobiVolt
+                  </h3>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[280px]">
-                    Olá! Sou o seu assistente de sucesso. Posso te ajudar no cadastro, no setup do perfil e a usar todo o potencial do seu painel!
+                    Olá! Sou o seu assistente de sucesso. Posso te ajudar no cadastro, no setup do
+                    perfil e a usar todo o potencial do seu painel!
                   </p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 pt-3">Ações de Onboarding Recomendadas</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 pt-3">
+                    Ações de Onboarding Recomendadas
+                  </p>
                 </div>
 
                 <div className="flex flex-col w-full space-y-2.5 mt-2">
@@ -214,8 +244,18 @@ export default function MobiVoltSuccessWidget() {
                       className="w-full bg-white dark:bg-zinc-800 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20 text-zinc-700 dark:text-zinc-200 font-bold py-3 px-4 rounded-xl shadow-sm border border-zinc-200/60 dark:border-zinc-800 transition-all hover:scale-[1.01] hover:border-indigo-400/40 active:scale-95 flex items-center justify-between text-left text-xs group"
                     >
                       <span>{action.label}</span>
-                      <svg className="w-4 h-4 text-indigo-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                      <svg
+                        className="w-4 h-4 text-indigo-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2.5"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </button>
                   ))}
@@ -230,14 +270,18 @@ export default function MobiVoltSuccessWidget() {
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
-                    <img
+                    <Image
                       src="/images/mobivolt-ai-avaliasolar.webp"
                       alt="MobiVolt Success"
-                      className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
                     />
                   </div>
                 )}
-                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1 w-full max-w-[85%]`}>
+                <div
+                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1 w-full max-w-[85%]`}
+                >
                   <div
                     className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm w-full ${
                       msg.role === 'user'
@@ -281,10 +325,12 @@ export default function MobiVoltSuccessWidget() {
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
-                  <img
+                  <Image
                     src="/images/mobivolt-ai-avaliasolar.webp"
                     alt="MobiVolt Success"
-                    className="w-full h-full object-cover filter saturate-150 hue-rotate-15"
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
                   />
                 </div>
                 <div className="flex items-center space-x-2 bg-white dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80px] shadow-sm">
@@ -299,7 +345,10 @@ export default function MobiVoltSuccessWidget() {
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleSend} className="p-3 border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center space-x-2">
+          <form
+            onSubmit={handleSend}
+            className="p-3 border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center space-x-2"
+          >
             <input
               type="text"
               value={input}
@@ -314,8 +363,18 @@ export default function MobiVoltSuccessWidget() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-2 transition-colors disabled:opacity-50 shadow-md shadow-indigo-600/10"
               aria-label="Enviar mensagem"
             >
-              <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg
+                className="w-5 h-5 transform rotate-90"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
               </svg>
             </button>
           </form>
@@ -327,9 +386,12 @@ export default function MobiVoltSuccessWidget() {
         <div className="pointer-events-auto mb-3 w-full max-w-[340px] rounded-lg border border-indigo-100 dark:border-zinc-850 bg-white dark:bg-zinc-900 p-5 shadow-2xl shadow-indigo-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-black text-slate-950 dark:text-white">🚀 Bem-vindo ao seu Painel!</h3>
+              <h3 className="text-sm font-black text-slate-950 dark:text-white">
+                🚀 Bem-vindo ao seu Painel!
+              </h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-zinc-400">
-                Gostaria de um tour rápido para entender onde configurar seu perfil, ver leads e gerenciar avaliações?
+                Gostaria de um tour rápido para entender onde configurar seu perfil, ver leads e
+                gerenciar avaliações?
               </p>
             </div>
             <button
@@ -339,7 +401,12 @@ export default function MobiVoltSuccessWidget() {
               aria-label="Fechar convite"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -353,7 +420,13 @@ export default function MobiVoltSuccessWidget() {
             </button>
             <button
               type="button"
-              onClick={() => handleActionClick({ label: 'Perguntar AI', kind: 'message', message: 'Como posso configurar as informações da minha empresa?' })}
+              onClick={() =>
+                handleActionClick({
+                  label: 'Perguntar AI',
+                  kind: 'message',
+                  message: 'Como posso configurar as informações da minha empresa?',
+                })
+              }
               className="rounded-full border border-indigo-100 dark:border-zinc-800 bg-indigo-50/30 dark:bg-zinc-850 px-4 py-2 text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-all hover:bg-indigo-100/50 active:scale-95"
             >
               Perguntar AI 🤖
@@ -366,7 +439,7 @@ export default function MobiVoltSuccessWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-indigo-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-indigo-500 bg-white dark:bg-zinc-900 overflow-hidden ring-4 ring-indigo-500/10"
+          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-indigo-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-indigo-500 bg-white overflow-hidden ring-4 ring-indigo-500/10"
           aria-label="Abrir MobiVolt Success"
         >
           {/* Notification Badge */}
@@ -374,10 +447,12 @@ export default function MobiVoltSuccessWidget() {
             SUCCESS
           </span>
 
-          <img
+          <Image
             src="/images/mobivolt-ai-avaliasolar.webp"
             alt="MobiVolt Success Avatar"
-            className="w-full h-full object-cover rounded-full filter saturate-150 hue-rotate-15"
+            width={60}
+            height={60}
+            className="h-full w-full rounded-full object-cover filter saturate-150 hue-rotate-15"
           />
         </button>
       )}

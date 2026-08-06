@@ -1,30 +1,32 @@
-import { 
-  DASHBOARD_NAVIGATION, 
+import {
+  DASHBOARD_NAVIGATION,
   flattenNavigationItems,
-  filterNavigationByContext, 
+  filterNavigationByContext,
   getFlatNavigationByContext,
   getNavigationItemById,
-  type NavigationContext 
 } from '../config/navigation';
 
 describe('Navigation Configuration', () => {
   describe('DASHBOARD_NAVIGATION', () => {
     it('contains all required navigation items', () => {
       expect(DASHBOARD_NAVIGATION.length).toBeGreaterThan(0);
-      
+
       const requiredIds = [
-        'overview', 'analytics-group', 'reviews-group', 
-        'interaction-group', 'product-edit-group'
+        'overview',
+        'analytics-group',
+        'reviews-group',
+        'interaction-group',
+        'product-edit-group',
       ];
-      
-      requiredIds.forEach(id => {
-        const item = DASHBOARD_NAVIGATION.find(nav => nav.id === id);
+
+      requiredIds.forEach((id) => {
+        const item = DASHBOARD_NAVIGATION.find((nav) => nav.id === id);
         expect(item).toBeDefined();
       });
     });
 
     it('has proper structure with required fields', () => {
-      DASHBOARD_NAVIGATION.forEach(item => {
+      DASHBOARD_NAVIGATION.forEach((item) => {
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('label');
         expect(item).toHaveProperty('icon');
@@ -35,8 +37,8 @@ describe('Navigation Configuration', () => {
 
     it('includes 29 total tabs (groups + children)', () => {
       let totalTabs = 0;
-      
-      DASHBOARD_NAVIGATION.forEach(item => {
+
+      DASHBOARD_NAVIGATION.forEach((item) => {
         if (item.children) {
           totalTabs += item.children.length;
         } else {
@@ -51,17 +53,17 @@ describe('Navigation Configuration', () => {
   describe('filterNavigationByContext', () => {
     it('filters operational context correctly', () => {
       const operational = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
-      
+
       expect(operational.length).toBeGreaterThan(0);
-      operational.forEach(item => {
+      operational.forEach((item) => {
         expect(item.context).toContain('operational');
       });
     });
 
     it('filters quick_access context correctly', () => {
       const quickAccess = filterNavigationByContext(DASHBOARD_NAVIGATION, 'quick_access');
-      
-      quickAccess.forEach(item => {
+
+      quickAccess.forEach((item) => {
         expect(
           item.context.includes('quick_access') ||
             item.context.includes('all') ||
@@ -74,23 +76,19 @@ describe('Navigation Configuration', () => {
 
     it('filters admin context correctly', () => {
       const admin = filterNavigationByContext(DASHBOARD_NAVIGATION, 'admin');
-      
-      admin.forEach(item => {
-        expect(
-          item.context.includes('admin') || item.context.includes('all')
-        ).toBe(true);
+
+      admin.forEach((item) => {
+        expect(item.context.includes('admin') || item.context.includes('all')).toBe(true);
       });
     });
 
     it('filters children items by context', () => {
       const operational = filterNavigationByContext(DASHBOARD_NAVIGATION, 'operational');
-      const productGroup = operational.find(item => item.id === 'product-edit-group');
-      
+      const productGroup = operational.find((item) => item.id === 'product-edit-group');
+
       if (productGroup?.children) {
-        productGroup.children.forEach(child => {
-          expect(
-            child.context.includes('operational') || child.context.includes('all')
-          ).toBe(true);
+        productGroup.children.forEach((child) => {
+          expect(child.context.includes('operational') || child.context.includes('all')).toBe(true);
         });
       }
     });
@@ -100,13 +98,13 @@ describe('Navigation Configuration', () => {
     it('finds top-level items', () => {
       const item = getNavigationItemById('overview');
       expect(item).toBeDefined();
-      expect(item?.label).toBe('Home');
+      expect(item?.label).toBe('Início');
     });
 
     it('finds nested children items', () => {
       const item = getNavigationItemById('analytics');
       expect(item).toBeDefined();
-      expect(item?.label).toBe('Analytics');
+      expect(item?.label).toBe('Análises');
     });
 
     it('returns undefined for non-existent items', () => {
@@ -131,7 +129,10 @@ describe('Navigation Configuration', () => {
       expect(quickAccess.map((item) => item.id)).toEqual([
         'overview',
         'reviews',
+        'review-forms',
+        'live-inbox',
         'leads',
+        'icp-config',
         'ranking-performance',
         'trust-widget',
       ]);

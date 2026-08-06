@@ -7,7 +7,7 @@ export const FLOATING_WIDGET_POSITIONS = {
   // Z-index hierarchy
   Z_INDEX: {
     COMPARISON: 75,
-    MOBIVOLT: 60, 
+    MOBIVOLT: 60,
     CHAT: 70,
     EXPANDED_BUBBLE: 80,
   },
@@ -17,27 +17,29 @@ export const FLOATING_WIDGET_POSITIONS = {
     sm: {
       chat: 'h-10 w-10',
       mobivolt: 'max-w-[280px]',
-      comparison: 'h-10 min-w-[120px] max-w-[140px] text-xs'
+      comparison: 'h-10 min-w-[120px] max-w-[140px] text-xs',
     },
     // Medium screens (360px - 429px) - default mobile
     md: {
       chat: 'h-11 w-11',
       mobivolt: 'max-w-[320px]',
-      comparison: 'h-11 min-w-[132px] max-w-[156px] text-sm'
+      comparison: 'h-11 min-w-[132px] max-w-[156px] text-sm',
     },
     // Large mobile screens (430px+)
     lg: {
       chat: 'h-12 w-12',
       mobivolt: 'max-w-[360px]',
-      comparison: 'h-12 min-w-[144px] max-w-[168px] text-sm'
-    }
-  }
+      comparison: 'h-12 min-w-[144px] max-w-[168px] text-sm',
+    },
+  },
 } as const;
 
 /**
  * Get z-index for floating widgets
  */
-export function getFloatingWidgetZIndex(widget: 'comparison' | 'mobivolt' | 'chat' | 'expanded'): number {
+export function getFloatingWidgetZIndex(
+  widget: 'comparison' | 'mobivolt' | 'chat' | 'expanded'
+): number {
   const key = widget.toUpperCase() as keyof typeof FLOATING_WIDGET_POSITIONS.Z_INDEX;
   return FLOATING_WIDGET_POSITIONS.Z_INDEX[key] || 50;
 }
@@ -52,8 +54,8 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
     `min-[320px]:max-[359px]:${sizes.sm[widget]}`,
     // Medium screens (default)
     sizes.md[widget],
-    // Large screens  
-    `min-[430px]:${sizes.lg[widget]}`
+    // Large screens
+    `min-[430px]:${sizes.lg[widget]}`,
   ].join(' ');
 }
 
@@ -66,10 +68,12 @@ export const WIDGET_POSITION_CLASSES = {
   chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
 
   // 2º Meio: Assistente IA (MobiVolt)
-  mobivolt: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_76px)] right-4 md:bottom-[84px] md:right-6',
+  mobivolt:
+    'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-[calc(var(--safe-area-inset-right)_+_1rem)] dashboard:bottom-6 dashboard:right-6',
 
   // 1º Topo: Expandir / Recolher (Comparação / Minimizar)
-  comparison: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_136px)] right-4 md:bottom-[144px] md:right-6 md:left-auto',
+  comparison:
+    'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_136px)] right-4 md:bottom-[144px] md:right-6 md:left-auto',
 } as const;
 
 /**
@@ -84,5 +88,5 @@ export const FLOATING_WIDGET_SPACING = {
     right: 'pr-20 sm:pr-24', // 80px on small, 96px on larger screens
     // Bottom padding to account for widget stack height
     bottom: 'pb-40 sm:pb-48', // 160px on small, 192px on larger screens
-  }
+  },
 } as const;
