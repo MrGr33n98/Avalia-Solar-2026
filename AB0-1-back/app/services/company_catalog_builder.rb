@@ -20,6 +20,7 @@ class CompanyCatalogBuilder
     services = fetch_category_services
 
     payload = {
+      category: category,
       products: products,
       services: services
     }
@@ -105,9 +106,11 @@ class CompanyCatalogBuilder
     proximity = related_category_ids_for(category).count { |id| product_category_ids.include?(id) }
     featured = product.featured ? 1 : 0
     rating = product.company&.rating_avg.to_f
-    price = -1 * (product.price.to_f > 0 ? product.price.to_f : 0)
+    price = product.price.to_f > 0 ? product.price.to_f : 0.0
 
-    [proximity, featured, rating, price]
+    # sort_by ordena em ordem crescente. Multiplicamos por -1 proximidade, destaque e rating
+    # para trazer os maiores valores no topo. O preço permanece positivo para trazer os menores valores primeiro.
+    [-proximity, -featured, -rating, price]
   end
 
   # Categories associated with the company that have at least one visible
@@ -119,12 +122,28 @@ class CompanyCatalogBuilder
     counts = category_product_counts(category_ids)
     service_counts = category_service_counts(category_ids)
 
+    # Elimina N+1 queries carregando todas de uma única vez
+    categories_by_id = Category.where(id: category_ids).index_by(&:id)
+
     category_ids
       .map { |id| [id, counts.fetch(id, 0) + service_counts.fetch(id, 0)] }
       .select { |_, count| count.positive? }
-      .sort_by { |id, count| [-count, Category.find(id).name] }
+      .sort_by { |id, count| [-count, categories_by_id[id]&.name.to_s] }
       .first(MAX_RELATED_CATEGORIES)
-      .map { |id, count| category_payload(id, count) }
+      .map { |id, count| category_payload_from_lookup(id, count, categories_by_id) }
+      .compact
+  end
+
+  def category_payload_from_lookup(category_id, count, lookup_hash)
+    related = lookup_hash[category_id]
+    return nil unless related
+
+    {
+      id: related.id,
+      name: related.name,
+      seo_url: related.seo_url,
+      product_count: count
+    }
   end
 
   def category_product_counts(category_ids)
