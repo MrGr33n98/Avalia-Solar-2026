@@ -21,7 +21,9 @@ module CompanyDashboard
       )
       leads_total = @company.leads.count
       leads_30d = leads_received_last_30d
-      conversion_rate = calculate_conversion_rate(views: profile_views, leads: leads_total)
+      
+      # Calcula taxa de conversão baseada nos últimos 30 dias para unificar com o desktop
+      conversion_rate = calculate_conversion_rate(views: profile_views, leads: leads_30d)
 
       {
         profile_views: profile_views,
@@ -29,6 +31,7 @@ module CompanyDashboard
         whatsapp_clicks: whatsapp_clicks,
         leads_total: leads_total,
         leads_30d: leads_30d,
+        leads_received: leads_30d, # Alinha contrato esperado pelo frontend mobile
         marketplace_potential: calculate_marketplace_potential,
         active_categories: format_active_categories,
         reviews_count: reviews_count,
@@ -86,7 +89,8 @@ module CompanyDashboard
 
     def daily_stats_totals
       return @daily_stats_totals if defined?(@daily_stats_totals)
-      totals = canonical_metrics_available? ? metrics_source.totals : nil
+      # Filtra pelos últimos 30 dias para unificar as visualizações/cliques com o desktop
+      totals = canonical_metrics_available? ? metrics_source.totals(from_day: 30.days.ago.to_date, to_day: Date.current) : nil
 
       @daily_stats_totals = {
         'profile_views' => totals&.dig(:profile_views),
@@ -115,7 +119,8 @@ module CompanyDashboard
     end
 
     def reviews_count
-      @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : @company.reviews.size
+      count = @company.respond_to?(:reviews_count) ? (@company.reviews_count || 0) : @company.reviews.size
+      [count, 0].max
     end
 
     def pending_reviews_count
