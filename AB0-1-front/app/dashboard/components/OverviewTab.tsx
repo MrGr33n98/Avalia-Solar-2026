@@ -365,7 +365,7 @@ export default function OverviewTab({ companyId, company, onNavigateToTab }: Ove
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="hidden lg:grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <MetricCard icon={Eye} title="Visualizações do perfil" value={formatNumber(metrics.views)} comparison={metrics.viewsTrend} href={() => onNavigateToTab?.('analytics')} />
             <MetricCard icon={MousePointerClick} title="Interações (CTAs)" value={formatNumber(metrics.clicks)} comparison={metrics.clicksTrend} available={detailedAnalyticsAvailable} href={() => onNavigateToTab?.('analytics')} />
             <MetricCard icon={UsersRound} title="Leads" value={formatNumber(metrics.leads)} comparison={metrics.leadsTrend} available={detailedAnalyticsAvailable} href={() => onNavigateToTab?.('leads')} />

@@ -411,6 +411,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pt-0 md:pt-4 dashboard:pt-6">
           <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-5 dashboard:p-6 dashboard:pt-0">
+            <DashboardToolbar
+              company={company}
+              onTabChange={handleTabChange}
+              onOpenNavigation={() => setSidebarOpen(true)}
+              themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
+            />
+
             <MobileDashboardQuickAccess
               activeTab={activeTab}
               company={company}
@@ -418,13 +425,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               onTabChange={handleTabChange}
               onOpenNavigation={() => setSidebarOpen(true)}
               visibleTabIds={visibleTabIds}
-            />
-
-            <DashboardToolbar
-              company={company}
-              onTabChange={handleTabChange}
-              onOpenNavigation={() => setSidebarOpen(true)}
-              themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
             />
 
             {/* Content based on active tab using Shadcn Tabs */}

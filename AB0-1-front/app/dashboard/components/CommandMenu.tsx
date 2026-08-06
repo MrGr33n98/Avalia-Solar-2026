@@ -36,6 +36,12 @@ export function CommandMenu({ onSelectTab, visibleTabIds }: CommandMenuProps) {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
+  React.useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener('open-command-menu', handleOpen);
+    return () => window.removeEventListener('open-command-menu', handleOpen);
+  }, []);
+
   const runCommand = React.useCallback((command: () => void) => {
     setOpen(false);
     command();

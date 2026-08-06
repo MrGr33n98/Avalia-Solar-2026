@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-08-06-v1';
+const SW_VERSION = '2026-08-06-v2';
 const APP_SHELL_CACHE = `avalia-app-shell-${SW_VERSION}`;
 const STATIC_CACHE = `avalia-static-${SW_VERSION}`;
 const API_CACHE = `avalia-api-${SW_VERSION}`;
