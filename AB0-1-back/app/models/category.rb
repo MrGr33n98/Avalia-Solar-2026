@@ -85,6 +85,19 @@ class Category < ApplicationRecord
       .order(name: :asc)
   end
 
+  # Return categories that are semantically close to the given one:
+  # same parent, children of the same parent, or the parent itself.
+  def self.similar_to(category)
+    return none unless category.is_a?(Category)
+
+    ids = [category.id]
+    ids << category.parent_id if category.parent_id.present?
+    ids.concat(where(parent_id: category.parent_id).where.not(id: category.id).pluck(:id)) if category.parent_id.present?
+    ids.concat(category.children.pluck(:id)) if category.respond_to?(:children)
+
+    where(id: ids.compact.uniq).active
+  end
+
   # =========================
   # Ransack configuration
   # =========================

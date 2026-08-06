@@ -6,13 +6,14 @@ RSpec.configure do |config|
     next unless connection.adapter_name.downcase.include?('postgresql')
     next unless connection.table_exists?('platform_events')
 
-    id_default = connection.select_value(<<~SQL.squish)
-      SELECT column_default
+    column_metadata = connection.select_one(<<~SQL.squish)
+      SELECT column_default, is_identity
       FROM information_schema.columns
       WHERE table_name = 'platform_events'
         AND column_name = 'id'
     SQL
-    next if id_default.present?
+    next if column_metadata.blank?
+    next if column_metadata['column_default'].present? || column_metadata['is_identity'] == 'YES'
 
     connection.execute('CREATE SEQUENCE IF NOT EXISTS platform_events_id_seq')
     connection.execute(<<~SQL.squish)

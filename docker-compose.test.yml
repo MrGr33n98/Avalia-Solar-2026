@@ -26,7 +26,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.backend.test
     depends_on:
       db:
         condition: service_healthy
@@ -41,6 +41,7 @@ services:
       POSTGRES_DB: ab0_test
       POSTGRES_DEFAULT_DB: postgres
       REDIS_URL: redis://redis:6379/0
+      REDIS_ENABLED: "true"
     ports:
       - "3001:3001"
     command: >

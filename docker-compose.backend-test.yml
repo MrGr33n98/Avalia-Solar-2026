@@ -1,0 +1,25 @@
+services:
+  backend_test:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.test
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ab0_test
+      POSTGRES_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ab0_test
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./AB0-1-back:/app
+    command: >
+      sh -c "
+        bundle exec rails db:create db:migrate RAILS_ENV=test &&
+        bundle exec rspec spec/services/company_catalog_builder_spec.rb spec/requests/api/v1/company_catalog_spec.rb
+      "

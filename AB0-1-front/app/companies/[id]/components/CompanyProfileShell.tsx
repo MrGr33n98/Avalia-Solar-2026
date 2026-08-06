@@ -131,6 +131,8 @@ export default function CompanyProfileShell({
                     : []
               }
               companyPath={buildCompanyPath(company.slug, company.name, company.id)}
+              companyName={company.name}
+              companyId={company.id}
               showFinancing={showFinancing}
               showGallery={showGallery}
               showFaq={showFaq}

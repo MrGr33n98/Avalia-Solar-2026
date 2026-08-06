@@ -791,6 +791,16 @@ end
     status_allows_plan && %w[pro enterprise].include?(inferred_plan_tier)
   end
 
+  # Whether the marketplace may suggest competitor companies when a category
+  # page for this seller is empty. Premium/verified/featured companies are
+  # protected from competitor exposure.
+  def allows_competitor_suggestions?
+    return false if featured? || verified? || has_paid_plan?
+
+    inferred_tier = inferred_plan_tier rescue 'free'
+    %w[free basic].include?(inferred_tier.to_s)
+  end
+
   def can_use_social_proof?
     return false if respond_to?(:social_proof_enabled) && social_proof_enabled == false
 

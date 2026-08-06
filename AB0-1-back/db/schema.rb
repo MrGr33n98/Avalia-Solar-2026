@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -212,9 +212,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.boolean "featured"
     t.integer "views_count"
     t.bigint "author_id"
-    t.string "seo_keywords"
     t.string "seo_title"
     t.text "seo_description"
+    t.string "seo_keywords"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
@@ -577,6 +577,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.index ["product_id", "category_id"], name: "index_categories_products_on_product_id_and_category_id"
   end
 
+  create_table "category_faqs", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.string "question", null: false
+    t.text "answer", null: false
+    t.integer "position", default: 0, null: false
+    t.string "status", default: "published", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "position"], name: "index_category_faqs_on_category_id_and_position"
+    t.index ["category_id", "status"], name: "index_category_faqs_on_category_id_and_status"
+    t.index ["category_id"], name: "index_category_faqs_on_category_id"
+  end
+
   create_table "category_lead_wizards", force: :cascade do |t|
     t.bigint "category_id", null: false
     t.boolean "enabled", default: true, null: false
@@ -898,8 +911,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.integer "delivered_projects_count", default: 0, null: false
     t.integer "response_sla_minutes"
     t.datetime "operational_data_updated_at"
-    t.string "seo_keywords"
     t.text "seo_description"
+    t.string "seo_keywords"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -1193,6 +1206,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.index ["company_id", "status"], name: "index_company_products_on_company_id_and_status"
     t.index ["company_id"], name: "index_company_products_on_company_id"
     t.index ["product_id"], name: "index_company_products_on_product_id"
+  end
+
+  create_table "company_profile_views", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "session_fingerprint", limit: 64, null: false
+    t.string "ip_hash", limit: 64, null: false
+    t.string "user_agent_hash", limit: 64
+    t.datetime "viewed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "session_fingerprint"], name: "idx_company_views_on_company_and_fingerprint"
+    t.index ["company_id"], name: "index_company_profile_views_on_company_id"
+    t.index ["viewed_at"], name: "index_company_profile_views_on_viewed_at"
   end
 
   create_table "company_projects", force: :cascade do |t|
@@ -2295,50 +2321,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
   end
 
-  create_table "platform_events_y2026m05", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m05_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m05_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m05_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m05_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2026m06", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m06_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m06_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m06_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m06_occurred_at_idx", using: :brin
-  end
-
   create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
     t.bigint "id", null: false
     t.text "event_id", null: false
@@ -2469,6 +2451,50 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
     t.index ["event_id"], name: "platform_events_y2026m12_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2026m12_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2026m12_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m01", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m01_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m01_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m01_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m01_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m02", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m02_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
   end
 
   create_table "posts", force: :cascade do |t|
@@ -3044,6 +3070,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_02_100003) do
   add_foreign_key "categories_companies", "companies"
   add_foreign_key "categories_products", "categories"
   add_foreign_key "categories_products", "products"
+  add_foreign_key "category_faqs", "categories"
   add_foreign_key "category_lead_wizards", "categories"
   add_foreign_key "chat_lead_activities", "chat_leads"
   add_foreign_key "chat_leads", "chat_sessions"

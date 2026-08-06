@@ -1,0 +1,30 @@
+## syntax=docker/dockerfile:1.7
+FROM ruby:3.2.2-slim
+
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      libpq-dev \
+      curl \
+      nodejs \
+      npm \
+      git \
+      pkg-config \
+      libvips \
+      libvips-dev && \
+    npm install -g yarn && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY AB0-1-back/Gemfile AB0-1-back/Gemfile.lock ./
+RUN gem install bundler:2.4.22 && \
+    bundle install --jobs 4 --retry 3
+
+COPY AB0-1-back/ ./
+
+ENV RAILS_ENV=test \
+    RAILS_LOG_TO_STDOUT=true
+
+CMD ["bundle", "exec", "rspec"]

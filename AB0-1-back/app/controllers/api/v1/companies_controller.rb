@@ -116,37 +116,12 @@ module Api
 
         return render json: { error: 'Category not found for company' }, status: :not_found unless category
 
-        linked_ids = CompanyProduct.visible.where(company_id: @company.id).pluck(:product_id)
-        product_ids = Product
-                      .active_status
-                      .joins(:categories)
-                      .where(categories: { id: category.id })
-                      .where('products.id IN (?) OR products.company_id = ?', linked_ids.presence || [0], @company.id)
-                      .pluck(:id)
-                      .uniq
+        cache_key = "company_catalog_v1:#{@company.id}:#{category.id}"
+        payload = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+          CompanyCatalogBuilder.new(company: @company, category: category).call
+        end
 
-        products = Product
-                   .where(id: product_ids)
-                   .includes(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
-                   .order(Arel.sql('products.featured DESC NULLS LAST, products.name ASC'))
-
-        services = @company.company_services.visible.where(category_id: category.id).order(name: :asc)
-
-        render json: {
-          company: {
-            id: @company.id,
-            name: @company.name,
-            slug: @company.slug,
-            logo_url: @company.logo_url,
-            city: @company.city,
-            state: @company.state,
-            rating_avg: @company.rating_avg,
-            rating_count: @company.rating_count
-          },
-          category: category.as_json(only: %i[id name seo_url description short_description]),
-          products: products.map { |product| product.as_json(include_specs: true) },
-          services: services.as_json(only: %i[id name slug description price_from coverage])
-        }, status: :ok
+        render json: serialize_catalog_payload(payload), status: :ok
       rescue StandardError => e
         Rails.logger.error(
           "[CompaniesController#catalog] request_id=#{request.request_id} " \
@@ -426,6 +401,28 @@ module Api
       end
 
       private
+
+      def serialize_catalog_payload(payload)
+        {
+          company: {
+            id: @company.id,
+            name: @company.name,
+            slug: @company.slug,
+            logo_url: @company.logo_url,
+            city: @company.city,
+            state: @company.state,
+            rating_avg: @company.rating_avg,
+            rating_count: @company.rating_count,
+            allows_competitor_suggestions: @company.allows_competitor_suggestions?
+          },
+          category: payload[:category].as_json(only: %i[id name seo_url description short_description]),
+          products: payload[:products].map { |product| product.as_json(include_specs: true) },
+          services: payload[:services].as_json(only: %i[id name slug description price_from coverage]),
+          suggested_products: payload[:suggested_products].map { |product| product.as_json(include_specs: true) },
+          related_categories: payload[:related_categories],
+          similar_companies: payload[:similar_companies]
+        }
+      end
 
       def fetch_companies_data
         retries = 0

@@ -675,11 +675,33 @@ export interface CompanyCatalogService {
   coverage?: string[];
 }
 
+export interface CategoryWithCount {
+  id: number;
+  name: string;
+  seo_url: string;
+  product_count?: number;
+}
+
+export interface CompanyMiniCardData {
+  id: number;
+  name: string;
+  slug: string;
+  logo_url?: string | null;
+  rating_avg?: number;
+  city?: string;
+  state?: string;
+  verified?: boolean;
+  product_count?: number;
+}
+
 export interface CompanyCatalogResponse {
-  company: Company;
+  company: Company & { allows_competitor_suggestions?: boolean };
   category: Category;
   products: Product[];
   services: CompanyCatalogService[];
+  suggested_products?: Product[];
+  related_categories?: CategoryWithCount[];
+  similar_companies?: CompanyMiniCardData[];
 }
 
 export interface SocialProofReview {

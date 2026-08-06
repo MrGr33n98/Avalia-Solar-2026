@@ -157,6 +157,64 @@ export interface EventPayloadMap {
     filter_id: string;
     [key: string]: any;
   };
+
+  // --- Categoria da Empresa ---
+  company_category_empty_viewed: {
+    company_id: string | number;
+    company_name: string;
+    category_id: string | number;
+    category_name: string;
+    has_suggestions: boolean;
+    suggestion_count: number;
+    [key: string]: any;
+  };
+  company_category_suggestion_clicked: {
+    company_id: string | number;
+    company_name: string;
+    category_id: string | number;
+    category_name: string;
+    suggestion_type: 'product' | 'category' | 'competitor' | 'quote';
+    target_id?: string | number;
+    target_name?: string;
+    [key: string]: any;
+  };
+  company_category_quote_started: {
+    company_id: string | number;
+    company_name: string;
+    category_id: string | number;
+    category_name: string;
+    source: string;
+    [key: string]: any;
+  };
+  company_category_search: {
+    company_id: string | number;
+    company_name: string;
+    category_id: string | number;
+    category_name: string;
+    query: string;
+    result_count: number;
+    [key: string]: any;
+  };
+  company_category_favorite_toggled: {
+    company_id: string | number;
+    product_id: string | number;
+    product_name: string;
+    is_favorite: boolean;
+    [key: string]: any;
+  };
+  company_profile_category_dropdown_opened: {
+    company_id: string | number;
+    company_name: string;
+    [key: string]: any;
+  };
+  company_profile_category_selected: {
+    company_id: string | number;
+    company_name: string;
+    category_id: string | number;
+    category_name: string;
+    source?: string;
+    [key: string]: any;
+  };
 }
 
 /**
