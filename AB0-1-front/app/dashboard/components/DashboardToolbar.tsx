@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, HelpCircle, Menu } from 'lucide-react';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 
 interface DashboardToolbarProps {
@@ -16,33 +16,25 @@ export default function DashboardToolbar({
   onOpenNavigation,
   themeToggle,
 }: DashboardToolbarProps) {
-  return (
-    <header className="sticky top-0 z-30 mb-4 flex min-h-[56px] flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-3 py-2 pt-[var(--safe-area-inset-top)] sm:px-4 md:static md:mb-5 md:pt-0">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        {/* Menu mobile */}
-        <button
-          type="button"
-          onClick={onOpenNavigation}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:hidden"
-          aria-label="Abrir menu de navegação"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
+  void onOpenNavigation;
 
+  return (
+    <header className="sticky top-0 z-30 mb-4 flex min-h-[56px] min-w-0 items-center justify-between gap-2 border-b border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-3 py-2 pt-[var(--safe-area-inset-top)] sm:px-4 md:static md:mb-5 md:pt-0">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         {/* Empresa ativa */}
         <button
           type="button"
           onClick={() => onTabChange('overview')}
-          className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left shadow-sm transition hover:bg-slate-50"
+          className="flex min-w-0 items-center gap-2 rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-2 py-2 text-left shadow-sm transition hover:bg-[hsl(var(--dashboard-surface))]"
           aria-label="Ir para visão geral"
         >
           <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-md bg-blue-600 text-[10px] font-black text-white">
             {company?.name?.slice(0, 2).toUpperCase() || 'AS'}
           </span>
-          <span className="max-w-[140px] truncate text-xs font-bold text-slate-800 sm:max-w-[200px]">
+          <span className="hidden max-w-[140px] truncate text-xs font-bold text-[hsl(var(--dashboard-ink))] sm:inline sm:max-w-[200px]">
             {company?.name || 'Empresa'}
           </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+          <ChevronDown className="hidden h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))] sm:block" aria-hidden="true" />
         </button>
 
         {/* Busca global do dashboard — uma por viewport */}
@@ -51,15 +43,15 @@ export default function DashboardToolbar({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <button
           type="button"
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          className="hidden h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-[hsl(var(--dashboard-muted))] hover:bg-[hsl(var(--dashboard-surface))] sm:inline-flex"
         >
           <HelpCircle className="h-4 w-4" aria-hidden="true" /> Ajuda
         </button>
         {themeToggle && (
-          <div className="flex h-9 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 transition-colors hover:bg-slate-100">
+          <div className="flex h-9 items-center justify-center rounded-md border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] px-1 transition-colors">
             {themeToggle}
           </div>
         )}
