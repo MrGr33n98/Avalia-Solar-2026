@@ -266,26 +266,11 @@ export const analyticsApi = {
   validateRoutes: validateAnalyticsRoutes,
   // Get company dashboard stats
   getStats: async (companyId?: number): Promise<CompanyAnalytics> => {
-    try {
-      const response = await fetchApi<{ stats: CompanyAnalytics }>(
-        '/company_dashboard/stats',
-        companyId ? { params: { company_id: companyId } } : undefined
-      );
-      return response.stats;
-    } catch (error) {
-      console.error('[analyticsApi.getStats] Error:', error);
-      return {
-        profile_views: 0,
-        cta_clicks: 0,
-        whatsapp_clicks: 0,
-        leads_received: 0,
-        reviews_count: 0,
-        average_rating: 0,
-        pending_approvals: 0,
-        active_campaigns: 0,
-        conversion_rate: 0,
-      };
-    }
+    const response = await fetchApi<{ stats: CompanyAnalytics }>(
+      '/company_dashboard/stats',
+      companyId ? { params: { company_id: companyId } } : undefined
+    );
+    return response.stats;
   },
 
   // Get historical data for charts
