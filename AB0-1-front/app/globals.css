@@ -247,6 +247,142 @@
     --dashboard-chart-2: 270 95% 75%;
     --dashboard-chart-grid: 217 33% 24%;
   }
+
+  .monokai {
+    --background: 70 8% 15%;
+    --foreground: 60 30% 96%;
+
+    --card: 70 8% 12%;
+    --card-foreground: 60 30% 96%;
+
+    --popover: 70 8% 12%;
+    --popover-foreground: 60 30% 96%;
+
+    --primary: 329 100% 60%;
+    --primary-foreground: 60 30% 96%;
+
+    --secondary: 70 8% 18%;
+    --secondary-foreground: 60 30% 96%;
+
+    --muted: 70 8% 20%;
+    --muted-foreground: 60 10% 70%;
+
+    --accent: 102 70% 50%;
+    --accent-foreground: 70 8% 15%;
+
+    --destructive: 329 100% 60%;
+    --destructive-foreground: 60 30% 96%;
+
+    --border: 70 8% 22%;
+    --input: 70 8% 22%;
+    --ring: 329 100% 60%;
+
+    --clay-bg: 70 8% 10%;
+    --clay-surface: 70 8% 12%;
+    --clay-surface-raised: 70 8% 14%;
+    --clay-surface-sunken: 70 8% 8%;
+
+    --color-background-primary: hsl(var(--card));
+    --color-background-secondary: rgba(30, 30, 26, 0.88);
+    --color-background-tertiary: hsl(var(--background));
+    --color-background-success: rgba(166, 226, 46, 0.16);
+    --color-background-danger: rgba(249, 38, 114, 0.18);
+    --color-background-info: rgba(102, 217, 239, 0.18);
+
+    --color-text-primary: hsl(var(--foreground));
+    --color-text-secondary: rgba(248, 248, 242, 0.76);
+    --color-text-tertiary: rgba(248, 248, 242, 0.54);
+    --color-text-success: rgb(166, 226, 46);
+    --color-text-danger: rgb(249, 38, 114);
+    --color-text-info: rgb(102, 217, 239);
+
+    --color-border-secondary: rgba(117, 113, 94, 0.38);
+    --color-border-tertiary: rgba(117, 113, 94, 0.24);
+
+    --border-radius-md: 0.875rem;
+    --border-radius-lg: 1rem;
+
+    /* === DASHBOARD SEMANTIC TOKENS — MONOKAI === */
+    --dashboard-ink: 60 30% 96%;
+    --dashboard-panel: 70 8% 12%;
+    --dashboard-surface: 70 8% 15%;
+    --dashboard-muted: 60 10% 70%;
+    --dashboard-border: 70 8% 22%;
+    --dashboard-rail: 70 8% 10%;
+    --dashboard-accent: 329 100% 60%;
+    --dashboard-accent-foreground: 60 30% 96%;
+    --dashboard-chart-1: 192 100% 65%;
+    --dashboard-chart-2: 38 100% 60%;
+    --dashboard-chart-grid: 70 8% 24%;
+  }
+
+  .darkmodern {
+    --background: 222 47% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 209 100% 55%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 222 47% 16%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 190 90% 50%;
+    --accent-foreground: 222 47% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 209 100% 55%;
+
+    --clay-bg: 222 47% 6%;
+    --clay-surface: 222 47% 14%;
+    --clay-surface-raised: 222 47% 18%;
+    --clay-surface-sunken: 222 47% 8%;
+
+    --color-background-primary: hsl(var(--card));
+    --color-background-secondary: rgba(30, 41, 59, 0.88);
+    --color-background-tertiary: hsl(var(--background));
+    --color-background-success: rgba(34, 197, 94, 0.16);
+    --color-background-danger: rgba(248, 113, 113, 0.18);
+    --color-background-info: rgba(56, 189, 248, 0.18);
+
+    --color-text-primary: hsl(var(--foreground));
+    --color-text-secondary: rgba(226, 232, 240, 0.76);
+    --color-text-tertiary: rgba(226, 232, 240, 0.54);
+    --color-text-success: rgb(74, 222, 128);
+    --color-text-danger: rgb(252, 165, 165);
+    --color-text-info: rgb(125, 211, 252);
+
+    --color-border-secondary: rgba(148, 163, 184, 0.38);
+    --color-border-tertiary: rgba(148, 163, 184, 0.24);
+
+    --border-radius-md: 0.875rem;
+    --border-radius-lg: 1rem;
+
+    /* === DASHBOARD SEMANTIC TOKENS — DARK MODERN === */
+    --dashboard-ink: 210 40% 98%;
+    --dashboard-panel: 222 47% 14%;
+    --dashboard-surface: 222 47% 10%;
+    --dashboard-muted: 215 20% 65%;
+    --dashboard-border: 217 33% 22%;
+    --dashboard-rail: 222 47% 8%;
+    --dashboard-accent: 209 100% 55%;
+    --dashboard-accent-foreground: 210 40% 98%;
+    --dashboard-chart-1: 209 100% 55%;
+    --dashboard-chart-2: 270 95% 75%;
+    --dashboard-chart-grid: 217 33% 26%;
+  }
 }
 
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 */
@@ -263,6 +399,20 @@
   --popover: 222 47% 11%; --popover-foreground: 210 40% 98%;
   --muted: 217 33% 17%; --muted-foreground: 215 20% 65%;
   --border: 217 33% 20%; --input: 217 33% 20%;
+}
+.monokai .dashboard-theme-shell {
+  --background: 70 8% 15%; --foreground: 60 30% 96%;
+  --card: 70 8% 12%; --card-foreground: 60 30% 96%;
+  --popover: 70 8% 12%; --popover-foreground: 60 30% 96%;
+  --muted: 70 8% 20%; --muted-foreground: 60 10% 70%;
+  --border: 70 8% 22%; --input: 70 8% 22%;
+}
+.darkmodern .dashboard-theme-shell {
+  --background: 222 47% 10%; --foreground: 210 40% 98%;
+  --card: 222 47% 14%; --card-foreground: 210 40% 98%;
+  --popover: 222 47% 14%; --popover-foreground: 210 40% 98%;
+  --muted: 217 33% 20%; --muted-foreground: 215 20% 65%;
+  --border: 217 33% 22%; --input: 217 33% 22%;
 }
 
 @layer base {

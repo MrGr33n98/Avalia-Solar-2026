@@ -28,7 +28,6 @@ import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-acces
 
 // Components
 import ThemeToggle from './ThemeToggle';
-import MobileBottomNavigation from './MobileBottomNavigation';
 import ApprovalsPanel from './ApprovalsPanel';
 import FeatureGuard from './FeatureGuard';
 
@@ -314,7 +313,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     router.replace(`${pathname}?${params.toString()}`);
   }, [activeTab, pathname, router, searchParams, visibleTabIds]);
 
-  const handleThemeChange = (theme: 'light' | 'dark') => {
+  const handleThemeChange = (theme: string) => {
     // Track using unified analytics
     track('Theme Changed', {
       theme_mode: theme,
@@ -396,9 +395,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         visibleTabIds={visibleTabIds}
       />
 
-      <div className="flex min-h-dvh flex-col pl-0 dashboard:pl-[var(--enterprise-sidebar-width,240px)] transition-[padding] duration-200">
+      <div className="flex min-h-dvh flex-col pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-[calc(68px+var(--safe-area-inset-bottom))] pt-0 md:pt-4 dashboard:pb-0 dashboard:pt-6">
+        <main className="flex-1 overflow-y-auto pb-[max(16px,var(--safe-area-inset-bottom))] pt-0 md:pt-4 dashboard:pb-0 dashboard:pt-6">
           <div className="mx-auto w-full max-w-[1400px] min-w-0 p-2 sm:p-4 md:p-5 dashboard:p-6 dashboard:pt-0">
             <DashboardToolbar
               company={company}
@@ -802,12 +801,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
             </Tabs>
           </div>
         </main>
-        <MobileBottomNavigation
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onOpenNavigation={() => setSidebarOpen(true)}
-          pendingReviewsCount={stats?.pendingReviewsCount || 0}
-        />
       </div>
     </div>
   );

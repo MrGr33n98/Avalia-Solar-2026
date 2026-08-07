@@ -96,7 +96,7 @@ function SidebarTree({
                   isGroupActive
                     ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm'
                     : 'text-slate-200 hover:bg-white/10 hover:text-white',
-                  isCompactRail
+                  isCompactRail && !isCollapsed
                     ? 'h-16 flex-col justify-center gap-1 px-1'
                     : 'h-11 justify-start px-3',
                   isCollapsed && 'h-11 justify-center px-0'
@@ -105,7 +105,7 @@ function SidebarTree({
                 aria-label={item.label}
                 aria-current={isGroupActive ? 'true' : undefined}
               >
-                <Icon className={cn('shrink-0', isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
+                <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
                 <span
                   className={cn(
                     'min-w-0 truncate font-medium whitespace-nowrap',
@@ -184,14 +184,16 @@ function SidebarTree({
               isActive
                 ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm'
                 : 'text-slate-200 hover:bg-white/10 hover:text-white',
-              isCompactRail ? 'h-16 flex-col justify-center gap-1 px-1' : 'h-11 justify-start px-3',
+              isCompactRail && !isCollapsed
+                ? 'h-16 flex-col justify-center gap-1 px-1'
+                : 'h-11 justify-start px-3',
               isCollapsed && 'h-11 justify-center px-0'
             )}
             title={item.label}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
           >
-            <Icon className={cn('shrink-0', isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
+            <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
               className={cn(
                 'min-w-0 truncate font-medium whitespace-nowrap',
@@ -229,6 +231,7 @@ export default function EnterpriseSidebar({
 }: EnterpriseSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([
     'analytics-group',
     'reviews-group',
@@ -245,8 +248,11 @@ export default function EnterpriseSidebar({
   }, []);
 
   useEffect(() => {
-    const updateCompact = () =>
-      setIsCompactViewport(window.innerWidth < COMPACT_RAIL_BREAKPOINT_PX);
+    const updateCompact = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsCompactViewport(width < COMPACT_RAIL_BREAKPOINT_PX);
+    };
     updateCompact();
     window.addEventListener('resize', updateCompact);
     return () => window.removeEventListener('resize', updateCompact);
@@ -254,13 +260,13 @@ export default function EnterpriseSidebar({
 
   useEffect(() => {
     try {
-      const width = isCollapsed ? '72px' : isCompactViewport ? '112px' : '240px';
+      const width = isMobile ? '64px' : isCollapsed ? '72px' : isCompactViewport ? '112px' : '240px';
       document.documentElement.style.setProperty('--enterprise-sidebar-width', width);
       window.localStorage.setItem(COLLAPSE_STORAGE_KEY, isCollapsed ? '1' : '0');
     } catch {
       // noop
     }
-  }, [isCollapsed, isCompactViewport]);
+  }, [isCollapsed, isCompactViewport, isMobile]);
 
   const navItems = useMemo(
     () =>
@@ -291,7 +297,7 @@ export default function EnterpriseSidebar({
         <div
           className={cn(
             'overflow-hidden rounded-md bg-white px-1',
-            !isDrawer && (isCollapsed || isCompactViewport) ? 'w-10' : 'w-[156px]'
+            !isDrawer && (isCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
           )}
         >
           <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
@@ -305,14 +311,14 @@ export default function EnterpriseSidebar({
           onTabChange={handleTabChange}
           pendingCount={pendingCount}
           pendingReviewsCount={pendingReviewsCount}
-          isCollapsed={isDrawer ? false : isCollapsed}
-          isCompactRail={isDrawer ? false : isCompactViewport && !isCollapsed}
+          isCollapsed={isDrawer ? false : isCollapsed || isMobile}
+          isCompactRail={isDrawer ? false : isMobile || (isCompactViewport && !isCollapsed)}
           openGroups={openGroups}
           setOpenGroups={setOpenGroups}
         />
       </div>
 
-      {!isDrawer && (
+      {!isDrawer && !isMobile && (
         <div className="border-t border-white/10 p-3">
           <Button
             type="button"
@@ -363,8 +369,8 @@ export default function EnterpriseSidebar({
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 hidden dashboard:block border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)]',
-          isCollapsed ? 'w-[72px]' : 'w-[112px] dashboard:w-[240px]'
+          'fixed inset-y-0 left-0 z-40 border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] transition-[width] duration-200',
+          isMobile ? 'w-[64px]' : isCollapsed ? 'w-[72px]' : 'w-[112px] dashboard:w-[240px]'
         )}
       >
         {sidebarContent()}

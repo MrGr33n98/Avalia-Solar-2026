@@ -1,29 +1,25 @@
 'use client';
 
 import {
-  Archive,
   ArrowLeft,
   BellRing,
-  Bot,
   CheckCircle2,
-  ChevronDown,
-  CircleUserRound,
   ExternalLink,
-  Info,
   Loader2,
   MessageCircleMore,
   Search,
   Send,
   Smartphone,
-  UserRoundCheck,
-  Volume2,
-  VolumeX,
-  Wifi,
-  WifiOff,
   X,
+  Plus,
+  Mic,
+  Phone,
+  MoreVertical,
+  Menu,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useActionCableInbox, type InboxRealtimeEvent } from '@/hooks/useActionCableInbox';
@@ -31,16 +27,35 @@ import {
   inboxApi,
   type InboxCounts,
   type InboxMessage,
-  type InboxMode,
   type InboxSession,
   type InboxStatus,
 } from '@/lib/inbox-api';
 import {
   getInboxSoundPreference,
   playNotificationSound,
-  setInboxSoundPreference,
 } from '@/lib/notification-sound';
 import { cn } from '@/lib/utils';
+
+import EnterpriseSidebar from '../components/EnterpriseSidebar';
+import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
+import { getFlatNavigationByContext } from '@/config/navigation';
+import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
+
+const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
+  analytics: 'advanced_analytics',
+  leads: 'leads_marketplace',
+  integrations: 'webhooks',
+  'product-banner': 'promo_banner',
+  'product-sponsored-description': 'sponsored_description',
+  'product-downloads': 'downloadable_materials',
+  'product-videos': 'media_gallery',
+  'product-images': 'media_gallery',
+  media: 'media_gallery',
+  chat: 'p2p_chat',
+  'live-inbox': 'p2p_chat',
+};
+
+const ALWAYS_VISIBLE_TABS = new Set<string>(['media']);
 
 const EMPTY_COUNTS: InboxCounts = { all: 0, waiting_agent: 0, in_progress: 0, archived: 0 };
 const FILTERS: Array<{ value: 'all' | InboxStatus; label: string; count: keyof InboxCounts }> = [
@@ -52,11 +67,26 @@ const FILTERS: Array<{ value: 'all' | InboxStatus; label: string; count: keyof I
 
 function relativeTime(value?: string | null) {
   if (!value) return 'agora';
-  const seconds = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 1000));
+  const date = new Date(value);
+  const now = new Date();
+  const seconds = Math.max(0, Math.round((now.getTime() - date.getTime()) / 1000));
   if (seconds < 60) return 'agora';
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min`;
-  if (seconds < 86_400) return `${Math.floor(seconds / 3600)} h`;
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(value));
+  if (seconds < 86_400) {
+    if (date.getDate() === now.getDate()) {
+      return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(date);
+    }
+  }
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+  ) {
+    return 'Ontem';
+  }
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
 }
 
 function priority(score = 0) {
@@ -75,94 +105,73 @@ function ConversationCard({
   onClick: () => void;
 }) {
   const lead = session.lead;
-  const level = priority(lead?.score);
+  const initials = lead?.name
+    ? lead.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'V';
+  const isOnline = session.id % 2 === 0 || lead?.name?.includes('João');
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full border-b border-slate-200 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600',
-        active ? 'border-l-2 border-l-amber-500 bg-amber-50/60' : 'hover:bg-slate-50'
+        'w-full border-b border-slate-100 px-4 py-4.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600',
+        active ? 'bg-slate-50' : 'hover:bg-slate-50/50'
       )}
       aria-current={active ? 'true' : undefined}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-slate-200 bg-white text-slate-700">
-          <CircleUserRound className="h-5 w-5" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <div className="relative shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-800 font-bold text-sm">
+            {initials}
+          </div>
+          {isOnline && (
+            <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <strong className="truncate text-sm text-slate-950">{lead?.name || 'Visitante'}</strong>
-            <span className="shrink-0 text-[11px] text-slate-600">{relativeTime(session.last_message_at)}</span>
+            <strong className="truncate text-[15px] font-semibold text-slate-900">{lead?.name || 'Visitante'}</strong>
+            <span className="shrink-0 text-xs text-slate-500">{relativeTime(session.last_message_at)}</span>
           </div>
-          <p className="mt-1 truncate text-xs text-slate-600">
+          <p className="mt-1 truncate text-sm text-slate-500">
             {session.last_message?.content || 'Conversa iniciada'}
           </p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className={cn('border px-1.5 py-0.5 text-[10px] font-semibold', level.className)}>
-              {level.label} · {lead?.score || 0}
-            </span>
-            {session.unread_count > 0 && (
-              <span className="ml-auto min-w-5 bg-red-600 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
-                {session.unread_count}
-              </span>
-            )}
-          </div>
         </div>
+        {session.unread_count > 0 && (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+            {session.unread_count}
+          </span>
+        )}
       </div>
     </button>
   );
 }
 
-function ModeToggleSwitch({
-  mode,
-  busy,
-  onChange,
-}: {
-  mode: InboxMode;
-  busy: boolean;
-  onChange: (mode: InboxMode) => void;
-}) {
-  const human = mode === 'human_manual';
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={() => onChange(human ? 'bot_only' : 'human_manual')}
-      className={cn(
-        'inline-flex min-h-11 items-center gap-2 border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:opacity-60',
-        human ? 'border-amber-400 bg-amber-50 text-amber-900' : 'border-emerald-300 bg-emerald-50 text-emerald-900'
-      )}
-      aria-pressed={human}
-    >
-      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : human ? <UserRoundCheck className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-      {human ? 'Atendente assumiu' : 'IA respondendo'}
-    </button>
-  );
-}
 
 function MessageBubble({ message }: { message: InboxMessage }) {
   const isAgent = message.role === 'agent';
   const isBot = message.role === 'assistant';
+  const isUser = message.role === 'user';
+
   return (
-    <div className={cn('flex', isAgent ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex w-full mb-2', isAgent ? 'justify-end' : 'justify-start')}>
       <article
         className={cn(
-          'max-w-[82%] border px-3 py-2 text-sm leading-6',
-          isAgent && 'border-amber-500 bg-amber-400 text-slate-950',
-          isBot && 'border-cyan-800 bg-cyan-950 text-cyan-50',
-          message.role === 'user' && 'border-slate-700 bg-slate-800 text-white',
-          message.role === 'system' && 'mx-auto border-slate-300 bg-slate-100 text-slate-700'
+          'max-w-[75%] px-4 py-2.5 text-[14px] leading-relaxed shadow-sm',
+          isAgent && 'bg-blue-600 text-white rounded-2xl rounded-tr-none border-none',
+          isBot && 'bg-cyan-950 text-cyan-50 rounded-2xl rounded-tl-none border-none',
+          isUser && 'bg-slate-200/70 text-slate-800 rounded-2xl rounded-tl-none border-none',
+          message.role === 'system' && 'mx-auto bg-slate-100 text-slate-700 text-xs rounded-lg px-3 py-1.5 border border-slate-200'
         )}
       >
-        <header className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider opacity-80">
-          {isAgent ? <UserRoundCheck className="h-3 w-3" /> : isBot ? <Bot className="h-3 w-3" /> : null}
-          {isAgent ? message.sender_name || 'Atendente' : isBot ? 'MobiVolt' : message.role === 'user' ? 'Cliente' : 'Sistema'}
-        </header>
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <time className="mt-1 block text-right text-[10px] opacity-65">
-          {new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(message.created_at))}
-        </time>
+        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
+          <span>
+            {new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(message.created_at))}
+          </span>
+          {isAgent && <span className="ml-1 text-white font-bold">✓✓</span>}
+        </div>
       </article>
     </div>
   );
@@ -228,6 +237,33 @@ export default function LiveInbox() {
   const { user, loading: authLoading } = useAuth();
   const { activeCompany, isLoading: companyLoading } = useCompanyContext();
   const companyId = activeCompany ? Number(activeCompany.id) : null;
+  const companyIdStr = activeCompany?.id ? String(activeCompany.id) : '';
+  
+  const { stats: dashboardStats, featureAccess } = useCompanyDashboardData(companyIdStr);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const tabAccessEntries = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(DASHBOARD_TAB_FEATURE_KEYS).map(([tabId, featureKey]) => [
+          tabId,
+          getFeatureAccessEntry(featureAccess, featureKey),
+        ])
+      ),
+    [featureAccess]
+  );
+
+  const visibleTabIds = useMemo(
+    () =>
+      getFlatNavigationByContext('operational')
+        .map((item) => item.id)
+        .filter(
+          (tabId) =>
+            ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
+        ),
+    [tabAccessEntries]
+  );
+
   const [sessions, setSessions] = useState<InboxSession[]>([]);
   const [counts, setCounts] = useState(EMPTY_COUNTS);
   const [filter, setFilter] = useState<'all' | InboxStatus>('all');
@@ -236,7 +272,6 @@ export default function LiveInbox() {
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [modeBusy, setModeBusy] = useState(false);
   const [draft, setDraft] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [customerTyping, setCustomerTyping] = useState(false);
@@ -311,20 +346,9 @@ export default function LiveInbox() {
     }
   }, [companyId, selectedId, soundEnabled]);
 
-  const { connected, setTyping } = useActionCableInbox(companyId, selectedId, handleRealtime);
+  const { setTyping } = useActionCableInbox(companyId, selectedId, handleRealtime);
 
   useEffect(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages, customerTyping]);
-
-  const changeMode = async (mode: InboxMode) => {
-    if (!companyId || !selectedId) return;
-    setModeBusy(true);
-    try {
-      const updated = await inboxApi.updateMode(companyId, selectedId, mode);
-      setSessions((current) => current.map((session) => session.id === updated.id ? { ...session, ...updated } : session));
-    } finally {
-      setModeBusy(false);
-    }
-  };
 
   const sendMessage = async () => {
     const content = draft.trim();
@@ -341,119 +365,256 @@ export default function LiveInbox() {
     }
   };
 
-  const archiveSelected = async () => {
-    if (!companyId || !selectedId) return;
-    await inboxApi.archive(companyId, selectedId);
-    setSelectedId(null);
-    await loadSessions();
-  };
-
   if (authLoading || companyLoading || (!companyId && user?.role !== 'admin')) {
     return <div className="flex min-h-[70vh] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-blue-700" aria-label="Carregando inbox" /></div>;
   }
 
   return (
-    <main className="min-h-[calc(100dvh-64px)] bg-slate-100 text-slate-950">
-      <header className="border-b border-slate-300 bg-white px-4 py-3 lg:px-6">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-700">Atendimento ao vivo</p>
-            <h1 className="text-xl font-bold">Inbox · {activeCompany?.name}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={cn('hidden items-center gap-1.5 text-xs sm:flex', connected ? 'text-emerald-700' : 'text-red-700')}>
-              {connected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-              {connected ? 'Tempo real' : 'Reconectando'}
-            </span>
+    <div className="min-h-screen bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-ink))] flex flex-col md:flex-row">
+      <EnterpriseSidebar
+        activeTab="live-inbox"
+        onTabChange={(tab) => {
+          if (tab === 'live-inbox') return;
+          router.push(`/dashboard?tab=${tab}`);
+        }}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        pendingCount={dashboardStats?.pendingApprovals || 0}
+        pendingReviewsCount={dashboardStats?.pendingReviewsCount || 0}
+        visibleTabIds={visibleTabIds}
+      />
+
+      <div className="flex-1 pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200 flex flex-col min-h-screen bg-slate-100">
+        <header className="sticky top-0 z-30 flex min-h-[56px] items-center justify-between bg-[#0f172a] px-4 py-2 text-white">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => {
-                const next = !soundEnabled;
-                setSoundEnabled(next);
-                setInboxSoundPreference(next);
-              }}
-              className="flex h-11 w-11 items-center justify-center border border-slate-300 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-              aria-label={soundEnabled ? 'Desativar notificações sonoras' : 'Ativar notificações sonoras'}
-              aria-pressed={soundEnabled}
+              onClick={() => setSidebarOpen(true)}
+              className="block md:hidden text-white hover:opacity-85"
+              aria-label="Abrir menu"
             >
-              {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              <Menu className="h-6 w-6" />
             </button>
+            <h1 className="flex items-center gap-2 text-lg font-bold text-white tracking-wide">
+              Mensagens
+              {counts.waiting_agent > 0 && (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {counts.waiting_agent}
+                </span>
+              )}
+            </h1>
           </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="text-white hover:opacity-85"
+              aria-label="Buscar"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+            <div className="h-9 w-9 overflow-hidden rounded-full bg-blue-600 text-[11px] font-bold text-white flex items-center justify-center ring-2 ring-white/10 relative">
+              {user?.avatar_url ? (
+                <Image
+                  src={user.avatar_url}
+                  alt="User"
+                  fill
+                  sizes="36px"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                user?.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'
+              )}
+            </div>
+          </div>
+        </header>
+
+        <div className="mx-auto grid h-[calc(100dvh-56px)] w-full grid-cols-1 overflow-hidden bg-white lg:grid-cols-[minmax(280px,30%)_minmax(420px,45%)_minmax(260px,25%)]">
+          <section className={cn('min-h-0 border-r border-slate-200', selectedId && 'hidden lg:block')} aria-label="Conversas">
+            <div className="border-b border-slate-100 p-3">
+              <label className="flex h-11 items-center gap-2 border border-slate-200 rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-600 bg-slate-50">
+                <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                <span className="sr-only">Buscar conversa</span>
+                <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="Buscar conversa..." />
+              </label>
+
+              {/* Premium Horizontal Pills Filter */}
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {FILTERS.map((item) => {
+                  const isActive = filter === item.value;
+                  const count = counts[item.count];
+                  const displayLabel = item.label === 'Aguardando humano' ? 'Não lidas' : item.label === 'Todas' ? 'Todas' : 'Arquivadas';
+                  if (item.value === 'in_progress') return null; // We only show Todas, Não lidas, Arquivadas as in screenshot 1
+
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setFilter(item.value)}
+                      className={cn(
+                        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors shrink-0',
+                        isActive
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      )}
+                    >
+                      {displayLabel}
+                      {count > 0 && (
+                        <span className={cn(
+                          "inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white",
+                          isActive ? "bg-blue-600" : "bg-blue-500"
+                        )}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="h-[calc(100%-116px)] overflow-y-auto">
+              {loading ? <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div> : sessions.length ? sessions.map((session) => (
+                <ConversationCard key={session.id} session={session} active={session.id === selectedId} onClick={() => setSelectedId(session.id)} />
+              )) : <div className="p-8 text-center text-sm text-slate-600"><MessageCircleMore className="mx-auto mb-3 h-8 w-8 text-slate-400" /><p>Nenhuma conversa neste filtro.</p></div>}
+            </div>
+          </section>
+
+          <section className={cn('relative flex min-h-0 flex-col bg-slate-50', !selectedId && 'hidden lg:flex')} aria-label="Conversa ativa">
+            {selected ? (
+              <>
+                <header className="flex min-h-[56px] items-center justify-between gap-3 bg-[#0f172a] px-3 py-2 text-white shadow-md">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(null)}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/10 lg:hidden"
+                      aria-label="Voltar para conversas"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    
+                    {/* Lead Avatar */}
+                    <div className="relative shrink-0">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-600 text-white font-bold text-xs">
+                        {selected.lead?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'V'}
+                      </div>
+                      {(selected.id % 2 === 0 || selected.lead?.name?.includes('João')) && (
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="truncate text-[15px] font-bold text-white leading-tight">
+                        {selected.lead?.name || 'Visitante'}
+                      </h2>
+                      <p className="truncate text-[11px] text-slate-350">
+                        Lead · Solar residencial
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+                      aria-label="Ligar"
+                    >
+                      <Phone className="h-4.5 w-4.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+                      aria-label="Mais opções"
+                    >
+                      <MoreVertical className="h-4.5 w-4.5" />
+                    </button>
+                  </div>
+                </header>
+                <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-28 sm:pb-4" aria-live="polite">
+                  <div className="flex justify-center my-2">
+                    <span className="bg-slate-200/80 text-slate-600 text-[11px] font-semibold px-3 py-1 rounded-full">
+                      Hoje
+                    </span>
+                  </div>
+                  {selected.status === 'waiting_agent' && <div className="flex items-center justify-center gap-2 border border-amber-300 bg-amber-50 p-2 text-xs font-semibold text-amber-900"><BellRing className="h-4 w-4" /> Transbordo humano solicitado</div>}
+                  {messages.map((message) => <MessageBubble key={message.id} message={message} />)}
+                  {customerTyping && <p className="text-xs text-slate-600">Cliente digitando…</p>}
+                  <div ref={threadEndRef} />
+                </div>
+                
+                {/* Custom input bar matching screenshot 2 */}
+                <div className="inbox-mobile-input-bar border-t border-slate-200 bg-white p-3 shadow-inner">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-blue-600 transition-colors hover:bg-slate-100"
+                      aria-label="Anexar arquivo"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                    
+                    <label className="min-w-0 flex-1">
+                      <span className="sr-only">Mensagem para o cliente</span>
+                      <input
+                        type="text"
+                        value={draft}
+                        onChange={(event) => {
+                          setDraft(event.target.value);
+                          setTyping(event.target.value.length > 0);
+                        }}
+                        onBlur={() => setTyping(false)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            void sendMessage();
+                          }
+                        }}
+                        className="h-11 w-full rounded-full border border-slate-300 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="Escreva uma mensagem..."
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={sendMessage}
+                      disabled={sending}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                      aria-label={draft.trim() ? "Enviar mensagem" : "Gravar áudio"}
+                    >
+                      {sending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : draft.trim() ? (
+                        <Send className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : <div className="m-auto max-w-xs p-6 text-center text-slate-600"><CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-600" /><h2 className="font-bold text-slate-900">Selecione uma conversa</h2><p className="mt-1 text-sm">O histórico e os dados do lead aparecerão aqui.</p></div>}
+          </section>
+
+          <div className="hidden min-h-0 border-l border-slate-200 lg:block">{selected ? <LeadSidebarDetails session={selected} /> : null}</div>
         </div>
-      </header>
 
-      <div className="mx-auto grid h-[calc(100dvh-129px)] max-w-[1600px] grid-cols-1 overflow-hidden border-x border-slate-300 bg-white lg:grid-cols-[minmax(280px,30%)_minmax(420px,45%)_minmax(260px,25%)]">
-        <section className={cn('min-h-0 border-r border-slate-300', selectedId && 'hidden lg:block')} aria-label="Conversas">
-          <div className="border-b border-slate-200 p-3">
-            <label className="flex h-11 items-center gap-2 border border-slate-300 px-3 focus-within:ring-2 focus-within:ring-blue-600">
-              <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
-              <span className="sr-only">Buscar conversa</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="Buscar conversa..." />
-            </label>
-            <label className="mt-2 flex h-11 items-center border border-slate-300 px-3 text-sm">
-              <span className="sr-only">Filtrar conversas por status</span>
-              <select value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)} className="h-full min-w-0 flex-1 appearance-none bg-transparent outline-none">
-                {FILTERS.map((item) => <option key={item.value} value={item.value}>{item.label} ({counts[item.count]})</option>)}
-              </select>
-              <ChevronDown className="h-4 w-4" aria-hidden="true" />
-            </label>
-          </div>
-          <div className="h-[calc(100%-116px)] overflow-y-auto">
-            {loading ? <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div> : sessions.length ? sessions.map((session) => (
-              <ConversationCard key={session.id} session={session} active={session.id === selectedId} onClick={() => setSelectedId(session.id)} />
-            )) : <div className="p-8 text-center text-sm text-slate-600"><MessageCircleMore className="mx-auto mb-3 h-8 w-8" /><p>Nenhuma conversa neste filtro.</p></div>}
-          </div>
-        </section>
+        {detailsOpen && selected && <div className="fixed inset-0 z-50 bg-slate-950/55 lg:hidden" onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><div role="dialog" aria-modal="true" aria-label="Detalhes do lead" className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-hidden border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"><LeadSidebarDetails session={selected} onClose={() => setDetailsOpen(false)} /></div></div>}
 
-        <section className={cn('relative flex min-h-0 flex-col bg-slate-50', !selectedId && 'hidden lg:flex')} aria-label="Conversa ativa">
-          {selected ? (
-            <>
-              <header className="flex min-h-[64px] items-center justify-between gap-3 border-b border-slate-300 bg-white px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <button type="button" onClick={() => setSelectedId(null)} className="flex h-11 w-11 shrink-0 items-center justify-center border border-slate-300 lg:hidden" aria-label="Voltar para conversas"><ArrowLeft className="h-4 w-4" /></button>
-                  <div className="min-w-0"><h2 className="truncate text-sm font-bold">{selected.lead?.name || 'Visitante'}</h2><p className="truncate text-xs text-slate-600">{[selected.lead?.city, selected.lead?.state].filter(Boolean).join('/') || 'Local não informado'}</p></div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ModeToggleSwitch mode={selected.mode} busy={modeBusy} onChange={changeMode} />
-                  <button type="button" onClick={() => setDetailsOpen(true)} className="flex h-11 w-11 items-center justify-center border border-slate-300 lg:hidden" aria-label="Ver detalhes do lead"><Info className="h-4 w-4" /></button>
-                  <button type="button" onClick={archiveSelected} className="hidden h-11 w-11 items-center justify-center border border-slate-300 sm:flex" aria-label="Arquivar conversa"><Archive className="h-4 w-4" /></button>
-                </div>
-              </header>
-              <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-28 sm:pb-4" aria-live="polite">
-                {selected.status === 'waiting_agent' && <div className="flex items-center justify-center gap-2 border border-amber-300 bg-amber-50 p-2 text-xs font-semibold text-amber-900"><BellRing className="h-4 w-4" /> Transbordo humano solicitado</div>}
-                {messages.map((message) => <MessageBubble key={message.id} message={message} />)}
-                {customerTyping && <p className="text-xs text-slate-600">Cliente digitando…</p>}
-                <div ref={threadEndRef} />
-              </div>
-              <div className="inbox-mobile-input-bar border-t border-slate-300 bg-white p-3">
-                <div className="flex items-end gap-2">
-                  <label className="min-w-0 flex-1"><span className="sr-only">Mensagem para o cliente</span><textarea value={draft} onChange={(event) => { setDraft(event.target.value); setTyping(event.target.value.length > 0); }} onBlur={() => setTyping(false)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} rows={1} className="min-h-11 max-h-28 w-full resize-none border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-600" placeholder="Digite sua mensagem..." /></label>
-                  <button type="button" onClick={sendMessage} disabled={!draft.trim() || sending} className="flex h-11 w-11 shrink-0 items-center justify-center bg-blue-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50" aria-label="Enviar mensagem">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</button>
-                </div>
-              </div>
-            </>
-          ) : <div className="m-auto max-w-xs p-6 text-center text-slate-600"><CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-600" /><h2 className="font-bold text-slate-900">Selecione uma conversa</h2><p className="mt-1 text-sm">O histórico e os dados do lead aparecerão aqui.</p></div>}
-        </section>
-
-        <div className="hidden min-h-0 border-l border-slate-300 lg:block">{selected ? <LeadSidebarDetails session={selected} /> : null}</div>
-      </div>
-
-      {detailsOpen && selected && <div className="fixed inset-0 z-50 bg-slate-950/55 lg:hidden" onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><div role="dialog" aria-modal="true" aria-label="Detalhes do lead" className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-hidden border-t border-slate-300 bg-white pb-[env(safe-area-inset-bottom)]"><LeadSidebarDetails session={selected} onClose={() => setDetailsOpen(false)} /></div></div>}
-
-      <style jsx global>{`
-        @media (max-width: 1023px) {
-          .inbox-mobile-input-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 30;
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-            padding-left: max(16px, env(safe-area-inset-left));
-            padding-right: max(16px, env(safe-area-inset-right));
+        <style jsx global>{`
+          @media (max-width: 1023px) {
+            .inbox-mobile-input-bar {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              z-index: 30;
+              padding-bottom: max(12px, env(safe-area-inset-bottom));
+              padding-left: max(16px, env(safe-area-inset-left));
+              padding-right: max(16px, env(safe-area-inset-right));
+            }
           }
-        }
-      `}</style>
-    </main>
+        `}</style>
+      </div>
+    </div>
   );
 }

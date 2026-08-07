@@ -155,7 +155,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.classList.remove('light','darkmodern','monokai');document.documentElement.classList.add(t)}catch(e){}})()`,
           }}
         />
       </head>
@@ -177,6 +177,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
+          themes={['light', 'darkmodern', 'monokai']}
         >
           <UtmProvider>
             <Providers>

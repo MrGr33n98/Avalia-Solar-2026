@@ -38,7 +38,7 @@ import EnterpriseSidebar from '../components/EnterpriseSidebar';
 import DashboardToolbar from '../components/DashboardToolbar';
 import MobileDashboardQuickAccess from '../components/MobileDashboardQuickAccess';
 import ThemeToggle from '../components/ThemeToggle';
-import { Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
@@ -84,7 +84,6 @@ export default function IcpPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
 
   // Gating check - Pro or Enterprise required for advanced features
   // If plan is 'free', some sections are locked/gated.
@@ -104,7 +103,7 @@ export default function IcpPage() {
       
       // Clear success state after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
+    } catch {
       setSaveError(true);
       toast.error('Erro ao salvar as configurações do ICP.');
     } finally {
@@ -112,7 +111,7 @@ export default function IcpPage() {
     }
   };
 
-  const { form, onSubmit, isDirty, reset } = useIcpForm({
+  const { form, onSubmit, isDirty } = useIcpForm({
     initialData: profile,
     onSubmit: handleFormSubmit,
   });
@@ -156,7 +155,7 @@ export default function IcpPage() {
         auto_reject_out_of_icp: nextActive,
       });
       refetch();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao alterar status de ativação.');
     }
   };
@@ -193,13 +192,8 @@ export default function IcpPage() {
     toast.success('Configuração JSON exportada com sucesso.');
   };
 
-  const handleThemeChange = (theme: 'light' | 'dark') => {
-    setThemeMode(theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+  const handleThemeChange = (_theme: string) => {
+    // next-themes handles class mapping automatically
   };
 
   // Auth Redirects
@@ -235,7 +229,7 @@ export default function IcpPage() {
         visibleTabIds={visibleTabIds}
       />
 
-      <div className="flex-1 lg:pl-[var(--enterprise-sidebar-width,240px)] flex flex-col min-h-screen">
+      <div className="flex-1 pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200 flex flex-col min-h-screen">
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto w-full space-y-6 pb-24 md:pb-8">
           {/* Quick Access toolbar for Mobile */}
           <MobileDashboardQuickAccess
