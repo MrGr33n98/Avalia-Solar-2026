@@ -23,6 +23,13 @@ export default function ReviewDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { summary, reviews, leads, loading, refreshing, error, onRefresh } = useDashboardContext();
+  const activityData =
+    summary?.charts?.activity_30d?.map((point) => ({
+      date: point.date,
+      profile_views: point.profile_views ?? 0,
+      whatsapp_clicks: point.whatsapp_clicks ?? 0,
+      cta_clicks: point.cta_clicks ?? 0,
+    })) ?? undefined;
 
   const handleDeleteReview = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta avaliação?')) return;
@@ -48,7 +55,7 @@ export default function ReviewDashboardPage() {
       loading={loading}
       refreshing={refreshing}
       error={error}
-      activityChart={<ActivityChart data={summary?.charts?.activity_30d ?? undefined} loading={loading} />}
+      activityChart={<ActivityChart data={activityData} loading={loading} />}
       onRefresh={onRefresh}
       onDeleteReview={handleDeleteReview}
       onEditReview={(id) => {
