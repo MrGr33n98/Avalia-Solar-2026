@@ -144,6 +144,15 @@ const ANALYTICS_CACHE_TTL_MS = 10 * 60 * 1000;
 const ANALYTICS_UNAUTH_TTL_MS = 60 * 1000;
 const analyticsAvailability = new Map<number, AnalyticsAvailability>();
 
+export const invalidateAnalyticsAvailability = (companyId?: number): void => {
+  if (companyId === undefined) {
+    analyticsAvailability.clear();
+    return;
+  }
+
+  analyticsAvailability.delete(companyId);
+};
+
 const getAvailability = (companyId: number): AnalyticsAvailability | null => {
   const cached = analyticsAvailability.get(companyId);
   if (!cached) return null;
@@ -519,26 +528,6 @@ export const analyticsApi = {
 // =======================
 // Helper Functions
 // =======================
-
-function generateMockHistoricalData(days: number): HistoricalData[] {
-  const data: HistoricalData[] = [];
-  const today = new Date();
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-
-    data.push({
-      date: date.toISOString().split('T')[0],
-      views: Math.floor(80 + Math.random() * 100 + (days - i) * 2),
-      clicks: Math.floor(10 + Math.random() * 30 + (days - i) * 0.5),
-      leads: Math.floor(2 + Math.random() * 8),
-      conversion: Number((5 + Math.random() * 10).toFixed(1)),
-    });
-  }
-
-  return data;
-}
 
 function defaultAnalyticsSettings(): CompanyAnalyticsSettings {
   return {

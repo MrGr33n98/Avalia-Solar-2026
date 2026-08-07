@@ -63,7 +63,7 @@ interface Metrics {
     avgTimeOnPage: number;
     bounceRate: number;
     pagesPerSession: number;
-  };
+  } | null;
   sources: {
     source: string;
     visits: number;
@@ -124,7 +124,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
   const metrics: Metrics = {
     profileViews: {
       total: analyticsData?.views_30d || 0,
-      trend: analyticsData?.views_trend || 0,
+      trend: analyticsData?.views_trend ?? null,
       unique: analyticsData?.unique_views_30d || 0,
       returning: analyticsData?.returning_views_30d || 0,
     },
@@ -138,7 +138,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         { type: 'website', count: analyticsData?.website_clicks_30d || 0, label: 'Website' },
       ],
     },
-    engagement: analyticsData?.engagement || { avgTimeOnPage: 0, bounceRate: 0, pagesPerSession: 0 },
+    engagement: analyticsData?.engagement ?? null,
     sources: analyticsData?.traffic_sources || [],
   };
 
@@ -252,10 +252,10 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         />
         <MetricCard 
           title="Traffic Friction: Rejeição"
-          value={metrics.engagement ? `${metrics.engagement.bounceRate}%` : '0%'}
+          value={metrics.engagement ? `${metrics.engagement.bounceRate}%` : '—'}
           icon={ArrowUpRight}
-          change={metrics.engagement ? (metrics.engagement.bounceRate < 50 ? 'Optimum' : 'Warning') : 'Loading'}
-          changeType={metrics.engagement?.bounceRate < 50 ? 'positive' : 'negative'}
+          change={metrics.engagement ? (metrics.engagement.bounceRate < 50 ? 'Optimum' : 'Warning') : undefined}
+          changeType={metrics.engagement ? (metrics.engagement.bounceRate < 50 ? 'positive' : 'negative') : 'neutral'}
           color="brand-yellow"
           delay={0.4}
           trend={null}

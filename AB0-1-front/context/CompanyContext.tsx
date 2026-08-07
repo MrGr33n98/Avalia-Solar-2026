@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { companiesApi, companyAccessApi, hasPossibleAuthSession, Company } from '@/lib/api';
+import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
 interface CompanyContextType {
   activeCompany: Company | null;
@@ -72,11 +73,15 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     if (activeCompany?.id === company.id) return;
 
     const previous = activeCompany;
+    invalidateAnalyticsAvailability(previous?.id);
+    invalidateAnalyticsAvailability(company.id);
     setActiveCompany(company);
     try {
       await companyAccessApi.selectActiveCompany(company.id);
     } catch (error) {
       console.warn('[CompanyContext] Failed to persist active company selection', error);
+      invalidateAnalyticsAvailability(company.id);
+      invalidateAnalyticsAvailability(previous?.id);
       setActiveCompany(previous ?? null);
       throw error;
     }

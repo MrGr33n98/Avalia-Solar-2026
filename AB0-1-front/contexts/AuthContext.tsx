@@ -19,6 +19,7 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
 import { resolvePostAuthDestination } from '@/lib/auth/post-auth-destination';
 import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
+import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return userData || null;
     } catch (authError) {
       if (requestId === authRequestId.current) {
+        invalidateAnalyticsAvailability();
         setUser(null);
         setError(getApiErrorMessage(authError, 'Falha ao validar sessao.'));
         clearAuthSessionHint();
@@ -214,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     nextAuthRequest();
+    invalidateAnalyticsAvailability();
     track('Logout Performed');
     reset();
     await authApi.logout();
