@@ -391,7 +391,7 @@ export default function PricingPage() {
             <div className="relative w-full min-h-[320px] sm:min-h-[400px] flex items-center justify-center lg:justify-end">
               <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
                 {/* Notebook CSS Mockup */}
-                <div className="relative w-[320px] sm:w-[420px] h-[200px] sm:h-[260px] rounded-2xl border border-slate-350 bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
+                <div className="relative w-[min(320px,100%)] sm:w-[420px] h-[200px] sm:h-[260px] rounded-2xl border border-slate-350 bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
                   <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
                     <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
                       <span className="h-2 w-2 rounded-full bg-red-400" />
@@ -415,7 +415,7 @@ export default function PricingPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[360px] sm:w-[460px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[min(360px,100%)] sm:w-[460px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
                 </div>
 
                 {/* Smartphone CSS Mockup */}

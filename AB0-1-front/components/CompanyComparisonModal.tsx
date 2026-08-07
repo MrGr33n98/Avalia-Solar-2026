@@ -219,9 +219,9 @@ export default function CompanyComparisonModal({
                   'Empresas lado a lado'
                 )}
               </p>
-              <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white shadow-none">
-                <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth scrollbar-none">
-                  <div className="mobile-comparison-table flex w-full min-w-[530px] flex-col divide-y divide-slate-100 md:min-w-[960px]">
+              <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white shadow-none max-w-full">
+                <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth scrollbar-none max-w-full">
+                  <div className="mobile-comparison-table flex w-full min-w-[530px] flex-col divide-y divide-slate-100 md:min-w-[960px] max-w-full">
                     
                     {/* Header Row: Company Logos & Names */}
                     <div className="sticky top-0 z-30 grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">

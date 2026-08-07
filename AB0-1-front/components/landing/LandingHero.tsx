@@ -58,8 +58,8 @@ export default function LandingHero(props: LandingHeroProps) {
        */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-[max(0px,calc((100vw-1320px)/2))] hidden h-full w-[50%] lg:block"
-        style={{ zIndex: 1 }}
+        className="pointer-events-none absolute bottom-0 right-0 hidden h-full w-[50%] lg:block"
+        style={{ zIndex: 1, maxWidth: 'calc((100% - 1320px) / 2 + 50%)' }}
       >
         <Image
           src="/images/lp-avalia-solar-image.webp"

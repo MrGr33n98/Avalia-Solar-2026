@@ -1494,11 +1494,11 @@ export const reviewDashboardApi = {
 
 export interface CompanyAnalyticsOverview {
   views_30d: number;
-  views_trend: number;
+  views_trend?: number | null;
   unique_views_30d: number;
   returning_views_30d: number;
   cta_clicks_30d: number;
-  cta_clicks_trend: number;
+  cta_clicks_trend?: number | null;
   whatsapp_clicks_30d: number;
   email_clicks_30d: number;
   phone_clicks_30d: number;

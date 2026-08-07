@@ -401,7 +401,7 @@ export default function EnterpriseSidebar({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="left"
-          className="w-[min(320px,calc(100vw-24px))] p-0 border-r border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] sm:max-w-[320px]"
+          className="w-[min(320px,calc(100%-24px))] p-0 border-r border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] sm:max-w-[320px]"
         >
           <SheetTitle className="sr-only">Navegação do dashboard</SheetTitle>
           <SheetDescription className="sr-only">

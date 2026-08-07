@@ -211,13 +211,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
 
         if (summaryRes.status === 'fulfilled') {
           const apiSummary = summaryRes.value;
-          setSummary({
-            ...emptySummary(),
-            ...apiSummary,
-          } as ReviewDashboardSummary);
+          setSummary(apiSummary as ReviewDashboardSummary);
         } else {
           console.warn('[ReviewDashboard] Summary unavailable', summaryRes.reason);
-          setSummary(emptySummary());
+          setSummary(null);
           failures.push('summary');
         }
 

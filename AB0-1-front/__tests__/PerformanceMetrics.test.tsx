@@ -74,8 +74,22 @@ describe('PerformanceMetrics - Real Data Integration', () => {
 
     render(<PerformanceMetrics companyId="123" />);
 
-    expect(screen.getByText(/CRITICAL DATA CORRUPTION/)).toBeInTheDocument();
+    expect(screen.getByText(/Não foi possível carregar os dados de analytics/)).toBeInTheDocument();
     expect(screen.getByText(/Failed to load analytics/)).toBeInTheDocument();
+  });
+
+  it('does not display a trend when comparison data is unavailable', () => {
+    useCompanyAnalytics.mockReturnValue({
+      data: { views_30d: 0, cta_clicks_30d: 0, views_trend: null, cta_clicks_trend: null },
+      loading: false,
+      error: null,
+      refresh: jest.fn(),
+    });
+
+    render(<PerformanceMetrics companyId="123" />);
+
+    expect(screen.queryByText(/Ratio/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
   it('calculates conversion rate from real data', () => {

@@ -37,10 +37,10 @@ export default function Hero() {
           <div
             className="mt-8 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both"
           >
-            <div className="relative">
+            <div className="relative max-w-full">
               <SearchBar placeholder="Busque empresas, produtos ou serviços..." />
-              <div className="mt-4 overflow-x-auto no-scrollbar">
-                <div className="inline-flex items-center gap-2 px-2 whitespace-nowrap snap-x snap-mandatory">
+              <div className="mt-4 overflow-x-auto no-scrollbar max-w-full">
+                <div className="inline-flex items-center gap-2 px-2 whitespace-nowrap snap-x snap-mandatory min-w-0">
                   {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map((tag) => (
                     <span
                       key={tag}

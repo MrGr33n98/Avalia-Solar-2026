@@ -103,8 +103,8 @@ export default function Navbar() {
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)]">
-      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-2 px-3 sm:px-4 xl:h-[60px] xl:gap-4 xl:px-5">
+    <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">
+      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-2 px-3 sm:px-4 xl:h-[60px] xl:gap-4 xl:px-5 min-w-0">
         <Link
           href="/"
           aria-label="Home Avalia Solar"

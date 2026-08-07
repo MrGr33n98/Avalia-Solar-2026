@@ -35,9 +35,9 @@ type FooterLink = {
 
 export default function Footer({ compact: _compact = false }: FooterProps) {
   return (
-    <footer className="border-t border-white/10 bg-[#020617] text-white" aria-label="Rodapé">
+    <footer className="border-t border-white/10 bg-[#020617] text-white max-w-full overflow-x-hidden" aria-label="Rodapé">
       <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-0 lg:grid-cols-[1.35fr_repeat(5,minmax(0,1fr))] lg:gap-8">
+        <div className="grid gap-0 min-w-0 lg:grid-cols-[1.35fr_repeat(5,minmax(0,1fr))] lg:gap-8">
           <FooterBrand />
 
           <FooterSection

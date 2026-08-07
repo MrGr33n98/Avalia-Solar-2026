@@ -12,7 +12,7 @@ interface MetricCardProps {
   icon: LucideIcon;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
-  trend?: number[];
+  trend?: number[] | null;
   color?: string;
   delay?: number;
   description?: string;
@@ -181,7 +181,7 @@ interface MetricsGridProps {
     icon: LucideIcon;
     change?: string;
     changeType?: 'positive' | 'negative' | 'neutral';
-    trend?: number[];
+    trend?: number[] | null;
     color?: string;
   }>;
 }

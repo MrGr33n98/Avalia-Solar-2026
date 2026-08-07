@@ -50,13 +50,13 @@ interface PerformanceMetricsProps {
 interface Metrics {
   profileViews: {
     total: number;
-    trend: number;
+    trend: number | null;
     unique: number;
     returning: number;
   };
   ctaClicks: {
     total: number;
-    trend: number;
+    trend: number | null;
     byType: { type: string; count: number; label: string }[];
   };
   engagement: {
@@ -130,7 +130,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
     },
     ctaClicks: {
       total: analyticsData?.cta_clicks_30d || 0,
-      trend: analyticsData?.cta_clicks_trend || 0,
+      trend: analyticsData?.cta_clicks_trend ?? null,
       byType: [
         { type: 'whatsapp', count: analyticsData?.whatsapp_clicks_30d || 0, label: 'WhatsApp' },
         { type: 'email', count: analyticsData?.email_clicks_30d || 0, label: 'Email' },
@@ -171,9 +171,9 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         <Alert variant="destructive" className="rounded-[2rem] border-none clay-precision bg-red-500/10 text-red-500 p-8">
           <AlertCircle className="h-8 w-8 mb-4" />
           <AlertDescription className="text-sm font-black uppercase tracking-[0.2em] leading-relaxed">
-            CRITICAL DATA CORRUPTION: {error}
+            Não foi possível carregar os dados de analytics: {error}
             <br />
-            <span className="opacity-60 text-[10px]">FAILED TO SYNCHRONIZE WITH ANALYTICS ENGINE</span>
+            <span className="opacity-60 text-[10px]">Tente novamente em instantes.</span>
           </AlertDescription>
         </Alert>
       </motion.div>
@@ -224,21 +224,21 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
           title="Telemetry: Profile Views"
           value={metrics.profileViews.total}
           icon={Eye}
-          change={`${metrics.profileViews.trend > 0 ? '+' : ''}${metrics.profileViews.trend}%`}
-          changeType={metrics.profileViews.trend > 0 ? 'positive' : 'negative'}
+          change={metrics.profileViews.trend === null ? undefined : `${metrics.profileViews.trend > 0 ? '+' : ''}${metrics.profileViews.trend}%`}
+          changeType={metrics.profileViews.trend === null ? 'neutral' : metrics.profileViews.trend > 0 ? 'positive' : 'negative'}
           color="brand-blue"
           delay={0.1}
-          trend={[30, 45, 35, 60, 50, 75, 45, 80, 95]}
+          trend={null}
         />
         <MetricCard 
           title="Active Intent: CTA Clicks"
           value={metrics.ctaClicks.total}
           icon={MousePointerClick}
-          change={`${((metrics.ctaClicks.total / metrics.profileViews.total || 0) * 100).toFixed(1)}% Ratio`}
+          change={metrics.profileViews.total > 0 ? `${((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}% Ratio` : undefined}
           changeType="neutral"
           color="brand-cyan"
           delay={0.2}
-          trend={[10, 25, 15, 40, 30, 55, 25, 60, 85]}
+          trend={null}
         />
         <MetricCard 
           title="Institution Retention: Sessão"
@@ -248,7 +248,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
           changeType="positive"
           color="brand-green"
           delay={0.3}
-          trend={[40, 35, 45, 30, 50, 45, 60, 55, 70]}
+          trend={null}
         />
         <MetricCard 
           title="Traffic Friction: Rejeição"
@@ -258,7 +258,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
           changeType={metrics.engagement?.bounceRate < 50 ? 'positive' : 'negative'}
           color="brand-yellow"
           delay={0.4}
-          trend={[60, 55, 50, 45, 40, 45, 40, 35, 30]}
+          trend={null}
         />
       </div>
 

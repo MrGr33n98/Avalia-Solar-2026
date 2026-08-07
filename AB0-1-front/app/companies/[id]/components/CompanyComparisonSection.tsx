@@ -114,8 +114,8 @@ export default function CompanyComparisonSection({
           )}
         </div>
 
-        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-x-auto md:overflow-hidden scrollbar-hide">
-          <div className="min-w-[800px] md:min-w-0">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-x-auto md:overflow-hidden scrollbar-hide max-w-full">
+          <div className="min-w-[800px] md:min-w-0 w-full max-w-full">
             {/* Header Row */}
             <div className="grid grid-cols-4">
               <div className="p-10 flex flex-col justify-end bg-slate-50/40 border-r border-slate-100">

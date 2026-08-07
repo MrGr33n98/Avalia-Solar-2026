@@ -19,6 +19,7 @@ export default function AppContentFrame({ children }: AppContentFrameProps) {
           ? 'pb-0'
           : 'pb-[calc(5.5rem+var(--safe-area-inset-bottom))] md:pb-0'
       }
+      style={{ width: '100%', maxWidth: '100%', overflowX: 'clip' }}
     >
       {children}
     </div>

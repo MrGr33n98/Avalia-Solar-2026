@@ -362,16 +362,16 @@ export function ReputationDashboard({
   ).length;
 
   // Real values from the API summary
-  const helpfulVotes = summary?.impact?.helpful_votes || 0;
-  const impactedPeople = summary?.impact?.impacted_people || 0;
-  const greenScore = summary?.gamification?.green_score || 0;
-  const rankingPosition = summary?.gamification?.regional_ranking || 1;
+  const helpfulVotes = summary?.impact?.helpful_votes ?? null;
+  const impactedPeople = summary?.impact?.impacted_people ?? null;
+  const greenScore = summary?.gamification?.green_score ?? null;
+  const rankingPosition = summary?.gamification?.regional_ranking ?? null;
   const recommendationsList = summary?.recommendations || [];
   const recentActivitiesList = summary?.recent_activities || [];
 
   const companyReplies = rows.filter((row) => row.reply || row.status.includes('Respond'));
-  const profileViews =
-    summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) || 0;
+  const profileViews = summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) ?? null;
+  const responseRate = reviews.length > 0 ? Math.round((companyReplies.length / reviews.length) * 100) : null;
 
   const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
   const hasEVSolution = solutions.some((s) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
@@ -426,7 +426,7 @@ export function ReputationDashboard({
     },
     {
       label: 'Votos úteis',
-      value: `${helpfulVotes}`,
+      value: helpfulVotes === null ? '—' : `${helpfulVotes}`,
       suffix: 'votos',
       helper: 'recebidos',
       icon: ThumbsUp,
@@ -444,7 +444,7 @@ export function ReputationDashboard({
       label: 'Comentários',
       value: `${commentsCount}`,
       suffix: 'feitos',
-      helper: `ranking ${rankingPosition}º`,
+      helper: rankingPosition === null ? 'ranking indisponível' : `ranking ${rankingPosition}º`,
       icon: MessageCircle,
       iconClass: 'bg-blue-100 text-blue-700',
     },
@@ -681,14 +681,14 @@ export function ReputationDashboard({
                     <Eye className="h-4 w-4 text-slate-400" />
                     Visualizações
                   </span>
-                  <span className="font-bold text-slate-900">{profileViews || 428}</span>
+                  <span className="font-bold text-slate-900">{profileViews ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-slate-100">
                   <span className="flex items-center gap-2 text-sm text-slate-600">
                     <Star className="h-4 w-4 text-slate-400" />
                     Avaliações
                   </span>
-                  <span className="font-bold text-slate-900">{reviews.length || 12}</span>
+                  <span className="font-bold text-slate-900">{reviews.length}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-slate-100">
                   <span className="flex items-center gap-2 text-sm text-slate-600">
@@ -703,7 +703,7 @@ export function ReputationDashboard({
                     Taxa de resposta
                   </span>
                   <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">
-                    92%
+                    {responseRate === null ? '—' : `${responseRate}%`}
                   </span>
                 </div>
               </CardContent>
