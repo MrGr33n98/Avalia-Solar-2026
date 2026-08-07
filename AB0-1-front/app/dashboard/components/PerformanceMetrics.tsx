@@ -242,10 +242,14 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         />
         <MetricCard 
           title="Institution Retention: Sessão"
-          value={metrics.engagement ? formatTime(metrics.engagement.avgTimeOnPage) : '0:00'}
+          value={metrics.engagement ? formatTime(metrics.engagement.avgTimeOnPage) : '—'}
           icon={Clock}
-          change={`${metrics.engagement?.pagesPerSession.toFixed(1) || '0.0'} P/S`}
-          changeType="positive"
+          change={
+            metrics.engagement
+              ? `${metrics.engagement.pagesPerSession.toFixed(1)} P/S`
+              : undefined
+          }
+          changeType={metrics.engagement ? 'positive' : 'neutral'}
           color="brand-green"
           delay={0.3}
           trend={null}
