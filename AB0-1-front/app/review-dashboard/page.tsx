@@ -48,7 +48,7 @@ export default function ReviewDashboardPage() {
       loading={loading}
       refreshing={refreshing}
       error={error}
-      activityChart={<ActivityChart data={summary?.charts?.activity_30d} loading={loading} />}
+      activityChart={<ActivityChart data={summary?.charts?.activity_30d ?? undefined} loading={loading} />}
       onRefresh={onRefresh}
       onDeleteReview={handleDeleteReview}
       onEditReview={(id) => {
