@@ -27,14 +27,14 @@ import { canAccessReviewDashboard } from '@/lib/auth/role-access';
 export interface ReviewDashboardSummary {
   kpis?: {
     estimated_savings?: number;
-    quotes_total: number;
-    quotes_open: number;
-    quotes_replied: number;
-    reviews_published: number;
+    quotes_total: number | null;
+    quotes_open: number | null;
+    quotes_replied: number | null;
+    reviews_published: number | null;
   };
   gamification?: {
-    green_score: number;
-    regional_ranking: number;
+    green_score: number | null;
+    regional_ranking: number | null;
     achievements: Array<{
       title: string;
       subtitle: string;
@@ -42,8 +42,8 @@ export interface ReviewDashboardSummary {
     }>;
   };
   impact?: {
-    helpful_votes: number;
-    impacted_people: number;
+    helpful_votes: number | null;
+    impacted_people: number | null;
   };
   recommendations?: Array<{
     name: string;
@@ -62,10 +62,10 @@ export interface ReviewDashboardSummary {
   charts?: {
     activity_30d?: Array<{
       date: string;
-      profile_views: number;
-      whatsapp_clicks: number;
-      cta_clicks: number;
-    }>;
+      profile_views: number | null;
+      whatsapp_clicks: number | null;
+      cta_clicks: number | null;
+    }> | null;
   };
   sustainable_journey?: Array<{
     id: string;

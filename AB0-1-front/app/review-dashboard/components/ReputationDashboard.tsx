@@ -370,7 +370,10 @@ export function ReputationDashboard({
   const recentActivitiesList = summary?.recent_activities || [];
 
   const companyReplies = rows.filter((row) => row.reply || row.status.includes('Respond'));
-  const profileViews = summary?.charts?.activity_30d?.reduce((total, point) => total + point.profile_views, 0) ?? null;
+  const profileViews = summary?.charts?.activity_30d?.reduce(
+    (total, point) => total + (point.profile_views ?? 0),
+    0
+  ) ?? null;
   const responseRate = reviews.length > 0 ? Math.round((companyReplies.length / reviews.length) * 100) : null;
 
   const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
@@ -407,12 +410,24 @@ export function ReputationDashboard({
 
   const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
 
+  const safeGreenScore = greenScore ?? 0;
+  const safeHelpfulVotes = helpfulVotes ?? 0;
+  const safeImpactedPeople = impactedPeople ?? 0;
+  const safeRankingPosition = rankingPosition ?? null;
+
   const kpis = [
     {
       label: 'Green Score',
-      value: `${greenScore}`,
+      value: greenScore === null ? '—' : `${safeGreenScore}`,
       suffix: 'score',
-      helper: greenScore >= 760 ? 'Eco Expert' : greenScore >= 650 ? 'Green Pro' : 'Em evolução',
+      helper:
+        greenScore === null
+          ? 'dados indisponíveis'
+          : safeGreenScore >= 760
+            ? 'Eco Expert'
+            : safeGreenScore >= 650
+              ? 'Green Pro'
+              : 'Em evolução',
       icon: Leaf,
       iconClass: 'bg-green-100 text-green-700',
     },
@@ -426,7 +441,7 @@ export function ReputationDashboard({
     },
     {
       label: 'Votos úteis',
-      value: helpfulVotes === null ? '—' : `${helpfulVotes}`,
+      value: helpfulVotes === null ? '—' : `${safeHelpfulVotes}`,
       suffix: 'votos',
       helper: 'recebidos',
       icon: ThumbsUp,
@@ -434,7 +449,7 @@ export function ReputationDashboard({
     },
     {
       label: 'Impactados',
-      value: impactedPeople.toLocaleString('pt-BR'),
+      value: impactedPeople === null ? '—' : safeImpactedPeople.toLocaleString('pt-BR'),
       suffix: 'pessoas',
       helper: 'pessoas',
       icon: Users,
@@ -444,7 +459,7 @@ export function ReputationDashboard({
       label: 'Comentários',
       value: `${commentsCount}`,
       suffix: 'feitos',
-      helper: rankingPosition === null ? 'ranking indisponível' : `ranking ${rankingPosition}º`,
+      helper: safeRankingPosition === null ? 'ranking indisponível' : `ranking ${safeRankingPosition}º`,
       icon: MessageCircle,
       iconClass: 'bg-blue-100 text-blue-700',
     },
@@ -1377,18 +1392,19 @@ function GreenScoreCompact({
   greenScore,
   rankingPosition,
 }: {
-  greenScore: number;
-  rankingPosition: number;
+  greenScore: number | null;
+  rankingPosition: number | null;
 }) {
+  const safeScore = greenScore ?? 0;
   const level =
-    greenScore >= 900
+    safeScore >= 900
       ? 'Platinum'
-      : greenScore >= 760
+      : safeScore >= 760
         ? 'Gold'
-        : greenScore >= 650
+        : safeScore >= 650
           ? 'Green Pro'
           : 'Em evolução';
-  const progress = Math.min(100, Math.max(0, Math.round((greenScore / 900) * 100)));
+  const progress = Math.min(100, Math.max(0, Math.round((safeScore / 900) * 100)));
 
   return (
     <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
@@ -1404,15 +1420,19 @@ function GreenScoreCompact({
                   Green Score
                 </p>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <p className="text-3xl font-semibold leading-none text-slate-950">{greenScore}</p>
-                  <span className="text-xs font-medium text-emerald-700">{level}</span>
+                  <p className="text-3xl font-semibold leading-none text-slate-950">
+                    {greenScore === null ? '—' : safeScore}
+                  </p>
+                  <span className="text-xs font-medium text-emerald-700">
+                    {greenScore === null ? 'dados indisponíveis' : level}
+                  </span>
                 </div>
               </div>
               <Badge
                 variant="outline"
                 className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700"
               >
-                {rankingPosition}º
+                {rankingPosition === null ? '—' : `${rankingPosition}º`}
               </Badge>
             </div>
             <div className="mt-3 flex items-center gap-3">
@@ -1439,7 +1459,7 @@ function ReviewsPanel({
   rows: CompanyRow[];
   reviews: Review[];
   loading: boolean;
-  helpfulVotes: number;
+  helpfulVotes: number | null;
   commentsCount: number;
   onOpenReply: (row: CompanyRow) => void;
   onEdit: (id: string) => void;
@@ -1600,12 +1620,13 @@ function ProfileSummaryPanel({
   location,
 }: {
   user: User & { city?: string | null; state?: string | null; avatar_url?: string | null };
-  greenScore: number;
+  greenScore: number | null;
   profileCompletion: number;
   location: string;
 }) {
+  const safeScore = greenScore ?? 0;
   const level =
-    greenScore >= 760 ? 'Avançado' : greenScore >= 650 ? 'Intermediário' : 'Em evolução';
+    safeScore >= 760 ? 'Avançado' : safeScore >= 650 ? 'Intermediário' : 'Em evolução';
   const rows = [
     ['Nome', user.name],
     ['Email', user.email],
@@ -1672,7 +1693,7 @@ function ProfileSummaryPanel({
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-slate-950">{user.name}</p>
               <p className="mt-1 text-xs font-normal text-slate-500">
-                Green Score {greenScore} · Perfil {profileCompletion}% completo
+                Green Score {greenScore === null ? '—' : safeScore} · Perfil {profileCompletion}% completo
               </p>
               <Progress value={profileCompletion} className="mt-3 h-2 bg-slate-200" />
             </div>
@@ -1933,10 +1954,10 @@ function CommunityImpact({
   impactedPeople,
   activityChart,
 }: {
-  views: number;
+  views: number | null;
   requests: number;
   conversions: number;
-  impactedPeople: number;
+  impactedPeople: number | null;
   activityChart: ReactNode;
 }) {
   return (
@@ -1960,7 +1981,7 @@ function CommunityImpact({
             >
               <p className="truncate text-[11px] font-medium text-slate-500 md:text-xs">{label}</p>
               <p className="mt-1 text-lg font-semibold text-slate-950 md:mt-2 md:text-2xl">
-                {Number(value).toLocaleString('pt-BR')}
+                {value === null ? '—' : Number(value).toLocaleString('pt-BR')}
               </p>
             </div>
           ))}
@@ -2042,12 +2063,13 @@ function ActivityFeed({
   );
 }
 
-function GreenHouseCertification({ greenScore }: { greenScore: number }) {
+function GreenHouseCertification({ greenScore }: { greenScore: number | null }) {
+  const safeScore = greenScore ?? 0;
   const tiers = [
-    ['Bronze', 'Energia Solar', greenScore >= 550, Flame],
-    ['Silver', 'Solar + EV', greenScore >= 650, ShieldCheck],
-    ['Gold', 'Solar + EV + Bateria', greenScore >= 760, Sun],
-    ['Platinum', 'Completo', greenScore >= 900, Trophy],
+    ['Bronze', 'Energia Solar', safeScore >= 550, Flame],
+    ['Silver', 'Solar + EV', safeScore >= 650, ShieldCheck],
+    ['Gold', 'Solar + EV + Bateria', safeScore >= 760, Sun],
+    ['Platinum', 'Completo', safeScore >= 900, Trophy],
   ] as const;
   return (
     <Card className="rounded-[18px] border-emerald-100 bg-emerald-50/70 shadow-none md:rounded-[20px] md:shadow-sm">

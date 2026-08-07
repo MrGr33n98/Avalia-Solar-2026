@@ -199,8 +199,8 @@ export function getReviewerLevel(points: number): { label: string; nextThreshold
 export function deriveAchievementStatuses(params: {
   reviewsCount: number;
   profileCompletionPercent: number;
-  helpfulVotes: number;
-  greenScore: number;
+  helpfulVotes: number | null;
+  greenScore: number | null;
   hasSolarReview: boolean;
   hasMobilityReview: boolean;
   hasEVSolution: boolean;
@@ -209,13 +209,16 @@ export function deriveAchievementStatuses(params: {
   const {
     reviewsCount,
     profileCompletionPercent,
-    helpfulVotes,
-    greenScore,
+    helpfulVotes: rawHelpfulVotes,
+    greenScore: rawGreenScore,
     hasSolarReview,
     hasMobilityReview,
     hasEVSolution,
     isLinkedInVerified,
   } = params;
+
+  const helpfulVotes = rawHelpfulVotes ?? 0;
+  const greenScore = rawGreenScore ?? 0;
 
   return [
     {
