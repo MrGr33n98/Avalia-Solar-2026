@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -232,8 +232,8 @@ export default function EnterpriseSidebar({
   const [isCompactViewport, setIsCompactViewport] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([
-    'analytics-group',
-    'reviews-group',
+    'overview-group',
+    'reputation-group',
     'product-edit-group',
   ]);
 
@@ -299,15 +299,30 @@ export default function EnterpriseSidebar({
 
     return (
       <div className="flex h-full flex-col bg-[hsl(var(--dashboard-rail))] pb-[var(--safe-area-inset-bottom)] text-white">
-        <div className="flex min-h-[72px] items-center justify-center border-b border-white/10 px-3 py-3">
+        <div className="flex min-h-[72px] items-center justify-between gap-2 border-b border-white/10 px-3 py-3">
           <div
             className={cn(
-              'overflow-hidden rounded-md bg-white px-1',
+              'overflow-hidden rounded-md bg-white px-1 transition-[width] duration-200',
               !isDrawer && (isCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
             )}
           >
             <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
           </div>
+          {!isDrawer && !isMobile && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsCollapsed((prev) => !prev)}
+              aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+              className="h-9 w-9 shrink-0 rounded-lg p-0 text-slate-300 hover:bg-white/10 hover:text-white"
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
@@ -364,33 +379,7 @@ export default function EnterpriseSidebar({
             </span>
           </Button>
 
-          {!isDrawer && !isMobile && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsCollapsed((prev) => !prev)}
-              aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-              className={cn(
-                'w-full h-11 rounded-lg justify-start px-3 text-slate-300 hover:bg-white/10 hover:text-white mt-1',
-                (isCollapsed || isCompactViewport) && 'h-14 flex-col justify-center gap-1 px-1'
-              )}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-              <span
-                className={cn(
-                  'font-medium whitespace-nowrap',
-                  isCompactViewport ? 'ml-0 text-[10px]' : 'ml-3 text-sm',
-                  isCollapsed && 'hidden'
-                )}
-              >
-                Recolher menu
-              </span>
-            </Button>
-          )}
+
         </div>
       </div>
     );
