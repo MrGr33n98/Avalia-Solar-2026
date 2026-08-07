@@ -48,7 +48,7 @@ export default function DashboardToolbar({
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
-          <BrandLogo className="h-7 w-auto max-w-[148px] min-[360px]:max-w-[176px]" />
+          <BrandLogo className="h-7 w-auto max-w-[148px] min-[360px]:max-w-[176px] md:hidden" />
           <button
             type="button"
             onClick={() => onTabChange('overview')}
@@ -72,6 +72,11 @@ export default function DashboardToolbar({
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {themeToggle && (
+            <div className="hidden md:flex items-center mr-2">
+              {themeToggle}
+            </div>
+          )}
           <button
             type="button"
             className="hidden h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-[hsl(var(--dashboard-muted))] hover:bg-[hsl(var(--dashboard-surface))] md:inline-flex"
