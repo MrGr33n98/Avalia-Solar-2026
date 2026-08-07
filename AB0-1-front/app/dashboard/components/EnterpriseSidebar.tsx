@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -62,9 +62,7 @@ function SidebarTree({
   openGroups: string[];
   setOpenGroups: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
-  const renderedItems = isCompactRail
-    ? items.flatMap((item) => (item.children?.length ? item.children : [item]))
-    : items;
+  const renderedItems = items;
 
   return (
     <nav className={cn('space-y-2', isCompactRail && 'space-y-1')}>
@@ -108,7 +106,7 @@ function SidebarTree({
                 <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
                 <span
                   className={cn(
-                    'min-w-0 truncate font-medium whitespace-nowrap',
+                    'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
                     isCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
                     isCollapsed && 'hidden'
                   )}
@@ -118,14 +116,14 @@ function SidebarTree({
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 transition-transform',
-                    (isCollapsed || isCompactRail) && 'hidden',
+                    isCollapsed && 'hidden',
                     isOpen && 'rotate-180'
                   )}
                 />
               </Button>
 
-              {!isCollapsed && !isCompactRail && isOpen && (
-                <div className="ml-4 space-y-1 border-l border-white/15 pl-3">
+              {!isCollapsed && isOpen && (
+                <div className={cn("space-y-1 border-white/15", isCompactRail ? "ml-0 pl-0 pt-1 border-l-0" : "ml-4 pl-3 border-l")}>
                   {item.children.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
@@ -142,16 +140,17 @@ function SidebarTree({
                         aria-label={child.label}
                         aria-current={isChildActive ? 'page' : undefined}
                         className={cn(
-                          'w-full h-10 rounded-lg justify-start px-3 text-left transition-all',
+                          'w-full rounded-lg justify-start text-left transition-all',
                           isChildActive
                             ? 'bg-primary/5 text-primary border border-primary/10'
-                            : 'text-slate-200 hover:text-white hover:bg-white/10'
+                            : 'text-slate-200 hover:text-white hover:bg-white/10',
+                          isCompactRail ? 'h-14 flex-col justify-center gap-1 px-1' : 'h-10 px-3'
                         )}
                       >
-                        <ChildIcon className="h-4 w-4 shrink-0" />
-                        <span className="ml-3 flex-1 truncate text-sm">{child.label}</span>
+                        <ChildIcon className={cn("shrink-0", isCompactRail ? "h-5 w-5" : "h-4 w-4")} />
+                        <span className={cn("truncate tabular-nums", isCompactRail ? "w-full text-center text-[10px]" : "ml-3 flex-1 text-sm")}>{child.label}</span>
                         {childBadge > 0 && (
-                          <Badge className="ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
+                          <Badge className={cn("ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]", isCompactRail && "hidden")}>
                             {childBadge}
                           </Badge>
                         )}
@@ -196,7 +195,7 @@ function SidebarTree({
             <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
               className={cn(
-                'min-w-0 truncate font-medium whitespace-nowrap',
+                'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
                 isCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
                 isCollapsed && 'hidden'
               )}
@@ -291,64 +290,111 @@ export default function EnterpriseSidebar({
     onClose();
   };
 
-  const sidebarContent = (isDrawer = false) => (
-    <div className="flex h-full flex-col bg-[hsl(var(--dashboard-rail))] pb-[var(--safe-area-inset-bottom)] text-white">
-      <div className="flex min-h-[72px] items-center justify-center border-b border-white/10 px-3 py-3">
-        <div
-          className={cn(
-            'overflow-hidden rounded-md bg-white px-1',
-            !isDrawer && (isCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
-          )}
-        >
-          <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
+  const sidebarContent = (isDrawer = false) => {
+    const isSidebarCollapsed = isDrawer ? false : isCollapsed || isMobile;
+    const isSidebarCompactRail = isDrawer ? false : isMobile || (isCompactViewport && !isCollapsed);
+    
+    const mainNavItems = navItems.filter((item) => item.id !== 'settings-group');
+    const settingsItem = navItems.find((item) => item.id === 'settings-group');
+
+    return (
+      <div className="flex h-full flex-col bg-[hsl(var(--dashboard-rail))] pb-[var(--safe-area-inset-bottom)] text-white">
+        <div className="flex min-h-[72px] items-center justify-center border-b border-white/10 px-3 py-3">
+          <div
+            className={cn(
+              'overflow-hidden rounded-md bg-white px-1',
+              !isDrawer && (isCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
+            )}
+          >
+            <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-4">
-        <SidebarTree
-          items={navItems}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          pendingCount={pendingCount}
-          pendingReviewsCount={pendingReviewsCount}
-          isCollapsed={isDrawer ? false : isCollapsed || isMobile}
-          isCompactRail={isDrawer ? false : isMobile || (isCompactViewport && !isCollapsed)}
-          openGroups={openGroups}
-          setOpenGroups={setOpenGroups}
-        />
-      </div>
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <SidebarTree
+            items={mainNavItems}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            pendingCount={pendingCount}
+            pendingReviewsCount={pendingReviewsCount}
+            isCollapsed={isSidebarCollapsed}
+            isCompactRail={isSidebarCompactRail}
+            openGroups={openGroups}
+            setOpenGroups={setOpenGroups}
+          />
+        </div>
 
-      {!isDrawer && !isMobile && (
-        <div className="border-t border-white/10 p-3">
+        <div className="border-t border-white/10 p-3 flex flex-col gap-2">
+          {settingsItem && (
+            <SidebarTree
+              items={[settingsItem]}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              pendingCount={0}
+              pendingReviewsCount={0}
+              isCollapsed={isSidebarCollapsed}
+              isCompactRail={isSidebarCompactRail}
+              openGroups={openGroups}
+              setOpenGroups={setOpenGroups}
+            />
+          )}
+
           <Button
             type="button"
             variant="ghost"
-            onClick={() => setIsCollapsed((prev) => !prev)}
-            aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+            onClick={() => { window.location.href = '/logout'; }}
+            aria-label="Sair"
             className={cn(
-              'w-full h-11 rounded-lg justify-start px-3 text-slate-300 hover:bg-white/10 hover:text-white',
-              (isCollapsed || isCompactViewport) && 'h-14 flex-col justify-center gap-1 px-1'
+              'w-full rounded-lg border border-transparent text-left transition-colors text-slate-200 hover:bg-white/10 hover:text-white',
+              isSidebarCompactRail && !isSidebarCollapsed
+                ? 'h-16 flex-col justify-center gap-1 px-1'
+                : 'h-11 justify-start px-3',
+              isSidebarCollapsed && 'h-11 justify-center px-0'
             )}
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            <LogOut className={cn('shrink-0 text-red-400', isSidebarCollapsed ? 'h-5 w-5' : isSidebarCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
               className={cn(
-                'font-medium whitespace-nowrap',
-                isCompactViewport ? 'ml-0 text-[10px]' : 'ml-3 text-sm',
-                isCollapsed && 'hidden'
+                'min-w-0 truncate font-medium whitespace-nowrap text-red-400 tabular-nums',
+                isSidebarCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
+                isSidebarCollapsed && 'hidden'
               )}
             >
-              Recolher menu
+              Sair
             </span>
           </Button>
+
+          {!isDrawer && !isMobile && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsCollapsed((prev) => !prev)}
+              aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+              className={cn(
+                'w-full h-11 rounded-lg justify-start px-3 text-slate-300 hover:bg-white/10 hover:text-white mt-1',
+                (isCollapsed || isCompactViewport) && 'h-14 flex-col justify-center gap-1 px-1'
+              )}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+              <span
+                className={cn(
+                  'font-medium whitespace-nowrap',
+                  isCompactViewport ? 'ml-0 text-[10px]' : 'ml-3 text-sm',
+                  isCollapsed && 'hidden'
+                )}
+              >
+                Recolher menu
+              </span>
+            </Button>
+          )}
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <>
