@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, HelpCircle, Menu, Settings } from 'lucide-react';
+import { ChevronDown, HelpCircle, PanelLeft, Settings } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,14 +17,16 @@ import {
 interface DashboardToolbarProps {
   company: { name?: string } | null;
   onTabChange: (tabId: string) => void;
-  onOpenNavigation?: () => void;
+  onToggleNavigation?: () => void;
+  navigationOpen?: boolean;
   themeToggle?: React.ReactNode;
 }
 
 export default function DashboardToolbar({
   company,
   onTabChange,
-  onOpenNavigation,
+  onToggleNavigation,
+  navigationOpen = false,
   themeToggle,
 }: DashboardToolbarProps) {
   const { user } = useAuth();
@@ -42,11 +44,12 @@ export default function DashboardToolbar({
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={onOpenNavigation}
+            onClick={onToggleNavigation}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[hsl(var(--dashboard-ink))] transition-colors hover:bg-[hsl(var(--dashboard-surface))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))] dashboard:hidden"
-            aria-label="Abrir menu de navegação"
+            aria-label={navigationOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+            aria-expanded={navigationOpen}
           >
-            <Menu className="h-5 w-5" aria-hidden="true" />
+            <PanelLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <BrandLogo className="h-7 w-auto max-w-[148px] min-[360px]:max-w-[176px] md:hidden" />
           <button

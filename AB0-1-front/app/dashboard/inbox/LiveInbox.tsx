@@ -15,7 +15,7 @@ import {
   Mic,
   Phone,
   MoreVertical,
-  Menu,
+  PanelLeft,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -389,11 +389,12 @@ export default function LiveInbox() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="block md:hidden text-white hover:opacity-85"
-              aria-label="Abrir menu"
+              onClick={() => setSidebarOpen((previous) => !previous)}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:hidden"
+              aria-label={sidebarOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+              aria-expanded={sidebarOpen}
             >
-              <Menu className="h-6 w-6" />
+              <PanelLeft className="h-5 w-5" aria-hidden="true" />
             </button>
             <h1 className="flex items-center gap-2 text-lg font-bold text-white tracking-wide">
               Mensagens

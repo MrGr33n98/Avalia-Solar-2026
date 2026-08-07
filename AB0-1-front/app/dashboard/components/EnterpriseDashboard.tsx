@@ -402,7 +402,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
             <DashboardToolbar
               company={company}
               onTabChange={handleTabChange}
-              onOpenNavigation={() => setSidebarOpen(true)}
+              onToggleNavigation={() => setSidebarOpen((previous) => !previous)}
+              navigationOpen={sidebarOpen}
               themeToggle={<ThemeToggle onThemeChange={handleThemeChange} />}
             />
 
