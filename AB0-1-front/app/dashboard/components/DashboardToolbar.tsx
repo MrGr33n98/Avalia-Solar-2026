@@ -131,23 +131,14 @@ export default function DashboardToolbar({
         </div>
       </div>
 
-      <div className="flex min-h-12 items-center justify-between gap-3 border-t border-[hsl(var(--dashboard-border))] px-3 sm:hidden">
-        <button
-          type="button"
-          onClick={() => onTabChange('overview')}
-          className="inline-flex min-w-0 items-center gap-1.5 rounded-lg py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]"
-          aria-label={`Empresa ativa: ${company?.name || 'Empresa'}. Ir para visão geral`}
-        >
-          <span className="max-w-[160px] truncate">{company?.name || 'Empresa'}</span>
-          <ChevronDown
-            className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]"
-            aria-hidden="true"
-          />
-        </button>
+      <div className="flex min-h-12 min-w-0 items-center gap-2 border-t border-[hsl(var(--dashboard-border))] px-3 sm:hidden">
+        <div className="min-w-0 flex-1">
+          <CommandMenu onSelectTab={onTabChange} mobile />
+        </div>
         <button
           type="button"
           onClick={() => onTabChange('review-forms')}
-          className="inline-flex min-h-10 shrink-0 items-center rounded-xl bg-[hsl(var(--dashboard-accent))] px-4 text-sm font-bold text-[hsl(var(--dashboard-accent-foreground))] shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]"
+          className="inline-flex h-8 shrink-0 items-center rounded-lg bg-[hsl(var(--dashboard-accent))] px-3 text-xs font-bold text-[hsl(var(--dashboard-accent-foreground))] shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]"
         >
           Coletar QR
         </button>

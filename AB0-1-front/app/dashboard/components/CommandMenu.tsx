@@ -18,9 +18,15 @@ interface CommandMenuProps {
   onSelectTab: (tabId: string) => void;
   visibleTabIds?: string[];
   compact?: boolean;
+  mobile?: boolean;
 }
 
-export function CommandMenu({ onSelectTab, visibleTabIds, compact = false }: CommandMenuProps) {
+export function CommandMenu({
+  onSelectTab,
+  visibleTabIds,
+  compact = false,
+  mobile = false,
+}: CommandMenuProps) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -66,19 +72,25 @@ export function CommandMenu({ onSelectTab, visibleTabIds, compact = false }: Com
         className={
           compact
             ? 'grid h-10 w-10 place-items-center rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-[hsl(var(--dashboard-ink))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]'
-            : 'relative inline-flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-64 lg:w-80'
+            : mobile
+              ? 'relative inline-flex h-10 min-w-0 w-full items-center justify-start rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-3 text-sm font-medium text-[hsl(var(--dashboard-muted))] shadow-sm transition-colors hover:bg-[hsl(var(--dashboard-surface))] hover:text-[hsl(var(--dashboard-ink))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]'
+              : 'relative inline-flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-64 lg:w-80'
         }
       >
         <Search
-          className={compact ? 'h-[18px] w-[18px]' : 'mr-2 h-[18px] w-[18px] shrink-0 opacity-50'}
+          className={
+            compact
+              ? 'h-[18px] w-[18px]'
+              : 'mr-2 h-[18px] w-[18px] shrink-0 text-[hsl(var(--dashboard-muted))]'
+          }
           aria-hidden="true"
         />
         {compact ? (
           <span className="sr-only">Buscar no dashboard</span>
         ) : (
-          <span className="inline-flex">Buscar no dashboard...</span>
+          <span className="min-w-0 truncate">Buscar no dashboard...</span>
         )}
-        {!compact && (
+        {!compact && !mobile && (
           <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
             <span className="text-xs">⌘</span>K
           </kbd>
