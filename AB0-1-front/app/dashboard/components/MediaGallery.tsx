@@ -132,7 +132,14 @@ export default function MediaGallery({
         dispatchGallery({ type: 'loading', loading: true });
 
         let pendingMediaUrls: string[] = [];
-        let pendingVideos: DashboardVideo[] = [];
+        let pendingVideos: {
+          id: string;
+          url: string;
+          thumbnail_url?: string;
+          provider?: string;
+          video_id?: string;
+          pending?: boolean;
+        }[] = [];
 
         if (showControls) {
           try {
