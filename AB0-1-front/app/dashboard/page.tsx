@@ -283,12 +283,9 @@ export default function DashboardPage() {
 // ✅ Shared loading skeleton for lazy-loaded components
 function DashboardLoadingState() {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--clay-bg))]">
-      <div className="text-center space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <p className="text-muted-foreground font-medium animate-pulse">
-          Preparando seu painel personalizado...
-        </p>
+    <div className="flex min-h-dvh w-full items-center justify-center bg-[hsl(var(--clay-bg))] px-4 pb-[var(--safe-area-inset-bottom)] pt-[var(--safe-area-inset-top)]">
+      <div className="flex flex-col items-center space-y-4 text-center">
+        <LoadingSpinner size="lg" text="Preparando seu painel personalizado..." />
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ import {
   Star, 
   Users,
   FileText,
-  Loader2,
   BarChart3
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
@@ -16,6 +15,7 @@ import StatsCard from '../components/StatsCard';
 import ChartCard from '../components/ChartCard';
 import { DashboardCharts } from '../components/DashboardCharts';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface CompanyDashboardModernProps {
   companyId: string;
@@ -71,11 +71,8 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex h-[60vh] items-center justify-center">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">Carregando dashboard...</p>
-          </div>
+        <div className="flex min-h-dvh items-center justify-center px-4 pb-[var(--safe-area-inset-bottom)] pt-[var(--safe-area-inset-top)]">
+          <LoadingSpinner size="lg" text="Carregando dashboard..." />
         </div>
       </DashboardLayout>
     );

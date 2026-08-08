@@ -91,7 +91,7 @@ export default function DashboardToolbar({
               <button
                 type="button"
                 className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--dashboard-ring))]"
-                aria-label="Abrir menu da conta"
+                aria-label="Abrir perfil da conta"
               >
                 <Avatar className="h-9 w-9 ring-1 ring-[hsl(var(--dashboard-border))] ring-offset-0">
                   <AvatarImage src={user?.avatar_url || undefined} alt="" />
@@ -115,6 +115,23 @@ export default function DashboardToolbar({
                   </span>
                 )}
               </DropdownMenuLabel>
+              {user && (
+                <div className="grid gap-2 px-2 pb-2 text-xs text-[hsl(var(--dashboard-muted))]">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+                    <span>Perfil</span>
+                    <span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">
+                      {user.role === 'admin' ? 'Administrador' : user.role === 'company' ? 'Empresa' : 'Avaliador'}
+                    </span>
+                    <span>ID</span>
+                    <span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.id}</span>
+                    {user.company_id != null && <><span>Empresa</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.company_id}</span></>}
+                    {user.phone && <><span>Telefone</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.phone}</span></>}
+                    {(user.city || user.state) && <><span>Local</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{[user.city, user.state].filter(Boolean).join(' / ')}</span></>}
+                    <span>Status</span>
+                    <span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.approved_by_admin ? 'Aprovado' : 'Pendente'}</span>
+                  </div>
+                </div>
+              )}
               <DropdownMenuSeparator />
               {themeToggle && (
                 <div className="flex min-h-11 items-center justify-between rounded-xl px-3 py-1.5 text-sm font-medium">

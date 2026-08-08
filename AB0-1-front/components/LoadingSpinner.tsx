@@ -54,28 +54,21 @@ export default function LoadingSpinner({
   };
 
   const spinner = (
-    <div
-      className={`
-        animate-spin rounded-full
-        ${sizeClasses[size]}
-        ${colorClasses[color]}
-        ${className}
-      `}
-      role="status"
-      aria-label="Loading"
-    />
+    <span className={`loading-spinner-shell ${className}`}>
+      <span
+        className={`loading-spinner animate-spin rounded-full ${sizeClasses[size]} ${colorClasses[color]}`}
+        role="status"
+        aria-label="Carregando"
+      />
+    </span>
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90 backdrop-blur-sm">
-        <div className="flex flex-col items-center space-y-4">
+      <div className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center bg-white/90 px-4 pb-[var(--safe-area-inset-bottom)] pt-[var(--safe-area-inset-top)] backdrop-blur-sm">
+        <div className="flex flex-col items-center space-y-4 text-center">
           {spinner}
-          {text && (
-            <p className="text-sm font-medium text-gray-700 animate-pulse">
-              {text}
-            </p>
-          )}
+          {text && <p className="text-sm font-medium text-gray-700">{text}</p>}
         </div>
       </div>
     );
