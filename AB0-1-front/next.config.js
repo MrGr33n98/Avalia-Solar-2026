@@ -166,7 +166,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://us.i.posthog.com https://f.avaliasolar.com.br https://static.hotjar.com https://growth.avaliasolar.com.br ${newRelicScriptOrigin}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http: https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' ws: wss: https://viacep.com.br https://us.i.posthog.com https://f.avaliasolar.com.br https://growth.avaliasolar.com.br https://www.google-analytics.com https://www.google.com https://api.avaliasolar.com.br http://localhost:3001 ws://localhost:3001 https://www.googletagmanager.com ${newRelicTelemetryOrigin}; manifest-src 'self'; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com; object-src 'none';`,
+              `default-src 'self' https://f.avaliasolar.com.br; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://us.i.posthog.com https://f.avaliasolar.com.br https://static.hotjar.com https://growth.avaliasolar.com.br ${newRelicScriptOrigin}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http: https://www.googletagmanager.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' ws: wss: https://viacep.com.br https://us.i.posthog.com https://f.avaliasolar.com.br https://growth.avaliasolar.com.br https://www.google-analytics.com https://www.google.com https://api.avaliasolar.com.br http://localhost:3001 ws://localhost:3001 https://www.googletagmanager.com ${newRelicTelemetryOrigin}; manifest-src 'self'; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com; object-src 'none';`,
           },
           {
             key: 'Cross-Origin-Opener-Policy',
@@ -264,6 +264,10 @@ const nextConfig = {
         {
           source: '/api/v1/:path*',
           destination: `${apiProxyTarget}/api/v1/:path*`,
+        },
+        {
+          source: '/graphql',
+          destination: `${apiProxyTarget}/graphql`,
         },
         {
           source: '/cable',

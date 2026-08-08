@@ -4,7 +4,7 @@ interface GTMProps {
   gtmId: string;
 }
 
-const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
+const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false' && process.env.NODE_ENV === 'production';
 
 /**
  * GoogleTagManager — Performance-optimized

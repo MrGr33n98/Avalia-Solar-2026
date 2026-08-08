@@ -772,11 +772,22 @@ module Api
       # GET /api/v1/company_dashboard/pending_changes
       def pending_changes
         changes = @company.pending_changes.pending.order(created_at: :desc)
-        render json: {
-          pending_changes: changes.as_json(
-            include: { user: { only: %i[id name email] } }
-          )
-        }
+        changes_json = changes.map do |change|
+          change_hash = change.as_json(include: { user: { only: %i[id name email] } })
+          if change.change_type == 'media' && change.data['signed_ids'].present?
+            urls = change.data['signed_ids'].map do |sid|
+              blob = ActiveStorage::Blob.find_signed(sid)
+              generate_blob_url(blob) if blob
+            end.compact
+            change_hash['data'] = change.data.merge('urls' => urls)
+          elsif %w[logo banner].include?(change.change_type) && change.data['signed_id'].present?
+            blob = ActiveStorage::Blob.find_signed(change.data['signed_id'])
+            url = blob ? generate_blob_url(blob) : nil
+            change_hash['data'] = change.data.merge('url' => url)
+          end
+          change_hash
+        end
+        render json: { pending_changes: changes_json }
       end
 
       # GET /api/v1/company_dashboard/notifications
@@ -870,6 +881,11 @@ module Api
 
         signed_ids = []
         Array(images).each do |io|
+          if io.size > 3.megabytes
+            purge_unattached_media_blobs(signed_ids)
+            return render json: { error: 'Arquivo muito grande. Limite de 3MB excedido.' }, status: :unprocessable_entity
+          end
+
           blob = ActiveStorage::Blob.create_and_upload!(io: io, filename: io.original_filename,
                                                         content_type: io.content_type)
           signed_ids << blob.signed_id
@@ -1148,6 +1164,25 @@ module Api
       end
 
       private
+
+      def generate_blob_url(blob)
+        return nil if blob.blank?
+        storage_options = Rails.application.config.active_storage.respond_to?(:default_url_options) ?
+          Rails.application.config.active_storage.default_url_options : nil
+        options = (storage_options.presence || Rails.application.routes.default_url_options).dup
+        if options[:host].blank?
+          fallback_origin = ENV['ACTIVE_STORAGE_HOST'].presence || ENV['APP_HOST'].presence ||
+                            (Rails.env.test? ? 'http://www.example.com' : 'https://api.avaliasolar.com.br')
+          fallback_uri = URI.parse(fallback_origin)
+          options[:host] = fallback_uri.host || fallback_origin
+          options[:protocol] ||= fallback_uri.scheme || 'https'
+        end
+        options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+        Rails.application.routes.url_helpers.rails_storage_proxy_url(blob, options)
+      rescue StandardError => e
+        Rails.logger.error("Error generating blob URL in dashboard: #{e.message}")
+        nil
+      end
 
       def enforce_intent_summary_feature_access!
         enforce_feature_access!(:intent_scores, company: @company)

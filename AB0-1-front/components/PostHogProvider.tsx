@@ -171,6 +171,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
+      cookie_domain: window.location.hostname === 'localhost' ? 'localhost' : undefined,
 
       // Perfis apenas para usuários identificados (não anônimos por padrão)
       person_profiles: 'identified_only',

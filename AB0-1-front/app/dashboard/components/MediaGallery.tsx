@@ -130,6 +130,32 @@ export default function MediaGallery({
     const load = async () => {
       try {
         dispatchGallery({ type: 'loading', loading: true });
+
+        let pendingMediaUrls: string[] = [];
+        let pendingVideos: DashboardVideo[] = [];
+
+        if (showControls) {
+          try {
+            const pendingResp = await fetchApi<{ pending_changes?: Array<{ id: number; change_type: string; data: Record<string, any> }> }>('/company_dashboard/pending_changes');
+            (pendingResp?.pending_changes || []).forEach((change) => {
+              if (change.change_type === 'media' && Array.isArray(change.data?.urls)) {
+                pendingMediaUrls.push(...change.data.urls);
+              } else if (change.change_type === 'video' && change.data) {
+                pendingVideos.push({
+                  id: `pending-${change.id}`,
+                  url: change.data.url,
+                  thumbnail_url: change.data.thumbnail_url,
+                  provider: change.data.provider,
+                  video_id: change.data.video_id,
+                  pending: true
+                } as any);
+              }
+            });
+          } catch (e) {
+            console.error('Error loading pending changes:', e);
+          }
+        }
+
         try {
           const photosResp = showControls
             ? await fetchApi<{ photos: string[] }>('/company_dashboard/media')
@@ -140,12 +166,17 @@ export default function MediaGallery({
                 .then((response) => ({ photos: response?.company?.media_urls || [] }));
           const photoItems = (photosResp?.photos || []).map((url, idx) => {
             const normalized = getFullImageUrl(url) || url;
-            return { id: `${idx}`, url: normalized };
+            return { id: `approved-${idx}`, url: normalized, pending: false };
           });
-          dispatchGallery({ type: 'set_photos', photos: photoItems });
+          const pendingPhotoItems = pendingMediaUrls.map((url, idx) => {
+            const normalized = getFullImageUrl(url) || url;
+            return { id: `pending-media-${idx}`, url: normalized, pending: true };
+          });
+          dispatchGallery({ type: 'set_photos', photos: [...pendingPhotoItems, ...photoItems] });
         } catch {
           dispatchGallery({ type: 'set_photos', photos: [] });
         }
+
         try {
           const videosResp = showControls
             ? await fetchApi<{ videos: DashboardVideo[] }>('/company_dashboard/videos')
@@ -160,8 +191,9 @@ export default function MediaGallery({
             thumbnail_url: getFullImageUrl(v.thumbnail_url) || v.thumbnail_url,
             provider: v.provider,
             video_id: v.video_id,
+            pending: false
           }));
-          dispatchGallery({ type: 'set_videos', videos: videoItems });
+          dispatchGallery({ type: 'set_videos', videos: [...pendingVideos, ...videoItems] });
         } catch {
           dispatchGallery({ type: 'set_videos', videos: [] });
         }
@@ -223,7 +255,7 @@ export default function MediaGallery({
     if (!files || files.length === 0) return;
 
     const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
-    const maxBytes = 8 * 1024 * 1024;
+    const maxBytes = 3 * 1024 * 1024;
 
     const invalid = Array.from(files).filter(
       (file) => !allowedTypes.includes(file.type) || file.size > maxBytes
@@ -232,7 +264,7 @@ export default function MediaGallery({
     if (invalid.length > 0) {
       toast({
         title: 'Upload bloqueado',
-        description: 'Verifique o formato ou o tamanho dos arquivos.',
+        description: 'Imagens devem ser PNG, JPEG ou WebP e ter no máximo 3MB.',
         variant: 'destructive',
       });
       e.target.value = '';
@@ -427,12 +459,19 @@ export default function MediaGallery({
                         className="w-full rounded-none overflow-hidden group relative aspect-square bg-card dark:bg-[#0F172A] border-none"
                         onClick={() => openPhotoLightbox(photo.url, index)}
                       >
+                        {photo.pending && (
+                          <div className="absolute top-2 left-2 z-10">
+                            <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-md">
+                              Pendente
+                            </Badge>
+                          </div>
+                        )}
                         <Image
                           src={photo.url}
                           alt={photo.title || ''}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${photo.pending ? 'grayscale-[0.8] opacity-75' : 'grayscale-[0.2] group-hover:grayscale-0'}`}
                         />
                         <div className="absolute inset-0 bg-brand-blue/0 group-hover:bg-brand-blue/20 transition-all duration-500 flex items-center justify-center">
                           <div className="h-12 w-12 rounded-none bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-500 border border-white/20">
@@ -514,12 +553,19 @@ export default function MediaGallery({
                           setLightboxOpen(true);
                         }}
                       >
+                        {v.pending && (
+                          <div className="absolute top-2 left-2 z-10">
+                            <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-md">
+                              Pendente
+                            </Badge>
+                          </div>
+                        )}
                         <Image
                           src={v.thumbnail_url || ''}
                           alt={v.video_id || ''}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60 group-hover:opacity-100"
+                          className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ${v.pending ? 'opacity-40 grayscale' : 'opacity-60 group-hover:opacity-100'}`}
                         />
                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-8 group-hover:bg-brand-blue/20 transition-all duration-500">
                           <div className="h-20 w-20 rounded-none bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-blue transition-all duration-500 shadow-2xl">

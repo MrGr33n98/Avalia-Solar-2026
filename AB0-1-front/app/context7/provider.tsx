@@ -2,8 +2,8 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
 
 type GalleryState = {
-  photos: { id: string; url: string; title?: string }[];
-  videos: { id: string; url: string; thumbnail_url?: string; provider?: string; video_id?: string }[];
+  photos: { id: string; url: string; title?: string; pending?: boolean }[];
+  videos: { id: string; url: string; thumbnail_url?: string; provider?: string; video_id?: string; pending?: boolean }[];
   loading: boolean;
 };
 
