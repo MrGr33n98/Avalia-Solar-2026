@@ -1,38 +1,40 @@
 'use client';
 
-import { Building2, MapPin, RotateCcw, ShieldCheck, SlidersHorizontal, Star } from 'lucide-react';
-
-interface Chip {
-  id: string;
-  label: string;
-  active: boolean;
-  removable?: boolean;
-}
+import { Building2, MapPin, RotateCcw, ShieldCheck, SlidersHorizontal, Star, ChevronDown } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DecisionChipsProps {
-  chips: Chip[];
-  onChipToggle: (chipId: string) => void;
-  onChipRemove: (chipId: string) => void;
+  filters: {
+    verified: boolean;
+    minRating: number;
+    state: string;
+    projectType?: string;
+  };
+  onFilterChange: (key: string, value: string | number | boolean | undefined) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
+  onOpenMoreFilters?: () => void;
+  activeFiltersCount?: number;
 }
 
-const CHIP_ICONS = {
-  verified: ShieldCheck,
-  rated: Star,
-  my_state: MapPin,
-  industrial: Building2,
-};
-
-function getChipIcon(chipId: string) {
-  return CHIP_ICONS[chipId as keyof typeof CHIP_ICONS] || SlidersHorizontal;
-}
+const UFS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
+  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
 
 export default function DecisionChips({
-  chips,
-  onChipToggle,
+  filters,
+  onFilterChange,
   onClearFilters,
   hasActiveFilters = false,
+  onOpenMoreFilters,
+  activeFiltersCount = 0,
 }: DecisionChipsProps) {
   return (
     <section className="bg-white py-3">
@@ -52,33 +54,112 @@ export default function DecisionChips({
           </button>
         </div>
 
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-          {chips.map((chip) => {
-            const Icon = getChipIcon(chip.id);
-            return (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => onChipToggle(chip.id)}
-                className={`flex h-9 min-w-0 items-center justify-center gap-1 rounded-lg border px-1 text-[9px] font-bold shadow-sm transition-all sm:h-11 sm:gap-1.5 sm:px-3 sm:text-xs ${
-                  chip.active
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
-                }`}
-              >
-                <Icon
-                  className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${chip.id === 'rated' ? 'fill-amber-400 text-amber-400' : ''}`}
-                />
-                <span className="truncate">{chip.label}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          {/* Verificadas */}
+          <Select 
+            value={filters.verified ? 'true' : 'false'} 
+            onValueChange={(val) => onFilterChange('verified', val === 'true')}
+          >
+            <SelectTrigger 
+              className={`h-9 sm:h-11 rounded-lg px-2 sm:px-3 text-[10px] sm:text-xs font-bold w-auto shadow-sm border ${
+                filters.verified ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
+              }`}
+            >
+              <div className="flex items-center gap-1 sm:gap-1.5 mr-1">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span>Verificadas</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="false">Todas as empresas</SelectItem>
+              <SelectItem value="true">Apenas Verificadas</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Nota */}
+          <Select 
+            value={filters.minRating > 0 ? String(filters.minRating) : '0'} 
+            onValueChange={(val) => onFilterChange('minRating', Number(val))}
+          >
+            <SelectTrigger 
+              className={`h-9 sm:h-11 rounded-lg px-2 sm:px-3 text-[10px] sm:text-xs font-bold w-auto shadow-sm border ${
+                filters.minRating > 0 ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
+              }`}
+            >
+              <div className="flex items-center gap-1 sm:gap-1.5 mr-1">
+                <Star className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
+                <span>{filters.minRating > 0 ? `Nota: ${filters.minRating}+` : 'Qualquer Nota'}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">Qualquer Nota</SelectItem>
+              <SelectItem value="3">Nota: 3.0+</SelectItem>
+              <SelectItem value="4">Nota: 4.0+</SelectItem>
+              <SelectItem value="4.5">Nota: 4.5+</SelectItem>
+              <SelectItem value="5">Nota: 5.0</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Estado */}
+          <Select 
+            value={filters.state || 'all'} 
+            onValueChange={(val) => onFilterChange('state', val === 'all' ? '' : val)}
+          >
+            <SelectTrigger 
+              className={`h-9 sm:h-11 rounded-lg px-2 sm:px-3 text-[10px] sm:text-xs font-bold w-auto shadow-sm border ${
+                filters.state ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
+              }`}
+            >
+              <div className="flex items-center gap-1 sm:gap-1.5 mr-1">
+                <MapPin className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span>{filters.state || 'Meu Estado'}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer Estado</SelectItem>
+              {UFS.map(uf => (
+                <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Tipo de Projeto (Industrial/Residencial/etc) */}
+          <Select 
+            value={filters.projectType || 'all'} 
+            onValueChange={(val) => onFilterChange('projectType', val === 'all' ? undefined : val)}
+          >
+            <SelectTrigger 
+              className={`h-9 sm:h-11 rounded-lg px-2 sm:px-3 text-[10px] sm:text-xs font-bold w-auto shadow-sm border ${
+                filters.projectType ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
+              }`}
+            >
+              <div className="flex items-center gap-1 sm:gap-1.5 mr-1">
+                <Building2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span>{filters.projectType || 'Especialidade'}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="Residencial">Residencial</SelectItem>
+              <SelectItem value="Comercial">Comercial</SelectItem>
+              <SelectItem value="Industrial">Industrial</SelectItem>
+              <SelectItem value="Agronegócio">Agronegócio</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Mais filtros Button */}
           <button
             type="button"
-            className="flex h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-1 text-[9px] font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 sm:h-11 sm:gap-1.5 sm:px-3 sm:text-xs"
+            onClick={onOpenMoreFilters}
+            className="flex h-9 min-w-0 items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2 sm:px-3 text-[10px] sm:text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 sm:h-11"
           >
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-blue-600 sm:h-4 sm:w-4" />
-            <span className="truncate">Mais filtros</span>
+            <span>Mais filtros</span>
+            {activeFiltersCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-300 text-[9px] text-blue-900 sm:h-5 sm:w-5 sm:text-[10px]">
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

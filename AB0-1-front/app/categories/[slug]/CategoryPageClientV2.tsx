@@ -42,13 +42,6 @@ interface CategoryPageClientProps {
   paginationMeta: unknown;
 }
 
-const QUICK_FILTER_CHIPS = [
-  { id: 'verified', label: 'Verificadas' },
-  { id: 'rated', label: 'Nota +4.5' },
-  { id: 'my_state', label: 'Meu Estado' },
-  { id: 'industrial', label: 'Industrial' },
-];
-
 export default function CategoryPageClient({
   initialCategory,
   initialCompanies,
@@ -65,10 +58,6 @@ export default function CategoryPageClient({
   // Initialise from URL params so filters are shareable / survive back-navigation
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(() => {
-    const raw = searchParams.get('chips');
-    return raw ? new Set(raw.split(',').filter(Boolean)) : new Set();
-  });
   const [sidebarFilters, setSidebarFilters] = useState(() => ({
     verified: searchParams.get('verified') === 'true',
     minRating: parseFloat(searchParams.get('min_rating') || '0') || 0,
@@ -138,33 +127,12 @@ export default function CategoryPageClient({
       );
     };
 
-    // Filtros rápidos
-    if (activeQuickFilters.has('verified')) {
-      result = result.filter((c) => c.verified);
-    }
-    if (activeQuickFilters.has('rated')) {
-      result = result.filter((c) => (Number(c.rating_avg) || 0) >= 4.5);
-    }
-    if (activeQuickFilters.has('industrial')) {
-      const industrialTerms = ['industrial', 'industriais'];
-      result = result.filter(
-        (c) =>
-          c.project_types?.some((pt) => industrialTerms.includes(pt.toLowerCase())) ||
-          c.services_offered?.some((so) => industrialTerms.includes(so.toLowerCase()))
-      );
-    }
-    if (activeQuickFilters.has('my_state') && sidebarFilters.state) {
-      result = result.filter(
-        (c) => c.state?.trim().toUpperCase() === sidebarFilters.state.trim().toUpperCase()
-      );
-    }
-
     // Filtros sidebar
     if (sidebarFilters.verified) {
       result = result.filter((c) => c.verified);
     }
     if (sidebarFilters.minRating > 0) {
-      result = result.filter((c) => (Number(c.rating_avg) || 0) >= sidebarFilters.minRating);
+      result = result.filter((c) => (Number(c.rating_avg) || 0) >= sidebarFilters.minRating && (Number(c.rating_count) || 0) > 0);
     }
     if (sidebarFilters.state) {
       result = result.filter(
@@ -189,23 +157,7 @@ export default function CategoryPageClient({
     }
 
     return result;
-  }, [initialCompanies, debouncedSearchTerm, activeQuickFilters, sidebarFilters, sortBy]);
-
-  const handleQuickFilterToggle = (filterId: string) => {
-    track('quick_filter_click', {
-      filter_name: filterId,
-      state: activeQuickFilters.has(filterId) ? 'off' : 'on',
-    });
-
-    const newFilters = new Set(activeQuickFilters);
-    if (newFilters.has(filterId)) {
-      newFilters.delete(filterId);
-    } else {
-      newFilters.add(filterId);
-    }
-    setActiveQuickFilters(newFilters);
-    syncToUrl({ chips: newFilters.size > 0 ? Array.from(newFilters).join(',') : undefined });
-  };
+  }, [initialCompanies, debouncedSearchTerm, sidebarFilters, sortBy]);
 
   const handleSidebarFilterChange = (key: string, value: SidebarFilterValue) => {
     setSidebarFilters((prev) => ({ ...prev, [key]: value }));
@@ -232,12 +184,10 @@ export default function CategoryPageClient({
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    setActiveQuickFilters(new Set());
     setSidebarFilters({ verified: false, minRating: 0, state: '', projectType: undefined });
     setSortBy('rating_desc');
     syncToUrl({
       search: undefined,
-      chips: undefined,
       verified: undefined,
       min_rating: undefined,
       state: undefined,
@@ -248,19 +198,18 @@ export default function CategoryPageClient({
 
   const hasActiveFilters = Boolean(
     searchTerm ||
-    activeQuickFilters.size > 0 ||
     sidebarFilters.verified ||
     sidebarFilters.minRating > 0 ||
     sidebarFilters.state ||
     sidebarFilters.projectType
   );
 
-  const quickFilterChips = QUICK_FILTER_CHIPS.map((chip) => ({
-    id: chip.id,
-    label: chip.label,
-    active: activeQuickFilters.has(chip.id),
-    removable: true,
-  }));
+  const activeFiltersCount = [
+    sidebarFilters.verified,
+    sidebarFilters.minRating > 0,
+    sidebarFilters.state,
+    sidebarFilters.projectType
+  ].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-white">
@@ -307,11 +256,15 @@ export default function CategoryPageClient({
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 
           <DecisionChips
-            chips={quickFilterChips}
-            onChipToggle={handleQuickFilterToggle}
-            onChipRemove={handleQuickFilterToggle}
+            filters={sidebarFilters}
+            onFilterChange={handleSidebarFilterChange}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
+            onOpenMoreFilters={() => {
+              // TODO: Acionar sidebar mobile real
+              alert('Abrir painel lateral de filtros (A ser implementado no layout global)');
+            }}
+            activeFiltersCount={activeFiltersCount}
           />
 
           {/* Main Layout Container */}
