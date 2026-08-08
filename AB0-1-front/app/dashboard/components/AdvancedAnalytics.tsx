@@ -74,12 +74,14 @@ export default function AdvancedAnalytics({ themeMode, companyId, layout = 'defa
     enabled: Boolean(companyId) && Number.isFinite(days),
   });
 
-  // Usar traffic antigo por enquanto ou mock até FASE 2
+  // Fonte de tráfego — endpoint estável: /companies/{id}/analytics/traffic
+  // Dados reais via analyticsApi.getTrafficSources (api-analytics.ts)
   const trafficQuery = useQuery({
     queryKey: ['company-analytics-traffic', companyId, days],
     queryFn: async () => analyticsApi.getTrafficSources(Number(companyId), days),
     enabled: Boolean(companyId) && Number.isFinite(days),
   });
+
 
   const historicalData = useMemo(() => {
     const hist = historicalQuery.data?.data || [];

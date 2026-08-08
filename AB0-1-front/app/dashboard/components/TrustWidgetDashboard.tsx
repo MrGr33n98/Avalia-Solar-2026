@@ -62,15 +62,17 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
     }
   };
 
-  const mockCompanyData = {
+  // previewData: usado SOMENTE para pré-visualização do snippet de embed.
+  // Fallbacks aqui são valores de demonstração visual do widget — não representam dados reais da empresa.
+  const previewData = {
     name: company?.name || 'Sua Empresa',
     verified: company?.verified ?? true,
-    trust_score: company?.trust_score || 95,
-    rating_avg: company?.rating_avg || 4.8,
-    reviews_count: company?.reviews_count || 124,
+    trust_score: company?.trust_score ?? 0,
+    rating_avg: company?.rating_avg ?? 0,
+    reviews_count: company?.reviews_count ?? 0,
     verified_badge_image_url: company?.verified_badge_image_url,
-    public_profile_url: '#',
-    priority_score: company?.priority_score || 100,
+    public_profile_url: company?.public_profile_url || '#',
+    priority_score: company?.priority_score ?? 0,
   };
 
   return (
@@ -113,7 +115,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
         />
         <MetricCard
           title="Trust Score"
-          value={`${mockCompanyData.trust_score}%`}
+          value={company?.trust_score != null ? `${company.trust_score}%` : '—'}
           icon={ShieldCheck}
           color="emerald"
         />
@@ -277,7 +279,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative z-10 p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
                >
-                  <WidgetBadge companyData={mockCompanyData} theme={theme} />
+                  <WidgetBadge companyData={previewData} theme={theme} />
                </motion.div>
                               <div className="mt-8 text-center relative z-10 space-y-2">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ambiente de Preview v8.2</p>

@@ -72,8 +72,13 @@ module RailsBlogDemo
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # REQ-006: Timezone configurado para Brasil (BRT = UTC-3).
+    # Garante que .days.ago e Date.current usem fuso correto nas queries de analytics.
+    # active_record.default_timezone = :utc preserva armazenamento em UTC — apenas o display/queries usam BRT.
+    config.time_zone = 'Brasilia'
+    config.active_record.default_timezone = :utc
     # config.eager_load_paths << Rails.root.join("extras")
+
     config.assets.initialize_on_precompile = false
 
     # TASK-022: Autoload/eager_load lib for Zeitwerk (needed for custom middleware)

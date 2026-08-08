@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { fetchApi } from '@/lib/api';
 import { 
   TrendingUp, 
   Eye, 
@@ -57,15 +58,33 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
     },
   ] : [];
 
-  // Mock chart data - TODO: get from API
-  const chartData = [
-    { month: 'Jan', value: stats?.monthly_views?.[0] || 0 },
-    { month: 'Fev', value: stats?.monthly_views?.[1] || 0 },
-    { month: 'Mar', value: stats?.monthly_views?.[2] || 0 },
-    { month: 'Abr', value: stats?.monthly_views?.[3] || 0 },
-    { month: 'Mai', value: stats?.monthly_views?.[4] || 0 },
-    { month: 'Jun', value: stats?.monthly_views?.[5] || 0 },
-  ];
+  // REQ-004: Conectar gráfico ao endpoint timeseries real. monthly_views não existe no backend.
+  const timeseriesQuery = useQuery<{ data: Array<{ date: string; views: number; clicks: number; leads: number }> }>({
+    queryKey: ['company-timeseries-chart', companyId],
+    queryFn: () =>
+      fetchApi('/company_dashboard/analytics/timeseries', {
+        params: { company_id: companyId, days: 180 }, // ~6 meses
+      }),
+    enabled: Boolean(companyId),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Agrupa dados do timeseries por mês para o gráfico
+  const chartData = useMemo(() => {
+    const raw = timeseriesQuery.data?.data ?? [];
+    if (raw.length === 0) return [];
+    const byMonth: Record<string, number> = {};
+    for (const point of raw) {
+      const d = new Date(point.date);
+      const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+      byMonth[label] = (byMonth[label] ?? 0) + (point.views ?? 0);
+    }
+    return Object.entries(byMonth)
+      .slice(-6)
+      .map(([month, value]) => ({ month, value }));
+  }, [timeseriesQuery.data]);
+
+  const chartReady = !timeseriesQuery.isLoading && chartData.length > 0;
 
   // Show loading state
   if (loading) {
@@ -122,16 +141,28 @@ export default function CompanyDashboardModern({ companyId }: CompanyDashboardMo
         <div className="grid gap-6 md:grid-cols-2">
           <ChartCard
             title="Visualizações Mensais"
-            description="Número de visualizações do perfil"
+            description={chartReady ? 'Visualizações reais dos últimos 6 meses' : 'Histórico indisponível ou em processamento'}
           >
-            <DashboardCharts.AreaChart data={chartData} />
+            {chartReady ? (
+              <DashboardCharts.AreaChart data={chartData} />
+            ) : (
+              <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                {timeseriesQuery.isLoading ? 'Carregando...' : 'Sem dados suficientes ainda'}
+              </div>
+            )}
           </ChartCard>
 
           <ChartCard
             title="Evolução de Avaliações"
-            description="Crescimento de reviews ao longo do tempo"
+            description={chartReady ? 'Baseado em dados transacionais reais' : 'Histórico indisponível ou em processamento'}
           >
-            <DashboardCharts.LineChart data={chartData} />
+            {chartReady ? (
+              <DashboardCharts.LineChart data={chartData} />
+            ) : (
+              <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                {timeseriesQuery.isLoading ? 'Carregando...' : 'Sem dados suficientes ainda'}
+              </div>
+            )}
           </ChartCard>
         </div>
 
