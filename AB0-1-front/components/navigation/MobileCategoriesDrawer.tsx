@@ -113,7 +113,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
       <SheetContent
         id={id}
         side="left"
-        className="bottom-0 top-0 flex h-dvh max-h-dvh w-[92vw] max-w-[430px] flex-col gap-0 rounded-none border-r border-slate-200 bg-white p-0 shadow-[8px_0_24px_rgba(15,23,42,0.08)] sm:w-[420px] [&>button]:hidden"
+        className="bottom-0 top-0 flex h-dvh max-h-dvh w-[92vw] max-w-[430px] flex-col gap-0 rounded-2xl border-r border-neutral-200 bg-[#fafafa] p-0 shadow-[8px_0_24px_rgba(0,0,0,0.08)] sm:w-[420px] [&>button]:hidden"
       >
         <header className="shrink-0 border-b border-slate-200 px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))]">
           <div className="flex items-center justify-between gap-3">
@@ -122,7 +122,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
                   aria-label="Voltar para categorias principais"
                 >
                   <ArrowLeft className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -136,14 +136,14 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-slate-200 bg-white text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
               aria-label="Fechar menu de categorias"
             >
               <X className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           </div>
 
-          <label className="mt-4 flex h-11 items-center gap-2.5 rounded-none border border-slate-300 bg-white px-3.5 text-slate-500 shadow-none focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20">
+          <label className="mt-4 flex h-11 items-center gap-2.5 rounded-2xl border border-neutral-300 bg-white px-3.5 text-neutral-500 shadow-[0_2px_8px_rgba(0,0,0,0.03)] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-500/20">
             <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
             <input
               value={query}
@@ -159,7 +159,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-4">
           {!isAuthenticated && !selectedCategory && (
-            <div className="mb-4 flex flex-col gap-2.5 rounded-lg border border-blue-100 bg-blue-50/50 p-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)] backdrop-blur-sm">
+            <div className="mb-4 flex flex-col gap-2.5 rounded-2xl border border-neutral-200 bg-[#f0f0f0] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
               <p className="text-xs font-semibold leading-relaxed text-slate-700">
                 Acesse sua conta para comparar propostas e acompanhar avaliações.
               </p>
@@ -168,7 +168,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                   asChild
                   size="sm"
                   variant="outline"
-                  className="h-9 flex-1 border-blue-200 bg-white text-xs font-semibold text-blue-700 shadow-none hover:bg-blue-50"
+                  className="h-9 flex-1 border-neutral-300 bg-white text-xs font-semibold text-neutral-900 shadow-none hover:bg-neutral-100"
                 >
                   <Link href="/login" onClick={closeDrawer}>
                     Entrar
@@ -177,7 +177,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
                 <Button
                   asChild
                   size="sm"
-                  className="h-9 flex-1 bg-blue-700 text-xs font-semibold text-white shadow-none hover:bg-blue-800"
+                  className="h-9 flex-1 bg-gradient-to-br from-neutral-900 to-neutral-700 text-xs font-semibold text-white shadow-[0_3px_10px_rgba(0,0,0,0.1)] hover:from-black hover:to-neutral-800"
                 >
                   <Link href="/register" onClick={closeDrawer}>
                     Criar conta
@@ -206,11 +206,11 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
+        <div className="shrink-0 border-t border-neutral-200 bg-[#fafafa] px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
           <button
             type="button"
             onClick={handleViewAllCategories}
-            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-none bg-blue-700 text-sm font-semibold text-white shadow-none transition-colors hover:bg-blue-800"
+            className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-700 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-colors hover:from-black hover:to-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
           >
             <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
             {isAuthenticated ? 'Ver todas as categorias' : 'Entrar para ver categorias'}
@@ -227,14 +227,14 @@ function LoadingList() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="flex h-[68px] items-center gap-3 rounded-none border-b border-slate-200 bg-white px-3"
+          className="flex h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
         >
-          <Skeleton className="h-11 w-11 rounded-none" />
+          <Skeleton className="h-11 w-11 rounded-2xl" />
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-3 w-1/3" />
           </div>
-          <Skeleton className="h-[18px] w-[18px] rounded-none" />
+          <Skeleton className="h-[18px] w-[18px] rounded-full" />
         </div>
       ))}
     </div>
@@ -244,7 +244,7 @@ function LoadingList() {
 function ErrorState() {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-      <div className="mb-4 rounded-none border border-amber-200 bg-amber-50 p-4 text-amber-500">
+      <div className="mb-4 rounded-2xl border border-neutral-200 bg-[#f0f0f0] p-4 text-neutral-700">
         <Zap className="h-8 w-8" aria-hidden="true" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-slate-950">Menu em manutenção</h3>
@@ -254,9 +254,9 @@ function ErrorState() {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-none border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 transition-colors hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
       >
-        <RefreshCw className="h-4 w-4 text-blue-600" aria-hidden="true" />
+        <RefreshCw className="h-4 w-4 text-neutral-700" aria-hidden="true" />
         Recarregar menu
       </button>
     </div>
@@ -285,14 +285,14 @@ function MainCategoriesView({
             key={link.href}
             href={link.href}
             onClick={onClose}
-            className="flex min-h-11 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50/40 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="flex min-h-11 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
           >
             {link.label}
           </Link>
         ))}
       </nav>
 
-      {categories.map((category, index) => {
+      {categories.map((category) => {
         const iconSrc = getPreferredCategoryIcon(
           category.slug || category.seo_url,
           category.icon_url,
@@ -305,13 +305,9 @@ function MainCategoriesView({
             key={category.id}
             type="button"
             onClick={() => (hasChildren ? onOpenCategory(category) : undefined)}
-            className={`flex min-h-[68px] w-full items-center gap-3 rounded-none border-x-0 border-b border-t-0 px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-              index === 0
-                ? 'border-blue-200 bg-blue-50/40'
-                : 'border-slate-100 bg-white hover:border-blue-100 hover:bg-blue-50/30'
-            }`}
+            className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500`}
           >
-            <CategoryIcon iconSrc={iconSrc} name={category.name} highlighted={index === 0} />
+            <CategoryIcon iconSrc={iconSrc} name={category.name} />
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-[15px] font-medium leading-tight text-slate-950">
                 {category.name}
@@ -320,7 +316,7 @@ function MainCategoriesView({
                 {formatCount(category.companies_count || 0)}
               </p>
             </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-blue-700" aria-hidden="true" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-neutral-700" aria-hidden="true" />
           </button>
         );
       })}
@@ -328,9 +324,9 @@ function MainCategoriesView({
       <Link
         href="/categories"
         onClick={onClose}
-        className="flex min-h-[68px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-slate-200 bg-white px-3 transition-colors hover:bg-blue-50/40"
+        className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-blue-50 text-blue-700">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-[#f0f0f0] text-neutral-700">
           <Grid2X2 className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -359,9 +355,9 @@ function SubcategoryView({
       <Link
         href={getCategoryHref(category)}
         onClick={onClose}
-        className="flex min-h-[64px] items-center gap-3 rounded-none border-x-0 border-b border-t-0 border-blue-100 bg-blue-50/60 px-3 text-blue-700 transition-colors hover:bg-blue-50"
+        className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-neutral-200 bg-[#f0f0f0] px-3 text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-white"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-blue-100 bg-white text-blue-700 shadow-none">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-700 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
           <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
         <p className="min-w-0 flex-1 text-[15px] font-medium leading-tight">
@@ -381,7 +377,7 @@ function SubcategoryView({
             key={subcategory.id}
             href={getCategoryHref(subcategory)}
             onClick={onClose}
-            className="flex min-h-[64px] items-center gap-3 rounded-none border-b border-slate-200 bg-white px-2.5 transition-colors hover:bg-slate-50"
+            className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
           >
             <CategoryIcon iconSrc={iconSrc} name={subcategory.name} size="sm" />
             <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-slate-950">
@@ -403,12 +399,10 @@ function SubcategoryView({
 function CategoryIcon({
   iconSrc,
   name,
-  highlighted,
   size = 'md',
 }: {
   iconSrc: string | null;
   name: string;
-  highlighted?: boolean;
   size?: 'sm' | 'md';
 }) {
   const fallbackIcon = iconSrc || getCategoryIcon(null, name);
@@ -417,9 +411,7 @@ function CategoryIcon({
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-none border border-slate-200 shadow-none ${
-        highlighted ? 'bg-white' : 'bg-slate-50'
-      }`}
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-[#f0f0f0] shadow-[0_2px_8px_rgba(0,0,0,0.03)]`}
     >
       {fallbackIcon ? (
         <Image
@@ -430,7 +422,7 @@ function CategoryIcon({
           sizes={imageSize}
         />
       ) : (
-        <Grid2X2 className="h-5 w-5 text-blue-700" aria-hidden="true" />
+        <Grid2X2 className="h-5 w-5 text-neutral-700" aria-hidden="true" />
       )}
     </span>
   );

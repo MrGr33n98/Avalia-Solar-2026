@@ -46,8 +46,8 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
 
     if (error && categories.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center border border-slate-200 bg-white py-12 text-center rounded-none">
-          <div className="mb-5 border border-amber-200 bg-amber-50 p-4 text-amber-500 rounded-none">
+        <div className="flex flex-col items-center justify-center border border-slate-200 bg-white py-12 text-center rounded-2xl">
+          <div className="mb-5 rounded-2xl border border-neutral-200 bg-[#f0f0f0] p-4 text-neutral-700">
             <Zap className="h-8 w-8" aria-hidden="true" />
           </div>
           <h3 className="text-slate-900 text-lg font-bold mb-2">Menu em Manutenção</h3>
@@ -58,7 +58,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
           <Link
             href="/categories"
             onClick={onClose}
-            className="inline-flex items-center rounded-none bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            className="inline-flex items-center rounded-2xl bg-gradient-to-br from-neutral-900 to-neutral-700 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-colors hover:from-black hover:to-neutral-800"
           >
             Acessar Todas as Categorias
           </Link>
@@ -97,7 +97,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                 className="group/parent flex min-w-0 flex-col"
               >
                 <div className="flex flex-col min-w-0">
-                  <span className="truncate text-[15px] font-semibold leading-tight text-slate-950 transition-colors group-hover/parent:text-blue-600">
+                  <span className="truncate text-[15px] font-semibold leading-tight text-slate-950 transition-colors group-hover/parent:text-neutral-700">
                     {category.name}
                   </span>
                   <span className="mt-1 text-xs font-medium text-slate-500">
@@ -115,9 +115,9 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                         key={child.id}
                         href={`/categories/${child.slug}`}
                         onClick={onClose}
-                        className="group/child flex items-center gap-2 text-[13px] font-normal text-slate-600 transition-colors hover:text-blue-600"
+                        className="group/child flex items-center gap-2 text-[13px] font-normal text-slate-600 transition-colors hover:text-neutral-700"
                       >
-                        <ArrowRight className="h-3 w-3 shrink-0 text-slate-400 transition-transform group-hover/child:translate-x-0.5 group-hover/child:text-blue-600" aria-hidden="true" />
+                        <ArrowRight className="h-3 w-3 shrink-0 text-slate-400 transition-transform group-hover/child:translate-x-0.5 group-hover/child:text-black" aria-hidden="true" />
                         <span className="truncate">{child.name}</span>
                       </Link>
                     );
@@ -126,7 +126,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                     <Link
                       href={`/categories/${category.slug}`}
                       onClick={onClose}
-                      className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      className="mt-2 text-xs font-semibold text-neutral-700 hover:text-black"
                     >
                       Ver todas ({category.children.length})
                     </Link>
@@ -149,7 +149,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-slate-950/10"
+            className="fixed inset-0 z-40 bg-black/10"
           />
 
           {/* Menu Container */}
@@ -159,7 +159,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute left-0 top-full z-50 w-full overflow-hidden border-y border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+            className="absolute left-0 top-full z-50 w-full overflow-hidden border-y border-slate-200 bg-[#fafafa] shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
           >
             <div className="mx-auto flex max-h-[min(620px,calc(100vh-80px))] max-w-7xl flex-col overflow-y-auto border-x border-slate-200 bg-white">
               {/* Sticky Header dentro do Menu */}
@@ -172,12 +172,12 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                 <aside className="border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
                   <h2 className="text-lg font-semibold tracking-tight text-slate-950">Explorar categorias</h2>
                   <p className="mt-3 text-sm font-normal leading-6 text-slate-600">Encontre empresas especializadas no que você precisa.</p>
-                  <Link href="/categories" onClick={onClose} className="mt-5 flex h-11 items-center justify-between rounded-none border border-slate-300 px-4 text-sm font-medium text-slate-950 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Ver todas as categorias <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-                  <div className="mt-6 border border-blue-100 bg-blue-50/60 p-4">
-                    <Headphones className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                  <Link href="/categories" onClick={onClose} className="mt-5 flex h-11 items-center justify-between rounded-2xl border border-slate-300 px-4 text-sm font-medium text-slate-950 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500">Ver todas as categorias <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                  <div className="mt-6 rounded-2xl border border-neutral-200 bg-[#f0f0f0] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+                    <Headphones className="h-5 w-5 text-neutral-700" aria-hidden="true" />
                     <p className="mt-3 text-sm font-medium text-slate-950">Precisa de ajuda?</p>
                     <p className="mt-1 text-xs leading-5 text-slate-600">Peça orientações e compare propostas verificadas.</p>
-                    <Link href="/compare" onClick={onClose} className="mt-3 flex items-center gap-2 text-xs font-semibold text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Comparar gratuitamente <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
+                    <Link href="/compare" onClick={onClose} className="mt-3 flex items-center gap-2 text-xs font-semibold text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500">Comparar gratuitamente <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
                   </div>
                 </aside>
                 <div className="min-w-0">{renderContent()}</div>
@@ -196,14 +196,14 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                           key={cat.id}
                           href={`/categories/${cat.slug}`}
                           onClick={onClose}
-                          className="flex items-center gap-1.5 rounded-none border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-600"
+                          className="flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 transition-colors hover:border-neutral-400 hover:text-black"
                         >
                           {cat.name}
                         </Link>
                       ))}
                     </div>
                   </div>
-                  <Link href="/categories" onClick={onClose} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Mais de {categories.length} categorias <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
+                  <Link href="/categories" onClick={onClose} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500">Mais de {categories.length} categorias <ArrowRight className="h-3 w-3" aria-hidden="true" /></Link>
                 </div>
               )}
             </div>
