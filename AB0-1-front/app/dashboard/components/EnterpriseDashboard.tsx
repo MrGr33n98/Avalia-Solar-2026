@@ -474,17 +474,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               >
                 {renderGuardedTab(
                   'analytics',
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Analytics Avançado
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Métricas detalhadas de performance e engajamento
-                      </p>
+                  <div className="space-y-3">
+                      <div>
+                        <h2 className="text-xl font-bold text-foreground md:text-2xl">
+                          Analytics Avançado
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          Métricas detalhadas de performance e engajamento
+                        </p>
+                      </div>
+                      <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
                     </div>
-                    <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
-                  </div>
                 )}
               </TabsContent>
 

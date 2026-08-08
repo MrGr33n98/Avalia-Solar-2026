@@ -181,42 +181,21 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
   }
 
   return (
-    <div className="space-y-12 max-w-[1400px] mx-auto pb-32">
-      {/* Precision Header */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 no-print">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-                <Activity className="h-6 w-6 text-indigo-500" />
-            </div>
-            <h2 className="text-4xl font-black text-foreground dark:text-white tracking-tighter uppercase">
-              Precision Analytics
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground font-medium max-w-lg leading-relaxed">
-            Monitoramento em tempo real de tráfego de alta fidelidade, vetores de conversão e métricas de retenção institucional.
-          </p>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex flex-wrap items-center gap-4"
-        >
-          <DateRangePicker value={timeRange} customRange={customDateRange} onChange={handleDateRangeChange} />
-          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/5">
-             <ExportButton timeseriesData={timeseriesData} aggregatedData={analyticsData ?? undefined} companyName="Avalia Solar" />
-             <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/[0.05]">
-               <Printer className="h-4 w-4 mr-2" />
-               Report Generation
-             </Button>
-          </div>
-        </motion.div>
-      </div>
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-32">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="no-print flex flex-wrap items-center gap-3"
+      >
+        <DateRangePicker value={timeRange} customRange={customDateRange} onChange={handleDateRangeChange} />
+        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-white/5 dark:bg-white/[0.03]">
+          <ExportButton timeseriesData={timeseriesData} aggregatedData={analyticsData ?? undefined} companyName="Avalia Solar" />
+          <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/[0.05]">
+            <Printer className="mr-2 h-4 w-4" />
+            Report Generation
+          </Button>
+        </div>
+      </motion.div>
 
       {/* High-Fi Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

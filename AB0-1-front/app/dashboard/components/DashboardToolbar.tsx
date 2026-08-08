@@ -124,7 +124,7 @@ export default function DashboardToolbar({
                     </span>
                     <span>ID</span>
                     <span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.id}</span>
-                    {user.company_id != null && <><span>Empresa</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.company_id}</span></>}
+                    {company?.name && <><span>Empresa</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{company.name}</span></>}
                     {user.phone && <><span>Telefone</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{user.phone}</span></>}
                     {(user.city || user.state) && <><span>Local</span><span className="truncate text-right font-medium text-[hsl(var(--dashboard-ink))]">{[user.city, user.state].filter(Boolean).join(' / ')}</span></>}
                     <span>Status</span>
