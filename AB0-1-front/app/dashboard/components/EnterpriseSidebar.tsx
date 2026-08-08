@@ -107,8 +107,7 @@ function SidebarTree({
                 <span
                   className={cn(
                     'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
-                    isCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
-                    isCollapsed && 'hidden'
+                    isCompactRail || isCollapsed ? 'hidden' : 'ml-3 flex-1 text-sm'
                   )}
                 >
                   {item.label}
@@ -116,7 +115,7 @@ function SidebarTree({
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 transition-transform',
-                    isCollapsed && 'hidden',
+                    (isCollapsed || isCompactRail) && 'hidden',
                     isOpen && 'rotate-180'
                   )}
                 />
@@ -148,7 +147,9 @@ function SidebarTree({
                         )}
                       >
                         <ChildIcon className={cn("shrink-0", isCompactRail ? "h-5 w-5" : "h-4 w-4")} />
-                        <span className={cn("truncate tabular-nums", isCompactRail ? "w-full text-center text-[10px]" : "ml-3 flex-1 text-sm")}>{child.label}</span>
+                        <span className={cn('truncate tabular-nums', (isCompactRail || isCollapsed) ? 'hidden' : 'ml-3 flex-1 text-sm')}>
+                          {child.label}
+                        </span>
                         {childBadge > 0 && (
                           <Badge className={cn("ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]", isCompactRail && "hidden")}>
                             {childBadge}
@@ -156,7 +157,10 @@ function SidebarTree({
                         )}
                         {hasMessageBadge && (
                           <span
-                            className="ml-2 h-2.5 w-2.5 rounded-full bg-[hsl(var(--dashboard-accent))] ring-2 ring-[hsl(var(--dashboard-panel))]"
+                            className={cn(
+                              'ml-2 h-2.5 w-2.5 rounded-full bg-[hsl(var(--dashboard-accent))] ring-2 ring-[hsl(var(--dashboard-panel))]',
+                              isCompactRail && 'hidden'
+                            )}
                             aria-label="Central de mensagens"
                           />
                         )}
@@ -196,8 +200,7 @@ function SidebarTree({
             <span
               className={cn(
                 'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
-                isCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
-                isCollapsed && 'hidden'
+                isCompactRail || isCollapsed ? 'hidden' : 'ml-3 flex-1 text-sm'
               )}
             >
               {item.label}
