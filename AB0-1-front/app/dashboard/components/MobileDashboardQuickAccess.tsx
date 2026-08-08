@@ -14,7 +14,6 @@ interface MobileDashboardQuickAccessProps {
     conversionRate: number;
   } | null;
   onTabChange: (tabId: string) => void;
-  onOpenNavigation: () => void;
   visibleTabIds?: string[];
 }
 
