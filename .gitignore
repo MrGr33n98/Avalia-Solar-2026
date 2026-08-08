@@ -74,3 +74,10 @@ docs/observability/*
 !AB0-1-front/__tests__/lib/
 !AB0-1-front/__tests__/lib/footer-visibility.test.ts
 !AB0-1-front/__tests__/components/CompanyLogoBadge.test.tsx
+
+# Skills and Agent configurations
+.agents/skills/*
+!.agents/skills/hallmark
+.kiro/
+agent/
+
