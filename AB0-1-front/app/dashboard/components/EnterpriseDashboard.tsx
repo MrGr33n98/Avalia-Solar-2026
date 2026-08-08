@@ -412,7 +412,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               company={company}
               stats={stats}
               onTabChange={handleTabChange}
-              onOpenNavigation={() => setSidebarOpen(true)}
               visibleTabIds={visibleTabIds}
             />
 

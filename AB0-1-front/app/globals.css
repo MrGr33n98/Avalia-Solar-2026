@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .loading-spinner-shell {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    isolation: isolate;
+  }
+
+  .loading-spinner-shell::before,
+  .loading-spinner-shell::after {
+    position: absolute;
+    inset: -0.45rem;
+    border: 1px solid hsl(var(--primary) / 0.3);
+    border-radius: 9999px;
+    content: '';
+    pointer-events: none;
+    transform: scale(0.72);
+    opacity: 0;
+    animation: loading-shock 1.8s ease-out infinite;
+  }
+
+  .loading-spinner-shell::after {
+    animation-delay: 0.9s;
+  }
+
+  @keyframes loading-shock {
+    0% {
+      transform: scale(0.72) rotate(0deg);
+      opacity: 0.7;
+    }
+    70%,
+    100% {
+      transform: scale(1.35) rotate(45deg);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loading-spinner-shell::before,
+    .loading-spinner-shell::after,
+    .loading-spinner {
+      animation: none;
+    }
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 245, 247, 250; /* Um cinza muito claro, quase branco */

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,6 @@ interface EnterpriseSidebarProps {
   visibleTabIds?: string[];
 }
 
-const COLLAPSE_STORAGE_KEY = 'avalia:enterprise-sidebar-collapsed';
 const COMPACT_RAIL_BREAKPOINT_PX = 1180;
 
 function filterVisibleItems(items: NavigationItem[], visibleTabIds?: string[]): NavigationItem[] {
@@ -106,8 +105,8 @@ function SidebarTree({
                 <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
                 <span
                   className={cn(
-                    'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
-                    isCompactRail || isCollapsed ? 'hidden' : 'ml-3 flex-1 text-sm'
+                    'min-w-0 break-words text-center font-medium leading-tight tabular-nums',
+                    isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
                   )}
                 >
                   {item.label}
@@ -147,7 +146,12 @@ function SidebarTree({
                         )}
                       >
                         <ChildIcon className={cn("shrink-0", isCompactRail ? "h-5 w-5" : "h-4 w-4")} />
-                        <span className={cn('truncate tabular-nums', (isCompactRail || isCollapsed) ? 'hidden' : 'ml-3 flex-1 text-sm')}>
+                        <span
+                          className={cn(
+                            'min-w-0 break-words text-center leading-tight tabular-nums',
+                            isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
+                          )}
+                        >
                           {child.label}
                         </span>
                         {childBadge > 0 && (
@@ -199,8 +203,8 @@ function SidebarTree({
             <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
               className={cn(
-                'min-w-0 truncate font-medium whitespace-nowrap tabular-nums',
-                isCompactRail || isCollapsed ? 'hidden' : 'ml-3 flex-1 text-sm'
+                'min-w-0 break-words text-center font-medium leading-tight tabular-nums',
+                isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
               )}
             >
               {item.label}
@@ -231,7 +235,6 @@ export default function EnterpriseSidebar({
   pendingReviewsCount = 0,
   visibleTabIds,
 }: EnterpriseSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([
@@ -239,15 +242,6 @@ export default function EnterpriseSidebar({
     'reputation-group',
     'product-edit-group',
   ]);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(COLLAPSE_STORAGE_KEY);
-      setIsCollapsed(stored === '1');
-    } catch {
-      setIsCollapsed(false);
-    }
-  }, []);
 
   useEffect(() => {
     const updateCompact = () => {
@@ -262,13 +256,12 @@ export default function EnterpriseSidebar({
 
   useEffect(() => {
     try {
-      const width = isMobile ? '64px' : isCollapsed ? '72px' : isCompactViewport ? '112px' : '240px';
+      const width = isMobile ? '0px' : isCompactViewport ? '112px' : '240px';
       document.documentElement.style.setProperty('--enterprise-sidebar-width', width);
-      window.localStorage.setItem(COLLAPSE_STORAGE_KEY, isCollapsed ? '1' : '0');
     } catch {
       // noop
     }
-  }, [isCollapsed, isCompactViewport, isMobile]);
+  }, [isCompactViewport, isMobile]);
 
   const navItems = useMemo(
     () =>
@@ -294,8 +287,8 @@ export default function EnterpriseSidebar({
   };
 
   const sidebarContent = (isDrawer = false) => {
-    const isSidebarCollapsed = isDrawer ? false : isCollapsed || isMobile;
-    const isSidebarCompactRail = isDrawer ? false : isMobile || (isCompactViewport && !isCollapsed);
+    const isSidebarCollapsed = false;
+    const isSidebarCompactRail = isDrawer ? false : isCompactViewport;
     
     const mainNavItems = navItems.filter((item) => item.id !== 'settings-group');
     const settingsItem = navItems.find((item) => item.id === 'settings-group');
@@ -311,21 +304,7 @@ export default function EnterpriseSidebar({
           >
             <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
           </div>
-          {!isDrawer && !isMobile && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsCollapsed((prev) => !prev)}
-              aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-              className="h-9 w-9 shrink-0 rounded-lg p-0 text-slate-300 hover:bg-white/10 hover:text-white"
-            >
-              {isCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </Button>
-          )}
+
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
@@ -407,8 +386,8 @@ export default function EnterpriseSidebar({
         initial={{ x: -12, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] transition-[width] duration-200',
-          isMobile ? 'w-[64px]' : isCollapsed ? 'w-[72px]' : 'w-[112px] dashboard:w-[240px]'
+          'fixed inset-y-0 left-0 z-40 hidden border-r border-white/10 bg-[hsl(var(--dashboard-rail))] pl-[var(--safe-area-inset-left)] transition-[width] duration-200 md:block',
+          'w-[112px] dashboard:w-[240px]'
         )}
       >
         {sidebarContent()}
