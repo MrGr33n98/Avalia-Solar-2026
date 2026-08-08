@@ -15,6 +15,10 @@ import {
   getPreferredCategoryIcon,
   normalizeCategoryKey,
 } from '@/lib/categoryIcons';
+import {
+  CategoryMonochromeIcon,
+  getMonochromeIconKey,
+} from '@/components/categories/CategoryMonochromeIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
 
@@ -307,7 +311,7 @@ function MainCategoriesView({
             onClick={() => (hasChildren ? onOpenCategory(category) : undefined)}
             className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500`}
           >
-            <CategoryIcon iconSrc={iconSrc} name={category.name} />
+            <CategoryIcon iconSrc={iconSrc} name={category.name} slug={category.slug || category.seo_url} />
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-[15px] font-medium leading-tight text-slate-950">
                 {category.name}
@@ -379,7 +383,7 @@ function SubcategoryView({
             onClick={onClose}
             className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
           >
-            <CategoryIcon iconSrc={iconSrc} name={subcategory.name} size="sm" />
+            <CategoryIcon iconSrc={iconSrc} name={subcategory.name} slug={subcategory.slug || subcategory.seo_url} size="sm" />
             <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-slate-950">
               {subcategory.name}
             </p>
@@ -399,21 +403,27 @@ function SubcategoryView({
 function CategoryIcon({
   iconSrc,
   name,
+  slug,
   size = 'md',
 }: {
   iconSrc: string | null;
   name: string;
+  slug?: string | null;
   size?: 'sm' | 'md';
 }) {
+  const monochromeKey = getMonochromeIconKey(name, slug);
   const fallbackIcon = iconSrc || getCategoryIcon(null, name);
   const dimensions = size === 'sm' ? 'h-10 w-10' : 'h-12 w-12';
   const imageSize = size === 'sm' ? '40px' : '48px';
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-[#f0f0f0] shadow-[0_2px_8px_rgba(0,0,0,0.03)]`}
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)]`}
+      aria-hidden="true"
     >
-      {fallbackIcon ? (
+      {monochromeKey ? (
+        <CategoryMonochromeIcon icon={monochromeKey} className="h-full w-full" />
+      ) : fallbackIcon ? (
         <Image
           src={fallbackIcon}
           alt=""
