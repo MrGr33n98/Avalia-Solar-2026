@@ -145,7 +145,7 @@ export default function DynamicLeadWizardModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden max-h-[92vh] flex flex-col z-[10000] rounded-2xl border-none">
+      <DialogContent className="max-w-2xl p-0 overflow-hidden max-h-[92vh] flex flex-col z-[10000] rounded-2xl border-none">
         <div className="bg-slate-950 px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
             <div>
