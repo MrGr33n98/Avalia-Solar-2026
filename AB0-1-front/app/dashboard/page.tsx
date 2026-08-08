@@ -134,10 +134,10 @@ export default function DashboardPage() {
 
   if (viewMode === 'loading' || viewMode === 'redirecting' || (viewMode === 'system_admin' && statsLoading)) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--clay-bg))]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground font-medium animate-pulse">
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[hsl(var(--clay-bg))] p-4">
+        <div className="space-y-4 text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+          <p className="font-medium text-muted-foreground animate-pulse">
             Preparando seu painel personalizado...
           </p>
         </div>
@@ -284,8 +284,8 @@ export default function DashboardPage() {
 // ✅ Shared loading skeleton for lazy-loaded components
 function DashboardLoadingState() {
   return (
-    <div className="flex min-h-dvh w-full items-center justify-center bg-[hsl(var(--clay-bg))] px-4 pb-[var(--safe-area-inset-bottom)] pt-[var(--safe-area-inset-top)]">
-      <div className="flex flex-col items-center space-y-4 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[hsl(var(--clay-bg))] p-4">
+      <div className="text-center">
         <LoadingSpinner size="lg" text="Preparando seu painel personalizado..." />
       </div>
     </div>
