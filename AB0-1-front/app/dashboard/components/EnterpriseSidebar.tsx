@@ -299,7 +299,7 @@ export default function EnterpriseSidebar({
           <div
             className={cn(
               'overflow-hidden rounded-md bg-white px-1 transition-[width] duration-200',
-              !isDrawer && (isCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
+              !isDrawer && (isSidebarCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
             )}
           >
             <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
