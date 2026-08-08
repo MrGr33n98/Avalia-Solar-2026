@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Scale } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ export default function ComparePageHeader({
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/85 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600 shadow-[0_10px_30px_-20px_rgba(37,99,235,0.55)]">
-              <Scale className="h-3.5 w-3.5" aria-hidden="true" /> 
+              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" /> 
               Comparativo Detalhado
             </div>
             
@@ -59,7 +59,7 @@ export default function ComparePageHeader({
               {' '}para facilitar sua escolha.
               {hasPremiumCompanies && (
                 <span className="mt-2 flex items-center gap-1 text-sm font-semibold text-blue-600">
-                  <Scale className="h-4 w-4" aria-hidden="true" />
+                  <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
                   Incluindo empresas premium destacadas
                 </span>
               )}

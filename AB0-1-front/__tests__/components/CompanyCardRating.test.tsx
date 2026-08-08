@@ -40,7 +40,7 @@ jest.mock('lucide-react', () => ({
   Building: () => <svg data-testid="building-icon" />,
   Share2: () => <svg data-testid="share-icon" />,
   Check: () => <svg data-testid="check-icon" />,
-  Scale: () => <svg data-testid="scale-icon" />,
+  ArrowLeftRight: () => <svg data-testid="scale-icon" />,
   MessageSquare: () => <svg data-testid="message-square-icon" />,
 }));
 

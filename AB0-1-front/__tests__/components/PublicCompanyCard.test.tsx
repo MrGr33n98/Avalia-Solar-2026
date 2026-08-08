@@ -27,7 +27,7 @@ jest.mock('lucide-react', () => ({
   Briefcase: (props: any) => <svg data-testid="briefcase-icon" className={props.className} />,
   Clock: (props: any) => <svg data-testid="clock-icon" className={props.className} />,
   MapPin: (props: any) => <svg data-testid="map-pin-icon" className={props.className} />,
-  Scale: (props: any) => <svg data-testid="scale-icon" className={props.className} />,
+  ArrowLeftRight: (props: any) => <svg data-testid="scale-icon" className={props.className} />,
   Plus: (props: any) => <svg data-testid="plus-icon" className={props.className} />,
   Check: (props: any) => <svg data-testid="check-icon" className={props.className} />,
   Crown: (props: any) => <svg data-testid="crown-icon" className={props.className} />,

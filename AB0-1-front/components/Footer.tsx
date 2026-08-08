@@ -12,7 +12,7 @@ import {
   Mail,
   MapPin,
   Phone,
-  Scale,
+  ArrowLeftRight,
   ShieldCheck,
   Star,
 } from 'lucide-react';
@@ -71,7 +71,7 @@ export default function Footer({ compact: _compact = false }: FooterProps) {
           <FooterSection
             id="footer-support"
             title="Suporte e legal"
-            icon={<Scale className="h-5 w-5" aria-hidden="true" />}
+            icon={<ArrowLeftRight className="h-5 w-5" aria-hidden="true" />}
             links={FOOTER_DISCOVERY_SECTIONS.support}
           />
         </div>

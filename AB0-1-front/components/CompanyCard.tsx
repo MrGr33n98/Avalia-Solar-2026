@@ -19,7 +19,7 @@ import {
   HelpCircle,
   Heart,
   PhoneCall,
-  Scale,
+  ArrowLeftRight,
   BadgeCheck,
   CheckCircle,
   ChevronRight,
