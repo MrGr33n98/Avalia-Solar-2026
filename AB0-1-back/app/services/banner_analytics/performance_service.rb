@@ -33,7 +33,7 @@ module BannerAnalytics
           total_days = 1 if total_days <= 0
           
           proportion = days_in_overlap.to_f / total_days
-          total_investment_cents += (sub.price_cents * proportion).round
+          total_investment_cents += (sub.price_paid_cents * proportion).round
         end
       end
       
