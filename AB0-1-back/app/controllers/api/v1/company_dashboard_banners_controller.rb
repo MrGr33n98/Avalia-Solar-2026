@@ -9,16 +9,7 @@ module Api
       def index
         banners = current_company.banners.includes(:banner_addon_subscriptions).order(created_at: :desc)
         
-        limit = current_company.respond_to?(:plan) && current_company.plan ? current_company.plan.max_banners : 3
-        used = banners.where(active: true, moderation_status: 'approved').count
-        remaining = [limit - used, 0].max
-        
-        quota = {
-          used: used,
-          limit: limit,
-          remaining: remaining,
-          can_create: remaining > 0
-        }
+        quota = Banners::CompanyBannerQuotaService.call(current_company)
 
         stats = BannerDailyStat.where(banner_id: banners.pluck(:id)).select('SUM(views_count) as v, SUM(clicks_count) as c, SUM(leads_count) as l, SUM(cost_cents) as cost').to_a.first
         

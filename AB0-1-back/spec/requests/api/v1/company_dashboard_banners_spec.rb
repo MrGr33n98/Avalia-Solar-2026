@@ -33,6 +33,27 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
         expect(json['banners'].first['operational_status']).to eq('active')
         expect(json['banners'].first['allowed_actions']).to include('pause', 'edit', 'buy_addon')
       end
+      end
+      
+      context 'regression: with a realistic Plan that does not respond to max_banners' do
+        let(:plan) { create(:plan, name: 'Pro', price: 100) }
+        let(:company) { create(:company, plan: plan) }
+
+        before do
+          # Stub feature_access to pretend promo_banner is enabled
+          allow_any_instance_of(Company).to receive(:feature_access).and_return({ 'promo_banner' => { 'state' => 'enabled' } })
+          allow_any_instance_of(Company).to receive(:feature_value_from_plan).and_return(nil)
+          allow_any_instance_of(Company).to receive(:inferred_plan_tier).and_return('pro')
+        end
+
+        it 'returns 200 OK without NoMethodError' do
+          get '/api/v1/company_dashboard/banners', headers: headers
+          expect(response).to have_http_status(:ok)
+          
+          json = JSON.parse(response.body)
+          expect(json['quota']['limit']).to eq(3) # Fallback limit for pro
+        end
+      end
     end
   end
 
