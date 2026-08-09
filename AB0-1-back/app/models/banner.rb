@@ -12,6 +12,9 @@ class Banner < ApplicationRecord
   belongs_to :approved_by_admin_user, class_name: 'AdminUser', optional: true
   has_one_attached :image
 
+  has_many :banner_addon_subscriptions, dependent: :destroy
+  has_many :active_banner_addon_subscriptions, -> { active }, class_name: 'BannerAddonSubscription'
+
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
   ALLOWED_POSITIONS = %w[
     navbar
@@ -314,10 +317,7 @@ class Banner < ApplicationRecord
   end
 
   def invalidate_cache
-    if Rails.cache.respond_to?(:delete_matched)
-      Rails.cache.delete_matched('banners/v1/*') rescue nil
-    end
-    Rails.cache.clear rescue nil
+    Banners::CacheInvalidatorService.call(self)
     Rails.logger.info("[Banner##{id}] Cache invalidado após alteração")
   rescue StandardError => e
     Rails.logger.error("[Banner##{id}] Erro ao invalidar cache: #{e.message}")

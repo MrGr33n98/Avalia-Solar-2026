@@ -307,25 +307,25 @@ RSpec.describe Banner, type: :model do
       let(:banner) { create(:banner) }
 
       before do
-        allow(Rails.cache).to receive(:delete_matched)
+        allow(Banners::CacheInvalidatorService).to receive(:call)
         allow(Rails.logger).to receive(:info)
       end
 
       it 'invalidates cache after save' do
         banner.update(title: 'New Title')
 
-        expect(Rails.cache).to have_received(:delete_matched).with('banners/v1/*')
+        expect(Banners::CacheInvalidatorService).to have_received(:call).with(banner)
         expect(Rails.logger).to have_received(:info).with(/Cache invalidado/)
       end
 
       it 'invalidates cache after destroy' do
         banner.destroy
 
-        expect(Rails.cache).to have_received(:delete_matched).with('banners/v1/*')
+        expect(Banners::CacheInvalidatorService).to have_received(:call).with(banner)
       end
 
       it 'logs error if cache invalidation fails' do
-        allow(Rails.cache).to receive(:delete_matched).and_raise(StandardError.new('Redis error'))
+        allow(Banners::CacheInvalidatorService).to receive(:call).and_raise(StandardError.new('Redis error'))
         allow(Rails.logger).to receive(:error)
 
         banner.update(title: 'New Title')

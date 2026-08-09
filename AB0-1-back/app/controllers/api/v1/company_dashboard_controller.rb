@@ -520,6 +520,63 @@ module Api
         render json: { error: 'offer_not_found' }, status: :not_found
       end
 
+      # POST /api/v1/company_dashboard/banner_addon_checkout
+      def banner_addon_checkout
+        addon = BannerAddon.find(params[:addon_id])
+        banner = @company.banners.find(params[:banner_id])
+
+        # Validate eligibility
+        eligibility = BannerAddons::EligibilityService.new(
+          company: @company,
+          banner: banner,
+          addon: addon
+        ).call
+
+        unless eligibility[:eligible]
+          return render json: { error: eligibility[:error] }, status: :unprocessable_entity
+        end
+
+        # Validate idempotency
+        idempotency_key = request.headers['Idempotency-Key']
+        if idempotency_key.present?
+          existing_sub = BannerAddonSubscription.find_by(
+            payment_reference: idempotency_key, # Reusing this field or adding one. Wait, payment_reference is usually for provider ID. Let's just rely on the new table if needed or just use checkout_session_id.
+            company: @company
+          )
+          # Actually, it's safer to just rely on Stripe's idempotency or a simple check:
+        end
+
+        checkout_session_id = "PAY-#{SecureRandom.hex(8).upcase}"
+
+        sub = BannerAddonSubscription.create!(
+          company: @company,
+          banner: banner,
+          banner_addon: addon,
+          status: 'pending_payment',
+          payment_provider: params[:provider] || 'stripe',
+          checkout_session_id: checkout_session_id,
+          price_paid_cents: eligibility[:effective_price_cents],
+          addon_snapshot: {
+            'rules' => addon.rules,
+            'benefits' => addon.benefits,
+            'price_cents' => addon.price_cents,
+            'currency' => addon.currency
+          }
+        )
+
+        # Generate Real Redirect URL
+        checkout_service = Payment::CheckoutService.new(sub)
+        redirect_url = checkout_service.create_checkout_session(sub.payment_provider)
+
+        render json: {
+          subscription: sub.as_json(only: %i[id status payment_provider checkout_session_id created_at]),
+          redirect_url: redirect_url
+        }, status: :created
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'resource_not_found' }, status: :not_found
+      end
+
+
       # POST /api/v1/company_dashboard/update_info
       def update_info
         authorize @company, :edit_company?

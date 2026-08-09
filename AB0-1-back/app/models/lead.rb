@@ -45,6 +45,11 @@ class Lead < ApplicationRecord
   after_commit :notify_slack, on: :create
   after_create_commit :instrument_lead_captured
   after_create_commit :create_notification_for_company
+  after_create_commit :track_banner_attribution
+
+  def track_banner_attribution
+    Analytics::BannerAttributionService.call(self)
+  end
 
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
             :decision_timeline, :address_full,

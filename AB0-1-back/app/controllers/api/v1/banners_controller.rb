@@ -96,26 +96,56 @@ class Api::V1::BannersController < Api::V1::BaseController
   end
 
   # Gera chave de cache determinística baseada nos parâmetros
-  # Formato: banners/v1/{hash_dos_params}
   def generate_cache_key
     params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city)
                         .to_h
                         .sort
                         .to_h
 
+    # Obtém as versões de cache granular
+    versions = Banners::CacheInvalidatorService.current_versions(params_hash)
+    version_string = versions.map { |k, v| "#{k}:#{v}" }.join('|')
+
     # Gera hash MD5 dos parâmetros para chave compacta
     params_digest = Digest::MD5.hexdigest(params_hash.to_json)
 
-    "banners/v1/#{params_digest}"
+    "banners/v2/#{params_digest}/#{version_string}"
   end
 
-  # Serializa banners retornando apenas campos necessários
-  # Reduz payload da resposta em ~40%
+  # Serializa banners retornando apenas campos necessários e anexa UTMs
   def serialize_banners(banners)
-    banners.as_json(
+    serialized = banners.as_json(
       only: %i[id title alt_text link active position sponsored banner_type category_id company_id start_date end_date
                created_at width height],
       methods: %i[image_url link_url category_ids]
     )
+
+    serialized.each do |b|
+      base_url = b['link_url'].presence || b['link'].presence
+      next if base_url.blank?
+
+      begin
+        uri = URI.parse(base_url)
+        
+        # Ignorar URLs vazias ou esquemas muito inválidos
+        next if uri.host.blank? && !base_url.start_with?('/')
+
+        existing_query = URI.decode_www_form(uri.query || '')
+        
+        # Só injetar se ainda não tiver utm_source, para não sobrescrever tracking manual do cliente
+        unless existing_query.assoc('utm_source')
+          existing_query << ['utm_source', 'avaliasolar_ads']
+          existing_query << ['utm_campaign', "banner_#{b['id']}"]
+          uri.query = URI.encode_www_form(existing_query)
+          
+          b['link_url'] = uri.to_s
+          b['link'] = uri.to_s
+        end
+      rescue StandardError
+        # Ignorar erros de parse (ex: links javascript: ou mailto:)
+      end
+    end
+
+    serialized
   end
 end

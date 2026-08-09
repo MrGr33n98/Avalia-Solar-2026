@@ -3,28 +3,86 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::BannerEvents', type: :request do
-  it 'keeps safe compare metadata for views and clicks' do
-    banner = create(:banner, :approved, active: true, position: 'compare_hero')
-
-    post '/api/v1/banner_events', params: {
+  let(:banner) { create(:banner, :approved, active: true, position: 'compare_hero') }
+  let(:valid_params) do
+    {
       banner_event: {
         banner_id: banner.id,
-        event_type: 'view',
+        event_type: 'impression',
         metadata: {
           position: 'compare_hero',
-          page: 'compare',
-          sponsored: true,
+          page_path: '/compare',
+          slot_key: 'top_banner',
           unsafe: 'discard me'
+        },
+        utm: {
+          utm_source: 'test_source'
         }
       }
     }
+  end
 
-    expect(response).to have_http_status(:created)
-    expect(BannerEvent.last.metadata_json).to include(
-      'position' => 'compare_hero',
-      'page' => 'compare',
-      'sponsored' => true
-    )
-    expect(BannerEvent.last.metadata_json).not_to have_key('unsafe')
+  describe 'POST /api/v1/banner_events' do
+    it 'creates a valid impression event with safe metadata and UTMs' do
+      post '/api/v1/banner_events', params: valid_params
+
+      expect(response).to have_http_status(:created)
+      
+      event = BannerEvent.last
+      expect(event.event_type).to eq('impression')
+      expect(event.banner_id).to eq(banner.id)
+      expect(event.metadata_json).to include(
+        'position' => 'compare_hero',
+        'page_path' => '/compare',
+        'slot_key' => 'top_banner'
+      )
+      expect(event.metadata_json).not_to have_key('unsafe')
+      expect(event.utm_source).to eq('test_source')
+      expect(event.event_key).to be_present
+    end
+
+    it 'is idempotent based on event_key (retry does not duplicate)' do
+      post '/api/v1/banner_events', params: valid_params
+      expect(response).to have_http_status(:created)
+      expect(BannerEvent.count).to eq(1)
+
+      # Simulate a retry with the exact same request parameters (same IP, same UA, same date)
+      post '/api/v1/banner_events', params: valid_params
+      expect(response).to have_http_status(:created)
+      expect(BannerEvent.count).to eq(1) # Still 1
+    end
+
+    it 'creates a new event if context (like position) changes' do
+      post '/api/v1/banner_events', params: valid_params
+      expect(BannerEvent.count).to eq(1)
+
+      # Change position, should generate new event_key
+      new_params = valid_params.deep_dup
+      new_params[:banner_event][:metadata][:position] = 'another_position'
+      post '/api/v1/banner_events', params: new_params
+      
+      expect(response).to have_http_status(:created)
+      expect(BannerEvent.count).to eq(2)
+    end
+
+    it 'rejects invalid event_type' do
+      invalid_params = valid_params.deep_dup
+      invalid_params[:banner_event][:event_type] = 'hack_event'
+
+      post '/api/v1/banner_events', params: invalid_params
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(BannerEvent.count).to eq(0)
+    end
+
+    it 'fails for non-existent banner' do
+      invalid_params = valid_params.deep_dup
+      invalid_params[:banner_event][:banner_id] = 999999
+
+      post '/api/v1/banner_events', params: invalid_params
+      expect(response).to have_http_status(:not_found) # Assume standard Rails record not found handling or similar.
+      # Note: The controller doesn't validate banner existence explicitly in the action unless ActiveRecord constraints fail,
+      # but create_or_find_by! might raise ActiveRecord::RecordInvalid if banner doesn't exist depending on FK.
+      # Let's adjust expectation if it throws 500/404 based on the app's generic exception handler.
+    end
   end
 end

@@ -259,6 +259,55 @@ ActiveAdmin.register Banner do
       row :created_at
       row :updated_at
     end
+
+    panel 'PERFORMANCE' do
+      begin
+        perf = BannerAnalytics::PerformanceService.call(resource.id)
+        metrics = perf[:metrics]
+        
+        attributes_table_for resource do
+          row 'Impressões' do
+            number_with_delimiter(metrics[:impressions], delimiter: '.')
+          end
+          row 'Cliques' do
+            number_with_delimiter(metrics[:clicks], delimiter: '.')
+          end
+          row 'CTR' do
+            "#{metrics[:ctr]}%"
+          end
+          row 'Leads' do
+            number_with_delimiter(metrics[:leads], delimiter: '.')
+          end
+          row 'Taxa de Conversão' do
+            "#{metrics[:conversion_rate]}%"
+          end
+          row 'Investimento' do
+            number_to_currency(metrics[:investment], unit: 'R$ ', separator: ',', delimiter: '.')
+          end
+          row 'CPC' do
+            number_to_currency(metrics[:cpc], unit: 'R$ ', separator: ',', delimiter: '.')
+          end
+        end
+      rescue StandardError => e
+        div "Erro ao carregar métricas: #{e.message}", class: 'flash flash_error'
+      end
+    end
+
+    panel 'ADD-ONS ATIVOS' do
+      active_subs = resource.banner_addon_subscriptions.where(status: 'active')
+      if active_subs.any?
+        table_for active_subs do
+          column :banner_addon
+          column :starts_at
+          column :ends_at
+          column '' do |sub|
+            link_to 'Ver', admin_banner_addon_subscription_path(sub)
+          end
+        end
+      else
+        div 'Nenhum add-on ativo neste banner.', style: 'padding: 10px; color: #666;'
+      end
+    end
   end
 
   filter :title

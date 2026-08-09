@@ -204,6 +204,7 @@ Rails.application.routes.draw do
         get 'stats', to: 'company_dashboard#stats'
         get 'banner_subscriptions', to: 'company_dashboard#banner_subscriptions'
         post 'banner_checkout', to: 'company_dashboard#banner_checkout'
+        post 'banner_addon_checkout', to: 'company_dashboard#banner_addon_checkout'
         get 'notifications', to: 'company_dashboard#notifications'
         get 'pending_changes', to: 'company_dashboard#pending_changes'
         get 'media', to: 'company_dashboard#media'
@@ -233,9 +234,12 @@ Rails.application.routes.draw do
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
           member do
             patch :submit
+            get :performance
           end
         end
       end
+
+      resources :banner_addons, only: %i[index]
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
 
