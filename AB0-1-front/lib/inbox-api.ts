@@ -50,6 +50,7 @@ export interface InboxSession {
   lead?: InboxLead | null;
   last_message?: InboxMessage | null;
   sla_breached_tracked?: boolean;
+  is_online?: boolean;
 }
 
 export interface InboxCounts {

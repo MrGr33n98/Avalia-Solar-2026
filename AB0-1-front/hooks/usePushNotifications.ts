@@ -50,10 +50,14 @@ export function usePushNotifications() {
 
       // Envia a assinatura para o backend
       const subscriptionJSON = sub.toJSON();
-      await api.post('/push_subscriptions', {
-        endpoint: subscriptionJSON.endpoint,
-        p256dh: subscriptionJSON.keys?.p256dh,
-        auth: subscriptionJSON.keys?.auth,
+      await api.request({
+        method: 'POST',
+        url: '/push_subscriptions',
+        data: {
+          endpoint: subscriptionJSON.endpoint,
+          p256dh: subscriptionJSON.keys?.p256dh,
+          auth: subscriptionJSON.keys?.auth,
+        }
       });
 
       return sub;
@@ -73,7 +77,9 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
       
       const subscriptionJSON = subscription.toJSON();
-      await api.delete('/push_subscriptions', {
+      await api.request({
+        method: 'DELETE',
+        url: '/push_subscriptions',
         data: { endpoint: subscriptionJSON.endpoint }
       });
       

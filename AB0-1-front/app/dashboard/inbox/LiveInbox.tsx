@@ -17,11 +17,12 @@ import {
   Phone,
   MoreVertical,
   PanelLeft,
+  Bot,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { trackEvent } from '@/lib/analytics';
+import { track } from '@/lib/analytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useActionCableInbox, type InboxRealtimeEvent } from '@/hooks/useActionCableInbox';
@@ -35,7 +36,7 @@ import {
 
 export type InboxMessage = ApiInboxMessage & {
   status?: 'sending' | 'sent' | 'read' | 'failed';
-  client_message_id?: string;
+  client_message_id?: string | null;
 };
 import {
   getInboxSoundPreference,
@@ -293,9 +294,9 @@ function LeadSidebarDetails({ session, onClose }: { session: InboxSession; onClo
           rel="noopener noreferrer"
           aria-disabled={!whatsapp}
           onClick={async () => {
-            if (whatsapp && companyId) {
+            if (whatsapp && session.company_id) {
               try {
-                await inboxApi.handoffToWhatsApp(companyId, session.id);
+                await inboxApi.handoffToWhatsApp(session.company_id, session.id);
               } catch (err) {
                 console.error('Falha ao registrar handoff WA:', err);
               }
@@ -463,7 +464,7 @@ export default function LiveInbox() {
         if (session.status === 'waiting_agent' && session.last_message_at) {
           const waitTime = now - new Date(session.last_message_at).getTime();
           if (waitTime > 15 * 60 * 1000 && !session.sla_breached_tracked) {
-            trackEvent('mobivolt_live_inbox_sla_breached', {
+            track('mobivolt_live_inbox_sla_breached', {
               company_id: String(companyId),
               session_id: String(session.id),
               wait_time_ms: waitTime,
