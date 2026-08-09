@@ -1,325 +1,434 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, 
   Copy, 
   Check, 
-  ExternalLink, 
-  Trophy, 
   Zap, 
   Globe, 
   Code2, 
   Smartphone, 
   Monitor, 
   Layout, 
-  Maximize,
-  ArrowRight,
-  Info
+  Laptop,
+  Info,
+  Layers,
+  HelpCircle,
+  Sparkles,
+  CheckCircle,
+  FileText,
+  MousePointerClick
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import WidgetBadge from './WidgetBadge';
 import { cn } from '@/lib/utils';
-import MetricCard from './MetricCard';
+
+interface CompanyWidgetData {
+  id: string | number;
+  name: string;
+  verified: boolean;
+  trust_score?: number;
+  rating_avg?: number;
+  reviews_count?: number;
+  verified_badge_image_url?: string;
+  public_profile_url?: string;
+  api_key?: string;
+}
 
 interface TrustWidgetDashboardProps {
-  company: any;
+  company: CompanyWidgetData | null;
 }
+
+type WidgetStyle = 'default' | 'compact' | 'circular' | 'split';
 
 export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardProps) {
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [size, setSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [showRank, setShowRank] = useState(true);
+  const [style, setStyle] = useState<WidgetStyle>('default');
   
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  const apiKey = company?.api_key || 'SUA_API_KEY';
-  const companyId = company?.id || 'ID';
+  // Customization Toggles
+  const [showRating, setShowRating] = useState(true);
+  const [showReviewsCount, setShowReviewsCount] = useState(true);
+  const [showTrustScore, setShowTrustScore] = useState(true);
+  const [showRank, setShowRank] = useState(true);
+  const [highlightColor, setHighlightColor] = useState('#2563EB');
+  const [integrationTab, setIntegrationTab] = useState<'js' | 'iframe'>('js');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  const snippet = `<div 
-    data-avalia-solar-widget 
-    data-company-id="${companyId}" 
-    data-api-key="${apiKey}"
-    data-theme="${theme}"
-    data-size="${size}"
-    data-show-rank="${showRank}"
-  ></div>
-  <script src="${apiBaseUrl}/trust-widget-embed.js" async></script>`;
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
+  const apiKey = company?.api_key || 'SUA_API_KEY';
+  const companyId = company?.id ? String(company.id) : '1772';
+
+  const jsSnippet = `<div id="avaliasolar-trust-widget"
+  data-company-id="${companyId}"
+  data-api-key="${apiKey}"
+  data-theme="${theme}"
+  data-style="${style}"
+  data-lang="pt-BR"
+></div>
+<script src="${apiBaseUrl}/api/v1/trust-widget-embed.js" async></script>`;
+
+  const iframeSnippet = `<iframe 
+  src="${apiBaseUrl}/api/v1/trust-widget?company_id=${companyId}&theme=${theme}&style=${style}"
+  width="100%" 
+  height="220" 
+  style="border: none; overflow: hidden;"
+></iframe>`;
+
+  const snippet = integrationTab === 'js' ? jsSnippet : iframeSnippet;
 
   const handleCopy = () => {
     if (typeof window !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(snippet);
       setCopied(true);
-      toast.success('Script de autoridade copiado!');
+      toast.success('Script copiado com sucesso!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  // previewData: usado SOMENTE para pré-visualização do snippet de embed.
-  // Fallbacks aqui são valores de demonstração visual do widget — não representam dados reais da empresa.
   const previewData = {
     name: company?.name || 'Sua Empresa',
     verified: company?.verified ?? true,
-    trust_score: company?.trust_score ?? 0,
-    rating_avg: company?.rating_avg ?? 0,
-    reviews_count: company?.reviews_count ?? 0,
+    trust_score: company?.trust_score ?? 88,
+    rating_avg: company?.rating_avg ?? 4.8,
+    reviews_count: company?.reviews_count ?? 32,
     verified_badge_image_url: company?.verified_badge_image_url,
     public_profile_url: company?.public_profile_url || '#',
-    priority_score: company?.priority_score ?? 0,
   };
 
   return (
-    <div className="space-y-12">
-      {/* Strategic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-brand-green mb-1">
-            <Globe className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Distribuição de Confiança</span>
-          </div>
-          <h2 className="text-3xl font-bold tracking-tight uppercase text-slate-900 dark:text-white leading-none">
-            Widget de <span className="text-brand-blue">Confiança</span>
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40 max-w-lg font-medium leading-relaxed">
-            Distribua sua prova social e reputação certificada em tempo real para qualquer endpoint externo através de nosso protocolo de widget assíncrono.
-          </p>
+    <div className="space-y-8 bg-slate-50/50 p-2 rounded-2xl">
+      {/* Header section (Breadcrumb & API Status) */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-5">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <span>WIDGET</span>
+          <span className="text-slate-300">/</span>
+          <span className="text-blue-600 font-bold">Widget de Confiança</span>
         </div>
-        
-        <div className="flex items-center gap-4">
-           <div className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-center">
-              <Code2 className="h-6 w-6 text-slate-400 dark:text-white/20" />
-           </div>
-           <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">API Protocol</p>
-              <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-bold text-[9px] px-3">ACTIVE v2.4</Badge>
-           </div>
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">API PROTOCOL</span>
+          <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold text-[9px] px-1.5 h-4">ACTIVE v2.4</Badge>
         </div>
       </div>
 
-      {/* Distribution Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard
-          title="Taxa de Impressão"
-          value="14.2k"
-          change="+8%"
-          changeType="positive"
-          icon={Monitor}
-          color="blue"
-        />
-        <MetricCard
-          title="Trust Score"
-          value={company?.trust_score != null ? `${company.trust_score}%` : '—'}
-          icon={ShieldCheck}
-          color="emerald"
-        />
-        <MetricCard
-          title="CTR Estimado"
-          value="4.8%"
-          change="+1.2%"
-          changeType="positive"
-          icon={Zap}
-          color="amber"
-        />
-        <MetricCard
-          title="Status de Rede"
-          value="Online"
-          icon={Globe}
-          color="blue"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Title & Preview Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Title, description, benefits */}
         <div className="lg:col-span-7 space-y-6">
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-            <CardHeader className="p-8 border-b border-slate-100 dark:border-slate-800">
-              <CardTitle className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Configuração de Interface</CardTitle>
-              <CardDescription className="text-sm text-slate-500 font-medium">Personalize os parâmetros de visualização do seu nó de autoridade.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              {/* Theme Selector */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Esquema Digital (Tema)</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    onClick={() => setTheme('light')}
-                    className={cn(
-                      "group h-12 rounded-lg border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
-                      theme === 'light' 
-                        ? "bg-slate-900 text-white border-slate-900" 
-                        : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
-                    )}
-                  >
-                    <div className={cn("w-2 h-2 rounded-full", theme === 'light' ? "bg-primary" : "bg-slate-300 dark:bg-white/20")} />
-                    Light Protocol
-                  </button>
-                  <button 
-                    onClick={() => setTheme('dark')}
-                    className={cn(
-                      "group h-12 rounded-lg border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
-                      theme === 'dark' 
-                        ? "bg-brand-blue text-white border-brand-blue shadow-sm" 
-                        : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
-                    )}
-                  >
-                    <div className={cn("w-2 h-2 rounded-full", theme === 'dark' ? "bg-white" : "bg-slate-300")} />
-                    Silicon Dark
-                  </button>
-                </div>
-              </div>
+          <div className="space-y-3">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Widget de <span className="text-blue-600">Confiança</span>
+            </h1>
+            <p className="text-sm text-slate-500 max-w-xl font-medium leading-relaxed">
+              Mostre sua reputação certificada em tempo real e aumente a confiança de novos clientes no seu site corporativo.
+            </p>
+          </div>
 
-              {/* Size Selector */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Escala de Renderização</Label>
-                <div className="grid grid-cols-3 gap-4">
-                  {(['small', 'medium', 'large'] as const).map((s) => (
-                    <button 
-                      key={s}
-                      onClick={() => setSize(s)}
-                      className={cn(
-                        "h-12 rounded-lg border transition-all text-[10px] font-bold uppercase tracking-widest",
-                        size === s 
-                          ? "bg-slate-900 text-white border-slate-900" 
-                          : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
-                      )}
-                    >
-                      {s}
-                    </button>
-                  ))}
+          {/* Quick benefits badge row */}
+          <div className="flex flex-wrap gap-2 pt-2">
+            {[
+              { text: 'Prova social em tempo real', icon: ShieldCheck },
+              { text: 'Fácil integração via script', icon: Code2 },
+              { text: 'Leve e rápido zero impacto', icon: Zap },
+              { text: 'Seguro e confiável dados verificados', icon: Globe }
+            ].map((benefit, idx) => {
+              const BenefitIcon = benefit.icon;
+              return (
+                <div key={idx} className="flex items-center gap-1.5 bg-white border border-slate-100 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm">
+                  <BenefitIcon className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{benefit.text}</span>
                 </div>
-              </div>
-
-              {/* Ranking View */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Visualização de Elite</Label>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => setShowRank(true)} 
-                    className={cn(
-                      "flex-1 h-12 rounded-lg border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
-                      showRank 
-                        ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/30" 
-                        : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
-                    )}
-                  >
-                    <Trophy className={cn("w-4 h-4", showRank ? "fill-amber-500/20" : "")} />
-                    Exibir Ranking
-                  </button>
-                  <button 
-                    onClick={() => setShowRank(false)} 
-                    className={cn(
-                      "flex-1 h-12 rounded-lg border transition-all flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-widest",
-                      !showRank 
-                        ? "bg-slate-900 text-white border-slate-900" 
-                        : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
-                    )}
-                  >
-                    Apenas Reputação
-                  </button>
-                </div>
-              </div>
-
-              {/* Code Snippet */}
-              <div className="pt-8 mt-8 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                <div className="flex items-center justify-between">
-                   <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Pipeline Snippet (HTML/JS)</Label>
-                   <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-[8px] font-bold">X64 ENCRYPTED</Badge>
-                </div>
-                <div className="relative group/snippet overflow-hidden">
-                  <pre className="p-6 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] overflow-x-auto border border-slate-200 dark:border-slate-800 leading-relaxed font-mono shadow-inner scrollbar-hide">
-                    {snippet}
-                  </pre>
-                  <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none group-hover/snippet:opacity-0 transition-opacity" />
-                  <Button
-                    size="icon"
-                    className="absolute top-4 right-4 h-10 w-10 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg transition-all shadow-md hover:bg-slate-800 dark:hover:bg-slate-200 active:scale-90"
-                    onClick={handleCopy}
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 mt-4">
-                   <Info className="h-4 w-4 text-blue-500 mt-0.5" />
-                   <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-                     O script deve ser injetado preferencialmente no rodapé da página para garantir <span className="text-slate-900 dark:text-white font-bold">zero latência</span> na renderização do conteúdo principal.
-                   </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Live Preview Column */}
-        <div className="lg:col-span-5 space-y-8">
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm sticky top-8">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                 <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                    <Smartphone className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                 </div>
-                 <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Monitor em Tempo Real</span>
-              </div>
-              <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
-                 <span className="text-[10px] font-bold text-brand-green uppercase tracking-widest">Active Link</span>
-              </div>
+        {/* Live Preview Container (Sticky right panel) */}
+        <div className="lg:col-span-5 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pré-visualização</span>
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
+              <button 
+                onClick={() => setPreviewDevice('desktop')}
+                className={cn("p-1 rounded", previewDevice === 'desktop' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+              </button>
+              <button 
+                onClick={() => setPreviewDevice('tablet')}
+                className={cn("p-1 rounded", previewDevice === 'tablet' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              >
+                <Laptop className="w-3.5 h-3.5" />
+              </button>
+              <button 
+                onClick={() => setPreviewDevice('mobile')}
+                className={cn("p-1 rounded", previewDevice === 'mobile' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+              </button>
             </div>
-            
-            <div className="p-12 min-h-[400px] flex flex-col items-center justify-center relative bg-slate-100 dark:bg-slate-950">
-               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#0056d2 0.5px, transparent 0.5px)", backgroundSize: "10px 10px" }} />
-               <motion.div 
-                key={`${theme}-${size}-${showRank}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="relative z-10 p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
-               >
-                  <WidgetBadge companyData={previewData} theme={theme} />
-               </motion.div>
-                              <div className="mt-8 text-center relative z-10 space-y-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ambiente de Preview v8.2</p>
-                   <div className="flex justify-center gap-3">
-                     <Monitor className="h-4 w-4 text-slate-300" />
-                     <Smartphone className="h-4 w-4 text-slate-300" />
-                     <Layout className="h-4 w-4 text-slate-300" />
-                   </div>
-               </div>
-            </div>
-            
-            <div className="p-6 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                <Button className="w-full h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 active:scale-95 shadow-sm">
-                   Simular Integração
-                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-            </div>
-          </Card>
+          </div>
 
-          <Card className="bg-slate-900 dark:bg-slate-800 border-none rounded-xl p-8 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <ShieldCheck className="h-24 w-24 text-white" />
-             </div>
-             <h4 className="text-xl font-bold text-white uppercase tracking-tight mb-4 flex items-center gap-3">
-               <Trophy className="h-6 w-6 text-amber-500" />
-               Elite Distribution
-             </h4>
-             <p className="text-sm text-slate-400 font-medium leading-relaxed mb-6">
-               Sua empresa está operando com o protocolo de confiança <span className="text-white font-bold">Nível 1</span>. Ativos Premium aumentam a retenção de usuários no funil.
-             </p>
-             <div className="space-y-4">
-                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                   <span>Resonance Depth</span>
-                   <span className="text-brand-green">Peak Performance</span>
-                </div>
-                <Progress value={85} className="h-1.5 bg-white/5" />
-             </div>
-          </Card>
+          <div className="flex justify-center items-center py-10 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 min-h-[220px]">
+            <div className={cn(
+              "transition-all duration-300 flex justify-center",
+              previewDevice === 'desktop' ? 'w-full' : previewDevice === 'tablet' ? 'w-80' : 'w-64'
+            )}>
+              <WidgetBadge 
+                companyData={previewData}
+                theme={theme}
+                style={style}
+                showRating={showRating}
+                showReviewsCount={showReviewsCount}
+                showTrustScore={showTrustScore}
+                showRank={showRank}
+                highlightColor={highlightColor}
+              />
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Interactive configuration area (Splits into Customize and Code Copy) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Column 1: Personalize Widget */}
+        <div className="lg:col-span-7 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">1</span>
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Personalize seu Widget</h3>
+          </div>
+          <p className="text-xs text-slate-400">Escolha como seu widget será exibido.</p>
+
+          {/* Theme Selector */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tema</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant={theme === 'light' ? 'default' : 'outline'}
+                onClick={() => setTheme('light')}
+                className={cn("h-10 text-xs uppercase tracking-wider font-bold", theme === 'light' ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-slate-200 text-slate-600 hover:bg-slate-50")}
+              >
+                Light
+              </Button>
+              <Button
+                variant={theme === 'dark' ? 'default' : 'outline'}
+                onClick={() => setTheme('dark')}
+                className={cn("h-10 text-xs uppercase tracking-wider font-bold", theme === 'dark' ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-slate-200 text-slate-600 hover:bg-slate-50")}
+              >
+                Dark
+              </Button>
+            </div>
+          </div>
+
+          {/* Style Selector */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estilo</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { id: 'default', label: 'Padrão', icon: Layout },
+                { id: 'compact', label: 'Compacto', icon: Minimize },
+                { id: 'circular', label: 'Circular', icon: Sparkles },
+                { id: 'split', label: 'Split', icon: Layers }
+              ].map((styleOption) => {
+                const OptionIcon = styleOption.icon;
+                const active = style === styleOption.id;
+                return (
+                  <button
+                    key={styleOption.id}
+                    onClick={() => setStyle(styleOption.id as WidgetStyle)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all hover:bg-slate-50/50",
+                      active ? "border-blue-600 bg-blue-50/20 text-blue-600" : "border-slate-200 text-slate-500"
+                    )}
+                  >
+                    <OptionIcon className="w-5 h-5 mb-1.5" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{styleOption.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Displayed Fields */}
+          <div className="space-y-4 pt-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Informações Exibidas</Label>
+            
+            <div className="space-y-3">
+              {[
+                { state: showRating, setter: setShowRating, title: 'Avaliação média', desc: 'Exibe estrelas e nota média' },
+                { state: showReviewsCount, setter: setShowReviewsCount, title: 'Número de avaliações', desc: 'Mostra o total de avaliações' },
+                { state: showTrustScore, setter: setShowTrustScore, title: 'Score de confiança', desc: 'Exibe o score percentual' },
+                { state: showRank, setter: setShowRank, title: 'Selo Diamond', desc: 'Mostra o selo de verificação' }
+              ].map((toggle, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/30">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-700">{toggle.title}</p>
+                    <p className="text-[10px] text-slate-400">{toggle.desc}</p>
+                  </div>
+                  <Switch checked={toggle.state} onCheckedChange={toggle.setter} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Highlight Color */}
+          <div className="space-y-3 pt-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cor de Destaque</Label>
+            <div className="flex items-center gap-3">
+              <input 
+                type="color" 
+                value={highlightColor}
+                onChange={(e) => setHighlightColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent"
+              />
+              <input 
+                type="text" 
+                value={highlightColor}
+                onChange={(e) => setHighlightColor(e.target.value)}
+                className="flex-1 h-10 px-3 rounded-lg border border-slate-200 text-xs font-bold font-mono focus:outline-none focus:border-blue-600"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Column 2: Code Snippet & Hints */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Copy and embed snippet */}
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">2</span>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Copie e cole o código</h3>
+              </div>
+              <a 
+                href="/docs" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[9px] font-black text-blue-600 uppercase tracking-wider hover:underline"
+              >
+                Ver Documentação
+              </a>
+            </div>
+
+            {/* Integration method tabs */}
+            <Tabs 
+              value={integrationTab} 
+              onValueChange={(val) => setIntegrationTab(val as 'js' | 'iframe')} 
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-2 bg-slate-50 p-1 rounded-xl">
+                <TabsTrigger value="js" className="text-[10px] font-bold uppercase tracking-wider rounded-lg">JavaScript (Recomendado)</TabsTrigger>
+                <TabsTrigger value="iframe" className="text-[10px] font-bold uppercase tracking-wider rounded-lg">IFrame</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {/* Code Box */}
+            <div className="relative group/snippet overflow-hidden">
+              <pre className="p-4 bg-slate-900 text-slate-300 rounded-xl text-[10px] overflow-x-auto leading-relaxed font-mono shadow-inner min-h-[140px] border border-slate-800">
+                {snippet}
+              </pre>
+              <Button
+                size="sm"
+                className="absolute top-3 right-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-bold text-[9px] uppercase tracking-wider px-3 h-8 shadow-sm"
+                onClick={handleCopy}
+              >
+                {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                <span>{copied ? 'Copiado' : 'Copiar'}</span>
+              </Button>
+            </div>
+
+            {/* Warning block */}
+            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-blue-50/40 border border-blue-100">
+              <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-blue-900/80 font-medium leading-relaxed">
+                O script é assíncrono e não impacta o desempenho do seu site corporativo.
+              </p>
+            </div>
+          </div>
+
+          {/* Section 3: Tips of use */}
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">3</span>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Dicas de Uso</h3>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { title: 'Posicione com destaque', desc: 'Ideal para rodapés, páginas de produto e páginas de checkout.', icon: MousePointerClick },
+                { title: 'Aumente a conversão', desc: 'Empresas com o selo Diamond convertem até 32% mais.', icon: Sparkles },
+                { title: 'Mantenha sempre ativo', desc: 'O widget atualiza automaticamente em tempo real.', icon: CheckCircle }
+              ].map((tip, idx) => {
+                const TipIcon = tip.icon;
+                return (
+                  <div key={idx} className="flex gap-3 items-start p-3 rounded-xl border border-slate-50 hover:bg-slate-50/30 transition-colors">
+                    <div className="p-2 rounded-lg bg-blue-50/50 text-blue-600 shrink-0">
+                      <TipIcon className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs font-bold text-slate-700">{tip.title}</h4>
+                      <p className="text-[10px] text-slate-400 leading-normal">{tip.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer navigation/support links */}
+      <div className="flex justify-center items-center gap-6 pt-4 text-xs font-bold border-t border-slate-200/60 mt-8">
+        <a 
+          href="/support" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors"
+        >
+          <HelpCircle className="w-4 h-4" />
+          <span>Falar com suporte</span>
+        </a>
+        <span className="text-slate-300">|</span>
+        <a 
+          href="/docs" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors"
+        >
+          <FileText className="w-4 h-4" />
+          <span>Ver documentação</span>
+        </a>
       </div>
     </div>
+  );
+}
+
+// Inline Minimize icon since lucide-react might import it as something else
+function Minimize(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M4 14h6v6" />
+      <path d="M20 10h-6V4" />
+      <path d="m14 10 7-7" />
+      <path d="m10 14-7 7" />
+    </svg>
   );
 }
