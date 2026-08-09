@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, ArrowLeftRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -335,6 +335,31 @@ export default function EnterpriseSidebar({
               setOpenGroups={setOpenGroups}
             />
           )}
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => { window.location.href = '/select-company'; }}
+            aria-label="Alternar Empresa"
+            className={cn(
+              'w-full rounded-lg border border-transparent text-left transition-colors text-slate-200 hover:bg-white/10 hover:text-white',
+              isSidebarCompactRail && !isSidebarCollapsed
+                ? 'h-16 flex-col justify-center gap-1 px-1'
+                : 'h-11 justify-start px-3',
+              isSidebarCollapsed && 'h-11 justify-center px-0'
+            )}
+          >
+            <ArrowLeftRight className={cn('shrink-0 text-blue-400', isSidebarCollapsed ? 'h-5 w-5' : isSidebarCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
+            <span
+              className={cn(
+                'min-w-0 truncate font-medium whitespace-nowrap text-slate-200 tabular-nums',
+                isSidebarCompactRail ? 'block w-full text-center text-[10px]' : 'ml-3 flex-1 text-sm',
+                isSidebarCollapsed && 'hidden'
+              )}
+            >
+              Alternar Empresa
+            </span>
+          </Button>
 
           <Button
             type="button"
