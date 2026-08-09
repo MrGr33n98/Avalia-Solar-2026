@@ -2,8 +2,8 @@
 
 module Chat
   class AgentMessageService
-    def self.call(session:, agent:, content:, client_message_id: nil)
-      new(session: session, agent: agent).call(content: content, client_message_id: client_message_id)
+    def self.call(session:, agent:, content: '', client_message_id: nil, attachment_ids: [])
+      new(session: session, agent: agent).call(content: content, client_message_id: client_message_id, attachment_ids: attachment_ids)
     end
 
     def initialize(session:, agent:)
@@ -11,9 +11,9 @@ module Chat
       @agent = agent
     end
 
-    def call(content:, client_message_id: nil)
+    def call(content: '', client_message_id: nil, attachment_ids: [])
       clean_content = content.to_s.strip
-      raise ActiveRecord::RecordInvalid, @session if clean_content.blank?
+      raise ActiveRecord::RecordInvalid, @session if clean_content.blank? && attachment_ids.blank?
 
       message = nil
       @session.with_lock do
@@ -23,13 +23,15 @@ module Chat
         return existing if existing
 
         @session.take_over!(agent: @agent) unless @session.mode == 'human_manual'
-        message = @session.chat_messages.create!(
+        message = @session.chat_messages.new(
           role: 'agent',
           sender: @agent,
           content: clean_content,
           client_message_id: client_message_id.presence,
           safety_status: 'clean'
         )
+        message.attachments.attach(attachment_ids) if attachment_ids.present?
+        message.save!
         @session.update!(
           last_message_at: message.created_at,
           last_agent_message_at: message.created_at

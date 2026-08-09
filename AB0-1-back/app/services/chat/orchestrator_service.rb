@@ -277,6 +277,10 @@ module Chat
                               'handoff_triggered' => handoff_result[:handoff_triggered],
                               'duplicate_prevented' => handoff_result[:duplicate_prevented]
                             })
+                            
+        if (handoff_result[:handoff_triggered] || handoff_result[:lead_status] == 'pending_contact_info' || @session.waiting_for_agent?) && @session.metadata['summary_card'].blank?
+          generate_summary_card(history)
+        end
       else
         # Fallback para Lógica Legada de Qualificação
         commercial_intents = %w[solar_quote solar_financing company_recommendation ev_charger_installation

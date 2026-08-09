@@ -4,6 +4,8 @@ class ChatMessage < ApplicationRecord
   belongs_to :chat_session
   belongs_to :sender, class_name: 'User', optional: true
 
+  has_many_attached :attachments
+
   validates :role, presence: true, inclusion: { in: %w[user assistant agent system] }
   validates :content, presence: true
   validates :client_message_id, uniqueness: { scope: :chat_session_id }, allow_blank: true

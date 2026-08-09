@@ -135,6 +135,7 @@ gem 'faker', '~> 3.5'
 gem 'jwt', '~> 3.1'
 gem 'noticed', '= 2.2'
 gem 'pg_search', '~> 2.3'
+gem 'webpush', '~> 1.1'
 gem 'sassc'
 
 # Resolve dependency conflict between selenium-webdriver (< 3.0) and caxlsx (>= 2.4)

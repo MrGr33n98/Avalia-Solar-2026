@@ -126,6 +126,14 @@ class Rack::Attack
     end
   end
 
+  # === Chat Sessions (P2P) ===
+  # Limite de criação de conversas: 10 por minuto por IP para evitar spam de chat bots
+  throttle('chat_sessions_create/ip', limit: 10, period: 1.minute) do |req|
+    if req.path == '/api/v1/chat/sessions' && req.post?
+      req.ip
+    end
+  end
+
   # === Stripe SaaS Webhook Protection ===
   # Limite: 60 requests por minuto por IP no webhook de billing
   throttle('billing_webhook/ip', limit: 60, period: 1.minute) do |req|

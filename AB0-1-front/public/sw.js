@@ -513,3 +513,50 @@ self.addEventListener('sync', (event) => {
     event.waitUntil(processQueuedMutations());
   }
 });
+
+// --- Push Notifications ---
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const data = event.data.json();
+    const title = data.title || 'Avalia Solar';
+    const options = {
+      body: data.body,
+      icon: data.icon || '/avalia_symbol.png',
+      badge: '/solar-market-ico-avalia-solar.png',
+      data: data.data || {},
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'avalia-solar-notification',
+      renotify: data.renotify || false,
+    };
+
+    if (data.actions) {
+      options.actions = data.actions;
+    }
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    console.error('Error parsing push data', err);
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  const urlToOpen = event.notification.data?.url || '/dashboard/inbox';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes(urlToOpen) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});

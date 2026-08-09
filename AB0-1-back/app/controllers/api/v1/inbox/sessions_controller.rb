@@ -9,6 +9,8 @@ module Api
         before_action :set_session, except: :index
 
         def index
+          # Usually index scope is handled by policy_scope, but here we enforce via @company
+          authorize @company, :show? # Just ensure user can view the company
           scope = @company.chat_sessions.includes(:assigned_agent, :chat_lead).inbox_recent
           scope = scope.where(inbox_status: normalized_status) if normalized_status.present?
           if params[:q].present?
@@ -29,22 +31,31 @@ module Api
         end
 
         def messages
+          authorize @session, :show?
           limit = [[params.fetch(:limit, 50).to_i, 1].max, 100].min
           records = @session.chat_messages.includes(:sender).order(created_at: :desc).limit(limit).reverse
           render json: { messages: records.map { |message| serialize_message(message) } }
         end
 
         def create_message
+          authorize @session, :update?
+          if params[:client_message_id].present?
+            existing = @session.chat_messages.find_by(client_message_id: params[:client_message_id])
+            return render json: serialize_message(existing), status: :ok if existing
+          end
+
           message = ::Chat::AgentMessageService.call(
             session: @session,
             agent: current_user,
             content: params[:content],
-            client_message_id: params[:client_message_id]
+            client_message_id: params[:client_message_id],
+            attachment_ids: params[:attachment_ids]
           )
           render json: serialize_message(message), status: :created
         end
 
         def update_mode
+          authorize @session, :update?
           mode = params.require(:mode).to_s
           unless ChatSession::MODES.include?(mode)
             return render_error_response(message: 'Modo inválido.', status: :unprocessable_entity, code: 'INVALID_MODE')
@@ -74,6 +85,15 @@ module Api
           render json: serialize_session(@session)
         end
 
+        def handoff_whatsapp
+          message = ::Chat::AgentMessageService.call(
+            session: @session,
+            agent: current_user,
+            content: "[Sistema] O atendente iniciou um contato via WhatsApp."
+          )
+          render json: serialize_message(message), status: :created
+        end
+
         private
 
         def set_company
@@ -95,7 +115,7 @@ module Api
         def normalized_status
           value = params[:status].to_s
           return nil if value.blank? || value == 'all'
-          return value if ChatSession::INBOX_STATUSES.include?(value)
+          return value if ChatSession.inbox_statuses.key?(value)
 
           nil
         end

@@ -47,6 +47,12 @@ Rails.application.routes.draw do
         post 'tools/:tool_name', to: 'tools#create'
       end
 
+      resources :push_subscriptions, only: [:create] do
+        collection do
+          delete :destroy
+        end
+      end
+
       # Growth analytics — PostHog webhook
       post 'posthog_webhook', to: 'posthog_webhooks#create'
       get 'posthog_webhook/health', to: 'posthog_webhooks#health'
@@ -241,6 +247,7 @@ Rails.application.routes.draw do
           resources :messages, only: [:create]
         end
         resources :leads, only: [:create]
+        resources :attachments, only: [:create]
         post 'company_recommendations', to: 'company_recommendations#create'
         post 'messages/:id/feedback', to: 'messages#feedback', as: :message_feedback
       end
@@ -253,6 +260,7 @@ Rails.application.routes.draw do
             patch :mode, action: :update_mode
             post :read, action: :mark_read
             post :archive
+            post :handoff_whatsapp
           end
         end
       end

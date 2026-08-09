@@ -12,6 +12,12 @@ export interface InboxMessage {
   sender_name?: string | null;
   client_message_id?: string | null;
   created_at: string;
+  attachments?: {
+    id: number;
+    filename: string;
+    url: string;
+    content_type: string;
+  }[];
 }
 
 export interface InboxLead {
@@ -38,8 +44,12 @@ export interface InboxSession {
   last_message_at?: string | null;
   vertical?: string | null;
   assigned_agent?: { id: number; name: string } | null;
+  human_requested_at?: string | null;
+  human_taken_over_at?: string | null;
+  summary_card?: string | null;
   lead?: InboxLead | null;
   last_message?: InboxMessage | null;
+  sla_breached_tracked?: boolean;
 }
 
 export interface InboxCounts {
@@ -63,11 +73,11 @@ export const inboxApi = {
       `inbox/sessions/${sessionId}/messages?company_id=${companyId}`,
       { noCache: true }
     ),
-  send: (companyId: number, sessionId: number, content: string, clientMessageId: string) =>
+  send: (companyId: number, sessionId: number, content: string, clientMessageId: string, attachmentIds?: number[]) =>
     fetchApiSafe<InboxMessage>(`inbox/sessions/${sessionId}/messages?company_id=${companyId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, client_message_id: clientMessageId }),
+      body: JSON.stringify({ content, client_message_id: clientMessageId, attachment_ids: attachmentIds }),
       noCache: true,
     }),
   updateMode: (companyId: number, sessionId: number, mode: InboxMode) =>
@@ -87,4 +97,19 @@ export const inboxApi = {
       method: 'POST',
       noCache: true,
     }),
+  handoffToWhatsApp: (companyId: number, sessionId: number) =>
+    fetchApiSafe<InboxMessage>(`inbox/sessions/${sessionId}/handoff_whatsapp?company_id=${companyId}`, {
+      method: 'POST',
+      noCache: true,
+    }),
+  getDirectUploadUrl: (companyId: number, filename: string, byteSize: number, checksum: string, contentType: string) =>
+    fetchApiSafe<{ id: number; signed_id: string; direct_upload: { url: string; headers: Record<string, string> } }>(
+      `chat/attachments?company_id=${companyId}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, byte_size: byteSize, checksum, content_type: contentType }),
+        noCache: true,
+      }
+    ),
 };

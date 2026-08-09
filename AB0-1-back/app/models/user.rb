@@ -35,6 +35,7 @@ class User < ApplicationRecord
   has_many :active_company_members, -> { where(status: 'active') }, class_name: 'CompanyMember'
   has_many :member_companies, through: :company_members, source: :company
   has_many :active_member_companies, through: :active_company_members, source: :company
+  has_many :push_subscriptions, dependent: :destroy
   accepts_nested_attributes_for :company_members, allow_destroy: true
 
   # Role validation

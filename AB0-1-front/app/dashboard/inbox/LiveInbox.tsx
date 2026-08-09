@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Bell,
   BellRing,
   CheckCircle2,
   ExternalLink,
@@ -20,21 +21,29 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { trackEvent } from '@/lib/analytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useActionCableInbox, type InboxRealtimeEvent } from '@/hooks/useActionCableInbox';
 import {
   inboxApi,
   type InboxCounts,
-  type InboxMessage,
+  type InboxMessage as ApiInboxMessage,
   type InboxSession,
   type InboxStatus,
 } from '@/lib/inbox-api';
+
+export type InboxMessage = ApiInboxMessage & {
+  status?: 'sending' | 'sent' | 'read' | 'failed';
+  client_message_id?: string;
+};
 import {
   getInboxSoundPreference,
   playNotificationSound,
 } from '@/lib/notification-sound';
 import { cn } from '@/lib/utils';
+import { useRealtimeConnection } from '@/hooks/useRealtimeConnection';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 import EnterpriseSidebar from '../components/EnterpriseSidebar';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
@@ -108,7 +117,8 @@ function ConversationCard({
   const initials = lead?.name
     ? lead.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'V';
-  const isOnline = session.id % 2 === 0 || lead?.name?.includes('João');
+  // Use passed active status or default to false
+  const isOnline = session.is_online === true;
 
   return (
     <button
@@ -134,9 +144,15 @@ function ConversationCard({
             <strong className="truncate text-[15px] font-semibold text-slate-900">{lead?.name || 'Visitante'}</strong>
             <span className="shrink-0 text-xs text-slate-500">{relativeTime(session.last_message_at)}</span>
           </div>
-          <p className="mt-1 truncate text-sm text-slate-500">
-            {session.last_message?.content || 'Conversa iniciada'}
-          </p>
+          {session.status === 'waiting_agent' && session.human_requested_at ? (
+            <p className="mt-1 truncate text-xs font-semibold text-amber-600">
+              Esperando desde {new Date(session.human_requested_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          ) : (
+            <p className="mt-1 truncate text-sm text-slate-500">
+              {session.last_message?.content || 'Conversa iniciada'}
+            </p>
+          )}
         </div>
         {session.unread_count > 0 && (
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
@@ -162,15 +178,46 @@ function MessageBubble({ message }: { message: InboxMessage }) {
           isAgent && 'bg-blue-600 text-white rounded-2xl rounded-tr-none border-none',
           isBot && 'bg-cyan-950 text-cyan-50 rounded-2xl rounded-tl-none border-none',
           isUser && 'bg-slate-200/70 text-slate-800 rounded-2xl rounded-tl-none border-none',
-          message.role === 'system' && 'mx-auto bg-slate-100 text-slate-700 text-xs rounded-lg px-3 py-1.5 border border-slate-200'
+          message.role === 'system' && 'mx-auto bg-slate-100 text-slate-700 text-xs rounded-lg px-3 py-1.5 border border-slate-200',
+          message.status === 'failed' && 'opacity-60 border-red-500'
         )}
       >
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="mb-2 space-y-1">
+            {message.attachments.map((att) => (
+              <a
+                key={att.id}
+                href={att.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "flex items-center gap-2 rounded-md p-2 text-xs font-medium underline-offset-4 hover:underline",
+                  isAgent ? "bg-blue-700/50 text-white" : "bg-white/50 text-blue-700"
+                )}
+              >
+                {att.content_type?.startsWith('image/') ? (
+                  <img src={att.url} alt={att.filename} className="h-10 w-10 rounded object-cover" />
+                ) : (
+                  <ExternalLink className="h-4 w-4 shrink-0" />
+                )}
+                <span className="truncate">{att.filename}</span>
+              </a>
+            ))}
+          </div>
+        )}
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
         <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
           <span>
             {new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(message.created_at))}
           </span>
-          {isAgent && <span className="ml-1 text-white font-bold">✓✓</span>}
+          {isAgent && (
+            <span className={cn(
+              "ml-1 font-bold", 
+              message.status === 'read' ? 'text-blue-200' : 'text-white'
+            )}>
+              {message.status === 'sending' ? '🕒' : message.status === 'failed' ? '❌' : message.status === 'read' ? '✓✓' : '✓'}
+            </span>
+          )}
         </div>
       </article>
     </div>
@@ -216,12 +263,44 @@ function LeadSidebarDetails({ session, onClose }: { session: InboxSession; onClo
           </div>
         ))}
       </dl>
+      
+      {/* Activity Log / Timeline */}
+      <div className="mt-6 border-t border-slate-200 pt-5">
+        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Histórico de Atividade</h3>
+        <div className="relative border-l-2 border-slate-200 ml-3 space-y-4 pb-4">
+          <div className="relative pl-4">
+            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-blue-500" />
+            <p className="text-xs text-slate-500">Agora</p>
+            <p className="text-sm font-medium">Conversa em andamento</p>
+          </div>
+          <div className="relative pl-4">
+            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
+            <p className="text-xs text-slate-500">Há 2 horas</p>
+            <p className="text-sm font-medium">Classificado como Alta Intenção</p>
+          </div>
+          <div className="relative pl-4">
+            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-slate-300" />
+            <p className="text-xs text-slate-500">Ontem</p>
+            <p className="text-sm font-medium">Lead capturado (Widget TaaS)</p>
+          </div>
+        </div>
+      </div>
+
       <div className="mt-4 space-y-2">
         <a
           href={whatsapp || undefined}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           aria-disabled={!whatsapp}
+          onClick={async () => {
+            if (whatsapp && companyId) {
+              try {
+                await inboxApi.handoffToWhatsApp(companyId, session.id);
+              } catch (err) {
+                console.error('Falha ao registrar handoff WA:', err);
+              }
+            }
+          }}
           className={cn('flex min-h-11 w-full items-center justify-center gap-2 bg-emerald-700 px-4 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500', !whatsapp && 'pointer-events-none opacity-50')}
         >
           <Smartphone className="h-4 w-4" /> Abrir no WhatsApp <ExternalLink className="h-3 w-3" />
@@ -241,6 +320,7 @@ export default function LiveInbox() {
   
   const { stats: dashboardStats, featureAccess } = useCompanyDashboardData(companyIdStr);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isSupported, isSubscribed, subscribe } = usePushNotifications();
 
   const tabAccessEntries = useMemo(
     () =>
@@ -276,19 +356,15 @@ export default function LiveInbox() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [customerTyping, setCustomerTyping] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  // Store online status by lead_id
+  const [onlineStatuses, setOnlineStatuses] = useState<Record<number, boolean>>({});
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const threadEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selected = useMemo(() => sessions.find((session) => session.id === selectedId) || null, [sessions, selectedId]);
-
-  useEffect(() => setSoundEnabled(getInboxSoundPreference()), []);
-
-  useEffect(() => {
-    if (authLoading || companyLoading) return;
-    if (!user) router.replace('/login?return_to=%2Fdashboard%2Finbox');
-    else if (user.role === 'review') router.replace('/review-dashboard');
-    else if (!companyId && user.role !== 'admin') router.replace('/select-company');
-  }, [authLoading, companyId, companyLoading, router, user]);
 
   const loadSessions = useCallback(async () => {
     if (!companyId) return;
@@ -303,21 +379,41 @@ export default function LiveInbox() {
     }
   }, [companyId, filter, query]);
 
+  const loadMessages = useCallback(async () => {
+    if (!companyId || !selectedId) {
+      setMessages([]);
+      return;
+    }
+    const response = await inboxApi.messages(companyId, selectedId);
+    setMessages(response.messages);
+    void inboxApi.markRead(companyId, selectedId);
+  }, [companyId, selectedId]);
+
+  useRealtimeConnection(() => {
+    // When reconnecting, fetch data again to close any gaps
+    void loadSessions();
+    if (selectedId) {
+      void loadMessages();
+    }
+  });
+
+  useEffect(() => setSoundEnabled(getInboxSoundPreference()), []);
+
+  useEffect(() => {
+    if (authLoading || companyLoading) return;
+    if (!user) router.replace('/login?return_to=%2Fdashboard%2Finbox');
+    else if (user.role === 'review') router.replace('/review-dashboard');
+    else if (!companyId && user.role !== 'admin') router.replace('/select-company');
+  }, [authLoading, companyId, companyLoading, router, user]);
+
   useEffect(() => {
     const timer = setTimeout(() => void loadSessions(), query ? 250 : 0);
     return () => clearTimeout(timer);
   }, [loadSessions, query]);
 
   useEffect(() => {
-    if (!companyId || !selectedId) {
-      setMessages([]);
-      return;
-    }
-    void inboxApi.messages(companyId, selectedId).then((response) => {
-      setMessages(response.messages);
-      void inboxApi.markRead(companyId, selectedId);
-    });
-  }, [companyId, selectedId]);
+    void loadMessages();
+  }, [loadMessages]);
 
   const handleRealtime = useCallback((event: InboxRealtimeEvent) => {
     if (event.type === 'inbox.message.created') {
@@ -339,6 +435,14 @@ export default function LiveInbox() {
     if (event.type === 'inbox.session.updated') {
       setSessions((current) => current.map((session) => session.id === event.session.id ? { ...session, ...event.session } : session));
     }
+    if (event.type === 'inbox.presence.updated') {
+      if (event.user_type === 'Lead') {
+        setOnlineStatuses((prev) => ({
+          ...prev,
+          [event.user_id]: event.status === 'online',
+        }));
+      }
+    }
     if (event.type === 'inbox.typing' && event.session_id === selectedId && event.actor === 'customer') {
       setCustomerTyping(event.typing);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
@@ -350,18 +454,102 @@ export default function LiveInbox() {
 
   useEffect(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages, customerTyping]);
 
+  // SLA Tracking
+  useEffect(() => {
+    if (!companyId || sessions.length === 0) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      sessions.forEach(session => {
+        if (session.status === 'waiting_agent' && session.last_message_at) {
+          const waitTime = now - new Date(session.last_message_at).getTime();
+          if (waitTime > 15 * 60 * 1000 && !session.sla_breached_tracked) {
+            trackEvent('mobivolt_live_inbox_sla_breached', {
+              company_id: String(companyId),
+              session_id: String(session.id),
+              wait_time_ms: waitTime,
+            });
+            session.sla_breached_tracked = true; // mutates in place to prevent duplicate tracking
+          }
+        }
+      });
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [sessions, companyId]);
+
   const sendMessage = async () => {
     const content = draft.trim();
     if (!companyId || !selectedId || !content || sending) return;
     setSending(true);
     setDraft('');
     setTyping(false);
+    
+    const clientMsgId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    
+    // Optimistic UI
+    const optimisticMessage: InboxMessage = {
+      id: -Date.now(),
+      role: 'agent',
+      content,
+      created_at: new Date().toISOString(),
+      client_message_id: clientMsgId,
+      status: 'sending'
+    };
+    
+    setMessages((current) => [...current, optimisticMessage]);
+    
     try {
-      const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-      const message = await inboxApi.send(companyId, selectedId, content, id);
-      setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+      const message = await inboxApi.send(companyId, selectedId, content, clientMsgId);
+      setMessages((current) => current.map((item) => 
+        (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 
+          ? { ...message, status: 'sent' } 
+          : item
+      ));
+    } catch (error) {
+      setMessages((current) => current.map((item) => 
+        (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 
+          ? { ...item, status: 'failed' } 
+          : item
+      ));
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !companyId || !selectedId) return;
+    
+    setUploading(true);
+    try {
+      // 1. Get presigned URL
+      const { direct_upload: { url, headers }, id } = await inboxApi.getDirectUploadUrl(
+        companyId,
+        file.name,
+        file.size,
+        'dummy', // MD5 checksum optional
+        file.type || 'application/octet-stream'
+      );
+      
+      // 2. Upload directly to storage provider
+      await fetch(url, {
+        method: 'PUT',
+        headers: {
+          ...headers,
+          'Content-Type': file.type || 'application/octet-stream'
+        },
+        body: file,
+      });
+
+      // 3. Send message with attachment ID
+      const clientMsgId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+      const message = await inboxApi.send(companyId, selectedId, `Arquivo anexado: ${file.name}`, clientMsgId, [id]);
+      setMessages((current) => [...current, { ...message, status: 'sent' }]);
+    } catch (error) {
+      console.error('Falha no upload', error);
+      alert('Falha ao enviar arquivo.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -475,7 +663,7 @@ export default function LiveInbox() {
             </div>
             <div className="h-[calc(100%-116px)] overflow-y-auto">
               {loading ? <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div> : sessions.length ? sessions.map((session) => (
-                <ConversationCard key={session.id} session={session} active={session.id === selectedId} onClick={() => setSelectedId(session.id)} />
+                <ConversationCard key={session.id} session={{...session, is_online: session.lead?.id ? onlineStatuses[session.lead.id] : false} as any} active={session.id === selectedId} onClick={() => setSelectedId(session.id)} />
               )) : <div className="p-8 text-center text-sm text-slate-600"><MessageCircleMore className="mx-auto mb-3 h-8 w-8 text-slate-400" /><p>Nenhuma conversa neste filtro.</p></div>}
             </div>
           </section>
@@ -499,7 +687,7 @@ export default function LiveInbox() {
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-600 text-white font-bold text-xs">
                         {selected.lead?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'V'}
                       </div>
-                      {(selected.id % 2 === 0 || selected.lead?.name?.includes('João')) && (
+                      {(selected.lead?.id && onlineStatuses[selected.lead.id]) && (
                         <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white" />
                       )}
                     </div>
@@ -515,6 +703,17 @@ export default function LiveInbox() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {isSupported && !isSubscribed && (
+                      <button
+                        type="button"
+                        className="hidden sm:flex h-8 items-center justify-center gap-1.5 rounded-full bg-blue-600/20 px-3 text-blue-100 border border-blue-400/30 text-xs font-semibold hover:bg-blue-600/40 transition-colors"
+                        onClick={() => subscribe()}
+                        aria-label="Ativar Notificações"
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                        Notificações
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
@@ -538,6 +737,17 @@ export default function LiveInbox() {
                     </span>
                   </div>
                   {selected.status === 'waiting_agent' && <div className="flex items-center justify-center gap-2 border border-amber-300 bg-amber-50 p-2 text-xs font-semibold text-amber-900"><BellRing className="h-4 w-4" /> Transbordo humano solicitado</div>}
+                  
+                  {selected.summary_card && (
+                    <div className="my-2 p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+                      <h3 className="text-xs font-bold text-blue-900 mb-2 flex items-center gap-1"><Bot className="h-4 w-4" /> Resumo da IA Pré-Atendimento</h3>
+                      <div className="text-xs text-blue-800 space-y-1 whitespace-pre-wrap">
+                        {selected.summary_card.split('\n').map((line: string, i: number) => (
+                          <p key={i}>{line.replace(/\*\*/g, '')}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {messages.map((message) => <MessageBubble key={message.id} message={message} />)}
                   {customerTyping && <p className="text-xs text-slate-600">Cliente digitando…</p>}
                   <div ref={threadEndRef} />
@@ -546,12 +756,24 @@ export default function LiveInbox() {
                 {/* Custom input bar matching screenshot 2 */}
                 <div className="inbox-mobile-input-bar border-t border-slate-200 bg-white p-3 shadow-inner">
                   <div className="flex items-center gap-2">
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload}
+                      accept="image/*,application/pdf"
+                    />
                     <button
                       type="button"
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-blue-600 transition-colors hover:bg-slate-100"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 transition-colors",
+                        uploading ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-slate-50 text-blue-600 hover:bg-slate-100"
+                      )}
                       aria-label="Anexar arquivo"
                     >
-                      <Plus className="h-5 w-5" />
+                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
                     </button>
                     
                     <label className="min-w-0 flex-1">

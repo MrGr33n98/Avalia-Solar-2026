@@ -9,6 +9,7 @@ export type InboxRealtimeEvent =
   | { type: 'inbox.message.created'; session: InboxSession; message: InboxMessage }
   | { type: 'inbox.session.updated'; session: InboxSession }
   | { type: 'inbox.typing'; session_id: number; actor: 'customer' | 'agent'; typing: boolean }
+  | { type: 'inbox.presence.updated'; user_type: string; user_id: number; status: 'online' | 'away' | 'offline' }
   | { type: 'inbox.message.acknowledged'; message: InboxMessage }
   | { type: 'inbox.error'; code: string; message: string };
 

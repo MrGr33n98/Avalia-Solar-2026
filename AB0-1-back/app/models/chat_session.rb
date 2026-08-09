@@ -8,7 +8,6 @@ class ChatSession < ApplicationRecord
   has_one :chat_lead, dependent: :destroy
 
   MODES = %w[bot_only human_manual hybrid].freeze
-  INBOX_STATUSES = %w[active waiting_agent in_progress archived].freeze
 
   enum status: {
     active: 'active',
@@ -16,9 +15,15 @@ class ChatSession < ApplicationRecord
     abandoned: 'abandoned'
   }, _prefix: true
 
+  enum inbox_status: {
+    active: 'active',
+    waiting_agent: 'waiting_agent',
+    in_progress: 'in_progress',
+    archived: 'archived'
+  }, _prefix: true
+
   validates :visitor_id, presence: true
   validates :mode, inclusion: { in: MODES }
-  validates :inbox_status, inclusion: { in: INBOX_STATUSES }
 
   before_validation :generate_visitor_id, on: :create
   before_create :set_started_at

@@ -99,10 +99,14 @@ class ChatLead < ApplicationRecord
   end
 
   def calculate_score
-    calculated_score = Chat::LeadScoringService.calculate(self)
+    result = Chat::LeadScoringService.calculate(self)
+    calculated_score = result[:total_score]
     calculated_temperature = Chat::LeadScoringService.temperature_for(calculated_score)
 
     self.lead_score = calculated_score
+    self.intent_score = result[:intent_score] if respond_to?(:intent_score=)
+    self.fit_score = result[:fit_score] if respond_to?(:fit_score=)
+    self.score_explanation = result[:explanation] if respond_to?(:score_explanation=)
     self.lead_temperature = Chat::LeadTemperature.normalize(calculated_temperature)
   end
 

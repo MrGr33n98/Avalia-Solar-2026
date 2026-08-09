@@ -35,6 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
+import { useRealtimeConnection } from '@/hooks/useRealtimeConnection';
 import { getFullImageUrl } from '@/utils/image';
 import { RichLinkPreview } from '@/components/chat/RichLinkPreview';
 import { RightChatSidebar } from './components/RightChatSidebar';
@@ -349,6 +350,8 @@ export default function ChatClient() {
     [handleConversationPayload, loadMessagesForConversation]
   );
 
+
+
   const selectConversation = useCallback(
     async (conversation: Conversation, options?: { openOnMobile?: boolean }) => {
       if (!canUseP2PChat) return;
@@ -416,6 +419,14 @@ export default function ChatClient() {
       setLoading(false);
     }
   }, [canUseP2PChat, searchParams, selectConversation]);
+
+  const { isOnline } = useRealtimeConnection(() => {
+    // When reconnecting, fetch conversations again and reload current conversation
+    void loadConversations();
+    if (activeConversation) {
+      setupActionCable(activeConversation.id);
+    }
+  });
 
   useEffect(() => {
     if (authLoading) return;

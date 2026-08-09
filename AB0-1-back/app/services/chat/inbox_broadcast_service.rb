@@ -44,6 +44,9 @@ module Chat
           status: session.inbox_status,
           unread_count: session.company_unread_count,
           last_message_at: session.last_message_at,
+          summary_card: session.metadata&.dig('summary_card'),
+          human_requested_at: session.human_requested_at,
+          human_taken_over_at: session.human_taken_over_at,
           assigned_agent: session.assigned_agent && {
             id: session.assigned_agent.id,
             name: session.assigned_agent.name
@@ -67,7 +70,15 @@ module Chat
           sender_id: message.sender_id,
           sender_name: message.sender&.name,
           client_message_id: message.client_message_id,
-          created_at: message.created_at
+          created_at: message.created_at,
+          attachments: message.attachments.map do |att|
+            {
+              id: att.id,
+              filename: att.filename.to_s,
+              url: Rails.application.routes.url_helpers.rails_blob_url(att, only_path: true),
+              content_type: att.content_type
+            }
+          end
         }
       end
 
