@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyContext } from "@/context/CompanyContext";
@@ -30,6 +30,7 @@ export default function RoleBasedDashboardLayout({
 }: RoleBasedDashboardLayoutProps) {
   const { user, loading: authLoading } = useAuth();
   const { activeCompany } = useCompanyContext();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (authLoading) {
     return (
@@ -53,8 +54,8 @@ export default function RoleBasedDashboardLayout({
         <EnterpriseSidebar 
           activeTab={activeTab} 
           onTabChange={() => {}} 
-          isOpen={true}
-          onClose={() => {}}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
       )}
       
@@ -67,6 +68,8 @@ export default function RoleBasedDashboardLayout({
             <DashboardToolbar 
               company={activeCompany}
               onTabChange={() => {}}
+              navigationOpen={isSidebarOpen}
+              onToggleNavigation={() => setIsSidebarOpen((prev) => !prev)}
             />
           </div>
         )}
