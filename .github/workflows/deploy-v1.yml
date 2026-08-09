@@ -337,6 +337,9 @@ jobs:
             [ -z "$PREVIOUS_BACKEND_ID" ] || docker image tag "$PREVIOUS_BACKEND_ID" "$BACKEND_ROLLBACK_IMAGE"
             [ -z "$PREVIOUS_FRONTEND_ID" ] || docker image tag "$PREVIOUS_FRONTEND_ID" "$FRONTEND_ROLLBACK_IMAGE"
 
+            echo "?? Parando aplicacoes para liberar memoria RAM..."
+            docker compose stop backend frontend worker || true
+
             echo "?? Baixando imagens imutaveis, uma por vez..."
             docker pull "$BACKEND_IMAGE"
             docker pull "$FRONTEND_IMAGE"
