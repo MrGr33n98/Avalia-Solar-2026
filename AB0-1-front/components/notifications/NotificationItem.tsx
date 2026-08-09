@@ -15,6 +15,8 @@ import {
   BellOff,
   Flag,
   ChevronRight,
+  Bell,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,18 +38,20 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const router = useRouter();
   const { markAsRead, archiveNotification } = useNotificationStore();
 
-  const getCategoryDot = () => {
+  const getCategoryIcon = () => {
     switch (notification.category) {
       case 'quotes':
-        return <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />;
+        return <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0"><FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="currentColor" fillOpacity={0.2} /></div>;
       case 'reviews':
-        return <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shrink-0 mt-1.5" />;
+        return <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center shrink-0"><Star className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="currentColor" /></div>;
       case 'messages':
-        return <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />;
+        return <div className="h-12 w-12 rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center shrink-0"><MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="currentColor" fillOpacity={0.2} /></div>;
       case 'companies':
-        return <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0 mt-1.5" />;
+        return <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0"><Building2 className="h-6 w-6 text-amber-600 dark:text-amber-400" /></div>;
+      case 'system':
+        return <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0"><ShieldAlert className="h-6 w-6 text-slate-600 dark:text-slate-400" fill="currentColor" /></div>;
       default:
-        return <span className="h-2.5 w-2.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />;
+        return <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0"><Bell className="h-6 w-6 text-slate-500 dark:text-slate-400" fill="currentColor" fillOpacity={0.2} /></div>;
     }
   };
 
@@ -59,9 +63,9 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins < 60) return `Há ${diffMins} min atrás`;
-    if (diffHours < 24) return `Há ${diffHours} hora${diffHours > 1 ? 's' : ''} atrás`;
+    if (diffMins < 1) return 'Agora';
+    if (diffMins < 60) return `(há ${diffMins} min)`;
+    if (diffHours < 24) return `(há ${diffHours} h)`;
     if (diffDays === 1) return `Ontem, ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     return `${diffDays} dias atrás`;
   };
@@ -88,58 +92,41 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
     <article
       aria-label={!notification.read ? 'Notificação não lida' : 'Notificação'}
       className={cn(
-        'group relative flex items-start gap-4 p-4 transition-colors border border-slate-200 rounded-none bg-white hover:border-slate-300 shadow-none',
-        !notification.read ? 'border-l-[3px] border-l-blue-600 bg-blue-50/20' : 'border-l-slate-200'
+        'group relative flex items-center gap-4 p-4 transition-all duration-200 border-none rounded-2xl shadow-sm hover:shadow-md cursor-pointer',
+        !notification.read ? 'bg-slate-50 dark:bg-slate-800/50 ring-1 ring-blue-500/20' : 'bg-slate-100/50 dark:bg-slate-900/50'
       )}
+      onClick={handleCtaClick}
     >
-      {/* Unread Blue Dot */}
-      {!notification.read && (
-        <span className="mt-2.5 h-2 w-2 rounded-full bg-blue-600 shrink-0" title="Não lida" />
-      )}
-
-      {/* Category Indicator Dot */}
-      {getCategoryDot()}
+      {/* Category Icon */}
+      {getCategoryIcon()}
 
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className="flex items-center gap-2">
           <h3
             className={cn(
-              'text-sm text-slate-900 leading-snug',
-              !notification.read ? 'font-bold' : 'font-semibold'
+              'text-base leading-snug',
+              !notification.read ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-800 dark:text-slate-200'
             )}
           >
             {notification.title}
           </h3>
-          <span className="text-xs text-slate-400 font-mono shrink-0">
-            {formatRelativeTime(notification.created_at)}
-          </span>
+          {!notification.read && (
+            <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0" title="Não lida" />
+          )}
         </div>
 
-        <p className="text-xs text-slate-600 line-clamp-2 mt-1 leading-relaxed">
+        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5">
           {notification.body}
         </p>
-
-        {/* Company / Item Context Subline */}
-        {notification.company_name && (
-          <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-            <Building2 className="h-3 w-3 text-slate-400" />
-            <span className="font-semibold text-slate-700">{notification.company_name}</span>
-          </p>
-        )}
-
-        {/* Contextual CTA Button */}
-        {notification.cta_label && (
-          <div className="mt-3">
-            <Button
-              onClick={handleCtaClick}
-              className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-none transition-colors"
-            >
-              {notification.cta_label}
-            </Button>
-          </div>
-        )}
       </div>
+
+      <span className="text-sm text-slate-500 dark:text-slate-400 shrink-0 ml-4">
+        {formatRelativeTime(notification.created_at)}
+      </span>
+
+      {/* Contextual CTA Button is hidden for this specific list design, 
+          as clicking the card handles navigation, but kept in code logic */}
 
       {/* 3-Dots Action Menu */}
       <DropdownMenu>
@@ -147,13 +134,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-none shrink-0"
+            className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="rounded-none text-xs w-52 shadow-md">
-          <DropdownMenuItem onClick={() => markAsRead(notification.id)}>
+        <DropdownMenuContent align="end" className="rounded-xl text-sm w-52 shadow-lg border-slate-200 dark:border-slate-800">
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); markAsRead(notification.id); }}>
             {notification.read ? (
               <>
                 <EyeOff className="mr-2 h-4 w-4 text-slate-500" /> Marcar como não lida
@@ -164,14 +152,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
               </>
             )}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleArchive}>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(e); }}>
             <Archive className="mr-2 h-4 w-4 text-slate-500" /> Arquivar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => alert(`Notificações do tipo ${notification.category} pausadas.`)}>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); alert(`Notificações do tipo ${notification.category} pausadas.`); }}>
             <BellOff className="mr-2 h-4 w-4 text-slate-500" /> Desativar deste tipo
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => alert('Reportado ao time de suporte.')}>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); alert('Reportado ao time de suporte.'); }}>
             <Flag className="mr-2 h-4 w-4 text-slate-500" /> Reportar problema
           </DropdownMenuItem>
         </DropdownMenuContent>

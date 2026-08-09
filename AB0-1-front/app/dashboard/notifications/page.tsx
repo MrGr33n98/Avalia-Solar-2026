@@ -8,6 +8,9 @@ import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { NotificationFilters } from '@/components/notifications/NotificationFilters';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import { Button } from '@/components/ui/button';
+import RoleBasedDashboardLayout from '../components/RoleBasedDashboardLayout';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export default function DashboardNotificationsPage() {
   const {
@@ -61,19 +64,34 @@ export default function DashboardNotificationsPage() {
   const groups = groupNotifications(notifications);
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-6 font-sans text-slate-900">
-      {/* Undo Toast */}
-      {undoToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 border border-slate-800 shadow-2xl rounded-xl animate-bounce">
-          <span className="text-xs font-semibold">{undoToast.title}</span>
-          <Button
-            onClick={() => handleRestore(undoToast.id)}
-            className="h-6 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg"
+    <RoleBasedDashboardLayout activeTab="notifications">
+      <div className="mx-auto max-w-5xl space-y-6 font-sans text-slate-900">
+        
+        {/* Breadcrumb / Back Button */}
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-1 hover:text-blue-600 transition-colors"
           >
-            Desfazer
-          </Button>
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Dashboard
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-slate-900 dark:text-slate-100">Notificações</span>
         </div>
-      )}
+
+        {/* Undo Toast */}
+        {undoToast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 shadow-2xl rounded-xl transition-all duration-300">
+            <span className="text-sm font-medium">{undoToast.title}</span>
+            <Button
+              onClick={() => handleRestore(undoToast.id)}
+              className="h-7 px-3 bg-white/20 hover:bg-white/30 text-white font-semibold text-xs rounded-lg"
+            >
+              Desfazer
+            </Button>
+          </div>
+        )}
 
       {/* Main Content Area */}
       <div className="space-y-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xs">
@@ -81,7 +99,7 @@ export default function DashboardNotificationsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Central de Notificações
+              Suas Notificações ({notifications.length})
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Acompanhe propostas, mensagens diretas, avaliações e alertas do sistema.
@@ -97,7 +115,7 @@ export default function DashboardNotificationsPage() {
                 className="h-8 text-xs font-bold text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 rounded-xl"
               >
                 <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-blue-600" />
-                Marcar todas como lidas
+                Marcar como lidas
               </Button>
             )}
 
@@ -138,8 +156,8 @@ export default function DashboardNotificationsPage() {
           <div className="space-y-6">
             {groups.today.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Hoje</h3>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2">Hoje</h3>
+                <div className="space-y-3">
                   {groups.today.map((item) => (
                     <NotificationItem key={item.id} notification={item} />
                   ))}
@@ -149,8 +167,8 @@ export default function DashboardNotificationsPage() {
 
             {groups.yesterday.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Ontem</h3>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2 mt-4">Ontem</h3>
+                <div className="space-y-3">
                   {groups.yesterday.map((item) => (
                     <NotificationItem key={item.id} notification={item} />
                   ))}
@@ -160,8 +178,8 @@ export default function DashboardNotificationsPage() {
 
             {groups.last7Days.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Últimos 7 dias</h3>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2 mt-4">Últimos 7 dias</h3>
+                <div className="space-y-3">
                   {groups.last7Days.map((item) => (
                     <NotificationItem key={item.id} notification={item} />
                   ))}
@@ -171,8 +189,8 @@ export default function DashboardNotificationsPage() {
 
             {groups.older.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Mais antigas</h3>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2 mt-4">Mais antigas</h3>
+                <div className="space-y-3">
                   {groups.older.map((item) => (
                     <NotificationItem key={item.id} notification={item} />
                   ))}
@@ -183,5 +201,6 @@ export default function DashboardNotificationsPage() {
         )}
       </div>
     </div>
+  </RoleBasedDashboardLayout>
   );
 }
