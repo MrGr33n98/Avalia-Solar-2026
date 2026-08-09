@@ -234,6 +234,8 @@ Rails.application.routes.draw do
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
           member do
             patch :submit
+            patch :pause
+            patch :resume
             get :performance
           end
         end

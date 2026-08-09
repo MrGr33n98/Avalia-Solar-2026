@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_09_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -245,6 +245,79 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["public_slug"], name: "index_badges_on_public_slug", unique: true
   end
 
+  create_table "banner_addon_subscriptions", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "banner_id"
+    t.bigint "banner_addon_id", null: false
+    t.bigint "legacy_source_id"
+    t.string "legacy_migration_status"
+    t.integer "price_paid_cents", null: false
+    t.integer "discount_cents", default: 0, null: false
+    t.datetime "starts_at"
+    t.datetime "ends_at"
+    t.string "status", default: "pending_payment", null: false
+    t.string "payment_provider"
+    t.string "payment_reference"
+    t.datetime "activated_at"
+    t.datetime "cancelled_at"
+    t.jsonb "addon_snapshot", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "checkout_session_id"
+    t.string "idempotency_key"
+    t.text "checkout_url"
+    t.index ["banner_addon_id"], name: "index_banner_addon_subscriptions_on_banner_addon_id"
+    t.index ["banner_id"], name: "index_banner_addon_subscriptions_on_banner_id"
+    t.index ["checkout_session_id"], name: "index_banner_addon_subscriptions_on_checkout_session_id"
+    t.index ["company_id", "idempotency_key"], name: "idx_banner_addon_subscriptions_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["company_id"], name: "index_banner_addon_subscriptions_on_company_id"
+    t.index ["ends_at"], name: "index_banner_addon_subscriptions_on_ends_at"
+    t.index ["payment_reference"], name: "index_banner_addon_subscriptions_on_payment_reference"
+    t.index ["status"], name: "index_banner_addon_subscriptions_on_status"
+    t.check_constraint "ends_at > starts_at", name: "ck_banner_addon_subs_valid_dates"
+  end
+
+  create_table "banner_addons", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "code", null: false
+    t.text "description"
+    t.integer "price_cents", default: 0, null: false
+    t.integer "promotional_price_cents"
+    t.string "currency", default: "BRL", null: false
+    t.integer "duration_days", default: 30, null: false
+    t.string "category"
+    t.jsonb "benefits", default: [], null: false
+    t.jsonb "rules", default: {}, null: false
+    t.boolean "is_active", default: true, null: false
+    t.boolean "stackable", default: false, null: false
+    t.boolean "automatic_application", default: false, null: false
+    t.integer "priority_boost", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category"], name: "index_banner_addons_on_category"
+    t.index ["code"], name: "index_banner_addons_on_code", unique: true
+    t.index ["is_active"], name: "index_banner_addons_on_is_active"
+  end
+
+  create_table "banner_audit_logs", force: :cascade do |t|
+    t.string "auditable_type", null: false
+    t.bigint "auditable_id", null: false
+    t.string "actor_type"
+    t.bigint "actor_id"
+    t.string "source"
+    t.string "action", null: false
+    t.jsonb "changes_json", default: {}, null: false
+    t.jsonb "metadata_json", default: {}, null: false
+    t.string "reason"
+    t.string "ip_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_banner_audit_logs_on_action"
+    t.index ["actor_type", "actor_id"], name: "index_banner_audit_logs_on_actor"
+    t.index ["auditable_type", "auditable_id"], name: "index_banner_audit_logs_on_auditable"
+    t.index ["source"], name: "index_banner_audit_logs_on_source"
+  end
+
   create_table "banner_daily_stats", force: :cascade do |t|
     t.bigint "banner_id", null: false
     t.date "day", null: false
@@ -253,6 +326,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.decimal "ctr", default: "0.0", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "leads_count", default: 0, null: false
+    t.integer "cost_cents", default: 0, null: false
     t.index ["banner_id", "day"], name: "index_banner_daily_stats_on_banner_id_and_day", unique: true
     t.index ["banner_id"], name: "index_banner_daily_stats_on_banner_id"
   end
@@ -269,9 +344,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.datetime "tracked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "event_key"
+    t.string "page_path"
+    t.string "slot_key"
+    t.string "placement"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.string "utm_term"
+    t.string "utm_content"
+    t.index ["banner_id", "event_type", "placement"], name: "index_banner_events_on_banner_id_and_event_type_and_placement"
     t.index ["banner_id", "event_type", "tracked_at"], name: "idx_banner_events_analytics", order: { tracked_at: :desc }
     t.index ["banner_id"], name: "index_banner_events_on_banner_id"
     t.index ["company_id"], name: "index_banner_events_on_company_id"
+    t.index ["event_key"], name: "index_banner_events_on_event_key", unique: true, where: "(event_key IS NOT NULL)"
     t.index ["event_type"], name: "index_banner_events_on_event_type"
     t.index ["tracked_at"], name: "index_banner_events_on_tracked_at"
   end
@@ -520,7 +606,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -677,6 +763,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "intent_score", default: 0
+    t.integer "fit_score", default: 0
+    t.jsonb "score_explanation", default: {}
     t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id", unique: true, where: "(chat_session_id IS NOT NULL)"
     t.index ["city"], name: "index_chat_leads_on_city"
     t.index ["consent_given"], name: "index_chat_leads_on_consent_given"
@@ -943,6 +1032,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["slug"], name: "index_companies_on_slug", unique: true
     t.index ["social_proof_enabled"], name: "index_companies_on_social_proof_enabled"
     t.index ["sponsored"], name: "index_companies_on_sponsored"
+    t.index ["state", "city", "rating_avg"], name: "idx_companies_geo_rating"
     t.index ["state", "city"], name: "index_companies_on_state_and_city"
     t.index ["status", "active_admin"], name: "index_companies_on_status_and_active_admin"
     t.index ["status", "rating_avg", "reviews_count"], name: "idx_companies_ranking", order: { rating_avg: :desc, reviews_count: :desc }
@@ -951,7 +1041,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -968,7 +1058,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1414,7 +1504,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -1811,7 +1901,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2090,7 +2180,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
-    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
+    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying::text, 'pending_otp'::character varying::text, 'verified'::character varying::text, 'distributed'::character varying::text, 'proposal_submitted'::character varying::text, 'proposal_processing'::character varying::text, 'proposal_sent'::character varying::text, 'proposal_failed'::character varying::text])", name: "ck_leads_valid_status"
   end
 
   create_table "material_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2250,6 +2340,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.datetime "created_at", null: false
     t.index ["created_at"], name: "index_optimization_log_on_created_at"
     t.index ["workflow_id"], name: "index_optimization_log_on_workflow_id"
+  end
+
+  create_table "payment_webhook_events", force: :cascade do |t|
+    t.string "provider", null: false
+    t.string "provider_event_id", null: false
+    t.string "event_type", null: false
+    t.string "status", default: "pending", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "provider_event_id"], name: "index_payment_webhook_events_on_provider_and_provider_event_id", unique: true
+    t.index ["status"], name: "index_payment_webhook_events_on_status"
   end
 
   create_table "pending_changes", force: :cascade do |t|
@@ -2597,7 +2700,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
+  end
+
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "endpoint", null: false
+    t.string "p256dh", null: false
+    t.string "auth", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
+    t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
   end
 
   create_table "push_tokens", force: :cascade do |t|
@@ -3042,6 +3156,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
   add_foreign_key "articles", "categories"
   add_foreign_key "articles", "companies"
   add_foreign_key "articles", "products"
+  add_foreign_key "banner_addon_subscriptions", "banner_addons"
+  add_foreign_key "banner_addon_subscriptions", "banners"
+  add_foreign_key "banner_addon_subscriptions", "companies"
   add_foreign_key "banner_daily_stats", "banners"
   add_foreign_key "banner_events", "banners"
   add_foreign_key "banner_events", "companies"
@@ -3168,6 +3285,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_04_174500) do
   add_foreign_key "product_specifications", "spec_templates"
   add_foreign_key "products", "brands"
   add_foreign_key "products", "companies"
+  add_foreign_key "push_subscriptions", "users"
   add_foreign_key "push_tokens", "users"
   add_foreign_key "rating_criteria", "categories"
   add_foreign_key "recommendation_placements", "categories"

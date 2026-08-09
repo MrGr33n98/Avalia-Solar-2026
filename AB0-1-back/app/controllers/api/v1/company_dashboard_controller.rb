@@ -522,6 +522,35 @@ module Api
 
       # POST /api/v1/company_dashboard/banner_addon_checkout
       def banner_addon_checkout
+        authorize @company, :update_banner?, policy_class: CompanyDashboardPolicy
+        unless @company.feature_enabled?('promo_banner')
+          return render json: { error: 'plan_upgrade_required', feature: 'promo_banner' }, status: :forbidden
+        end
+
+        idempotency_key = request.headers['Idempotency-Key'].to_s.strip
+        if idempotency_key.blank?
+          return render json: { error: 'idempotency_key_required' }, status: :unprocessable_entity
+        end
+        if idempotency_key.bytesize > 255
+          return render json: { error: 'idempotency_key_too_long' }, status: :unprocessable_entity
+        end
+
+        existing_sub = BannerAddonSubscription.find_by(company: @company, idempotency_key: idempotency_key)
+        if existing_sub
+          same_request = existing_sub.banner_id == params[:banner_id].to_i &&
+                         existing_sub.banner_addon_id == params[:addon_id].to_i
+          unless same_request
+            return render json: { error: 'idempotency_key_conflict' }, status: :conflict
+          end
+
+          return render_addon_checkout(existing_sub, :ok)
+        end
+
+        payment_provider = params[:provider].presence || 'stripe'
+        unless %w[stripe mercadopago].include?(payment_provider)
+          return render json: { error: 'unsupported_payment_provider' }, status: :unprocessable_entity
+        end
+
         addon = BannerAddon.find(params[:addon_id])
         banner = @company.banners.find(params[:banner_id])
 
@@ -536,42 +565,38 @@ module Api
           return render json: { error: eligibility[:error] }, status: :unprocessable_entity
         end
 
-        # Validate idempotency
-        idempotency_key = request.headers['Idempotency-Key']
-        if idempotency_key.present?
-          existing_sub = BannerAddonSubscription.find_by(
-            payment_reference: idempotency_key, # Reusing this field or adding one. Wait, payment_reference is usually for provider ID. Let's just rely on the new table if needed or just use checkout_session_id.
-            company: @company
-          )
-          # Actually, it's safer to just rely on Stripe's idempotency or a simple check:
-        end
-
         checkout_session_id = "PAY-#{SecureRandom.hex(8).upcase}"
 
-        sub = BannerAddonSubscription.create!(
-          company: @company,
-          banner: banner,
-          banner_addon: addon,
-          status: 'pending_payment',
-          payment_provider: params[:provider] || 'stripe',
-          checkout_session_id: checkout_session_id,
-          price_paid_cents: eligibility[:effective_price_cents],
-          addon_snapshot: {
-            'rules' => addon.rules,
-            'benefits' => addon.benefits,
-            'price_cents' => addon.price_cents,
-            'currency' => addon.currency
-          }
-        )
+        sub = BannerAddonSubscription.transaction do
+          subscription = BannerAddonSubscription.create!(
+            company: @company,
+            banner: banner,
+            banner_addon: addon,
+            status: 'pending_payment',
+            payment_provider: payment_provider,
+            checkout_session_id: checkout_session_id,
+            idempotency_key: idempotency_key,
+            price_paid_cents: eligibility[:effective_price_cents],
+            discount_cents: [addon.price_cents - eligibility[:effective_price_cents], 0].max,
+            addon_snapshot: {
+              'rules' => addon.rules,
+              'benefits' => addon.benefits,
+              'price_cents' => addon.price_cents,
+              'effective_price_cents' => eligibility[:effective_price_cents],
+              'currency' => addon.currency
+            }
+          )
 
-        # Generate Real Redirect URL
-        checkout_service = Payment::CheckoutService.new(sub)
-        redirect_url = checkout_service.create_checkout_session(sub.payment_provider)
+          checkout_url = Payment::CheckoutService.new(subscription)
+                                                        .create_checkout_session(subscription.payment_provider)
+          subscription.update!(checkout_url: checkout_url)
+          subscription
+        end
 
-        render json: {
-          subscription: sub.as_json(only: %i[id status payment_provider checkout_session_id created_at]),
-          redirect_url: redirect_url
-        }, status: :created
+        render_addon_checkout(sub, :created)
+      rescue ActiveRecord::RecordNotUnique
+        existing_sub = BannerAddonSubscription.find_by!(company: @company, idempotency_key: idempotency_key)
+        render_addon_checkout(existing_sub, :ok)
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'resource_not_found' }, status: :not_found
       end
@@ -1227,6 +1252,15 @@ module Api
       end
 
       private
+
+      def render_addon_checkout(subscription, status)
+        render json: {
+          subscription: subscription.as_json(
+            only: %i[id status payment_provider checkout_session_id created_at]
+          ),
+          redirect_url: subscription.checkout_url
+        }, status: status
+      end
 
       def generate_blob_url(blob)
         return nil if blob.blank?

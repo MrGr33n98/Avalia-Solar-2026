@@ -2,7 +2,11 @@ module Payment
   class CheckoutService
     def initialize(subscription)
       @subscription = subscription
-      @offer = subscription.banner_offer
+      @offer = if subscription.respond_to?(:checkout_product)
+                 subscription.checkout_product
+               else
+                 subscription.banner_offer
+               end
       @company = subscription.company
     end
 
@@ -34,7 +38,7 @@ module Payment
               name: "Banner: #{@offer.name}",
               description: @offer.description,
             },
-            unit_amount: @offer.price_cents,
+            unit_amount: checkout_price_cents,
           },
           quantity: 1,
         }],
@@ -61,7 +65,7 @@ module Payment
         items: [
           {
             title: "Banner: #{@offer.name}",
-            unit_price: @offer.price_cents / 100.0,
+            unit_price: checkout_price_cents / 100.0,
             quantity: 1,
             currency_id: 'BRL'
           }
@@ -81,6 +85,12 @@ module Payment
       
       # link for redirect
       preference['init_point']
+    end
+
+    def checkout_price_cents
+      return @subscription.price_paid_cents if @subscription.respond_to?(:price_paid_cents)
+
+      @offer.price_cents
     end
   end
 end

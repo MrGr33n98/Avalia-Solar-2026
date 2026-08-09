@@ -3,14 +3,17 @@ require 'rails_helper'
 RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
   let(:company) { create(:company) }
   let(:user) { create(:user, company: company) }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.credentials.secret_key_base) }
+  let!(:membership) { create(:company_member, user: user, company: company, role: 'owner', status: 'active') }
+  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET /api/v1/company_dashboard/banners' do
     context 'when user is authenticated and authorized' do
       before do
-        allow_any_instance_of(Api::V1::BaseController).to receive(:authorize_feature!).and_return(true)
-        allow_any_instance_of(Api::V1::BaseController).to receive(:current_company).and_return(company)
+        allow_any_instance_of(Api::V1::CompanyDashboardBannersController)
+          .to receive(:authorize_feature!).and_return(true)
+        allow_any_instance_of(Api::V1::CompanyDashboardBannersController)
+          .to receive(:current_company).and_return(company)
       end
 
       it 'returns a consolidated dashboard payload' do
@@ -32,7 +35,6 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
         expect(json['banners'].first['id']).to eq(banner.id)
         expect(json['banners'].first['operational_status']).to eq('active')
         expect(json['banners'].first['allowed_actions']).to include('pause', 'edit', 'buy_addon')
-      end
       end
       
       context 'regression: with a realistic Plan that does not respond to max_banners' do
@@ -61,8 +63,10 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
     let(:banner) { create(:banner, company: company) }
     
     before do
-      allow_any_instance_of(Api::V1::BaseController).to receive(:authorize_feature!).and_return(true)
-      allow_any_instance_of(Api::V1::BaseController).to receive(:current_company).and_return(company)
+      allow_any_instance_of(Api::V1::CompanyDashboardBannersController)
+        .to receive(:authorize_feature!).and_return(true)
+      allow_any_instance_of(Api::V1::CompanyDashboardBannersController)
+        .to receive(:current_company).and_return(company)
       
       allow(BannerAnalytics::PerformanceService).to receive(:call).and_return(
         { metrics: { impressions: 50, clicks: 5, ctr: 10, leads: 0, investment: 10, cpc: 2 }, time_series: [] }

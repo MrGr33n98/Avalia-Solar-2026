@@ -5,9 +5,11 @@ module Api
       before_action :require_company_user
       before_action :ensure_company
       before_action -> { authorize_feature!('promo_banner') }
+      before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy]
 
       def index
-        banners = current_company.banners.includes(:banner_addon_subscriptions).order(created_at: :desc)
+        banners = current_company.banners.includes(banner_addon_subscriptions: :banner_addon)
+                                 .order(created_at: :desc)
         
         quota = Banners::CompanyBannerQuotaService.call(current_company)
 
@@ -53,15 +55,20 @@ module Api
             'active'
           end
 
-          allowed_actions = ['edit']
+          allowed_actions = []
+          allowed_actions << 'edit' if %w[draft rejected approved].include?(b.moderation_status)
+          allowed_actions << 'submit' if %w[draft rejected].include?(b.moderation_status)
           allowed_actions << 'pause' if b.active && operational_status == 'active'
-          allowed_actions << 'resume' if !b.active && operational_status == 'paused'
+          allowed_actions << 'resume' if !b.active && b.moderation_status == 'approved'
           allowed_actions << 'buy_addon' if operational_status == 'active' || operational_status == 'scheduled'
+          allowed_actions << 'delete' if %w[draft rejected].include?(b.moderation_status)
 
           {
             id: b.id,
             title: b.title,
             thumbnail_url: b.respond_to?(:image_url) ? b.image_url : nil,
+            link_url: b.link_url,
+            banner_type: b.banner_type,
             operational_status: operational_status,
             moderation_status: b.moderation_status,
             rejected_reason: b.rejected_reason,
@@ -100,6 +107,8 @@ module Api
         banner = current_company.banners.find(params[:id])
         banner.assign_attributes(banner_params)
         attach_image!(banner) if params[:image].present?
+        banner.moderation_status = 'draft'
+        banner.active = false
         banner.save!
 
         render json: { banner: banner.as_json(methods: %i[image_url link_url]) }
@@ -107,7 +116,31 @@ module Api
 
       def submit
         banner = current_company.banners.find(params[:id])
-        banner.submit_for_review! if banner.respond_to?(:submit_for_review!)
+        unless %w[draft rejected].include?(banner.moderation_status)
+          return render json: { error: 'invalid_moderation_transition' }, status: :unprocessable_entity
+        end
+
+        banner.submit_for_review!
+        render json: { banner: banner.as_json(methods: %i[image_url link_url]) }
+      end
+
+      def pause
+        banner = current_company.banners.find(params[:id])
+        unless banner.active?
+          return render json: { error: 'banner_already_paused' }, status: :unprocessable_entity
+        end
+
+        banner.update!(active: false)
+        render json: { banner: banner.as_json(methods: %i[image_url link_url]) }
+      end
+
+      def resume
+        banner = current_company.banners.find(params[:id])
+        unless banner.moderation_status == 'approved'
+          return render json: { error: 'banner_must_be_approved' }, status: :unprocessable_entity
+        end
+
+        banner.update!(active: true)
         render json: { banner: banner.as_json(methods: %i[image_url link_url]) }
       end
 
@@ -128,6 +161,10 @@ module Api
 
       def destroy
         banner = current_company.banners.find(params[:id])
+        unless %w[draft rejected].include?(banner.moderation_status)
+          return render json: { error: 'banner_cannot_be_deleted' }, status: :unprocessable_entity
+        end
+
         banner.destroy!
         head :no_content
       end
@@ -147,6 +184,10 @@ module Api
 
         render json: { error: 'plan_upgrade_required', feature: feature_name }, status: :forbidden
         false
+      end
+
+      def authorize_banner_management!
+        authorize current_company, :update_banner?, policy_class: CompanyDashboardPolicy
       end
 
       def banner_params

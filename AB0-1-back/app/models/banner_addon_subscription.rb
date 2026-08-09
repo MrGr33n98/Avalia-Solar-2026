@@ -5,6 +5,7 @@ class BannerAddonSubscription < ApplicationRecord
 
   validates :price_paid_cents, numericality: { greater_than_or_equal_to: 0 }
   validates :status, presence: true
+  validates :idempotency_key, uniqueness: { scope: :company_id }, allow_nil: true
   validate :ends_at_after_starts_at
 
   STATUSES = %w[pending_payment scheduled active expired cancelled refunded].freeze
@@ -20,6 +21,10 @@ class BannerAddonSubscription < ApplicationRecord
   
   def effective_benefits
     addon_snapshot['benefits'] || banner_addon.benefits
+  end
+
+  def checkout_product
+    banner_addon
   end
 
   private

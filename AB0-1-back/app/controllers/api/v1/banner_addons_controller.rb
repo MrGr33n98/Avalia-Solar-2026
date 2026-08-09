@@ -16,6 +16,7 @@ module Api
               category: addon.category,
               price_cents: addon.price_cents,
               promotional_price_cents: addon.promotional_price_cents,
+              effective_price_cents: addon.current_price_cents,
               currency: addon.currency,
               duration_days: addon.duration_days,
               benefits: addon.benefits,
