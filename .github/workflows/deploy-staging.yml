@@ -266,8 +266,8 @@ jobs:
             FRONTEND_IMAGE="ghcr.io/${REPO}-frontend:staging-${GIT_SHA}"
             export BACKEND_IMAGE FRONTEND_IMAGE
 
-            docker pull "$BACKEND_IMAGE"
-            docker pull "$FRONTEND_IMAGE"
+            docker pull -q "$BACKEND_IMAGE"
+            docker pull -q "$FRONTEND_IMAGE"
 
             docker compose -f "$COMPOSE_FILE" config --images | grep -Fx "$BACKEND_IMAGE" >/dev/null
             docker compose -f "$COMPOSE_FILE" config --images | grep -Fx "$FRONTEND_IMAGE" >/dev/null

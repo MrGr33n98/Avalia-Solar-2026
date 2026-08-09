@@ -341,8 +341,8 @@ jobs:
             docker compose stop backend frontend worker || true
 
             echo "?? Baixando imagens imutaveis, uma por vez..."
-            docker pull "$BACKEND_IMAGE"
-            docker pull "$FRONTEND_IMAGE"
+            docker pull -q "$BACKEND_IMAGE"
+            docker pull -q "$FRONTEND_IMAGE"
 
             FREE_KB=$(df / --output=avail | tail -1 | tr -d ' ')
             if [ "${FREE_KB:-0}" -lt 1048576 ]; then
