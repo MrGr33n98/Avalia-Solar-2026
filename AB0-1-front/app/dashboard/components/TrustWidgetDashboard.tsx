@@ -36,6 +36,7 @@ interface CompanyWidgetData {
   trust_score?: number;
   rating_avg?: number;
   reviews_count?: number;
+  logo_url?: string;
   verified_badge_image_url?: string;
   public_profile_url?: string;
   api_key?: string;
@@ -98,6 +99,7 @@ export default function TrustWidgetDashboard({ company }: TrustWidgetDashboardPr
     trust_score: company?.trust_score ?? 88,
     rating_avg: company?.rating_avg ?? 4.8,
     reviews_count: company?.reviews_count ?? 32,
+    logo_url: company?.logo_url,
     verified_badge_image_url: company?.verified_badge_image_url,
     public_profile_url: company?.public_profile_url || '#',
   };

@@ -10,6 +10,7 @@ interface CompanyData {
   trust_score: number;
   rating_avg: number;
   reviews_count: number;
+  logo_url?: string;
   verified_badge_image_url?: string;
   public_profile_url: string;
 }
@@ -42,6 +43,8 @@ export default function WidgetBadge({
   const textColor = isDark ? 'text-white' : 'text-slate-900';
   const mutedColor = isDark ? 'text-slate-400' : 'text-slate-500';
   const borderColor = isDark ? 'border-slate-800' : 'border-slate-100';
+
+  const logoSrc = companyData.logo_url || companyData.verified_badge_image_url;
 
   const stars = (
     <div className="flex gap-0.5">
@@ -89,10 +92,21 @@ export default function WidgetBadge({
       <div className={`border rounded-xl p-4 shadow-sm w-72 transition-all duration-300 ${bgColor}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-8 h-8 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'} flex items-center justify-center shrink-0`}>
-              <span className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                {companyData.name.charAt(0).toUpperCase()}
-              </span>
+            <div className={`w-8 h-8 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'} flex items-center justify-center shrink-0 overflow-hidden border`}>
+              {logoSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoSrc}
+                  alt={companyData.name}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-cover"
+                />
+              ) : (
+                <span className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {companyData.name.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <div className="min-w-0">
               <h3 className={`text-xs font-bold truncate ${textColor}`}>{companyData.name}</h3>
@@ -185,15 +199,15 @@ export default function WidgetBadge({
     <div className={`border rounded-xl p-5 shadow-sm max-w-sm w-full transition-all duration-300 ${bgColor}`}>
       {/* Header */}
       <div className="flex items-center gap-3.5 mb-4">
-        <div className={`w-11 h-11 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'} flex items-center justify-center shrink-0`}>
-          {companyData.verified_badge_image_url ? (
+        <div className={`w-11 h-11 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'} flex items-center justify-center shrink-0 overflow-hidden border`}>
+          {logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={companyData.verified_badge_image_url}
+              src={logoSrc}
               alt={companyData.name}
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-full object-cover"
+              width={44}
+              height={44}
+              className="w-11 h-11 object-cover"
             />
           ) : (
             <div className={`w-9 h-9 rounded-full ${isDark ? 'bg-blue-950' : 'bg-blue-50'} flex items-center justify-center`}>
