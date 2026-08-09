@@ -327,7 +327,10 @@ jobs:
             export BACKEND_IMAGE FRONTEND_IMAGE
 
             echo "?? Limpando cache e imagens Docker antigas nao utilizadas para liberar espaco..."
-            docker system prune -a -f || true
+            docker container prune -f || true
+            docker image prune -a -f || true
+            docker builder prune -a -f || true
+            docker system prune -a -f --volumes || true
 
             PREVIOUS_BACKEND_ID=$(docker inspect --format='{{.Image}}' ab0-backend 2>/dev/null || true)
             PREVIOUS_FRONTEND_ID=$(docker inspect --format='{{.Image}}' ab0-frontend 2>/dev/null || true)
