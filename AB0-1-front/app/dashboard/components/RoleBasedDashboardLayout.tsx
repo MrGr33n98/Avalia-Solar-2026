@@ -60,7 +60,10 @@ export default function RoleBasedDashboardLayout({
       )}
       
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 transition-[padding] duration-200",
+        !isAdmin && "md:pl-[var(--enterprise-sidebar-width,112px)]"
+      )}>
         {isAdmin ? (
           <DashboardHeader />
         ) : (
