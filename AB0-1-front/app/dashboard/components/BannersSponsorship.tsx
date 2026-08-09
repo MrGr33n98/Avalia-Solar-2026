@@ -88,7 +88,7 @@ type BannerCheckoutResponse = {
   message?: string;
 };
 
-function formatMoney(cents: number, currency: string = 'BRL') {
+function formatMoney(cents?: number, currency: string = 'BRL') {
   const value = (cents || 0) / 100;
   try {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value);
@@ -166,11 +166,11 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
                </div>
                <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Custo</div>
-                 <div className="font-black text-lg">{formatMoney(data.metrics.investment_cents || data.metrics.investment * 100)}</div>
+                 <div className="font-black text-lg">{formatMoney(data.metrics.investment_cents || (data.metrics.investment || 0) * 100)}</div>
                </div>
                <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">CPC</div>
-                 <div className="font-black text-lg">{formatMoney(data.metrics.cpc_cents || data.metrics.cpc * 100)}</div>
+                 <div className="font-black text-lg">{formatMoney(data.metrics.cpc_cents || (data.metrics.cpc || 0) * 100)}</div>
                </div>
              </div>
 
