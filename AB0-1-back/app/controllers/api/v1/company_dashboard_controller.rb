@@ -214,11 +214,17 @@ module Api
 
           category_id = params[:category_id].presence
           criterion_slug = params[:criterion_slug].presence
+          state = params[:state].presence
+          city = params[:city].presence
+          sector = params[:sector].presence
           history_days = [[params.fetch(:history_days, 90).to_i, 7].max, 365].min
           service = ::CompanyDashboard::RankingService.new(
             company: @company,
             category_id: category_id,
             criterion_slug: criterion_slug,
+            state: state,
+            city: city,
+            sector: sector,
             history_days: history_days
           )
           data = service.ranking_data

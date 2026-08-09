@@ -7,13 +7,20 @@ module CompanyDashboard
     MAX_EXECUTION_VIEWS = 2_000.0
     MAX_EXECUTION_CLICKS = 300.0
 
-    attr_reader :company, :category_id, :criterion_slug, :history_days
+    attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector
 
-    def initialize(company:, category_id: nil, criterion_slug: nil, history_days: 90)
+    def initialize(company:, category_id: nil, criterion_slug: nil, state: nil, city: nil, sector: nil, history_days: 90)
       @company = company
       @category_id = category_id
       @criterion_slug = criterion_slug
+      @state = state
+      @city = city
+      @sector = sector
       @history_days = [[history_days.to_i, 7].max, 365].min
+    end
+
+    def ad_hoc_preview?
+      criterion_slug.present? || state.present? || city.present? || sector.present?
     end
 
     def ranking_data
@@ -22,9 +29,9 @@ module CompanyDashboard
         # Do not silently substitute the legacy rating ranking when the auditable
         # snapshot is absent. Criterion filtering remains a quadrant preview until
         # criterion-level snapshots are materialized.
-        current_position: criterion_slug.present? ? current_position : snapshot&.rank_position,
-        total_companies: criterion_slug.present? ? total_companies : snapshot&.population_size,
-        percentile: criterion_slug.present? ? percentile : snapshot&.percentile.to_f,
+        current_position: ad_hoc_preview? ? current_position : snapshot&.rank_position,
+        total_companies: ad_hoc_preview? ? total_companies : snapshot&.population_size,
+        percentile: ad_hoc_preview? ? percentile : snapshot&.percentile.to_f,
         category_rankings: category_rankings,
         magic_quadrant_competitors: competitors_for_quadrant,
         quadrant_meta: quadrant_meta,
@@ -40,6 +47,9 @@ module CompanyDashboard
       if category_id.present?
         scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
       end
+      scope = scope.where(state: state) if state.present?
+      scope = scope.where(city: city) if city.present?
+      scope = scope.where("project_types @> ?", %("#{sector}")) if sector.present?
       scope
     end
 
@@ -69,8 +79,9 @@ module CompanyDashboard
         score_definition: 'Trust score × 10 + engagement score dos últimos 7 dias com decaimento exponencial.',
         tie_breaker: 'company_id asc', scope: category_id.present? ? 'category' : 'global',
         computed_at: snapshot&.computed_at, data_through: snapshot&.data_through,
-        quality_flags: (snapshot&.quality_flags || []) + (criterion_slug.present? ? ['criterion_ranking_not_persisted'] : (snapshot ? [] : ['snapshot_unavailable'])),
-        breakdown: snapshot&.breakdown || {}
+        quality_flags: (snapshot&.quality_flags || []) + (ad_hoc_preview? ? ['local_ranking_preview_not_persisted'] : (snapshot ? [] : ['snapshot_unavailable'])),
+        breakdown: snapshot&.breakdown || {},
+        is_ad_hoc_preview: ad_hoc_preview?
       }
     end
 
@@ -138,10 +149,10 @@ module CompanyDashboard
 
     def category_rankings
       company.categories.map do |category|
-        if criterion_slug.present?
-          scoped_service = self.class.new(company: company, category_id: category.id, criterion_slug: criterion_slug)
-          total = Company.active.joins(:categories).where(categories: { id: category.id }).distinct.count
-          position = scoped_service.send(:current_position_by_criterion)
+        if ad_hoc_preview?
+          scoped_service = self.class.new(company: company, category_id: category.id, criterion_slug: criterion_slug, state: state, city: city, sector: sector)
+          total = scoped_service.send(:total_companies)
+          position = scoped_service.send(:current_position)
 
           {
             category_id: category.id,

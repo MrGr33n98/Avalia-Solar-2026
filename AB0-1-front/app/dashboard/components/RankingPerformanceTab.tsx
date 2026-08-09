@@ -55,6 +55,9 @@ interface Props {
 export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>('all');
+  const [selectedState, setSelectedState] = useState<string>('all');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedSector, setSelectedSector] = useState<string>('all');
   const [historyDays, setHistoryDays] = useState<string>('90');
 
   const criteriaQuery = useQuery({
@@ -71,12 +74,15 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
   }, [selectedCategoryId]);
 
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, historyDays],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, selectedCity, selectedSector, historyDays],
     queryFn: async () => {
       return companyDashboardApi.getRanking(
         company.id,
         selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
         selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
+        selectedState !== 'all' ? selectedState : undefined,
+        selectedCity.trim() !== '' ? selectedCity.trim() : undefined,
+        selectedSector !== 'all' ? selectedSector : undefined,
         Number(historyDays)
       );
     },
@@ -153,11 +159,21 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             Monitoramento analítico de alta precisão para benchmarking competitivo e otimização de tração orgânica.
           </p>
         </div>
-        <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 items-center px-4 py-1.5 gap-3">
-          <Award className="h-4 w-4 text-amber-500" />
-          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest whitespace-nowrap">
-            Nível Atual: Posição {data?.rank_position || 'N/D'} entre Líderes
-          </span>
+        <div className="flex flex-col gap-2">
+          <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 items-center px-4 py-1.5 gap-3">
+            <Award className="h-4 w-4 text-amber-500" />
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest whitespace-nowrap">
+              Nível Atual: Posição {data?.rank_position || 'N/D'} entre Líderes
+            </span>
+          </div>
+          {data?.transparency?.is_ad_hoc_preview && (
+            <div className="flex p-1 bg-brand-blue/5 rounded-lg border border-brand-blue/20 items-center px-4 py-1.5 gap-3">
+              <ShieldCheck className="h-4 w-4 text-brand-blue" />
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest whitespace-nowrap">
+                Filtro Local/Setorial Ativo
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -232,7 +248,9 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 <BarChart3 className="w-5 h-5 text-brand-blue" />
                 Histórico de posicionamento orgânico
               </CardTitle>
-              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Snapshots diários · últimos 90 dias</CardDescription>
+              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                {data?.transparency?.is_ad_hoc_preview ? 'Exibindo curva base (Nacional/Categoria)' : 'Snapshots diários · últimos 90 dias'}
+              </CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
                 <div className="flex items-center gap-2">
@@ -338,7 +356,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
                   <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="SELETOR DE ESCOPO" />
+                    <SelectValue placeholder="SELETOR DE ESCOPO (CATEGORIA)" />
                   </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                     <SelectItem value="all" className="text-[10px] font-bold uppercase">ESCOPO GLOBAL</SelectItem>
@@ -349,6 +367,48 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="relative group">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
+                <Select value={selectedState} onValueChange={setSelectedState}>
+                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
+                    <SelectValue placeholder="ESTADO (UF)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <SelectItem value="all" className="text-[10px] font-bold uppercase">BRASIL TODO</SelectItem>
+                    {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
+                      <SelectItem key={uf} value={uf} className="text-[10px] font-bold uppercase">{uf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="relative group">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
+                <Select value={selectedSector} onValueChange={setSelectedSector}>
+                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
+                    <SelectValue placeholder="SETOR / PROJETO" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <SelectItem value="all" className="text-[10px] font-bold uppercase">TODOS OS SETORES</SelectItem>
+                    <SelectItem value="Residencial" className="text-[10px] font-bold uppercase">Residencial</SelectItem>
+                    <SelectItem value="Comercial" className="text-[10px] font-bold uppercase">Comercial</SelectItem>
+                    <SelectItem value="Usina" className="text-[10px] font-bold uppercase">Usina de Investimento</SelectItem>
+                    <SelectItem value="Industrial" className="text-[10px] font-bold uppercase">Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="relative group">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="CIDADE (EX: SÃO PAULO)"
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30 focus:outline-none"
+                />
               </div>
 
               <div className="relative group">

@@ -1678,6 +1678,7 @@ export interface RankingData {
     data_through?: string | null;
     quality_flags: string[];
     breakdown?: Record<string, unknown>;
+    is_ad_hoc_preview?: boolean;
   };
 }
 
@@ -1708,6 +1709,9 @@ export const companyDashboardApi = {
     companyId?: string | number,
     categoryId?: string | number,
     criterionSlug?: string,
+    state?: string,
+    city?: string,
+    sector?: string,
     historyDays: number = 90
   ) =>
     fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
@@ -1715,6 +1719,9 @@ export const companyDashboardApi = {
         company_id: companyId,
         category_id: categoryId,
         criterion_slug: criterionSlug,
+        state: state,
+        city: city,
+        sector: sector,
         history_days: historyDays,
       },
     }),
