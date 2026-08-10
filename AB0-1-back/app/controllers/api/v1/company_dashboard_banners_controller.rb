@@ -5,7 +5,7 @@ module Api
       before_action :require_company_user
       before_action :ensure_company
       before_action -> { authorize_feature!('promo_banner') }
-      before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy export_audit export_audits export_alerts acknowledge_export_alert]
+      before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy export_audit export_audits acknowledge_export_alert]
 
       def index
         banners = current_company.banners.includes(banner_addon_subscriptions: :banner_addon)
