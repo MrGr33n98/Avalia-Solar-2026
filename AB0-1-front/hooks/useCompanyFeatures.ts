@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { companiesApi, type CompanyFeatureAccessResponse, type FeatureAccessEntry } from '@/lib/api';
+import { companiesApi } from '@/lib/api';
+import type { CompanyFeatureAccessResponse, FeatureAccessEntry } from '@/lib/feature-access-types';
 
 type FeatureAccessMap = Record<string, FeatureAccessEntry>;
 
@@ -67,10 +68,10 @@ export function useCompanyFeatures(companyId?: number | string | null) {
         setFeatures(data.features || {});
         setResponse(data);
         return data;
-      } catch (err: any) {
+      } catch (err) {
         if (requestIdRef.current === requestId) {
           console.error('[useCompanyFeatures] Failed to fetch company feature access:', err);
-          setError(err?.message || 'Failed to load feature access.');
+          setError(err instanceof Error ? err.message : 'Failed to load feature access.');
           setFeatures({});
           setResponse(null);
         }

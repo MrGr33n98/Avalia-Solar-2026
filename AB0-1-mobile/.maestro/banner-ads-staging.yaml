@@ -1,0 +1,8 @@
+appId: com.anonymous.AvaliaSolarApp
+---
+# Requer staging com banner ativo em search_top.
+- launchApp
+- assertVisible: "Buscar instaladores"
+- tapOn: "Buscar instaladores"
+- assertVisible: "Patrocinado"
+- tapOn: "Patrocinado"

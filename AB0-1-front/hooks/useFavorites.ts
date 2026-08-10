@@ -4,26 +4,31 @@ import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'avalia_solar_favorites';
 
+function parseFavorites(value: string | null): number[] {
+  if (!value) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((id): id is number => Number.isInteger(id) && id > 0);
+  } catch {
+    return [];
+  }
+}
+
 export function useFavorites() {
   const [favorites, setFavorites] = useState<number[]>([]);
 
   // Initialize from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setFavorites(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse favorites from localStorage', e);
-      }
-    }
+    setFavorites(parseFavorites(localStorage.getItem(STORAGE_KEY)));
   }, []);
 
   // Sync with other tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        setFavorites(JSON.parse(e.newValue));
+      if (e.key === STORAGE_KEY) {
+        setFavorites(parseFavorites(e.newValue));
       }
     };
     window.addEventListener('storage', handleStorageChange);

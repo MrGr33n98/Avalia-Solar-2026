@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import AppContentFrame from '@/components/layout/AppContentFrame';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
 import Navbar from '@/components/Navbar';
+import NavbarBannerSlot from '@/components/NavbarBannerSlot';
 import JsonLd from '@/components/JsonLd';
 import GoogleTagManager, { GoogleTagManagerNoScript, GTM_ID } from '@/components/GoogleTagManager';
 import UtmProvider from '@/components/UtmProvider';
@@ -14,7 +15,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeferredClientRuntime from '@/components/performance/DeferredClientRuntime';
-import { SITE } from '@/lib/site';
+import { SITE } from '@/lib/site-core';
 
 export const metadata: Metadata = {
   title: 'Avalia Solar | Compare Empresas de Energia Solar',
@@ -182,6 +183,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <UtmProvider>
             <Providers>
               <Navbar />
+              <div className="hidden border-b border-slate-100 bg-white md:block dark:border-slate-800 dark:bg-slate-950" aria-label="Publicidade no topo">
+                <div className="mx-auto max-w-[1200px] px-4 py-1">
+                  <NavbarBannerSlot />
+                </div>
+              </div>
               <AppContentFrame>{children}</AppContentFrame>
               <ConditionalFooter />
               <MobileBottomNav />

@@ -2,14 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import {
-  Banknote,
-  Sparkles,
-  AlertCircle,
-  Building2,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react';
+import { Banknote, Sparkles, AlertCircle, Building2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,13 +11,19 @@ import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Company, CompanyFinancingOffer, CompanyFinancingPartner, FinancingOption } from '@/lib/api';
+import {
+  Company,
+  CompanyFinancingOffer,
+  CompanyFinancingPartner,
+  FinancingOption,
+} from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
 import { useCalculatorInput } from '@/lib/analytics/hooks/useIntentTracking';
 import { simulateFinancing, AmortizationType } from '@/lib/financing';
 import { cn } from '@/lib/utils';
 import { FinancialInstitutionDropdown } from '@/components/financing/FinancialInstitutionDropdown';
 import { BankLogo } from '@/components/financing/BankLogo';
+import { BannerContainer } from '@/components/BannerContainer';
 import { FinancialInstitution } from '@/lib/api';
 
 type Props = {
@@ -36,7 +35,9 @@ const formatCurrency = (value: number, curr: string = 'BRL') => {
   const safeValue = Number.isFinite(value) ? value : 0;
   const safeCurr = typeof curr === 'string' && curr.length === 3 ? curr.toUpperCase() : 'BRL';
   try {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: safeCurr }).format(safeValue);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: safeCurr }).format(
+      safeValue
+    );
   } catch {
     return `R$ ${safeValue.toFixed(2)}`;
   }
@@ -78,13 +79,15 @@ export default function CompanyFinancing({ company, companyId }: Props) {
   const currency = profile?.currency || 'BRL';
 
   const [amount, setAmount] = useState<number>(
-    profile?.default_amount_cents ? profile.default_amount_cents / 100 : 50000,
+    profile?.default_amount_cents ? profile.default_amount_cents / 100 : 50000
   );
-  const [downPayment, setDownPayment] = useState<number>(profile?.default_down_payment_percent ?? 20);
+  const [downPayment, setDownPayment] = useState<number>(
+    profile?.default_down_payment_percent ?? 20
+  );
   const [termMonths, setTermMonths] = useState<number>(profile?.default_term_months ?? 60);
   const [interest, setInterest] = useState<number>(profile?.default_interest_rate_monthly ?? 1.2);
   const [amortization, setAmortization] = useState<AmortizationType>(
-    (profile?.amortization_type as AmortizationType) || 'price',
+    (profile?.amortization_type as AmortizationType) || 'price'
   );
   const [graceMonths, setGraceMonths] = useState<number>(0);
   const [selectedInstitution, setSelectedInstitution] = useState<FinancialInstitution | null>(null);
@@ -109,10 +112,21 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         graceMonths: profile?.grace_months_enabled ? graceMonths : 0,
         amortizationType: amortization,
       }),
-    [amount, downPayment, termMonths, interest, graceMonths, amortization, profile?.grace_months_enabled],
+    [
+      amount,
+      downPayment,
+      termMonths,
+      interest,
+      graceMonths,
+      amortization,
+      profile?.grace_months_enabled,
+    ]
   );
 
-  const applyOffer = (offer: CompanyFinancingOffer | FinancingOption, institution?: FinancialInstitution) => {
+  const applyOffer = (
+    offer: CompanyFinancingOffer | FinancingOption,
+    institution?: FinancialInstitution
+  ) => {
     const o = offer as any;
     const term = o.term_months || o.max_term_months;
     const rate = o.interest_rate_monthly || o.interest_rate_percent;
@@ -125,7 +139,7 @@ export default function CompanyFinancing({ company, companyId }: Props) {
     if (minDown) setDownPayment(Number(minDown));
     if (amort) setAmortization(amort as AmortizationType);
     if (grace) setGraceMonths(Number(grace));
-    
+
     if (institution) setSelectedInstitution(institution);
 
     if (trackingCompanyId) {
@@ -207,19 +221,27 @@ export default function CompanyFinancing({ company, companyId }: Props) {
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4">
-            <FinancialInstitutionDropdown 
+            <FinancialInstitutionDropdown
               partners={partners}
               selectedPartnerId={selectedPartnerId}
               onSelectPartner={(partner) => setSelectedPartnerId(partner.id)}
-              onSelectOption={applyOffer} 
+              onSelectOption={applyOffer}
             />
-            
+
             <div className="grid gap-3">
               <label className="text-sm font-medium text-muted-foreground">Valor do projeto</label>
               <Input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(clamp(Number(e.target.value || 0), profile?.min_amount_cents ? profile.min_amount_cents / 100 : undefined, profile?.max_amount_cents ? profile.max_amount_cents / 100 : undefined))}
+                onChange={(e) =>
+                  setAmount(
+                    clamp(
+                      Number(e.target.value || 0),
+                      profile?.min_amount_cents ? profile.min_amount_cents / 100 : undefined,
+                      profile?.max_amount_cents ? profile.max_amount_cents / 100 : undefined
+                    )
+                  )
+                }
                 onBlur={() => trackCurrentSimulation()}
                 min={profile?.min_amount_cents ? profile.min_amount_cents / 100 : 1000}
                 max={profile?.max_amount_cents ? profile.max_amount_cents / 100 : undefined}
@@ -230,7 +252,9 @@ export default function CompanyFinancing({ company, companyId }: Props) {
             <div className="grid gap-2">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>Entrada ({Number(downPayment || 0).toFixed(0)}%)</span>
-                <span>{formatCurrency((Number(amount || 0) * Number(downPayment || 0)) / 100, currency)}</span>
+                <span>
+                  {formatCurrency((Number(amount || 0) * Number(downPayment || 0)) / 100, currency)}
+                </span>
               </div>
               <Slider
                 value={[downPayment]}
@@ -309,10 +333,23 @@ export default function CompanyFinancing({ company, companyId }: Props) {
             </Tabs>
 
             <div className="flex gap-3 pt-2">
-              <Button type="button" className="w-full font-semibold bg-blue-600 hover:bg-blue-700 text-white" onClick={() => trackCurrentSimulation()}>Calcular</Button>
-              <Button type="button" variant="outline" className="w-full font-semibold" onClick={resetForm}>Limpar</Button>
+              <Button
+                type="button"
+                className="w-full font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => trackCurrentSimulation()}
+              >
+                Calcular
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full font-semibold"
+                onClick={resetForm}
+              >
+                Limpar
+              </Button>
             </div>
-            
+
             {profile?.disclaimer && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                 <AlertCircle className="h-3.5 w-3.5" />
@@ -323,18 +360,20 @@ export default function CompanyFinancing({ company, companyId }: Props) {
 
           <div className="space-y-4">
             {microBanner && microBanner.image_url && (
-              <a 
-                href={microBanner.link_url || microBanner.link || '#'} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="block w-full overflow-hidden rounded-xl shadow-sm hover:shadow-md transition border border-primary/10 bg-white"
-              >
-                <img 
-                  src={microBanner.image_url} 
-                  alt={microBanner.title || 'Banner Patrocinado'} 
-                  className="w-full h-auto max-h-[120px] object-cover"
-                />
-              </a>
+              <BannerContainer
+                position="financing_simulator_micro_banner"
+                banners={[
+                  {
+                    id: microBanner.id,
+                    title: microBanner.title || 'Banner Patrocinado',
+                    image_url: microBanner.image_url,
+                    link: microBanner.link,
+                    link_url: microBanner.link_url,
+                    sponsored: true,
+                    position: 'financing_simulator_micro_banner',
+                  },
+                ]}
+              />
             )}
 
             <div className="grid grid-cols-2 gap-3">
@@ -343,16 +382,29 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 value={formatCurrency(simulation.monthlyPayment, currency)}
                 highlight
               />
-              <SummaryCard label="Valor financiado" value={formatCurrency(simulation.financedAmount, currency)} />
-              <SummaryCard label="Total em juros" value={formatCurrency(simulation.totalInterest, currency)} />
-              <SummaryCard label="Custo total" value={formatCurrency(simulation.totalPaid, currency)} />
+              <SummaryCard
+                label="Valor financiado"
+                value={formatCurrency(simulation.financedAmount, currency)}
+              />
+              <SummaryCard
+                label="Total em juros"
+                value={formatCurrency(simulation.totalInterest, currency)}
+              />
+              <SummaryCard
+                label="Custo total"
+                value={formatCurrency(simulation.totalPaid, currency)}
+              />
             </div>
 
             {partners.length > 0 && profile?.show_bank_logos !== false && (
               <div className="pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-muted-foreground">Instituições disponíveis</span>
-                  <span className="text-xs font-medium text-primary cursor-pointer hover:underline">Ver todas</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Instituições disponíveis
+                  </span>
+                  <span className="text-xs font-medium text-primary cursor-pointer hover:underline">
+                    Ver todas
+                  </span>
                 </div>
                 <div className="flex items-center gap-4 overflow-x-auto pb-2">
                   {partners.map((partner: CompanyFinancingPartner) => (
@@ -361,15 +413,17 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                       type="button"
                       onClick={() => setSelectedPartnerId(partner.id)}
                       className={cn(
-                        "flex-shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer",
+                        'flex-shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer',
                         selectedPartnerId === partner.id
-                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 opacity-100 ring-2 ring-blue-500/20"
-                          : "border-transparent opacity-80 hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 opacity-100 ring-2 ring-blue-500/20'
+                          : 'border-transparent opacity-80 hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800'
                       )}
                     >
                       <div className="flex items-center gap-1.5 px-1 py-0.5">
                         <BankLogo name={partner.name} logoUrl={partner.logo_url} size={22} />
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{partner.name}</span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {partner.name}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -378,7 +432,10 @@ export default function CompanyFinancing({ company, companyId }: Props) {
             )}
 
             {ctaUrl && (
-              <Button className="w-full h-12 gap-2 mt-2 font-semibold text-md bg-blue-600 hover:bg-blue-700" asChild>
+              <Button
+                className="w-full h-12 gap-2 mt-2 font-semibold text-md bg-blue-600 hover:bg-blue-700"
+                asChild
+              >
                 <a href={ctaUrl} target="_blank" rel="noreferrer">
                   <Sparkles className="h-4 w-4" />
                   {ctaLabel}
@@ -414,8 +471,12 @@ export default function CompanyFinancing({ company, companyId }: Props) {
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
                   {offer.term_months && <div>Prazo: {offer.term_months} meses</div>}
-                  {offer.interest_rate_monthly && <div>Taxa: {offer.interest_rate_monthly}% a.m.</div>}
-                  {offer.min_down_payment_percent && <div>Entrada mínima: {offer.min_down_payment_percent}%</div>}
+                  {offer.interest_rate_monthly && (
+                    <div>Taxa: {offer.interest_rate_monthly}% a.m.</div>
+                  )}
+                  {offer.min_down_payment_percent && (
+                    <div>Entrada mínima: {offer.min_down_payment_percent}%</div>
+                  )}
                   {offer.grace_months && <div>Carência: {offer.grace_months} meses</div>}
                 </div>
                 <div className="mt-3 inline-flex items-center gap-1 text-primary text-sm font-semibold">
@@ -426,8 +487,6 @@ export default function CompanyFinancing({ company, companyId }: Props) {
           </CardContent>
         </Card>
       )}
-
-
     </div>
   );
 }
@@ -445,7 +504,7 @@ function SummaryCard({
     <div
       className={cn(
         'rounded-xl border p-4 shadow-sm bg-card/60',
-        highlight && 'border-primary/40 shadow-primary/10 bg-primary/5',
+        highlight && 'border-primary/40 shadow-primary/10 bg-primary/5'
       )}
     >
       <p className="text-sm text-muted-foreground">{label}</p>

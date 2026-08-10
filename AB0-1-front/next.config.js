@@ -42,7 +42,7 @@ const nextConfig = {
   staticPageGenerationTimeout: 180,
 
   experimental: {
-    webpackBuildWorker: true,
+    ...(process.env.NEXT_DISABLE_WEBPACK_BUILD_WORKER !== 'true' ? { webpackBuildWorker: true } : {}),
     optimizeCss: enableOptimizeCss,
     serverActions: {
       bodySizeLimit: '2mb',
@@ -57,22 +57,25 @@ const nextConfig = {
       'better-auth',
       'better-auth/next-js',
     ],
-    optimizePackageImports: [
-      'lucide-react',
-      'date-fns',
-      'recharts',
-      'framer-motion',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-select',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-tooltip',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-checkbox',
-      '@radix-ui/react-scroll-area',
-      '@radix-ui/react-accordion',
-      'cmdk',
-    ],
+    optimizePackageImports:
+      process.env.NEXT_DISABLE_OPTIMIZE_PACKAGE_IMPORTS === 'true'
+        ? []
+        : [
+            'lucide-react',
+            'date-fns',
+            'recharts',
+            'framer-motion',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-scroll-area',
+            '@radix-ui/react-accordion',
+            'cmdk',
+          ],
   },
 
   // TASK-023: Enable TypeScript and ESLint checks
@@ -178,10 +181,12 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
-    };
+    if (process.env.NEXT_ENABLE_POLLING === 'true') {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
 
     // Fix for OpenTelemetry/require-in-the-middle warnings
     if (!isServer) {

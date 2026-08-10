@@ -39,6 +39,34 @@ RSpec.describe BannerAnalytics::PerformanceService do
       expect(result[:context_breakdown]).to be_an(Array)
     end
 
+    it 'separa eventos descartados dos KPIs e os expõe apenas em quality' do
+      day = 1.day.ago
+      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: day, valid_for_reporting: true, placement: 'home_top')
+      create(:banner_event, banner: banner, event_type: 'click', tracked_at: day, valid_for_reporting: false, discard_reason: 'bot_user_agent', placement: 'home_top')
+
+      result = described_class.call(banner.id, start_date: start_date, end_date: end_date)
+
+      expect(result[:breakdown]).to include(
+        include(placement: 'home_top', impressions: 1, clicks: 0, leads: 0)
+      )
+      expect(result[:quality]).to include(
+        total_events: 2,
+        reportable_events: 1,
+        discarded_events: 1,
+        discard_reasons: { 'bot_user_agent' => 1 }
+      )
+    end
+
+    it 'calcula custo de assinatura aberta sem ends_at' do
+      addon = create(:banner_addon, price_cents: 10000)
+      create(:banner_addon_subscription, banner: banner, banner_addon: addon, price_cents: 10000,
+             starts_at: 4.days.ago, ends_at: nil, status: 'active')
+
+      result = described_class.call(banner.id, start_date: start_date, end_date: end_date)
+
+      expect(result[:metrics][:investment]).to eq(200.0)
+    end
+
     it 'returns correctly aggregated metrics' do
       result = described_class.call(banner.id, start_date: start_date, end_date: end_date)
       

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_09_190000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -353,13 +353,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_09_190000) do
     t.string "utm_campaign"
     t.string "utm_term"
     t.string "utm_content"
+    t.string "delivery_id"
+    t.string "impression_instance_id"
+    t.string "click_instance_id"
+    t.boolean "valid_for_reporting", default: true, null: false
+    t.integer "fraud_score", default: 0, null: false
+    t.string "discard_reason"
     t.index ["banner_id", "event_type", "placement"], name: "index_banner_events_on_banner_id_and_event_type_and_placement"
     t.index ["banner_id", "event_type", "tracked_at"], name: "idx_banner_events_analytics", order: { tracked_at: :desc }
     t.index ["banner_id"], name: "index_banner_events_on_banner_id"
+    t.index ["click_instance_id"], name: "idx_banner_events_click_instance", unique: true, where: "(((event_type)::text = 'click'::text) AND (click_instance_id IS NOT NULL))"
     t.index ["company_id"], name: "index_banner_events_on_company_id"
+    t.index ["delivery_id"], name: "index_banner_events_on_delivery_id"
     t.index ["event_key"], name: "index_banner_events_on_event_key", unique: true, where: "(event_key IS NOT NULL)"
     t.index ["event_type"], name: "index_banner_events_on_event_type"
+    t.index ["impression_instance_id"], name: "idx_banner_events_impression_instance", unique: true, where: "(((event_type)::text = 'impression'::text) AND (impression_instance_id IS NOT NULL))"
     t.index ["tracked_at"], name: "index_banner_events_on_tracked_at"
+    t.index ["valid_for_reporting"], name: "index_banner_events_on_valid_for_reporting"
   end
 
   create_table "banner_globals", force: :cascade do |t|

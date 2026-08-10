@@ -17,7 +17,13 @@ RSpec.describe 'Api::V1::Banners', type: :request do
     let!(:inactive_banner) { create(:banner, active: false) }
 
     context 'cache behavior (Fase 1)' do
-      before { Rails.cache.clear }
+      let(:cache_store) { ActiveSupport::Cache::MemoryStore.new }
+
+      before do
+        allow(Rails).to receive(:cache).and_return(cache_store)
+        allow(cache_store).to receive(:fetch).and_call_original
+        cache_store.clear
+      end
 
       it 'caches the response' do
         # Primeira chamada: cache miss
@@ -25,8 +31,7 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         expect(response).to have_http_status(:ok)
 
         # Verifica que cache foi criado
-        cache_key = "banners/v1/#{Digest::MD5.hexdigest({ position: 'navbar' }.sort.to_h.to_json)}"
-        expect(Rails.cache.exist?(cache_key)).to be true
+        expect(cache_store).to have_received(:fetch).with(a_string_matching(%r{\Abanners/v2/}), expires_in: 5.minutes)
 
         # Segunda chamada: cache hit
         get '/api/v1/banners', params: { position: 'navbar' }
@@ -47,13 +52,39 @@ RSpec.describe 'Api::V1::Banners', type: :request do
     context 'filtering' do
       before { Rails.cache.clear }
 
-      it 'filters by position' do
+      it 'aplica frequency cap recebido pela API por audiencia' do
+      banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
+      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
+             metadata_json: { 'audience_key' => 'audience-api-1' }, valid_for_reporting: true)
+
+      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-api-1' }
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body).map { |item| item['id'] }).not_to include(banner.id)
+    end
+
+    it 'isola cache entre audiences no frequency cap' do
+      banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
+      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
+             metadata_json: { 'audience_key' => 'audience-cache-a' }, valid_for_reporting: true)
+
+      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-a' }
+      first_payload = JSON.parse(response.body)
+      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-b' }
+      second_payload = JSON.parse(response.body)
+
+      expect(first_payload.map { |item| item['id'] }).not_to include(banner.id)
+      expect(second_payload.map { |item| item['id'] }).to include(banner.id)
+    end
+
+    it 'filters by position' do
         create(:banner, :approved, active: true, position: 'sidebar')
 
         get '/api/v1/banners', params: { position: 'navbar' }
 
         json = JSON.parse(response.body)
         expect(json.all? { |b| b['position'] == 'navbar' }).to be true
+        expect(json.first['delivery_id']).to match(/\A[a-f0-9]{32}\z/)
       end
 
       it 'serves newly managed conversion positions' do

@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
-import SponsorCarousel from '@/components/ui/sponsorcarousel';
+import { BannerCarousel } from '@/components/categories/BannerCarousel';
 import { useLocationData } from '@/hooks/useLocationData';
 import { Badge } from '@/components/ui/badge';
 import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
@@ -126,7 +126,8 @@ function MobileLocationLeadFilter({
         ? 'Selecione sua cidade'
         : 'Nenhuma cidade disponível';
 
-  const statePlaceholder = orderedStates.length > 0 ? 'Selecione seu estado' : 'Carregando estados...';
+  const statePlaceholder =
+    orderedStates.length > 0 ? 'Selecione seu estado' : 'Carregando estados...';
 
   const handleStateSelect = async (stateValue: string) => {
     setSelectedState(stateValue);
@@ -153,9 +154,15 @@ function MobileLocationLeadFilter({
       className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_6px_22px_rgba(15,23,42,0.06)]"
     >
       <div className="space-y-1">
-        <p className="text-[14px] font-medium text-slate-700">Encontre fornecedores na sua região</p>
+        <p className="text-[14px] font-medium text-slate-700">
+          Encontre fornecedores na sua região
+        </p>
         <p className="text-[11px] text-slate-500">
-          {canApplyLocation ? 'Tudo pronto para ver opções locais' : cityEnabled ? 'Falta apenas escolher sua cidade' : 'Passo 1 de 2'}
+          {canApplyLocation
+            ? 'Tudo pronto para ver opções locais'
+            : cityEnabled
+              ? 'Falta apenas escolher sua cidade'
+              : 'Passo 1 de 2'}
         </p>
       </div>
 
@@ -364,7 +371,6 @@ function CategoryHeader({
   return (
     // ALTURA REDUZIDA: h-[200px] em mobile, h-[240px] em desktop (Aprox 1/2 do anterior)
     <section className="relative w-full overflow-hidden rounded-2xl border border-gray-100 shadow-lg mb-6 group h-[200px] md:h-[240px]">
-      
       {/* 1. Background Imersivo */}
       <div className="absolute inset-0 z-0">
         {hasImage ? (
@@ -381,7 +387,7 @@ function CategoryHeader({
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950" />
         )}
-        
+
         {/* Overlay Escuro para contraste */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent opacity-50" />
@@ -391,7 +397,6 @@ function CategoryHeader({
       {/* Padding reduzido: p-4 em vez de p-10 */}
       <div className="relative z-10 h-full flex flex-col justify-end p-4 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 max-w-7xl mx-auto w-full">
-          
           {/* Texto Principal */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -403,11 +408,13 @@ function CategoryHeader({
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 text-white text-[9px] font-bold uppercase tracking-wider border border-white/20 backdrop-blur-md">
                 {category.name}
               </span>
-              
+
               <div className="flex items-center gap-1 bg-amber-500/90 text-white px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
                 <Star className="h-3 w-3 fill-current" />
                 <span className="text-[10px] font-bold">4.8</span>
-                <span className="text-[9px] opacity-80 font-medium hidden sm:inline ml-0.5">Média</span>
+                <span className="text-[9px] opacity-80 font-medium hidden sm:inline ml-0.5">
+                  Média
+                </span>
               </div>
             </div>
 
@@ -434,15 +441,19 @@ function CategoryHeader({
 
             {/* Stats Compactos (Apenas Desktop) */}
             <div className="hidden md:flex items-center gap-4 text-white/80 mt-1">
-               <div className="flex items-center gap-1.5">
-                  <User className="w-3 h-3 text-emerald-400" />
-                  <span className="text-[10px]"><strong className="text-white">{companiesCount || 0}</strong> Fornecedores</span>
-               </div>
-               <div className="w-px h-3 bg-white/20" />
-               <div className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span className="text-[10px]">Orçamentos <strong className="text-white">Grátis</strong></span>
-               </div>
+              <div className="flex items-center gap-1.5">
+                <User className="w-3 h-3 text-emerald-400" />
+                <span className="text-[10px]">
+                  <strong className="text-white">{companiesCount || 0}</strong> Fornecedores
+                </span>
+              </div>
+              <div className="w-px h-3 bg-white/20" />
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3 h-3 text-emerald-400" />
+                <span className="text-[10px]">
+                  Orçamentos <strong className="text-white">Grátis</strong>
+                </span>
+              </div>
             </div>
           </motion.div>
 
@@ -482,27 +493,50 @@ function CategoryHeader({
 function QuickActionsSection() {
   const quickActions = [
     { label: 'Empresas', href: '/companies', icon: Home, color: 'bg-amber-500 hover:bg-amber-600' },
-    { label: 'Produtos', href: '/products', icon: Grid, color: 'bg-emerald-500 hover:bg-emerald-600' },
+    {
+      label: 'Produtos',
+      href: '/products',
+      icon: Grid,
+      color: 'bg-emerald-500 hover:bg-emerald-600',
+    },
     { label: 'Avaliar', href: '/reviews/my', icon: Star, color: 'bg-blue-500 hover:bg-blue-600' },
-    { label: 'Favoritos', href: '/profile?tab=favorites', icon: Heart, color: 'bg-rose-500 hover:bg-rose-600' },
+    {
+      label: 'Favoritos',
+      href: '/profile?tab=favorites',
+      icon: Heart,
+      color: 'bg-rose-500 hover:bg-rose-600',
+    },
     { label: 'Blog', href: '/blog', icon: Zap, color: 'bg-violet-500 hover:bg-violet-600' },
   ];
 
   return (
-    <motion.section initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-5 gap-2">
+    <motion.section
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="grid grid-cols-5 gap-2"
+    >
       {quickActions.map((action, index) => {
         const Icon = action.icon;
         return (
-          <motion.div key={action.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05 }}>
+          <motion.div
+            key={action.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.05 }}
+          >
             <Link
               href={action.href}
               className="group flex flex-col items-center gap-1.5 p-2 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-gray-200"
             >
-              <div className={`relative p-2 rounded-lg ${action.color} text-white shadow-sm group-hover:scale-105 transition-all duration-300`}>
+              <div
+                className={`relative p-2 rounded-lg ${action.color} text-white shadow-sm group-hover:scale-105 transition-all duration-300`}
+              >
                 <Icon className="h-3.5 w-3.5" />
                 <div className="absolute inset-0 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
-              <span className="text-[9px] font-semibold text-gray-900 block truncate w-full text-center">{action.label}</span>
+              <span className="text-[9px] font-semibold text-gray-900 block truncate w-full text-center">
+                {action.label}
+              </span>
             </Link>
           </motion.div>
         );
@@ -532,7 +566,7 @@ export default function CategoryClientComponent({
   const [companies, setCompanies] = useState<Company[]>(initialCompanies || []);
   const [meta, setMeta] = useState<CategoryClientProps['paginationMeta']>(paginationMeta || null);
   const [currentPage, setCurrentPage] = useState<number>(paginationMeta?.page || 1);
-  
+
   // Sincroniza lista/meta quando os props mudam (ex.: filtros via URL / SSR)
   useEffect(() => {
     setCompanies(initialCompanies || []);
@@ -542,19 +576,22 @@ export default function CategoryClientComponent({
     setLoadingMore(false);
   }, [initialCompanies, paginationMeta]);
 
-  const filters = useMemo(() => ({
-    search: searchParams.get('search') || searchParams.get('searchTerm') || '',
-    state: searchParams.get('state') || '',
-    city: searchParams.get('city') || '',
-    rating: Number(searchParams.get('rating')) || 0,
-    verified: searchParams.get('verified') === 'true',
-    niche_tag: searchParams.get('niche_tag') || '',
-  }), [searchParams]);
+  const filters = useMemo(
+    () => ({
+      search: searchParams.get('search') || searchParams.get('searchTerm') || '',
+      state: searchParams.get('state') || '',
+      city: searchParams.get('city') || '',
+      rating: Number(searchParams.get('rating')) || 0,
+      verified: searchParams.get('verified') === 'true',
+      niche_tag: searchParams.get('niche_tag') || '',
+    }),
+    [searchParams]
+  );
 
   const createQueryString = useCallback(
     (params: Record<string, string | number | boolean | null>) => {
       const newSearchParams = new URLSearchParams(searchParams.toString());
-      
+
       Object.entries(params).forEach(([key, value]) => {
         if (value === null || value === '' || value === 0 || value === false) {
           newSearchParams.delete(key);
@@ -562,7 +599,7 @@ export default function CategoryClientComponent({
           newSearchParams.set(key, String(value));
         }
       });
-      
+
       // This page uses client-side "load more"; keep `page` out of the URL to avoid SSR refetch + duplicate URLs.
       newSearchParams.delete('page');
 
@@ -571,47 +608,50 @@ export default function CategoryClientComponent({
     [searchParams]
   );
 
-  const handleFilterChange = useCallback((type: string, value: any) => {
-    setLoadingCompanies(true);
+  const handleFilterChange = useCallback(
+    (type: string, value: any) => {
+      setLoadingCompanies(true);
 
-    if (type === 'clearAll') {
-      router.push(pathname, { scroll: false });
-      return;
-    }
+      if (type === 'clearAll') {
+        router.push(pathname, { scroll: false });
+        return;
+      }
 
-    if (type === 'location') {
-      const nextState = value?.state || null;
-      const nextCity = value?.city || null;
-      const queryString = createQueryString({
-        state: nextState,
-        city: nextCity,
-        rating: null,
-        verified: null,
-      });
+      if (type === 'location') {
+        const nextState = value?.state || null;
+        const nextCity = value?.city || null;
+        const queryString = createQueryString({
+          state: nextState,
+          city: nextCity,
+          rating: null,
+          verified: null,
+        });
+        const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+        router.push(nextUrl, { scroll: false });
+        return;
+      }
+
+      // Map legacy or UI names to standard filter names if needed
+      const filterKeyMap: Record<string, string> = {
+        searchTerm: 'search',
+        minRating: 'rating',
+      };
+
+      const key = filterKeyMap[type] || type;
+      const updates: Record<string, any> = {
+        [key]: value,
+      };
+
+      if (key === 'state') {
+        updates.city = null; // Clear city when state changes
+      }
+
+      const queryString = createQueryString(updates);
       const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
       router.push(nextUrl, { scroll: false });
-      return;
-    }
-
-    // Map legacy or UI names to standard filter names if needed
-    const filterKeyMap: Record<string, string> = {
-      'searchTerm': 'search',
-      'minRating': 'rating',
-    };
-
-    const key = filterKeyMap[type] || type;
-    const updates: Record<string, any> = {
-      [key]: value,
-    };
-
-    if (key === 'state') {
-      updates.city = null; // Clear city when state changes
-    }
-
-    const queryString = createQueryString(updates);
-    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.push(nextUrl, { scroll: false });
-  }, [pathname, router, createQueryString]);
+    },
+    [pathname, router, createQueryString]
+  );
 
   const filteredCompanies = companies;
 
@@ -744,7 +784,7 @@ export default function CategoryClientComponent({
     <div className="relative min-h-screen bg-gray-50/50">
       <BreadcrumbJsonLd items={jsonLdItems} />
       <ItemListJsonLd items={itemListItems} />
-      
+
       {/* MOBILE */}
       <div className="md:hidden">
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -785,7 +825,7 @@ export default function CategoryClientComponent({
                   Ads
                 </Badge>
               </div>
-              <SponsorCarousel banners={banners} />
+              <BannerCarousel banners={banners} />
             </motion.section>
           )}
 
@@ -800,9 +840,9 @@ export default function CategoryClientComponent({
 
           {/* Top Ranking Section (Sprint 1) */}
           {filteredCompanies.length > 0 && currentPage === 1 && !loadingCompanies && (
-            <TopCompaniesGrid 
-              companies={filteredCompanies} 
-              title={`Top ${category.name}`} 
+            <TopCompaniesGrid
+              companies={filteredCompanies}
+              title={`Top ${category.name}`}
               className="px-0"
             />
           )}
@@ -832,7 +872,12 @@ export default function CategoryClientComponent({
                   ))}
                 </motion.div>
               ) : filteredCompanies.length > 0 ? (
-                <motion.div key="companies" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                <motion.div
+                  key="companies"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4"
+                >
                   {filteredCompanies.map((company, index) => (
                     <motion.div
                       key={company.id}
@@ -856,10 +901,14 @@ export default function CategoryClientComponent({
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-lg font-bold text-slate-900 leading-snug">
-                      {filters.city ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!` : 'Seja o primeiro a solicitar orçamentos!'}
+                      {filters.city
+                        ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!`
+                        : 'Seja o primeiro a solicitar orçamentos!'}
                     </h3>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                      Ainda não temos instaladores de {category.name} avaliados em {filters.city || 'sua região'}, mas temos parceiros certificados que atendem em todo o estado de {filters.state || 'sua região'}.
+                      Ainda não temos instaladores de {category.name} avaliados em{' '}
+                      {filters.city || 'sua região'}, mas temos parceiros certificados que atendem
+                      em todo o estado de {filters.state || 'sua região'}.
                     </p>
                   </div>
                   <Button
@@ -881,7 +930,11 @@ export default function CategoryClientComponent({
                 { href: '/profile?tab=favorites', icon: Heart, label: 'Favoritos' },
                 { href: '/profile', icon: User, label: 'Perfil' },
               ].map((item) => (
-                <Link key={item.label} href={item.href} className="flex flex-col items-center gap-0.5 group">
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="flex flex-col items-center gap-0.5 group"
+                >
                   <div className="p-1.5 rounded-lg transition-all duration-300 group-hover:bg-gray-100">
                     <item.icon
                       className={`h-4 w-4 transition-colors duration-300 ${
@@ -913,15 +966,28 @@ export default function CategoryClientComponent({
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="h-fit space-y-6">
               <div className="lg:hidden">
-                <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="w-full text-sm hover:bg-gray-50">
+                <Button
+                  onClick={() => setShowFilters(!showFilters)}
+                  variant="outline"
+                  className="w-full text-sm hover:bg-gray-50"
+                >
                   <Filter className="h-3.5 w-3.5 mr-1.5" />
                   Filtros
                 </Button>
               </div>
 
               <AnimatePresence mode="wait">
-                <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} className={`lg:block ${showFilters ? 'block' : 'hidden'}`}>
-                  <SidebarFilter filters={filters} onFilterChange={handleFilterChange} locationsData={{}} categories={[]} />
+                <motion.div
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`lg:block ${showFilters ? 'block' : 'hidden'}`}
+                >
+                  <SidebarFilter
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    locationsData={{}}
+                    categories={[]}
+                  />
                 </motion.div>
               </AnimatePresence>
             </aside>
@@ -943,7 +1009,7 @@ export default function CategoryClientComponent({
                     </Badge>
                   </div>
                   <div className="w-full">
-                    <SponsorCarousel banners={banners} />
+                    <BannerCarousel banners={banners} />
                   </div>
                 </motion.div>
               )}
@@ -951,8 +1017,12 @@ export default function CategoryClientComponent({
               <div className="space-y-6">
                 <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Empresas de {category.name}</h2>
-                    <p className="text-sm text-gray-500 mt-1">{filteredCompanies.length} fornecedores encontrados</p>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                      Empresas de {category.name}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {filteredCompanies.length} fornecedores encontrados
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <ActiveFilters filters={filters} handleFilterChange={handleFilterChange} />
@@ -961,8 +1031,8 @@ export default function CategoryClientComponent({
 
                 {/* Top Ranking Section (Sprint 1) */}
                 {filteredCompanies.length > 0 && currentPage === 1 && !loadingCompanies && (
-                  <TopCompaniesGrid 
-                    companies={filteredCompanies} 
+                  <TopCompaniesGrid
+                    companies={filteredCompanies}
                     title={`Ranking: Melhores em ${category.name}`}
                   />
                 )}
@@ -1012,10 +1082,14 @@ export default function CategoryClientComponent({
                       </div>
                       <div className="space-y-2">
                         <h3 className="text-xl font-bold text-slate-900">
-                          {filters.city ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!` : 'Seja o primeiro a solicitar orçamentos!'}
+                          {filters.city
+                            ? `Seja o primeiro a solicitar orçamentos em ${filters.city}!`
+                            : 'Seja o primeiro a solicitar orçamentos!'}
                         </h3>
                         <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                          Ainda não temos instaladores de {category.name} avaliados em {filters.city || 'sua região'}, mas temos parceiros certificados que atendem em todo o estado de {filters.state || 'sua região'}.
+                          Ainda não temos instaladores de {category.name} avaliados em{' '}
+                          {filters.city || 'sua região'}, mas temos parceiros certificados que
+                          atendem em todo o estado de {filters.state || 'sua região'}.
                         </p>
                       </div>
                       <Button

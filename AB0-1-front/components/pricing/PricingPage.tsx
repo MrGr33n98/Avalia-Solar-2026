@@ -60,6 +60,14 @@ const planIconMap = {
 
 const planOrder: Record<PlanSlug, number> = { free: 0, essential: 1, pro: 2, enterprise: 3 };
 
+const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      window.setTimeout(() => reject(new Error("Request timed out")), timeoutMs)
+    ),
+  ]);
+
 function normalizePlanSlug(plan: Partial<BillingPlan> & { plan_tier?: string }, fallbackIndex = 0): PlanSlug {
   const explicitSlug = plan.slug || plan.plan_tier;
   if (explicitSlug === 'free' || explicitSlug === 'essential' || explicitSlug === 'pro' || explicitSlug === 'enterprise') {
@@ -124,7 +132,7 @@ export default function PricingPage() {
         // Busca os planos do backend
         let apiPlans: BillingPlan[] = [];
         try {
-          apiPlans = await billingApi.getPlans();
+          apiPlans = await withTimeout(billingApi.getPlans(), 8000);
         } catch (err) {
           console.warn('[PricingPage] Falha ao carregar planos da API, usando catálogo estático como fallback:', err);
         }
@@ -174,7 +182,7 @@ export default function PricingPage() {
 
         // Busca assinatura se estiver logado e tiver empresa associada
         if (isAuthenticated && user?.company_id) {
-          const sub = await billingApi.getSubscription(user.company_id);
+          const sub = await withTimeout(billingApi.getSubscription(user.company_id), 8000);
           setSubscription(sub);
         }
       } catch (err) {
@@ -307,7 +315,7 @@ export default function PricingPage() {
       setModalSuccessMessage('Sua solicitação de plano Enterprise foi enviada com sucesso! Nosso time comercial entrará em contato em breve.');
       
       if (isAuthenticated && user?.company_id) {
-        const sub = await billingApi.getSubscription(user.company_id);
+        const sub = await withTimeout(billingApi.getSubscription(user.company_id), 8000);
         setSubscription(sub);
       }
     } catch (err) {

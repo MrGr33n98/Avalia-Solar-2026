@@ -1,46 +1,48 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { cn } from '@/lib/utils';
-import { getInitials } from '@/lib/utils';
+import Image from 'next/image';
+import { getInitials } from '@/lib/text-utils';
 import type { ChatCompanyReferenceCardProps } from './ChatCompanyReferenceCard.types';
+
+const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
 
 /* ------------------------------------------------------------------ */
 /*  Ícones inline mínimos (sem dependência de lucide-react no bundle)  */
 /* ------------------------------------------------------------------ */
 
 const StarIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-3 w-3 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
+  <svg className={cx('h-3 w-3 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
   </svg>
 );
 
 const VerifiedIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-[18px] w-[18px] shrink-0 fill-emerald-500', className)} viewBox="0 0 20 20" aria-hidden="true">
+  <svg className={cx('h-[18px] w-[18px] shrink-0 fill-emerald-500', className)} viewBox="0 0 20 20" aria-hidden="true">
     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
   </svg>
 );
 
 const CheckIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
+  <svg className={cx('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
   </svg>
 );
 
 const MessageIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
+  <svg className={cx('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-4 0H9v2h2V9z" clipRule="evenodd" />
   </svg>
 );
 
 const DocIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
+  <svg className={cx('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
   </svg>
 );
 
 const SpinnerIcon = ({ className }: { className?: string }) => (
-  <svg className={cn('h-3.5 w-3.5 shrink-0 animate-spin', className)} viewBox="0 0 24 24" fill="none">
+  <svg className={cx('h-3.5 w-3.5 shrink-0 animate-spin', className)} viewBox="0 0 24 24" fill="none">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
   </svg>
@@ -81,7 +83,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
 
   return (
     <div
-      className={cn(
+      className={cx(
         'relative w-full min-w-0 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white',
         'shadow-[0_4px_12px_rgba(15,23,42,0.06)]',
         'border-l-[3px] border-l-[#2563EB]',
@@ -95,12 +97,15 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
       {/* ================================================================ */}
       <div className="flex items-start gap-2.5">
         {/* Logo */}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
           {hasLogo ? (
-            <img
+            <Image
               src={logoUrl}
               alt={company.name}
-              className="h-full w-full object-cover"
+              fill
+              sizes="44px"
+              unoptimized
+              className="object-cover"
               onError={handleImgError}
             />
           ) : (
@@ -200,7 +205,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
                 ? `Remover ${company.name} da comparação`
                 : `Adicionar ${company.name} à comparação`
             }
-            className={cn(
+            className={cx(
               'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border px-1.5 text-[11px] font-semibold leading-none transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
               isSelectedForComparison
@@ -234,7 +239,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             type="button"
             onClick={onReviews}
             aria-label="Ver avaliações"
-            className={cn(
+            className={cx(
               'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border border-zinc-200 bg-white px-1.5 text-[11px] font-semibold leading-none text-zinc-700 transition-colors',
               'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
@@ -253,7 +258,7 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
             onClick={onBudget}
             disabled={isBudgetLoading}
             aria-label="Solicitar orçamento"
-            className={cn(
+            className={cx(
               'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg bg-[#2563EB] px-1.5 text-[11px] font-semibold leading-none text-white transition-colors',
               'hover:bg-[#1D4ED8]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',

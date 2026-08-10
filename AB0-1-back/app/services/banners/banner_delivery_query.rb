@@ -10,24 +10,32 @@ module Banners
 
     def call
       scope = Banner.currently_active
+      scope = apply_catalog_availability(scope)
       scope = apply_contract_eligibility(scope)
       scope = scope.where(position: @params[:position]) if @params[:position].present?
       scope = scope.where(slot_key: @params[:slot_key]) if @params[:slot_key].present? && Banner.column_names.include?('slot_key')
       scope = apply_company(scope)
       scope = apply_category(scope)
       scope = apply_location(scope)
-      scope = scope.order(priority: :asc, sponsored: :desc, created_at: :desc)
+      scope = apply_frequency_cap(scope)
+      scope = apply_fair_rotation(scope)
       scope = scope.limit(@params[:limit].to_i) if @params[:limit].to_i.positive?
       scope.includes(:categories, :company, image_attachment: :blob)
     end
 
     private
 
+    def apply_catalog_availability(scope)
+      active_positions = BannerPlacements::Catalog.all.select { |entry| entry.status == 'active' }.map(&:key)
+      scope.where(position: active_positions)
+    end
+
     def apply_contract_eligibility(scope)
+      return scope unless banner_ads_v2_enabled?
       return scope unless Banner.column_names.include?('sponsored') && Banner.column_names.include?('company_id')
 
       now = Time.current
-      scope.where(<<~SQL.squish, now, now)
+      scope.where(<<~SQL.squish, now, now, now, now)
         banners.sponsored = FALSE
         OR banners.company_id IS NULL
         OR EXISTS (
@@ -37,7 +45,19 @@ module Banners
             AND banner_subscriptions.starts_at <= ?
             AND (banner_subscriptions.ends_at IS NULL OR banner_subscriptions.ends_at >= ?)
         )
+        OR EXISTS (
+          SELECT 1 FROM banner_addon_subscriptions
+          WHERE banner_addon_subscriptions.company_id = banners.company_id
+            AND banner_addon_subscriptions.banner_id = banners.id
+            AND banner_addon_subscriptions.status = 'active'
+            AND banner_addon_subscriptions.starts_at <= ?
+            AND (banner_addon_subscriptions.ends_at IS NULL OR banner_addon_subscriptions.ends_at >= ?)
+        )
       SQL
+    end
+
+    def banner_ads_v2_enabled?
+      ENV.fetch('BANNER_ADS_V2', 'true').casecmp('true').zero?
     end
 
     def apply_company(scope)
@@ -54,6 +74,32 @@ module Banners
       else
         scope.where(category_id: @params[:category_id])
       end
+    end
+
+    def apply_fair_rotation(scope)
+      window = @params[:rotation_window_seconds].to_i
+      window = 3_600 if window <= 0
+      bucket = (Time.current.to_i / window).floor
+      scope.order(priority: :asc, sponsored: :desc)
+           .order(Arel.sql("md5(concat(banners.id::text, '-#{bucket}')) ASC"))
+           .order(created_at: :desc)
+    end
+
+    def apply_frequency_cap(scope)
+      audience_key = @params[:audience_key].to_s.strip
+      return scope if audience_key.blank? || !ActiveRecord::Base.connection.table_exists?(:banner_events)
+
+      seconds = @params[:frequency_cap_seconds].to_i
+      seconds = 86_400 if seconds <= 0
+      cutoff = Time.current - seconds
+
+      scope.where.not(
+        id: BannerEvent.reportable
+          .where(event_type: %w[view impression])
+          .where('tracked_at >= ?', cutoff)
+          .where("metadata_json ->> 'audience_key' = ?", audience_key)
+          .select(:banner_id)
+      )
     end
 
     def apply_location(scope)

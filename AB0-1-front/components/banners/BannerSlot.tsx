@@ -22,9 +22,13 @@ export function BannerSlot({
   limit = 3,
   priority = false,
   companyId,
-  blockCompetitors = false
+  blockCompetitors = false,
 }: BannerSlotProps) {
-  const { data: banners, isLoading, error } = useBannersQuery({
+  const {
+    data: banners,
+    isLoading,
+    error,
+  } = useBannersQuery({
     position: placement,
     limit,
   });
@@ -52,7 +56,9 @@ export function BannerSlot({
   let finalBanners = banners || [];
 
   if (blockCompetitors && companyId) {
-    finalBanners = finalBanners.filter(b => b.company_id === null || b.company_id === undefined || b.company_id === companyId);
+    finalBanners = finalBanners.filter(
+      (b) => b.company_id === null || b.company_id === undefined || b.company_id === companyId
+    );
   }
 
   // Slice to the actual limit
@@ -63,8 +69,9 @@ export function BannerSlot({
   }
 
   // Adapter seguro para mapear as chaves opcionais e evitar erros TypeScript no build de produção
-  const formattedBanners = finalBanners.map(b => ({
+  const formattedBanners = finalBanners.map((b) => ({
     id: b.id,
+    delivery_id: b.delivery_id ?? null,
     alt_text: b.alt_text ?? null,
     banner_type: b.banner_type,
     position: b.position,

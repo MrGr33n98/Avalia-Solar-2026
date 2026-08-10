@@ -13,6 +13,7 @@ import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import LandingHero from '@/components/landing/LandingHero';
+import { BannerSlot } from '@/components/banners/BannerSlot';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,11 @@ function SectionShell({
   tone?: 'soft' | 'white';
 }) {
   return (
-    <section className={tone === 'soft' ? 'bg-slate-50/20 py-14 sm:py-20' : 'bg-transparent py-14 sm:py-20'}>
+    <section
+      className={
+        tone === 'soft' ? 'bg-slate-50/20 py-14 sm:py-20' : 'bg-transparent py-14 sm:py-20'
+      }
+    >
       <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">{children}</div>
     </section>
   );
@@ -96,9 +101,15 @@ function SectionHeader({
   return (
     <div className="mb-8 flex flex-col justify-between gap-4 sm:mb-10 md:flex-row md:items-end">
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">{eyebrow}</p>
-        <h2 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">{title}</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{subtitle}</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">
+          {eyebrow}
+        </p>
+        <h2 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          {subtitle}
+        </p>
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
     </div>
@@ -161,10 +172,14 @@ const getHeroDataCached = unstable_cache(
   { revalidate: 600, tags: ['home-data', 'home-hero'] }
 );
 
-const getHomeDataCached = unstable_cache(async () => getHomeData(), ['home-categories-section-v2'], {
-  revalidate: 600,
-  tags: ['home-data', 'home-categories'],
-});
+const getHomeDataCached = unstable_cache(
+  async () => getHomeData(),
+  ['home-categories-section-v2'],
+  {
+    revalidate: 600,
+    tags: ['home-data', 'home-categories'],
+  }
+);
 
 const getCompaniesDataCached = unstable_cache(
   async () => getCompaniesData(),
@@ -205,6 +220,8 @@ export default async function Home() {
         />
       </Suspense>
 
+      <BannerSlot placement="home_top" limit={1} className="mx-auto my-4 max-w-[1200px]" />
+
       <DeferredHomeSections />
 
       <Suspense fallback={<div className="h-[520px] animate-pulse bg-slate-50" />}>
@@ -240,21 +257,44 @@ export default async function Home() {
                 backgroundSize: 'auto, auto, 20px 20px',
               }}
             />
-            <div className="pointer-events-none absolute -left-14 -bottom-20 h-40 w-40 rotate-45 border border-blue-400/15" aria-hidden="true" />
-            <div className="pointer-events-none absolute -right-16 -top-24 h-48 w-48 rotate-45 border border-[#FFC82C]/10" aria-hidden="true" />
+            <div
+              className="pointer-events-none absolute -left-14 -bottom-20 h-40 w-40 rotate-45 border border-blue-400/15"
+              aria-hidden="true"
+            />
+            <div
+              className="pointer-events-none absolute -right-16 -top-24 h-48 w-48 rotate-45 border border-[#FFC82C]/10"
+              aria-hidden="true"
+            />
 
             <div className="max-w-[690px]">
               <div className="flex items-center gap-2 text-[#FFC82C]">
                 <Sparkles className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
-                <span className="text-xs font-semibold uppercase tracking-[0.18em]">Próximo passo seguro</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+                  Próximo passo seguro
+                </span>
               </div>
               <h2 className="mt-4 max-w-2xl text-3xl font-medium tracking-tight sm:text-4xl">
-                Faça a escolha certa para o seu <span className="font-semibold text-[#FFC82C]">projeto solar</span>
+                Faça a escolha certa para o seu{' '}
+                <span className="font-semibold text-[#FFC82C]">projeto solar</span>
               </h2>
               <div className="mt-6 flex flex-col gap-4 text-sm font-normal text-slate-300 sm:flex-row sm:items-center sm:gap-6">
-                <span className="inline-flex items-center gap-2.5"><BadgeCheck className="h-4 w-4 text-[#22C55E]" strokeWidth={1.6} aria-hidden="true" /> Empresas verificadas</span>
+                <span className="inline-flex items-center gap-2.5">
+                  <BadgeCheck
+                    className="h-4 w-4 text-[#22C55E]"
+                    strokeWidth={1.6}
+                    aria-hidden="true"
+                  />{' '}
+                  Empresas verificadas
+                </span>
                 <span className="hidden h-6 border-l border-white/15 sm:block" aria-hidden="true" />
-                <span className="inline-flex items-center gap-2.5"><ShieldCheck className="h-4 w-4 text-[#22C55E]" strokeWidth={1.6} aria-hidden="true" /> Comparação sem compromisso</span>
+                <span className="inline-flex items-center gap-2.5">
+                  <ShieldCheck
+                    className="h-4 w-4 text-[#22C55E]"
+                    strokeWidth={1.6}
+                    aria-hidden="true"
+                  />{' '}
+                  Comparação sem compromisso
+                </span>
               </div>
             </div>
             <div className="mt-8 shrink-0 lg:mt-0">
@@ -263,7 +303,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }
@@ -322,7 +361,8 @@ async function CategoriesSectionWrapper({
     console.error('[Home] CategoriesSectionWrapper fallback triggered:', error);
   }
 
-  const safeCategories = featuredCategories.length > 0 ? featuredCategories : getFallbackCategories(8);
+  const safeCategories =
+    featuredCategories.length > 0 ? featuredCategories : getFallbackCategories(8);
   const usingFallbackCategories =
     safeCategories.length > 0 &&
     safeCategories.every((category) => Number(category?.id) >= FALLBACK_CATEGORY_MIN_ID);
@@ -376,7 +416,8 @@ async function CompaniesSectionWrapper({
     console.error('[Home] CompaniesSectionWrapper fallback triggered:', error);
   }
 
-  const isRecommendationsEngineEnabled = process.env.NEXT_PUBLIC_RECOMMENDATIONS_ENGINE_ENABLED !== 'false';
+  const isRecommendationsEngineEnabled =
+    process.env.NEXT_PUBLIC_RECOMMENDATIONS_ENGINE_ENABLED !== 'false';
 
   if (!isRecommendationsEngineEnabled) {
     return (
@@ -417,7 +458,9 @@ async function ComparisonSectionWrapper({
 }) {
   try {
     const data = await dataPromise;
-    return <HomeComparisonPreview companies={Array.isArray(data?.companies) ? data.companies : []} />;
+    return (
+      <HomeComparisonPreview companies={Array.isArray(data?.companies) ? data.companies : []} />
+    );
   } catch (error) {
     console.error('[Home] ComparisonSectionWrapper fallback triggered:', error);
     return null;

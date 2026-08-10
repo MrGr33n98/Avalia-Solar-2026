@@ -5,7 +5,7 @@ module Api
       before_action :require_company_user
       before_action :ensure_company
       before_action -> { authorize_feature!('promo_banner') }
-      before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy]
+      before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy export_audit export_audits export_alerts acknowledge_export_alert]
 
       def index
         banners = current_company.banners.includes(banner_addon_subscriptions: :banner_addon)
@@ -34,7 +34,10 @@ module Api
         banners_data = banners.map do |b|
           perf = BannerAnalytics::PerformanceService.call(b.id)[:metrics]
           
-          active_addons = b.banner_addon_subscriptions.select { |s| s.status == 'active' }.map do |sub|
+          now = Time.current
+          active_addons = b.banner_addon_subscriptions.select do |sub|
+            sub.status == 'active' && sub.starts_at <= now && (sub.ends_at.nil? || sub.ends_at >= now)
+          end.map do |sub|
             {
               id: sub.banner_addon_id,
               name: sub.banner_addon.name,
@@ -91,7 +94,80 @@ module Api
           }
         end
 
-        render json: { quota: quota, summary: summary, banners: banners_data }
+        operational_health = BannerAnalytics::OperationalHealth.call(banner_ids: banners.map(&:id))
+        placements = BannerPlacements::Catalog.all.map do |entry|
+          { key: entry.key, status: entry.status, dimensions: entry.dimensions, commercial: entry.commercial }
+        end
+        render json: { quota: quota, summary: summary, operational_health: operational_health,
+                       placements: placements, banners: banners_data }
+      end
+
+      def export_audit
+        format = params[:format].to_s.presence || 'json'
+        unless %w[csv json].include?(format)
+          return render json: { error: 'invalid_export_format' }, status: :unprocessable_entity
+        end
+
+        filters = params.permit(:days, :incident_type, :banner_id).to_h
+        BannerAuditLog.create!(
+          auditable: current_company,
+          actor: current_user,
+          action: 'export_incidents',
+          source: 'company_dashboard',
+          metadata_json: filters.merge('format' => format, 'record_count' => params[:record_count].to_i),
+          ip_address: request.remote_ip
+        )
+        render json: { status: 'audited' }, status: :created
+      end
+
+      def export_audits
+        page = [params[:page].to_i, 1].max
+        per_page = [[params[:per_page].to_i, 1].max, 50].min
+        scope = BannerAuditLog.where(auditable: current_company, action: 'export_incidents')
+                              .order(created_at: :desc)
+        scope = scope.where(actor_id: params[:actor_id]) if params[:actor_id].to_s.match?(/\A\d+\z/)
+        scope = scope.where('created_at >= ?', parsed_audit_date(:from).beginning_of_day) if parsed_audit_date(:from)
+        scope = scope.where('created_at <= ?', parsed_audit_date(:to).end_of_day) if parsed_audit_date(:to)
+        scope = scope.where("metadata_json ->> 'format' = ?", params[:format]) if %w[csv json].include?(params[:format].to_s)
+        scope = scope.where("metadata_json ->> 'incident_type' = ?", params[:incident_type]) if params[:incident_type].present? && params[:incident_type] != 'all'
+        scope = scope.where("metadata_json ->> 'banner_id' = ?", params[:banner_id].to_s) if params[:banner_id].to_s.match?(/\A\d+\z/)
+        total = scope.count
+        audits = scope.offset((page - 1) * per_page).limit(per_page).map do |log|
+          metadata = log.metadata_json || {}
+          {
+            id: log.id,
+            action: log.action,
+            actor_type: log.actor_type,
+            actor_id: log.actor_id,
+            format: metadata['format'],
+            days: metadata['days'],
+            incident_type: metadata['incident_type'],
+            banner_id: metadata['banner_id'],
+            record_count: metadata['record_count'].to_i,
+            created_at: log.created_at
+          }
+        end
+        render json: { audits: audits, meta: { page: page, per_page: per_page, total: total } }
+      end
+
+      def export_alerts
+        alerts = BannerAuditLog.where(action: 'suspicious_export_alert', actor: current_user)
+                              .order(created_at: :desc).limit(20)
+        render json: { alerts: alerts.map { |log|
+          metadata = log.metadata_json || {}
+          { id: log.id, status: metadata['status'] || 'open', count: metadata['count'].to_i,
+            threshold: metadata['threshold'].to_i, window_hours: metadata['window_hours'].to_i,
+            created_at: log.created_at }
+        } }
+      end
+
+      def acknowledge_export_alert
+        alert = BannerAuditLog.where(action: 'suspicious_export_alert', actor: current_user).find(params[:id])
+        metadata = (alert.metadata_json || {}).merge('status' => 'resolved', 'resolved_at' => Time.current.iso8601, 'resolution' => 'acknowledged_by_actor')
+        alert.update!(metadata_json: metadata)
+        BannerAuditLog.create!(auditable: alert, actor: current_user, action: 'suspicious_export_acknowledged',
+                               source: 'company_dashboard', metadata_json: { 'alert_id' => alert.id })
+        render json: { status: 'acknowledged', alert_id: alert.id }
       end
 
       def create
@@ -119,6 +195,11 @@ module Api
         banner = current_company.banners.find(params[:id])
         unless %w[draft rejected].include?(banner.moderation_status)
           return render json: { error: 'invalid_moderation_transition' }, status: :unprocessable_entity
+        end
+
+        placement = BannerPlacements::Catalog.fetch(banner.position)
+        if placement.status != 'active'
+          return render json: { error: 'placement_not_available', placement: banner.position }, status: :unprocessable_entity
         end
 
         banner.submit_for_review!
@@ -169,12 +250,18 @@ module Api
         checks << { key: 'expiration', label: 'Não expirado', ok: banner.end_date.blank? || banner.end_date >= Time.current }
 
         if banner.sponsored? && banner.company_id.present?
-          subscription = current_company.banner_subscriptions
-                                   .where(status: 'active')
-                                   .where('starts_at <= ?', Time.current)
-                                   .where('ends_at IS NULL OR ends_at >= ?', Time.current)
-                                   .first
-          checks << { key: 'contract', label: 'Assinatura ativa', ok: subscription.present? }
+          now = Time.current
+          legacy_subscription = current_company.banner_subscriptions
+                                             .where(status: 'active')
+                                             .where('starts_at <= ?', now)
+                                             .where('ends_at IS NULL OR ends_at >= ?', now)
+                                             .exists?
+          addon_subscription = banner.banner_addon_subscriptions
+                                    .where(company_id: current_company.id, status: 'active')
+                                    .where('starts_at <= ?', now)
+                                    .where('ends_at IS NULL OR ends_at >= ?', now)
+                                    .exists?
+          checks << { key: 'contract', label: 'Contrato ativo', ok: legacy_subscription || addon_subscription }
         end
 
         failed = checks.reject { |check| check[:ok] }
@@ -237,6 +324,12 @@ module Api
 
       def authorize_banner_management!
         authorize current_company, :update_banner?, policy_class: CompanyDashboardPolicy
+      end
+
+      def parsed_audit_date(key)
+        Date.iso8601(params[key].to_s)
+      rescue Date::Error, ArgumentError
+        nil
       end
 
       def banner_params

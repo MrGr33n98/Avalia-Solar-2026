@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ type Banner = {
   sponsored?: boolean;
   width?: number | null;
   height?: number | null;
+  delivery_id?: string | null;
 };
 
 export default function SponsoredBanner({
@@ -36,6 +37,8 @@ export default function SponsoredBanner({
   const [banners, setBanners] = useState<Banner[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const impressionTrackedRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -50,33 +53,68 @@ export default function SponsoredBanner({
         const items = Array.isArray(response.data) ? response.data : [];
         if (!mounted) return;
         setBanners(items);
-
-        items.forEach(item => {
-          analyticsApi.trackBannerEvent({
-            banner_id: item.id,
-            company_id: companyId,
-            event_type: 'view',
-          });
-        });
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!mounted) return;
-        setError(err?.message || 'Erro ao carregar banners patrocinados');
+        const message =
+          err instanceof Error ? err.message : 'Erro ao carregar banners patrocinados';
+        setError(message);
       } finally {
         if (mounted) setLoading(false);
       }
     }
     loadBanners();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [slotKey, companyId]);
 
-  const aspectClass = useMemo(() => 
-    variant === 'square' ? 'aspect-[16/10]' : 'aspect-[3/1] md:aspect-[4/1]',
+  useEffect(() => {
+    const node = containerRef.current;
+    const firstBanner = banners[0];
+    if (!node || !firstBanner) return;
+    const trackImpression = (banner: Banner) => {
+      if (impressionTrackedRef.current.has(banner.id)) return;
+      impressionTrackedRef.current.add(banner.id);
+      void analyticsApi.trackBannerEvent({
+        banner_id: banner.id,
+        company_id: companyId,
+        event_type: 'impression',
+        impression_instance_id: `${banner.id}:${slotKey}`,
+        delivery_id: banner.delivery_id || undefined,
+        metadata: { slot_key: slotKey },
+      });
+    };
+    if (typeof IntersectionObserver === 'undefined') {
+      trackImpression(firstBanner);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && entry.intersectionRatio >= 0.5) {
+          trackImpression(firstBanner);
+          observer.disconnect();
+        }
+      },
+      { threshold: [0.5] }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [banners, companyId, loading, slotKey]);
+
+  const aspectClass = useMemo(
+    () => (variant === 'square' ? 'aspect-[16/10]' : 'aspect-[3/1] md:aspect-[4/1]'),
     [variant]
   );
 
   if (loading) {
     return (
-      <div className={cn("w-full overflow-hidden rounded-2xl bg-muted animate-pulse", aspectClass, className)} />
+      <div
+        className={cn(
+          'w-full overflow-hidden rounded-2xl bg-muted animate-pulse',
+          aspectClass,
+          className
+        )}
+      />
     );
   }
 
@@ -85,14 +123,6 @@ export default function SponsoredBanner({
   const renderBannerContent = (banner: Banner) => {
     const imageSrc = banner.image_url || '/images/banner-avalia-solar.png';
     const imageAlt = banner.title || 'Banner';
-    
-    const onClick = () => {
-      analyticsApi.trackBannerEvent({
-        banner_id: banner.id,
-        company_id: companyId,
-        event_type: 'click',
-      });
-    };
 
     const content = (
       <div className="relative w-full h-full bg-muted/20">
@@ -100,7 +130,11 @@ export default function SponsoredBanner({
           src={imageSrc}
           alt={imageAlt}
           fill
-          sizes={variant === 'square' ? '(max-width: 1024px) 100vw, 360px' : '(max-width: 1024px) 100vw, 900px'}
+          sizes={
+            variant === 'square'
+              ? '(max-width: 1024px) 100vw, 360px'
+              : '(max-width: 1024px) 100vw, 900px'
+          }
           className="object-cover object-center"
         />
         {banner.sponsored !== false && (
@@ -115,17 +149,28 @@ export default function SponsoredBanner({
       return (
         <Card className="h-full overflow-hidden border border-slate-100 shadow-sm">
           <CardContent className="p-3 h-full flex flex-col">
-            <div className={cn("relative flex-1 overflow-hidden rounded-lg", aspectClass)}>
+            <div className={cn('relative flex-1 overflow-hidden rounded-lg', aspectClass)}>
               {banner.link_url ? (
-                <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick} className="block w-full h-full">
+                <a
+                  href={`/api/v1/banner_clicks/${banner.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
                   {content}
                 </a>
-              ) : content}
+              ) : (
+                content
+              )}
             </div>
             {banner.link_url && (
               <div className="mt-3">
                 <Button asChild variant="default" size="sm" className="w-full">
-                  <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
+                  <a
+                    href={`/api/v1/banner_clicks/${banner.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Saiba mais
                   </a>
                 </Button>
@@ -139,36 +184,54 @@ export default function SponsoredBanner({
     return (
       <div className="w-full h-full">
         {banner.link_url ? (
-          <a href={banner.link_url} target="_blank" rel="noopener noreferrer" onClick={onClick} className="block w-full h-full">
+          <a
+            href={`/api/v1/banner_clicks/${banner.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-full"
+          >
             {content}
           </a>
-        ) : content}
+        ) : (
+          content
+        )}
       </div>
     );
   };
 
   if (banners.length === 1) {
     return (
-      <div className={cn('overflow-hidden rounded-2xl border border-slate-100 shadow-sm', className)}>
-        <div className={aspectClass}>
-          {renderBannerContent(banners[0])}
-        </div>
+      <div
+        ref={containerRef}
+        className={cn('overflow-hidden rounded-2xl border border-slate-100 shadow-sm', className)}
+      >
+        <div className={aspectClass}>{renderBannerContent(banners[0])}</div>
       </div>
     );
   }
 
   const items = banners.map((b, i) => (
-    <React.Fragment key={b.id || i}>
-      {renderBannerContent(b)}
-    </React.Fragment>
+    <React.Fragment key={b.id || i}>{renderBannerContent(b)}</React.Fragment>
   ));
 
   return (
-    <div className={cn("w-full", className)}>
-      <PremiumBannerCarousel 
+    <div ref={containerRef} className={cn('w-full', className)}>
+      <PremiumBannerCarousel
         items={items}
         aspectRatio={aspectClass}
         autoplayDelay={5000}
+        onActiveIndexChange={(index) => {
+          const banner = banners[index];
+          if (!banner) return;
+          void analyticsApi.trackBannerEvent({
+            banner_id: banner.id,
+            company_id: companyId,
+            event_type: 'impression',
+            impression_instance_id: `${banner.id}:${slotKey}`,
+            delivery_id: banner.delivery_id || undefined,
+            metadata: { slot_key: slotKey },
+          });
+        }}
       />
     </div>
   );

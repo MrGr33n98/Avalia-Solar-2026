@@ -7,6 +7,8 @@ import * as Sentry from '@sentry/nextjs';
 import { logError } from './error-handler';
 import { apolloClient } from './apollo-client';
 import { gql } from '@apollo/client';
+import type { Banner } from './api-banner-types';
+import type { FeatureAccessEntry, CompanyFeatureAccessResponse } from './feature-access-types';
 
 // =======================
 // API Response Types
@@ -91,33 +93,7 @@ export interface SectorQuestion {
   enabled: boolean;
 }
 
-export interface FeatureAccessEntry {
-  state: 'enabled' | 'locked' | 'hidden' | 'limited' | 'trial';
-  value?: boolean | number | string | null;
-  group?: string;
-  source?: string;
-  reason?: string;
-  upsell_copy?: string;
-  expires_at?: string | null;
-  limit?: Record<string, number> | null;
-}
-
-export interface CompanyFeatureAccessResponse {
-  features: Record<string, FeatureAccessEntry>;
-  plan: 'free' | 'pro' | 'enterprise' | string;
-  subscription: {
-    status: string;
-    current_period_start?: string | null;
-    current_period_end?: string | null;
-    trial_end?: string | null;
-    canceled_at?: string | null;
-  };
-  metadata: {
-    timestamp: string;
-    version: number;
-    cache_ttl_seconds: number;
-  };
-}
+export type { FeatureAccessEntry, CompanyFeatureAccessResponse } from './feature-access-types';
 
 export interface Conversation {
   id: number;
@@ -810,23 +786,7 @@ export interface Category {
   updated_at: string;
 }
 
-export interface Banner {
-  id: number;
-  title: string;
-  description?: string | null;
-  link?: string | null;
-  link_url?: string | null;
-  image_url?: string | null;
-  banner_type?: string;
-  position?: string;
-  width?: number | null;
-  height?: number | null;
-  category_ids?: number[];
-  sponsored?: boolean;
-  active?: boolean;
-  start_date?: string | null;
-  end_date?: string | null;
-}
+export type { Banner } from './api-banner-types';
 
 export interface Plan {
   id: number;

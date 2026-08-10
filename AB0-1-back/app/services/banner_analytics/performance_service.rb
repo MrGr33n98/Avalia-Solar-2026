@@ -19,15 +19,17 @@ module BannerAnalytics
         # Aproximação: assinaturas que foram ativadas no período (ou antes) e não expiraram antes do início.
         subs = banner.banner_addon_subscriptions
                      .where.not(status: %w[draft cancelled refunded])
-                     .where('starts_at <= ? AND ends_at >= ?', end_date.end_of_day, start_date.beginning_of_day)
+                     .where('starts_at <= ? AND (ends_at IS NULL OR ends_at >= ?)', end_date.end_of_day, start_date.beginning_of_day)
         
         # Rateio do custo pro-rata para simplificar, ou pegar o valor total da assinatura
         # Para ser conservador, se a subscription tocou no período, incluímos o custo ou uma proporção
         subs.each do |sub|
-          overlap_start = [sub.starts_at.to_date, start_date].max
-          overlap_end = [sub.ends_at.to_date, end_date].min
+          subscription_start = sub.starts_at&.to_date || start_date
+          subscription_end = sub.ends_at&.to_date || end_date
+          overlap_start = [subscription_start, start_date].max
+          overlap_end = [subscription_end, end_date].min
           days_in_overlap = (overlap_end - overlap_start).to_i + 1
-          total_days = (sub.ends_at.to_date - sub.starts_at.to_date).to_i + 1
+          total_days = (subscription_end - subscription_start).to_i + 1
           
           # Se total_days <= 0 (ex. expirou no mesmo dia), assumimos 1.
           total_days = 1 if total_days <= 0
@@ -83,6 +85,8 @@ module BannerAnalytics
           }
         end
       }
+    end
+
     def self.build_breakdown(banner_id, start_date, end_date)
       grouped = BannerEvent.reportable
                            .where(banner_id: banner_id, tracked_at: start_date.beginning_of_day..end_date.end_of_day)

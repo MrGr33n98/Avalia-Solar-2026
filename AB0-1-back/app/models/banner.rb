@@ -247,7 +247,9 @@ class Banner < ApplicationRecord
 
   def ensure_dimensions
     return unless self.class.column_names.include?('width') && self.class.column_names.include?('height')
-    return if width.present? && height.present?
+    # Aplica default somente quando o criativo nao informou nenhuma dimensao.
+    # Campo explicitamente nulo deve falhar na validacao, nao ser mascarado.
+    return unless width.nil? && height.nil?
 
     self.width, self.height = default_dimensions_for_position(position)
   end

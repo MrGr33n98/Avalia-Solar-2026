@@ -182,7 +182,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
       {/* Header */}
       <div className="flex items-start space-x-4 mb-4">
         {/* Avatar */}
-        <Avatar className="h-12 w-12">
+        <Avatar className="h-12 w-12 shrink-0 overflow-hidden">
           <AvatarImage src={displayImage || undefined} />
           <AvatarFallback className="bg-gray-200">
             {isCompany ? (
@@ -194,10 +194,10 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
         </Avatar>
 
         {/* Info & Rating */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center space-x-2">
-              <h4 className="font-semibold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h4 className="font-semibold text-gray-900 truncate">
                 {isCompany && review.company ? (
                   <span>
                     Avaliou <strong>{typeof review.company === 'string' ? review.company : review.company.name}</strong>

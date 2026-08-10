@@ -1,9 +1,9 @@
 import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import { AppState } from 'react-native';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { createPersistedQueryLink } from '@apollo/client/link/persisted-queries';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { persistCache } from 'apollo3-cache-persist';
 import { getStoredToken } from './authStorage';
 
 // Constrói a URL do GraphQL baseada nas configurações de ambiente
@@ -163,14 +163,36 @@ const persistedQueriesLink = createPersistedQueryLink({
   useGETForHashedQueries: true,
 });
 
-// Cache reidratável para persistência offline
+// Persistencia offline nativa, compativel com Apollo Client 4.
+// Restaura no boot e salva quando o app deixa de estar ativo; nao bloqueia o cliente.
 const cache = new InMemoryCache();
+const CACHE_STORAGE_KEY = '@avalia_solar:apollo_cache_v1';
 
-persistCache({
-  cache,
-  storage: AsyncStorage,
-}).catch((error) => {
-  console.error('[Cache Persist] Erro ao carregar cache offline:', error);
+const restoreCache = AsyncStorage.getItem(CACHE_STORAGE_KEY)
+  .then((serialized) => {
+    if (serialized) cache.restore(JSON.parse(serialized));
+  })
+  .catch((error) => {
+    console.warn('[Cache Persist] Falha ao restaurar cache offline:', error);
+  });
+
+let persistInFlight: Promise<void> | null = null;
+const persistCache = () => {
+  if (persistInFlight) return persistInFlight;
+
+  persistInFlight = AsyncStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cache.extract()))
+    .catch((error) => {
+      console.warn('[Cache Persist] Falha ao salvar cache offline:', error);
+    })
+    .finally(() => {
+      persistInFlight = null;
+    });
+
+  return persistInFlight;
+};
+
+AppState.addEventListener('change', (state) => {
+  if (state !== 'active') void persistCache();
 });
 
 // Inicialização do Apollo Client no App Mobile

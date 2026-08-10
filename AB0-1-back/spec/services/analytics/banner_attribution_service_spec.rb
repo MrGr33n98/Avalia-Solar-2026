@@ -12,7 +12,7 @@ RSpec.describe Analytics::BannerAttributionService do
                utm_campaign: "banner_#{banner.id}",
                utm_medium: 'cpc',
                company: company,
-               wizard_status: 'pending_otp')
+               wizard_status: 'draft')
       end
 
       it 'creates a lead BannerEvent' do
@@ -27,7 +27,7 @@ RSpec.describe Analytics::BannerAttributionService do
         expect(event.utm_source).to eq('avaliasolar_ads')
         expect(event.utm_campaign).to eq("banner_#{banner.id}")
         expect(event.metadata_json['lead_id']).to eq(lead.id)
-        expect(event.metadata_json['status']).to eq('pending_otp')
+        expect(event.metadata_json['status']).to eq('draft')
       end
     end
 
@@ -47,4 +47,23 @@ RSpec.describe Analytics::BannerAttributionService do
       end
     end
   end
+
+    it 'persiste attribution_id, first-touch e last-touch' do
+      lead = create(:lead, utm_source: 'avaliasolar_ads', utm_campaign: "banner_#{banner.id}", utm_medium: 'cpc', company: company)
+
+      described_class.call(lead)
+      attribution = lead.reload.attribution_json
+
+      expect(attribution['attribution_id']).to eq("banner:#{banner.id}:lead:#{lead.id}")
+      expect(attribution['first_touch']['campaign']).to eq("banner_#{banner.id}")
+      expect(attribution['last_touch']['medium']).to eq('cpc')
+    end
+
+    it 'não duplica o evento quando callback é repetido' do
+      lead = create(:lead, utm_source: 'avaliasolar_ads', utm_campaign: "banner_#{banner.id}", company: company)
+      BannerEvent.where("metadata_json ->> 'lead_id' = ?", lead.id.to_s).delete_all
+
+      expect { 2.times { described_class.call(lead) } }.to change(BannerEvent, :count).by(1)
+    end
+
 end

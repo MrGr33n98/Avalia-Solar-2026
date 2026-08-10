@@ -1,16 +1,18 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 
 export function BlogHero() {
   return (
-    <div className="bg-white py-10 md:py-14">
+    <div className="bg-white py-10 md:py-14 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-          {/* Left: Title & CTA */}
-          <div className="max-w-2xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 relative">
+
+          {/* Lado esquerdo: título + CTA */}
+          <div className="max-w-2xl flex-shrink-0 relative z-10">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-[11px] font-semibold text-blue-600 tracking-widest uppercase">
                 Blog
@@ -50,6 +52,32 @@ export function BlogHero() {
               </Button>
             </div>
           </div>
+
+          {/* Lado direito: imagem com fade para branco na borda esquerda — oculta em mobile */}
+          <div
+            className="hidden md:block relative flex-1 h-[280px] lg:h-[320px] overflow-hidden"
+            aria-hidden="true"
+          >
+            {/* Imagem do banner */}
+            <Image
+              src="/images/hero-banner-avalia-solar-v1.png"
+              alt="Casa com energia solar e carro elétrico"
+              fill
+              priority
+              sizes="(max-width: 1280px) 50vw, 640px"
+              className="object-cover object-center"
+            />
+
+            {/* Gradiente fade: da esquerda (branco opaco) para direita (transparente) */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.3) 50%, transparent 80%)',
+              }}
+            />
+          </div>
+
         </div>
       </div>
     </div>

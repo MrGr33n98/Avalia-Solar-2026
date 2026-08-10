@@ -17,6 +17,7 @@ import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
+import { getBannerAudienceKey } from '@/lib/banner-audience';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Search,
@@ -40,7 +41,6 @@ import { BannerCarousel } from '@/features/home/components/BannerCarousel';
 import { CategoryScroll } from '@/features/home/components/CategoryScroll';
 import { FeaturedCompanies } from '@/features/home/components/FeaturedCompanies';
 import { LatestArticles } from '@/features/home/components/LatestArticles';
-import { BannerSlot } from '@/components/BannerSlot';
 import { useAuthStore } from '@/store/auth';
 
 const { width } = Dimensions.get('window');
@@ -136,10 +136,17 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  const [audienceKey, setAudienceKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    getBannerAudienceKey().then(setAudienceKey).catch(() => setAudienceKey(null));
+  }, []);
+
   // Buscar dados da Home via Apollo
   const { data, loading, error, refetch } = useQuery(GET_HOME_DATA, {
-    variables: { city: selectedCity, state: selectedState },
+    variables: { city: selectedCity, state: selectedState, audienceKey },
     fetchPolicy: 'cache-and-network',
+    skip: !audienceKey,
   });
 
   const handleSearch = () => {
@@ -378,11 +385,9 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* 5. Carrossel de Banners e Slot Patrocinado do Active Admin */}
-        <BannerSlot position="home_hero" state={selectedState} city={selectedCity} />
-
+        {/* 5. Carrossel de Banners patrocinados */}
         {banners.length > 0 && (
-          <BannerCarousel banners={banners} />
+          <BannerCarousel banners={banners} audienceKey={audienceKey} />
         )}
 
         {/* 6. Grid de Equipamentos Solares (OLX Style) */}

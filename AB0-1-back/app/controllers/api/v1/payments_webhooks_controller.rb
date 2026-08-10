@@ -37,14 +37,34 @@ module Api
       def handle_mock_webhook
         data = webhook_payload
         checkout_session_id = data['checkout_session_id'] || params[:checkout_session_id]
-        status = data['status'] || params[:status]
-        sub = ::BannerSubscription.find_by(checkout_session_id: checkout_session_id)
-        return render json: { error: 'subscription_not_found' }, status: :not_found if sub.nil?
+        status = (data['status'] || params[:status]).to_s.downcase
+        resolved = ::Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
+        return render json: { error: 'subscription_not_found' }, status: :not_found if resolved.nil?
 
-        return unless %w[success paid].include?(status)
+        sub = resolved[:subscription]
+        provider_event_id = data['event_id'] || data['id'] || Digest::SHA256.hexdigest("#{checkout_session_id}:#{status}")
+        event = ::PaymentWebhookEvent.find_or_initialize_by(provider: 'mock', provider_event_id: provider_event_id.to_s)
+        return if event.persisted? && event.status == 'processed'
 
-        ends_at = Time.current + sub.banner_offer.duration_days.days
-        sub.activate!(starts_at: Time.current, ends_at: ends_at)
+        event.assign_attributes(event_type: 'payment', payload: data, status: 'pending')
+        event.save!
+
+        if %w[success paid approved].include?(status)
+          if resolved[:type] == :new
+            sub.update!(payment_provider: 'mock')
+            ::BannerAddons::LifecycleService.new(sub).activate! unless sub.status == 'active'
+          else
+            ends_at = Time.current + sub.banner_offer.duration_days.days
+            sub.activate!(starts_at: Time.current, ends_at: ends_at) unless sub.active?
+          end
+        elsif %w[failed rejected declined].include?(status) && resolved[:type] == :legacy
+          sub.update!(status: 'failed', failure_reason: 'Pagamento recusado') unless sub.active?
+        end
+
+        event.processed!
+      rescue StandardError => e
+        event&.failed!(e.message)
+        raise
       end
 
       def validate_provider

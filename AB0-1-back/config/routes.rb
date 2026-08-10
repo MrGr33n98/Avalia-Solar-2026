@@ -233,10 +233,16 @@ Rails.application.routes.draw do
         resources :sector_questions, controller: 'company_sector_questions', only: %i[index create update destroy]
 
         resources :banners, only: %i[index create update destroy], controller: 'company_dashboard_banners' do
+          collection do
+            post :export_audit
+            get :export_audits
+            get :export_alerts
+          end
           member do
             patch :submit
             patch :pause
             patch :resume
+            patch :acknowledge_export_alert
             get :performance
             get :export
           end

@@ -19,8 +19,7 @@ RUN apk add --no-cache libc6-compat
 COPY --from=deps /app/node_modules ./node_modules
 COPY AB0-1-front/ .
 
-# Fix for OpenTelemetry/require-in-the-middle warnings
-RUN npm install --no-save require-in-the-middle module-details-from-path
+# Dependencies are already resolved by npm ci; avoid extra network installs.
 
 # --- Variáveis de Ambiente para o Build ---
 # Variáveis públicas (seguras para ENV, embutidas no JS)

@@ -1,8 +1,14 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
-import PricingPage from '@/components/pricing/PricingPage';
-import { PricingIntentTracker } from '@/components/pricing/PricingIntentTracker';
+const PricingPage = dynamic(() => import('@/components/pricing/PricingPage'), {
+  ssr: false,
+  loading: () => <div className="min-h-[60vh] animate-pulse bg-slate-50" aria-label="Carregando planos" />,
+});
+const PricingIntentTracker = dynamic(() => import('@/components/pricing/PricingIntentTracker').then((mod) => mod.PricingIntentTracker), {
+  ssr: false,
+});
 
 export const metadata: Metadata = {
   title: 'Planos e Precos | Avalia Solar',

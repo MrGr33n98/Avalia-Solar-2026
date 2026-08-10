@@ -1,4 +1,4 @@
-import { absoluteUrl, SITE } from '@/lib/site';
+import { absoluteUrl, SITE } from '@/lib/site-core';
 
 export const SEO_IMAGE_PROXY_PATH = '/seo-image';
 

@@ -515,7 +515,7 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <BannerSlot
-                position="search_results"
+                position="search_top"
                 state={selectedState || undefined}
                 city={selectedCity || undefined}
               />

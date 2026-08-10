@@ -18,19 +18,22 @@ import { ArticleComments } from '@/components/blog/ArticleComments';
 import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import ArticleConversionSection from '@/components/ArticleConversionSection';
 import { PostTOC } from '@/components/blog/PostTOC';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { List } from 'lucide-react';
 import { fixArticleContent } from '@/lib/content-fixer';
 import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
-
 
 export const revalidate = 3600; // ISR - 1 hora
 // force-dynamic: evita que o Next.js tente coletar dados estáticos durante o build Docker.
 // O conteúdo é gerado na primeira requisição e re-validado a cada 3600s via ISR em runtime.
 // Remove o "Failed to collect page data for /blog/[slug]" causado por dependências incompatíveis.
 export const dynamic = 'force-dynamic';
-
 
 async function getArticle(slug: string): Promise<Article | null> {
   const controller = new AbortController();
@@ -88,7 +91,11 @@ async function getRelatedArticles(slug: string): Promise<Article[]> {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const article = await getArticle(params.slug);
 
   if (!article) {
@@ -98,18 +105,20 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     };
   }
 
-  const ogImage = article.image_url ? toCrawlableImageUrl(getFullImageUrl(article.image_url)) : undefined;
+  const ogImage = article.image_url
+    ? toCrawlableImageUrl(getFullImageUrl(article.image_url))
+    : undefined;
   const authorName = article.author_name || article.author?.name || 'Equipe Avalia Solar';
   const articleSlug = article.slug || String(article.id);
   const canonicalUrl = absoluteUrl(`/blog/${articleSlug}`);
   const seoTitle = article.seo_title || article.meta_title || article.title || undefined;
-  const seoDescription = article.seo_description || article.meta_description || article.excerpt || undefined;
-  const seoKeywords = article.seo_keywords || [
-    'energia solar',
-    'blog solar',
-    article.category?.name,
-    'Avalia Solar',
-  ].filter(Boolean).join(', ');
+  const seoDescription =
+    article.seo_description || article.meta_description || article.excerpt || undefined;
+  const seoKeywords =
+    article.seo_keywords ||
+    ['energia solar', 'blog solar', article.category?.name, 'Avalia Solar']
+      .filter(Boolean)
+      .join(', ');
 
   return {
     title: seoTitle,
@@ -148,17 +157,25 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const articleSlug = article.slug || String(article.id);
   const isInstitutional = !article.author_name && !article.author?.name;
   const authorName = article.author_name || article.author?.name || 'Equipe Avalia Solar';
-  const author = article.author as (Article['author'] & { avatar_photo_url?: string | null }) | undefined;
+  const author = article.author as
+    | (Article['author'] & { avatar_photo_url?: string | null })
+    | undefined;
   const authorAvatarUrl = article.author_avatar_url
-    ? getFullImageUrl(article.author_avatar_url) 
-    : author?.avatar_photo_url ? getFullImageUrl(author.avatar_photo_url) : '/images/felipe-ceo-avalia-solar.png';
-  const schemaAuthorAvatarUrl = isInstitutional ? undefined : (toCrawlableImageUrl(authorAvatarUrl) || absoluteUrl('/images/felipe-ceo-avalia-solar.png'));
+    ? getFullImageUrl(article.author_avatar_url)
+    : author?.avatar_photo_url
+      ? getFullImageUrl(author.avatar_photo_url)
+      : '/images/felipe-ceo-avalia-solar.png';
+  const schemaAuthorAvatarUrl = isInstitutional
+    ? undefined
+    : toCrawlableImageUrl(authorAvatarUrl) || absoluteUrl('/images/felipe-ceo-avalia-solar.png');
   const schemaArticleImage = article.image_url
     ? toCrawlableImageUrl(getFullImageUrl(article.image_url))
     : undefined;
-  const authorBio = isInstitutional ? undefined : (article.author_bio || article.author?.bio || undefined);
+  const authorBio = isInstitutional
+    ? undefined
+    : article.author_bio || article.author?.bio || undefined;
   const categoryName = article.category?.name;
-  
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -171,36 +188,43 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       '@type': isInstitutional ? 'Organization' : 'Person',
       name: authorName,
       image: schemaAuthorAvatarUrl || undefined,
-      url: isInstitutional ? absoluteUrl('/') : absoluteUrl(`/blog/autores/${article.author?.id || ''}`),
-      '@id': isInstitutional ? absoluteUrl('#organization') : absoluteUrl(`#author-${article.author?.id || 'default'}`)
+      url: isInstitutional
+        ? absoluteUrl('/')
+        : absoluteUrl(`/blog/autores/${article.author?.id || ''}`),
+      '@id': isInstitutional
+        ? absoluteUrl('#organization')
+        : absoluteUrl(`#author-${article.author?.id || 'default'}`),
     },
     publisher: {
       '@type': 'Organization',
       name: SITE.name,
       logo: {
         '@type': 'ImageObject',
-        url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg')
+        url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg'),
       },
-      '@id': absoluteUrl('#organization')
+      '@id': absoluteUrl('#organization'),
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': absoluteUrl(`/blog/${articleSlug}`)
-    }
+      '@id': absoluteUrl(`/blog/${articleSlug}`),
+    },
   };
 
-  const faqJsonLd = article.faqs && article.faqs.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: article.faqs.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer
-      }
-    }))
-  } : null;
+  const faqJsonLd =
+    article.faqs && article.faqs.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: article.faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.answer,
+            },
+          })),
+        }
+      : null;
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -210,21 +234,21 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: SITE.url
+        item: SITE.url,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Blog',
-        item: absoluteUrl('/blog')
+        item: absoluteUrl('/blog'),
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: article.title,
-        item: absoluteUrl(`/blog/${articleSlug}`)
-      }
-    ]
+        item: absoluteUrl(`/blog/${articleSlug}`),
+      },
+    ],
   };
 
   return (
@@ -243,7 +267,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      
+
       <ReadingProgress
         articleId={article.id}
         articleSlug={articleSlug}
@@ -271,7 +295,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          
           {/* Main Content Column */}
           <div className="lg:col-span-8">
             <PostHeader article={article} />
@@ -309,7 +332,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </div>
 
             {/* Article Content */}
-            <article className="prose prose-lg prose-slate max-w-none leading-loose text-slate-700
+            <article
+              className="prose prose-lg prose-slate max-w-none leading-loose text-slate-700
               prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight prose-headings:mt-10 prose-headings:mb-6
               prose-p:text-slate-600 prose-p:leading-loose prose-p:mb-8
               prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
@@ -319,7 +343,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-8 prose-ul:text-slate-600 prose-ul:space-y-3
               prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-8 prose-ol:text-slate-600 prose-ol:space-y-3
               prose-li:leading-loose
-              prose-hr:border-slate-200 prose-hr:my-12">
+              prose-hr:border-slate-200 prose-hr:my-12"
+            >
               <div dangerouslySetInnerHTML={{ __html: fixArticleContent(article.content) }} />
             </article>
 
@@ -327,11 +352,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <ArticleConversionSection article={article} />
 
             {/* Author Bio */}
-            <AuthorCardWithStats 
-              name={authorName} 
-              bio={authorBio} 
-              avatarUrl={authorAvatarUrl}
-            />
+            <AuthorCardWithStats name={authorName} bio={authorBio} avatarUrl={authorAvatarUrl} />
 
             {/* Related Posts */}
             <RelatedPostsGrid articles={relatedArticles} />
@@ -348,12 +369,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <div className="lg:col-span-4 relative hidden lg:block">
             <div className="sticky top-24">
               <div className="mb-8">
-                 <PostTOC />
+                <PostTOC />
               </div>
               <PostSidebar />
             </div>
           </div>
-
         </div>
       </main>
 

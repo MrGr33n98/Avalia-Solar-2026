@@ -1,6 +1,7 @@
 import { ApiError, toApiError } from './api-error';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
-import type { Banner, Category, Company, Review } from './api';
+import type { Category, Company, Review } from './api';
+import type { Banner } from './api-banner-types';
 import type { LocalSolarPageResponse } from './api-client';
 
 type QueryValue =

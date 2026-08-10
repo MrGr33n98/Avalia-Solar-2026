@@ -31,6 +31,42 @@ Yabeda.configure do
     counter :company_access_context_requests_total,
             tags: [:status],
             comment: 'Total number of company access context requests by status'
+
+    counter :banner_deliveries_total,
+            tags: [:status, :position, :source],
+            comment: 'Total de respostas de distribuição de banners'
+
+    counter :banner_events_total,
+            tags: [:event_type, :status, :quality, :discard_reason],
+            comment: 'Total de eventos de banners recebidos e classificados'
+
+    counter :banner_attributions_total,
+            tags: [:status],
+            comment: 'Total de atribuições de leads a banners'
+
+    counter :banner_reconciliation_total,
+            tags: [:status, :metric],
+            comment: 'Total de verificações de consistência dos agregados de banners'
+
+    gauge :banner_operational_health_discard_rate,
+          tags: [:source],
+          comment: 'Taxa percentual de eventos de banners descartados nas últimas 24h'
+
+    gauge :banner_operational_health_lag_minutes,
+          tags: [:source],
+          comment: 'Atraso em minutos do agregado diário de banners'
+
+    gauge :banner_audit_retention_candidates,
+          comment: 'Quantidade de logs de auditoria de banners além da janela de retenção'
+
+    gauge :banner_audit_retention_oldest_age_days,
+          comment: 'Idade em dias do log de auditoria de banner mais antigo elegível'
+
+    histogram :banner_operational_health_duration,
+              tags: [:source],
+              unit: :seconds,
+              buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+              comment: 'Duração do cálculo de saúde operacional de banners'
     
     # Performance Metrics
     histogram :request_duration,

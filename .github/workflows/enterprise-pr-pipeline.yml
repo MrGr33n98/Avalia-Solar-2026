@@ -154,12 +154,23 @@ jobs:
         working-directory: ./AB0-1-front
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
+
+      - name: Validate authenticated Banner E2E credentials
+        if: github.event_name == 'push'
+        env:
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: |
+          test -n "$E2E_USER_EMAIL" || { echo 'Missing E2E_USER_EMAIL secret'; exit 1; }
+          test -n "$E2E_USER_PASSWORD" || { echo 'Missing E2E_USER_PASSWORD secret'; exit 1; }
 
       - name: Run Playwright Tests
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: npx playwright test
 
       - name: Upload Playwright Report

@@ -74,6 +74,38 @@ RSpec.describe 'Api::V1::BannerEvents', type: :request do
       expect(event.fraud_score).to be > 0
     end
 
+    it 'discards events with timestamps outside the accepted window' do
+      [
+        [(Time.current + 10.minutes).iso8601, 'future_timestamp'],
+        [(Time.current - 3.days).iso8601, 'stale_timestamp'],
+      ].each do |tracked_at, reason|
+        params = valid_params.deep_merge(
+          banner_event: { tracked_at: tracked_at, impression_instance_id: "quality-#{reason}" }
+        )
+
+        post '/api/v1/banner_events', params: params
+
+        event = BannerEvent.find_by(impression_instance_id: "quality-#{reason}")
+        expect(event).to be_present
+        expect(event.valid_for_reporting).to be(false)
+        expect(event.discard_reason).to eq(reason)
+      end
+    end
+
+    it 'discards events without a source IP while retaining audit data' do
+      allow_any_instance_of(ActionDispatch::Request).to receive(:remote_ip).and_return(nil)
+
+      post '/api/v1/banner_events', params: valid_params.deep_merge(
+        banner_event: { impression_instance_id: 'quality-missing-ip' }
+      )
+
+      event = BannerEvent.find_by(impression_instance_id: 'quality-missing-ip')
+      expect(event).to be_present
+      expect(event.valid_for_reporting).to be(false)
+      expect(event.discard_reason).to eq('missing_ip')
+      expect(event.ip_hash).to be_nil
+    end
+
     it 'creates a new event if context (like position) changes' do
       post '/api/v1/banner_events', params: valid_params
       expect(BannerEvent.count).to eq(1)

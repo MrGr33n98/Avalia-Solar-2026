@@ -175,6 +175,23 @@ class SlackNotificationService
     notify(message, attachments, channel: :alertas, synchronous: true)
   end
 
+  # 🚨 Divergência nos agregados de banners
+  def self.notify_banner_reconciliation_alert(date:, summary:, divergent_count:)
+    return unless ENV.fetch('BANNER_RECON_SLACK_ALERT', 'false').casecmp('true').zero?
+
+    message = '🚨 *ALERTA: Reconciliação de Banners*'
+    attachments = [{
+      color: '#f39c12',
+      title: "Divergência detectada em #{date}",
+      fields: [
+        { title: 'Banners divergentes', value: divergent_count.to_s, short: true },
+        { title: 'Resumo', value: summary.map { |status, count| "#{status}: #{count}" }.join(' | '), short: false }
+      ],
+      footer: 'BannerStatsReconciliationJob'
+    }]
+    notify(message, attachments, channel: :alertas, synchronous: true)
+  end
+
   # 🔥 Mudança de Intent (Lead Esquenta)
   def self.notify_intent_change(score)
     message = "🔥 *INTENT ALERT: Lead atingiu #{score.intent_level.upcase}*"

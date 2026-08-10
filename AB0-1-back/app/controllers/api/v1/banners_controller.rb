@@ -21,10 +21,12 @@ class Api::V1::BannersController < Api::V1::BaseController
     end
 
     # Serializa apenas campos necessários para reduzir payload
+    Banners::Metrics.delivery(status: 'success', position: params[:position].presence || 'all', source: 'cache_or_db')
     render json: serialize_banners(@banners)
   rescue StandardError => e
     Rails.logger.error("[BannersController#index] Error: #{e.message}")
     Rails.logger.error(e.backtrace.join("\n"))
+    Banners::Metrics.delivery(status: 'error', position: params[:position].presence || 'unknown', source: 'fallback')
     render json: [], status: :ok
   end
 
@@ -38,7 +40,7 @@ class Api::V1::BannersController < Api::V1::BaseController
 
   # Gera chave de cache determinística baseada nos parâmetros
   def generate_cache_key
-    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city)
+    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city, :audience_key, :frequency_cap_seconds, :rotation_window_seconds)
                         .to_h
                         .sort
                         .to_h
@@ -62,6 +64,7 @@ class Api::V1::BannersController < Api::V1::BaseController
     )
 
     serialized.each do |b|
+      b['delivery_id'] = Digest::SHA256.hexdigest("#{b['id']}:#{request.path}:#{request.query_parameters.to_query}")[0, 32]
       base_url = b['link_url'].presence || b['link'].presence
       next if base_url.blank?
 

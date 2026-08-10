@@ -275,28 +275,8 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
         </Button>
       </div>
 
-      {/* Right Column: Primary CTA */}
-      <div className="flex w-full lg:w-[180px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
-        
-        {/* Mobile secondary actions (visible only on small screens) */}
-        <div className="flex lg:hidden gap-2 mb-1">
-          <ComparisonToggleButton 
-            company={company as any} 
-            variant="default"
-            className="flex-1 h-9 text-xs rounded-xl"
-          />
-          <Button
-            asChild
-            variant="outline"
-            className="flex-1 h-9 rounded-xl text-xs font-bold border-slate-200 text-blue-600 hover:bg-slate-50 shadow-none gap-1.5"
-          >
-            <Link href={reviewsHref}>
-              <Star className="w-3.5 h-3.5 fill-blue-600" />
-              Avaliar
-            </Link>
-          </Button>
-        </div>
-
+      {/* Right Column: Primary CTA — desktop only (lg+) */}
+      <div className="hidden lg:flex w-[180px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
         {canRequestQuote && (
           <Button
             onClick={() => openLeadModal({
@@ -304,7 +284,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
               source: 'search-list-card',
               type: 'quick',
             })}
-            className="w-full h-11 lg:h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 transition-all"
+            className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 transition-all"
           >
             Solicitar orçamento
           </Button>
@@ -314,9 +294,9 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
           asChild
           variant={canRequestQuote ? "outline" : "default"}
           className={cn(
-            "w-full h-11 lg:h-10 rounded-xl font-bold text-xs shadow-none gap-1.5 transition-all",
-            canRequestQuote 
-              ? "border-blue-200 text-blue-600 hover:bg-blue-50 bg-white hover:text-blue-700" 
+            "w-full h-10 rounded-xl font-bold text-xs shadow-none gap-1.5 transition-all",
+            canRequestQuote
+              ? "border-blue-200 text-blue-600 hover:bg-blue-50 bg-white hover:text-blue-700"
               : "bg-blue-600 hover:bg-blue-700 text-white"
           )}
         >
@@ -324,6 +304,70 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
             Ver avaliações {reviewCount} <ChevronRight className="w-4 h-4" />
           </Link>
         </Button>
+      </div>
+
+      {/* Mobile footer: todas as ações numa barra inferior separada */}
+      <div className="flex lg:hidden w-full border-t border-slate-100 bg-slate-50/50">
+        {canRequestQuote ? (
+          // Com orçamento: [Comparar] [Avaliar] | [Solicitar orçamento (destaque)]
+          <>
+            <div className="flex flex-1 divide-x divide-slate-100">
+              <ComparisonToggleButton
+                company={company as any}
+                variant="default"
+                className="flex-1 h-11 text-xs rounded-none border-0 shadow-none"
+              />
+              <Button
+                asChild
+                variant="ghost"
+                className="flex-1 h-11 rounded-none text-xs font-bold text-blue-600 hover:bg-blue-50 shadow-none gap-1.5"
+              >
+                <Link href={reviewsHref}>
+                  <Star className="w-3.5 h-3.5 fill-blue-600" />
+                  Avaliar
+                </Link>
+              </Button>
+            </div>
+            <Button
+              onClick={() => openLeadModal({
+                preferredCompanyId: company.id,
+                source: 'search-list-card-mobile',
+                type: 'quick',
+              })}
+              className="h-11 px-4 rounded-none bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 border-l border-blue-500 shrink-0"
+            >
+              Orçamento
+            </Button>
+          </>
+        ) : (
+          // Sem orçamento: [Comparar] [Avaliar] [Ver avaliações]
+          <div className="flex w-full divide-x divide-slate-100">
+            <ComparisonToggleButton
+              company={company as any}
+              variant="default"
+              className="flex-1 h-11 text-xs rounded-none border-0 shadow-none"
+            />
+            <Button
+              asChild
+              variant="ghost"
+              className="flex-1 h-11 rounded-none text-xs font-bold text-blue-600 hover:bg-blue-50 shadow-none gap-1.5"
+            >
+              <Link href={reviewsHref}>
+                <Star className="w-3.5 h-3.5 fill-blue-600" />
+                Avaliar
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className="flex-1 h-11 rounded-none font-bold text-xs text-blue-600 hover:bg-blue-50 shadow-none gap-1"
+            >
+              <Link href={reviewsHref}>
+                Ver {reviewCount} <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </article>
   );

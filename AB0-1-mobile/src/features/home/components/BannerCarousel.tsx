@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   ScrollView,
@@ -8,28 +8,67 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   useColorScheme,
-} from 'react-native';
-import { Image } from 'expo-image';
-import { Colors, Spacing } from '@/constants/theme';
+  Linking,
+} from "react-native";
+import { Image } from "expo-image";
+import { Colors, Spacing } from "@/constants/theme";
+import { fetchApi, getApiBaseUrl } from "@/lib/api";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - Spacing.four * 2;
 
 interface Banner {
   id: string;
   imageUrl: string;
   linkUrl?: string;
+  deliveryId?: string | null;
 }
 
 interface BannerCarouselProps {
   banners: Banner[];
   onPress?: (banner: Banner) => void;
+  audienceKey?: string | null;
 }
 
-export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
+export const BannerCarousel = ({
+  banners,
+  onPress,
+  audienceKey,
+}: BannerCarouselProps) => {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+  const colors = Colors[scheme === "unspecified" || !scheme ? "light" : scheme];
   const [activeIndex, setActiveIndex] = useState(0);
+  const impressionTrackedRef = useRef<Set<string>>(new Set());
+
+  const trackImpression = (banner: Banner) => {
+    const deliveryKey = banner.deliveryId || "legacy";
+    const impressionInstanceId = `${banner.id}:${deliveryKey}:home_top`;
+    if (impressionTrackedRef.current.has(impressionInstanceId)) return;
+    impressionTrackedRef.current.add(impressionInstanceId);
+    void fetchApi("banner_events", {
+      method: "POST",
+      body: JSON.stringify({
+        banner_event: {
+          banner_id: Number(banner.id),
+          event_type: "impression",
+          impression_instance_id: impressionInstanceId,
+          delivery_id: banner.deliveryId || undefined,
+          metadata: {
+            position: "home_top",
+            platform: "mobile",
+            audience_key: audienceKey,
+          },
+        },
+      }),
+    }).catch((error) =>
+      console.warn("[HomeBannerCarousel] Falha ao registrar impressao:", error),
+    );
+  };
+
+  useEffect(() => {
+    const banner = banners[0];
+    if (banner) trackImpression(banner);
+  }, [banners]);
 
   if (!banners || banners.length === 0) return null;
 
@@ -38,6 +77,8 @@ export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
     const index = Math.round(scrollPosition / CARD_WIDTH);
     if (index !== activeIndex && index >= 0 && index < banners.length) {
       setActiveIndex(index);
+      const banner = banners[index];
+      if (banner) trackImpression(banner);
     }
   };
 
@@ -58,7 +99,19 @@ export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
           <TouchableOpacity
             key={banner.id}
             style={styles.bannerItem}
-            onPress={() => onPress && onPress(banner)}
+            onPress={() => {
+              if (onPress) return onPress(banner);
+              if (banner.linkUrl) {
+                Linking.openURL(
+                  `${getApiBaseUrl()}/banner_clicks/${banner.id}`,
+                ).catch((error) =>
+                  console.warn(
+                    "[HomeBannerCarousel] Falha no redirect:",
+                    error,
+                  ),
+                );
+              }
+            }}
             activeOpacity={0.85}
           >
             <Image
@@ -79,7 +132,10 @@ export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
             style={[
               styles.dot,
               activeIndex === index ? styles.activeDot : styles.inactiveDot,
-              { backgroundColor: activeIndex === index ? colors.tint : colors.border },
+              {
+                backgroundColor:
+                  activeIndex === index ? colors.tint : colors.border,
+              },
             ]}
           />
         ))}
@@ -91,7 +147,7 @@ export const BannerCarousel = ({ banners, onPress }: BannerCarouselProps) => {
 const styles = StyleSheet.create({
   outerContainer: {
     marginVertical: Spacing.two,
-    alignItems: 'center',
+    alignItems: "center",
   },
   container: {
     width: width,
@@ -108,10 +164,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   pagination: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 6,
   },
   dot: {

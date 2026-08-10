@@ -60,6 +60,7 @@ module Types
       argument :installments, Integer, required: true
       argument :state, String, required: false
       argument :city, String, required: false
+      argument :audience_key, String, required: false
       argument :company_ids, [ID], required: false
       argument :audience, String, required: false
     end
@@ -84,6 +85,7 @@ module Types
       description 'Lista empresas com filtros e paginação'
       argument :q, String, required: false, description: 'Busca textual'
       argument :city, String, required: false
+      argument :audience_key, String, required: false
       argument :state, String, required: false
       argument :category_id, ID, required: false
       argument :category_ids, [ID], required: false
@@ -166,6 +168,7 @@ module Types
       argument :q, String, required: true, description: 'Texto da busca'
       argument :state, String, required: false
       argument :city, String, required: false
+      argument :audience_key, String, required: false
       argument :limit, Integer, required: false, default_value: 5
     end
 
@@ -174,6 +177,7 @@ module Types
         q: q,
         state: state,
         city: city,
+        audience_key: audience_key,
         limit: limit
       ).call
     end
@@ -240,49 +244,20 @@ module Types
       argument :limit, Integer, required: false
       argument :state, String, required: false
       argument :city, String, required: false
+      argument :audience_key, String, required: false
     end
 
-    def banners(position: nil, category_id: nil, slot_key: nil, company_id: nil, limit: nil, state: nil, city: nil)
-      query = ::Banner.currently_active
-
-      query = query.where(position: position) if position.present?
-
-      query = query.where(slot_key: slot_key) if slot_key.present? && ::Banner.column_names.include?('slot_key')
-
-      if company_id.present? && ::Banner.column_names.include?('company_id')
-        query = query.where('company_id = ? OR company_id IS NULL', company_id)
-      end
-
-      if category_id.present?
-        if ::Banner.reflect_on_association(:categories) && ActiveRecord::Base.connection.table_exists?(:banners_categories)
-          query = query.left_joins(:categories)
-                       .where('categories.id = ? OR categories.id IS NULL', category_id)
-                       .distinct
-        elsif ::Banner.column_names.include?('category_id')
-          query = query.where(category_id: category_id)
-        end
-      end
-
-      if state.present? && ::Banner.column_names.include?('target_states')
-        state_code = state.to_s.strip.upcase
-        query = query.where("target_states = '{}' OR target_states IS NULL OR ? = ANY(target_states)", state_code)
-      end
-
-      if city.present? && ::Banner.column_names.include?('target_cities')
-        city_name = city.to_s.strip
-        query = query.where("target_cities = '{}' OR target_cities IS NULL OR ? = ANY(target_cities)", city_name)
-      end
-
-      query = if ::Banner.column_names.include?('priority')
-                query.order(priority: :asc, sponsored: :desc, created_at: :desc)
-              elsif ::Banner.column_names.include?('sponsored')
-                query.order(sponsored: :desc, created_at: :desc)
-              else
-                query.order(created_at: :desc)
-              end
-
-      query = query.limit(limit) if limit.present? && limit.positive?
-      query.includes(:categories, :company, image_attachment: :blob)
+    def banners(position: nil, category_id: nil, slot_key: nil, company_id: nil, limit: nil, state: nil, city: nil, audience_key: nil)
+      Banners::BannerDeliveryQuery.call(
+        position: position,
+        category_id: category_id,
+        slot_key: slot_key,
+        company_id: company_id,
+        state: state,
+        city: city,
+        audience_key: audience_key,
+        limit: limit
+      )
     end
 
     def articles(category: nil, q: nil, page: 1, per_page: 10)

@@ -22,23 +22,14 @@ type NavigatorWithConnection = Navigator & {
   connection?: NetworkInformationLike;
 };
 
-declare global {
-  interface Window {
-    __analyticsPosthog?: {
-      alias: (newId: string) => void;
-      capture: (eventName: string, properties?: Record<string, unknown>) => void;
-      identify: (userId: string, traits?: Record<string, unknown>) => void;
-      isLoaded: () => boolean;
-      reset: () => void;
-    };
-  }
-}
-
 function exposeAnalyticsBridge() {
   window.__analyticsPosthog = {
     alias: (newId) => posthog.alias(newId),
     capture: (eventName, properties = {}) => {
-      posthog.capture(eventName, sanitizeAnalyticsProperties(properties) as Record<string, unknown>);
+      posthog.capture(
+        eventName,
+        sanitizeAnalyticsProperties(properties) as Record<string, unknown>
+      );
     },
     identify: (userId, traits = {}) => {
       posthog.identify(userId, sanitizeAnalyticsProperties(traits) as Record<string, unknown>);
@@ -95,9 +86,7 @@ function PostHogPageView() {
       pathname === '/login' ||
       pathname === '/signup';
 
-    const isDashboardOrAdmin =
-      pathname.startsWith('/dashboard') ||
-      pathname.startsWith('/admin');
+    const isDashboardOrAdmin = pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
 
     if (isAllowedReplayPage && !isDashboardOrAdmin && hasAnalyticsConsent()) {
       try {
@@ -121,7 +110,7 @@ function PostHogPageView() {
 
     const url = window.location.origin + pathname;
 
-    posthog.capture('$pageview', { 
+    posthog.capture('$pageview', {
       $current_url: url,
       ...getPageAnalyticsProperties(pathname),
     });
@@ -192,10 +181,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // Recording: desativado por padrão — scripts (posthog-recorder.js, dead-clicks-autocapture.js)
       // só carregam se o usuário deu consentimento explícito + está em desktop + boa conexão
       disable_session_recording: !shouldEnableRecording,
-      session_recording: shouldEnableRecording ? {
-        maskAllInputs: true,
-        maskTextSelector: '[data-ph-no-capture]',
-      } : undefined,
+      session_recording: shouldEnableRecording
+        ? {
+            maskAllInputs: true,
+            maskTextSelector: '[data-ph-no-capture]',
+          }
+        : undefined,
 
       // Bootstrap: usa $pageview no load inicial
       loaded: (ph) => {
@@ -209,8 +200,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         // Task 2.2: Integração Sentry + PostHog
         const distinctId = ph.get_distinct_id();
         const sessionId = ph.get_session_id();
-        if (distinctId) Sentry.setTag("posthog_distinct_id", distinctId);
-        if (sessionId) Sentry.setTag("posthog_session_id", sessionId);
+        if (distinctId) Sentry.setTag('posthog_distinct_id', distinctId);
+        if (sessionId) Sentry.setTag('posthog_session_id', sessionId);
 
         if (process.env.NODE_ENV === 'development') {
           console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());
@@ -225,7 +216,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       if (consent.analytics) {
         posthog.opt_in_capturing();
         // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
-        posthog.capture('$pageview', { 
+        posthog.capture('$pageview', {
           $current_url: window.location.origin + window.location.pathname,
           ...getPageAnalyticsProperties(window.location.pathname),
         });

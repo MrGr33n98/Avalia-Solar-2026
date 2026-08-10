@@ -7,7 +7,7 @@ module Api
       skip_before_action :verify_authenticity_token, raise: false
 
       ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_term utm_content gclid fbclid msclkid].freeze
-      ALLOWED_METADATA_KEYS = %w[slot_key position page page_path category_id banner_id title link sponsored impression_instance_id click_instance_id].freeze
+      ALLOWED_METADATA_KEYS = %w[slot_key position page page_path category_id banner_id title link sponsored impression_instance_id click_instance_id audience_key].freeze
 
       def create
         event_params = params.require(:banner_event).permit(
@@ -16,9 +16,10 @@ module Api
                                                                                                                metadata: {})
 
         banner_id = event_params[:banner_id]
+        return render json: { error: 'banner_not_found' }, status: :not_found unless Banner.exists?(banner_id)
         event_type = event_params[:event_type].to_s
         company_id = event_params[:company_id]
-        tracked_at = event_params[:tracked_at].presence || Time.current
+        tracked_at = parse_tracked_at(event_params[:tracked_at])
 
         unless BannerEvent::EVENT_TYPES.include?(event_type)
           return render json: { error: 'invalid_event_type' }, status: :unprocessable_entity
@@ -40,7 +41,7 @@ module Api
                       meta['impression_instance_id'] || meta['click_instance_id']
         
         raw_key = if instance_id.present?
-                    "#{banner_id}:#{event_type}:#{instance_id}"
+                    "#{banner_id}:#{event_type}:#{instance_id}:#{position}:#{slot_key}"
                   else
                     "#{banner_id}:#{event_type}:#{date_str}:#{ip_hash}:#{ua_hash}:#{position}:#{slot_key}"
                   end
@@ -56,7 +57,7 @@ module Api
             e.user_agent_hash = ua_hash
             e.referrer = sanitized_referrer
             e.utm_json = sanitize_utm(event_params[:utm])
-            e.metadata_json = meta
+            e.metadata_json = meta.merge('page_path' => (meta['page_path'] || meta['page']), 'position' => position, 'slot_key' => slot_key).compact
             e.page_path = meta['page_path'] || meta['page']
             e.slot_key = slot_key
             e.placement = position
@@ -79,10 +80,30 @@ module Api
           # Idempotent success
         end
 
+        Banners::Metrics.event(
+          event_type: event_type,
+          status: 'accepted',
+          quality: quality[:valid] ? 'valid' : 'discarded',
+          discard_reason: quality[:discard_reason]
+        )
         render json: { status: 'ok' }, status: :created
+      rescue StandardError => e
+        report_ingestion_error(e, event_type: event_type)
+        raise
       end
 
       private
+
+      def report_ingestion_error(error, event_type:)
+        return unless defined?(Sentry)
+
+        Sentry.capture_exception(
+          error,
+          tags: { component: 'banner_event_ingestion', event_type: event_type.to_s.presence || 'unknown' }
+        )
+      rescue StandardError => reporting_error
+        Rails.logger.warn("[BannerEvents] Sentry reporting failed: #{reporting_error.message}")
+      end
 
       def sanitized_referrer
         return nil if request.referer.blank?
@@ -96,18 +117,18 @@ module Api
       end
 
       def sanitize_utm(obj)
-        return {} unless obj.is_a?(Hash)
+        return {} unless obj.respond_to?(:to_h)
 
-        obj.stringify_keys.slice(*ALLOWED_UTM_KEYS).each_with_object({}) do |(key, val), acc|
+        obj.to_h.stringify_keys.slice(*ALLOWED_UTM_KEYS).each_with_object({}) do |(key, val), acc|
           norm = normalize_value(val)
           acc[key] = norm if norm.present?
         end
       end
 
       def sanitize_metadata(obj, banner_id)
-        return {} unless obj.is_a?(Hash)
+        return {} unless obj.respond_to?(:to_h)
 
-        obj = obj.stringify_keys
+        obj = obj.to_h.stringify_keys
         obj['banner_id'] ||= banner_id
 
         obj.slice(*ALLOWED_METADATA_KEYS).each_with_object({}) do |(key, val), acc|
@@ -117,6 +138,14 @@ module Api
 
       def normalize_value(value)
         value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
+      end
+
+      def parse_tracked_at(value)
+        return Time.current if value.blank?
+
+        Time.zone.parse(value.to_s)
+      rescue ArgumentError, TypeError
+        Time.current
       end
 
       def event_quality(event_type, tracked_at)

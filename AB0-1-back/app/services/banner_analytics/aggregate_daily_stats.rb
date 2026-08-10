@@ -67,10 +67,20 @@ module BannerAnalytics
       BannerDailyStat.upsert_all(
         attributes,
         unique_by: [:banner_id, :day],
-        update_only: [:views_count, :clicks_count, :leads_count, :ctr, :updated_at]
+        update_only: [:views_count, :clicks_count, :leads_count, :ctr]
       )
     rescue StandardError => e
+      report_aggregation_error(e)
       Rails.logger.error("[BannerAnalytics::AggregateDailyStats] Failed for date #{date}: #{e.message}")
+      raise
+    end
+
+    def self.report_aggregation_error(error)
+      return unless defined?(Sentry)
+
+      Sentry.capture_exception(error, tags: { component: 'banner_daily_aggregation' })
+    rescue StandardError => reporting_error
+      Rails.logger.warn("[BannerAnalytics::AggregateDailyStats] Sentry reporting failed: #{reporting_error.message}")
     end
   end
 end

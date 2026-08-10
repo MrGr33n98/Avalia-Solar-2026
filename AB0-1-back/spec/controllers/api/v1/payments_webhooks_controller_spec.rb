@@ -24,6 +24,7 @@ RSpec.describe Api::V1::PaymentsWebhooksController, type: :controller do
   let(:stripe_event) do
     double(
       'StripeEvent',
+      id: 'evt_test_checkout_completed',
       type: 'checkout.session.completed',
       data: double('StripeEventData', object: stripe_session)
     )
@@ -42,6 +43,35 @@ RSpec.describe Api::V1::PaymentsWebhooksController, type: :controller do
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to include('ok' => true)
         expect(banner_subscription.reload.status).to eq('active')
+      end
+    end
+
+    context 'with a repeated approved mock event' do
+      it 'is idempotent and preserves the first activation timestamp' do
+        request.headers['X-Webhook-Signature'] = valid_signature
+        request.headers['X-Webhook-Timestamp'] = current_timestamp
+
+        post :create, params: { provider: valid_provider }, body: payload
+        first_activation = banner_subscription.reload.activated_at
+        post :create, params: { provider: valid_provider }, body: payload
+
+        expect(response).to have_http_status(:ok)
+        expect(banner_subscription.reload.activated_at).to eq(first_activation)
+        expect(PaymentWebhookEvent.where(provider: 'mock').count).to eq(1)
+      end
+    end
+
+    context 'with a rejected mock payment' do
+      it 'marks the subscription as failed' do
+        rejected_payload = { checkout_session_id: checkout_session_id, status: 'rejected', event_id: 'evt-rejected-1' }.to_json
+        request.headers['X-Webhook-Signature'] = OpenSSL::HMAC.hexdigest('SHA256', secret, rejected_payload)
+        request.headers['X-Webhook-Timestamp'] = current_timestamp
+
+        post :create, params: { provider: valid_provider }, body: rejected_payload
+
+        expect(response).to have_http_status(:ok)
+        expect(banner_subscription.reload.status).to eq('failed')
+        expect(PaymentWebhookEvent.find_by(provider: 'mock', provider_event_id: 'evt-rejected-1').status).to eq('processed')
       end
     end
 

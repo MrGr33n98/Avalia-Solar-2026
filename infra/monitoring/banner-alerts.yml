@@ -1,0 +1,88 @@
+groups:
+  - name: avalia-solar-banner-ads
+    interval: 30s
+    rules:
+      - alert: BannerEventDiscardRateHigh
+        expr: |
+          sum(rate(ab0_banner_events_total{quality="discarded"}[10m]))
+          / clamp_min(sum(rate(ab0_banner_events_total[10m])), 1) > 0.20
+        for: 10m
+        labels:
+          severity: warning
+          service: banner-ads
+        annotations:
+          summary: "Taxa de eventos Banner descartados acima de 20%"
+          description: "A ingestão está descartando mais eventos do que o limite operacional."
+
+      - alert: BannerBotDiscardRateHigh
+        expr: sum(rate(ab0_banner_events_total{quality="discarded",discard_reason="bot_user_agent"}[10m])) / clamp_min(sum(rate(ab0_banner_events_total[10m])), 1) > 0.10
+        for: 10m
+        labels:
+          severity: warning
+          service: banner-ads
+        annotations:
+          summary: "Eventos de Banner descartados por bots acima de 10%"
+          description: "Investigar tráfego automatizado, user agents e regras de proteção."
+
+      - alert: BannerOperationalHealthStale
+        expr: max(ab0_banner_operational_health_lag_minutes) > 2160
+        for: 15m
+        labels:
+          severity: critical
+          service: banner-ads
+        annotations:
+          summary: "Agregação de Banner atrasada"
+          description: "O agregado diário está mais de 36 horas atrasado; verificar Sidekiq, banco e job de agregação."
+
+      - alert: BannerReconciliationDivergence
+        expr: sum(increase(ab0_banner_reconciliation_total{status="divergent"}[15m])) > 0
+        for: 15m
+        labels:
+          severity: warning
+          service: banner-ads
+        annotations:
+          summary: "Divergência nos agregados de Banner"
+          description: "Eventos brutos e agregados diários não coincidem."
+
+      - alert: BannerAttributionErrors
+        expr: sum(rate(ab0_banner_attributions_total{status="error"}[10m])) > 0
+        for: 10m
+        labels:
+          severity: critical
+          service: banner-ads
+        annotations:
+          summary: "Falha na atribuição de leads Banner"
+          description: "Leads provenientes de Banner estão falhando na atribuição."
+
+      - alert: BannerOperationalHealthSlow
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(ab0_banner_operational_health_duration_seconds_bucket[10m])) by (le)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: banner-ads
+        annotations:
+          summary: "Health operacional Banner lento"
+          description: "P95 do cálculo de saúde operacional excede 2 segundos."
+
+      - alert: BannerAuditRetentionBacklogHigh
+        expr: ab0_banner_audit_retention_candidates > 10000
+        for: 30m
+        labels:
+          severity: warning
+          service: banner-ads
+        annotations:
+          summary: "Backlog de retenção de auditoria Banner alto"
+          description: "Há mais de 10 mil logs fora da janela; revisar retenção e capacidade do banco."
+
+      - alert: BannerAuditRetentionAgeCritical
+        expr: ab0_banner_audit_retention_oldest_age_days > 1095
+        for: 1h
+        labels:
+          severity: critical
+          service: banner-ads
+        annotations:
+          summary: "Log de auditoria Banner excessivamente antigo"
+          description: "O registro elegível mais antigo excede três anos; revisar política LGPD e operação."

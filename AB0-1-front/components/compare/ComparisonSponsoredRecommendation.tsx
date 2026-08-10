@@ -17,7 +17,7 @@ export function ComparisonSponsoredRecommendation({
   excludedCompanyIds,
 }: ComparisonSponsoredRecommendationProps) {
   const containerRef = useRef<HTMLAnchorElement>(null);
-  const impressionTrackedRef = useRef<number | null>(null);
+  const impressionTrackedRef = useRef<string | null>(null);
   const { data: banners } = useBannersQuery({ position: PLACEMENT, limit: 6 });
 
   const recommendation = useMemo(() => {
@@ -29,16 +29,23 @@ export function ComparisonSponsoredRecommendation({
 
   useEffect(() => {
     const node = containerRef.current;
-    if (!node || !recommendation || impressionTrackedRef.current === recommendation.id) return;
+    const deliveryKey = recommendation?.delivery_id || 'legacy';
+    const impressionKey = recommendation
+      ? `${recommendation.id}:${deliveryKey}:${PLACEMENT}`
+      : null;
+    if (!node || !recommendation || impressionTrackedRef.current === impressionKey) return;
 
     let visibleTimer: ReturnType<typeof setTimeout> | undefined;
     const registerImpression = () => {
-      if (impressionTrackedRef.current === recommendation.id) return;
-      impressionTrackedRef.current = recommendation.id;
+      if (!impressionKey || impressionTrackedRef.current === impressionKey) return;
+      impressionTrackedRef.current = impressionKey;
+      const impressionInstanceId = impressionKey;
       void analyticsApi.trackBannerEvent({
         banner_id: recommendation.id,
         company_id: recommendation.company_id || undefined,
-        event_type: 'view',
+        event_type: 'impression',
+        impression_instance_id: impressionInstanceId,
+        delivery_id: recommendation.delivery_id || undefined,
         metadata: {
           position: PLACEMENT,
           page_path: window.location.pathname,
@@ -84,19 +91,6 @@ export function ComparisonSponsoredRecommendation({
   const destination = recommendation.link_url || recommendation.link || '#';
 
   const handleClick = () => {
-    void analyticsApi.trackBannerEvent({
-      banner_id: recommendation.id,
-      company_id: recommendation.company_id || undefined,
-      event_type: 'click',
-      metadata: {
-        position: PLACEMENT,
-        page_path: window.location.pathname,
-        banner_id: recommendation.id,
-        title: recommendation.title,
-        link: destination,
-      },
-      tracked_at: new Date().toISOString(),
-    });
     track('banner_click', {
       banner_id: recommendation.id,
       banner_position: PLACEMENT,
@@ -108,7 +102,7 @@ export function ComparisonSponsoredRecommendation({
   return (
     <a
       ref={containerRef}
-      href={destination}
+      href={`/api/v1/banner_clicks/${recommendation.id}`}
       target="_blank"
       rel="sponsored noopener noreferrer"
       onClick={handleClick}

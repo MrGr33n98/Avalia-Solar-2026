@@ -9,7 +9,6 @@
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/netinfo": "^12.0.1",
     "@tanstack/react-query": "^5.101.0",
-    "apollo3-cache-persist": "^0.15.0",
     "expo": "~56.0.11",
     "expo-application": "^56.0.3",
     "expo-constants": "~56.0.18",
@@ -50,7 +49,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@react-native/jest-preset": "^0.86.0",
+    "@react-native/jest-preset": "^0.85.3",
     "@testing-library/react-native": "^14.0.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
@@ -75,7 +74,8 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "maestro": "maestro test .maestro/",
     "ui-audit": "node scripts/check-premium-ui.js",
-    "audit": "npm run lint && npm run typecheck && npm run test:ci && npm run ui-audit"
+    "audit": "npm run lint && npm run typecheck && npm run test:ci && npm run ui-audit",
+    "validate:maestro": "node scripts/validate-maestro.js"
   },
   "private": true
 }

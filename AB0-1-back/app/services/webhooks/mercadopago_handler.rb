@@ -31,14 +31,14 @@ module Webhooks
       payment_data = payment_info[:response]
       if payment_data && payment_data['status'] == 'approved'
         checkout_session_id = payment_data['external_reference']
-        resolved = Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
+        resolved = ::Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
         
         if resolved
           sub = resolved[:subscription]
           if resolved[:type] == :new
             unless sub.status == 'active'
               sub.update!(payment_reference: resource_id.to_s, payment_provider: 'mercadopago')
-              BannerAddons::LifecycleService.new(sub).activate!
+              ::BannerAddons::LifecycleService.new(sub).activate!
             end
           else
             unless sub.active?
@@ -61,13 +61,13 @@ module Webhooks
     def mock_handle(webhook_event)
       # Simple mock simulation
       checkout_session_id = @params['external_reference']
-      resolved = Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
+      resolved = ::Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
       
       if resolved && @params['status'] == 'approved'
         sub = resolved[:subscription]
         if resolved[:type] == :new
           unless sub.status == 'active'
-            BannerAddons::LifecycleService.new(sub).activate!
+            ::BannerAddons::LifecycleService.new(sub).activate!
           end
         else
           unless sub.active?

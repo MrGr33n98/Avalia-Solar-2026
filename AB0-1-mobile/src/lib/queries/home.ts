@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const COMPANY_FRAGMENT = gql`
   fragment CompanyFields on Company {
@@ -31,6 +31,7 @@ export const BANNER_FRAGMENT = gql`
     title
     imageUrl
     linkUrl
+    deliveryId
   }
 `;
 
@@ -46,8 +47,8 @@ export const ARTICLE_FRAGMENT = gql`
 `;
 
 export const GET_HOME_DATA = gql`
-  query GetHomeData($city: String, $state: String) {
-    banners(position: "home_top", city: $city, state: $state, limit: 5) {
+  query GetHomeData($city: String, $state: String, $audienceKey: String) {
+    banners(position: "home_top", city: $city, state: $state, audienceKey: $audienceKey, limit: 5) {
       ...BannerFields
     }
     categories(featured: true, limit: 10) {

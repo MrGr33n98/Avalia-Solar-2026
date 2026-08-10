@@ -43,14 +43,14 @@ module Webhooks
 
     def handle_checkout_completed(session)
       checkout_session_id = session.client_reference_id
-      resolved = Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
+      resolved = ::Payments::BannerSubscriptionResolver.find_by_checkout_session(checkout_session_id)
       return if resolved.nil?
 
       sub = resolved[:subscription]
 
       if resolved[:type] == :new
         sub.update!(payment_reference: session.payment_intent, payment_provider: 'stripe')
-        BannerAddons::LifecycleService.new(sub).activate!
+        ::BannerAddons::LifecycleService.new(sub).activate!
       else
         # Legacy
         sub.update!(payment_reference: session.payment_intent, provider: 'stripe')

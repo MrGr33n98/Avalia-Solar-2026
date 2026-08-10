@@ -160,3 +160,49 @@ analytics_daily_reconciliation_job:
   queue: default
   description: 'Audit data integrity between logs and aggregates'
   enabled: true
+
+banner_stats_reconciliation_job:
+  cron: '45 1 * * *'
+  class: BannerStatsReconciliationJob
+  queue: analytics
+  description: 'Rebuild and verify banner daily aggregates'
+  enabled: true
+
+banner_subscription_expiration_job:
+  cron: '*/15 * * * *'
+  class: BannerSubscriptionExpirationJob
+  queue: default
+  description: 'Expire paid banner subscriptions after their contract ends'
+  enabled: true
+
+banner_addon_expiration_job:
+  cron: '*/15 * * * *'
+  class: BannerAddonExpirationJob
+  queue: default
+  description: 'Expire paid banner add-ons after their contract ends'
+  enabled: true
+
+banner_event_retention_audit_job:
+  cron: '30 3 * * 0'
+  class: BannerEventRetentionAuditJob
+  queue: maintenance
+  description: 'Audit LGPD retention window without deleting banner events'
+  enabled: true
+
+
+# Banner Ads: alerta persistido de volume anomalo em exportacoes
+banner_audit_anomaly_job:
+  cron: '0 * * * *'
+  class: BannerAuditAnomalyJob
+  queue: maintenance
+  description: 'Detecta exportacoes suspeitas com cooldown'
+  enabled: true
+
+
+# Banner Ads: auditoria LGPD de logs antigos (sem exclusao automatica)
+banner_audit_log_retention_job:
+  cron: '30 3 * * *'
+  class: BannerAuditLogRetentionJob
+  queue: maintenance
+  description: 'Reporta logs antigos sem apagar trilha de auditoria'
+  enabled: true

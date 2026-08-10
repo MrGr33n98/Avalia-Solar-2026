@@ -81,6 +81,9 @@ jobs:
           bundle exec rails routes -g sector_ratings
           bundle exec rails routes -g company_dashboard
 
+      - name: Run Banner Ads functional regression
+        run: ../scripts/testing/run-banner-regression.sh
+
       - name: Run targeted regression suite
         run: |
           bundle exec rspec \
@@ -90,6 +93,9 @@ jobs:
             spec/services/analytics/track_event_service_spec.rb \
             spec/services/analytics/track_event_contract_spec.rb \
             spec/requests/api/v1/analytics_tracking_spec.rb \
+            spec/controllers/api/v1/payments_webhooks_controller_spec.rb \
+            spec/jobs/banner_event_retention_audit_job_spec.rb \
+            spec/models/banner_event_concurrency_spec.rb \
             spec/requests/api/v1/company_sector_questions_spec.rb \
             spec/requests/api/v1/sector_ratings_spec.rb \
             spec/requests/api/v1/company_dashboard_stats_notifications_spec.rb

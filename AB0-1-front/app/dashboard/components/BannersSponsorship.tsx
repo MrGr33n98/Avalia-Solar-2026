@@ -12,6 +12,7 @@ import {
   MousePointerClick,
   AlertCircle,
   BarChart3,
+  Activity,
   Download,
   Pause,
   Play,
@@ -41,7 +42,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { fetchApi } from '@/lib/api';
+import { fetchBannerApi } from '@/lib/api-banner-client';
 
 interface BannersSponsorshipProps {
   companyId: string;
@@ -61,8 +62,8 @@ type BannerPerformance = {
 type ActiveAddon = {
   id: number;
   name: string;
-  ends_at: string;
-  days_remaining: number;
+  ends_at: string | null;
+  days_remaining: number | null;
 };
 
 type CompanyBanner = {
@@ -76,9 +77,9 @@ type CompanyBanner = {
   rejected_reason?: string | null;
   position: string;
   slot_key: string;
-  starts_at?: string;
-  ends_at?: string;
-  days_remaining?: number;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  days_remaining?: number | null;
   performance: BannerPerformance;
   active_addons: ActiveAddon[];
   allowed_actions: string[];
@@ -96,9 +97,63 @@ type Quota = {
   can_create: boolean;
 };
 
+type OperationalHealth = {
+  status: 'healthy' | 'degraded' | 'stale' | 'unknown';
+  last_aggregated_at?: string | null;
+  lag_minutes?: number | null;
+  reportable_events_24h: number;
+  discarded_events_24h: number;
+  discard_rate_24h?: number;
+  discard_reasons_24h?: Record<string, number>;
+  quality_history?: Array<{
+    date: string;
+    reportable_events: number;
+    discarded_events: number;
+    discard_rate: number;
+  }>;
+  incident_history?: Array<{
+    date: string;
+    type: 'discard_rate_high' | 'reconciliation_divergence' | 'aggregate_missing' | string;
+    severity: 'warning' | 'critical' | string;
+    value: number;
+    affected_banners?: Array<{ id: number; title: string; event_count?: number }>;
+  }>;
+  divergent_banners_yesterday: number;
+  checked_at?: string;
+};
+
+type ExportAudit = {
+  id: number;
+  actor_id?: number | null;
+  format?: string;
+  days?: string;
+  incident_type?: string;
+  banner_id?: string | null;
+  record_count: number;
+  created_at: string;
+};
+
+type ExportAlert = {
+  id: number;
+  status: string;
+  count: number;
+  threshold: number;
+  window_hours: number;
+  created_at: string;
+};
+
+type PlacementOption = {
+  key: string;
+  status: 'active' | 'planned';
+  dimensions: [number, number];
+  commercial: string;
+};
+
 type DashboardPayload = {
   quota: Quota;
   summary: BannerPerformance;
+  operational_health?: OperationalHealth;
+  placements?: PlacementOption[];
   banners: CompanyBanner[];
 };
 
@@ -115,6 +170,68 @@ type BannerAddon = {
 };
 
 type ApiFailure = Error & { status?: number };
+type ExportIncident = {
+  date: string;
+  type: string;
+  severity: string;
+  value: number;
+  affected_banners?: Array<{ id: number; title: string; event_count?: number }>;
+};
+type ExportRow = {
+  date: string;
+  type: string;
+  severity: string;
+  value: number;
+  banner_id: number | '';
+  banner_title: string;
+  event_count: number;
+};
+
+function downloadIncidentExport(incidents: ExportIncident[], format: 'csv' | 'json') {
+  const rows: ExportRow[] = incidents.flatMap((incident): ExportRow[] =>
+    incident.affected_banners?.length
+      ? incident.affected_banners.map((banner) => ({
+          date: incident.date,
+          type: incident.type,
+          severity: incident.severity,
+          value: incident.value,
+          banner_id: banner.id,
+          banner_title: banner.title,
+          event_count: banner.event_count ?? 0,
+        }))
+      : [
+          {
+            date: incident.date,
+            type: incident.type,
+            severity: incident.severity,
+            value: incident.value,
+            banner_id: '',
+            banner_title: '',
+            event_count: 0,
+          },
+        ]
+  );
+  const content =
+    format === 'json'
+      ? JSON.stringify(rows, null, 2)
+      : [
+          'date,type,severity,value,banner_id,banner_title,event_count',
+          ...rows.map((row) =>
+            Object.values(row as Record<string, string | number>)
+              .map((value) => `"${String(value).replaceAll('\"', '\\"')}"`)
+              .join(',')
+          ),
+        ].join('\n');
+  const blob = new Blob([content], {
+    type: format === 'json' ? 'application/json' : 'text/csv;charset=utf-8',
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `banner-incidentes-${new Date().toISOString().slice(0, 10)}.${format}`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo',
@@ -126,6 +243,18 @@ const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Agendado',
   submitted: 'Em análise',
 };
+
+const ACTIVE_BANNER_POSITIONS = new Set([
+  'home_top',
+  'categories_top',
+  'compare_hero',
+  'compare_page_top',
+  'compare_page_bottom',
+  'company_profile_about_inline',
+  'sidebar',
+  'search_mid',
+  'pricing_advertise_section',
+]);
 
 const BANNER_POSITIONS = [
   ['navbar', 'Barra de navegação'],
@@ -222,7 +351,7 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
       setLoading(true);
       setError(null);
       try {
-        const resp = await fetchApi<DetailedPerformance>(
+        const resp = await fetchBannerApi<DetailedPerformance>(
           `/company_dashboard/banners/${banner.id}/performance`
         );
         setData(resp);
@@ -287,8 +416,13 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Qualidade do tracking</h4>
-                    <p className="mt-1 text-xs text-slate-500">{data.quality.reportable_events} reportáveis de {data.quality.total_events} eventos</p>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">
+                      Qualidade do tracking
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {data.quality.reportable_events} reportáveis de {data.quality.total_events}{' '}
+                      eventos
+                    </p>
                   </div>
                   <Badge variant={data.quality.discarded_events > 0 ? 'secondary' : 'default'}>
                     {data.quality.discarded_events} descartados
@@ -296,7 +430,10 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
                 </div>
                 {Object.keys(data.quality.discard_reasons).length > 0 && (
                   <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
-                    Motivos: {Object.entries(data.quality.discard_reasons).map(([reason, count]) => `${reason} (${count})`).join(', ')}
+                    Motivos:{' '}
+                    {Object.entries(data.quality.discard_reasons)
+                      .map(([reason, count]) => `${reason} (${count})`)
+                      .join(', ')}
                   </p>
                 )}
               </div>
@@ -304,29 +441,44 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
 
             {data.breakdown?.length > 0 && (
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Por posição</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">
+                  Por posição
+                </h4>
                 <div className="grid gap-2">
                   {data.breakdown.map((row) => (
-                    <div key={row.placement} className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-2 text-xs">
+                    <div
+                      key={row.placement}
+                      className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-2 text-xs"
+                    >
                       <span className="font-semibold">{row.placement}</span>
-                      <span className="text-slate-500">{row.impressions} imp. · {row.clicks} cliques · {row.leads} leads · {row.ctr}% CTR</span>
+                      <span className="text-slate-500">
+                        {row.impressions} imp. · {row.clicks} cliques · {row.leads} leads ·{' '}
+                        {row.ctr}% CTR
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {data.context_breakdown?.length > 0 && (
+            {(data.context_breakdown?.length ?? 0) > 0 && (
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Por página e posição</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">
+                  Por página e posição
+                </h4>
                 <div className="max-h-48 space-y-2 overflow-y-auto">
-                  {data.context_breakdown.map((row) => (
-                    <div key={`${row.page_path}:${row.placement}`} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs dark:bg-white/5">
+                  {(data.context_breakdown ?? []).map((row) => (
+                    <div
+                      key={`${row.page_path}:${row.placement}`}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs dark:bg-white/5"
+                    >
                       <div className="min-w-0">
                         <div className="truncate font-semibold">{row.page_path}</div>
                         <div className="truncate text-slate-500">{row.placement}</div>
                       </div>
-                      <span className="shrink-0 text-slate-500">{row.impressions} imp. · {row.clicks} cliques · {row.leads} leads</span>
+                      <span className="shrink-0 text-slate-500">
+                        {row.impressions} imp. · {row.clicks} cliques · {row.leads} leads
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -391,7 +543,7 @@ function AddonCheckoutDialog({ banner, trigger }: { banner: CompanyBanner; trigg
       setLoadingAddons(true);
       setError(null);
       try {
-        const resp = await fetchApi<{ banner_addons: BannerAddon[] }>('/banner_addons');
+        const resp = await fetchBannerApi<{ banner_addons: BannerAddon[] }>('/banner_addons');
         const list = resp?.banner_addons || [];
         setAddons(list);
         if (list[0]?.id) setSelectedAddonId((current) => current || String(list[0].id));
@@ -416,7 +568,7 @@ function AddonCheckoutDialog({ banner, trigger }: { banner: CompanyBanner; trigg
           globalThis.crypto?.randomUUID?.() ||
           `banner-${banner.id}-${selectedAddonId}-${Date.now()}-${Math.random()}`;
       }
-      const resp = await fetchApi<BannerCheckoutResponse>(
+      const resp = await fetchBannerApi<BannerCheckoutResponse>(
         '/company_dashboard/banner_addon_checkout',
         {
           method: 'POST',
@@ -490,12 +642,22 @@ function BannerFormDialog({
   banner,
   trigger,
   onSaved,
+  placements,
 }: {
   banner?: CompanyBanner;
   trigger: ReactNode;
   onSaved: () => Promise<void>;
+  placements?: PlacementOption[];
 }) {
   const [open, setOpen] = useState(false);
+  const placementOptions = placements?.length
+    ? placements
+    : BANNER_POSITIONS.map(([key]) => ({
+        key,
+        status: ACTIVE_BANNER_POSITIONS.has(key) ? ('active' as const) : ('planned' as const),
+        dimensions: [0, 0] as [number, number],
+        commercial: 'premium',
+      }));
   const [title, setTitle] = useState(banner?.title || '');
   const [link, setLink] = useState(banner?.link_url || '');
   const [position, setPosition] = useState(banner?.position || 'home_top');
@@ -524,7 +686,7 @@ function BannerFormDialog({
     if (image) body.set('image', image);
 
     try {
-      await fetchApi(`/company_dashboard/banners${banner ? `/${banner.id}` : ''}`, {
+      await fetchBannerApi(`/company_dashboard/banners${banner ? `/${banner.id}` : ''}`, {
         method: banner ? 'PATCH' : 'POST',
         body,
       });
@@ -579,11 +741,15 @@ function BannerFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {BANNER_POSITIONS.map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {placementOptions.map((placement) => {
+                    const label = placement.key.replaceAll('_', ' ');
+                    const active = placement.status === 'active';
+                    return (
+                      <SelectItem key={placement.key} value={placement.key} disabled={!active}>
+                        {active ? label : `${label} (Em breve)`}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -640,6 +806,14 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBannerId, setActionBannerId] = useState<number | null>(null);
+  const [expandedIncident, setExpandedIncident] = useState<string | null>(null);
+  const [incidentDays, setIncidentDays] = useState<'3' | '7'>('7');
+  const [incidentType, setIncidentType] = useState('all');
+  const [incidentBanner, setIncidentBanner] = useState('all');
+  const [exportAudits, setExportAudits] = useState<ExportAudit[]>([]);
+  const [exportAuditsOpen, setExportAuditsOpen] = useState(false);
+  const [exportAuditsLoading, setExportAuditsLoading] = useState(false);
+  const [exportAlerts, setExportAlerts] = useState<ExportAlert[]>([]);
 
   const loadData = useCallback(async () => {
     if (!allowed) return;
@@ -648,8 +822,12 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetchApi<DashboardPayload>('/company_dashboard/banners');
+      const [resp, alerts] = await Promise.all([
+        fetchBannerApi<DashboardPayload>('/company_dashboard/banners'),
+        fetchBannerApi<{ alerts?: ExportAlert[] }>('/company_dashboard/banners/export_alerts'),
+      ]);
       setData(resp);
+      setExportAlerts(alerts.alerts ?? []);
     } catch (e: unknown) {
       const failure = e as ApiFailure;
       if (failure.status === 403) {
@@ -666,6 +844,57 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     loadData();
   }, [loadData]);
 
+  const incidentOptions = useMemo(() => {
+    const incidents = data?.operational_health?.incident_history ?? [];
+    return Array.from(
+      new Map(
+        incidents.flatMap((incident) =>
+          (incident.affected_banners ?? []).map((banner) => [String(banner.id), banner.title])
+        )
+      ).entries()
+    );
+  }, [data?.operational_health?.incident_history]);
+
+  const filteredIncidentHistory = useMemo(() => {
+    const incidents = data?.operational_health?.incident_history ?? [];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - Number(incidentDays));
+    return incidents.filter((incident) => {
+      const inPeriod = new Date(`${incident.date}T23:59:59`) >= cutoff;
+      const inType = incidentType === 'all' || incident.type === incidentType;
+      const inBanner =
+        incidentBanner === 'all' ||
+        (incident.affected_banners ?? []).some((banner) => String(banner.id) === incidentBanner);
+      return inPeriod && inType && inBanner;
+    });
+  }, [data?.operational_health?.incident_history, incidentBanner, incidentDays, incidentType]);
+
+  const acknowledgeExportAlert = async (alertId: number) => {
+    try {
+      await fetchBannerApi(`/company_dashboard/banners/${alertId}/acknowledge_export_alert`, {
+        method: 'PATCH',
+      });
+      await loadData();
+    } catch (e: unknown) {
+      setActionError(errorMessage(e, 'Não foi possível reconhecer o alerta.'));
+    }
+  };
+
+  const loadExportAudits = async () => {
+    setExportAuditsLoading(true);
+    try {
+      const response = await fetchBannerApi<{ audits: ExportAudit[] }>(
+        '/company_dashboard/banners/export_audits'
+      );
+      setExportAudits(response.audits ?? []);
+      setExportAuditsOpen(true);
+    } catch (e: unknown) {
+      setActionError(errorMessage(e, 'Histórico indisponível para este usuário.'));
+    } finally {
+      setExportAuditsLoading(false);
+    }
+  };
+
   const runAction = async (
     banner: CompanyBanner,
     action: 'submit' | 'pause' | 'resume' | 'delete'
@@ -675,7 +904,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     setActionBannerId(banner.id);
     setActionError(null);
     try {
-      await fetchApi(
+      await fetchBannerApi(
         `/company_dashboard/banners/${banner.id}${action === 'delete' ? '' : `/${action}`}`,
         {
           method: action === 'delete' ? 'DELETE' : 'PATCH',
@@ -687,6 +916,20 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     } finally {
       setActionBannerId(null);
     }
+  };
+
+  const exportFilteredIncidents = async (format: 'csv' | 'json') => {
+    await fetchBannerApi('/company_dashboard/banners/export_audit', {
+      method: 'POST',
+      body: {
+        format,
+        days: incidentDays,
+        incident_type: incidentType,
+        banner_id: incidentBanner === 'all' ? null : incidentBanner,
+        record_count: filteredIncidentHistory.length,
+      },
+    });
+    downloadIncidentExport(filteredIncidentHistory, format);
   };
 
   if (!allowed) {
@@ -729,6 +972,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
 
         <div className="flex items-center gap-4">
           <BannerFormDialog
+            placements={data?.placements}
             onSaved={loadData}
             trigger={
               <Button
@@ -771,6 +1015,31 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
               {actionError}
             </div>
           )}
+          {exportAlerts.filter((alert) => alert.status === 'open').length ? (
+            <div
+              role="status"
+              data-testid="banner-export-alerts"
+              className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              <strong>Atenção operacional:</strong> foram detectadas exportações acima do limiar
+              configurado ({exportAlerts.filter((alert) => alert.status === 'open')[0].count} em
+              24h).
+              <span className="ml-1">Consulte o administrador para investigação.</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-3"
+                onClick={() =>
+                  acknowledgeExportAlert(
+                    exportAlerts.filter((alert) => alert.status === 'open')[0].id
+                  )
+                }
+              >
+                Marcar como visto
+              </Button>
+            </div>
+          ) : null}
           {/* Summary KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
@@ -830,13 +1099,281 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
             </Card>
           </div>
 
+          {(() => {
+            const health = data.operational_health;
+            const labels = {
+              healthy: ['Operação normal', 'border-emerald-200 bg-emerald-50 text-emerald-800'],
+              degraded: ['Qualidade degradada', 'border-amber-200 bg-amber-50 text-amber-800'],
+              stale: ['Dados atrasados', 'border-rose-200 bg-rose-50 text-rose-800'],
+              unknown: ['Aguardando dados', 'border-slate-200 bg-slate-50 text-slate-700'],
+            } as const;
+            const [label, tone] = labels[health?.status ?? 'unknown'];
+            const discardRate = health?.discard_rate_24h ?? 0;
+            const topDiscardReason = Object.entries(health?.discard_reasons_24h ?? {}).sort(
+              ([, a], [, b]) => b - a
+            )[0];
+            return (
+              <Card className={`rounded-3xl border shadow-sm ${tone}`}>
+                <CardContent className="p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Activity className="h-5 w-5" aria-hidden="true" />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest">
+                          Saúde da medição
+                        </p>
+                        <p className="text-sm font-bold">{label}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                      <span>
+                        Eventos válidos 24h: <strong>{health?.reportable_events_24h ?? 0}</strong>
+                      </span>
+                      <span>
+                        Descartados: <strong>{health?.discarded_events_24h ?? 0}</strong>
+                      </span>
+                      <span>
+                        Taxa: <strong>{discardRate.toFixed(2)}%</strong>
+                      </span>
+                      <span>
+                        Atraso:{' '}
+                        <strong>
+                          {health?.lag_minutes == null ? 'n/d' : `${health.lag_minutes} min`}
+                        </strong>
+                      </span>
+                      <span>
+                        Divergências: <strong>{health?.divergent_banners_yesterday ?? 0}</strong>
+                      </span>
+                      <span>
+                        Motivo principal:{' '}
+                        <strong>
+                          {topDiscardReason
+                            ? `${topDiscardReason[0]} (${topDiscardReason[1]})`
+                            : 'n/d'}
+                        </strong>
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {data.operational_health?.quality_history?.length ? (
+            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                      Qualidade nos últimos 7 dias
+                    </p>
+                    <p className="text-sm text-slate-500">Eventos válidos x descartados</p>
+                  </div>
+                  <Activity className="h-5 w-5 text-brand-blue" aria-hidden="true" />
+                </div>
+                <div className="grid grid-cols-7 gap-2" data-testid="banner-quality-history">
+                  {data.operational_health.quality_history.map((day) => {
+                    const total = day.reportable_events + day.discarded_events;
+                    const validWidth = total ? (day.reportable_events / total) * 100 : 0;
+                    return (
+                      <div
+                        key={day.date}
+                        className="min-w-0"
+                        title={`${day.date}: ${day.discard_rate}% descartados`}
+                      >
+                        <div className="flex h-16 flex-col justify-end overflow-hidden rounded-lg bg-slate-100">
+                          <div className="bg-rose-400" style={{ height: `${100 - validWidth}%` }} />
+                          <div className="bg-emerald-400" style={{ height: `${validWidth}%` }} />
+                        </div>
+                        <p className="mt-1 truncate text-center text-[10px] text-slate-500">
+                          {day.date.slice(5)}
+                        </p>
+                        <p className="text-center text-[10px] font-bold text-slate-700">
+                          {day.discard_rate.toFixed(1)}%
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {data.operational_health?.incident_history?.length ? (
+            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                      Incidentes recentes
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      Sinais que exigem investigação operacional
+                    </p>
+                  </div>
+                  <AlertCircle className="h-5 w-5 text-amber-500" aria-hidden="true" />
+                </div>
+                <div className="mb-4 grid gap-2 sm:grid-cols-3">
+                  <select
+                    aria-label="Período dos incidentes"
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                    value={incidentDays}
+                    onChange={(event) => setIncidentDays(event.target.value as '3' | '7')}
+                  >
+                    <option value="7">Últimos 7 dias</option>
+                    <option value="3">Últimos 3 dias</option>
+                  </select>
+                  <select
+                    aria-label="Tipo de incidente"
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                    value={incidentType}
+                    onChange={(event) => setIncidentType(event.target.value)}
+                  >
+                    <option value="all">Todos os tipos</option>
+                    <option value="discard_rate_high">Descarte alto</option>
+                    <option value="reconciliation_divergence">Divergência</option>
+                    <option value="aggregate_missing">Agregado ausente</option>
+                  </select>
+                  <select
+                    aria-label="Banner afetado"
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                    value={incidentBanner}
+                    onChange={(event) => setIncidentBanner(event.target.value)}
+                  >
+                    <option value="all">Todos os banners</option>
+                    {incidentOptions.map(([id, title]) => (
+                      <option key={id} value={id}>
+                        {title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportFilteredIncidents('csv')}
+                    disabled={filteredIncidentHistory.length === 0}
+                  >
+                    <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                    Exportar CSV
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportFilteredIncidents('json')}
+                    disabled={filteredIncidentHistory.length === 0}
+                  >
+                    <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                    Exportar JSON
+                  </Button>
+                </div>
+                <div className="mb-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={loadExportAudits}
+                    disabled={exportAuditsLoading}
+                  >
+                    <Activity className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                    {exportAuditsLoading ? 'Carregando histórico…' : 'Histórico de exportações'}
+                  </Button>
+                </div>
+                {exportAuditsOpen ? (
+                  <div
+                    className="mb-4 rounded-xl border border-slate-200 p-3"
+                    data-testid="banner-export-audit-history"
+                  >
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Downloads auditados
+                    </p>
+                    {exportAudits.length ? (
+                      exportAudits.map((audit) => (
+                        <div
+                          key={audit.id}
+                          className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2 text-xs last:border-0"
+                        >
+                          <span>
+                            {audit.format?.toUpperCase()} · {audit.record_count} incidentes · ator #
+                            {audit.actor_id ?? '—'}
+                          </span>
+                          <time dateTime={audit.created_at}>
+                            {new Date(audit.created_at).toLocaleString('pt-BR')}
+                          </time>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-500">Nenhuma exportação registrada.</p>
+                    )}
+                  </div>
+                ) : null}
+                <ol className="space-y-2" data-testid="banner-incident-history">
+                  {filteredIncidentHistory
+                    .slice(-5)
+                    .reverse()
+                    .map((incident, index) => {
+                      const label =
+                        incident.type === 'discard_rate_high'
+                          ? 'Taxa de descarte alta'
+                          : incident.type === 'reconciliation_divergence'
+                            ? 'Divergência de reconciliação'
+                            : 'Agregado ausente';
+                      return (
+                        <li
+                          key={`${incident.date}-${incident.type}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
+                        >
+                          <button
+                            type="button"
+                            className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
+                            onClick={() =>
+                              setExpandedIncident(
+                                expandedIncident === `${incident.date}-${incident.type}`
+                                  ? null
+                                  : `${incident.date}-${incident.type}`
+                              )
+                            }
+                            aria-expanded={expandedIncident === `${incident.date}-${incident.type}`}
+                          >
+                            <span className="font-semibold text-slate-700">{label}</span>
+                            <span className="text-slate-500">
+                              {incident.date} · {incident.value}
+                            </span>
+                          </button>
+                          {expandedIncident === `${incident.date}-${incident.type}` && (
+                            <div className="basis-full border-t border-slate-200 pt-2 text-[11px] text-slate-500">
+                              {incident.affected_banners?.length
+                                ? incident.affected_banners.map((banner) => (
+                                    <div key={banner.id}>
+                                      {banner.title}
+                                      {banner.event_count ? ` · ${banner.event_count} eventos` : ''}
+                                    </div>
+                                  ))
+                                : 'Nenhum banner identificado'}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                </ol>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {/* Funnel */}
           <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest">Funil de campanha</h3>
-                  <p className="text-xs text-slate-500 mt-1">Eventos reportáveis no período atual</p>
+                  <h3 className="text-sm font-black uppercase tracking-widest">
+                    Funil de campanha
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Eventos reportáveis no período atual
+                  </p>
                 </div>
                 <BarChart3 className="h-5 w-5 text-brand-blue" />
               </div>
@@ -847,16 +1384,24 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                   ['Leads', data.summary.leads, 'bg-orange-500'],
                   ['CTR', `${data.summary.ctr}%`, 'bg-purple-500'],
                 ].map(([label, value, color]) => (
-                  <div key={String(label)} className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+                  <div
+                    key={String(label)}
+                    className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 p-4"
+                  >
                     <div className={`absolute inset-y-0 left-0 w-1 ${color}`} />
-                    <div className="pl-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
-                    <div className="pl-2 mt-2 text-xl font-black">{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</div>
+                    <div className="pl-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      {label}
+                    </div>
+                    <div className="pl-2 mt-2 text-xl font-black">
+                      {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
+                    </div>
                   </div>
                 ))}
               </div>
               {data.summary.clicks > 0 && (
                 <p className="mt-4 text-xs font-semibold text-slate-500">
-                  Conversão clique para lead: {((data.summary.leads / data.summary.clicks) * 100).toFixed(2)}%
+                  Conversão clique para lead:{' '}
+                  {((data.summary.leads / data.summary.clicks) * 100).toFixed(2)}%
                 </p>
               )}
             </CardContent>
@@ -905,11 +1450,13 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                       </p>
 
                       {banner.delivery_health && (
-                        <div className={`mb-6 rounded-xl border p-3 ${
-                          banner.delivery_health.status === 'healthy'
-                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10'
-                            : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
-                        }`}>
+                        <div
+                          className={`mb-6 rounded-xl border p-3 ${
+                            banner.delivery_health.status === 'healthy'
+                              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10'
+                              : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
+                          }`}
+                        >
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[10px] font-black uppercase tracking-widest">
                               Saúde da entrega
@@ -939,6 +1486,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                           </p>
                           <BannerFormDialog
                             banner={banner}
+                            placements={data.placements}
                             onSaved={loadData}
                             trigger={
                               <Button
@@ -1012,6 +1560,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                           {banner.allowed_actions.includes('edit') && (
                             <BannerFormDialog
                               banner={banner}
+                              placements={data.placements}
                               onSaved={loadData}
                               trigger={
                                 <Button
@@ -1028,7 +1577,11 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                           variant="outline"
                           className="w-full font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl"
                           onClick={() => {
-                            window.open(`/api/v1/company_dashboard/banners/${banner.id}/export.csv`, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              `/api/v1/company_dashboard/banners/${banner.id}/export.csv`,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
                           }}
                         >
                           <Download className="mr-2 h-3.5 w-3.5" />

@@ -40,6 +40,7 @@ const CategoriesManagement = dynamic(() => import('./CategoriesManagement'), {
 });
 const BannersSponsorship = dynamic(() => import('./BannersSponsorship'), {
   loading: () => <DashboardTabSkeleton />,
+  ssr: false,
 });
 const ProductsManagement = dynamic(() => import('./ProductsManagement'), {
   loading: () => <DashboardTabSkeleton />,

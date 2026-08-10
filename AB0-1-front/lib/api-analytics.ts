@@ -3,6 +3,7 @@
 // =======================
 import { fetchApi } from './api';
 import { hasAnalyticsConsent } from './analytics/consent';
+import { getBannerAudienceKey } from './banner-audience';
 import {
   isQueuedOfflineMutationResult,
   sendJsonApiMutationWithOfflineQueue,
@@ -206,7 +207,11 @@ async function requestAnalytics<T>(
   } catch (error: any) {
     const status = error?.status || error?.context?.status;
     const reason =
-      status === 404 ? 'route_not_found' : status === 401 || status === 403 ? 'unauthorized' : 'error';
+      status === 404
+        ? 'route_not_found'
+        : status === 401 || status === 403
+          ? 'unauthorized'
+          : 'error';
     const ttl = status === 401 || status === 403 ? ANALYTICS_UNAUTH_TTL_MS : ANALYTICS_CACHE_TTL_MS;
 
     if (status === 404 || status === 401 || status === 403) {
@@ -229,21 +234,22 @@ async function validateAnalyticsRoutes(companyId: number): Promise<boolean> {
   if (cached) return cached.available;
 
   try {
-    await fetchApi<{ data: any[] }>(
-      `/companies/${companyId}/analytics/historical`,
-      {
-        params: { days: 1 },
-        retries: 0,
-        silentStatusCodes: [401, 403, 404],
-        tag: 'analytics.validate',
-      }
-    );
+    await fetchApi<{ data: any[] }>(`/companies/${companyId}/analytics/historical`, {
+      params: { days: 1 },
+      retries: 0,
+      silentStatusCodes: [401, 403, 404],
+      tag: 'analytics.validate',
+    });
     setAvailability(companyId, true, 'ok', 200, ANALYTICS_CACHE_TTL_MS);
     return true;
   } catch (error: any) {
     const status = error?.status || error?.context?.status;
     const reason =
-      status === 404 ? 'route_not_found' : status === 401 || status === 403 ? 'unauthorized' : 'error';
+      status === 404
+        ? 'route_not_found'
+        : status === 401 || status === 403
+          ? 'unauthorized'
+          : 'error';
     const ttl = status === 401 || status === 403 ? ANALYTICS_UNAUTH_TTL_MS : ANALYTICS_CACHE_TTL_MS;
 
     if (status === 404 || status === 401 || status === 403) {
@@ -274,10 +280,7 @@ export const analyticsApi = {
   },
 
   // Get historical data for charts
-  getHistoricalData: async (
-    companyId: number,
-    days: number = 30
-  ): Promise<HistoricalData[]> => {
+  getHistoricalData: async (companyId: number, days: number = 30): Promise<HistoricalData[]> => {
     return requestAnalytics(
       companyId,
       'historical',
@@ -331,9 +334,7 @@ export const analyticsApi = {
   },
 
   // Settings: get
-  getAnalyticsSettings: async (
-    companyId: number
-  ): Promise<CompanyAnalyticsSettings> => {
+  getAnalyticsSettings: async (companyId: number): Promise<CompanyAnalyticsSettings> => {
     const storageKey = `analytics_settings_company_${companyId}`;
     try {
       const response = await fetchApi<{ settings: CompanyAnalyticsSettings }>(
@@ -404,10 +405,7 @@ export const analyticsApi = {
   },
 
   // Get traffic sources
-  getTrafficSources: async (
-    companyId: number,
-    days: number = 30
-  ): Promise<TrafficSource[]> => {
+  getTrafficSources: async (companyId: number, days: number = 30): Promise<TrafficSource[]> => {
     return requestAnalytics(
       companyId,
       'traffic',
@@ -443,7 +441,15 @@ export const analyticsApi = {
   // Track event (for user actions)
   trackEvent: async (eventData: {
     company_id: number;
-    event_type: 'view' | 'click' | 'lead' | 'whatsapp_click' | 'badge_cta_click' | 'badge_cta_view' | 'badges_tab_open' | string;
+    event_type:
+      | 'view'
+      | 'click'
+      | 'lead'
+      | 'whatsapp_click'
+      | 'badge_cta_click'
+      | 'badge_cta_view'
+      | 'badges_tab_open'
+      | string;
     metadata?: Record<string, any>;
   }): Promise<void> => {
     if (typeof window !== 'undefined' && !hasAnalyticsConsent()) {
@@ -467,12 +473,15 @@ export const analyticsApi = {
   },
 
   // Conversion metrics grouped by event_type
-  getConversionMetrics: async (companyId: number, days = 30): Promise<{ metrics: Record<string, number>; daily: Record<string, number> }> => {
+  getConversionMetrics: async (
+    companyId: number,
+    days = 30
+  ): Promise<{ metrics: Record<string, number>; daily: Record<string, number> }> => {
     try {
-      const response = await fetchApi<{ metrics: Record<string, number>; daily: Record<string, number> }>(
-        '/analytics/conversions',
-        { params: { company_id: companyId, days } }
-      );
+      const response = await fetchApi<{
+        metrics: Record<string, number>;
+        daily: Record<string, number>;
+      }>('/analytics/conversions', { params: { company_id: companyId, days } });
       return response;
     } catch (error) {
       console.error('[analyticsApi.getConversionMetrics] Error:', error);
@@ -493,9 +502,16 @@ export const analyticsApi = {
     tracked_at?: string;
   }): Promise<void> => {
     try {
+      const normalizedPayload = {
+        ...payload,
+        metadata: {
+          ...payload.metadata,
+          audience_key: payload.metadata?.audience_key || getBannerAudienceKey(),
+        },
+      };
       const response = await sendJsonApiMutationWithOfflineQueue('/banner_events', {
         method: 'POST',
-        body: { banner_event: payload },
+        body: { banner_event: normalizedPayload },
         conflictKey: `banner:${payload.banner_id}:${payload.event_type}:${payload.impression_instance_id || payload.click_instance_id || payload.delivery_id || `${Date.now()}-${Math.random()}`}`,
         metadata: {
           queue: 'banner-events',

@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getBannerAudienceKey } from '@/lib/banner-audience';
 
 export interface Banner {
   id: number;
+  delivery_id?: string | null;
   title: string;
   alt_text?: string | null;
   image_url?: string | null;
@@ -27,32 +29,48 @@ interface UseBannersQueryOptions {
   city?: string;
   enabled?: boolean;
   initialData?: Banner[];
+  audience_key?: string;
 }
 
 /**
  * Custom hook para buscar banners com React Query
- * 
+ *
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
  */
+const BANNER_REQUEST_TIMEOUT_MS = 5000;
+
+const withBannerTimeout = <T>(promise: Promise<T>, timeoutMs = BANNER_REQUEST_TIMEOUT_MS) =>
+  Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      window.setTimeout(() => reject(new Error('Banner request timed out')), timeoutMs)
+    ),
+  ]);
+
 export function useBannersQuery(options: UseBannersQueryOptions = {}) {
-  const { 
-    position, 
-    limit, 
-    category_id, 
-    company_id, 
-    slot_key, 
+  const {
+    position,
+    limit,
+    category_id,
+    company_id,
+    slot_key,
     state,
     city,
     enabled = true,
-    initialData 
+    initialData,
+    audience_key,
   } = options;
+  const audienceKey = audience_key || getBannerAudienceKey();
 
   return useQuery<Banner[]>({
-    queryKey: ['banners', { position, limit, category_id, company_id, slot_key, state, city }],
+    queryKey: [
+      'banners',
+      { position, limit, category_id, company_id, slot_key, state, city, audienceKey },
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      
+
       if (position) params.append('position', position);
       if (limit) params.append('limit', String(limit));
       if (category_id) params.append('category_id', String(category_id));
@@ -60,17 +78,20 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (slot_key) params.append('slot_key', slot_key);
       if (state) params.append('state', state);
       if (city) params.append('city', city);
+      if (audienceKey) params.append('audience_key', audienceKey);
 
-      const response = await api.request<Banner[]>({
-        url: `/banners?${params.toString()}`,
-        method: 'GET'
-      });
+      const response = await withBannerTimeout(
+        api.request<Banner[]>({
+          url: `/banners?${params.toString()}`,
+          method: 'GET',
+        })
+      );
       return response.data;
     },
     enabled,
     initialData,
-    staleTime: 5 * 60 * 1000, 
-    gcTime: 15 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     retry: (failureCount, error: unknown) => {
       const requestError = error as { status?: number; context?: { status?: number } };
       const status = requestError.status ?? requestError.context?.status;
@@ -87,6 +108,6 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
 export function useCategoriesBannersQuery(categoryId?: number | string) {
   return useBannersQuery({
     position: 'categories_top',
-    category_id: categoryId
+    category_id: categoryId,
   });
 }
