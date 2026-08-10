@@ -325,7 +325,7 @@ export function BannerContainer({
     );
 
     return (
-      <div ref={containerRef} className={cn('w-full py-2', className)}>
+      <div ref={containerRef} className={cn('m-0 w-full p-0', className)}>
         <PremiumBannerCarousel
           items={items}
           aspectRatio={aspectRatio}

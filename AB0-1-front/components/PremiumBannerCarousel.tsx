@@ -128,7 +128,10 @@ export function PremiumBannerCarousel({
   return (
     <div 
       ref={containerRef}
-      className={cn("group relative w-full overflow-visible !rounded-none shadow-sm transition-shadow hover:shadow-md md:overflow-hidden", className)}
+      className={cn(
+        "group relative mb-0 w-full overflow-hidden !rounded-none shadow-sm transition-shadow hover:shadow-md",
+        className
+      )}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -155,11 +158,11 @@ export function PremiumBannerCarousel({
         {items.length > 1 && (
           <>
             {/* Arrows: Always visible on mobile, hover on desktop */}
-            <div className="absolute inset-y-0 -left-3 flex items-center px-0 opacity-100 md:left-0 md:px-4 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselPrevious className="relative left-0 h-9 w-9 border border-slate-200 bg-white/95 text-slate-600 shadow-md backdrop-blur-md hover:bg-white hover:text-blue-600 md:h-12 md:w-12 md:border-none md:bg-white/30 md:text-white md:hover:bg-white/50" />
+            <div className="absolute inset-y-0 left-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
+              <CarouselPrevious className="relative left-0 h-8 w-8 border border-white/40 !bg-black/20 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/35 hover:text-white [&>svg]:h-6 [&>svg]:w-6 md:h-9 md:w-9" />
             </div>
-            <div className="absolute inset-y-0 -right-3 flex items-center px-0 opacity-100 md:right-0 md:px-4 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-              <CarouselNext className="relative right-0 h-9 w-9 border border-slate-200 bg-white/95 text-slate-600 shadow-md backdrop-blur-md hover:bg-white hover:text-blue-600 md:h-12 md:w-12 md:border-none md:bg-white/30 md:text-white md:hover:bg-white/50" />
+            <div className="absolute inset-y-0 right-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
+              <CarouselNext className="relative right-0 h-8 w-8 border border-white/40 !bg-black/20 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/35 hover:text-white [&>svg]:h-6 [&>svg]:w-6 md:h-9 md:w-9" />
             </div>
 
             {/* On desktop the progress control stays inside the banner. */}
@@ -197,9 +200,9 @@ export function PremiumBannerCarousel({
       </Carousel>
 
       {/* Mobile indicators live below the image, never on top of the creative. */}
-      <div className="mt-1.5 flex h-5 items-center justify-center gap-1.5 md:hidden">
-        {items.length > 1
-          ? scrollSnaps.map((_, index) => {
+      {items.length > 1 && (
+        <div className="mt-0 flex h-4 items-center justify-center gap-1.5 bg-transparent md:hidden">
+          {scrollSnaps.map((_, index) => {
               const active = index === selectedIndex;
               return (
                 <button
@@ -218,9 +221,9 @@ export function PremiumBannerCarousel({
                   />
                 </button>
               );
-            })
-          : null}
-      </div>
+            })}
+        </div>
+      )}
     </div>
   );
 }
