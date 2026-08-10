@@ -32,6 +32,7 @@ export const BANNER_FRAGMENT = gql`
     imageUrl
     linkUrl
     deliveryId
+    sponsored
   }
 `;
 

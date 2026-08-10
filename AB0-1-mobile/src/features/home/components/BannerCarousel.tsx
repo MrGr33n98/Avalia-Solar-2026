@@ -72,7 +72,7 @@ export const BannerCarousel = ({
   useEffect(() => {
     const banner = banners[0];
     if (banner) trackImpression(banner);
-  }, [banners, trackBannerViewed]);
+  }, [banners, trackImpression]);
 
   if (!banners || banners.length === 0) return null;
 

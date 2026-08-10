@@ -60,6 +60,7 @@ export const authErrorHandler = ({ graphQLErrors, networkError }: any) => {
   if (isUnauthorized) {
     console.warn('[Apollo Client] Unauthorized acess detected, logging out...');
     // lazy evaluation of store state to avoid circular dependency
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { useAuthStore } = require('../store/auth');
     useAuthStore.getState().logout();
   }
@@ -105,8 +106,6 @@ function sha256(ascii: string): string {
 
   for (j = 0; j < wordsLength; j++) {
     const w = words.slice(j * 16, (j + 1) * 16);
-    const oldHash = hash.slice(0);
-
     for (i = 16; i < 64; i++) {
       const s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ (w[i - 15] >>> 3);
       const s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >>> 10);
@@ -168,7 +167,7 @@ const persistedQueriesLink = createPersistedQueryLink({
 const cache = new InMemoryCache();
 const CACHE_STORAGE_KEY = '@avalia_solar:apollo_cache_v1';
 
-const restoreCache = AsyncStorage.getItem(CACHE_STORAGE_KEY)
+void AsyncStorage.getItem(CACHE_STORAGE_KEY)
   .then((serialized) => {
     if (serialized) cache.restore(JSON.parse(serialized));
   })

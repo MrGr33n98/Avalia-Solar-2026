@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Colors } from "@/constants/theme";
+import { Colors, Radius, Shadows, Spacing } from "@/constants/theme";
 import {
   StyleSheet,
   View,
@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { fetchApi, getApiBaseUrl } from "../lib/api";
 import { useTracking } from "../hooks/useTracking";
-import { Radius, Shadows, Spacing } from "../constants/theme";
+
 import { ThemedText } from "./themed-text";
 import { getBannerAudienceKey } from "../lib/banner-audience";
 

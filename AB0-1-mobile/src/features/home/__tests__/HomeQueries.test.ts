@@ -16,6 +16,7 @@ describe('Home Queries', () => {
     expect(queryStr).toContain('fragment CompanyFields');
     expect(queryStr).toContain('fragment CategoryFields');
     expect(queryStr).toContain('fragment BannerFields');
+    expect(queryStr).toContain('sponsored');
     expect(queryStr).toContain('fragment ArticleFields');
   });
 

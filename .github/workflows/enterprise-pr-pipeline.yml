@@ -165,6 +165,10 @@ jobs:
           test -n "$E2E_USER_EMAIL" || { echo 'Missing E2E_USER_EMAIL secret'; exit 1; }
           test -n "$E2E_USER_PASSWORD" || { echo 'Missing E2E_USER_PASSWORD secret'; exit 1; }
 
+      - name: Run Banner Ads unit regression
+        working-directory: ./AB0-1-front
+        run: npm run test:banners
+
       - name: Run Playwright Tests
         working-directory: ./AB0-1-front
         env:
