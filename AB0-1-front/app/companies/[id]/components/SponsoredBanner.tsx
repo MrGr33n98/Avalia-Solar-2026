@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import analyticsApi from '@/lib/api-analytics';
+import { track } from '@/lib/analytics/lazy';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
@@ -83,6 +84,14 @@ export default function SponsoredBanner({
         delivery_id: banner.delivery_id || undefined,
         metadata: { slot_key: slotKey },
       });
+      track("banner_view", {
+        banner_id: banner.id,
+        banner_title: banner.title,
+        banner_position: slotKey,
+        element_type: "sponsored_banner",
+        action_type: "view",
+        sponsored: Boolean(banner.sponsored),
+      });
     };
     if (typeof IntersectionObserver === 'undefined') {
       trackImpression(firstBanner);
@@ -155,6 +164,7 @@ export default function SponsoredBanner({
                   href={`/api/v1/banner_clicks/${banner.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
                   className="block w-full h-full"
                 >
                   {content}
@@ -170,6 +180,7 @@ export default function SponsoredBanner({
                     href={`/api/v1/banner_clicks/${banner.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
                   >
                     Saiba mais
                   </a>
@@ -188,6 +199,7 @@ export default function SponsoredBanner({
             href={`/api/v1/banner_clicks/${banner.id}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
             className="block w-full h-full"
           >
             {content}

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Check, MoreHorizontal, ExternalLink, Info, EyeOff, Flag } from 'lucide-react';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { analyticsApi } from '@/lib/api-analytics';
+import { track } from '@/lib/analytics/lazy';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ export const PromotedCompanyCard: React.FC = () => {
         delivery_id: banner.delivery_id || undefined,
         metadata: { position: 'sidebar', slot_key: 'promoted_company_card' },
       });
+      track('banner_view', { banner_id: banner.id, banner_title: banner.title, banner_position: 'sidebar', element_type: 'promoted_company_card', action_type: 'view' });
     };
     if (typeof IntersectionObserver === 'undefined') {
       trackImpression();
@@ -64,7 +66,7 @@ export const PromotedCompanyCard: React.FC = () => {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [banner?.id, banner?.delivery_id]);
+  }, [banner?.id, banner?.delivery_id, banner?.title]);
 
   if (hidden) return null;
 
@@ -113,6 +115,25 @@ export const PromotedCompanyCard: React.FC = () => {
           href={banner?.id ? `/api/v1/banner_clicks/${banner.id}` : bannerLink}
           target="_blank"
           rel="sponsored noopener noreferrer"
+          onClick={() => {
+            track("banner_click", {
+              banner_id: banner?.id,
+              banner_title: bannerTitle,
+              banner_position: "sidebar",
+              element_type: "promoted_company_card",
+              action_type: "click",
+            });
+            void analyticsApi.trackBannerEvent({
+              banner_id: banner?.id || 0,
+              event_type: 'click',
+              click_instance_id: `${banner?.id || 0}:sidebar:${Date.now()}`,
+              delivery_id: banner?.delivery_id || undefined,
+              metadata: {
+                position: "sidebar",
+                slot_key: "promoted_company_card",
+              },
+            });
+          }}
           className="block group relative overflow-hidden border border-slate-200"
         >
           <Image

@@ -169,6 +169,8 @@ jobs:
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_CATEGORY_SLUG: energia-solar
+          E2E_PLACEMENT_SMOKE: true
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: npx playwright test
