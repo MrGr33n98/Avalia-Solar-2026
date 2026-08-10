@@ -12,6 +12,7 @@ import {
   MousePointerClick,
   AlertCircle,
   BarChart3,
+  Download,
   Pause,
   Play,
   Send,
@@ -81,6 +82,11 @@ type CompanyBanner = {
   performance: BannerPerformance;
   active_addons: ActiveAddon[];
   allowed_actions: string[];
+  delivery_health?: {
+    status: 'healthy' | 'blocked';
+    blockers: string[];
+    checks: Array<{ key: string; label: string; ok: boolean }>;
+  };
 };
 
 type Quota = {
@@ -174,6 +180,27 @@ function formatMoney(cents?: number, currency: string = 'BRL') {
 type DetailedPerformance = {
   banner_id: number;
   metrics: BannerPerformance;
+  quality?: {
+    total_events: number;
+    reportable_events: number;
+    discarded_events: number;
+    discard_reasons: Record<string, number>;
+  };
+  context_breakdown?: {
+    page_path: string;
+    placement: string;
+    impressions: number;
+    clicks: number;
+    leads: number;
+    ctr: number;
+  }[];
+  breakdown: {
+    placement: string;
+    impressions: number;
+    clicks: number;
+    leads: number;
+    ctr: number;
+  }[];
   time_series: {
     day: string;
     impressions: number;
@@ -255,6 +282,56 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
                 </div>
               </div>
             </div>
+
+            {data.quality && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Qualidade do tracking</h4>
+                    <p className="mt-1 text-xs text-slate-500">{data.quality.reportable_events} reportáveis de {data.quality.total_events} eventos</p>
+                  </div>
+                  <Badge variant={data.quality.discarded_events > 0 ? 'secondary' : 'default'}>
+                    {data.quality.discarded_events} descartados
+                  </Badge>
+                </div>
+                {Object.keys(data.quality.discard_reasons).length > 0 && (
+                  <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                    Motivos: {Object.entries(data.quality.discard_reasons).map(([reason, count]) => `${reason} (${count})`).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {data.breakdown?.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Por posição</h4>
+                <div className="grid gap-2">
+                  {data.breakdown.map((row) => (
+                    <div key={row.placement} className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-2 text-xs">
+                      <span className="font-semibold">{row.placement}</span>
+                      <span className="text-slate-500">{row.impressions} imp. · {row.clicks} cliques · {row.leads} leads · {row.ctr}% CTR</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.context_breakdown?.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Por página e posição</h4>
+                <div className="max-h-48 space-y-2 overflow-y-auto">
+                  {data.context_breakdown.map((row) => (
+                    <div key={`${row.page_path}:${row.placement}`} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs dark:bg-white/5">
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold">{row.page_path}</div>
+                        <div className="truncate text-slate-500">{row.placement}</div>
+                      </div>
+                      <span className="shrink-0 text-slate-500">{row.impressions} imp. · {row.clicks} cliques · {row.leads} leads</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Simple mini-chart representation */}
             {data.time_series.length > 0 && (
@@ -753,6 +830,38 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
             </Card>
           </div>
 
+          {/* Funnel */}
+          <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-widest">Funil de campanha</h3>
+                  <p className="text-xs text-slate-500 mt-1">Eventos reportáveis no período atual</p>
+                </div>
+                <BarChart3 className="h-5 w-5 text-brand-blue" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  ['Impressões', data.summary.impressions, 'bg-brand-blue'],
+                  ['Cliques', data.summary.clicks, 'bg-emerald-500'],
+                  ['Leads', data.summary.leads, 'bg-orange-500'],
+                  ['CTR', `${data.summary.ctr}%`, 'bg-purple-500'],
+                ].map(([label, value, color]) => (
+                  <div key={String(label)} className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+                    <div className={`absolute inset-y-0 left-0 w-1 ${color}`} />
+                    <div className="pl-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+                    <div className="pl-2 mt-2 text-xl font-black">{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</div>
+                  </div>
+                ))}
+              </div>
+              {data.summary.clicks > 0 && (
+                <p className="mt-4 text-xs font-semibold text-slate-500">
+                  Conversão clique para lead: {((data.summary.leads / data.summary.clicks) * 100).toFixed(2)}%
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Banner List */}
           <div className="space-y-6">
             <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
@@ -794,6 +903,28 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                       <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-6">
                         Posição: {banner.position}
                       </p>
+
+                      {banner.delivery_health && (
+                        <div className={`mb-6 rounded-xl border p-3 ${
+                          banner.delivery_health.status === 'healthy'
+                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10'
+                            : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
+                        }`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest">
+                              Saúde da entrega
+                            </span>
+                            <Badge variant="secondary" className="text-[9px] uppercase">
+                              {banner.delivery_health.status === 'healthy' ? 'Normal' : 'Bloqueado'}
+                            </Badge>
+                          </div>
+                          {banner.delivery_health.blockers.length > 0 && (
+                            <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+                              Bloqueios: {banner.delivery_health.blockers.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       {banner.moderation_status === 'rejected' && banner.rejected_reason && (
                         <div className="mb-6 p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20">
@@ -893,6 +1024,16 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                             />
                           )}
                         </div>
+                        <Button
+                          variant="outline"
+                          className="w-full font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl"
+                          onClick={() => {
+                            window.open(`/api/v1/company_dashboard/banners/${banner.id}/export.csv`, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          <Download className="mr-2 h-3.5 w-3.5" />
+                          Exportar CSV
+                        </Button>
                         <div className="grid grid-cols-2 gap-2">
                           {banner.allowed_actions.includes('submit') && (
                             <Button

@@ -52,6 +52,28 @@ RSpec.describe 'Api::V1::BannerEvents', type: :request do
       expect(BannerEvent.count).to eq(1) # Still 1
     end
 
+    it 'uses client instance id for deterministic idempotency' do
+      params = valid_params.deep_merge(banner_event: { impression_instance_id: 'impression-123' })
+
+      post '/api/v1/banner_events', params: params
+      post '/api/v1/banner_events', params: params
+
+      expect(response).to have_http_status(:created)
+      expect(BannerEvent.where(impression_instance_id: 'impression-123').count).to eq(1)
+    end
+
+    it 'marks bot events as non-reportable while retaining audit data' do
+      allow_any_instance_of(ActionDispatch::Request).to receive(:user_agent).and_return('Googlebot/2.1')
+
+      post '/api/v1/banner_events', params: valid_params
+
+      event = BannerEvent.last
+      expect(event).to be_present
+      expect(event.valid_for_reporting).to be false
+      expect(event.discard_reason).to eq('bot_user_agent')
+      expect(event.fraud_score).to be > 0
+    end
+
     it 'creates a new event if context (like position) changes' do
       post '/api/v1/banner_events', params: valid_params
       expect(BannerEvent.count).to eq(1)

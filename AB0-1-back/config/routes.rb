@@ -161,6 +161,7 @@ Rails.application.routes.draw do
 
       resources :banner_offers, only: [:index]
       resources :banner_events, only: [:create]
+      get 'banner_clicks/:id', to: 'banner_clicks#show'
       post 'payments_webhooks', to: 'payments_webhooks#create', defaults: { provider: 'stripe' }
       post 'payments/webhooks/:provider', to: 'payments_webhooks#create'
       post 'payments/create_intent', to: 'payments#create_intent'
@@ -237,6 +238,7 @@ Rails.application.routes.draw do
             patch :pause
             patch :resume
             get :performance
+            get :export
           end
         end
       end

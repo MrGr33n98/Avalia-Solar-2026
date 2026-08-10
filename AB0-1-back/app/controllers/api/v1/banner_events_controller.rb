@@ -10,7 +10,9 @@ module Api
       ALLOWED_METADATA_KEYS = %w[slot_key position page page_path category_id banner_id title link sponsored impression_instance_id click_instance_id].freeze
 
       def create
-        event_params = params.require(:banner_event).permit(:banner_id, :company_id, :event_type, :tracked_at, utm: {},
+        event_params = params.require(:banner_event).permit(
+          :banner_id, :company_id, :event_type, :tracked_at, :impression_instance_id, :click_instance_id,
+          :delivery_id, utm: {},
                                                                                                                metadata: {})
 
         banner_id = event_params[:banner_id]
@@ -25,6 +27,7 @@ module Api
         ip_hash = safe_hash(request.remote_ip.to_s)
         ua_hash = safe_hash(request.user_agent.to_s)
         meta = sanitize_metadata(event_params[:metadata], banner_id)
+        quality = event_quality(event_type, tracked_at)
         
         date_str = tracked_at.to_date.to_s
         position = meta['position'] || 'unknown'
@@ -32,9 +35,15 @@ module Api
         
         # Include an instance_id if provided by the client, to avoid deduplicating 
         # multiple valid impressions/clicks from the same user/slot throughout the day.
-        instance_id = meta['impression_instance_id'] || meta['click_instance_id'] || SecureRandom.uuid
+        instance_id = event_params[:impression_instance_id].presence ||
+                      event_params[:click_instance_id].presence ||
+                      meta['impression_instance_id'] || meta['click_instance_id']
         
-        raw_key = "#{banner_id}:#{event_type}:#{date_str}:#{ip_hash}:#{ua_hash}:#{position}:#{slot_key}:#{instance_id}"
+        raw_key = if instance_id.present?
+                    "#{banner_id}:#{event_type}:#{instance_id}"
+                  else
+                    "#{banner_id}:#{event_type}:#{date_str}:#{ip_hash}:#{ua_hash}:#{position}:#{slot_key}"
+                  end
         event_key = Digest::SHA256.hexdigest(raw_key)
 
         begin
@@ -51,6 +60,12 @@ module Api
             e.page_path = meta['page_path'] || meta['page']
             e.slot_key = slot_key
             e.placement = position
+            e.delivery_id = event_params[:delivery_id] if e.respond_to?(:delivery_id=)
+            e.impression_instance_id = event_params[:impression_instance_id] if e.respond_to?(:impression_instance_id=)
+            e.click_instance_id = event_params[:click_instance_id] if e.respond_to?(:click_instance_id=)
+            e.valid_for_reporting = quality[:valid] if e.respond_to?(:valid_for_reporting=)
+            e.fraud_score = quality[:fraud_score] if e.respond_to?(:fraud_score=)
+            e.discard_reason = quality[:discard_reason] if e.respond_to?(:discard_reason=)
             
             # Save explicit UTMs for analytics
             utm_data = sanitize_utm(event_params[:utm])
@@ -102,6 +117,17 @@ module Api
 
       def normalize_value(value)
         value.to_s.downcase.strip.gsub(/[^a-z0-9_.-]/, '')[0, 255]
+      end
+
+      def event_quality(event_type, tracked_at)
+        reasons = []
+        reasons << 'bot_user_agent' if request.user_agent.to_s.match?(/bot|crawler|spider|headless/i)
+        reasons << 'future_timestamp' if tracked_at > 5.minutes.from_now
+        reasons << 'stale_timestamp' if tracked_at < 2.days.ago
+        reasons << 'missing_ip' if request.remote_ip.blank?
+
+        score = [reasons.length * 35, 100].min
+        { valid: reasons.empty?, fraud_score: score, discard_reason: reasons.first }
       end
 
       def safe_hash(value)

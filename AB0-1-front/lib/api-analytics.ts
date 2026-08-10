@@ -484,8 +484,11 @@ export const analyticsApi = {
   trackBannerEvent: async (payload: {
     banner_id: number;
     company_id?: number;
-    event_type: 'view' | 'click';
+    event_type: 'view' | 'click' | 'impression' | 'lead';
     utm?: Record<string, any>;
+    impression_instance_id?: string;
+    click_instance_id?: string;
+    delivery_id?: string;
     metadata?: Record<string, any>;
     tracked_at?: string;
   }): Promise<void> => {
@@ -493,7 +496,7 @@ export const analyticsApi = {
       const response = await sendJsonApiMutationWithOfflineQueue('/banner_events', {
         method: 'POST',
         body: { banner_event: payload },
-        conflictKey: `banner:${payload.banner_id}:${payload.event_type}`,
+        conflictKey: `banner:${payload.banner_id}:${payload.event_type}:${payload.impression_instance_id || payload.click_instance_id || payload.delivery_id || `${Date.now()}-${Math.random()}`}`,
         metadata: {
           queue: 'banner-events',
           eventType: payload.event_type,

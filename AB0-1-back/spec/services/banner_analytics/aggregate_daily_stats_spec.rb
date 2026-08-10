@@ -25,6 +25,16 @@ RSpec.describe BannerAnalytics::AggregateDailyStats do
       expect(stat.ctr).to eq(100.0) # 2 clicks / 2 views * 100
     end
 
+    it 'excludes non-reportable events from commercial metrics' do
+      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: date.midday,
+             valid_for_reporting: false, discard_reason: 'bot_user_agent')
+
+      described_class.aggregate_for_date(date)
+
+      stat = BannerDailyStat.find_by(banner_id: banner.id, day: date)
+      expect(stat.views_count).to eq(2)
+    end
+
     it 'is idempotent and updates if stats change' do
       described_class.aggregate_for_date(date)
       

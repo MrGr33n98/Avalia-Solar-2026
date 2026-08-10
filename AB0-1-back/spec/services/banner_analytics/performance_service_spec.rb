@@ -23,6 +23,22 @@ RSpec.describe BannerAnalytics::PerformanceService do
   end
 
   describe '.call' do
+    it 'returns reportable breakdown by placement' do
+      create(:banner_event, banner: banner, event_type: 'impression', placement: 'sidebar', tracked_at: 1.day.ago)
+      create(:banner_event, banner: banner, event_type: 'click', placement: 'sidebar', tracked_at: 1.day.ago)
+      create(:banner_event, banner: banner, event_type: 'lead', placement: 'sidebar', tracked_at: 1.day.ago)
+      create(:banner_event, banner: banner, event_type: 'impression', placement: 'home_top', tracked_at: 1.day.ago,
+             valid_for_reporting: false)
+
+      result = described_class.call(banner.id, start_date: start_date, end_date: end_date)
+
+      expect(result[:breakdown]).to include(
+        include(placement: 'sidebar', impressions: 1, clicks: 1, leads: 1, ctr: 100.0)
+      )
+      expect(result[:breakdown].map { |row| row[:placement] }).not_to include('home_top')
+      expect(result[:context_breakdown]).to be_an(Array)
+    end
+
     it 'returns correctly aggregated metrics' do
       result = described_class.call(banner.id, start_date: start_date, end_date: end_date)
       
@@ -46,6 +62,7 @@ RSpec.describe BannerAnalytics::PerformanceService do
       
       # CPL: $100 / 10 leads = $10.00
       expect(result[:metrics][:cpl]).to eq(10.0)
+      expect(result[:quality]).to include(total_events: 0, reportable_events: 0, discarded_events: 0)
     end
   end
 end

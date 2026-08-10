@@ -73,6 +73,22 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
       )
     end
 
+    it 'exports performance as csv' do
+      get "/api/v1/company_dashboard/banners/#{banner.id}/export.csv", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq('text/csv')
+      expect(response.body).to include('day,impressions,clicks,leads,ctr')
+    end
+
+    it 'returns invalid date range error' do
+      get "/api/v1/company_dashboard/banners/#{banner.id}/export.json",
+          params: { start_date: 'invalid-date' }, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(JSON.parse(response.body)['error']).to eq('invalid_date_range')
+    end
+
     it 'returns performance data' do
       get "/api/v1/company_dashboard/banners/#{banner.id}/performance", headers: headers
 

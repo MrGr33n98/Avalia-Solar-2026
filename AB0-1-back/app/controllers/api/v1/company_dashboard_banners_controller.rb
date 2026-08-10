@@ -86,6 +86,7 @@ module Api
               cpc_cents: (perf[:cpc] * 100).to_i
             },
             active_addons: active_addons,
+            delivery_health: delivery_health_for(b),
             allowed_actions: allowed_actions
           }
         end
@@ -157,6 +158,54 @@ module Api
         )
         
         render json: performance_data
+      end
+
+
+      def delivery_health_for(banner)
+        checks = []
+        checks << { key: 'active', label: 'Banner ativo', ok: banner.active? }
+        checks << { key: 'moderation', label: 'Moderação aprovada', ok: banner.moderation_status == 'approved' }
+        checks << { key: 'schedule', label: 'Período válido', ok: banner.start_date.blank? || banner.start_date <= Time.current }
+        checks << { key: 'expiration', label: 'Não expirado', ok: banner.end_date.blank? || banner.end_date >= Time.current }
+
+        if banner.sponsored? && banner.company_id.present?
+          subscription = current_company.banner_subscriptions
+                                   .where(status: 'active')
+                                   .where('starts_at <= ?', Time.current)
+                                   .where('ends_at IS NULL OR ends_at >= ?', Time.current)
+                                   .first
+          checks << { key: 'contract', label: 'Assinatura ativa', ok: subscription.present? }
+        end
+
+        failed = checks.reject { |check| check[:ok] }
+        { status: failed.empty? ? 'healthy' : 'blocked', checks: checks, blockers: failed.map { |check| check[:key] } }
+      end
+
+      def export
+        banner = current_company.banners.find(params[:id])
+        start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : 30.days.ago.to_date
+        end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : Date.current
+        performance_data = BannerAnalytics::PerformanceService.call(
+          banner.id,
+          start_date: start_date,
+          end_date: end_date
+        )
+
+        respond_to do |format|
+          format.json { render json: performance_data }
+          format.csv do
+            require 'csv'
+            csv = CSV.generate(headers: true) do |output|
+              output << %w[day impressions clicks leads ctr]
+              performance_data[:time_series].each do |row|
+                output << [row[:day], row[:impressions], row[:clicks], row[:leads], row[:ctr]]
+              end
+            end
+            send_data csv, filename: "banner-#{banner.id}-#{start_date}-#{end_date}.csv", type: 'text/csv'
+          end
+        end
+      rescue Date::Error
+        render json: { error: 'invalid_date_range' }, status: :unprocessable_entity
       end
 
       def destroy

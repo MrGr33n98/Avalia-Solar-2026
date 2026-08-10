@@ -22,7 +22,7 @@ module BannerAnalytics
       start_of_day = date.beginning_of_day
       end_of_day = date.end_of_day
 
-      aggregations = BannerEvent.where(tracked_at: start_of_day..end_of_day)
+      aggregations = BannerEvent.reportable.where(tracked_at: start_of_day..end_of_day)
                                 .group(:banner_id, :event_type)
                                 .count
 
@@ -54,6 +54,7 @@ module BannerAnalytics
           clicks_count: clicks,
           leads_count: stats[:leads_count],
           ctr: ctr,
+          cost_cents: 0,
           created_at: Time.current,
           updated_at: Time.current
         }

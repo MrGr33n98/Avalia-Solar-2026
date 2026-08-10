@@ -20,6 +20,7 @@ interface PremiumBannerCarouselProps {
   className?: string;
   aspectRatio?: string;
   onItemClick?: (index: number) => void;
+  onActiveIndexChange?: (index: number) => void;
 }
 
 export function PremiumBannerCarousel({
@@ -28,6 +29,7 @@ export function PremiumBannerCarousel({
   className,
   aspectRatio = "aspect-[3/1] md:aspect-[4/1]",
   onItemClick,
+  onActiveIndexChange,
 }: PremiumBannerCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = React.useState(0);
@@ -51,8 +53,10 @@ export function PremiumBannerCarousel({
 
   const onSelect = React.useCallback((api: CarouselApi) => {
     if (!api) return;
-    setSelectedIndex(api.selectedScrollSnap());
-  }, []);
+    const index = api.selectedScrollSnap();
+    setSelectedIndex(index);
+    onActiveIndexChange?.(index);
+  }, [onActiveIndexChange]);
 
   React.useEffect(() => {
     if (!api) return;

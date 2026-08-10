@@ -49,6 +49,9 @@ module BannerAnalytics
       cpc = total_clicks.positive? ? (total_investment / total_clicks).round(2) : 0.0
       cpl = total_leads.positive? ? (total_investment / total_leads).round(2) : 0.0
       conversion_rate = total_clicks.positive? ? ((total_leads.to_f / total_clicks) * 100).round(2) : 0.0
+      breakdown = build_breakdown(banner_id, start_date, end_date)
+      quality = build_quality_summary(banner_id, start_date, end_date)
+      context_breakdown = build_context_breakdown(banner_id, start_date, end_date)
 
       {
         banner_id: banner_id,
@@ -66,6 +69,9 @@ module BannerAnalytics
           cpl: cpl,
           conversion_rate: conversion_rate
         },
+        breakdown: breakdown,
+        quality: quality,
+        context_breakdown: context_breakdown,
         time_series: stats.order(:day).map do |s|
           {
             day: s.day,
@@ -77,6 +83,67 @@ module BannerAnalytics
           }
         end
       }
+    def self.build_breakdown(banner_id, start_date, end_date)
+      grouped = BannerEvent.reportable
+                           .where(banner_id: banner_id, tracked_at: start_date.beginning_of_day..end_date.end_of_day)
+                           .group(:placement, :event_type)
+                           .count
+      placements = Hash.new { |hash, key| hash[key] = { impressions: 0, clicks: 0, leads: 0 } }
+
+      grouped.each do |(placement, event_type), count|
+        key = placement.presence || 'unknown'
+        case event_type
+        when 'view', 'impression' then placements[key][:impressions] += count
+        when 'click' then placements[key][:clicks] += count
+        when 'lead' then placements[key][:leads] += count
+        end
+      end
+
+      placements.map do |placement, values|
+        impressions = values[:impressions]
+        clicks = values[:clicks]
+        { placement: placement, **values, ctr: impressions.positive? ? (clicks.to_f / impressions * 100).round(2) : 0.0 }
+      end.sort_by { |row| [-row[:impressions], row[:placement]] }
     end
+
+    private_class_method :build_breakdown
+
+    def self.build_quality_summary(banner_id, start_date, end_date)
+      events = BannerEvent.where(banner_id: banner_id, tracked_at: start_date.beginning_of_day..end_date.end_of_day)
+      discarded = events.where(valid_for_reporting: false)
+      {
+        total_events: events.count,
+        reportable_events: events.where(valid_for_reporting: true).count,
+        discarded_events: discarded.count,
+        discard_reasons: discarded.group(:discard_reason).count
+      }
+    end
+
+    private_class_method :build_quality_summary
+
+    def self.build_context_breakdown(banner_id, start_date, end_date)
+      grouped = BannerEvent.reportable
+                           .where(banner_id: banner_id, tracked_at: start_date.beginning_of_day..end_date.end_of_day)
+                           .group(:page_path, :placement, :event_type)
+                           .count
+      contexts = Hash.new { |hash, key| hash[key] = { impressions: 0, clicks: 0, leads: 0 } }
+
+      grouped.each do |(page_path, placement, event_type), count|
+        key = [page_path.presence || 'unknown', placement.presence || 'unknown']
+        case event_type
+        when 'view', 'impression' then contexts[key][:impressions] += count
+        when 'click' then contexts[key][:clicks] += count
+        when 'lead' then contexts[key][:leads] += count
+        end
+      end
+
+      contexts.map do |(page_path, placement), values|
+        impressions = values[:impressions]
+        clicks = values[:clicks]
+        { page_path: page_path, placement: placement, **values, ctr: impressions.positive? ? (clicks.to_f / impressions * 100).round(2) : 0.0 }
+      end.sort_by { |row| [-row[:impressions], row[:page_path], row[:placement]] }
+    end
+
+    private_class_method :build_context_breakdown
   end
 end

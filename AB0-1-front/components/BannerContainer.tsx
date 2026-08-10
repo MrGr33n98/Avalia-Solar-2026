@@ -107,6 +107,14 @@ export function BannerContainer({
 }: BannerContainerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewedBannerIdsRef = React.useRef<Set<string>>(new Set());
+  const impressionIdsRef = React.useRef<Map<string, string>>(new Map());
+  const activeIndexRef = React.useRef(0);
+  const containerVisibleRef = React.useRef(false);
+
+  const createEventId = React.useCallback(() => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }, []);
   const displayBanners = React.useMemo(() => (
     Array.isArray(banners) ? banners : []
   ), [banners]);
@@ -115,14 +123,19 @@ export function BannerContainer({
     const bannerId = Number(banner.id);
     if (!Number.isFinite(bannerId)) return;
 
-    const eventKey = `${bannerId}:view:${position || banner.position || 'unknown'}`;
+    const placement = position || banner.position || 'unknown';
+    const eventKey = `${bannerId}:view:${placement}`;
     if (viewedBannerIdsRef.current.has(eventKey)) return;
     viewedBannerIdsRef.current.add(eventKey);
+    const impressionKey = `${bannerId}:${placement}`;
+    const impressionInstanceId = impressionIdsRef.current.get(impressionKey) || createEventId();
+    impressionIdsRef.current.set(impressionKey, impressionInstanceId);
 
     analyticsApi.trackBannerEvent({
       banner_id: bannerId,
       company_id: banner.company_id || undefined,
-      event_type: 'view',
+      event_type: 'impression',
+      impression_instance_id: impressionInstanceId,
       metadata: {
         title: banner.title,
         position: position || banner.position,
@@ -136,34 +149,19 @@ export function BannerContainer({
     track('banner_view', {
       banner_id: bannerId,
       banner_title: banner.title,
-      banner_position: position || banner.position,
+      banner_position: placement,
       element_type: 'banner',
       action_type: 'view',
       page,
       sponsored: Boolean(banner.sponsored),
     });
-  }, [page, position]);
+  }, [createEventId, page, position]);
 
   const trackBannerClick = React.useCallback((banner: BannerData) => {
     const bannerId = Number(banner.id);
     if (!Number.isFinite(bannerId)) return;
 
     const destinationUrl = banner.link_url || banner.link || null;
-
-    analyticsApi.trackBannerEvent({
-      banner_id: bannerId,
-      company_id: banner.company_id || undefined,
-      event_type: 'click',
-      metadata: {
-        title: banner.title,
-        position: position || banner.position,
-        link: destinationUrl,
-        page,
-        sponsored: Boolean(banner.sponsored),
-      },
-      tracked_at: new Date().toISOString(),
-    });
-
     track('banner_click', {
       banner_id: bannerId,
       banner_title: banner.title,
@@ -176,12 +174,19 @@ export function BannerContainer({
     });
   }, [page, position]);
 
+  const trackActiveBannerView = React.useCallback(() => {
+    if (!containerVisibleRef.current) return;
+    const activeBanner = displayBanners[activeIndexRef.current];
+    if (activeBanner) trackBannerView(activeBanner);
+  }, [displayBanners, trackBannerView]);
+
   React.useEffect(() => {
     const node = containerRef.current;
     if (!node || displayBanners.length === 0) return;
 
     if (typeof IntersectionObserver === 'undefined') {
-      displayBanners.forEach(trackBannerView);
+      containerVisibleRef.current = true;
+      trackActiveBannerView();
       return;
     }
 
@@ -189,7 +194,8 @@ export function BannerContainer({
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35)) return;
 
-        displayBanners.forEach(trackBannerView);
+        containerVisibleRef.current = true;
+        trackActiveBannerView();
         observer.disconnect();
       },
       { threshold: 0.35 }
@@ -198,7 +204,7 @@ export function BannerContainer({
     observer.observe(node);
 
     return () => observer.disconnect();
-  }, [displayBanners, trackBannerView]);
+  }, [displayBanners, trackActiveBannerView]);
 
   if (displayBanners.length === 0) {
     return null;
@@ -253,7 +259,7 @@ export function BannerContainer({
       <div className="relative w-full h-full bg-muted/20">
         {banner.link_url || banner.link ? (
           <Link
-            href={banner.link_url || banner.link || '/'}
+            href={`/api/v1/banner_clicks/${bannerId}`}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full h-full"
@@ -282,6 +288,10 @@ export function BannerContainer({
           items={items}
           aspectRatio={aspectRatio}
           autoplayDelay={4000}
+          onActiveIndexChange={(index) => {
+            activeIndexRef.current = index;
+            trackActiveBannerView();
+          }}
           className={hasSponsoredBanner ? '!rounded-none' : undefined}
         />
       </div>
