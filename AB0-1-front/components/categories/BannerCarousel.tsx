@@ -13,7 +13,7 @@ export interface Banner {
   id: number;
   delivery_id?: string | null;
   title: string;
-  link_url?: string;
+  link_url?: string | null;
   image_url: string;
   position?: string;
   description?: string;

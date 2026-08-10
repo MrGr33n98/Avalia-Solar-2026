@@ -1515,7 +1515,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                                 </span>
                               </div>
                               <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                                {Math.max(addon.days_remaining, 0)} dias
+                                {Math.max(addon.days_remaining ?? 0, 0)} dias
                               </span>
                             </div>
                           ))}
