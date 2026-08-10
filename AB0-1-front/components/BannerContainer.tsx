@@ -48,7 +48,7 @@ export function getBannerAspectRatio(position?: string) {
     case 'sidebar':
       return 'aspect-[1/1]';
     case 'categories_top':
-      return 'aspect-[12/5] sm:aspect-[6/1]';
+      return 'aspect-[12/2.5] sm:aspect-[12/1] md:aspect-[14/1]';
     case 'compare_hero':
       return 'aspect-[16/7] md:aspect-[40/7]';
     case 'compare_page_sidebar':

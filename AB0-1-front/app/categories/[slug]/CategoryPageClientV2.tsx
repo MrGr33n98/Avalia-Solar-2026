@@ -234,7 +234,7 @@ export default function CategoryPageClient({
         </>
       ) : (
         <>
-          {/* Hero - Full width header (Agora Integrado com Banners) */}
+          {/* Hero - Full width header (Agora Integrado com Banners e Carrossel Unificado) */}
           <CategoryHero
             name={categoryName}
             description={
@@ -256,17 +256,6 @@ export default function CategoryPageClient({
               track('category_methodology_click', { category: slug, placement: 'hero' })
             }
           />
-
-          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6">
-            <BannerByLocation
-              location="categories_top"
-              categoryId={categoryId}
-              limit={1}
-              initialBanners={initialBanners.filter(
-                (banner) => banner.position === 'categories_top' || !banner.position
-              )}
-            />
-          </div>
 
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 

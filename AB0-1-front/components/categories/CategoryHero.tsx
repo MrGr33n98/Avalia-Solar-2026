@@ -1,9 +1,11 @@
 'use client';
 
-import { OptimizedImage } from '@/components/ui/optimized-image';
-import { getFullImageUrl } from '@/utils/image';
-import { ChevronRight } from 'lucide-react';
+import React from 'react';
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
+import { getFullImageUrl } from '@/utils/image';
 
 interface Subcategory {
   id: number;
@@ -40,19 +42,80 @@ export default function CategoryHero({
   description,
   bannerUrl,
   parentCategory,
+  banners = [],
 }: CategoryHeroProps) {
-  const resolvedBannerUrl = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
-  const heroDescription =
-    description?.trim() ||
-    `Compare empresas, avaliações e soluções para escolher a melhor para o seu projeto.`;
-  const visualUrl = resolvedBannerUrl || FALLBACK_BANNER_SRC;
+  const resolvedCategoryBanner = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
 
-  const displayTitle = name.toLowerCase().startsWith('empresas') ? name : `Empresas de ${name}`;
+  // Montagem do carrossel unificado (Category Hero Banner + Banners Patrocinados)
+  const carouselItems = React.useMemo(() => {
+    const items: React.ReactNode[] = [];
+
+    // Item 1: Banner Hero próprio da Categoria
+    items.push(
+      <div key="category-default-hero" className="relative w-full h-full bg-slate-950">
+        <OptimizedImage
+          src={resolvedCategoryBanner || FALLBACK_BANNER_SRC}
+          alt={name}
+          fill
+          priority
+          quality={92}
+          sizes="(max-width: 768px) 100vw, 1280px"
+          className="h-full w-full object-contain object-center"
+          fallbackSrc="/images/default-banner.svg"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-slate-950/10" />
+      </div>
+    );
+
+    // Itens Adicionais: Banners Patrocinados
+    banners.forEach((b) => {
+      const bannerSrc = b.image_url ? getFullImageUrl(b.image_url) : FALLBACK_BANNER_SRC;
+      const targetUrl = b.link_url || b.link;
+
+      const content = (
+        <div className="relative w-full h-full bg-slate-950">
+          <OptimizedImage
+            src={bannerSrc}
+            alt={b.title || 'Banner Patrocinado'}
+            fill
+            quality={92}
+            sizes="(max-width: 768px) 100vw, 1280px"
+            className="h-full w-full object-contain object-center"
+            fallbackSrc="/images/default-banner.svg"
+          />
+          {b.sponsored !== false && (
+            <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+              Patrocinado
+            </span>
+          )}
+        </div>
+      );
+
+      items.push(
+        <div key={`sponsored-${b.id}`} className="relative w-full h-full">
+          {targetUrl ? (
+            <a
+              href={targetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full"
+            >
+              {content}
+            </a>
+          ) : (
+            content
+          )}
+        </div>
+      );
+    });
+
+    return items;
+  }, [bannerUrl, name, banners, resolvedCategoryBanner]);
 
   return (
-    <section className="bg-white pb-3 pt-4 md:pb-5 md:pt-5">
+    <section className="bg-white pb-2 pt-3 md:pb-4 md:pt-4">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
-        <nav className="mb-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
+        <nav className="mb-3 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
           <Link href="/" className="transition-colors hover:text-blue-600">
             Home
           </Link>
@@ -63,7 +126,7 @@ export default function CategoryHero({
           {parentCategory && (
             <>
               <ChevronRight className="h-3 w-3 opacity-50" />
-               <Link
+              <Link
                 href={`/categories/${parentCategory.seo_url || parentCategory.slug}`}
                 className="transition-colors hover:text-blue-600"
               >
@@ -75,28 +138,18 @@ export default function CategoryHero({
           <span className="font-bold text-slate-950">{name}</span>
         </nav>
 
-        <div className="relative h-16 overflow-hidden rounded-none border border-slate-200 bg-slate-950 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.45)] sm:h-20 md:h-32 lg:h-64">
-          <div className="absolute inset-0">
-            {visualUrl ? (
-              <OptimizedImage
-                src={visualUrl}
-                alt={name}
-                fill
-                priority
-                quality={92}
-                sizes="(max-width: 768px) 100vw, 1280px"
-                className="h-full w-full object-cover object-center"
-                fallbackSrc="/images/default-banner.svg"
-              />
-            ) : (
-              <div className="h-full w-full bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.35),_transparent_30%),linear-gradient(120deg,_#0f172a,_#1e293b_55%,_#111827)]" />
-            )}
+        {/* Container Global Reduzido: -15% de cada lado (px-12 a px-16/mx-auto em telas maiores) + Altura reduzida 50% */}
+        <div className="mx-auto w-full max-w-[1020px] px-2 sm:px-8 md:px-12 lg:px-16">
+          <div className="overflow-hidden border border-slate-200 bg-slate-950 shadow-sm">
+            <PremiumBannerCarousel
+              items={carouselItems}
+              aspectRatio="aspect-[12/3] sm:aspect-[16/3.2] md:aspect-[20/3.2]"
+              autoplayDelay={5000}
+            />
           </div>
-
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/22 via-transparent to-slate-950/10" />
         </div>
 
-        <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-5">
+        <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4">
           <div className="max-w-[46rem]">
             <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
               {displayTitle}
