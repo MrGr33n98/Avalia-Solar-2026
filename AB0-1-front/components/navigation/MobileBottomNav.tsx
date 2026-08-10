@@ -1,27 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Building2, Heart, Home, User } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Building2, Heart, Home, Search, User } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
-const BASE_NAV_ITEMS = [
-  { href: '/', label: 'Início', icon: Home },
-  { href: '/companies', label: 'Empresas', icon: Building2 },
-  { href: '/favorites', label: 'Favoritos', icon: Heart },
-  { href: '/profile', label: 'Perfil', icon: User },
-];
-
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
-  const navItems = BASE_NAV_ITEMS.map((item) =>
-    item.href === '/profile' && user?.role === 'review'
-      ? { ...item, href: '/review-dashboard/profile' }
-      : item
-  );
+
   const isInternalProfile =
     pathname === '/profile' ||
     pathname === '/review-dashboard' ||
@@ -29,38 +19,81 @@ export default function MobileBottomNav() {
   if (isInternalProfile) return null;
   if (pathname?.startsWith('/dashboard')) return null;
 
-  return (
-    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-0.5">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active =
-            item.href === '/'
-              ? pathname === '/'
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const profileHref = user?.role === 'review' ? '/review-dashboard/profile' : '/profile';
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'relative flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[11px] font-bold transition-all',
-                active
-                  ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-              )}
-            >
-              <span className="relative flex h-7 w-7 items-center justify-center">
-                <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.5 : 2} />
-                {active && (
-                  <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-blue-600" />
-                )}
-              </span>
-              <span className="truncate tracking-tight">{item.label}</span>
-            </Link>
-          );
-        })}
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-0.5 items-center">
+        {/* 1. Início */}
+        <Link
+          href="/"
+          className={cn(
+            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            pathname === '/'
+              ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+          )}
+        >
+          <Home className="h-5 w-5" strokeWidth={pathname === '/' ? 2.5 : 2} />
+          <span className="truncate">Início</span>
+        </Link>
+
+        {/* 2. Empresas */}
+        <Link
+          href="/companies"
+          className={cn(
+            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            pathname.startsWith('/companies')
+              ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+          )}
+        >
+          <Building2 className="h-5 w-5" strokeWidth={pathname.startsWith('/companies') ? 2.5 : 2} />
+          <span className="truncate">Empresas</span>
+        </Link>
+
+        {/* 3. FAB Central Elevado - Buscar */}
+        <div className="relative flex flex-col items-center justify-center">
+          <button
+            type="button"
+            onClick={() => router.push('/companies?focus=search')}
+            aria-label="Buscar empresas e categorias"
+            className="absolute -top-6 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white active:scale-95 transition-transform"
+          >
+            <Search className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+          <span className="mt-7 text-[10px] font-black text-blue-700">Buscar</span>
+        </div>
+
+        {/* 4. Favoritos */}
+        <Link
+          href="/favorites"
+          className={cn(
+            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            pathname.startsWith('/favorites')
+              ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+          )}
+        >
+          <Heart className="h-5 w-5" strokeWidth={pathname.startsWith('/favorites') ? 2.5 : 2} />
+          <span className="truncate">Favoritos</span>
+        </Link>
+
+        {/* 5. Perfil */}
+        <Link
+          href={profileHref}
+          className={cn(
+            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            pathname.startsWith(profileHref)
+              ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+          )}
+        >
+          <User className="h-5 w-5" strokeWidth={pathname.startsWith(profileHref) ? 2.5 : 2} />
+          <span className="truncate">Perfil</span>
+        </Link>
       </div>
     </nav>
   );
 }
+

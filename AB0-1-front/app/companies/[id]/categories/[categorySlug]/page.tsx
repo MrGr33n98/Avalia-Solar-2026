@@ -7,6 +7,7 @@ import { companiesApiSafe } from '@/lib/api-client';
 import { buildCompanyPath, buildCompanyCategoryPath, buildProductPath } from '@/lib/slug';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { UnifiedHeroBanner } from '@/components/banners/UnifiedHeroBanner';
 import CatalogClient from './CatalogClient';
 
 interface Props {
@@ -182,6 +183,12 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
           )}
         </section>
         <div className="mt-8">
+          <UnifiedHeroBanner
+            categoryName={catalog.category.name}
+            categorySlug={catalog.category.seo_url}
+            companyId={catalog.company.id}
+            companyName={catalog.company.name}
+          />
           <CatalogClient catalog={catalog} />
         </div>
       </div>
