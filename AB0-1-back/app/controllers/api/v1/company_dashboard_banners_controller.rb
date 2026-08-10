@@ -249,6 +249,10 @@ module Api
         checks << { key: 'moderation', label: 'Moderação aprovada', ok: banner.moderation_status == 'approved' }
         checks << { key: 'schedule', label: 'Período válido', ok: banner.start_date.blank? || banner.start_date <= Time.current }
         checks << { key: 'expiration', label: 'Não expirado', ok: banner.end_date.blank? || banner.end_date >= Time.current }
+        checks << { key: 'image', label: 'Imagem anexada', ok: banner.image.attached? }
+        checks << { key: 'position', label: 'Posição definida', ok: banner.position.present? }
+        checks << { key: 'slot', label: 'Slot definido', ok: banner.slot_key.present? || banner.position.present? }
+        checks << { key: 'targeting', label: 'Público-alvo compatível', ok: Array(banner.target_states).blank? && Array(banner.target_cities).blank? || banner.company_id.present? }
 
         if banner.sponsored? && banner.company_id.present?
           now = Time.current

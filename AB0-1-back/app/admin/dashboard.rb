@@ -95,6 +95,19 @@ ActiveAdmin.register_page 'Dashboard' do
       end
     end
 
+    panel 'Qual tela controla o quê' do
+      table_for [
+        ['Planos (Catálogo)', 'Features da Company', 'Não gerencia cobrança'],
+        ['Assinatura Legada', 'Assinatura de produto', 'Não altera feature flags'],
+        ['Patrocínio Legado', 'Patrocínio de produto', 'Não define plano da Company'],
+        ['Contratos Faturáveis', 'Billing, status e cobrança', 'Não edita catálogo de features']
+      ] do
+        column('Tela') { |row| row[0] }
+        column('Controla') { |row| row[1] }
+        column('Não controla') { |row| row[2] }
+      end
+    end
+
     # ----------------------------------------------------
     # PLATAFORMA GERAL (Legacy Metrics)
     # ----------------------------------------------------

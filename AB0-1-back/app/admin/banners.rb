@@ -79,6 +79,7 @@ ActiveAdmin.register Banner do
         status_tag 'Ativo Agora', class: 'ok'
       end
     end
+    column('Público-alvo', sortable: false) { |banner| [Array(banner.target_states).presence&.join(', '), Array(banner.target_cities).presence&.join(', '), banner.category&.name].compact.presence&.join(' · ') || 'Global' }
     column :position
     column :slot_key
     column :company
