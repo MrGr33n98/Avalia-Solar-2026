@@ -117,6 +117,15 @@ ActiveAdmin.register Plan do
       row('Última Atualização') { resource.updated_at }
     end
 
+    panel "Origem dos preços" do
+      attributes_table do
+        row("Catálogo anual") { number_to_currency(resource.price, unit: "R$ ", separator: ",", delimiter: ".") }
+        row("Stripe mensal") { resource.stripe_price_id_monthly.presence || "Não configurado" }
+        row("Stripe anual") { resource.stripe_price_id_yearly.presence || "Não configurado" }
+        row("Fonte efetiva") { resource.stripe_price_id_monthly.present? ? "Stripe Price ID Principal" : "Catálogo local" }
+      end
+    end
+
     panel 'Visualização dos Recursos (Features)' do
       attributes_table_for resource do
         row('Lista de Ativos') do
@@ -289,6 +298,7 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
+      para "Alteração afeta empresas que usam este Plan. Confirme impacto antes de salvar.", class: "inline-hints"
         view_helpers.safe_join(
           [
             if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
