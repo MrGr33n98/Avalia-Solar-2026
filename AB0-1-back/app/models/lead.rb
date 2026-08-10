@@ -238,4 +238,12 @@ class Lead < ApplicationRecord
   rescue StandardError => e
     Rails.logger.error("[Lead] Failed to create notification: #{e.message}")
   end
+  def score_explanation
+    insights = SaasLeads::LeadInsights.new(self)
+    { score: insights.score, band: insights.score_band, factors: { status: wizard_status, budget: estimated_budget, timeline: decision_timeline, b2b: insights.b2b? } }
+  end
+
+  def delivery_status_chain
+    [{ status: "created", at: created_at }] + lead_distributions.order(:created_at).map { |d| { status: d.status, company_id: d.company_id, at: d.assigned_at || d.created_at } } + [{ status: wizard_status, at: updated_at }]
+  end
 end

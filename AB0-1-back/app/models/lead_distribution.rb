@@ -15,4 +15,12 @@ class LeadDistribution < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     %w[company lead]
   end
+  def rule_explanation
+    parts = []
+    parts << "categoria=#{lead.category&.name || "todas"}"
+    parts << "regiao=#{lead.state.presence || lead.city.presence || "todas"}"
+    parts << "score=#{lead.try(:cached_score) || "não calculado"}"
+    parts << "empresa=#{company&.name || "não definida"}"
+    parts.join(" · ")
+  end
 end

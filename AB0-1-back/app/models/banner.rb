@@ -243,6 +243,16 @@ class Banner < ApplicationRecord
     super(raw_list.map(&:to_s).map(&:strip).reject(&:blank?).uniq)
   end
 
+  def operational_status
+    return "Rascunho" if moderation_status == "draft"
+    return "Em Revisão" if moderation_status == "submitted"
+    return "Rejeitado" if moderation_status == "rejected"
+    return "Expirado" if end_date.present? && end_date < Time.current
+    return "Agendado" if start_date.present? && start_date > Time.current
+    return "Pausado" unless active
+    moderation_status == "approved" ? "Veiculando" : moderation_status.to_s.humanize
+  end
+
   private
 
   def ensure_dimensions

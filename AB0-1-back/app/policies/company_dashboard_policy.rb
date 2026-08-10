@@ -69,6 +69,10 @@ class CompanyDashboardPolicy < ApplicationPolicy
     admin? || company_owner?
   end
 
+  def view_banners?
+    admin_or_member?
+  end
+
   def update_banner?
     admin? || company_owner?
   end

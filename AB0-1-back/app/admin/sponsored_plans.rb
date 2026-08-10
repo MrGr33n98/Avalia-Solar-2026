@@ -1,5 +1,5 @@
 ActiveAdmin.register SponsoredPlan do
-  menu label: 'SAAS - Patrocinados', priority: 20
+  menu label: 'Patrocínio Legado', priority: 20
 
   permit_params :member_id, :product_id, :category_id, :plan_id, :custom_cta, :active, :purchased_at, :start_at, :end_at
 

@@ -16,6 +16,7 @@ ActiveAdmin.register LeadDistribution do
     column :lead
     column :company
     column :status
+    column("Regra usada", sortable: false) { |distribution| distribution.rule_explanation }
     column :assigned_at
     column :created_at
     actions

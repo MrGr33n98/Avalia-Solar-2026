@@ -169,7 +169,7 @@ type BannerAddon = {
   duration_days: number;
 };
 
-type ApiFailure = Error & { status?: number };
+type ApiFailure = Error & { status?: number; details?: { code?: string } };
 type ExportIncident = {
   date: string;
   type: string;
@@ -831,7 +831,8 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     } catch (e: unknown) {
       const failure = e as ApiFailure;
       if (failure.status === 403) {
-        setError('Acesso restrito ao seu plano atual.');
+        const code = failure.details?.code;
+        setError(code === 'FEATURE_DISABLED' ? 'Banner não habilitado no plano da empresa.' : code === 'POLICY_FORBIDDEN' ? 'Você pode consultar banners, mas não pode alterá-los.' : 'Acesso restrito: verifique plano e permissão da empresa.');
       } else {
         setError(errorMessage(e, 'Falha ao sincronizar dados.'));
       }

@@ -1,5 +1,5 @@
 ActiveAdmin.register SubscriptionPlan do
-  menu label: 'SAAS - Gestao de planos', priority: 19
+  menu label: 'Assinatura Legada (não controla features)', priority: 19
 
   permit_params :member_id, :product_id, :category_id, :plan_id, :value, :status, :purchased_at, :start_at, :end_at
 

@@ -5,6 +5,7 @@ module Api
       before_action :require_company_user
       before_action :ensure_company
       before_action -> { authorize_feature!('promo_banner') }
+      before_action :authorize_banner_read!
       before_action :authorize_banner_management!, only: %i[create update submit pause resume destroy export_audit export_audits acknowledge_export_alert]
 
       def index
@@ -318,8 +319,13 @@ module Api
       def authorize_feature!(feature_name)
         return true if current_company&.feature_enabled?(feature_name)
 
-        render json: { error: 'plan_upgrade_required', feature: feature_name }, status: :forbidden
+        Rails.logger.warn("[FeatureDenied] user_id=#{current_user&.id} company_id=#{current_company&.id} plan_id=#{current_company&.plan_id} feature=#{feature_name} request_id=#{request.request_id} reason=feature_disabled")
+        render json: { error: 'feature_disabled', code: 'FEATURE_DISABLED', feature: feature_name, message: "Recurso '#{feature_name}' não está habilitado no plano desta empresa." }, status: :forbidden
         false
+      end
+
+      def authorize_banner_read!
+        authorize current_company, :view_banners?, policy_class: CompanyDashboardPolicy
       end
 
       def authorize_banner_management!

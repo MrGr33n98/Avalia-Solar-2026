@@ -17,11 +17,17 @@ module Api
 
       # JSON responses by default
       respond_to :json
+      after_action :set_effective_company_header
       # Error handling
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
       rescue_from Pundit::NotAuthorizedError, with: :authorization_error
+
+      def set_effective_company_header
+        company = current_user&.company
+        response.set_header("X-Effective-Company-Id", company.id.to_s) if company
+      end
 
       private
 
@@ -199,9 +205,9 @@ module Api
 
       def authorization_error(_exception)
         render_error_response(
-          message: 'You are not authorized to access this resource',
+          message: 'Permissão insuficiente para esta ação',
           status: :forbidden,
-          code: 'AUTHORIZATION_ERROR'
+          code: 'POLICY_FORBIDDEN', details: { action: params[:action], resource: self.class.name, required_role: 'owner_or_admin' }
         )
       end
     end
