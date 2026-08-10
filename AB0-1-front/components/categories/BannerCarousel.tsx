@@ -14,9 +14,9 @@ export interface Banner {
   delivery_id?: string | null;
   title: string;
   link_url?: string | null;
-  image_url: string;
+  image_url?: string | null;
   position?: string;
-  description?: string;
+  description?: string | null;
 }
 
 interface BannerCarouselProps {
@@ -40,6 +40,13 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
       impression_instance_id: impressionInstanceId,
       delivery_id: banner.delivery_id || undefined,
       metadata: { position: banner.position || 'categories_hero' },
+    });
+    track('banner_view', {
+      banner_id: banner.id,
+      banner_title: banner.title,
+      banner_position: banner.position || 'categories_hero',
+      element_type: 'banner',
+      action_type: 'view',
     });
   }, []);
 

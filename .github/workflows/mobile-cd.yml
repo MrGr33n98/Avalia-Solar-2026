@@ -55,7 +55,8 @@ jobs:
 
       - name: 🚀 EAS Update (Over-The-Air)
         if: github.event_name == 'push' || github.event.inputs.action == 'update'
-        run: eas update --branch production --message "Auto-update from GitHub Actions: ${{ github.sha }}" --non-interactive
+        run: >-
+          eas update --branch production --message "Auto-update from GitHub Actions: ${{ github.sha }}" --non-interactive
 
       - name: 🏗 EAS Build (Binaries)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build'

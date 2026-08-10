@@ -13,6 +13,7 @@ import {
 import { Image } from "expo-image";
 import { Colors, Spacing } from "@/constants/theme";
 import { fetchApi, getApiBaseUrl } from "@/lib/api";
+import { useTracking } from "@/hooks/useTracking";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - Spacing.four * 2;
@@ -22,6 +23,7 @@ interface Banner {
   imageUrl: string;
   linkUrl?: string;
   deliveryId?: string | null;
+  sponsored?: boolean;
 }
 
 interface BannerCarouselProps {
@@ -39,12 +41,14 @@ export const BannerCarousel = ({
   const colors = Colors[scheme === "unspecified" || !scheme ? "light" : scheme];
   const [activeIndex, setActiveIndex] = useState(0);
   const impressionTrackedRef = useRef<Set<string>>(new Set());
+  const { trackBannerViewed, trackBannerClicked } = useTracking();
 
   const trackImpression = (banner: Banner) => {
     const deliveryKey = banner.deliveryId || "legacy";
     const impressionInstanceId = `${banner.id}:${deliveryKey}:home_top`;
     if (impressionTrackedRef.current.has(impressionInstanceId)) return;
     impressionTrackedRef.current.add(impressionInstanceId);
+    trackBannerViewed(Number(banner.id), "home_top", Boolean(banner.sponsored));
     void fetchApi("banner_events", {
       method: "POST",
       body: JSON.stringify({
@@ -68,7 +72,7 @@ export const BannerCarousel = ({
   useEffect(() => {
     const banner = banners[0];
     if (banner) trackImpression(banner);
-  }, [banners]);
+  }, [banners, trackBannerViewed]);
 
   if (!banners || banners.length === 0) return null;
 
@@ -100,6 +104,7 @@ export const BannerCarousel = ({
             key={banner.id}
             style={styles.bannerItem}
             onPress={() => {
+              trackBannerClicked(Number(banner.id), "home_top", Boolean(banner.sponsored));
               if (onPress) return onPress(banner);
               if (banner.linkUrl) {
                 Linking.openURL(
