@@ -28,6 +28,7 @@ interface BannerCarouselProps {
 export function BannerCarousel({ banners, loading, className }: BannerCarouselProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const impressionTrackedRef = React.useRef<Set<string>>(new Set());
+  const impressionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const trackImpression = React.useCallback((banner: Banner) => {
     const deliveryKey = banner.delivery_id || 'legacy';
@@ -60,7 +61,7 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
-        trackImpression(firstBanner);
+        impressionTimerRef.current = setTimeout(() => trackImpression(firstBanner), 1000);
         observer.disconnect();
       },
       { threshold: [0.5] }
@@ -129,7 +130,8 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
         autoplayDelay={5000}
         onActiveIndexChange={(index) => {
           const banner = banners[index];
-          if (banner) trackImpression(banner);
+          if (impressionTimerRef.current) clearTimeout(impressionTimerRef.current);
+          if (banner) impressionTimerRef.current = setTimeout(() => trackImpression(banner), 1000);
         }}
       />
     </div>

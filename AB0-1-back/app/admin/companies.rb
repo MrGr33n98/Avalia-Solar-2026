@@ -29,6 +29,18 @@ ActiveAdmin.register Company do
     link_to 'Suspend', suspend_admin_company_path(resource), method: :put, class: 'member_link'
   end
 
+  action_item :view_banners, only: :show do
+    link_to 'Ver Banners', admin_banners_path(q: { company_id_eq: resource.id }), class: 'member_link'
+  end
+
+  action_item :view_plan, only: :show do
+    link_to 'Ver Plano', resource.plan_id.present? ? admin_plan_path(resource.plan_id) : admin_plans_path, class: 'member_link'
+  end
+
+  action_item :view_contracts, only: :show do
+    link_to 'Ver Contratos', admin_billing_company_subscriptions_path(q: { company_id_eq: resource.id }), class: 'member_link'
+  end
+
   action_item :add_product, only: :show do
     link_to 'Adicionar Produto', new_admin_product_path(company_id: resource.id)
   end
