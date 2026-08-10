@@ -519,6 +519,14 @@ export function CompaniesContent({
             </aside>
 
             <div className="w-full min-w-0 flex-1 space-y-6">
+              <div className="w-full min-w-0 max-w-full">
+                <BannerByLocation
+                  location="companies_top"
+                  categoryId={filters.category_ids[0]}
+                  className="max-w-full"
+                />
+              </div>
+
               <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
