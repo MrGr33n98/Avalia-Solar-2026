@@ -625,11 +625,15 @@ function AddonCheckoutDialog({ banner, trigger }: { banner: CompanyBanner; trigg
           {error && <div className="text-sm text-destructive">{error}</div>}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <Button onClick={doCheckout} disabled={submitting || loadingAddons || !selectedAddonId}>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={doCheckout}
+            disabled={submitting || loadingAddons || !selectedAddonId}
+          >
             {submitting ? 'Gerando Checkout...' : 'Ir para Pagamento'}
           </Button>
         </DialogFooter>
@@ -702,16 +706,16 @@ function BannerFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[620px]">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:max-h-[90dvh] sm:w-full sm:max-w-[620px] sm:p-6">
         <DialogHeader>
           <DialogTitle>{banner ? 'Editar banner' : 'Novo banner'}</DialogTitle>
           <DialogDescription>
             {banner
               ? 'Alterações voltam para rascunho e exigem nova moderação.'
-              : 'Crie anúncio em rascunho e envie para moderação quando estiver pronto.'}
+              : 'Crie o anúncio gratuitamente como rascunho. O pagamento acontece somente ao escolher um pacote de promoção.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-2">
+        <div className="grid gap-5 py-4">
           <div className="space-y-2">
             <Label htmlFor={`banner-title-${banner?.id || 'new'}`}>Título</Label>
             <Input
@@ -785,11 +789,16 @@ function BannerFormDialog({
             </p>
           )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            className="w-full sm:w-auto"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={submitting}
+          >
             Cancelar
           </Button>
-          <Button onClick={save} disabled={submitting}>
+          <Button className="w-full sm:w-auto" onClick={save} disabled={submitting}>
             {submitting ? 'Salvando...' : banner ? 'Salvar alterações' : 'Criar rascunho'}
           </Button>
         </DialogFooter>

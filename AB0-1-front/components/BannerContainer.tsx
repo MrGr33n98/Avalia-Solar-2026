@@ -184,10 +184,30 @@ export function BannerContainer({
       if (!Number.isFinite(bannerId)) return;
 
       const destinationUrl = banner.link_url || banner.link || null;
+      const placement = position || banner.position || 'unknown';
+      const clickInstanceId = createEventId();
+
+      void analyticsApi.trackBannerEvent({
+        banner_id: bannerId,
+        company_id: banner.company_id || undefined,
+        event_type: 'click',
+        click_instance_id: clickInstanceId,
+        delivery_id: banner.delivery_id || undefined,
+        metadata: {
+          title: banner.title,
+          position: placement,
+          destination_url: destinationUrl,
+          page,
+          sponsored: Boolean(banner.sponsored),
+          audience_key: getBannerAudienceKey(),
+        },
+        tracked_at: new Date().toISOString(),
+      });
+
       track('banner_click', {
         banner_id: bannerId,
         banner_title: banner.title,
-        banner_position: position || banner.position,
+        banner_position: placement,
         element_type: 'banner',
         action_type: 'click',
         destination_url: destinationUrl,
@@ -196,7 +216,7 @@ export function BannerContainer({
         delivery_id: banner.delivery_id || undefined,
       });
     },
-    [page, position]
+    [createEventId, page, position]
   );
 
   const trackActiveBannerView = React.useCallback(() => {

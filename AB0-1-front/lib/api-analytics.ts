@@ -523,6 +523,10 @@ export const analyticsApi = {
       if (isQueuedOfflineMutationResult(response)) {
         return;
       }
+
+      if (!response.ok) {
+        throw new Error(`Falha ao registrar evento de banner (${response.status})`);
+      }
     } catch (error) {
       console.error('[analyticsApi.trackBannerEvent] Error:', error);
     }
