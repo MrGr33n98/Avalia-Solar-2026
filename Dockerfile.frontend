@@ -93,6 +93,7 @@ RUN --mount=type=secret,id=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY \
     SENTRY_ORG="${SENTRY_ORG}" \
     SENTRY_PROJECT="${SENTRY_PROJECT}" \
     NEXT_DISABLE_SOURCEMAPS=1 \
+    NEXT_DISABLE_WEBPACK_BUILD_WORKER=true \
     npm run build
 
 # Stage 3: Production image, copy all the files and run next

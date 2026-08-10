@@ -45,6 +45,8 @@ export default function CategoryHero({
   banners = [],
 }: CategoryHeroProps) {
   const resolvedCategoryBanner = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
+  const displayTitle = name;
+  const heroDescription = description || '';
 
   // Montagem do carrossel unificado (Category Hero Banner + Banners Patrocinados)
   const carouselItems = React.useMemo(() => {
