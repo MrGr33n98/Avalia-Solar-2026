@@ -226,6 +226,7 @@ ActiveAdmin.register Banner do
         link_to banner.link, banner.link, target: '_blank' if banner.link.present?
       end
       row :position
+      row('Status operacional') { |banner| banner.operational_status }
       row :slot_key
       row :company
       row :financial_institution
