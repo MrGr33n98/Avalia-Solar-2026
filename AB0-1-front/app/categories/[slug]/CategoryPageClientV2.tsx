@@ -253,6 +253,17 @@ export default function CategoryPageClient({
             }
           />
 
+          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6">
+            <BannerByLocation
+              location="categories_top"
+              categoryId={categoryId}
+              limit={1}
+              initialBanners={initialBanners.filter(
+                (banner) => banner.position === 'categories_top' || !banner.position
+              )}
+            />
+          </div>
+
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 
           <DecisionChips
