@@ -12,8 +12,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, Star, X, ShieldCheck, Building2, Minimize2 } from 'lucide-react';
+import { ArrowLeftRight, Star, X, ShieldCheck, Building2 } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
+import { hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
@@ -64,6 +65,7 @@ interface ComparisonCompany {
   delivered_projects_score?: number;
   response_time_sla?: string;
   warranty_years?: number;
+  has_paid_plan?: boolean | null;
 }
 
 interface CompanyComparisonModalProps {
@@ -168,17 +170,17 @@ function MobileComparisonContent({
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-1 md:hidden">
-      <div className="mb-2 grid min-w-0 grid-cols-3 gap-1.5">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1.5 pb-1.5 pt-0.5 md:hidden">
+      <div className="mb-1.5 grid min-w-0 grid-cols-3 gap-1">
         {visibleCompanies.map((company) => {
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
-            <div key={company.id} className={cn('relative min-w-0 rounded-lg border bg-white p-1.5 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
-              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="absolute right-0.5 top-0.5 rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500">
+            <div key={company.id} className={cn('relative min-w-0 rounded-md border bg-white p-1 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
+              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="absolute right-0 top-0 rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500">
                 <X className="h-3 w-3" aria-hidden="true" />
               </button>
-              <div className="relative mx-auto mb-1 h-7 w-9 overflow-hidden rounded border border-slate-100 bg-white">
+              <div className="relative mx-auto mb-0.5 h-6 w-8 overflow-hidden rounded border border-slate-100 bg-white">
                 {logoUrl ? <Image src={logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />}
               </div>
               <Link href={`/companies/${company.slug || company.id}`} className="block min-w-0">
@@ -193,20 +195,24 @@ function MobileComparisonContent({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
         {rows.map((row) => (
-          <div key={row.label} className="grid min-w-0 grid-cols-[68px_minmax(0,1fr)] border-b border-slate-100 last:border-b-0">
-            <div className="bg-slate-50/70 px-1.5 py-2">
+          <div className="grid min-w-0 grid-cols-[62px_minmax(0,1fr)] border-b border-slate-100 last:border-b-0">
+            <div className="bg-slate-50/70 px-1 py-1.5">
               <span className="block text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-800">{row.label}</span>
               <span className="block text-[9px] leading-tight text-slate-400">{row.detail}</span>
             </div>
             <div className="grid min-w-0 grid-cols-3 divide-x divide-slate-100">
-              {visibleCompanies.map((company) => <div key={`${row.label}-${company.id}`} className={cn('flex min-w-0 flex-col justify-center gap-0.5 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>{row.render(company)}</div>)}
+              {visibleCompanies.map((company) => <div key={`${row.label}-${company.id}`} className={cn('flex min-w-0 flex-col justify-center gap-0.5 px-1 py-1.5', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>{row.render(company)}</div>)}
             </div>
           </div>
         ))}
-        <div className="grid min-w-0 grid-cols-[68px_minmax(0,1fr)] bg-slate-50/50">
-          <span className="px-1.5 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Cotação</span>
+        <div className="grid min-w-0 grid-cols-[62px_minmax(0,1fr)] bg-slate-50/50">
+          <span className="px-1 py-1.5 text-[9px] font-bold uppercase tracking-wide text-slate-400">Orçamento</span>
           <div className="grid min-w-0 grid-cols-3 divide-x divide-slate-100">
-            {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className="min-w-0 px-1.5 py-2"><Button onClick={() => onQuote(company.id)} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold text-[#C2410C] hover:bg-[#FFEED5]">Cotar</Button></div>)}
+            {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className="min-w-0 px-1.5 py-2">{hasPaidPlan(company) ? (
+                <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-7 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-0.5 text-[8px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">
+                  Solicitar orçamento
+                </Button>
+              ) : null}</div>)}
           </div>
         </div>
       </div>
@@ -270,7 +276,7 @@ export default function CompanyComparisonModal({
         className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[78dvh] !w-[calc(100vw-24px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[85vh] md:!w-[calc(100vw-64px)] md:!max-w-[1020px] md:rounded-lg md:border md:shadow-xl"
       >
         {/* Swiss Design Header */}
-        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-3 py-3 pr-12 md:px-8 md:py-4 md:pr-14">
+        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2.5 py-2 pr-11 md:px-5 md:py-2.5 md:pr-12">
           <div className="mb-1 flex items-center justify-between md:hidden">
             <div className="flex min-w-0 items-center gap-2 text-left">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-white" aria-hidden="true">
@@ -290,11 +296,11 @@ export default function CompanyComparisonModal({
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="h-7 rounded-md border border-blue-200 bg-blue-50 px-2 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
-                title="Minimizar modal para o balão flutuante"
+                aria-label="Minimizar comparação"
+                className="h-7 w-7 rounded-md border border-blue-200 bg-blue-50 p-0 text-blue-700 hover:bg-blue-100"
+                title="Minimizar comparação"
               >
-                <Minimize2 className="mr-1 h-3 w-3 stroke-[2.5]" />
-                Minimizar
+                <span aria-hidden="true" className="text-base font-bold leading-none">−</span>
               </Button>
               <Button
                 variant="ghost"
@@ -307,8 +313,8 @@ export default function CompanyComparisonModal({
               </Button>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="hidden flex-wrap items-center gap-3 md:flex">
+          <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
+            <div className="hidden flex-wrap items-center gap-1.5 md:flex">
               <DialogTitle className="sr-only">Comparar empresas</DialogTitle>
               <DialogDescription className="sr-only">
                 Selecione até 4 empresas para comparar
@@ -323,7 +329,7 @@ export default function CompanyComparisonModal({
                 return (
                   <div
                     key={comp.id}
-                    className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-1 pr-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm"
+                    className="flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-white py-0.5 pl-0.5 pr-1.5 text-[10px] font-bold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                   >
                     <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-100 bg-white flex items-center justify-center shrink-0">
                       {logoUrl ? (
@@ -361,16 +367,16 @@ export default function CompanyComparisonModal({
               )}
             </div>
 
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden items-center gap-1.5 md:flex">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="h-9 rounded-lg border border-blue-200 bg-blue-50/80 px-3.5 text-xs font-bold text-blue-700 transition-all hover:bg-blue-100 hover:text-blue-800 shadow-xs"
-                title="Minimizar para o balão flutuante"
+                aria-label="Minimizar comparação"
+                className="h-8 w-8 rounded-md border border-blue-200 bg-blue-50/80 p-0 text-blue-700 transition-all hover:bg-blue-100 hover:text-blue-800 shadow-xs"
+                title="Minimizar comparação"
               >
-                <Minimize2 className="h-4 w-4 mr-1.5 stroke-[2.5]" />
-                Minimizar
+                <span aria-hidden="true" className="text-lg font-bold leading-none">−</span>
               </Button>
 
               <Button
@@ -388,7 +394,7 @@ export default function CompanyComparisonModal({
 
         {/* Comparison Grid */}
         <div className="hidden min-h-0 overflow-y-auto md:block">
-          <div className="p-2 md:p-8 md:pb-16">
+          <div className="p-1.5 md:p-4 md:pb-8">
             <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
               {companies.length > 2 ? (
                 <>
@@ -530,7 +536,7 @@ export default function CompanyComparisonModal({
                   </div>
 
                   {/* 1. Reputação Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
+                  <div className="grid grid-cols-[72px_repeat(4,106px)] divide-x divide-slate-100 bg-white md:grid-cols-[136px_repeat(4,minmax(0,1fr))]">
                     <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
                       <div>
                         <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
@@ -809,17 +815,21 @@ export default function CompanyComparisonModal({
                           key={`cta-${company.id}`}
                           className={cn('p-2 md:p-4', isHighlighted && 'bg-blue-50/5')}
                         >
-                          <Button
-                            className={cn(
-                              'h-9 w-full rounded-md border text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all md:h-11',
-                              'bg-[#FFF7ED] hover:bg-[#FFEED5] border-[#FDBA74] text-[#C2410C]',
-                              'dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400'
-                            )}
-                            onClick={() => handleQuoteClick(company.id)}
-                            aria-label={`Solicitar orçamento da ${company.name}`}
-                          >
-                            Cotar
-                          </Button>
+                          {hasPaidPlan(company) ? (
+                            <Button
+                              className={cn(
+                                'h-9 w-full rounded-md border text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all md:h-11',
+                                'bg-[#FFF7ED] hover:bg-[#FFEED5] border-[#FDBA74] text-[#C2410C]',
+                                'dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400'
+                              )}
+                              onClick={() => handleQuoteClick(company.id)}
+                              aria-label={`Solicitar orçamento da ${company.name}`}
+                            >
+                              Solicitar orçamento
+                            </Button>
+                          ) : (
+                            <span className="block text-center text-[10px] text-slate-300">Indisponível</span>
+                          )}
                         </div>
                       );
                     })}
