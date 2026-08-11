@@ -10,8 +10,8 @@ module Api
             name: @current_company.name,
             verified: @current_company.respond_to?(:verified?) ? @current_company.verified? : true,
             trust_score: @current_company.trust_score || 0,
-            rating_avg: @current_company.respond_to?(:rating_avg) ? @current_company.rating_avg : 4.5,
-            reviews_count: @current_company.respond_to?(:reviews_count) ? @current_company.reviews_count : 10,
+            rating_avg: @current_company.reviews_count.to_i.positive? ? @current_company.rating_avg : nil,
+            reviews_count: @current_company.respond_to?(:reviews_count) ? @current_company.reviews_count.to_i : 0,
             badges: [] # To be implemented
           },
           metrics: {

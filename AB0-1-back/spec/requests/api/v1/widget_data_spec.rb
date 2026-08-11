@@ -5,7 +5,16 @@ RSpec.describe 'Api::V1::WidgetData', type: :request do
 
   describe 'GET /api/v1/companies/:id/widget_data' do
     context 'with valid api_key' do
-      it 'returns company trust data' do
+      it "returns no synthetic reputation without reviews" do
+      get "/api/v1/companies/#{company.id}/widget_data", params: { api_key: "test_key" }
+
+      json = JSON.parse(response.body)
+      expect(json["rating_avg"]).to be_nil
+      expect(json["reviews_count"]).to eq(0)
+      expect(json.values).not_to include(4.5, 10)
+    end
+
+      it "returns company trust data" do
         get "/api/v1/companies/#{company.id}/widget_data", params: { api_key: 'test_key' }
 
         expect(response).to have_http_status(:success)

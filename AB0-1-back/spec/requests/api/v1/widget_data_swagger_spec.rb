@@ -15,7 +15,7 @@ RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
             name: { type: :string },
             verified: { type: :boolean },
             trust_score: { type: :number },
-            rating_avg: { type: :number },
+            rating_avg: { type: :number, nullable: true },
             reviews_count: { type: :integer },
             verified_badge_image_url: { type: :string, nullable: true },
             public_profile_url: { type: :string }

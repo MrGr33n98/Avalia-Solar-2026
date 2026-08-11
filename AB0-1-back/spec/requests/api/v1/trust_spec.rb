@@ -16,7 +16,7 @@ RSpec.describe 'Trust API', type: :request, swagger_doc: 'v1/swagger.json' do
                      name: { type: :string },
                      verified: { type: :boolean },
                      trust_score: { type: :number },
-                     rating_avg: { type: :number },
+                     rating_avg: { type: :number, nullable: true },
                      reviews_count: { type: :integer },
                      badges: { type: :array, items: { type: :string } }
                    }

@@ -17,8 +17,8 @@ module Api
           name: company.name,
           verified: company.verified?,
           trust_score: trust_score,
-          rating_avg: company.rating_avg || 0,
-          reviews_count: company.reviews_count || 0,
+          rating_avg: company.reviews_count.to_i.positive? ? company.rating_avg : nil,
+          reviews_count: company.reviews_count.to_i,
           verified_badge_image_url: company.verified_badge&.attached? ? url_for(company.verified_badge) : nil,
           public_profile_url: public_profile_url_for(company)
         }, status: :ok
