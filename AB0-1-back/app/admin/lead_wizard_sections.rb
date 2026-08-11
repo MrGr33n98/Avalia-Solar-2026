@@ -2,7 +2,6 @@
 
 ActiveAdmin.register LeadWizardSection do
   menu false
-  menu parent: 'Lead Wizards', priority: 21
 
   permit_params :lead_wizard_version_id, :key, :title, :description, :position
 

@@ -2,7 +2,6 @@
 
 ActiveAdmin.register LeadWizardFieldOption do
   menu false
-  menu parent: 'Lead Wizards', priority: 23
   actions :all, except: [:destroy]
   config.batch_actions = false
 

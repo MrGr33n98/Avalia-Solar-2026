@@ -2,7 +2,6 @@
 
 ActiveAdmin.register LeadWizardField do
   menu false
-  menu parent: 'Lead Wizards', priority: 22
 
   permit_params :lead_wizard_section_id, :key, :field_type, :label, :target,
                 :placeholder, :help_text, :required, :position, :min_value,

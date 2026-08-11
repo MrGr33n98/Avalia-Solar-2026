@@ -1,13 +1,5 @@
 ActiveAdmin.register CompanyAccessRequest do
   menu false
-  menu priority: 11, label: proc {
-    pending_count = CompanyAccessRequest.pending.count
-    if pending_count.positive?
-      "Solicitacoes de Acesso <span class='count'>#{pending_count}</span>".html_safe
-    else
-      'Solicitacoes de Acesso'
-    end
-  }
   actions :index, :show
 
   scope :all, default: true
