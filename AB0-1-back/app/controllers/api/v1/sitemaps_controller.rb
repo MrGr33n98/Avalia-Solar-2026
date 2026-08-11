@@ -29,7 +29,7 @@ module Api
         # O projeto usa `status: 'active'` para empresas ativas.
         # Vamos assumir: status: 'active' e, se existir published_at, ele deve estar preenchido.
         
-        results = Company.joins(:categories)
+        results = ::Company.joins(:categories)
                          .where(companies: { status: 'active' })
                          .where.not(companies: { city: [nil, ''], state: [nil, ''] })
                          .group('categories.seo_url', 'companies.state', 'companies.city')

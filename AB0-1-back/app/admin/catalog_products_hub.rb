@@ -21,14 +21,14 @@ ActiveAdmin.register_page 'Catálogo & Produtos' do
       nil
     end
 
-    columns do
-      metric = lambda do |title, value, detail|
-        panel title do
-          h2 number_with_delimiter(value, delimiter: '.')
-          span detail
-        end
+    metric = lambda do |title, value, detail|
+      panel title do
+        h2 number_with_delimiter(value, delimiter: '.')
+        span detail
       end
+    end
 
+    columns do
       column { metric.call('Produtos totais', Product.count, 'Itens no catálogo') }
       column { metric.call('Produtos ativos', Product.active_status.count, 'Publicados') }
       column { metric.call('Rascunhos', Product.draft_status.count, 'Aguardando publicação') }

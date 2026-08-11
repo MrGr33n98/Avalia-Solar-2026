@@ -20,14 +20,14 @@ ActiveAdmin.register_page 'Reputação' do
       nil
     end
 
-    columns do
-      metric = lambda do |title, value, detail|
-        panel title do
-          h2 number_with_delimiter(value, delimiter: '.')
-          span detail
-        end
+    metric = lambda do |title, value, detail|
+      panel title do
+        h2 number_with_delimiter(value, delimiter: '.')
+        span detail
       end
+    end
 
+    columns do
       column { metric.call('Avaliações aprovadas', Review.approved.count, 'Reputação orgânica publicada') }
       column { metric.call('Aguardando moderação', Review.pending.count, 'Avaliações pendentes') }
       column { metric.call('Em análise', Review.in_analysis.count, 'Fila de análise') }

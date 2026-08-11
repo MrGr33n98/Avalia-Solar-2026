@@ -10,7 +10,7 @@ Rails.application.configure do
   config.lograge.custom_options = lambda do |event|
     {
       time: Time.current.iso8601,
-      params: event.payload[:params].except('controller', 'action', 'format'),
+      params: event.payload[:params].to_h.except('controller', 'action', 'format'),
       request_id: event.payload[:request_id],
       user_id: event.payload[:user_id], # Requires controller instrumentation
       remote_ip: event.payload[:remote_ip],
