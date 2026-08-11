@@ -61,8 +61,8 @@ ActiveAdmin.register_page 'Catálogo & Produtos' do
           offers = ProductOffer.includes(company_product: %i[company product]).order(created_at: :desc).limit(10)
           if offers.any?
             table_for offers do
-              column('Empresa') { |offer| offer.company_product.company.name }
-              column('Produto') { |offer| offer.company_product.product.name }
+              column('Empresa') { |offer| offer.company_product&.company&.name || 'Empresa não vinculada' }
+              column('Produto') { |offer| offer.company_product&.product&.name || 'Produto não vinculado' }
               column('Preço da oferta') { |offer| number_to_currency(offer.price || 0, unit: 'R$ ', separator: ',', delimiter: '.') }
               column('Status') { |offer| status_tag offer.status }
             end

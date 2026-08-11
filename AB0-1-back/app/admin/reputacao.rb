@@ -49,7 +49,7 @@ ActiveAdmin.register_page 'Reputação' do
             para 'Nenhuma avaliação aguardando moderação.'
           else
             table_for reviews do
-              column('Empresa') { |review| link_to review.company.name, admin_company_path(review.company) }
+              column('Empresa') { |review| review.company ? link_to(review.company.name, admin_company_path(review.company)) : 'Empresa não vinculada' }
               column('Status') { |review| status_tag review.status }
               column :rating
               column :created_at
