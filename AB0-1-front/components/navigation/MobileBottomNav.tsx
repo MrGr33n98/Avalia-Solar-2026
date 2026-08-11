@@ -3,11 +3,20 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeftRight, Building2, Home, MessageCircle, Search } from 'lucide-react';
+import { useComparison } from '@/hooks/useComparison';
+import { openComparisonModal } from '@/lib/floating-widget-events';
+import { useNotificationStore } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { count, maxComparison } = useComparison();
+  const { unreadMessagesCount, toggleChat } = useNotificationStore();
+
+  const handleComparisonClick = () => {
+    if (count > 0) openComparisonModal();
+  };
 
   const isInternalProfile =
     pathname === '/profile' ||
@@ -61,8 +70,11 @@ export default function MobileBottomNav() {
         </div>
 
         {/* 4. Comparar */}
-        <Link
-          href="/products/compare"
+        <button
+          type="button"
+          onClick={handleComparisonClick}
+          aria-label={`Comparar: ${count} de ${maxComparison} empresas selecionadas`}
+          aria-disabled={count === 0}
           className={cn(
             'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
             pathname.startsWith('/products/compare')
@@ -72,11 +84,18 @@ export default function MobileBottomNav() {
         >
           <ArrowLeftRight className="h-5 w-5" strokeWidth={pathname.startsWith('/products/compare') ? 2.5 : 2} />
           <span className="truncate">Comparar</span>
-        </Link>
+          {count > 0 && (
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">
+              {count}
+            </span>
+          )}
+        </button>
 
         {/* 5. Mensagens */}
-        <Link
-          href="/messages"
+        <button
+          type="button"
+          onClick={() => toggleChat('expanded')}
+          aria-label="Abrir mensagens"
           className={cn(
             'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
             pathname.startsWith('/messages')
@@ -86,7 +105,12 @@ export default function MobileBottomNav() {
         >
           <MessageCircle className="h-5 w-5" strokeWidth={pathname.startsWith('/messages') ? 2.5 : 2} />
           <span className="truncate">Mensagens</span>
-        </Link>
+          {unreadMessagesCount > 0 && (
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">
+              {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+            </span>
+          )}
+        </button>
       </div>
     </nav>
   );

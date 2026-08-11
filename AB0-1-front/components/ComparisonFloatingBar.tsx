@@ -25,6 +25,7 @@ import { track } from '@/lib/analytics/lazy';
 import {
   OPEN_ASSISTANT_COMPACT_EVENT,
   OPEN_COMPARISON_DOCK_EVENT,
+  OPEN_COMPARISON_MODAL_EVENT,
   openComparisonDock,
 } from '@/lib/floating-widget-events';
 import { getFloatingWidgetZIndex, WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
@@ -142,6 +143,12 @@ export default function ComparisonFloatingBar() {
       setDockState('expanded');
       track('compare_popover_opened', { comparison_count: count });
     };
+    const openComparisonModal = () => {
+      if (count === 0) return;
+      setIsForcedOpen(true);
+      setIsModalOpen(true);
+      track('comparison_modal_opened_from_bottom_nav', { comparison_count: count });
+    };
     const handleAssistantOpen = () => {
       if (window.matchMedia('(max-width: 767px)').matches) {
         setDockState('minimized');
@@ -149,9 +156,11 @@ export default function ComparisonFloatingBar() {
     };
 
     window.addEventListener(OPEN_COMPARISON_DOCK_EVENT, openComparison);
+    window.addEventListener(OPEN_COMPARISON_MODAL_EVENT, openComparisonModal);
     window.addEventListener(OPEN_ASSISTANT_COMPACT_EVENT, handleAssistantOpen);
     return () => {
       window.removeEventListener(OPEN_COMPARISON_DOCK_EVENT, openComparison);
+      window.removeEventListener(OPEN_COMPARISON_MODAL_EVENT, openComparisonModal);
       window.removeEventListener(OPEN_ASSISTANT_COMPACT_EVENT, handleAssistantOpen);
     };
   }, [count]);
