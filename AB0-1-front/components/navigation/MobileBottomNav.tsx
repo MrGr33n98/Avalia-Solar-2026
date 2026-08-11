@@ -2,15 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, Heart, Home, Search, User } from 'lucide-react';
-
-import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeftRight, Building2, Home, MessageCircle, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
 
   const isInternalProfile =
     pathname === '/profile' ||
@@ -18,8 +15,6 @@ export default function MobileBottomNav() {
     pathname.startsWith('/review-dashboard/');
   if (isInternalProfile) return null;
   if (pathname?.startsWith('/dashboard')) return null;
-
-  const profileHref = user?.role === 'review' ? '/review-dashboard/profile' : '/profile';
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
@@ -65,32 +60,32 @@ export default function MobileBottomNav() {
           <span className="mt-7 text-[10px] font-black text-blue-700">Buscar</span>
         </div>
 
-        {/* 4. Favoritos */}
+        {/* 4. Comparar */}
         <Link
-          href="/favorites"
+          href="/products/compare"
           className={cn(
             'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
-            pathname.startsWith('/favorites')
+            pathname.startsWith('/products/compare')
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <Heart className="h-5 w-5" strokeWidth={pathname.startsWith('/favorites') ? 2.5 : 2} />
-          <span className="truncate">Favoritos</span>
+          <ArrowLeftRight className="h-5 w-5" strokeWidth={pathname.startsWith('/products/compare') ? 2.5 : 2} />
+          <span className="truncate">Comparar</span>
         </Link>
 
-        {/* 5. Perfil */}
+        {/* 5. Mensagens */}
         <Link
-          href={profileHref}
+          href="/messages"
           className={cn(
             'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
-            pathname.startsWith(profileHref)
+            pathname.startsWith('/messages')
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <User className="h-5 w-5" strokeWidth={pathname.startsWith(profileHref) ? 2.5 : 2} />
-          <span className="truncate">Perfil</span>
+          <MessageCircle className="h-5 w-5" strokeWidth={pathname.startsWith('/messages') ? 2.5 : 2} />
+          <span className="truncate">Mensagens</span>
         </Link>
       </div>
     </nav>
