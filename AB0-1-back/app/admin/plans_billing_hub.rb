@@ -41,7 +41,7 @@ ActiveAdmin.register_page 'Planos & Billing' do
           para "Empresas sem assinatura SaaS: #{overview[:companies_without_subscription]}"
           para "Features catalogadas: #{overview[:feature_count]}"
           para "Assinaturas legadas: #{overview[:legacy_subscriptions]}"
-          mrr = number_to_currency(overview[:mrr_cents].to_f / 100, unit: 'R$ ', separator: ',', delimiter: '.')
+          mrr = number_to_currency(overview[:mrr_amount].to_f, unit: 'R$ ', separator: ',', delimiter: '.')
           para "MRR estimado: #{mrr}"
         end
       end
