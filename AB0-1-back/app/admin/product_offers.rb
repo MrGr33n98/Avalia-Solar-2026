@@ -8,8 +8,8 @@ ActiveAdmin.register ProductOffer do
   index do
     selectable_column
     id_column
-    column('Empresa') { |offer| offer.company_product.company.name }
-    column('Produto') { |offer| offer.company_product.product.name }
+    column('Empresa') { |offer| offer.company_product&.company&.name || 'Empresa não vinculada' }
+    column('Produto') { |offer| offer.company_product&.product&.name || 'Produto não vinculado' }
     column :price
     column :stock
     column :lead_time_days

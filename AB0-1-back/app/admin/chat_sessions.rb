@@ -22,7 +22,7 @@ ActiveAdmin.register ChatSession do
     selectable_column
     id_column
     column :visitor_id do |s|
-      s.visitor_id.truncate(16)
+      (s.visitor_id || 'Visitante não identificado').truncate(16)
     end
     column :status do |s|
       status_tag s.status, class: s.status == 'active' ? 'ok' : 'warning'
