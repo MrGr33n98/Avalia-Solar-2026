@@ -1,5 +1,5 @@
 ActiveAdmin.register BannerAuditLog do
-  menu parent: 'Avalia Solar Ads', priority: 5, label: 'Auditoria (Logs)'
+  menu false
   actions :index, :show
 
   member_action :resolve, method: :post do

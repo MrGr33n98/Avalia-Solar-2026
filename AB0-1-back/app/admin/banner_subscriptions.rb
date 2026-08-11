@@ -1,4 +1,5 @@
 ActiveAdmin.register BannerSubscription do
+  menu false
   permit_params :company_id, :banner_offer_id, :status, :provider, :checkout_session_id, :payment_reference,
                 :starts_at, :ends_at
 

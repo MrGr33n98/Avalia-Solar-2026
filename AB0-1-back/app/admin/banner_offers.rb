@@ -1,4 +1,5 @@
 ActiveAdmin.register BannerOffer do
+  menu false
   permit_params :name, :price_cents, :currency, :duration_days, :rules_json, :active
 
   index do

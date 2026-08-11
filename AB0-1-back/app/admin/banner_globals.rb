@@ -1,4 +1,5 @@
 ActiveAdmin.register BannerGlobal do
+  menu false
   permit_params :title, :image, :link
 
   index do

@@ -39,6 +39,7 @@ rescue StandardError
 end
 
 ActiveAdmin.register Banner do
+  menu false
   permit_params do
     allowed = %i[title alt_text image company_id financial_institution_id financing_option_id link active sponsored banner_type position
                  start_date end_date moderation_status priority rejected_reason width height slot_key]

@@ -1,5 +1,5 @@
 ActiveAdmin.register BannerAddon do
-  menu parent: 'Avalia Solar Ads', priority: 3, label: 'Banner Add-ons'
+  menu false
 
   permit_params :name, :code, :category, :description, :price_cents, :promo_price_cents,
                 :currency, :duration_days, :benefits, :rules, :priority_boost,

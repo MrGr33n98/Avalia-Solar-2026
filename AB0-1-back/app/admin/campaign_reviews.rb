@@ -1,4 +1,5 @@
 ActiveAdmin.register CampaignReview do
+  menu false
   permit_params :product_id, :company_id, :title, :code, :member_id, :share_code, :goal, :achieved, :debutants,
                 :shares, :prize, :start_at, :end_at, :sponsored
 

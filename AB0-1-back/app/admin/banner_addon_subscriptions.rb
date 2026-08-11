@@ -1,5 +1,5 @@
 ActiveAdmin.register BannerAddonSubscription do
-  menu parent: 'Avalia Solar Ads', priority: 4, label: 'Contratações (Add-ons)'
+  menu false
 
   permit_params :company_id, :banner_id, :banner_addon_id, :status, :payment_gateway,
                 :payment_reference, :starts_at, :ends_at, :price_paid_cents, :discount_cents
