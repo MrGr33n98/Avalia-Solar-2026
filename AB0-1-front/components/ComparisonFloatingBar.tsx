@@ -35,6 +35,8 @@ const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'),
   ssr: false,
 });
 
+const LEGACY_COMPARISON_DOCK_ENABLED = false;
+
 function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: number) => void }) {
   return (
     <div className="group flex h-16 min-w-[176px] max-w-[220px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-blue-300">
@@ -173,10 +175,6 @@ export default function ComparisonFloatingBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
-  if (count === 0 && !isForcedOpen) return null;
-
-  if (dockState === 'hidden') return null;
-
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
   const handleComparisonPageClick = () => {
     track('comparison_dock_compare_click', {
@@ -220,8 +218,9 @@ export default function ComparisonFloatingBar() {
 
   return (
     <>
-      <AnimatePresence>
-        {dockState === 'minimized' ? (
+      {LEGACY_COMPARISON_DOCK_ENABLED ? (
+        <AnimatePresence>
+          {dockState === 'minimized' ? (
           <div 
             className={cn("fixed z-[50]", WIDGET_POSITION_CLASSES.comparison)}
             style={{ zIndex: getFloatingWidgetZIndex('comparison') }}
@@ -484,11 +483,8 @@ export default function ComparisonFloatingBar() {
             </section>
             </motion.aside>
           </div>
-        )}
-      </AnimatePresence>
-
-      {dockState === 'expanded' ? (
-        <div aria-hidden="true" className="hidden h-[220px] md:block" />
+          )}
+        </AnimatePresence>
       ) : null}
 
       <CompanyComparisonModal
