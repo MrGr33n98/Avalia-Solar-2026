@@ -21,6 +21,7 @@ ActiveAdmin.register_page 'SaaS Leads' do
       tabs.each_with_index do |(label, path), index|
         link_to label, path, class: "button #{index.zero? ? 'primary' : ''}"
       end
+      nil
     end
 
     columns do
