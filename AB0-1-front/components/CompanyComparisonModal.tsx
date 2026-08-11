@@ -12,6 +12,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import WhatsappButton from '@/components/WhatsappButton';
 import { Star, X, ShieldCheck, Building2 } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { hasPaidPlan } from '@/lib/feature-access';
@@ -66,6 +67,10 @@ interface ComparisonCompany {
   response_time_sla?: string;
   warranty_years?: number;
   has_paid_plan?: boolean | null;
+  cta_whatsapp_enabled?: boolean | null;
+  whatsapp?: string | null;
+  whatsapp_url?: string | null;
+  phone?: string | null;
 }
 
 interface CompanyComparisonModalProps {
@@ -176,15 +181,15 @@ function MobileComparisonContent({
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
-            <div key={company.id} className={cn('relative grid min-w-0 grid-cols-[24px_minmax(0,1fr)_14px] items-start gap-0.5 rounded border bg-white p-1 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
+            <div key={company.id} className={cn('relative min-w-0 rounded border bg-white p-1 pr-5 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
               <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
                 {logoUrl ? <Image src={logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />}
               </div>
-              <Link href={`/companies/${company.slug || company.id}`} className="min-w-0 pt-0.5">
+              <Link href={`/companies/${company.slug || company.id}`} className="block min-w-0 pr-1 pt-0.5">
                 <span className="line-clamp-2 break-normal text-[9px] font-bold leading-tight text-slate-900">{company.name}</span>
                 <span className="mt-0.5 block break-normal text-[8px] leading-tight text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
               </Link>
-              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500">
+              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="absolute right-1 top-1 flex h-[18px] w-[18px] items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 active:bg-red-50 active:text-red-500">
                 <X className="h-3 w-3" aria-hidden="true" />
               </button>
             </div>
@@ -209,9 +214,29 @@ function MobileComparisonContent({
         ))}
         <div className={cn('grid min-w-0', mobileGridColumns, 'bg-slate-50/50')}>
           <span className="min-w-0 px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-wide text-slate-400">Orçamento</span>
-          {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className={cn('min-w-0 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>
-            {hasPaidPlan(company) ? <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button> : <span className="block px-1 py-2 text-center text-[9px] font-medium text-slate-400">Indisponível</span>}
-          </div>)}
+          {visibleCompanies.map((company) => {
+            const showWhatsApp = hasPaidPlan(company) && Boolean(company.cta_whatsapp_enabled);
+            const whatsappHref = company.whatsapp_url || company.whatsapp || company.phone || undefined;
+
+            return (
+              <div key={`mobile-cta-${company.id}`} className={cn('min-w-0 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>
+                {hasPaidPlan(company) ? (
+                  showWhatsApp ? (
+                    <WhatsappButton
+                      href={whatsappHref}
+                      companyId={company.id}
+                      label="WhatsApp"
+                      className="h-8 rounded-md px-1 text-[9px] font-bold leading-tight"
+                    />
+                  ) : (
+                    <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button>
+                  )
+                ) : (
+                  <span className="block px-1 py-2 text-center text-[9px] font-medium text-slate-400">Indisponível</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -271,10 +296,10 @@ export default function CompanyComparisonModal({
     <Dialog modal={false} open={isOpen} onOpenChange={onClose}>
       <DialogContent
         overlayClassName="pointer-events-none bg-black/35"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[78dvh] !w-[calc(100vw-24px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[80vh] md:!w-[calc(100vw-64px)] md:!max-w-[960px] md:rounded-lg md:border md:shadow-xl"
+        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[75dvh] !w-[calc(100vw-32px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[80vh] md:!w-[calc(100vw-64px)] md:!max-w-[960px] md:rounded-lg md:border md:shadow-xl"
       >
         {/* Swiss Design Header */}
-        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2.5 py-2 pr-11 md:px-5 md:py-2.5 md:pr-12">
+        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2.5 py-2 md:px-5 md:py-2.5 md:pr-12">
           <div className="mb-1 flex items-center justify-between md:hidden">
             <div className="flex min-w-0 items-center gap-2 text-left">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-white" aria-hidden="true">
@@ -289,25 +314,25 @@ export default function CompanyComparisonModal({
                 </DialogDescription>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="ml-auto flex shrink-0 items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
                 aria-label="Minimizar comparação"
-                className="h-7 w-7 rounded-md border border-blue-200 bg-blue-50 p-0 text-blue-700 hover:bg-blue-100"
+                className="h-6 w-6 rounded-md border border-blue-200 bg-blue-50 p-0 text-blue-700 hover:bg-blue-100"
                 title="Minimizar comparação"
               >
-                <span aria-hidden="true" className="text-base font-bold leading-none">−</span>
+                <span aria-hidden="true" className="text-sm font-bold leading-none">−</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
                 aria-label="Fechar comparação"
-                className="h-7 w-7 rounded-md border border-white/30 p-0 text-white hover:bg-white/15"
+                className="h-6 w-6 rounded-md border border-white/30 p-0 text-white hover:bg-white/15"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           </div>

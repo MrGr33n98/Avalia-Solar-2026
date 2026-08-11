@@ -116,9 +116,11 @@ export function useComparison() {
       toast.success('Empresa adicionada à comparação', {
         description: `${company.name} • ${newList.length}/${MAX_COMPARISON}`,
         duration: 2000,
-        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+        icon: <CheckCircle2 className="h-4 w-4 text-blue-600" />,
         classNames: {
-          toast: '!rounded-lg !border-emerald-100 !shadow-sm',
+          toast:
+            '!rounded-lg !border-blue-200 !bg-blue-50 !text-blue-950 !shadow-sm',
+          description: '!text-blue-700',
         },
       });
 
