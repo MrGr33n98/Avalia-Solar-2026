@@ -3,7 +3,7 @@
 require 'json'
 
 ActiveAdmin.register LeadWizardVersion do
-  menu label: 'Lead Wizards', priority: 20
+  menu false
 
   permit_params :company_id, :category_id, :template_key, :template_version, :status,
                 :ui_theme, :ui_primary_color, :ui_logo_url, :show_progress_bar,

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ChatSession do
+  menu false
   menu parent: 'Chat IA', label: 'Sessões', priority: 1
 
   actions :index, :show

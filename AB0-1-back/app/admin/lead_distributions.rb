@@ -1,5 +1,5 @@
 ActiveAdmin.register LeadDistribution do
-  menu label: 'Lead Distributions'
+  menu false
 
   includes :lead, :company
   actions :index, :show, :destroy

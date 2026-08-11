@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ContentLead do
+  menu false
   actions :index, :show
   includes :company
   filter :company

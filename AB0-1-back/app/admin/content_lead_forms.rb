@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ContentLeadForm do
+  menu false
   permit_params :company_id, :name, :status, :consent_text, :privacy_url, fields: %i[key label type required options]
   includes :company, :company_materials
   filter :company

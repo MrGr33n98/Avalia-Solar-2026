@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ContentLeadExport do
+  menu false
   actions :index, :show
   includes :company, :actor
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Lead, as: 'SaaS Lead' do
-  menu label: 'SAAS - Leads', priority: 25
+  menu false
 
   actions :index, :show
   config.sort_order = 'created_at_desc'
