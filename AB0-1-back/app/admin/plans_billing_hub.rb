@@ -4,6 +4,18 @@
 ActiveAdmin.register_page 'Planos & Billing' do
   menu priority: 3
 
+  controller do
+    before_action :require_billing_access
+
+    private
+
+    def require_billing_access
+      return if current_admin_user&.billing_support?
+
+      redirect_to admin_dashboard_path, alert: 'Sem permissão para acessar Planos & Billing.'
+    end
+  end
+
   content title: 'Planos & Billing' do
     overview = BillingAdminOverviewQuery.new.call
     tabs = [
