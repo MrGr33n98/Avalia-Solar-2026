@@ -74,9 +74,6 @@ interface CompanyComparisonModalProps {
   onClearAll: () => void;
 }
 
-
-
-
 interface MobileComparisonContentProps {
   companies: ComparisonCompany[];
   highestRatedCompanyId?: number;

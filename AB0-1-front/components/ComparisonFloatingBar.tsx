@@ -35,8 +35,6 @@ const CompanyComparisonModal = dynamic(() => import('./CompanyComparisonModal'),
   ssr: false,
 });
 
-const LEGACY_COMPARISON_DOCK_ENABLED = false;
-
 function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: number) => void }) {
   return (
     <div className="group flex h-16 min-w-[176px] max-w-[220px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-blue-300">
@@ -137,6 +135,26 @@ export default function ComparisonFloatingBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('minimized');
   const [isForcedOpen, setIsForcedOpen] = useState(false);
+  const [isMobileExperience, setIsMobileExperience] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const standalone = window.matchMedia('(display-mode: standalone)');
+    const updateExperience = () => {
+      setIsMobileExperience(
+        media.matches || standalone.matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+      );
+    };
+
+    updateExperience();
+    media.addEventListener('change', updateExperience);
+    standalone.addEventListener('change', updateExperience);
+
+    return () => {
+      media.removeEventListener('change', updateExperience);
+      standalone.removeEventListener('change', updateExperience);
+    };
+  }, []);
 
   useEffect(() => {
     const openComparison = () => {
@@ -218,7 +236,7 @@ export default function ComparisonFloatingBar() {
 
   return (
     <>
-      {LEGACY_COMPARISON_DOCK_ENABLED ? (
+      {!isMobileExperience ? (
         <AnimatePresence>
           {dockState === 'minimized' ? (
           <div 

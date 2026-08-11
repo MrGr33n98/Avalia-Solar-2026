@@ -51,6 +51,26 @@ export default function GlobalChatWidget() {
   const [typingByCompany, setTypingByCompany] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileExperience, setIsMobileExperience] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const standalone = window.matchMedia('(display-mode: standalone)');
+    const updateExperience = () => {
+      setIsMobileExperience(
+        media.matches || standalone.matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+      );
+    };
+
+    updateExperience();
+    media.addEventListener('change', updateExperience);
+    standalone.addEventListener('change', updateExperience);
+
+    return () => {
+      media.removeEventListener('change', updateExperience);
+      standalone.removeEventListener('change', updateExperience);
+    };
+  }, []);
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
@@ -349,6 +369,8 @@ export default function GlobalChatWidget() {
 
   // ESTADO MINIMIZADO
   if (chatState === 'minimized') {
+    if (isMobileExperience) return null;
+
     return (
       <FloatingChatTrigger
         user={user}
