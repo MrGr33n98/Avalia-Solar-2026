@@ -89,14 +89,12 @@ function BannerImage({
   priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const baseUrl = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
-  // Cache buster for Next.js Image Optimization and Cloudflare
-  const src =
-    baseUrl === FALLBACK_BANNER_SRC ? baseUrl : `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}v=3`;
+  const src = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
 
   return (
     <Image
       src={src}
+      unoptimized={src !== FALLBACK_BANNER_SRC}
       alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
       fill
       priority={priority}
