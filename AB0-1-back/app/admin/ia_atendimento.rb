@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ActiveAdmin.register_page 'IA & Atendimento' do
+ActiveAdmin.register_page 'IA Atendimento' do
   menu priority: 7, label: 'IA & Atendimento'
 
   content title: 'IA & Atendimento' do

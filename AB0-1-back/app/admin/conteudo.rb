@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-ActiveAdmin.register_page 'Conteúdo' do
-  menu priority: 6
+ActiveAdmin.register_page 'Conteudo' do
+  menu priority: 6, label: 'Conteúdo'
 
   content title: 'Central de Conteúdo' do
     tabs = [
@@ -57,7 +57,7 @@ ActiveAdmin.register_page 'Conteúdo' do
         panel 'Materiais de Empresas' do
           table_for CompanyMaterial.order(created_at: :desc).limit(5) do
             column('Título') { |material| material.title }
-            column('Empresa') { |material| material.company.name }
+            column('Empresa') { |material| material.company&.name || '—' }
             column('Status') { |material| status_tag material.status }
             column('Ações') { |material| link_to 'Visualizar', admin_company_material_path(material) }
           end
@@ -68,7 +68,7 @@ ActiveAdmin.register_page 'Conteúdo' do
         panel 'Últimos Artigos Editados' do
           table_for Article.order(updated_at: :desc).limit(5) do
             column('Título') { |article| article.title }
-            column('Status') { |article| status_tag(article.published? ? 'Publicado' : 'Rascunho') }
+            column('Status') { |article| status_tag(article.status == 'published' ? 'Publicado' : 'Rascunho') }
             column('Data') { |article| article.updated_at.strftime('%d/%m/%Y %H:%M') }
             column('Ações') { |article| link_to 'Editar', edit_admin_article_path(article) }
           end

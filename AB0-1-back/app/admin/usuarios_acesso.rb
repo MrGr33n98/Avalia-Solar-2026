@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ActiveAdmin.register_page 'Usuários & Acesso' do
+ActiveAdmin.register_page 'Usuarios Acesso' do
   menu priority: 10, label: 'Usuários & Acesso'
 
   content title: 'Usuários & Acesso' do
@@ -46,7 +46,7 @@ ActiveAdmin.register_page 'Usuários & Acesso' do
             column('Nome') { |user| user.name }
             column('E-mail') { |user| user.email }
             column('Admin?') { |user| status_tag(user.admin? ? 'Sim' : 'Não') }
-            column('Data de Cadastro') { |user| user.created_at.strftime('%d/%m/%Y %H:%M') }
+            column('Data de Cadastro') { |user| user.created_at&.strftime('%d/%m/%Y %H:%M') || '—' }
             column('Ações') { |user| link_to 'Ver Perfil', admin_user_path(user) }
           end
         end
