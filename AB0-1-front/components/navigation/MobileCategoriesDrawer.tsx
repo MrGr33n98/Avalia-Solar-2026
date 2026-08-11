@@ -304,13 +304,8 @@ function MainCategoriesView({
         );
         const hasChildren = category.children && category.children.length > 0;
 
-        return (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => (hasChildren ? onOpenCategory(category) : undefined)}
-            className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500`}
-          >
+        const content = (
+          <>
             <CategoryIcon iconSrc={iconSrc} name={category.name} slug={category.slug || category.seo_url} />
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-[15px] font-medium leading-tight text-slate-950">
@@ -321,7 +316,33 @@ function MainCategoriesView({
               </p>
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-neutral-700" aria-hidden="true" />
-          </button>
+          </>
+        );
+
+        const cardClassName = "flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500";
+
+        if (hasChildren) {
+          return (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => onOpenCategory(category)}
+              className={cardClassName}
+            >
+              {content}
+            </button>
+          );
+        }
+
+        return (
+          <Link
+            key={category.id}
+            href={getCategoryHref(category)}
+            onClick={onClose}
+            className={cardClassName}
+          >
+            {content}
+          </Link>
         );
       })}
 
