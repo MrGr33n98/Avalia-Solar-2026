@@ -53,12 +53,13 @@ ActiveAdmin.register_page 'IA Atendimento' do
             column('Nome') { |lead| lead.name.presence || 'Visitante Anônimo' }
             column('Telefone') { |lead| lead.phone }
             column('Temperatura') do |lead|
-              color = case lead.temperature.to_s.downcase
-                      when 'hot' then 'red'
-                      when 'warm' then 'orange'
+              temp = lead.lead_temperature.to_s.downcase
+              color = case temp
+                      when 'quente', 'muito_quente' then 'red'
+                      when 'morno' then 'orange'
                       else 'blue'
                       end
-              span lead.temperature.to_s.upcase, style: "color: #{color}; font-weight: bold;"
+              span lead.lead_temperature.to_s.upcase, style: "color: #{color}; font-weight: bold;"
             end
             column('Score') { |lead| lead.lead_score }
             column('Ações') { |lead| link_to 'Ver Lead', admin_chat_lead_path(lead) }
@@ -72,7 +73,7 @@ ActiveAdmin.register_page 'IA Atendimento' do
             column('Sessão ID') { |session| session.id }
             column('Canal') { |session| session.channel }
             column('Mensagens') { |session| session.chat_messages.count }
-            column('Última Atividade') { |session| session.updated_at.strftime('%d/%m/%Y %H:%M') }
+            column('Última Atividade') { |session| session.updated_at&.strftime('%d/%m/%Y %H:%M') || '—' }
             column('Ações') { |session| link_to 'Abrir Histórico', admin_chat_session_path(session) }
           end
         end
