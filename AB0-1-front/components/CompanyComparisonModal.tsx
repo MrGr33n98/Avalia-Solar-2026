@@ -127,16 +127,16 @@ export default function CompanyComparisonModal({
     <Dialog modal={false} open={isOpen} onOpenChange={onClose}>
       <DialogContent
         overlayClassName="pointer-events-none bg-black/35"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[60dvh] !w-[min(480px,calc(100vw-64px))] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-xl transition-all duration-300 sm:!max-h-[85vh] sm:!w-[calc(100vw-64px)] sm:!max-w-[1020px] sm:rounded-lg"
+        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[60dvh] !w-[min(480px,calc(100vw-64px))] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-xl transition-all duration-300 sm:!max-h-[85vh] sm:!w-[calc(100vw-64px)] sm:!max-w-[1020px] sm:rounded-lg"
       >
         {/* Swiss Design Header */}
-        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-slate-200 bg-white px-3 py-3 pr-12 md:px-8 md:py-4 md:pr-14">
+        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-3 py-3 pr-12 md:px-8 md:py-4 md:pr-14">
           <div className="flex items-center justify-between md:hidden mb-2">
             <div className="text-left">
-              <DialogTitle className="text-sm font-semibold text-slate-950">
+              <DialogTitle className="text-sm font-semibold text-white">
                 Comparar empresas
               </DialogTitle>
-              <DialogDescription className="mt-0.5 text-xs text-slate-500">
+              <DialogDescription className="mt-0.5 text-xs text-blue-100">
                 {companies.length} de 4 empresas selecionadas
               </DialogDescription>
             </div>
@@ -158,7 +158,7 @@ export default function CompanyComparisonModal({
                 Selecione até 4 empresas para comparar
               </DialogDescription>
 
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              <span className="text-sm font-bold text-white">
                 Sua comparação:
               </span>
 
@@ -684,12 +684,12 @@ export default function CompanyComparisonModal({
             </div>
           </div>
         </div>
-        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden">
-          <Button variant="outline" className="h-11 rounded-none" onClick={onClose}>
+        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden">
+          <Button variant="outline" className="h-11 rounded-none border-white/70 bg-white text-blue-800 hover:bg-blue-50" onClick={onClose}>
             Adicionar empresa
           </Button>
           <Button
-            className="h-11 rounded-none bg-blue-600 text-white hover:bg-blue-700"
+            className="h-11 rounded-none bg-white text-blue-800 hover:bg-blue-50"
             onClick={() => {
               track('comparison_modal_compare_confirm', { companies_count: companies.length });
               onClose();
