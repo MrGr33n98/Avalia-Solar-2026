@@ -522,7 +522,6 @@ export function CompaniesContent({
               <div className="w-full min-w-0 max-w-full">
                 <BannerByLocation
                   location="companies_top"
-                  categoryId={filters.category_ids[0]}
                   className="max-w-full"
                 />
               </div>

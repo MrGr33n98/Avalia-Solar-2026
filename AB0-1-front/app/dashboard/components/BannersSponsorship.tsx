@@ -250,6 +250,7 @@ const ACTIVE_BANNER_POSITIONS = new Set([
   'compare_hero',
   'compare_page_top',
   'compare_page_bottom',
+  'companies_top',
   'company_profile_about_inline',
   'sidebar',
   'search_mid',
