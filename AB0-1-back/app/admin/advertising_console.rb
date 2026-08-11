@@ -6,7 +6,7 @@ ActiveAdmin.register_page 'Publicidade & Campanhas' do
 
   content title: 'Publicidade & Campanhas' do
     tabs = [
-      ['Visão Geral', admin_advertising_path], ['Banners', admin_banners_path],
+      ['Visão Geral', admin_publicidade_campanhas_path], ['Banners', admin_banners_path],
       ['Ofertas', admin_banner_offers_path], ['Assinaturas', admin_banner_subscriptions_path],
       ['Add-ons', admin_banner_addons_path], ['Contratações', admin_banner_addon_subscriptions_path],
       ['Auditoria', admin_banner_audit_logs_path], ['Campanhas', admin_campaigns_path],
