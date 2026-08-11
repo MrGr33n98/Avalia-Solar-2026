@@ -1,4 +1,5 @@
 ActiveAdmin.register Product do
+  menu false
   belongs_to :company, optional: true, finder: :find_by_slug_or_id
 
   permit_params do

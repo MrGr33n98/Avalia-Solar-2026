@@ -1,4 +1,5 @@
 ActiveAdmin.register PendingChange do
+  menu false
   actions :index, :show
 
   scope :all

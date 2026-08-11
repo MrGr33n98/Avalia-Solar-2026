@@ -1,4 +1,5 @@
 ActiveAdmin.register Pricing do
+  menu false
   # Update the permitted parameters if needed
   permit_params :price, :product_id
 

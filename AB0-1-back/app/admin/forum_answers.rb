@@ -1,4 +1,5 @@
 ActiveAdmin.register ForumAnswer do
+  menu false
   # Update the permitted parameters to match your model's fields
   permit_params :forum_question_id, :user_id, :answer, :status, :requested_at
 

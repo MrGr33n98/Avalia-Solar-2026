@@ -1,4 +1,5 @@
 ActiveAdmin.register ProductOffer do
+  menu false
   permit_params :company_product_id, :price, :stock, :lead_time_days, :installation_available,
                 :commercial_terms, :status, coverage: []
 

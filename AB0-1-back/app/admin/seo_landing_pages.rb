@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register SeoLandingPage do
-  menu label: 'Páginas SEO Locais', parent: 'Content'
+  menu false
 
   permit_params :slug, :category_id, :city_name, :state_abbr
 

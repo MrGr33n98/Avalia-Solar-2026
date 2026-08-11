@@ -1,6 +1,5 @@
 ActiveAdmin.register CompanySectorQuestion do
   menu false
-  menu parent: 'Companies', label: 'Perguntas Setoriais', priority: 5
 
   permit_params :company_id, :prompt, :weight, :order, :enabled
 

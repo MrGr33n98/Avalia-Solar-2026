@@ -3,6 +3,7 @@
 require 'English'
 
 ActiveAdmin.register Category, namespace: :admin do
+  menu false
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
                 :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: [],
                 category_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]

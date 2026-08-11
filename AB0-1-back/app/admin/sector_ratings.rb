@@ -1,5 +1,5 @@
 ActiveAdmin.register SectorRating do
-  menu label: 'Avaliações Setoriais', priority: 4
+  menu false
 
   actions :index, :show, :destroy
   permit_params :status, :comment

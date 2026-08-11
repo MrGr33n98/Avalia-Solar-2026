@@ -1,4 +1,5 @@
 ActiveAdmin.register Badge do
+  menu false
   permit_params :name, :description, :position, :year, :edition, :category_label, :active, :public_slug, :image,
                 company_ids: []
 

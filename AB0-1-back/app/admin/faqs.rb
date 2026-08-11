@@ -1,7 +1,7 @@
 ActiveAdmin.register Faq do
   permit_params :question, :answer, :category, :position, :active
 
-  menu label: 'FAQs', priority: 45
+  menu false
 
   scope :all
   scope :active

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ContentModerationDecision do
+  menu false
   actions :index, :show
   includes :company, :admin_user, :moderatable
   filter :company

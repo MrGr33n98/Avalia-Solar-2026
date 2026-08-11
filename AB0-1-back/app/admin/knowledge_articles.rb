@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register KnowledgeArticle do
-  menu parent: 'MobiVolt AI', label: 'Base de Conhecimento'
+  menu false
 
   permit_params :title, :slug, :content, :category_id, :status, :published_at
 

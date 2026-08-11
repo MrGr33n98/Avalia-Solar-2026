@@ -1,4 +1,5 @@
 ActiveAdmin.register ProductAccess do
+  menu false
   # Update the permitted parameters if needed
   permit_params :product_id, :user_id
 

@@ -58,6 +58,8 @@ docs/*
 !docs/observability/
 docs/observability/*
 !docs/observability/new-relic-setup.md
+!docs/prd/
+!docs/prd/*
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/

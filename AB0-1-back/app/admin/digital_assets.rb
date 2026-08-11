@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register DigitalAsset do
+  menu false
   includes :company, :attachable
   actions :all, except: %i[new create]
   filter :company

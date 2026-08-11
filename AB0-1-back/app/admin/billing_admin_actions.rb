@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Billing::AdminAction do
-  menu label: 'Billing — Auditoria', priority: 21, parent: 'Billing'
+  menu false
 
   # Apenas leitura
   actions :index, :show

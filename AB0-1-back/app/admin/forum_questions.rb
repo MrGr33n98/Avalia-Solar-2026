@@ -1,4 +1,5 @@
 ActiveAdmin.register ForumQuestion do
+  menu false
   permit_params :subject, :description, :status, :requested_at, :user_id, :product_id, :company_id, :category_id
 
   filter :subject

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register ChatInsight do
-  menu parent: 'Chat IA', label: 'Inteligência de Mercado', priority: 3
+  menu false
 
   actions :index, :show, :destroy
 

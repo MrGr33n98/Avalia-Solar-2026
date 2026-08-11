@@ -1,4 +1,5 @@
 ActiveAdmin.register Article do
+  menu false
   permit_params :title, :slug, :content, :excerpt, :seo_title, :seo_description, :meta_title, :meta_description, :published_at,
                 :status, :featured, :category_id, :author_id, :product_id, :banner,
                 :sponsored, :sponsored_label, :views_count, :seo_keywords,

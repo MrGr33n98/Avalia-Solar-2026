@@ -1,5 +1,5 @@
 ActiveAdmin.register PaperTrail::Version, as: 'AuditLog' do
-  menu parent: 'Sistema', label: 'Logs de Auditoria'
+  menu false
 
   actions :index, :show
 

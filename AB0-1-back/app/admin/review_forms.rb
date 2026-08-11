@@ -1,4 +1,5 @@
 ActiveAdmin.register ReviewForm do
+  menu false
   permit_params :company_id, :name, :public_title, :public_description, :form_type, :status, :is_default
 
   includes :company

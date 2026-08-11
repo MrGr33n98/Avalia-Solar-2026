@@ -21,7 +21,8 @@ ActiveAdmin.register_page 'Planos & Billing' do
     tabs = [
       ['Visão Geral', admin_planos_billing_path], ['Planos', admin_plans_path],
       ['Assinaturas', admin_billing_company_subscriptions_path],
-      ['Features', admin_feature_groups_path], ['Legado', admin_subscription_plans_path]
+      ['Features', admin_feature_groups_path], ['Legado', admin_subscription_plans_path],
+      ['Auditoria', admin_billing_admin_actions_path]
     ]
 
     div class: 'plans-billing-tabs', style: 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;' do

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Billing::CompanySubscription do
-  menu label: 'Billing — Assinaturas SaaS', priority: 20, parent: 'Billing'
+  menu false
 
   # Permite apenas atualização de notas via form clássico
   permit_params :admin_notes, :enterprise_notes, :is_enterprise_manual, :cancel_at_period_end

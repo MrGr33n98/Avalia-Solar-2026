@@ -2,7 +2,6 @@
 
 ActiveAdmin.register ChatLead do
   menu false
-  menu parent: 'Chat IA', label: 'Leads do Chat', priority: 2
 
   actions :index, :show
 

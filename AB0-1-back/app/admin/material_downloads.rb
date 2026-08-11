@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register MaterialDownload do
+  menu false
   actions :index, :show
   includes :company, :company_material, :content_lead
   filter :company
