@@ -163,13 +163,16 @@ RSpec.describe 'Api::V1::Banners', type: :request do
     end
 
     context 'error handling' do
-      it 'returns empty array on error' do
-        allow(Banner).to receive(:currently_active).and_raise(StandardError)
+      it 'returns a retryable service error without masking the failure as an empty campaign list' do
+        allow(Banner).to receive(:currently_active).and_raise(StandardError, 'database unavailable')
 
         get '/api/v1/banners'
 
-        expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)).to eq([])
+        expect(response).to have_http_status(:service_unavailable)
+        expect(JSON.parse(response.body)).to include(
+          'code' => 'BANNER_DELIVERY_UNAVAILABLE',
+          'message' => 'Não foi possível carregar as campanhas no momento.'
+        )
       end
     end
   end

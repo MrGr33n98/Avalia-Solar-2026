@@ -24,10 +24,13 @@ class Api::V1::BannersController < Api::V1::BaseController
     Banners::Metrics.delivery(status: 'success', position: params[:position].presence || 'all', source: 'cache_or_db')
     render json: serialize_banners(@banners)
   rescue StandardError => e
-    Rails.logger.error("[BannersController#index] Error: #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
-    Banners::Metrics.delivery(status: 'error', position: params[:position].presence || 'unknown', source: 'fallback')
-    render json: [], status: :ok
+    Rails.logger.error("[BannersController#index] Error: #{e.class}: #{e.message}")
+    Rails.logger.error(e.backtrace&.join("\n"))
+    Banners::Metrics.delivery(status: 'error', position: params[:position].presence || 'unknown', source: 'error')
+    render json: {
+      code: 'BANNER_DELIVERY_UNAVAILABLE',
+      message: 'Não foi possível carregar as campanhas no momento.'
+    }, status: :service_unavailable
   end
 
   private

@@ -40,13 +40,27 @@ interface UseBannersQueryOptions {
  */
 const BANNER_REQUEST_TIMEOUT_MS = 5000;
 
-const withBannerTimeout = <T>(promise: Promise<T>, timeoutMs = BANNER_REQUEST_TIMEOUT_MS) =>
-  Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      window.setTimeout(() => reject(new Error('Banner request timed out')), timeoutMs)
-    ),
-  ]);
+const withBannerTimeout = <T>(promise: Promise<T>, timeoutMs = BANNER_REQUEST_TIMEOUT_MS) => {
+  let timeoutId: number | undefined;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error('Banner request timed out')), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+  });
+};
+
+function normalizeBanners(payload: unknown): Banner[] {
+  if (Array.isArray(payload)) return payload as Banner[];
+  if (payload && typeof payload === 'object') {
+    const envelope = payload as { data?: unknown; banners?: unknown };
+    if (Array.isArray(envelope.data)) return envelope.data as Banner[];
+    if (Array.isArray(envelope.banners)) return envelope.banners as Banner[];
+  }
+
+  throw new Error('Invalid banner response format');
+}
 
 export function useBannersQuery(options: UseBannersQueryOptions = {}) {
   const {
@@ -81,12 +95,12 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (audienceKey) params.append('audience_key', audienceKey);
 
       const response = await withBannerTimeout(
-        api.request<Banner[]>({
+        api.request<unknown>({
           url: `/banners?${params.toString()}`,
           method: 'GET',
         })
       );
-      return response.data;
+      return normalizeBanners(response.data);
     },
     enabled,
     initialData,
