@@ -100,7 +100,8 @@ function BannerImage({
       priority={priority}
       sizes={sizes}
       quality={95}
-      className="object-cover object-center w-full h-full"
+      // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
+      className="object-contain object-center w-full h-full"
       onError={() => {
         if (failed || !banner.image_url) return;
         console.warn(

@@ -90,7 +90,14 @@ export function BannerByLocation({
     }));
 
     return (
-      <div ref={containerRef} className={cn('w-full overflow-hidden !rounded-none', className)}>
+      <div
+        ref={containerRef}
+        className={cn(
+          'relative w-full min-w-0 overflow-hidden !rounded-none bg-slate-50',
+          getBannerAspectRatio(location),
+          className
+        )}
+      >
         <BannerContainer position={location} banners={normalizedBanners} />
       </div>
     );
