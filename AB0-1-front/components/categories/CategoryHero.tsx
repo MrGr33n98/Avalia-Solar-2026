@@ -140,8 +140,7 @@ export default function CategoryHero({
           <span className="font-bold text-slate-950">{name}</span>
         </nav>
 
-        {/* Container Global Reduzido: -15% de cada lado (px-12 a px-16/mx-auto em telas maiores) + Altura reduzida 50% */}
-        <div className="mx-auto w-full max-w-[1020px] px-2 sm:px-8 md:px-12 lg:px-16">
+        <div className="w-full">
           <div className="overflow-hidden border border-slate-200 bg-slate-950 shadow-sm">
             <PremiumBannerCarousel
               items={carouselItems}
@@ -149,17 +148,17 @@ export default function CategoryHero({
               autoplayDelay={5000}
             />
           </div>
-        </div>
 
-        <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4">
-          <div className="max-w-[46rem]">
-            <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
-              {displayTitle}
-            </h1>
+          <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4">
+            <div className="max-w-[46rem]">
+              <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
+                {displayTitle}
+              </h1>
 
-            <p className="mt-1.5 line-clamp-2 max-w-[38rem] text-sm font-medium leading-relaxed text-slate-600 md:text-[15px]">
-              {heroDescription}
-            </p>
+              <p className="mt-1.5 line-clamp-2 max-w-[38rem] text-sm font-medium leading-relaxed text-slate-600 md:text-[15px]">
+                {heroDescription}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -191,7 +191,7 @@ function MobileComparisonContent({
             </div>
           );
         })}
-        {visibleCompanies.length < 3 && <button onClick={onAddCompany} className="flex className="min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700" Adicionar</button>}
+        {visibleCompanies.length < 3 && <button onClick={onAddCompany} className="flex min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700">Adicionar</button>}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
