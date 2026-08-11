@@ -92,7 +92,7 @@ function MobileComparisonContent({
   onQuote,
 }: MobileComparisonContentProps) {
   const visibleCompanies = companies.slice(0, 3);
-  const mobileGridColumns = 'grid-cols-[minmax(76px,0.8fr)_repeat(3,minmax(0,1fr))]';
+  const mobileGridColumns = 'grid-cols-[minmax(62px,0.72fr)_repeat(3,minmax(0,1fr))]';
 
   const rows = [
     {
@@ -171,27 +171,27 @@ function MobileComparisonContent({
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1.5 pb-1.5 pt-0.5 md:hidden">
-      <div className="mb-1.5 grid min-w-0 grid-cols-3 gap-1">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-1 pt-0 md:hidden">
+      <div className="mb-1 grid min-w-0 grid-cols-3 gap-0.5">
         {visibleCompanies.map((company) => {
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
-            <div key={company.id} className={cn('relative grid min-w-0 grid-cols-[30px_minmax(0,1fr)_16px] items-start gap-1 rounded-md border bg-white p-1.5 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
-              <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
+            <div key={company.id} className={cn('relative grid min-w-0 grid-cols-[24px_minmax(0,1fr)_14px] items-start gap-0.5 rounded border bg-white p-1 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
+              <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
                 {logoUrl ? <Image src={logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />}
               </div>
               <Link href={`/companies/${company.slug || company.id}`} className="min-w-0 pt-0.5">
-                <span className="line-clamp-2 break-normal text-[10px] font-bold leading-tight text-slate-900">{company.name}</span>
-                <span className="mt-0.5 block break-normal text-[9px] leading-tight text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
+                <span className="line-clamp-2 break-normal text-[9px] font-bold leading-tight text-slate-900">{company.name}</span>
+                <span className="mt-0.5 block break-normal text-[8px] leading-tight text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
               </Link>
-              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500">
+              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500">
                 <X className="h-3 w-3" aria-hidden="true" />
               </button>
             </div>
           );
         })}
-        {visibleCompanies.length < 3 && <button onClick={onAddCompany} className="flex min-h-[70px] min-w-0 items-center justify-center rounded-lg border border-dashed border-blue-300 bg-blue-50/50 text-xs font-bold text-blue-700">+ Adicionar</button>}
+        {visibleCompanies.length < 3 && <button onClick={onAddCompany} className="flex className="min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700" Adicionar</button>}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
@@ -268,7 +268,7 @@ export default function CompanyComparisonModal({
     <Dialog modal={false} open={isOpen} onOpenChange={onClose}>
       <DialogContent
         overlayClassName="pointer-events-none bg-black/35"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[78dvh] !w-[calc(100vw-24px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[85vh] md:!w-[calc(100vw-64px)] md:!max-w-[1020px] md:rounded-lg md:border md:shadow-xl"
+        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[78dvh] !w-[calc(100vw-24px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[80vh] md:!w-[calc(100vw-64px)] md:!max-w-[960px] md:rounded-lg md:border md:shadow-xl"
       >
         {/* Swiss Design Header */}
         <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2.5 py-2 pr-11 md:px-5 md:py-2.5 md:pr-12">
