@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyFinancingPartner do
+  menu false
   permit_params :company_id, :name, :partner_type, :website, :priority, :position, :active, :badge, :logo
 
   includes :company

@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyFaq do
+  menu false
   permit_params :company_id, :question, :answer, :status, :position
 
   includes :company

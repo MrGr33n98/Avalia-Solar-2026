@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyMember do
+  menu false
   menu parent: 'Corporativo', label: 'Membros'
 
   actions :all, except: [:destroy]

@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyFinancingProfile do
+  menu false
   permit_params :company_id, :title, :subtitle, :disclaimer, :cta_label, :cta_url,
                 :currency, :status, :default_amount_cents, :min_amount_cents, :max_amount_cents,
                 :default_down_payment_percent, :min_down_payment_percent, :max_down_payment_percent,

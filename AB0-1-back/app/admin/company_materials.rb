@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register CompanyMaterial do
+  menu false
   includes :company, :content_lead_form, :digital_assets
   permit_params :company_id, :content_lead_form_id, :title, :slug, :description, :material_type, :visibility,
                 :gate_mode, :status, :expires_at

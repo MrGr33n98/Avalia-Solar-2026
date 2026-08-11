@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyProduct do
+  menu false
   permit_params :company_id, :product_id, :relationship_type, :status, :authorized, territories: []
 
   filter :company

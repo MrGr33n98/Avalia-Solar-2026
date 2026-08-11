@@ -9,6 +9,7 @@ brazil_capitals = Locations::CoverageNormalizer::BRAZIL_CAPITALS.map do |capital
 end.freeze
 
 ActiveAdmin.register Company do
+  menu false
   # Scopes
   scope :all
   scope :pending_review
@@ -784,6 +785,53 @@ ActiveAdmin.register Company do
   end
 
   show do
+    panel 'Empresa 360' do
+      overview_tabs = [
+        ['Resumo', admin_company_path(resource)],
+        ['Perfil', edit_admin_company_path(resource)],
+        ['Produtos', admin_company_products_path(q: { company_id_eq: resource.id })],
+        ['Projetos', admin_company_projects_path(q: { company_id_eq: resource.id })],
+        ['Serviços', admin_company_services_path(q: { company_id_eq: resource.id })],
+        ['Materiais', admin_company_materials_path(q: { company_id_eq: resource.id })],
+        ['FAQs', admin_company_faqs_path(q: { company_id_eq: resource.id })],
+        ['Financiamento', admin_company_financing_profiles_path(q: { company_id_eq: resource.id })],
+        ['Membros', admin_company_members_path(q: { company_id_eq: resource.id })],
+        ['Solicitações', admin_company_access_requests_path(q: { company_id_eq: resource.id })],
+        ['Perguntas setoriais', admin_company_sector_questions_path(q: { company_id_eq: resource.id })]
+      ]
+
+      attributes_table_for resource do
+        row('Empresa') { |company| company.name }
+        row('Slug') { |company| company.slug }
+        row('Status') { |company| status_tag company.status }
+        row('Verificada') { |company| status_tag(company.verified? ? 'Sim' : 'Não') }
+        row('Localização') { |company| [company.city, company.state].compact.join(', ') }
+        row('Atualizada em') { |company| l(company.updated_at, format: :long) }
+      end
+
+      div class: 'company-360-tabs', style: 'display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;' do
+        overview_tabs.each_with_index do |(label, path), index|
+          link_to label, path, class: "button #{index.zero? ? 'primary' : ''}"
+        end
+      end
+    end
+
+    overview = CompanyAdminOverviewQuery.new(resource).call
+    panel 'Resumo operacional' do
+      columns do
+        column { para "Produtos ativos: #{overview[:active_products]}" }
+        column { para "Projetos publicados: #{overview[:published_projects]}" }
+        column { para "Serviços: #{overview[:services]}" }
+        column { para "Materiais: #{overview[:materials]}" }
+        column { para "FAQs: #{overview[:faqs]}" }
+        column { para "Membros: #{overview[:members]}" }
+        column { para "Solicitações pendentes: #{overview[:pending_access_requests]}" }
+        column { para "Leads últimos 30 dias: #{overview[:recent_leads]}" }
+        column { para "Campanhas ativas: #{overview[:active_campaigns]}" }
+        column { para "Avaliação média: #{overview[:average_rating]}" }
+      end
+    end
+
     panel 'Moderation Details' do
       attributes_table_for resource do
         row :moderation_status do |company|

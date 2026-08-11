@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyAccessRequest do
+  menu false
   menu priority: 11, label: proc {
     pending_count = CompanyAccessRequest.pending.count
     if pending_count.positive?

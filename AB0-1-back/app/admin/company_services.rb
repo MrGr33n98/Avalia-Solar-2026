@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyService do
+  menu false
   permit_params :company_id, :category_id, :name, :slug, :description, :price_from, :status, coverage: []
 
   filter :company

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register CompanyProject do
+  menu false
   includes :company, :digital_assets
   permit_params :company_id, :title, :slug, :summary, :project_type, :segment, :technology, :city, :state,
                 :capacity_value, :capacity_unit, :completion_date, :status, :position

@@ -1,4 +1,5 @@
 ActiveAdmin.register CompanyFinancingOffer do
+  menu false
   permit_params :company_id, :name, :offer_type, :term_months, :interest_rate_monthly,
                 :min_down_payment_percent, :grace_months, :amortization_type, :notes,
                 :active, :position
