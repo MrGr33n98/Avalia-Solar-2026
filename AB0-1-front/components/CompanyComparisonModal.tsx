@@ -91,8 +91,8 @@ function MobileComparisonContent({
   onAddCompany,
   onQuote,
 }: MobileComparisonContentProps) {
-  const visibleCompanies = companies.slice(0, 3);
-  const mobileGridColumns = 'grid-cols-[minmax(62px,0.72fr)_repeat(3,minmax(0,1fr))]';
+  const visibleCompanies = companies.slice(0, 2);
+  const mobileGridColumns = 'grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)]';
 
   const rows = [
     {
@@ -103,7 +103,7 @@ function MobileComparisonContent({
         const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
         return (
           <>
-            <span className="text-sm font-extrabold text-slate-950">{rating > 0 ? rating.toFixed(1) : 'S/N'}</span>
+            <span className="text-sm font-extrabold text-slate-950">{rating > 0 ? rating.toFixed(1) : '—'}</span>
             <span className="text-[10px] text-amber-500">{rating > 0 ? '★★★★★' : 'Sem avaliações'}</span>
             {reviews > 0 && <span className="text-[10px] text-slate-400">{reviews} avaliação{reviews === 1 ? '' : 'ões'}</span>}
           </>
@@ -129,7 +129,7 @@ function MobileComparisonContent({
         const speed = getSpeedBadge(company.response_time_sla);
         return (
           <>
-            <span className="truncate text-xs font-bold text-slate-950">{company.response_time_sla || 'Consultar'}</span>
+            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">{company.response_time_sla || 'Consultar'}</span>
             {speed && <span className={cn('w-fit rounded border px-1 py-0.5 text-[9px] font-bold', speed.color)}>{speed.label}</span>}
           </>
         );
@@ -142,7 +142,7 @@ function MobileComparisonContent({
         const coverageCount = getCoverageCount(company);
         return (
           <>
-            <span className="truncate text-xs font-bold text-slate-950">{[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}</span>
+            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">{[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}</span>
             <span className="text-[10px] text-slate-400">{coverageCount > 0 ? `+${coverageCount} regiões` : 'Sob consulta'}</span>
           </>
         );
@@ -154,7 +154,6 @@ function MobileComparisonContent({
       render: (company: ComparisonCompany) => (
         <>
           <span className="text-xs font-bold text-slate-950">{company.delivered_projects_score ? `+${company.delivered_projects_score}` : 'Consultar'}</span>
-          <span className="text-[10px] text-slate-400">Projetos entregues</span>
         </>
       ),
     },
@@ -164,7 +163,6 @@ function MobileComparisonContent({
       render: (company: ComparisonCompany) => (
         <>
           <span className="text-xs font-bold text-slate-950">{company.warranty_years ? `${company.warranty_years} anos` : 'Consultar'}</span>
-          <span className="text-[10px] text-slate-400">Cobertura</span>
         </>
       ),
     },
@@ -172,8 +170,9 @@ function MobileComparisonContent({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-1 pt-0 md:hidden">
-      <div className="mb-1 grid min-w-0 grid-cols-3 gap-0.5">
-        {visibleCompanies.map((company) => {
+      <div className={cn('mb-1 grid min-w-0', mobileGridColumns, 'border-b border-slate-200 bg-white')}>
+          <div className="min-w-0 bg-slate-50/70 p-1.5" aria-hidden="true" />
+          {visibleCompanies.map((company) => {
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
@@ -190,9 +189,13 @@ function MobileComparisonContent({
               </button>
             </div>
           );
-        })}
-        {visibleCompanies.length < 3 && <button onClick={onAddCompany} className="flex min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700">Adicionar</button>}
-      </div>
+          })}
+          {visibleCompanies.length < 2 && (
+            <button onClick={onAddCompany} className="flex min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700">
+              Adicionar
+            </button>
+          )}
+        </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
         {rows.map((row) => (
@@ -207,7 +210,7 @@ function MobileComparisonContent({
         <div className={cn('grid min-w-0', mobileGridColumns, 'bg-slate-50/50')}>
           <span className="min-w-0 px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-wide text-slate-400">Orçamento</span>
           {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className={cn('min-w-0 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>
-            {hasPaidPlan(company) ? <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button> : null}
+            {hasPaidPlan(company) ? <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button> : <span className="block px-1 py-2 text-center text-[9px] font-medium text-slate-400">Indisponível</span>}
           </div>)}
         </div>
       </div>
@@ -282,7 +285,7 @@ export default function CompanyComparisonModal({
                   Comparar empresas
                 </DialogTitle>
                 <DialogDescription className="mt-0.5 text-[10px] text-blue-100">
-                  {Math.min(companies.length, 3)} de 3 exibidas
+                  {Math.min(companies.length, 2)} empresas selecionadas
                 </DialogDescription>
               </div>
             </div>
@@ -505,7 +508,7 @@ export default function CompanyComparisonModal({
                                   })}
                                 </div>
                                 <span className="text-[10px] font-bold text-slate-900">
-                                  {rating > 0 ? rating.toFixed(1) : 'S/N'}
+                                  {rating > 0 ? rating.toFixed(1) : '—'}
                                 </span>
                                 {reviews > 0 && (
                                   <span className="text-[10px] text-slate-400">({reviews})</span>
@@ -663,8 +666,8 @@ export default function CompanyComparisonModal({
                             isHighlighted && 'bg-blue-50/5'
                           )}
                         >
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-900">
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span className="line-clamp-2 min-w-0 break-words text-xs font-bold leading-tight text-slate-900">
                               {company.response_time_sla || 'Sob consulta'}
                             </span>
                             {speed && (
@@ -709,7 +712,7 @@ export default function CompanyComparisonModal({
                             isHighlighted && 'bg-blue-50/5'
                           )}
                         >
-                          <span className="text-xs font-bold text-slate-950 truncate">
+                          <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
                             {[company.city, company.state].filter(Boolean).join(', ') ||
                               'Consultar'}
                           </span>
