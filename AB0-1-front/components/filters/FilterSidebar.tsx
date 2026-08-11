@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useStatesOptions } from './hooks';
+import { useStatesOptions, useCitiesOptions } from './hooks';
 import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
 import { areFiltersEqual, parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
@@ -62,48 +62,80 @@ function FilterSection({
 // ─── Localização: grid de siglas com dados reais ─────────────────────────────
 function LocationSection({
   selectedStates,
+  selectedCities,
   onStatesChange,
+  onCitiesChange,
 }: {
   selectedStates: string[];
+  selectedCities: string[];
   onStatesChange: (states: string[]) => void;
+  onCitiesChange: (cities: string[]) => void;
 }) {
-  const { states, loading } = useStatesOptions();
+  const { states, loading: statesLoading } = useStatesOptions();
+  const { cities, loading: citiesLoading } = useCitiesOptions(selectedStates);
 
-  const toggle = (s: string) => {
-    onStatesChange(
-      selectedStates.includes(s) ? selectedStates.filter((x) => x !== s) : [...selectedStates, s]
+  const toggleState = (state: string) => {
+    const nextStates = selectedStates.includes(state)
+      ? selectedStates.filter((item) => item !== state)
+      : [...selectedStates, state];
+    onStatesChange(nextStates);
+    if (selectedStates.includes(state)) {
+      onCitiesChange(selectedCities.filter((city) => cities.some((item) => item.city === city && item.state !== state)));
+    }
+  };
+
+  const toggleCity = (city: string) => {
+    onCitiesChange(
+      selectedCities.includes(city)
+        ? selectedCities.filter((item) => item !== city)
+        : [...selectedCities, city]
     );
   };
 
   return (
-    <FilterSection label="Localização" defaultOpen={true} badge={selectedStates.length}>
-      <div className="space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Estados</p>
-        {loading ? (
-          <div className="grid grid-cols-5 gap-1.5">
-            {Array.from({ length: 15 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 rounded" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-5 gap-1.5">
-            {states.map((item) => {
-              const active = selectedStates.includes(item.state);
-              return (
+    <FilterSection label="Localização" defaultOpen={true} badge={selectedStates.length + selectedCities.length}>
+      <div className="space-y-4">
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Estado</p>
+          {statesLoading ? (
+            <div className="grid grid-cols-5 gap-1.5">
+              {Array.from({ length: 15 }).map((_, i) => <Skeleton key={i} className="h-8 rounded" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-5 gap-1.5">
+              {states.map((item) => (
                 <button
                   key={item.state}
                   type="button"
-                  onClick={() => toggle(item.state)}
-                  className={`flex h-8 items-center justify-center rounded text-[11px] font-bold transition-colors border ${
-                    active
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50'
-                  }`}
+                  onClick={() => toggleState(item.state)}
+                  className={`flex h-8 items-center justify-center rounded border text-[11px] font-bold transition-colors ${selectedStates.includes(item.state) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50'}`}
                 >
                   {item.state}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+          )}
+        </div>
+        {selectedStates.length > 0 && (
+          <div className="space-y-3 border-t border-slate-100 pt-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cidade</p>
+            {citiesLoading ? (
+              <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 rounded" />)}</div>
+            ) : (
+              <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                {cities.map((item) => (
+                  <button
+                    key={`${item.state}-${item.city}`}
+                    type="button"
+                    onClick={() => toggleCity(item.city)}
+                    className={`flex min-h-8 w-full items-center justify-between rounded px-2 text-left text-xs ${selectedCities.includes(item.city) ? 'bg-blue-50 font-semibold text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <span className="truncate">{item.city}</span>
+                    <span className="ml-2 shrink-0 text-[10px] text-slate-400">{item.state}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -303,7 +335,9 @@ export const FilterSidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         <LocationSection
           selectedStates={filters.state}
+          selectedCities={filters.city}
           onStatesChange={(state) => updateFilters({ state })}
+          onCitiesChange={(city) => updateFilters({ city })}
         />
         <CategoriesSection
           selectedIds={filters.category_ids}

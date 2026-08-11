@@ -63,7 +63,7 @@ export function getBannerAspectRatio(position?: string) {
     case 'home_top':
       return 'aspect-[15/2]';
     case 'companies_top':
-      return 'h-[88px] max-h-[88px] sm:h-[104px] sm:max-h-[104px] md:h-[120px] md:max-h-[120px] lg:h-[136px] lg:max-h-[136px]';
+      return 'h-[88px] max-h-[88px] w-full sm:h-[104px] sm:max-h-[104px] md:h-[120px] md:max-h-[120px] lg:h-[136px] lg:max-h-[136px]';
     case 'search_mid':
       return 'aspect-[15/2]';
     case 'categories_filter_sidebar':
@@ -323,7 +323,7 @@ export function BannerContainer({
     );
 
     return (
-      <div ref={containerRef} className={cn('m-0 w-full p-0', className)}>
+      <div ref={containerRef} className={cn('m-0 w-full min-w-0 max-w-full overflow-hidden p-0', className)}>
         <PremiumBannerCarousel
           items={items}
           aspectRatio={aspectRatio}
