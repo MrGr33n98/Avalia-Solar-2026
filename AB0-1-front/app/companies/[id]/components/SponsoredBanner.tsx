@@ -39,7 +39,58 @@ export default function SponsoredBanner({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const impressionTrackedRef = useRef<Set<number>>(new Set());
+  const impressionTrackedRef = useRef<Set<string>>(new Set());
+
+  const getEventInstanceId = (eventType: 'impression' | 'click', banner: Banner) => {
+    if (eventType === 'impression') {
+      return `${banner.id}:${banner.delivery_id || 'no-delivery'}:${slotKey}`;
+    }
+    return typeof crypto?.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${banner.id}:${slotKey}:${Date.now()}:${Math.random()}`;
+  };
+
+  const trackImpression = (banner: Banner) => {
+    const impressionKey = `${banner.id}:${banner.delivery_id || 'no-delivery'}:${slotKey}`;
+    if (impressionTrackedRef.current.has(impressionKey)) return;
+    impressionTrackedRef.current.add(impressionKey);
+    void analyticsApi.trackBannerEvent({
+      banner_id: banner.id,
+      company_id: companyId,
+      event_type: 'impression',
+      impression_instance_id: getEventInstanceId('impression', banner),
+      delivery_id: banner.delivery_id || undefined,
+      metadata: { slot_key: slotKey },
+    });
+    track('banner_view', {
+      banner_id: banner.id,
+      banner_title: banner.title,
+      banner_position: slotKey,
+      element_type: 'sponsored_banner',
+      action_type: 'view',
+      sponsored: Boolean(banner.sponsored),
+    });
+  };
+
+  const trackClick = (banner: Banner) => {
+    const destinationUrl = banner.link_url || banner.link || undefined;
+    void analyticsApi.trackBannerEvent({
+      banner_id: banner.id,
+      company_id: companyId,
+      event_type: 'click',
+      click_instance_id: getEventInstanceId('click', banner),
+      delivery_id: banner.delivery_id || undefined,
+      metadata: { slot_key: slotKey, destination_url: destinationUrl },
+    });
+    track('banner_click', {
+      banner_id: banner.id,
+      banner_title: banner.title,
+      banner_position: slotKey,
+      element_type: 'sponsored_banner',
+      action_type: 'click',
+      destination_url: destinationUrl,
+    });
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -73,26 +124,6 @@ export default function SponsoredBanner({
     const node = containerRef.current;
     const firstBanner = banners[0];
     if (!node || !firstBanner) return;
-    const trackImpression = (banner: Banner) => {
-      if (impressionTrackedRef.current.has(banner.id)) return;
-      impressionTrackedRef.current.add(banner.id);
-      void analyticsApi.trackBannerEvent({
-        banner_id: banner.id,
-        company_id: companyId,
-        event_type: 'impression',
-        impression_instance_id: `${banner.id}:${slotKey}`,
-        delivery_id: banner.delivery_id || undefined,
-        metadata: { slot_key: slotKey },
-      });
-      track("banner_view", {
-        banner_id: banner.id,
-        banner_title: banner.title,
-        banner_position: slotKey,
-        element_type: "sponsored_banner",
-        action_type: "view",
-        sponsored: Boolean(banner.sponsored),
-      });
-    };
     if (typeof IntersectionObserver === 'undefined') {
       trackImpression(firstBanner);
       return;
@@ -132,6 +163,7 @@ export default function SponsoredBanner({
   const renderBannerContent = (banner: Banner) => {
     const imageSrc = banner.image_url || '/images/banner-avalia-solar.png';
     const imageAlt = banner.title || 'Banner';
+    const hasLink = Boolean(banner.link_url || banner.link);
 
     const content = (
       <div className="relative w-full h-full bg-muted/20">
@@ -159,12 +191,12 @@ export default function SponsoredBanner({
         <Card className="h-full overflow-hidden border border-slate-100 shadow-sm">
           <CardContent className="p-3 h-full flex flex-col">
             <div className={cn('relative flex-1 overflow-hidden rounded-lg', aspectClass)}>
-              {banner.link_url ? (
+              {hasLink ? (
                 <a
                   href={`/api/v1/banner_clicks/${banner.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
+                  onClick={() => trackClick(banner)}
                   className="block w-full h-full"
                 >
                   {content}
@@ -173,14 +205,14 @@ export default function SponsoredBanner({
                 content
               )}
             </div>
-            {banner.link_url && (
+            {hasLink && (
               <div className="mt-3">
                 <Button asChild variant="default" size="sm" className="w-full">
                   <a
                     href={`/api/v1/banner_clicks/${banner.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
+                    onClick={() => trackClick(banner)}
                   >
                     Saiba mais
                   </a>
@@ -194,12 +226,12 @@ export default function SponsoredBanner({
 
     return (
       <div className="w-full h-full">
-        {banner.link_url ? (
+        {hasLink ? (
           <a
             href={`/api/v1/banner_clicks/${banner.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => track("banner_click", { banner_id: banner.id, banner_title: banner.title, banner_position: slotKey, element_type: "sponsored_banner", action_type: "click", destination_url: banner.link_url })}
+            onClick={() => trackClick(banner)}
             className="block w-full h-full"
           >
             {content}
@@ -235,14 +267,7 @@ export default function SponsoredBanner({
         onActiveIndexChange={(index) => {
           const banner = banners[index];
           if (!banner) return;
-          void analyticsApi.trackBannerEvent({
-            banner_id: banner.id,
-            company_id: companyId,
-            event_type: 'impression',
-            impression_instance_id: `${banner.id}:${slotKey}`,
-            delivery_id: banner.delivery_id || undefined,
-            metadata: { slot_key: slotKey },
-          });
+          trackImpression(banner);
         }}
       />
     </div>

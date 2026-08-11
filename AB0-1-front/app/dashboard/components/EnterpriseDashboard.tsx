@@ -154,8 +154,8 @@ const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: str
     description: 'Os recursos de webhook e integracao exigem upgrade de plano.',
   },
   'product-banner': {
-    title: 'Banner promocional bloqueado',
-    description: 'Seu plano atual nao libera gerenciamento de banner promocional.',
+    title: 'Campanhas patrocinadas bloqueadas',
+    description: 'Seu plano atual nao libera o gerenciamento de campanhas patrocinadas.',
   },
   'product-sponsored-description': {
     title: 'Descricao patrocinada bloqueada',
@@ -555,10 +555,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   <div>
                     <div className="mb-6">
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Banner
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Gerencie seu banner e opções de patrocínio.
+                        Campanhas Patrocinadas
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie suas campanhas patrocinadas e opções de veiculação.
                       </p>
                     </div>
                     <BannersSponsorship companyId={companyId} />
@@ -649,20 +649,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     </p>
                   </div>
                   <CategoriesManagement companyId={companyId} company={company} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="banners" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Banners & Patrocínios
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Gerencie suas campanhas publicitárias e patrocínios
-                    </p>
-                  </div>
-                  <BannersSponsorship companyId={companyId} />
                 </div>
               </TabsContent>
 

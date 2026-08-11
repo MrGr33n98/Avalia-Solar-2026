@@ -180,7 +180,7 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
       },
       {
         id: 'product-banner',
-        label: 'Banner',
+        label: 'Campanhas Patrocinadas',
         icon: Sparkles,
         context: ['operational', 'admin'],
       },

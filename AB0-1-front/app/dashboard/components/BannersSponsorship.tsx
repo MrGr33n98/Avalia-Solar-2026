@@ -29,6 +29,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogClose,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -345,6 +346,16 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DetailedPerformance | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [chartDays, setChartDays] = useState<'7' | '30' | '90'>('30');
+
+  const filteredTimeSeries = useMemo(() => {
+    const series = data?.time_series ?? [];
+    if (!series.length) return [];
+    const latestDay = Math.max(...series.map((point) => new Date(point.day).getTime()));
+    const cutoff = new Date(latestDay);
+    cutoff.setDate(cutoff.getDate() - Number(chartDays) + 1);
+    return series.filter((point) => new Date(point.day) >= cutoff);
+  }, [chartDays, data?.time_series]);
 
   useEffect(() => {
     if (!open) return;
@@ -486,15 +497,34 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
               </div>
             )}
 
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">
+                  Impressões ao longo do tempo
+                </h4>
+                <p className="text-xs text-slate-500">A série já carregada, sem novas consultas.</p>
+              </div>
+              <Select value={chartDays} onValueChange={(value) => setChartDays(value as '7' | '30' | '90')}>
+                <SelectTrigger aria-label="Período do gráfico" className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90">Últimos 90 dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Simple mini-chart representation */}
-            {data.time_series.length > 0 && (
+            {filteredTimeSeries.length > 0 && (
               <div
                 role="img"
-                aria-label={`Gráfico de impressões dos últimos ${data.time_series.length} dias`}
+                aria-label={`Gráfico de impressões dos últimos ${filteredTimeSeries.length} dias`}
                 className="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 h-48 flex items-end justify-between gap-1"
               >
-                {data.time_series.map((ts, i) => {
-                  const max = Math.max(...data.time_series.map((t) => t.impressions)) || 1;
+                {filteredTimeSeries.map((ts, i) => {
+                  const max = Math.max(...filteredTimeSeries.map((t) => t.impressions)) || 1;
                   const height = (ts.impressions / max) * 100;
                   return (
                     <div
@@ -991,10 +1021,33 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                 className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Novo Anúncio
+                Nova campanha
               </Button>
             }
           />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button type="button" variant="outline" className="h-12 rounded-2xl font-black uppercase tracking-widest text-[10px]">
+                Guia rápido
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Guia rápido de campanhas</DialogTitle>
+                <DialogDescription>Boas práticas para aproveitar melhor seu investimento.</DialogDescription>
+              </DialogHeader>
+              <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <li><strong>Use uma mensagem objetiva:</strong> destaque um diferencial em poucos segundos.</li>
+                <li><strong>Escolha a posição certa:</strong> combine o público da página com sua oferta.</li>
+                <li><strong>Acompanhe a performance:</strong> revise impressões, cliques e leads antes de ajustar.</li>
+              </ul>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Fechar</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -1105,6 +1158,50 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                 </div>
                 <div className="text-3xl font-black tracking-tight">
                   {formatMoney(data.summary.investment_cents)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                      Quota de campanhas
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {data.quota.limit === null ? 'Campanhas ilimitadas' : 'Campanhas disponíveis no plano'}
+                    </p>
+                  </div>
+                  <Badge variant={data.quota.can_create ? 'default' : 'secondary'}>
+                    {data.quota.can_create ? 'Disponível' : 'Limite atingido'}
+                  </Badge>
+                </div>
+                <div className="mt-5 flex items-end justify-between gap-4">
+                  <div className="text-3xl font-black tracking-tight">
+                    {data.quota.used}{' '}
+                    <span className="text-sm font-semibold text-slate-400">
+                      de {data.quota.limit ?? '∞'} usadas
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-brand-blue">
+                    {data.quota.remaining ?? '∞'} restantes
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-3xl border border-brand-blue/10 bg-brand-blue/5 shadow-sm dark:bg-brand-blue/10">
+              <CardContent className="flex items-start gap-3 p-6">
+                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-brand-blue" aria-hidden="true" />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-brand-blue">
+                    Dica de boas práticas
+                  </p>
+                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+                    Prefira uma oferta clara e uma imagem legível. Depois, compare cliques e leads para decidir quais campanhas manter ativas.
+                  </p>
                 </div>
               </CardContent>
             </Card>

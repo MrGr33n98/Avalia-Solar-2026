@@ -33,6 +33,11 @@ async function prepare(page: Page, request: APIRequestContext) {
           divergent_banners_yesterday: 0,
           lag_minutes: 4,
         },
+        time_series: [
+          { day: '2026-08-08', impressions: 320, clicks: 12 },
+          { day: '2026-08-09', impressions: 410, clicks: 17 },
+          { day: '2026-08-10', impressions: 470, clicks: 19 },
+        ],
         banners: [],
       }),
     });
@@ -56,6 +61,29 @@ test.describe('Banner Ads dashboard visual smoke', () => {
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth
     );
     expect(hasOverflow).toBe(false);
+  });
+
+  test('expõe as ações e os cards principais do mockup', async ({ page }) => {
+    await page.goto('/dashboard?company_id=1&tab=product-banner');
+
+    await expect(page.getByRole('button', { name: 'Nova campanha' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Guia rápido' })).toBeVisible();
+    await expect(page.getByText('Quota de campanhas')).toBeVisible();
+    await expect(page.getByText('Dica de boas práticas')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Guia rápido' }).click();
+    await expect(page.getByRole('dialog')).toContainText('Guia rápido de campanhas');
+    await page.getByRole('button', { name: 'Fechar' }).click();
+  });
+
+  test('permite alternar o período do gráfico', async ({ page }) => {
+    await page.goto('/dashboard?company_id=1&tab=product-banner');
+
+    const period = page.getByRole('combobox', { name: 'Período do gráfico' });
+    await expect(period).toBeVisible();
+    await period.click();
+    await page.getByRole('option', { name: 'Últimos 7 dias' }).click();
+    await expect(period).toContainText('Últimos 7 dias');
   });
 
   test('mantém o painel operacional legível no viewport atual', async ({ page }) => {
