@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, Star, X, ShieldCheck, Building2 } from 'lucide-react';
+import { Star, X, ShieldCheck, Building2 } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
@@ -92,6 +92,7 @@ function MobileComparisonContent({
   onQuote,
 }: MobileComparisonContentProps) {
   const visibleCompanies = companies.slice(0, 3);
+  const mobileGridColumns = 'grid-cols-[minmax(76px,0.8fr)_repeat(3,minmax(0,1fr))]';
 
   const rows = [
     {
@@ -176,17 +177,17 @@ function MobileComparisonContent({
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
-            <div key={company.id} className={cn('relative min-w-0 rounded-md border bg-white p-1 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
-              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="absolute right-0 top-0 rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500">
-                <X className="h-3 w-3" aria-hidden="true" />
-              </button>
-              <div className="relative mx-auto mb-0.5 h-6 w-8 overflow-hidden rounded border border-slate-100 bg-white">
+            <div key={company.id} className={cn('relative grid min-w-0 grid-cols-[30px_minmax(0,1fr)_16px] items-start gap-1 rounded-md border bg-white p-1.5 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
+              <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
                 {logoUrl ? <Image src={logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />}
               </div>
-              <Link href={`/companies/${company.slug || company.id}`} className="block min-w-0">
-                <span className="block truncate text-[10px] font-bold text-slate-900">{company.name}</span>
+              <Link href={`/companies/${company.slug || company.id}`} className="min-w-0 pt-0.5">
+                <span className="line-clamp-2 break-normal text-[10px] font-bold leading-tight text-slate-900">{company.name}</span>
+                <span className="mt-0.5 block break-normal text-[9px] leading-tight text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
               </Link>
-              <span className="block truncate text-[9px] text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
+              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500">
+                <X className="h-3 w-3" aria-hidden="true" />
+              </button>
             </div>
           );
         })}
@@ -195,25 +196,19 @@ function MobileComparisonContent({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
         {rows.map((row) => (
-          <div className="grid min-w-0 grid-cols-[62px_minmax(0,1fr)] border-b border-slate-100 last:border-b-0">
-            <div className="bg-slate-50/70 px-1 py-1.5">
-              <span className="block text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-800">{row.label}</span>
-              <span className="block text-[9px] leading-tight text-slate-400">{row.detail}</span>
+          <div key={row.label} className={cn('grid min-w-0', mobileGridColumns, 'border-b border-slate-100 last:border-b-0')}>
+            <div className="min-w-0 bg-slate-50/70 px-1.5 py-2">
+              <span className="block break-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-800">{row.label}</span>
+              <span className="block break-normal text-[9px] leading-tight text-slate-400">{row.detail}</span>
             </div>
-            <div className="grid min-w-0 grid-cols-3 divide-x divide-slate-100">
-              {visibleCompanies.map((company) => <div key={`${row.label}-${company.id}`} className={cn('flex min-w-0 flex-col justify-center gap-0.5 px-1 py-1.5', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>{row.render(company)}</div>)}
-            </div>
+            {visibleCompanies.map((company) => <div key={`${row.label}-${company.id}`} className={cn('flex min-w-0 flex-col items-start justify-start gap-1 overflow-hidden px-1.5 py-2 break-normal whitespace-normal', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>{row.render(company)}</div>)}
           </div>
         ))}
-        <div className="grid min-w-0 grid-cols-[62px_minmax(0,1fr)] bg-slate-50/50">
-          <span className="px-1 py-1.5 text-[9px] font-bold uppercase tracking-wide text-slate-400">Orçamento</span>
-          <div className="grid min-w-0 grid-cols-3 divide-x divide-slate-100">
-            {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className="min-w-0 px-1.5 py-2">{hasPaidPlan(company) ? (
-                <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-7 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-0.5 text-[8px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">
-                  Solicitar orçamento
-                </Button>
-              ) : null}</div>)}
-          </div>
+        <div className={cn('grid min-w-0', mobileGridColumns, 'bg-slate-50/50')}>
+          <span className="min-w-0 px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-wide text-slate-400">Orçamento</span>
+          {visibleCompanies.map((company) => <div key={`mobile-cta-${company.id}`} className={cn('min-w-0 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>
+            {hasPaidPlan(company) ? <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button> : null}
+          </div>)}
         </div>
       </div>
     </div>
