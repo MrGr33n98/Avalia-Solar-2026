@@ -476,7 +476,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
                   {/* Button Link & Comparison */}
                   <td className="py-4 px-4 text-right w-[19rem]">
-                    <div className="grid grid-cols-[7rem_10rem] items-center justify-end gap-2">
+                    <div className="grid grid-cols-[7rem_minmax(0,10rem)] items-center justify-end gap-2">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
                       {canRequestQuote ? (
@@ -490,10 +490,9 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                               type: 'quick',
                             });
                           }}
-                          className="rounded-lg text-[11px] font-bold h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+                          className="min-w-0 max-w-full min-h-10 h-auto whitespace-normal break-normal px-3 py-2 text-center leading-tight rounded-lg text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none"
                         >
-                          <span className="hidden xl:inline">Solicitar orçamento</span>
-                          <span className="xl:hidden">Orçamento</span>
+                          Solicitar orçamento
                         </Button>
                       ) : (
                         <span aria-hidden="true" className="h-8" />
