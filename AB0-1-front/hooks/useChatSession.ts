@@ -24,6 +24,7 @@ export interface ChatSession {
   vertical?: string;
   message_count: number;
   realtime_token?: string;
+  access_token?: string;
 }
 
 export interface ChatMessageMetadata {
@@ -110,13 +111,13 @@ export function useChatSession(sessionKey = 'as_chat_session') {
 
   const fetchSessionMessages = useCallback(async (sessionId: number) => {
     try {
-      const response = await fetchApiSafe<{ messages: ChatMessage[]; realtime_token?: string }>(`chat/sessions/${sessionId}`);
+      const response = await fetchApiSafe<{ messages: ChatMessage[]; realtime_token?: string; access_token?: string }>(`chat/sessions/${sessionId}`, { headers: session?.access_token ? { 'X-Chat-Session-Token': session.access_token } : {} });
       if (response && response.messages) {
         setMessages(response.messages);
-        if (response.realtime_token) {
+        if (response.access_token || response.realtime_token) {
           setSession((current) => {
             if (!current || current.id !== sessionId) return current;
-            const refreshed = { ...current, realtime_token: response.realtime_token };
+            const refreshed = { ...current, realtime_token: response.realtime_token || current.realtime_token, access_token: response.access_token || current.access_token };
             sessionStorage.setItem(sessionKey, JSON.stringify(refreshed));
             return refreshed;
           });
@@ -228,7 +229,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
       const url = buildApiUrl(`chat/sessions/${currentSession.id}/messages`);
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(currentSession.access_token ? { 'X-Chat-Session-Token': currentSession.access_token } : {}) },
         body: JSON.stringify({ content }),
         credentials: 'include'
       });
@@ -345,7 +346,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     try {
       await fetchApiSafe(`chat/messages/${messageId}/feedback`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { 'X-Chat-Session-Token': session.access_token } : {}) },
         body: JSON.stringify({ feedback: score })
       });
       // Update local state to reflect feedback
@@ -381,7 +382,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
 
       const response = await fetchApiSafe<{ success?: boolean; lead_id?: number; id?: number }>('chat/leads', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(session.access_token ? { 'X-Chat-Session-Token': session.access_token } : {}) },
         body: JSON.stringify(payload)
       });
 
