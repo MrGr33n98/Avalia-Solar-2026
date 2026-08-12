@@ -179,7 +179,7 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load
           bundle exec rails zeitwerk:check
-          RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
+          RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
 
   deploy:
     needs: [build-and-push, zeitwerk-check]
