@@ -65,7 +65,7 @@ export function getFloatingWidgetSizeClasses(widget: 'chat' | 'mobivolt' | 'comp
  */
 export const WIDGET_POSITION_CLASSES = {
   // 3º Base: Mensagens (Chat Trigger)
-  chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-6',
+  chat: 'bottom-[calc(var(--mobile-nav-height,_4rem)_+_env(safe-area-inset-bottom)_+_16px)] right-4 md:bottom-6 md:right-20',
 
   // 2º Meio: Assistente IA (MobiVolt)
   mobivolt:
