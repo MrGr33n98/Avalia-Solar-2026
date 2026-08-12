@@ -4,6 +4,15 @@ export type InboxMode = 'bot_only' | 'human_manual' | 'hybrid';
 export type InboxStatus = 'active' | 'waiting_agent' | 'in_progress' | 'archived';
 export type InboxMessageRole = 'user' | 'assistant' | 'agent' | 'system';
 
+export interface InboxActivity {
+  id: number;
+  type: string;
+  old_status?: string | null;
+  new_status?: string | null;
+  performed_by_id?: number | null;
+  created_at: string;
+}
+
 export interface InboxMessage {
   id: number;
   role: InboxMessageRole;
@@ -69,6 +78,11 @@ export const inboxApi = {
       { noCache: true }
     );
   },
+  activities: (companyId: number, sessionId: number) =>
+    fetchApiSafe<{ activities: InboxActivity[] }>(
+      `inbox/sessions/${sessionId}/activities?company_id=${companyId}`,
+      { noCache: true }
+    ),
   messages: (companyId: number, sessionId: number) =>
     fetchApiSafe<{ messages: InboxMessage[] }>(
       `inbox/sessions/${sessionId}/messages?company_id=${companyId}`,

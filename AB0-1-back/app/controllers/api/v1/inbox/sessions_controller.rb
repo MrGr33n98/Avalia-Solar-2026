@@ -37,6 +37,13 @@ module Api
           render json: { messages: records.map { |message| serialize_message(message) } }
         end
 
+        def activities
+          authorize @session, :show?
+          lead = @session.chat_lead
+          activities = lead ? lead.chat_lead_activities.includes(:chat_lead).recent.limit(50) : []
+          render json: { activities: activities.map { |activity| serialize_activity(activity) } }
+        end
+
         def create_message
           authorize @session, :update?
           if params[:client_message_id].present?
@@ -156,6 +163,17 @@ module Api
 
         def serialize_message(message)
           ::Chat::InboxBroadcastService.message_payload(message)
+        end
+
+        def serialize_activity(activity)
+          {
+            id: activity.id,
+            type: activity.activity_type,
+            old_status: activity.old_status,
+            new_status: activity.new_status,
+            performed_by_id: activity.performed_by_id,
+            created_at: activity.created_at
+          }
         end
 
         def latest_messages_for(session_ids)

@@ -30,6 +30,7 @@ import {
   inboxApi,
   type InboxCounts,
   type InboxMessage as ApiInboxMessage,
+  type InboxActivity,
   type InboxSession,
   type InboxStatus,
 } from '@/lib/inbox-api';
@@ -99,8 +100,19 @@ function relativeTime(value?: string | null) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
 }
 
+function activityLabel(activity: InboxActivity) {
+  const labels: Record<string, string> = {
+    status_change: 'Status atualizado',
+    lead_captured: 'Lead capturado',
+    human_requested: 'Atendimento humano solicitado',
+    agent_takeover: 'Atendente assumiu a conversa',
+    returned_to_bot: 'Conversa retornou ao assistente',
+  };
+  return labels[activity.type] || 'Atividade registrada';
+}
+
 function priority(score = 0) {
-  if (score >= 75) return { label: '🔥 ICP Match Alto', className: 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' };
+  if (score >= 75) return { label: 'Alta intenção', className: 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' };
   if (score >= 40) return { label: 'Média intenção', className: 'border-amber-300 bg-amber-50 text-amber-800' };
   return { label: 'Informativo', className: 'border-slate-300 bg-slate-50 text-slate-700' };
 }
@@ -268,23 +280,17 @@ function LeadSidebarDetails({ session, onClose }: { session: InboxSession; onClo
       {/* Activity Log / Timeline */}
       <div className="mt-6 border-t border-slate-200 pt-5">
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Histórico de Atividade</h3>
-        <div className="relative border-l-2 border-slate-200 ml-3 space-y-4 pb-4">
-          <div className="relative pl-4">
-            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-blue-500" />
-            <p className="text-xs text-slate-500">Agora</p>
-            <p className="text-sm font-medium">Conversa em andamento</p>
+        {activities.length ? (
+          <div className="relative ml-3 space-y-4 border-l-2 border-slate-200 pb-4">
+            {activities.map((activity) => (
+              <div key={activity.id} className="relative pl-4">
+                <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-slate-400" />
+                <p className="text-xs text-slate-500">{relativeTime(activity.created_at)}</p>
+                <p className="text-sm font-medium">{activityLabel(activity)}</p>
+              </div>
+            ))}
           </div>
-          <div className="relative pl-4">
-            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
-            <p className="text-xs text-slate-500">Há 2 horas</p>
-            <p className="text-sm font-medium">Classificado como Alta Intenção</p>
-          </div>
-          <div className="relative pl-4">
-            <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-slate-300" />
-            <p className="text-xs text-slate-500">Ontem</p>
-            <p className="text-sm font-medium">Lead capturado (Widget TaaS)</p>
-          </div>
-        </div>
+        ) : <p className="text-sm text-slate-500">Nenhuma atividade registrada.</p>}
       </div>
 
       <div className="mt-4 space-y-2">
@@ -351,6 +357,7 @@ export default function LiveInbox() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(() => Number(searchParams.get('session_id')) || null);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [activities, setActivities] = useState<InboxActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState('');
@@ -383,10 +390,13 @@ export default function LiveInbox() {
   const loadMessages = useCallback(async () => {
     if (!companyId || !selectedId) {
       setMessages([]);
+      setActivities([]);
       return;
     }
     const response = await inboxApi.messages(companyId, selectedId);
     setMessages(response.messages);
+    const activityResponse = await inboxApi.activities(companyId, selectedId);
+    setActivities(activityResponse.activities);
     void inboxApi.markRead(companyId, selectedId);
   }, [companyId, selectedId]);
 

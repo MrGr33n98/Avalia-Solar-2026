@@ -272,6 +272,7 @@ Rails.application.routes.draw do
         resources :sessions, only: [:index] do
           member do
             get :messages
+            get :activities
             post :messages, action: :create_message
             patch :mode, action: :update_mode
             post :read, action: :mark_read
