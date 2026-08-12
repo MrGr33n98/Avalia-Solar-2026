@@ -237,7 +237,7 @@ function MessageBubble({ message }: { message: InboxMessage }) {
   );
 }
 
-function LeadSidebarDetails({ session, onClose }: { session: InboxSession; onClose?: () => void }) {
+function LeadSidebarDetails({ session, onClose, activities = [] }: { session: InboxSession; onClose?: () => void; activities?: InboxActivity[] }) {
   const lead = session.lead;
   const phone = lead?.phone?.replace(/\D/g, '') || '';
   const whatsappPhone = phone.startsWith('55') ? phone : `55${phone}`;
@@ -835,10 +835,10 @@ export default function LiveInbox() {
             ) : <div className="m-auto max-w-xs p-6 text-center text-slate-600"><CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-600" /><h2 className="font-bold text-slate-900">Selecione uma conversa</h2><p className="mt-1 text-sm">O histórico e os dados do lead aparecerão aqui.</p></div>}
           </section>
 
-          <div className="hidden min-h-0 border-l border-slate-200 lg:block">{selected ? <LeadSidebarDetails session={selected} /> : null}</div>
+          <div className="hidden min-h-0 border-l border-slate-200 lg:block">{selected ? <LeadSidebarDetails session={selected} activities={activities} /> : null}</div>
         </div>
 
-        {detailsOpen && selected && <div className="fixed inset-0 z-50 bg-slate-950/55 lg:hidden" onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><div role="dialog" aria-modal="true" aria-label="Detalhes do lead" className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-hidden border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"><LeadSidebarDetails session={selected} onClose={() => setDetailsOpen(false)} /></div></div>}
+        {detailsOpen && selected && <div className="fixed inset-0 z-50 bg-slate-950/55 lg:hidden" onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><div role="dialog" aria-modal="true" aria-label="Detalhes do lead" className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-hidden border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"><LeadSidebarDetails session={selected} onClose={() => setDetailsOpen(false)} activities={activities} /></div></div>}
 
         <style jsx global>{`
           @media (max-width: 1023px) {

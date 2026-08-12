@@ -1,12 +1,16 @@
 "use client";
 
-import { HelpCircle, ShieldCheck, Award } from "lucide-react";
+import { useState, useEffect } from "react";
+import { HelpCircle, ShieldCheck, Award, FileText, Download, LockKeyhole } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Company } from "@/lib/api";
+import { Company, fetchApi } from "@/lib/api";
 import { isFeatureEnabled } from "@/lib/feature-access";
 import { getFullImageUrl } from "@/utils/image";
+import { toast } from "@/hooks/use-toast";
 
 import { trackFaqEngagement } from "@/lib/analytics/consolidated";
 import { useFaqExpand } from "@/lib/analytics/hooks/useIntentTracking";
@@ -14,6 +18,7 @@ import { useFaqExpand } from "@/lib/analytics/hooks/useIntentTracking";
 import CompanyContactCard from "./CompanyContactCard";
 import ClaimProfileCard from "./ClaimProfileCard";
 import PremiumSidebarAdSlot from "./PremiumSidebarAdSlot";
+import { DownloadGate, type Material } from "./MaterialsLibrary";
 
 interface SidebarPremiumProps {
   company: Company;
@@ -32,6 +37,61 @@ export default function SidebarPremium({
   // Hook legado de tracking de expansão de FAQ
   const { trackQuestion } = useFaqExpand(intentCompanyId);
   const visibleFaqs = company.faqs?.slice(0, 3) ?? [];
+
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`)
+      .then((response) => active && setMaterials(response.materials || []))
+      .catch(() => active && setMaterials([]));
+    return () => {
+      active = false;
+    };
+  }, [company.id]);
+
+  const track = (eventType: string, material: Material) =>
+    fetchApi('/events/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_id: company.id,
+        event_type: eventType,
+        metadata: { material_id: material.id, material_slug: material.slug },
+      }),
+    }).catch(() => undefined);
+
+  const requestDownload = async (
+    material: Material,
+    values: Record<string, string | Record<string, string>> = {}
+  ) => {
+    await track('material_download_clicked', material);
+    try {
+      const campaign = new URLSearchParams(window.location.search);
+      const response = await fetchApi<{ delivery_url: string }>(`/material_downloads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify({
+          company_id: company.id,
+          material_slug: material.slug,
+          utm_source: campaign.get('utm_source') || undefined,
+          utm_medium: campaign.get('utm_medium') || undefined,
+          utm_campaign: campaign.get('utm_campaign') || undefined,
+          ...values,
+        }),
+      });
+      window.location.assign(response.delivery_url);
+      setSelectedMaterial(null);
+    } catch {
+      toast({
+        title: 'Não foi possível preparar o download',
+        description: 'Tente novamente em alguns instantes.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -57,6 +117,40 @@ export default function SidebarPremium({
           </div>
         </div>
       </Card>
+
+      {/* Card de Materiais da Empresa */}
+      {materials.length > 0 && (
+        <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-black text-slate-950 uppercase tracking-wider">
+                  Materiais da Empresa
+                </h4>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Baixe catálogos, apresentações e outros conteúdos técnicos disponibilizados pela {company.name}.
+                </p>
+              </div>
+            </div>
+            
+            <div className="pt-3 flex items-center justify-between border-t border-slate-100 mt-2">
+              <span className="text-[10px] font-bold text-slate-500">
+                {materials.length} {materials.length === 1 ? 'material disponível' : 'materiais disponíveis'}
+              </span>
+              <Button 
+                size="sm" 
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 h-8"
+                onClick={() => setOpenModal(true)}
+              >
+                Baixar materiais
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* 4. Slot Lateral de Anúncios Patrocinados ou Galeria de Selos */}
       {hasPaidPlan ? (
@@ -150,6 +244,69 @@ export default function SidebarPremium({
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Lista de Materiais */}
+      <Dialog open={openModal} onOpenChange={setOpenModal}>
+        <DialogContent className="sm:max-w-[600px] rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-slate-950">
+              Materiais da {company.name}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Selecione e baixe os materiais disponibilizados pela empresa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 max-h-[400px] overflow-y-auto mt-4 pr-1">
+            {materials.map((material) => (
+              <article key={material.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                    <FileText className="h-5 w-5 text-blue-700" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-sm font-bold text-slate-900">{material.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+                      {material.description || 'Material técnico disponível para download.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center shrink-0">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-slate-200 text-slate-700 hover:bg-white text-xs"
+                    onClick={() => {
+                      if (material.gated) {
+                        setSelectedMaterial(material);
+                      } else {
+                        requestDownload(material);
+                      }
+                    }}
+                  >
+                    <Download className="mr-1 h-3 w-3" />
+                    {material.gated ? (
+                      <>
+                        <LockKeyhole className="mr-1 h-3 w-3" />
+                        Acessar
+                      </>
+                    ) : (
+                      'Baixar'
+                    )}
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal DownloadGate para formulário de Lead */}
+      <DownloadGate 
+        material={selectedMaterial} 
+        onClose={() => setSelectedMaterial(null)} 
+        onSubmit={requestDownload} 
+        onViewed={track} 
+      />
 
     </div>
   );

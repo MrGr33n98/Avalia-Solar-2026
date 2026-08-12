@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { fetchApi } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
-type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required?: boolean; options?: string[] };
-type LeadForm = { id: number; name: string; fields: FormField[]; consent_text?: string | null; privacy_url?: string | null; version: number };
-type Material = { id: number; title: string; slug: string; description?: string; material_type: string; gate_mode: string; gated: boolean; file_available: boolean; lead_form?: LeadForm | null };
+export type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required?: boolean; options?: string[] };
+export type LeadForm = { id: number; name: string; fields: FormField[]; consent_text?: string | null; privacy_url?: string | null; version: number };
+export type Material = { id: number; title: string; slug: string; description?: string; material_type: string; gate_mode: string; gated: boolean; file_available: boolean; lead_form?: LeadForm | null };
 
 export default function MaterialsLibrary({ companyId }: { companyId: number | string }) {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -45,7 +45,7 @@ export default function MaterialsLibrary({ companyId }: { companyId: number | st
   return <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4"><h2 className="text-lg font-black text-slate-950">Materiais e catálogos</h2><p className="mt-1 text-sm text-slate-500">Documentos técnicos e comerciais para apoiar sua decisão.</p></div><div className="grid gap-3 sm:grid-cols-2">{materials.map((material) => <article key={material.id} className="flex gap-3 rounded-xl border border-slate-200 p-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50"><FileText className="h-5 w-5 text-blue-700" /></div><div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900">{material.title}</h3><p className="mt-1 line-clamp-2 text-xs text-slate-500">{material.description || 'Material técnico disponível para download.'}</p><Button size="sm" variant="outline" className="mt-3" onClick={() => material.gated ? setSelected(material) : requestDownload(material)}><Download className="mr-1 h-3 w-3" />{material.gated ? <><LockKeyhole className="mr-1 h-3 w-3" />Acessar material</> : 'Baixar material'}</Button></div></article>)}</div><DownloadGate material={selected} onClose={() => setSelected(null)} onSubmit={requestDownload} onViewed={track} /></section>;
 }
 
-function DownloadGate({ material, onClose, onSubmit, onViewed }: { material: Material | null; onClose: () => void; onSubmit: (material: Material, values: Record<string, string | Record<string, string>>) => Promise<void>; onViewed: (eventType: string, material: Material) => Promise<unknown> }) {
+export function DownloadGate({ material, onClose, onSubmit, onViewed }: { material: Material | null; onClose: () => void; onSubmit: (material: Material, values: Record<string, string | Record<string, string>>) => Promise<void>; onViewed: (eventType: string, material: Material) => Promise<unknown> }) {
   useEffect(() => { if (material) void onViewed('material_gate_viewed', material); }, [material, onViewed]);
   const fields: FormField[] = material?.lead_form?.fields?.length ? material.lead_form.fields : [{ key: 'name', label: 'Nome', type: 'text', required: true }, { key: 'email', label: 'E-mail', type: 'email', required: true }];
   const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!material) return; const data = new FormData(event.currentTarget); const values: Record<string, string | Record<string, string>> = {}; const attributes: Record<string, string> = {}; fields.forEach((field) => { const value = String(data.get(field.key) || ''); if (['name', 'email', 'phone', 'company_name'].includes(field.key)) values[field.key] = value; else attributes[field.key] = value; }); if (Object.keys(attributes).length) values.attributes_data = attributes; values.company_website = String(data.get('company_website') || ''); values.marketing_consent = data.get('marketing_consent') ? 'true' : 'false'; await onSubmit(material, values); };

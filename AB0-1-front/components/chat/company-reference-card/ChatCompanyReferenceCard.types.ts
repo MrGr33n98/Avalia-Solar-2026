@@ -14,6 +14,7 @@ export interface ChatCompanyReferenceCardCompany {
   services?: string[];
   profileUrl?: string;
   reviewSnippet?: string;
+  placement?: string;
 }
 
 export interface ChatCompanyReferenceCardProps {

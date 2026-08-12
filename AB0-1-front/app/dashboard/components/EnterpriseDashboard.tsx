@@ -131,6 +131,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'product-banner': 'promo_banner',
   'product-sponsored-description': 'sponsored_description',
   'product-downloads': 'downloadable_materials',
+  materials: 'downloadable_materials',
   'product-videos': 'media_gallery',
   'product-images': 'media_gallery',
   media: 'media_gallery',
@@ -167,6 +168,10 @@ const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: str
   'product-downloads': {
     title: 'Projetos e materiais bloqueados',
     description: 'Seu plano atual nao permite publicar projetos, mídia e materiais para download.',
+  },
+  materials: {
+    title: 'Materiais para download bloqueados',
+    description: 'Seu plano atual nao permite publicar materiais para download.',
   },
   'product-videos': {
     title: 'Galeria de videos bloqueada',
@@ -605,6 +610,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 {renderGuardedTab(
                   'product-downloads',
                   <ProjectsMaterialsHub companyId={companyId} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="materials" className="mt-0 focus-visible:outline-none">
+                {renderGuardedTab(
+                  'materials',
+                  <ProjectsMaterialsHub companyId={companyId} defaultTab="materials" />
                 )}
               </TabsContent>
 
