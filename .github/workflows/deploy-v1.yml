@@ -359,7 +359,7 @@ jobs:
             # que bloqueiam a criacao de novos containers com o mesmo nome base.
             for SVC_NAME in ab0-postgres ab0-redis ab0-backend ab0-frontend ab0-worker; do
               # Encontra containers cujo nome contem o nome do servico mas tem prefixo de hash
-              GHOST_IDS=$(docker ps -a --filter "name=${SVC_NAME}" --format '{{.ID}} {{.Names}}' | grep -v "^.\{12\} ${SVC_NAME}$" | awk '{print $1}' || true)
+              GHOST_IDS=$(docker ps -a --filter "name=${SVC_NAME}" --format '{{.ID}} {{.Names}}' | awk -v name="${SVC_NAME}" '$2 != name {print $1}' || true)
               if [ -n "$GHOST_IDS" ]; then
                 echo "  Removendo containers fantasma para ${SVC_NAME}: $GHOST_IDS"
                 echo "$GHOST_IDS" | xargs -r docker rm -f 2>/dev/null || true
