@@ -84,10 +84,10 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
 # Nota: Validamos as secrets montadas no passo de build abaixo
 
 # Rodar o build com as variáveis sensíveis passadas via mount=secret
-# Memória limitada a 6GB para evitar OOM Killer em runners do GitHub (7GB total)
+# Build Next.js precisa margem para TypeScript, webpack e geração de páginas.
 RUN --mount=type=secret,id=NEXT_SERVER_ACTIONS_ENCRYPTION_KEY \
     --mount=type=secret,id=BETTER_AUTH_SECRET \
-    NODE_OPTIONS='--max-old-space-size=6144' \
+    NODE_OPTIONS='--max-old-space-size=8192' \
     NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(cat /run/secrets/NEXT_SERVER_ACTIONS_ENCRYPTION_KEY 2>/dev/null || echo '')" \
     BETTER_AUTH_SECRET="$(cat /run/secrets/BETTER_AUTH_SECRET 2>/dev/null || echo '')" \
     SENTRY_ORG="${SENTRY_ORG}" \
