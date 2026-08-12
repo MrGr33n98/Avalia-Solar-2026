@@ -32,7 +32,10 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const brandContext = resolveBrandContext(product);
-  const canRequestQuote = canUsePaidConversion(product.company || {}, 'quote');
+  const canRequestQuote = canUsePaidConversion(
+    product.company as { has_paid_plan?: boolean | null },
+    'quote'
+  );
 
   const [visible, setVisible] = useState(false);
   const cardRef = React.useCallback(
