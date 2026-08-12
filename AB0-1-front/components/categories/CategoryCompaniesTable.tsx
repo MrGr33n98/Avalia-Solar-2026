@@ -475,11 +475,11 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </td>
 
                   {/* Button Link & Comparison */}
-                  <td className="py-4 px-4 text-right min-w-[220px]">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="py-4 px-4 text-right w-[19rem]">
+                    <div className="grid grid-cols-[7rem_10rem] items-center justify-end gap-2">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
-                      {canRequestQuote && (
+                      {canRequestQuote ? (
                         <Button
                           size="sm"
                           onClick={(e) => {
@@ -492,8 +492,11 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           }}
                           className="rounded-lg text-[11px] font-bold h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-none"
                         >
-                          Solicitar orçamento
+                          <span className="hidden xl:inline">Solicitar orçamento</span>
+                          <span className="xl:hidden">Orçamento</span>
                         </Button>
+                      ) : (
+                        <span aria-hidden="true" className="h-8" />
                       )}
                     </div>
                   </td>

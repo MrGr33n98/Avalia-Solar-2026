@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 class NextBestActionService
+  ACTION_METADATA = {
+    "add_categories" => ["profile_add_categories", "CATEGORIES_MISSING", "product-categories"],
+    "add_contact_info" => ["profile_add_contact_info", "CONTACT_INFO_MISSING", "product-general"],
+    "reply_to_reviews" => ["reputation_reply_to_reviews", "UNREPLIED_REVIEWS_PRESENT", "reviews"],
+    "add_description" => ["profile_add_description", "DESCRIPTION_MISSING", "product-general"],
+    "add_logo" => ["profile_add_logo", "LOGO_MISSING", "product-general"],
+    "add_banner" => ["profile_add_banner", "BANNER_MISSING", "product-general"],
+    "invite_reviews" => ["reputation_invite_reviews", "LOW_REVIEW_COUNT", "reviews"],
+    "configure_webhook" => ["integration_configure_webhook", "WEBHOOKS_UNCONFIGURED", "integrations"],
+    "add_products" => ["content_add_products", "PRODUCTS_MISSING", "product-catalog"],
+    "add_projects" => ["content_add_projects", "PROJECTS_MISSING", "product-downloads"],
+    "renew_campaigns" => ["advertising_renew_campaigns", "CAMPAIGNS_EXPIRING", "product-banner"]
+  }.freeze
   def initialize(company)
     @company = company
   end
@@ -172,7 +185,12 @@ class NextBestActionService
       }
     end
 
-    # Sort actions by priority descending
+    actions.each { |action| enrich_action(action) }
     actions.sort_by { |a| -a[:priority] }
+  end
+
+  def enrich_action(action)
+    key, reason_code, destination = ACTION_METADATA.fetch(action[:id])
+    action.merge!(key: key, reason_code: reason_code, destination: destination, entity_context: {})
   end
 end
