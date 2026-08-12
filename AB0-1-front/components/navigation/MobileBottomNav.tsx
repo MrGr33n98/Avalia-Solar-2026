@@ -83,7 +83,7 @@ export default function MobileBottomNav() {
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <AnimatedCompareIcon size="sm" active={pathname.startsWith('/products/compare')} aria-hidden="true" />
+          <AnimatedCompareIcon size={18} active={pathname.startsWith('/products/compare')} aria-hidden="true" />
           <span className="truncate">Comparar</span>
           {count > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">

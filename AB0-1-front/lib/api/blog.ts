@@ -104,7 +104,7 @@ export const blogApi = {
   async fetchVerifiedCompanies() {
     // Mock or real endpoint
     try {
-      const res = await fetch(buildApiUrl('companies/verified?limit=3'), {
+      const res = await fetch(buildApiUrl('companies?verified=true&limit=3'), {
         headers: getApiRequestHeaders(),
         next: { revalidate: 3600 }
       });

@@ -490,7 +490,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                               type: 'quick',
                             });
                           }}
-                          className="min-w-0 max-w-full min-h-10 h-auto whitespace-normal break-normal px-3 py-2 text-center leading-tight rounded-lg text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+                          className="min-w-0 max-w-full min-h-9 md:min-h-10 h-auto whitespace-normal break-normal px-2 md:px-3 py-1.5 md:py-2 text-center leading-tight rounded-lg text-[10px] md:text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none"
                         >
                           Solicitar orçamento
                         </Button>

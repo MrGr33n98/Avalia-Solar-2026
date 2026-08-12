@@ -1289,11 +1289,16 @@ ActiveAdmin.register Company do
 
     def find_resource
       param_id = params[:id].to_s
-      if param_id.match?(/\A\d+\z/)
-        scoped_collection.find_by(id: param_id) || scoped_collection.find_by(slug: param_id)
-      else
-        scoped_collection.find_by(slug: param_id) || scoped_collection.find_by(id: param_id)
-      end
+      scope = scoped_collection
+      company = if param_id.match?(%r{\A\d+\z})
+                  scope.find_by(id: param_id) || scope.find_by(slug: param_id)
+                else
+                  scope.find_by(slug: param_id) || scope.find_by(id: param_id)
+                end
+
+      return company if company
+
+      raise ActiveRecord::RecordNotFound, "Company not found: #{param_id}"
     end
 
     def create
@@ -1329,7 +1334,7 @@ ActiveAdmin.register Company do
           if e.message.include?('missing keyword')
             flash[:error] =
               'Credenciais do storage não configuradas. Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY no .env ou use ACTIVE_STORAGE_SERVICE=local'
-            redirect_to edit_admin_company_path(resource) and return
+            redirect_to edit_admin_company_path(params[:id]) and return
           end
           raise
         end
@@ -1344,13 +1349,13 @@ ActiveAdmin.register Company do
       Rails.logger.error "[Upload Error] Missing storage credentials: #{e.message}"
       flash[:error] =
         'Erro de credenciais: Configure SPACES_ACCESS_KEY_ID e SPACES_SECRET_ACCESS_KEY ou use storage local'
-      redirect_to edit_admin_company_path(resource)
+      redirect_to edit_admin_company_path(params[:id])
     rescue StandardError => e
       Rails.logger.error "[Company Update Error] #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
 
       flash[:error] = "Erro ao atualizar empresa: #{e.message}"
-      redirect_to edit_admin_company_path(resource)
+      redirect_to edit_admin_company_path(params[:id])
     end
 
     def destroy
