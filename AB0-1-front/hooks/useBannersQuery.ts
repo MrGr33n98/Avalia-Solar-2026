@@ -66,10 +66,17 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
   } = options;
   const audienceKey = audience_key || getBannerAudienceKey();
 
+  // Detecta parâmetro de teste para ignorar frequency cap
+  let testAdsBypass = false;
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    testAdsBypass = urlParams.get('bypass_caps') === 'true' || urlParams.get('test_ads') === 'true';
+  }
+
   return useQuery<Banner[]>({
     queryKey: [
       'banners',
-      { position, limit, category_id, company_id, slot_key, state, city, audienceKey },
+      { position, limit, category_id, company_id, slot_key, state, city, audienceKey, testAdsBypass },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -82,6 +89,7 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (state) params.append('state', state);
       if (city) params.append('city', city);
       if (audienceKey) params.append('audience_key', audienceKey);
+      if (testAdsBypass) params.append('frequency_cap_seconds', '1');
 
       const response = await api.request<unknown>({
         url: `/banners?${params.toString()}`,
