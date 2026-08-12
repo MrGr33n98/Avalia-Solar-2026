@@ -15,6 +15,7 @@ export interface ChatMessage {
   feedback?: number;
   metadata?: ChatMessageMetadata;
   created_at: string;
+  status?: 'sending' | 'sent' | 'failed';
 }
 
 export interface ChatSession {
@@ -54,6 +55,8 @@ export function useChatSession(sessionKey = 'as_chat_session') {
   const [agentTyping, setAgentTyping] = useState(false);
   const agentTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cableRef = useRef<Cable | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const failedMessageRef = useRef<string | null>(null);
   const subscriptionRef = useRef<{
     unsubscribe?: () => void;
     perform?: (action: string, payload: Record<string, unknown>) => void;
@@ -216,7 +219,8 @@ export function useChatSession(sessionKey = 'as_chat_session') {
       id: Date.now(),
       role: 'user',
       content,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      status: 'sending'
     };
     setMessages(prev => [...prev, tempUserMsg]);
 
@@ -226,12 +230,17 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     });
 
     try {
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      const clientMessageId = `chat-${currentSession.id}-${Date.now()}`;
       const url = buildApiUrl(`chat/sessions/${currentSession.id}/messages`);
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(currentSession.access_token ? { 'X-Chat-Session-Token': currentSession.access_token } : {}) },
-        body: JSON.stringify({ content }),
-        credentials: 'include'
+        body: JSON.stringify({ content, client_message_id: clientMessageId }),
+        credentials: 'include',
+        signal: controller.signal
       });
 
       if (!response.ok || !response.body) {
@@ -327,20 +336,29 @@ export function useChatSession(sessionKey = 'as_chat_session') {
         }
       }
     } catch (error) {
+      if ((error as DOMException)?.name === 'AbortError') return;
       console.error('[Chat] Failed to send message:', error);
-      // Append fallback AI error response
-      const errorMsg: ChatMessage = {
-        id: Date.now() + 2,
-        role: 'assistant',
-        content: 'Desculpe, estou com alguma instabilidade para processar sua mensagem agora. Por favor, tente novamente em instantes ou fale conosco diretamente pelo WhatsApp!',
-        created_at: new Date().toISOString()
-      };
-      setMessages(prev => [...prev.filter(m => m.id !== tempUserMsg.id), errorMsg]);
+      failedMessageRef.current = content;
+      setMessages(prev => prev.map(m => m.id === tempUserMsg.id ? { ...m, status: 'failed' } : m));
       track('chat_message_failed', { session_id: currentSession.id });
     } finally {
+      abortControllerRef.current = null;
       setIsLoading(false);
     }
   }, [session, startSession, hasLeadCaptured, sessionKey]);
+
+  const stopGeneration = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsLoading(false);
+  }, []);
+
+  const retryLastMessage = useCallback(() => {
+    const content = failedMessageRef.current;
+    if (!content) return;
+    failedMessageRef.current = null;
+    void sendMessage(content);
+  }, [sendMessage]);
 
   const sendFeedback = useCallback(async (messageId: number, score: number) => {
     try {
@@ -415,6 +433,9 @@ export function useChatSession(sessionKey = 'as_chat_session') {
   }, [session]);
 
   const clearSession = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    failedMessageRef.current = null;
     sessionStorage.removeItem(sessionKey);
     localStorage.removeItem(sessionKey);
     setSession(null);
@@ -441,6 +462,8 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     setHasLeadCaptured,
     startSession,
     sendMessage,
+    stopGeneration,
+    retryLastMessage,
     sendFeedback,
     submitLead,
     setTyping,
