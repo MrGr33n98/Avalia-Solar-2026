@@ -126,20 +126,20 @@ export default function CompanyServicesScreen() {
                   <ThemedText style={styles.serviceSubtitle}>{service.subtitle}</ThemedText>
                 </View>
               </View>
-              
+
               <ThemedText style={styles.serviceDescription}>
                 {service.description}
               </ThemedText>
-              
+
               <View style={styles.cardDivider} />
-              
-              <TouchableOpacity 
+
+              {company?.has_paid_plan === true && <TouchableOpacity
                 style={styles.quoteRedirectBtn}
                 onPress={() => router.push(`/company/${id}/lead`)}
               >
                 <ThemedText style={styles.quoteRedirectBtnText}>Orçar este serviço</ThemedText>
                 <ChevronRight color={colors.tint} size={16} />
-              </TouchableOpacity>
+              </TouchableOpacity>}
             </View>
           ))}
         </View>
@@ -147,12 +147,12 @@ export default function CompanyServicesScreen() {
 
       {/* Botão de Rodapé Fixo */}
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        <TouchableOpacity 
+        {company?.has_paid_plan === true && <TouchableOpacity
           style={styles.quoteButton}
           onPress={() => router.push(`/company/${id}/lead`)}
         >
           <ThemedText style={styles.quoteButtonText}>Solicitar Orçamento Geral</ThemedText>
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
     </SafeAreaView>
   );

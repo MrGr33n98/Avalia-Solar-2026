@@ -154,10 +154,14 @@ class CompanyCardSerializer < ActiveModel::Serializer
     }
   end
 
+  def paid?
+    object.respond_to?(:has_paid_plan?) && object.has_paid_plan?
+  end
+
   def actions
     {
-      whatsapp_url: object.whatsapp_enabled ? (object.whatsapp_url || object.cta_whatsapp_url) : nil,
-      whatsapp_enabled: object.whatsapp_enabled == true,
+      whatsapp_url: paid? && object.whatsapp_enabled ? (object.whatsapp_url || object.cta_whatsapp_url) : nil,
+      whatsapp_enabled: paid? && object.whatsapp_enabled == true,
       p2p_chat_enabled: object.p2p_chat_enabled == true
     }
   end

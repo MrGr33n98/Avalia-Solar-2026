@@ -35,6 +35,7 @@ export interface Category {
 export interface Company {
   id: number;
   p2p_chat_enabled?: boolean;
+  has_paid_plan?: boolean;
   name: string;
   slug: string;
   description?: string | null;

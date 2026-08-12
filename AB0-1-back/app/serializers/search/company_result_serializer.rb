@@ -19,7 +19,7 @@ module Search
         description: company.description,
         website: company.website,
         phone: company.phone,
-        whatsapp: company.whatsapp,
+        whatsapp: paid? ? company.whatsapp : nil,
         state: company.state,
         city: company.city,
         address: company.address,
@@ -31,10 +31,11 @@ module Search
         sponsored: company.sponsored,
         active_admin: company.active_admin,
         p2p_chat_enabled: company.p2p_chat_enabled,
-        cta_whatsapp_enabled: company.try(:cta_whatsapp_enabled),
-        cta_whatsapp_url: company.try(:cta_whatsapp_url),
-        whatsapp_enabled: company.try(:whatsapp_enabled),
-        whatsapp_url: company.try(:whatsapp_url),
+        cta_whatsapp_enabled: paid? && company.try(:whatsapp_enabled) == true,
+        cta_whatsapp_url: paid? ? (company.try(:whatsapp_url) || company.try(:cta_whatsapp_url)) : nil,
+        whatsapp_enabled: paid? && company.try(:whatsapp_enabled) == true,
+        whatsapp_url: paid? ? company.try(:whatsapp_url) : nil,
+        has_paid_plan: paid?,
         rating_avg: company.rating_avg,
         average_rating: company.rating_avg,
         rating_count: company.rating_count,
@@ -52,6 +53,10 @@ module Search
     private
 
     attr_reader :company
+
+    def paid?
+      company.respond_to?(:has_paid_plan?) && company.has_paid_plan?
+    end
 
     def object
       company

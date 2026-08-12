@@ -88,6 +88,13 @@ module LeadWizard
         @errors['preferred_company_id'] = [schema_info.dig(:availability, :message) || 'is not available for this category']
       end
 
+      if company_id.present? && company_available
+        preferred_company = Company.find_by(id: company_id)
+        unless preferred_company&.has_paid_plan?
+          @errors['preferred_company_id'] = ['não possui entitlement de conversão pago']
+        end
+      end
+
       resolved_vertical = value_for(core_params, 'product_vertical', 'productVertical') || infer_product_vertical(category)
       resolved_quote_type = value_for(core_params, 'quote_type', 'quoteType') || resolved_vertical
       resolved_address = value_for(core_params, 'address_full', 'addressFull') || fallback_address_full(core_params)

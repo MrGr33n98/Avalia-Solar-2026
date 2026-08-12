@@ -187,8 +187,8 @@ export default function CompanyDetailScreen() {
           </View>
         </View>
 
-        {/* CTA Solicitar Orçamento */}
-        <View style={styles.ctaContainer}>
+        {/* CTA Solicitar Orçamento: somente entitlement pago */}
+        {company.has_paid_plan === true && <View style={styles.ctaContainer}>
           <TouchableOpacity
             style={[styles.ctaButton, { backgroundColor: colors.tint }]}
             onPress={() => router.push(`/company/${company.id}/lead`)}
@@ -196,7 +196,7 @@ export default function CompanyDetailScreen() {
             <ClipboardList size={18} color={colors.backgroundElement} />
             <ThemedText style={styles.ctaButtonText}>Solicitar Orçamento Grátis</ThemedText>
           </TouchableOpacity>
-        </View>
+        </View>}
 
         {/* Descrição / Sobre */}
         <View style={styles.section}>

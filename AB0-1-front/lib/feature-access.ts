@@ -44,3 +44,17 @@ export function hasPaidPlan(company: {
 }): boolean {
   return company.has_paid_plan === true;
 }
+
+
+export type ConversionFeature = 'quote' | 'whatsapp' | 'custom_cta';
+
+/** Paid conversion entitlement. Missing entitlement fails closed. */
+export function canUsePaidConversion(
+  company: { has_paid_plan?: boolean | null; feature_access?: FeatureAccessMap },
+  feature: ConversionFeature
+): boolean {
+  if (!hasPaidPlan(company)) return false;
+  const featureKey = feature === 'custom_cta' ? 'custom_ctas' : feature;
+  const entry = getFeatureAccessEntry(company.feature_access, featureKey);
+  return !entry || isFeatureEnabledEntry(entry);
+}

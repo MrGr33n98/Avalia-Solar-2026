@@ -6,7 +6,7 @@ class CompanyListSerializer < ActiveModel::Serializer
 
   # Campos escalares diretos do model
   attributes :id, :name, :description, :website,
-             :slug, :state, :city, :address, :phone, :whatsapp,
+             :slug, :state, :city, :address, :phone,
              :featured, :verified, :sponsored,
              :rating_avg, :rating_count,
              :banner_url, :logo_url, :verified_badge_image_url, :verified_badge_url,
@@ -21,6 +21,27 @@ class CompanyListSerializer < ActiveModel::Serializer
              :identity, :trust, :reputation, :badges
 
   def has_paid_plan = object.has_paid_plan?
+
+  def whatsapp
+    has_paid_plan ? object.whatsapp : nil
+  end
+
+  def cta_whatsapp_enabled
+    has_paid_plan && object.try(:whatsapp_enabled) == true
+  end
+
+  def cta_whatsapp_url
+    cta_whatsapp_enabled ? (object.try(:whatsapp_url) || object.try(:cta_whatsapp_url)) : nil
+  end
+
+  def whatsapp_enabled
+    cta_whatsapp_enabled
+  end
+
+  def whatsapp_url
+    cta_whatsapp_url
+  end
+
 
   # ─── Identidade estruturada (contrato CompanyCardData.identity) ───────────────
   def identity
@@ -154,8 +175,8 @@ class CompanyListSerializer < ActiveModel::Serializer
   # ─── Actions (CTAs de contato) ────────────────────────────────────────────────
   def actions
     {
-      whatsapp_url:     object.try(:whatsapp_enabled) ? (object.try(:whatsapp_url) || object.try(:cta_whatsapp_url)) : nil,
-      whatsapp_enabled: object.try(:whatsapp_enabled) == true,
+      whatsapp_url:     whatsapp_url,
+      whatsapp_enabled: whatsapp_enabled,
       p2p_chat_enabled: object.try(:p2p_chat_enabled) == true
     }
   end

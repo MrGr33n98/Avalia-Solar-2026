@@ -831,6 +831,8 @@ end
   end
 
   def quote_feature_enabled?
+    return false unless has_paid_plan?
+
     explicit_flag = explicit_feature_value_from_plan?(
       :custom_ctas,
       :active_admin,
@@ -840,8 +842,6 @@ end
       :quote_requests_enabled
     )
     return explicit_flag unless explicit_flag.nil?
-
-    return true if respond_to?(:active_admin) && active_admin
 
     feature_enabled_from_plan?(
       :custom_ctas,

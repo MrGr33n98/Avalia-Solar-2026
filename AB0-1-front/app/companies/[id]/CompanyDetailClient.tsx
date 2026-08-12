@@ -95,7 +95,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled } from '@/lib/feature-access';
+import { isFeatureEnabled, canUsePaidConversion } from '@/lib/feature-access';
 import CompanyProfileShell from './components/CompanyProfileShell';
 import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
 
@@ -259,16 +259,8 @@ export default function CompanyDetailClient({
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
   const extendedCompany = currentCompany as ExtendedCompany;
-  const isPremiumOrWEG = Boolean(
-    currentCompany.featured || 
-    currentCompany.plan_status === 'active' || 
-    currentCompany.has_paid_plan ||
-    currentCompany.slug === 'weg' ||
-    currentCompany.trust?.verification_status === 'premium'
-  );
-  const canRequestQuote = isPremiumOrWEG || (currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'custom_ctas')
-    : false);
+  const canRequestQuote = canUsePaidConversion(currentCompany, 'quote');
+  const canUseWhatsApp = canUsePaidConversion(currentCompany, 'whatsapp');
   const showFaq = true;
   const showGallery = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'media_gallery')
@@ -285,13 +277,13 @@ export default function CompanyDetailClient({
   const showFinancing = Boolean(currentCompany?.financing_tab_visible);
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
-  const ctaEnabled = canRequestQuote
+  const ctaEnabled = canUseWhatsApp
     ? enabledRawInit === undefined || enabledRawInit === null
       ? true
       : Boolean(enabledRawInit)
     : false;
 
-  const ctaUrl = canRequestQuote
+  const ctaUrl = canUseWhatsApp
     ? extendedCompany.cta_whatsapp_url ||
       extendedCompany.whatsapp_url ||
       (currentCompany as any)?.whatsapp ||

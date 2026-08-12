@@ -53,6 +53,7 @@ import { companiesApi, type Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
 import { buildCompanyPath } from '@/lib/slug';
 import { absoluteUrl } from '@/lib/site';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
 const MAX_COMPANIES = 4;
@@ -240,6 +241,7 @@ function ComparePageContent() {
   );
 
   const handleQuote = useCallback((company: CompareCompany) => {
+    if (!canUsePaidConversion(company, 'quote')) return;
     openLeadModal({ preferredCompanyId: company.id, source: 'comparison-page', type: 'quick' });
   }, []);
 
@@ -722,14 +724,14 @@ function DiscoveryCta() {
         </div>
 
         <div className="lg:min-w-[310px]">
-          <button
+          {comparisonList.some((company) => canUsePaidConversion(company, 'quote')) && <button
             type="button"
             onClick={() => openLeadModal({ source: 'comparison-bottom-cta', type: 'quick' })}
             className="inline-flex w-full items-center justify-center gap-3 rounded-none border border-[#FFC82C] bg-[#FFC82C] px-7 py-3.5 text-sm font-semibold text-[#0B0F1A] transition duration-200 hover:-translate-y-0.5 hover:border-[#e8b51e] hover:bg-[#e8b51e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFC82C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F1A] sm:w-auto lg:w-full"
           >
             <FileText className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
             Pedir orçamento gratuito
-          </button>
+          </button>}
         </div>
       </div>
     </section>

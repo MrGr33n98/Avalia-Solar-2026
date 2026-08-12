@@ -21,6 +21,7 @@ import { track } from '@/lib/analytics/lazy';
 import { resolveBrandContext } from '@/lib/analytics/brand';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { cn } from '@/lib/utils';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface ProductCardProps {
   product: Product;
@@ -31,6 +32,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const brandContext = resolveBrandContext(product);
+  const canRequestQuote = canUsePaidConversion(product.company || {}, 'quote');
 
   const [visible, setVisible] = useState(false);
   const cardRef = React.useCallback(
@@ -135,6 +137,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
       price_available: priceAvailable,
       ...brandContext,
     });
+    if (!canRequestQuote) return;
     openQuoteWizard({
       preferredCompanyId: product.company?.id,
       source: 'products_catalog',
@@ -468,7 +471,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                 </>
               ) : (
                 <span className="text-sm font-bold text-blue-600 bg-blue-50/50 border border-blue-100 rounded-lg px-2.5 py-1 w-fit">
-                  Consultar Preço e Orçamento
+                  {canRequestQuote ? 'Consultar Preço e Orçamento' : 'Ver detalhes do produto'}
                 </span>
               )}
             </div>
@@ -491,7 +494,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
                   })
                 }
               >
-                Ver Detalhes e Orçamento
+                {canRequestQuote ? 'Ver Detalhes e Orçamento' : 'Ver Detalhes'}
               </Link>
             </Button>
           </CardFooter>

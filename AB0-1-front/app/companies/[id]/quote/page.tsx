@@ -1,12 +1,16 @@
 import { companiesApiSafe } from '@/lib/api-client';
 import QuoteForm from '@/components/QuoteForm';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export default async function Page({ params }: { params: { id: string } }) {
   const company = await companiesApiSafe.getById(params.id);
 
   if (!company) {
     notFound();
+  }
+
+  if (company.has_paid_plan !== true) {
+    redirect(`/companies/${params.id}`);
   }
 
   return (

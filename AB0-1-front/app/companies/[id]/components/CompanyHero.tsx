@@ -305,7 +305,7 @@ export default function CompanyHero({
                       />
                     )}
                     {/* Premium é um atributo do perfil e permanece junto ao nome. */}
-                    {company.verified && (
+                    {company.has_paid_plan === true && (
                       <div className="inline-flex h-6 w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2 text-[10px] font-bold tracking-[0.04em] text-violet-700">
                         <Diamond className="h-3 w-3" />
                         PREMIUM
