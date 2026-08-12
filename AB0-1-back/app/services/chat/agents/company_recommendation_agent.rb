@@ -13,6 +13,7 @@ module Chat
           metadata = {
             'type' => 'company_recommendations',
             'source' => 'mobivolt_ai',
+            'selection_policy' => 'backend_company_recommendation_v1',
             'companies' => companies
           }
         else
@@ -20,6 +21,7 @@ module Chat
           metadata = {
             'type' => 'company_recommendations',
             'source' => 'mobivolt_ai',
+            'selection_policy' => 'backend_company_recommendation_v1',
             'companies' => []
           }
         end

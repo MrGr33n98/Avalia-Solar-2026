@@ -254,6 +254,12 @@ module Chat
           whatsapp_url: whatsapp_url_for(company),
           quote_enabled: true,
           comparison_enabled: true,
+          placement: company.sponsored? ? 'sponsored' : 'organic',
+          sponsored_label: (company.sponsored? ? 'Patrocinado' : nil),
+          sources: [
+            { type: 'company_catalog', id: company.id },
+            { type: 'company_profile', id: company.id }
+          ],
           short_reason: generate_recommendation_reason(company)
         }
       end

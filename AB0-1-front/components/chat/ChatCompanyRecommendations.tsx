@@ -26,6 +26,7 @@ const normalizeCompanyRecommendation = (company: any): ChatCompanyReferenceCardC
     logoUrl: company?.logo_url || company?.image || company?.logo || company?.image_url || company?.avatar || null,
     isSponsored: company?.sponsored ?? company?.patrocinada ?? false,
     isFeatured: company?.sponsored ?? company?.patrocinada ?? false,
+    placement: company?.placement ?? (company?.sponsored || company?.patrocinada ? 'sponsored' : 'organic'),
     isVerified: company?.verified ?? company?.verificada ?? false,
     rating: company?.rating_avg ?? company?.nota_media,
     ratingCount: company?.rating_count ?? company?.total_avaliacoes ?? 0,
