@@ -9,7 +9,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
+import { hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
 import {
   Select,
@@ -174,7 +174,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                 </div>
               </th>
               <th scope="col" className="py-3.5 px-4 w-32">Status</th>
-              <th scope="col" className="py-3.5 px-4 w-28 text-right"></th>
+              <th scope="col" className="py-3.5 px-4 w-80 text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
@@ -185,10 +185,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
               const location = [company.city, company.state].filter(Boolean).join(', ');
               const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const isVerified = Boolean(company.verified || (company as any).trust?.verification_status === 'verified');
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const projectsCount = company.delivered_projects_count ?? (company as any).projects_count ?? (company as any).project_count;
 
               // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const canRequestQuote = hasPaidPlan(company as any);
 
               return (
@@ -472,8 +475,9 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </td>
 
                   {/* Button Link & Comparison */}
-                  <td className="py-4 px-4 text-right">
+                  <td className="py-4 px-4 text-right min-w-[280px]">
                     <div className="flex items-center justify-end gap-2">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
                       {canRequestQuote && (
                         <Button
