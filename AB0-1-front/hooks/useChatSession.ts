@@ -4,6 +4,8 @@ import { fetchApiSafe } from '../lib/api-client';
 import { buildApiUrl } from '../lib/api-config';
 import { getCurrentUTMs } from '../lib/analytics/utm';
 import { track } from '../lib/analytics/lazy';
+
+const trackCanonical = (event: string, properties: Record<string, unknown>) => track(event, properties);
 import { isRealtimeEnabled } from '../lib/cable';
 
 export interface ChatMessage {
@@ -177,7 +179,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
         setSession(nextSession);
         setMessages(response.messages || []);
         sessionStorage.setItem(sessionKey, JSON.stringify(nextSession));
-        track('chat_session_started', {
+        trackCanonical('ai_session_started', {
           session_id: response.session.id,
           vertical,
           page_url: payload.page_url
@@ -224,7 +226,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     };
     setMessages(prev => [...prev, tempUserMsg]);
 
-    track('chat_message_sent', {
+    trackCanonical('ai_first_message', {
       session_id: currentSession.id,
       content_length: content.length
     });
@@ -297,7 +299,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
 
                     if (finalMetadata.should_trigger_lead && !hasLeadCaptured) {
                       setShowLeadForm(true);
-                      track('chat_lead_form_triggered', { session_id: currentSession!.id });
+                      trackCanonical('ai_consent_started', { session_id: currentSession!.id });
                     }
                   } else if (data.chunk) {
                     // Incremental chunk
@@ -408,7 +410,7 @@ export function useChatSession(sessionKey = 'as_chat_session') {
       if (response && (response.success || leadId)) {
         setHasLeadCaptured(true);
         setShowLeadForm(false);
-        track('chat_lead_submitted', {
+        trackCanonical('ai_lead_captured', {
           session_id: session.id,
           lead_id: leadId
         });
