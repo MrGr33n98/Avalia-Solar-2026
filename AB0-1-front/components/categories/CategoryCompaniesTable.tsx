@@ -475,7 +475,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </td>
 
                   {/* Button Link & Comparison */}
-                  <td className="py-4 px-4 text-right min-w-[280px]">
+                  <td className="py-4 px-4 text-right min-w-[220px]">
                     <div className="flex items-center justify-end gap-2">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
@@ -495,14 +495,6 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           Solicitar orçamento
                         </Button>
                       )}
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg text-[11px] font-bold h-8 border-slate-200 text-slate-700 hover:bg-slate-50 shadow-none"
-                      >
-                        <Link href={href}>Ver perfil</Link>
-                      </Button>
                     </div>
                   </td>
                 </tr>
