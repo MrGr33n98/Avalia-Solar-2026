@@ -134,6 +134,7 @@ export default function ComparisonFloatingBar() {
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('minimized');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isForcedOpen, setIsForcedOpen] = useState(false);
   const [isMobileExperience, setIsMobileExperience] = useState(true);
 
@@ -256,13 +257,13 @@ export default function ComparisonFloatingBar() {
               type="button"
               onClick={handleOpenDock}
               aria-label={`Comparar: ${count} de ${maxComparison} itens selecionados`}
-              className="group pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border border-blue-200/80 bg-white shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none dark:bg-slate-900 dark:border-slate-800"
+              className="group pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full border border-blue-200/80 bg-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/15 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none dark:bg-slate-900 dark:border-slate-800"
             >
-              <span className="absolute -top-1 -right-1 z-10 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-black text-white shadow-xs ring-2 ring-white dark:ring-slate-900" aria-hidden="true">
+              <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-black text-white shadow-md ring-2 ring-white dark:ring-slate-900" aria-hidden="true">
                 {count}
               </span>
-              <div className="flex h-7 w-7 items-center justify-center rounded-full text-blue-600">
-                <Maximize2 className="h-5 w-5 stroke-[2.5]" aria-hidden="true" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full text-blue-600">
+                <Maximize2 className="h-6 w-6 stroke-[2.5]" aria-hidden="true" />
               </div>
             </button>
             </motion.aside>

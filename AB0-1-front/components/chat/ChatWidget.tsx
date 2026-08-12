@@ -36,6 +36,7 @@ const CHAT_INVITE_DELAY_MS = 3000;
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function ChatWidget() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const {
     isOpen,
@@ -97,11 +98,11 @@ export default function ChatWidget() {
     removeFromComparison,
     count: comparisonCount,
     maxComparison,
-    getCompanyPosition,
   } = useComparison();
   const comparedCompanyIds = comparisonList.map((c) => c.id);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [showInviteBubble, setShowInviteBubble] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showCompactHelp, setShowCompactHelp] = useState(false);
   const [pendingInviteAction, setPendingInviteAction] = useState<ChatInviteAction | null>(null);
 
@@ -114,6 +115,7 @@ export default function ChatWidget() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [canShowInvite, setCanShowInvite] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const compactHelpId = 'mobivolt-ai-compact-help';
 
   const allCompanies = messages
@@ -992,18 +994,18 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-12 sm:w-12"
+          className="group pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full border border-blue-200 bg-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/15 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-16 sm:w-16"
           aria-label="Abrir assistente de IA (inteligência artificial)"
           aria-expanded={false}
           aria-haspopup="dialog"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-brand-blue px-1 py-0.2 text-[8px] font-bold text-white dark:border-zinc-900" aria-hidden="true">
+          <span className="absolute -right-1.5 -top-1.5 z-10 rounded-full border-2 border-white bg-brand-blue px-2 py-0.5 text-[9px] font-black text-white dark:border-zinc-900" aria-hidden="true">
             IA
           </span>
 
           {/* Avatar Image as launcher icon */}
-          <span className="flex h-8 w-8 overflow-hidden rounded-full bg-white">
+          <span className="flex h-11 w-11 overflow-hidden rounded-full bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/mobivolt-ai-avaliasolar.webp"
