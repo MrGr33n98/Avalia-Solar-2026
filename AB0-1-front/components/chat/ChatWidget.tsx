@@ -56,7 +56,6 @@ export default function ChatWidget() {
     startSession,
     sendMessage,
     stopGeneration,
-    retryLastMessage,
     sendFeedback,
     submitLead,
     setTyping,
