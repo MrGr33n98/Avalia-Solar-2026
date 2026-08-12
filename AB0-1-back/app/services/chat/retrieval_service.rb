@@ -138,7 +138,7 @@ module Chat
 
     def self.platform_stats_context
       company_count = begin
-        Company.where(status: 'active').count
+        Rails.cache.fetch('chat:platform_stats:active_companies', expires_in: 10.minutes) { Company.where(status: 'active').count }
       rescue StandardError
         0
       end
