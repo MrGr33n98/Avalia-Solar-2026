@@ -83,6 +83,13 @@ ActiveAdmin.register ChatSession do
         column :latency_ms do |m|
           "#{m.latency_ms}ms" if m.latency_ms
         end
+        column 'Prompt' do |m|
+          m.metadata['prompt_version'] if m.metadata.is_a?(Hash)
+        end
+        column 'Fontes' do |m|
+          sources = m.metadata.is_a?(Hash) ? m.metadata['sources'] : []
+          sources.present? ? JSON.generate(sources) : '—'
+        end
         column :feedback do |m|
           case m.feedback
           when 1 then '👍'

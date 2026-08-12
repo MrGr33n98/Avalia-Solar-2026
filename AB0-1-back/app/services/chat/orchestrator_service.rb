@@ -75,7 +75,7 @@ module Chat
           latency_ms: llm_response[:latency_ms],
           safety_status: 'clean',
           intent_detected: 'success_onboarding',
-          metadata: success_response_metadata
+          metadata: Chat::SourceProvenance.normalize(success_response_metadata)
         )
 
         @session.increment_message_count!
@@ -304,7 +304,7 @@ module Chat
         latency_ms: llm_latency_ms,
         safety_status: 'clean',
         intent_detected: intent,
-        metadata: (msg_metadata || {}).merge(prompt_metadata)
+        metadata: Chat::SourceProvenance.normalize((msg_metadata || {}).merge(prompt_metadata))
       )
 
       Chat::InboxBroadcastService.message_created(assistant_msg) if @session.company_id.present?
