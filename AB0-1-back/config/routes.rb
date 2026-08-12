@@ -203,6 +203,7 @@ Rails.application.routes.draw do
 
         get 'assets', to: 'company_dashboard#assets'
 
+        get 'subscription', to: 'company_dashboard#subscription'
         get 'stats', to: 'company_dashboard#stats'
         get 'banner_subscriptions', to: 'company_dashboard#banner_subscriptions'
         post 'banner_checkout', to: 'company_dashboard#banner_checkout'

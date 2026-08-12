@@ -63,6 +63,9 @@ const CampaignsMarketing = dynamic(() => import('./CampaignsMarketing'), {
 const CompanySettings = dynamic(() => import('./CompanySettings'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const PlanAndSubscription = dynamic(() => import('./PlanAndSubscription'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 const OverviewTab = dynamic(() => import('./OverviewTab'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -535,13 +538,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Planos e preços
+                      Plano e Assinatura
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Ajuste configurações relacionadas ao seu plano e comercialização.
                     </p>
                   </div>
-                  <CompanySettings companyId={companyId} />
+                  <PlanAndSubscription companyId={companyId} />
                 </div>
               </TabsContent>
 

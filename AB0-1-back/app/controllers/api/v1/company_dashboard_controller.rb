@@ -463,6 +463,15 @@ module Api
         }
       end
 
+      # GET /api/v1/company_dashboard/subscription
+      def subscription
+        subscription_data = ::EntitlementService.call(company: @company)
+        render json: subscription_data, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[CompanyDashboard#subscription] #{e.class}: #{e.message}")
+        render json: { error: 'Internal server error' }, status: :internal_server_error
+      end
+
       # GET /api/v1/company_dashboard/stats
       def stats
         stats_service = ::CompanyDashboard::StatsService.new(@company)
