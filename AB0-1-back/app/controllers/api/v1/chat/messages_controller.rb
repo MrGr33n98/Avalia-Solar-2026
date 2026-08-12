@@ -93,23 +93,20 @@ module Api
         end
 
         def check_rate_limit
-          rate_limit = ENV.fetch('CHAT_RATE_LIMIT_PER_MINUTE', '30').to_i
-          cache_key = "chat_rate:#{request.remote_ip}:#{Time.current.beginning_of_minute.to_i}"
-
-          count = Rails.cache.increment(cache_key, 1, expires_in: 1.minute, raw: true) || 1
-
-          return unless count.to_i > rate_limit
+          result = ::Chat::RateLimitService.check(session: @session, ip: request.remote_ip,
+                                                   user_id: current_user&.id)
+          return if result.allowed
 
           ::Chat::PosthogTrackingService.track(
             event: 'chat_rate_limited',
-            properties: { ip: request.remote_ip, session_id: @session.id }
+            properties: { ip: request.remote_ip, session_id: @session.id, code: result.code }
           )
 
           render_error_response(
             message: 'Muitas mensagens. Aguarde um momento.',
             status: :too_many_requests,
-            code: 'RATE_LIMITED',
-            retry_after: 60
+            code: result.code,
+            retry_after: result.retry_after
           )
         end
       end
