@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   mount ActiveStorage::Engine => '/rails/active_storage'
   mount ActionCable.server => '/cable'
 
+  get '/admin/publicidade_campanhas', to: 'api/v1/publicidade_campanhas#index', constraints: ->(req) { req.format.json? || req.headers['Accept'] =~ /json/ }
   ActiveAdmin.routes(self)
 
   devise_for :admin_users, ActiveAdmin::Devise.config.merge(
@@ -303,6 +304,7 @@ Rails.application.routes.draw do
       resources :push_tokens, only: %i[create]
 
       resources :banners, only: [:index]
+      get 'publicidade_campanhas', to: 'publicidade_campanhas#index'
       resources :banner_globals, only: [:index]
       resources :badges, param: :slug, only: [:show]
 

@@ -220,7 +220,7 @@ export default async function Home() {
         />
       </Suspense>
 
-      <BannerSlot placement="home_top" limit={1} className="mx-auto my-4 max-w-[1200px]" />
+
 
       <DeferredHomeSections />
 

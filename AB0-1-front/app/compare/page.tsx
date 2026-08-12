@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { BannerSlot } from '@/components/banners/BannerSlot';
+import { CampaignTopBanner } from '@/components/banners/CampaignTopBanner';
 import BestMatchCard from '@/components/compare/BestMatchCard';
 import CompareSummary from '@/components/compare/CompareSummary';
 import CompareTable from '@/components/compare/CompareTable';
@@ -300,13 +301,7 @@ function ComparePageContent() {
       )}
       <CompareHero />
 
-      <div className="mx-auto max-w-[1240px] px-4 pt-3 sm:px-6">
-        <BannerSlot
-          placement="compare_page_top"
-          limit={3}
-          className="!min-h-0 py-0 [&>div]:rounded-none [&>div]:border [&>div]:border-slate-200 [&>div]:shadow-none"
-        />
-      </div>
+      <CampaignTopBanner className="mx-auto max-w-[1240px] px-4 pt-3 sm:px-6" />
 
       <main className="mx-auto max-w-[1240px] px-4 pb-10 pt-5 sm:px-6" id="main-content">
         {isLoading ? (
