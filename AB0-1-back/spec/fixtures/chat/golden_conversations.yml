@@ -1,0 +1,24 @@
+- id: solar_quote
+  input: "Quero orçamento para energia solar"
+  expected_intent: lead_qualification
+- id: ev_charger
+  input: "Preciso de wallbox para carro elétrico"
+  expected_intent: ev_charger_question
+- id: financing
+  input: "Posso financiar instalação?"
+  expected_intent: financing_question
+- id: support
+  input: "Como respondo avaliação?"
+  expected_intent: fallback
+- id: recommendation
+  input: "Indique instaladores em São Paulo"
+  expected_intent: company_recommendation
+- id: no_company
+  input: "Encontre empresa na cidade sem cobertura"
+  expected_intent: company_recommendation
+- id: human_handoff
+  input: "Quero falar com atendente"
+  expected_intent: fallback
+- id: success_onboarding
+  input: "Como configuro categorias?"
+  expected_intent: fallback
