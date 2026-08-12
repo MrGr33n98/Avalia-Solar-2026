@@ -418,7 +418,7 @@ export default function ChatWidget() {
     }
   };
 
-  const handleQualificationSubmit = async (submission: ChatLeadQualificationSubmission) => {
+  const handleQualificationSubmit = async (submission: ChatLeadQualificationSubmission): Promise<boolean> => {
     const { recommendationQuery, ...leadData } = submission;
 
     // Compila os metadados de RAG, cliques e LGPD
@@ -457,6 +457,8 @@ export default function ChatWidget() {
       });
       await sendMessage(recommendationQuery);
     }
+    
+    return success;
   };
 
   const initialQuickReplies = [

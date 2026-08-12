@@ -60,7 +60,7 @@ interface ChatLeadQualificationWizardProps {
   vertical: ChatLeadVertical;
   isSubmitting?: boolean;
   onCancel: () => void;
-  onSubmit: (submission: ChatLeadQualificationSubmission) => Promise<void>;
+  onSubmit: (submission: ChatLeadQualificationSubmission) => Promise<boolean>;
 }
 
 type ChoiceStep = {
@@ -236,6 +236,16 @@ export default function ChatLeadQualificationWizard({
       setErrorMsg('Por favor, preencha nome, e-mail e WhatsApp.');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())) {
+      setErrorMsg('Por favor, informe um e-mail válido.');
+      return;
+    }
+    const phoneDigits = contact.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setErrorMsg('Por favor, informe um WhatsApp válido com DDD.');
+      return;
+    }
+    const normalizedPhone = `+55${phoneDigits}`;
     if (!contact.city.trim() || contact.state.trim().length !== 2) {
       setErrorMsg('Por favor, volte e informe um CEP válido com Cidade/UF.');
       return;
@@ -272,37 +282,45 @@ export default function ChatLeadQualificationWizard({
       'Mostre empresas cadastradas e seus reviews.',
     ].filter(Boolean).join(' ');
 
-    await onSubmit({
-      name: contact.name.trim(),
-      email: contact.email.trim(),
-      phone: contact.phone.trim(),
-      city: contact.city.trim(),
-      state: contact.state.trim().toUpperCase(),
-      vertical,
-      intent: need?.intent || 'company_recommendation',
-      project_type: answers.need,
-      monthly_bill: vertical === 'solar' ? answers.monthly_bill || undefined : undefined,
-      vehicle_count: vertical === 'electric_mobility' && answers.vehicle_count ? Number(answers.vehicle_count) : undefined,
-      solution_type: vertical === 'electric_mobility' ? answers.need : undefined,
-      budget_range: vertical === 'solar' ? labels.monthly_bill : undefined,
-      urgency: answers.timeline === 'immediate' ? 'imediata' : undefined,
-      decision_timeline: timeline?.value,
-      property_type: answers.profile,
-      company_size: vertical === 'electric_mobility' ? answers.profile : undefined,
-      summary: contact.summary.trim() || undefined,
-      wants_reviews: answers.review_interest !== 'none',
-      wants_comparison: answers.review_interest === 'compare_reviews' || answers.need === 'compare_proposal',
-      review_interest: answers.review_interest !== 'none' ? answers.review_interest : undefined,
-      recommended_next_action: 'Mostrar empresas cadastradas na região e orientar leitura dos reviews.',
-      metadata: {
-        qualification_answers: { ...answers, summary: contact.summary.trim() },
-        qualification_labels: labels,
-        qualification_source: 'guided_chat_wizard',
-        qualification_version: 'v2',
-        category_seo_url: categorySlug,
-      },
-      recommendationQuery,
-    });
+    try {
+      const success = await onSubmit({
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        phone: normalizedPhone,
+        city: contact.city.trim(),
+        state: contact.state.trim().toUpperCase(),
+        vertical,
+        intent: need?.intent || 'company_recommendation',
+        project_type: answers.need,
+        monthly_bill: vertical === 'solar' ? answers.monthly_bill || undefined : undefined,
+        vehicle_count: vertical === 'electric_mobility' && answers.vehicle_count ? Number(answers.vehicle_count) : undefined,
+        solution_type: vertical === 'electric_mobility' ? answers.need : undefined,
+        budget_range: vertical === 'solar' ? labels.monthly_bill : undefined,
+        urgency: answers.timeline === 'immediate' ? 'imediata' : undefined,
+        decision_timeline: timeline?.value,
+        property_type: answers.profile,
+        company_size: vertical === 'electric_mobility' ? answers.profile : undefined,
+        summary: contact.summary.trim() || undefined,
+        wants_reviews: answers.review_interest !== 'none',
+        wants_comparison: answers.review_interest === 'compare_reviews' || answers.need === 'compare_proposal',
+        review_interest: answers.review_interest !== 'none' ? answers.review_interest : undefined,
+        recommended_next_action: 'Mostrar empresas cadastradas na região e orientar leitura dos reviews.',
+        metadata: {
+          qualification_answers: { ...answers, summary: contact.summary.trim() },
+          qualification_labels: labels,
+          qualification_source: 'guided_chat_wizard',
+          qualification_version: 'v2',
+          category_seo_url: categorySlug,
+        },
+        recommendationQuery,
+      });
+
+      if (success === false) {
+        setErrorMsg('Não foi possível concluir agora. Tente novamente.');
+      }
+    } catch (e) {
+      setErrorMsg('Não foi possível concluir agora. Tente novamente.');
+    }
   };
 
   return (
