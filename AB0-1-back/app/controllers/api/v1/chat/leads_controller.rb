@@ -4,6 +4,7 @@ module Api
   module V1
     module Chat
       class LeadsController < BaseController
+        include ChatSessionAuthorization
         # POST /api/v1/chat/leads
         def create
           unless ENV.fetch('CHAT_CAPTURE_LEADS_ENABLED', 'true') == 'true'
@@ -15,6 +16,7 @@ module Api
           end
 
           session = ChatSession.find(params[:chat_session_id])
+          return unless authorize_chat_session!(session)
 
           # LGPD: Exigir consentimento
           unless [true, 'true'].include?(params[:consent_given])

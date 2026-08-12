@@ -23,9 +23,11 @@ class ChatSession < ApplicationRecord
   }, _prefix: true
 
   validates :visitor_id, presence: true
+  validates :visitor_nonce, presence: true, uniqueness: true
   validates :mode, inclusion: { in: MODES }
 
   before_validation :generate_visitor_id, on: :create
+  before_validation :generate_visitor_nonce, on: :create
   before_create :set_started_at
 
   scope :recent, -> { order(created_at: :desc) }
@@ -99,5 +101,9 @@ class ChatSession < ApplicationRecord
 
   def generate_visitor_id
     self.visitor_id ||= SecureRandom.uuid
+  end
+
+  def generate_visitor_nonce
+    self.visitor_nonce ||= SecureRandom.hex(32)
   end
 end

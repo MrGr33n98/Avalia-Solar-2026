@@ -4,6 +4,8 @@ module Api
   module V1
     module Chat
       class SessionsController < BaseController
+        include ChatSessionAuthorization
+
         # POST /api/v1/chat/sessions
         def create
           unless chat_enabled?
@@ -47,6 +49,7 @@ module Api
           render json: {
             session: {
               id: session.id,
+              access_token: Chat::SessionAccessToken.generate(session),
               visitor_id: session.visitor_id,
               status: session.status,
               vertical: session.vertical,
@@ -68,6 +71,7 @@ module Api
         # GET /api/v1/chat/sessions/:id
         def show
           session = ChatSession.find(params[:id])
+          return unless authorize_chat_session!(session)
           messages = session.chat_messages.chronological.select(:id, :role, :content, :intent_detected, :metadata,
                                                                 :created_at)
 
@@ -76,6 +80,7 @@ module Api
             status: session.status,
             message_count: session.message_count,
             realtime_token: realtime_token_for(session),
+            access_token: Chat::SessionAccessToken.generate(session),
             messages: messages
           }
         end

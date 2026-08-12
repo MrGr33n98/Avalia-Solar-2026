@@ -5,6 +5,7 @@ module Api
     module Chat
       class MessagesController < BaseController
         include ActionController::Live
+        include ChatSessionAuthorization
 
         before_action :find_session
         before_action :authorize_session!, only: [:create]
@@ -64,6 +65,7 @@ module Api
         # POST /api/v1/chat/messages/:id/feedback
         def feedback
           message = ChatMessage.find(params[:id])
+          return unless authorize_chat_session!(message.chat_session)
           feedback_value = params[:feedback].to_i
 
           unless [-1, 0, 1].include?(feedback_value)
@@ -82,20 +84,8 @@ module Api
         private
 
         def authorize_session!
-          if @session.user_id.present? && current_user.present?
-            # Only block if a different authenticated user tries to use this session
-            if @session.user_id != current_user.id
-              render_error_response(
-                message: 'Você não tem permissão para acessar esta sessão de chat.',
-                status: :forbidden,
-                code: 'FORBIDDEN_SESSION'
-              )
-            end
-          elsif current_user.present? && @session.user_id.nil?
-            # Associate the session with the authenticated user
-            @session.update!(user_id: current_user.id)
-          end
-          # If current_user is nil, allow the request (public chat widget)
+          return unless authorize_chat_session!(@session)
+          @session.update!(user_id: current_user.id) if current_user && @session.user_id.nil?
         end
 
         def find_session
