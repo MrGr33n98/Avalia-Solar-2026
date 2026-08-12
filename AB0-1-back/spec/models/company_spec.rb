@@ -17,6 +17,14 @@ RSpec.describe Company, type: :model do
       expect(company.errors[:cnpj]).to be_present
     end
 
+    it 'impede CNPJ duplicado antes de persistir' do
+      create(:company, cnpj: '11222333000181')
+      duplicate = build(:company, cnpj: '11.222.333/0001-81')
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:cnpj]).to include('já está cadastrado')
+    end
+
     it 'exige whatsapp_url quando whatsapp_enabled' do
       company = build(:company, whatsapp_enabled: true, whatsapp_url: nil)
 

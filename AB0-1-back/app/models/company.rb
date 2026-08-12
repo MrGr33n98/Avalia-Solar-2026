@@ -244,6 +244,7 @@ end
   validates :description, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validate :validate_cnpj_format
+  validates :cnpj, uniqueness: { message: 'já está cadastrado' }, allow_blank: true
   validate :validate_state_in_dataset
   validate :validate_city_in_dataset
   validate :validate_ticket_range

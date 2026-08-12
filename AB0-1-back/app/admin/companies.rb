@@ -1299,6 +1299,15 @@ ActiveAdmin.register Company do
     def create
       apply_pending_status_param!
       super
+    rescue ActiveRecord::RecordNotUnique => e
+      Rails.logger.error("[Admin::Companies] Create conflict: #{e.class}: #{e.message}")
+      flash[:error] = 'Não foi possível cadastrar: CNPJ ou slug já cadastrado.'
+      redirect_to new_admin_company_path
+    rescue StandardError => e
+      Rails.logger.error("[Admin::Companies] Create failed: #{e.class}: #{e.message}")
+      Rails.logger.error(e.backtrace.first(10).join("\n"))
+      flash[:error] = "Erro ao cadastrar empresa: #{e.message}"
+      redirect_to new_admin_company_path
     end
 
     def update
