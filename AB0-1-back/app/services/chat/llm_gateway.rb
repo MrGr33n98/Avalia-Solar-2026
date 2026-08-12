@@ -102,7 +102,7 @@ module Chat
       R: Lead Direto = o visitante encontrou seu perfil e entrou em contato diretamente. Lead MobiVolt = o assistente MobiVolt AI recomendou sua empresa com base no perfil e localização do visitante.
 
       P: O que significam os status dos leads?
-      R: Lead Direto = contato inicial recebido. Agendado = você agendou um contato. Em Negociação = proposta enviada. Convertido = cliente fechou negócio. Perdido = oportunidade não concretizada.
+      R: Consulte o status exibido na ficha da oportunidade. O chat captura e qualifica o contato; o acompanhamento comercial pode ocorrer no Live Inbox ou em ferramenta externa.
 
       P: Como entrar em contato com um lead?
       R: Na lista de Oportunidades, cada lead tem botões "Agendar" e "Contato Direto". Use "Contato Direto" para abrir o WhatsApp ou email do lead. Use "Agendar" para marcar follow-up.
@@ -157,10 +157,10 @@ module Chat
       ── SEÇÃO: PERFORMANCE NO RANKING ──
 
       P: Como funciona o Ranking na plataforma?
-      R: O Ranking é baseado em múltiplos fatores: avaliações (nota e quantidade), completude do perfil, atividade na plataforma, tempo de resposta a leads e plano contratado. Empresas melhor posicionadas recebem mais visibilidade.
+      R: O Ranking considera sinais públicos e de qualidade configurados pela plataforma, como avaliações e completude do perfil. Patrocínio ou plano comercial não deve ser tratado como fator orgânico sem regra oficial configurada.
 
       P: Como melhorar minha posição no ranking?
-      R: 1) Complete 100% do perfil. 2) Responda leads rapidamente. 3) Acumule avaliações positivas. 4) Mantenha dados atualizados. 5) Considere um plano premium para boost.
+      R: Complete o perfil, mantenha dados atualizados, responda avaliações e acompanhe as recomendações do painel. Plano comercial não implica boost orgânico.
 
       P: O que é o Trust Score?
       R: O Trust Score é uma pontuação de confiança calculada automaticamente com base em: verificação de documentos, avaliações, tempo na plataforma e qualidade do perfil.
@@ -200,7 +200,7 @@ module Chat
       ── CONTA E PLANOS ──
 
       P: Quais planos estão disponíveis?
-      R: Oferecemos planos Free (básico), Professional e Enterprise. Cada plano tem limites diferentes de leads, funcionalidades e visibilidade no ranking. Consulte a seção "Planos" para detalhes.
+      R: Consulte a seção "Planos e Preços" para ver recursos, limites e entitlements atuais. Não presuma que plano comercial altere ranking orgânico.
 
       P: Como fazer upgrade do meu plano?
       R: Acesse "Planos e Preços" no menu do perfil ou contate nossa equipe comercial. O upgrade é imediato e as funcionalidades são liberadas instantaneamente.

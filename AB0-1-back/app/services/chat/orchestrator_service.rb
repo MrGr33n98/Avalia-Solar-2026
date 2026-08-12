@@ -304,7 +304,7 @@ module Chat
         latency_ms: llm_latency_ms,
         safety_status: 'clean',
         intent_detected: intent,
-        metadata: msg_metadata
+        metadata: (msg_metadata || {}).merge(prompt_metadata)
       )
 
       Chat::InboxBroadcastService.message_created(assistant_msg) if @session.company_id.present?
@@ -345,6 +345,16 @@ module Chat
       else
         final_metadata
       end
+    end
+
+    def prompt_metadata
+      prompt = Chat::Prompts.for(@session.vertical)
+      {
+        'prompt_version' => prompt.id,
+        'orchestrator_version' => 'v2',
+        'router_version' => 'v2',
+        'retrieval_version' => 'v2'
+      }
     end
 
     private
