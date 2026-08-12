@@ -377,7 +377,7 @@ function ComparePageContent() {
               </aside>
             </div>
 
-            <DiscoveryCta />
+            <DiscoveryCta companies={companies} />
             <BannerSlot placement="compare_page_bottom" limit={3} />
           </div>
         )}
@@ -678,7 +678,7 @@ function VerificationTip() {
   );
 }
 
-function DiscoveryCta() {
+function DiscoveryCta({ companies }: { companies: CompareCompany[] }) {
   return (
     <section className="relative isolate overflow-hidden rounded-none border border-slate-800 bg-[#0B0F1A] px-6 py-8 text-white md:px-10 md:py-10">
       <div
@@ -724,7 +724,7 @@ function DiscoveryCta() {
         </div>
 
         <div className="lg:min-w-[310px]">
-          {comparisonList.some((company) => canUsePaidConversion(company, 'quote')) && <button
+          {companies.some((company) => canUsePaidConversion(company, 'quote')) && <button
             type="button"
             onClick={() => openLeadModal({ source: 'comparison-bottom-cta', type: 'quick' })}
             className="inline-flex w-full items-center justify-center gap-3 rounded-none border border-[#FFC82C] bg-[#FFC82C] px-7 py-3.5 text-sm font-semibold text-[#0B0F1A] transition duration-200 hover:-translate-y-0.5 hover:border-[#e8b51e] hover:bg-[#e8b51e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFC82C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F1A] sm:w-auto lg:w-full"
