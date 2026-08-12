@@ -16,54 +16,8 @@ class Banner < ApplicationRecord
   has_many :active_banner_addon_subscriptions, -> { active }, class_name: 'BannerAddonSubscription'
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
-  ALLOWED_POSITIONS = %w[
-    navbar
-    sidebar
-    categories_top
-    home_top
-    companies_top
-    companies_footer
-    article_footer_cta
-    search_top
-    search_mid
-    categories_filter_sidebar
-    categories_right_rail
-    companies_right_rail
-    pricing_advertise_section
-    company_profile_about_inline
-    company_profile_related_carousel
-    company_profile_sidebar_sponsored
-    compare_hero
-    compare_page_top
-    compare_page_inline
-    compare_page_sidebar
-    compare_page_bottom
-    comparison_floating_bar
-    financing_simulator_micro_banner
-  ].freeze
+  ALLOWED_POSITIONS = BannerPlacements::Catalog.keys.freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
-  DEFAULT_DIMENSIONS_BY_POSITION = {
-    'navbar' => [960, 100],
-    'sidebar' => [150, 125],
-    'companies_footer' => [1200, 160],
-    'article_footer_cta' => [1200, 160],
-    'search_top' => [1200, 180],
-    'search_mid' => [1200, 160],
-    'categories_filter_sidebar' => [300, 250],
-    'categories_right_rail' => [300, 600],
-    'companies_right_rail' => [300, 600],
-    'pricing_advertise_section' => [1200, 160],
-    'company_profile_about_inline' => [1200, 160],
-    'company_profile_related_carousel' => [1200, 160],
-    'company_profile_sidebar_sponsored' => [300, 600],
-    'compare_hero' => [1200, 300],
-    'compare_page_top' => [1200, 160],
-    'compare_page_inline' => [1200, 160],
-    'compare_page_sidebar' => [300, 600],
-    'compare_page_bottom' => [1200, 160],
-    'comparison_floating_bar' => [720, 120],
-    'financing_simulator_micro_banner' => [600, 200]
-  }.freeze
 
   # === Validações Básicas ===
   validates :title, :banner_type, :position, presence: true
@@ -97,6 +51,9 @@ class Banner < ApplicationRecord
   # Garante que end_date seja posterior a start_date
   validate :end_date_must_be_after_start_date,
            if: -> { start_date.present? && end_date.present? }
+
+  # === Validação de URL de Destino (Fase 4) ===
+  validate :validate_link_url, if: -> { link.present? }
 
   # === Validação de Limite por Empresa (Fase 1) ===
   # Garante que empresa respeita limite de banners ativos conforme sua assinatura
@@ -156,7 +113,9 @@ class Banner < ApplicationRecord
   scope :approved, -> { where(moderation_status: 'approved') }
 
   def self.default_dimensions_for_position(position)
-    DEFAULT_DIMENSIONS_BY_POSITION.fetch(position.to_s, [600, 200])
+    BannerPlacements::Catalog.fetch(position).dimensions
+  rescue KeyError
+    [600, 200]
   end
 
   def submit_for_review!
@@ -287,6 +246,25 @@ class Banner < ApplicationRecord
     return unless end_date < start_date
 
     errors.add(:end_date, 'deve ser posterior à data de início')
+  end
+
+  def validate_link_url
+    uri = URI.parse(link)
+    unless uri.scheme.in?(%w[http https])
+      errors.add(:link, 'deve ser um link HTTP ou HTTPS válido')
+      return
+    end
+
+    if uri.host.blank? || uri.host.include?('localhost') || uri.host.match?(/\A(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/)
+      errors.add(:link, 'não pode apontar para endereços locais ou privados')
+      return
+    end
+
+    if link.downcase.include?('javascript:') || link.downcase.include?('data:')
+      errors.add(:link, 'formato de link inválido')
+    end
+  rescue URI::InvalidURIError
+    errors.add(:link, 'não é uma URL válida')
   end
 
   def respect_company_active_banners_limit

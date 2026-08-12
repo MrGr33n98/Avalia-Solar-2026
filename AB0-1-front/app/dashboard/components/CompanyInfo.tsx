@@ -556,23 +556,32 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       if (result.success) {
         const responseData = result.data as
-          | { requires_commercial_approval?: boolean; service_area_limit?: { exceeds_limit?: boolean } }
+          | { requires_commercial_approval?: boolean; service_area_limit?: { exceeds_limit?: boolean }; direct_update?: boolean }
           | undefined;
         const requiresCommercialApproval =
           Boolean(responseData?.requires_commercial_approval) ||
           Boolean(responseData?.service_area_limit?.exceeds_limit);
+        const directUpdate = Boolean(responseData?.direct_update);
 
-        setPendingApproval(true);
-        setIsEditing(false);
-        toast({
-          title: requiresCommercialApproval
-            ? 'Solicitação comercial enviada'
-            : 'Alterações enviadas para aprovação',
-          description: requiresCommercialApproval
-            ? 'A abrangência excede o plano atual. O admin pode aprovar a exceção ou recomendar upgrade.'
-            : 'Felipe poderá revisar e liberar no Active Admin antes da publicação.',
-        });
-        window.setTimeout(() => setPendingApproval(false), 8000);
+        if (directUpdate) {
+          setIsEditing(false);
+          toast({
+            title: 'Alterações salvas com sucesso',
+            description: 'As novas informações já estão visíveis no seu perfil público.',
+          });
+        } else {
+          setPendingApproval(true);
+          setIsEditing(false);
+          toast({
+            title: requiresCommercialApproval
+              ? 'Solicitação comercial enviada'
+              : 'Alterações enviadas para aprovação',
+            description: requiresCommercialApproval
+              ? 'A abrangência excede o plano atual. O admin pode aprovar a exceção ou recomendar upgrade.'
+              : 'Felipe poderá revisar e liberar no Active Admin antes da publicação.',
+          });
+          window.setTimeout(() => setPendingApproval(false), 8000);
+        }
         await fetchCompanyData();
         return;
       }
@@ -610,11 +619,19 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       if (!response.ok) throw new Error('Falha no upload');
 
-      setPendingApproval(true);
-      toast({
-        title: 'Logo enviada para aprovação',
-        description: 'A nova marca será validada antes de aparecer no perfil público.',
-      });
+      const data = await response.json();
+      if (data.direct_update) {
+        toast({
+          title: 'Logo atualizada com sucesso',
+          description: 'A nova logo já está visível no seu perfil público.',
+        });
+      } else {
+        setPendingApproval(true);
+        toast({
+          title: 'Logo enviada para aprovação',
+          description: 'A nova marca será validada antes de aparecer no perfil público.',
+        });
+      }
       await fetchCompanyData();
     } catch {
       toast({
@@ -644,11 +661,19 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       if (!response.ok) throw new Error('Falha no upload');
 
-      setPendingApproval(true);
-      toast({
-        title: 'Imagem enviada para aprovação',
-        description: 'O banner será validado antes de aparecer no perfil público.',
-      });
+      const data = await response.json();
+      if (data.direct_update) {
+        toast({
+          title: 'Banner atualizado com sucesso',
+          description: 'O novo banner já está visível no seu perfil público.',
+        });
+      } else {
+        setPendingApproval(true);
+        toast({
+          title: 'Imagem enviada para aprovação',
+          description: 'O banner será validado antes de aparecer no perfil público.',
+        });
+      }
       await fetchCompanyData();
     } catch {
       toast({

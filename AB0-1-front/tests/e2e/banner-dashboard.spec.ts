@@ -53,6 +53,7 @@ test.describe('Banner Ads dashboard visual smoke', () => {
   test('renderiza KPIs e saúde da medição sem overflow horizontal', async ({ page }) => {
     await page.goto('/dashboard?company_id=1&tab=product-banner');
     await expect(page.getByText('Campanhas patrocinadas', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Ver Diagnóstico Técnico' }).click();
     await expect(page.getByText('Saúde da medição')).toBeVisible();
     await expect(page.getByText('Operação normal')).toBeVisible();
     await expect(page.getByText('Eventos válidos 24h:')).toBeVisible();

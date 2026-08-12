@@ -97,7 +97,7 @@ module Api
 
         operational_health = BannerAnalytics::OperationalHealth.call(banner_ids: banners.map(&:id))
         placements = BannerPlacements::Catalog.all.map do |entry|
-          { key: entry.key, status: entry.status, dimensions: entry.dimensions, commercial: entry.commercial }
+          { key: entry.key, label: entry.label, status: entry.status, dimensions: entry.dimensions, commercial: entry.commercial }
         end
         render json: { quota: quota, summary: summary, operational_health: operational_health,
                        placements: placements, banners: banners_data }

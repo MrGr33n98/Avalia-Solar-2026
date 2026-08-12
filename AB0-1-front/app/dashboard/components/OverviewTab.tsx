@@ -74,6 +74,27 @@ type OverviewTabProps = {
   themeMode?: 'light' | 'dark';
   onNavigateToReviews?: () => void;
   onNavigateToTab?: (tab: string) => void;
+  health?: {
+    score: number;
+    status: string;
+    dimensions: {
+      profile: number;
+      reputation: number;
+      content: number;
+      discoverability: number;
+      integration: number;
+    };
+  } | null;
+  nextBestActions?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    action_type: string;
+    action_params: { tab: string };
+    priority: number;
+    severity: 'high' | 'medium' | 'low';
+  }>;
 };
 
 type Period = 7 | 30 | 90;
@@ -268,7 +289,36 @@ function EmptyChart({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function OverviewTab({ companyId, company, onNavigateToTab }: OverviewTabProps) {
+function getActionIcon(id: string) {
+  const map: Record<string, typeof PackageOpen> = {
+    add_categories: Target,
+    add_contact_info: PhoneCall,
+    reply_to_reviews: Star,
+    add_description: FileText,
+    add_logo: UserRound,
+    add_banner: FileText,
+    invite_reviews: UsersRound,
+    configure_webhook: CheckCircle2,
+    add_products: PackageOpen,
+    add_projects: CalendarDays,
+    renew_campaigns: Clock3,
+  };
+  return map[id] || PackageOpen;
+}
+
+function getActionColor(severity: string) {
+  if (severity === 'high') return 'text-rose-600 bg-rose-50';
+  if (severity === 'medium') return 'text-amber-600 bg-amber-50';
+  return 'text-blue-600 bg-blue-50';
+}
+
+export default function OverviewTab({
+  companyId,
+  company,
+  onNavigateToTab,
+  health,
+  nextBestActions,
+}: OverviewTabProps) {
   const { user } = useAuth();
   const [period, setPeriod] = useState<Period>(30);
 
@@ -904,31 +954,64 @@ export default function OverviewTab({ companyId, company, onNavigateToTab }: Ove
               <div
                 className="grid h-20 w-20 shrink-0 place-items-center rounded-full"
                 style={{
-                  background: `conic-gradient(hsl(var(--dashboard-positive)) ${profileHealth * 3.6}deg, hsl(var(--dashboard-border)) 0deg)`,
+                  background: `conic-gradient(hsl(var(--dashboard-positive)) ${(health ? health.score : profileHealth) * 3.6}deg, hsl(var(--dashboard-border)) 0deg)`,
                 }}
               >
                 <div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-[hsl(var(--dashboard-panel))] text-lg font-bold">
-                  {profileHealth}%
+                  {health ? health.score : profileHealth}%
                 </div>
               </div>
               <div>
                 <p className="flex items-center gap-1 text-sm font-bold text-emerald-600">
                   <Star className="h-4 w-4 fill-current" />{' '}
-                  {profileHealth >= 80
-                    ? 'Muito bom'
-                    : profileHealth >= 60
-                      ? 'Em evolução'
-                      : 'Precisa de atenção'}
+                  {(health ? health.score : profileHealth) >= 90
+                    ? 'Excelente'
+                    : (health ? health.score : profileHealth) >= 70
+                      ? 'Muito bom'
+                      : (health ? health.score : profileHealth) >= 50
+                        ? 'Bom'
+                        : (health ? health.score : profileHealth) >= 30
+                          ? 'Regular'
+                          : 'Precisa de atenção'}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--dashboard-muted))]">
                   Complete os itens do perfil para melhorar a presença da empresa.
                 </p>
               </div>
             </div>
+
+            {health && health.dimensions && (
+              <div className="mt-4 border-t border-[hsl(var(--dashboard-border))] pt-4 space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
+                  Dimensões de Saúde
+                </p>
+                {[
+                  { label: 'Perfil', val: health.dimensions.profile },
+                  { label: 'Reputação', val: health.dimensions.reputation },
+                  { label: 'Conteúdo', val: health.dimensions.content },
+                  { label: 'Descoberta', val: health.dimensions.discoverability },
+                  { label: 'Integração', val: health.dimensions.integration },
+                ].map((dim) => (
+                  <div key={dim.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-medium text-[hsl(var(--dashboard-ink))]">{dim.label}</span>
+                      <span className="font-bold text-[hsl(var(--dashboard-muted))]">{dim.val}%</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-[hsl(var(--dashboard-surface))]">
+                      <div
+                        className="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${dim.val}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <Button
               type="button"
               variant="outline"
-              onClick={() => onNavigateToTab?.('info')}
+              onClick={() => onNavigateToTab?.('product-general')}
               className="mt-4 h-9 w-full border-blue-200 text-xs font-semibold text-blue-600"
             >
               Ver checklist
@@ -940,39 +1023,72 @@ export default function OverviewTab({ companyId, company, onNavigateToTab }: Ove
               <h2 className="text-sm font-bold">Próximas ações recomendadas</h2>
             </div>
             <div className="space-y-1 p-2">
-              {actions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.title}
-                    type="button"
-                    onClick={() => onNavigateToTab?.(action.tab)}
-                    className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
-                  >
-                    <span
-                      className={cn(
-                        'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
-                        action.color
-                      )}
+              {nextBestActions && nextBestActions.length > 0 ? (
+                nextBestActions.map((action) => {
+                  const Icon = getActionIcon(action.id);
+                  const colorClass = getActionColor(action.severity);
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => onNavigateToTab?.(action.action_params?.tab || 'product-general')}
+                      className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
                     >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
-                        {action.title}
-                      </strong>
-                      <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
-                        {action.description}
-                      </small>
-                    </span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
-                  </button>
-                );
-              })}
+                      <span
+                        className={cn(
+                          'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
+                          colorClass
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
+                          {action.title}
+                        </strong>
+                        <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
+                          {action.description}
+                        </small>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
+                    </button>
+                  );
+                })
+              ) : (
+                actions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.title}
+                      type="button"
+                      onClick={() => onNavigateToTab?.(action.tab === 'info' ? 'product-general' : action.tab)}
+                      className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
+                    >
+                      <span
+                        className={cn(
+                          'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
+                          action.color
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
+                          {action.title}
+                        </strong>
+                        <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
+                          {action.description}
+                        </small>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
+                    </button>
+                  );
+                })
+              )}
             </div>
             <button
               type="button"
-              onClick={() => onNavigateToTab?.('info')}
+              onClick={() => onNavigateToTab?.('product-general')}
               className="flex w-full items-center justify-center gap-2 border-t border-[hsl(var(--dashboard-border))] py-3 text-xs font-semibold text-blue-600"
             >
               Ver todas as ações <ArrowRight className="h-3.5 w-3.5" />

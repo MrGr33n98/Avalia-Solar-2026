@@ -323,8 +323,12 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
 
     setSubmitting(true);
     try {
+      let isDirectUpdate = true;
       if (toAdd.length > 0) {
-        await addCategories(toAdd);
+        const res = await addCategories(toAdd);
+        if (res && !res.direct_update) {
+          isDirectUpdate = false;
+        }
       }
 
       for (const categoryId of toRemove) {
@@ -332,13 +336,17 @@ export default function CategoriesManagement({ companyId, company }: CategoriesM
       }
 
       setSelectedIds(targetIds);
-      setPendingSelectionKey(targetKey);
-      toast({
-        title: exceedsCategoryLimit ? 'Solicitação comercial enviada' : 'Solicitação enviada',
-        description: exceedsCategoryLimit
-          ? 'O admin precisa aprovar a exceção ou ajustar o plano antes da publicação.'
-          : 'As categorias serão publicadas após aprovação do admin.',
-      });
+      if (!isDirectUpdate) {
+        setPendingSelectionKey(targetKey);
+        toast({
+          title: exceedsCategoryLimit ? 'Solicitação comercial enviada' : 'Solicitação enviada',
+          description: exceedsCategoryLimit
+            ? 'O admin precisa aprovar a exceção ou ajustar o plano antes da publicação.'
+            : 'As categorias serão publicadas após aprovação do admin.',
+        });
+      } else {
+        setPendingSelectionKey(null);
+      }
     } finally {
       setSubmitting(false);
     }

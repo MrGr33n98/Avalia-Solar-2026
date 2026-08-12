@@ -12,41 +12,34 @@ module Banners
       feature_access = @company.feature_access
       promo_banner = feature_access['promo_banner']
       
-      unless promo_banner && promo_banner['state'] == 'enabled'
-        return { 
-          used: active_banners_count, 
-          limit: 0, 
-          remaining: 0, 
-          can_create: false 
-        }
-      end
-
-      # Base plan limit from JSON features (max_banners or banner_limit)
-      plan_limit = @company.feature_value_from_plan('max_banners', 'banner_limit')
+      # Base plan limit from JSON features or EntitlementService
+      plan_limit = EntitlementService.new(@company).check('ads.campaigns.active.max') || @company.feature_value_from_plan('max_banners', 'banner_limit')
       
-      # Determine base limit (integer or nil for unlimited)
       base_limit = if plan_limit.nil?
-                     fallback_limit
+                     1 # Default fallback instead of checking inferred_plan_tier
                    elsif plan_limit.to_s.strip.downcase == 'unlimited'
                      nil
                    else
                      plan_limit.to_i
                    end
 
-      # Future: Add extra capacity from active Add-ons here if they start selling quota
       extra_capacity = 0
-      
       limit = base_limit.nil? ? nil : base_limit + extra_capacity
       used = active_banners_count
       
       remaining = limit.nil? ? nil : [limit - used, 0].max
-      can_create = remaining.nil? || remaining > 0
+      can_activate = remaining.nil? || remaining > 0
+
+      # Check if feature is enabled at all
+      is_enabled = promo_banner && promo_banner['state'] == 'enabled'
 
       {
-        used: used,
-        limit: limit,
-        remaining: remaining,
-        can_create: can_create
+        active_used: used,
+        active_limit: limit,
+        active_remaining: remaining,
+        can_activate: is_enabled && can_activate,
+        can_create_draft: is_enabled,
+        can_create: is_enabled # Legacy support
       }
     end
 
@@ -54,15 +47,6 @@ module Banners
 
     def active_banners_count
       @company.banners.where(active: true, moderation_status: 'approved').count
-    end
-
-    def fallback_limit
-      # Fallback for legacy plans that don't have max_banners in their feature JSON
-      case @company.inferred_plan_tier
-      when 'enterprise' then nil # Unlimited for enterprise
-      when 'pro' then 3
-      else 1
-      end
     end
   end
 end

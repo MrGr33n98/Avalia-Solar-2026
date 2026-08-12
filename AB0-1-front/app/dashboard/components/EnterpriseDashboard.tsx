@@ -193,7 +193,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { loading, company, companyError, stats, featureAccess } =
+  const { loading, company, companyError, stats, featureAccess, health, nextBestActions } =
     useCompanyDashboardData(companyId);
 
   const { resolvedTheme } = useTheme();
@@ -433,6 +433,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   themeMode={themeMode}
                   onNavigateToReviews={() => handleTabChange('reviews')}
                   onNavigateToTab={handleTabChange}
+                  health={health}
+                  nextBestActions={nextBestActions}
                 />
               </TabsContent>
 

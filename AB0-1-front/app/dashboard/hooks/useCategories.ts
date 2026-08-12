@@ -105,15 +105,18 @@ export function useCategories(companyId: string) {
 
   const addCategories = async (selectedIds: string[]) => {
     try {
-      await fetchApi('/company_dashboard/add_categories', {
+      const result = await fetchApi<{ message?: string; direct_update?: boolean }>('/company_dashboard/add_categories', {
         method: 'POST',
         body: JSON.stringify({ category_ids: selectedIds })
       });
       toast({
-        title: 'Sucesso',
-        description: 'Categorias enviadas para aprovação.'
+        title: result?.direct_update ? 'Sucesso' : 'Solicitação enviada',
+        description: result?.direct_update
+          ? 'Categorias atualizadas com sucesso.'
+          : (result?.message || 'Categorias enviadas para aprovação.')
       });
       await fetchCategories();
+      return result;
     } catch (error: unknown) {
       toast({
         title: 'Erro ao adicionar categorias',
@@ -126,15 +129,16 @@ export function useCategories(companyId: string) {
 
   const removeCategory = async (categoryId: string) => {
     try {
-      await fetchApi('/company_dashboard/remove_category', {
+      const result = await fetchApi<{ message?: string; direct_update?: boolean }>('/company_dashboard/remove_category', {
         method: 'POST',
         body: JSON.stringify({ category_id: categoryId })
       });
       toast({
         title: 'Sucesso',
-        description: 'Categoria removida.'
+        description: result?.direct_update ? 'Categoria removida com sucesso.' : 'Solicitação de remoção enviada para aprovação.'
       });
       await fetchCategories();
+      return result;
     } catch (error: unknown) {
       toast({
         title: 'Erro ao remover categoria',

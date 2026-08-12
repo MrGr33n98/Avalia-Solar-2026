@@ -18,6 +18,7 @@ import {
   Play,
   Send,
   Trash2,
+  DollarSign,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,11 +92,13 @@ type CompanyBanner = {
   };
 };
 
-type Quota = {
-  used: number;
-  limit: number | null;
-  remaining: number | null;
-  can_create: boolean;
+type BannerQuota = {
+  active_used: number;
+  active_limit: number | null;
+  active_remaining: number | null;
+  can_activate: boolean;
+  can_create_draft: boolean;
+  can_create: boolean; // legacy
 };
 
 type OperationalHealth = {
@@ -145,13 +148,14 @@ type ExportAlert = {
 
 type PlacementOption = {
   key: string;
+  label?: string;
   status: 'active' | 'planned';
   dimensions: [number, number];
   commercial: string;
 };
 
 type DashboardPayload = {
-  quota: Quota;
+  quota: BannerQuota;
   summary: BannerPerformance;
   operational_health?: OperationalHealth;
   placements?: PlacementOption[];
@@ -393,7 +397,7 @@ function PerformanceDialog({ banner, trigger }: { banner: CompanyBanner; trigger
           <div className="space-y-6 mt-4">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
               <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
-                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Views</div>
+                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Impressões</div>
                 <div className="font-black text-lg">{data.metrics.impressions}</div>
               </div>
               <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
@@ -685,14 +689,7 @@ function BannerFormDialog({
   placements?: PlacementOption[];
 }) {
   const [open, setOpen] = useState(false);
-  const placementOptions = placements?.length
-    ? placements
-    : BANNER_POSITIONS.map(([key]) => ({
-        key,
-        status: ACTIVE_BANNER_POSITIONS.has(key) ? ('active' as const) : ('planned' as const),
-        dimensions: [0, 0] as [number, number],
-        commercial: 'premium',
-      }));
+  const placementOptions = placements || [];
   const [title, setTitle] = useState(banner?.title || '');
   const [link, setLink] = useState(banner?.link_url || '');
   const [position, setPosition] = useState(banner?.position || 'home_top');
@@ -777,11 +774,12 @@ function BannerFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {placementOptions.map((placement) => {
-                    const label = placement.key.replaceAll('_', ' ');
+                    const label = placement.label || placement.key.replaceAll('_', ' ');
                     const active = placement.status === 'active';
+                    const dims = placement.dimensions ? `${placement.dimensions[0]}×${placement.dimensions[1]} px` : '';
                     return (
                       <SelectItem key={placement.key} value={placement.key} disabled={!active}>
-                        {active ? label : `${label} (Em breve)`}
+                        {active ? `${label} (${dims})` : `${label} (Em breve)`}
                       </SelectItem>
                     );
                   })}
@@ -854,6 +852,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
   const [exportAuditsOpen, setExportAuditsOpen] = useState(false);
   const [exportAuditsLoading, setExportAuditsLoading] = useState(false);
   const [exportAlerts, setExportAlerts] = useState<ExportAlert[]>([]);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!allowed) return;
@@ -986,6 +985,17 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
           <p className="text-sm text-slate-500 dark:text-white/30 font-medium max-w-xs text-center mb-8">
             Faça upgrade para plano com Avalia Solar Ads e libere banners patrocinados.
           </p>
+          <Button
+            type="button"
+            className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'product-pricing');
+              window.location.href = url.toString();
+            }}
+          >
+            Conhecer Planos e Assinaturas
+          </Button>
         </div>
       </div>
     );
@@ -1007,7 +1017,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
           <p className="text-sm text-slate-500 dark:text-white/40 max-w-md font-medium leading-relaxed">
             Gerencie seus anúncios de destaque.{' '}
             {data?.quota &&
-              `Você tem ${data.quota.used} de ${data.quota.limit ?? 'ilimitados'} anúncios ativos.`}
+              `Você tem ${data.quota.active_used} de ${data.quota.active_limit ?? 'ilimitados'} anúncios ativos.`}
           </p>
         </div>
 
@@ -1017,7 +1027,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
             onSaved={loadData}
             trigger={
               <Button
-                disabled={!data?.quota?.can_create}
+                disabled={!data?.quota?.can_create_draft}
                 className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -1079,33 +1089,9 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
               {actionError}
             </div>
           )}
-          {exportAlerts.filter((alert) => alert.status === 'open').length ? (
-            <div
-              role="status"
-              data-testid="banner-export-alerts"
-              className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
-            >
-              <strong>Atenção operacional:</strong> foram detectadas exportações acima do limiar
-              configurado ({exportAlerts.filter((alert) => alert.status === 'open')[0].count} em
-              24h).
-              <span className="ml-1">Consulte o administrador para investigação.</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="ml-3"
-                onClick={() =>
-                  acknowledgeExportAlert(
-                    exportAlerts.filter((alert) => alert.status === 'open')[0].id
-                  )
-                }
-              >
-                Marcar como visto
-              </Button>
-            </div>
-          ) : null}
+
           {/* Summary KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
@@ -1151,13 +1137,15 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
             <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
-                  <div className="p-2 bg-purple-500/10 text-purple-500 rounded-xl">
-                    <TrendingUp className="w-4 h-4" />
+                  <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
+                    <DollarSign className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Investimento</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">CPL</span>
                 </div>
                 <div className="text-3xl font-black tracking-tight">
-                  {formatMoney(data.summary.investment_cents)}
+                  {data.summary.leads > 0
+                    ? formatMoney((data.summary.investment_cents ?? 0) / data.summary.leads)
+                    : '—'}
                 </div>
               </CardContent>
             </Card>
@@ -1172,22 +1160,22 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                       Quota de campanhas
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {data.quota.limit === null ? 'Campanhas ilimitadas' : 'Campanhas disponíveis no plano'}
+                      {data.quota.active_limit === null ? 'Campanhas ilimitadas' : 'Campanhas disponíveis no plano'}
                     </p>
                   </div>
-                  <Badge variant={data.quota.can_create ? 'default' : 'secondary'}>
-                    {data.quota.can_create ? 'Disponível' : 'Limite atingido'}
+                  <Badge variant={data.quota.can_activate ? 'default' : 'secondary'}>
+                    {data.quota.can_activate ? 'Disponível' : 'Limite atingido'}
                   </Badge>
                 </div>
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div className="text-3xl font-black tracking-tight">
-                    {data.quota.used}{' '}
+                    {data.quota.active_used}{' '}
                     <span className="text-sm font-semibold text-slate-400">
-                      de {data.quota.limit ?? '∞'} usadas
+                      de {data.quota.active_limit ?? '∞'} usadas
                     </span>
                   </div>
                   <span className="text-xs font-bold text-brand-blue">
-                    {data.quota.remaining ?? '∞'} restantes
+                    {data.quota.active_remaining ?? '∞'} restantes
                   </span>
                 </div>
               </CardContent>
@@ -1205,271 +1193,313 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                 </div>
               </CardContent>
             </Card>
+
           </div>
 
-          {(() => {
-            const health = data.operational_health;
-            const labels = {
-              healthy: ['Operação normal', 'border-emerald-200 bg-emerald-50 text-emerald-800'],
-              degraded: ['Qualidade degradada', 'border-amber-200 bg-amber-50 text-amber-800'],
-              stale: ['Dados atrasados', 'border-rose-200 bg-rose-50 text-rose-800'],
-              unknown: ['Aguardando dados', 'border-slate-200 bg-slate-50 text-slate-700'],
-            } as const;
-            const [label, tone] = labels[health?.status ?? 'unknown'];
-            const discardRate = health?.discard_rate_24h ?? 0;
-            const topDiscardReason = Object.entries(health?.discard_reasons_24h ?? {}).sort(
-              ([, a], [, b]) => b - a
-            )[0];
-            return (
-              <Card className={`rounded-3xl border shadow-sm ${tone}`}>
-                <CardContent className="p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Activity className="h-5 w-5" aria-hidden="true" />
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-widest">
-                          Saúde da medição
-                        </p>
-                        <p className="text-sm font-bold">{label}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
-                      <span>
-                        Eventos válidos 24h: <strong>{health?.reportable_events_24h ?? 0}</strong>
-                      </span>
-                      <span>
-                        Descartados: <strong>{health?.discarded_events_24h ?? 0}</strong>
-                      </span>
-                      <span>
-                        Taxa: <strong>{discardRate.toFixed(2)}%</strong>
-                      </span>
-                      <span>
-                        Atraso:{' '}
-                        <strong>
-                          {health?.lag_minutes == null ? 'n/d' : `${health.lag_minutes} min`}
-                        </strong>
-                      </span>
-                      <span>
-                        Divergências: <strong>{health?.divergent_banners_yesterday ?? 0}</strong>
-                      </span>
-                      <span>
-                        Motivo principal:{' '}
-                        <strong>
-                          {topDiscardReason
-                            ? `${topDiscardReason[0]} (${topDiscardReason[1]})`
-                            : 'n/d'}
-                        </strong>
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              className="text-xs font-bold text-slate-500 hover:text-brand-blue"
+            >
+              {showDiagnostics ? "Ocultar Diagnóstico Técnico" : "Ver Diagnóstico Técnico"}
+            </Button>
+          </div>
 
-          {data.operational_health?.quality_history?.length ? (
-            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                      Qualidade nos últimos 7 dias
-                    </p>
-                    <p className="text-sm text-slate-500">Eventos válidos x descartados</p>
-                  </div>
-                  <Activity className="h-5 w-5 text-brand-blue" aria-hidden="true" />
+          {showDiagnostics && (
+            <div className="space-y-6">
+              {exportAlerts.filter((alert) => alert.status === 'open').length ? (
+                <div
+                  role="status"
+                  data-testid="banner-export-alerts"
+                  className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                >
+                  <strong>Atenção operacional:</strong> foram detectadas exportações acima do limiar
+                  configurado ({exportAlerts.filter((alert) => alert.status === 'open')[0].count} em
+                  24h).
+                  <span className="ml-1">Consulte o administrador para investigação.</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="ml-3"
+                    onClick={() =>
+                      acknowledgeExportAlert(
+                        exportAlerts.filter((alert) => alert.status === 'open')[0].id
+                      )
+                    }
+                  >
+                    Marcar como visto
+                  </Button>
                 </div>
-                <div className="grid grid-cols-7 gap-2" data-testid="banner-quality-history">
-                  {data.operational_health.quality_history.map((day) => {
-                    const total = day.reportable_events + day.discarded_events;
-                    const validWidth = total ? (day.reportable_events / total) * 100 : 0;
-                    return (
-                      <div
-                        key={day.date}
-                        className="min-w-0"
-                        title={`${day.date}: ${day.discard_rate}% descartados`}
-                      >
-                        <div className="flex h-16 flex-col justify-end overflow-hidden rounded-lg bg-slate-100">
-                          <div className="bg-rose-400" style={{ height: `${100 - validWidth}%` }} />
-                          <div className="bg-emerald-400" style={{ height: `${validWidth}%` }} />
+              ) : null}
+
+              {(() => {
+                const health = data.operational_health;
+                const labels = {
+                  healthy: ['Operação normal', 'border-emerald-200 bg-emerald-50 text-emerald-800'],
+                  degraded: ['Qualidade degradada', 'border-amber-200 bg-amber-50 text-amber-800'],
+                  stale: ['Dados atrasados', 'border-rose-200 bg-rose-50 text-rose-800'],
+                  unknown: ['Aguardando dados', 'border-slate-200 bg-slate-50 text-slate-700'],
+                } as const;
+                const [label, tone] = labels[health?.status ?? 'unknown'];
+                const discardRate = health?.discard_rate_24h ?? 0;
+                const topDiscardReason = Object.entries(health?.discard_reasons_24h ?? {}).sort(
+                  ([, a], [, b]) => b - a
+                )[0];
+                return (
+                  <Card className={`rounded-3xl border shadow-sm ${tone}`}>
+                    <CardContent className="p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <Activity className="h-5 w-5" aria-hidden="true" />
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-widest">
+                              Saúde da medição
+                            </p>
+                            <p className="text-sm font-bold">{label}</p>
+                          </div>
                         </div>
-                        <p className="mt-1 truncate text-center text-[10px] text-slate-500">
-                          {day.date.slice(5)}
-                        </p>
-                        <p className="text-center text-[10px] font-bold text-slate-700">
-                          {day.discard_rate.toFixed(1)}%
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {data.operational_health?.incident_history?.length ? (
-            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                      Incidentes recentes
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      Sinais que exigem investigação operacional
-                    </p>
-                  </div>
-                  <AlertCircle className="h-5 w-5 text-amber-500" aria-hidden="true" />
-                </div>
-                <div className="mb-4 grid gap-2 sm:grid-cols-3">
-                  <select
-                    aria-label="Período dos incidentes"
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                    value={incidentDays}
-                    onChange={(event) => setIncidentDays(event.target.value as '3' | '7')}
-                  >
-                    <option value="7">Últimos 7 dias</option>
-                    <option value="3">Últimos 3 dias</option>
-                  </select>
-                  <select
-                    aria-label="Tipo de incidente"
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                    value={incidentType}
-                    onChange={(event) => setIncidentType(event.target.value)}
-                  >
-                    <option value="all">Todos os tipos</option>
-                    <option value="discard_rate_high">Descarte alto</option>
-                    <option value="reconciliation_divergence">Divergência</option>
-                    <option value="aggregate_missing">Agregado ausente</option>
-                  </select>
-                  <select
-                    aria-label="Banner afetado"
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                    value={incidentBanner}
-                    onChange={(event) => setIncidentBanner(event.target.value)}
-                  >
-                    <option value="all">Todos os banners</option>
-                    {incidentOptions.map(([id, title]) => (
-                      <option key={id} value={id}>
-                        {title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportFilteredIncidents('csv')}
-                    disabled={filteredIncidentHistory.length === 0}
-                  >
-                    <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                    Exportar CSV
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportFilteredIncidents('json')}
-                    disabled={filteredIncidentHistory.length === 0}
-                  >
-                    <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                    Exportar JSON
-                  </Button>
-                </div>
-                <div className="mb-4">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={loadExportAudits}
-                    disabled={exportAuditsLoading}
-                  >
-                    <Activity className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                    {exportAuditsLoading ? 'Carregando histórico…' : 'Histórico de exportações'}
-                  </Button>
-                </div>
-                {exportAuditsOpen ? (
-                  <div
-                    className="mb-4 rounded-xl border border-slate-200 p-3"
-                    data-testid="banner-export-audit-history"
-                  >
-                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Downloads auditados
-                    </p>
-                    {exportAudits.length ? (
-                      exportAudits.map((audit) => (
-                        <div
-                          key={audit.id}
-                          className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2 text-xs last:border-0"
-                        >
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
                           <span>
-                            {audit.format?.toUpperCase()} · {audit.record_count} incidentes · ator #
-                            {audit.actor_id ?? '—'}
+                            Eventos válidos 24h: <strong>{health?.reportable_events_24h ?? 0}</strong>
                           </span>
-                          <time dateTime={audit.created_at}>
-                            {new Date(audit.created_at).toLocaleString('pt-BR')}
-                          </time>
+                          <span>
+                            Descartados: <strong>{health?.discarded_events_24h ?? 0}</strong>
+                          </span>
+                          <span>
+                            Taxa: <strong>{discardRate.toFixed(2)}%</strong>
+                          </span>
+                          <span>
+                            Atraso:{' '}
+                            <strong>
+                              {health?.lag_minutes == null ? 'n/d' : `${health.lag_minutes} min`}
+                            </strong>
+                          </span>
+                          <span>
+                            Divergências: <strong>{health?.divergent_banners_yesterday ?? 0}</strong>
+                          </span>
+                          <span>
+                            Motivo principal:{' '}
+                            <strong>
+                              {topDiscardReason
+                                ? `${topDiscardReason[0]} (${topDiscardReason[1]})`
+                                : 'n/d'}
+                            </strong>
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-slate-500">Nenhuma exportação registrada.</p>
-                    )}
-                  </div>
-                ) : null}
-                <ol className="space-y-2" data-testid="banner-incident-history">
-                  {filteredIncidentHistory
-                    .slice(-5)
-                    .reverse()
-                    .map((incident, index) => {
-                      const label =
-                        incident.type === 'discard_rate_high'
-                          ? 'Taxa de descarte alta'
-                          : incident.type === 'reconciliation_divergence'
-                            ? 'Divergência de reconciliação'
-                            : 'Agregado ausente';
-                      return (
-                        <li
-                          key={`${incident.date}-${incident.type}-${index}`}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
-                        >
-                          <button
-                            type="button"
-                            className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
-                            onClick={() =>
-                              setExpandedIncident(
-                                expandedIncident === `${incident.date}-${incident.type}`
-                                  ? null
-                                  : `${incident.date}-${incident.type}`
-                              )
-                            }
-                            aria-expanded={expandedIncident === `${incident.date}-${incident.type}`}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+              {data.operational_health?.quality_history?.length ? (
+                <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                          Qualidade nos últimos 7 dias
+                        </p>
+                        <p className="text-sm text-slate-500">Eventos válidos x descartados</p>
+                      </div>
+                      <Activity className="h-5 w-5 text-brand-blue" aria-hidden="true" />
+                    </div>
+                    <div className="grid grid-cols-7 gap-2" data-testid="banner-quality-history">
+                      {data.operational_health.quality_history.map((day) => {
+                        const total = day.reportable_events + day.discarded_events;
+                        const validWidth = total ? (day.reportable_events / total) * 100 : 0;
+                        return (
+                          <div
+                            key={day.date}
+                            className="min-w-0"
+                            title={`${day.date}: ${day.discard_rate}% descartados`}
                           >
-                            <span className="font-semibold text-slate-700">{label}</span>
-                            <span className="text-slate-500">
-                              {incident.date} · {incident.value}
-                            </span>
-                          </button>
-                          {expandedIncident === `${incident.date}-${incident.type}` && (
-                            <div className="basis-full border-t border-slate-200 pt-2 text-[11px] text-slate-500">
-                              {incident.affected_banners?.length
-                                ? incident.affected_banners.map((banner) => (
-                                    <div key={banner.id}>
-                                      {banner.title}
-                                      {banner.event_count ? ` · ${banner.event_count} eventos` : ''}
-                                    </div>
-                                  ))
-                                : 'Nenhum banner identificado'}
+                            <div className="flex h-16 flex-col justify-end overflow-hidden rounded-lg bg-slate-100">
+                              <div className="bg-rose-400" style={{ height: `${100 - validWidth}%` }} />
+                              <div className="bg-emerald-400" style={{ height: `${validWidth}%` }} />
                             </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                </ol>
-              </CardContent>
-            </Card>
-          ) : null}
+                            <p className="mt-1 truncate text-center text-[10px] text-slate-500">
+                              {day.date.slice(5)}
+                            </p>
+                            <p className="text-center text-[10px] font-bold text-slate-700">
+                              {day.discard_rate.toFixed(1)}%
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {data.operational_health?.incident_history?.length ? (
+                <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+                          Incidentes recentes
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          Sinais que exigem investigação operacional
+                        </p>
+                      </div>
+                      <AlertCircle className="h-5 w-5 text-amber-500" aria-hidden="true" />
+                    </div>
+                    <div className="mb-4 grid gap-2 sm:grid-cols-3">
+                      <select
+                        aria-label="Período dos incidentes"
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                        value={incidentDays}
+                        onChange={(event) => setIncidentDays(event.target.value as '3' | '7')}
+                      >
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="3">Últimos 3 dias</option>
+                      </select>
+                      <select
+                        aria-label="Tipo de incidente"
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                        value={incidentType}
+                        onChange={(event) => setIncidentType(event.target.value)}
+                      >
+                        <option value="all">Todos os tipos</option>
+                        <option value="discard_rate_high">Descarte alto</option>
+                        <option value="reconciliation_divergence">Divergência</option>
+                        <option value="aggregate_missing">Agregado ausente</option>
+                      </select>
+                      <select
+                        aria-label="Banner afetado"
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
+                        value={incidentBanner}
+                        onChange={(event) => setIncidentBanner(event.target.value)}
+                      >
+                        <option value="all">Todos os banners</option>
+                        {incidentOptions.map(([id, title]) => (
+                          <option key={id} value={id}>
+                            {title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportFilteredIncidents('csv')}
+                        disabled={filteredIncidentHistory.length === 0}
+                      >
+                        <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                        Exportar CSV
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportFilteredIncidents('json')}
+                        disabled={filteredIncidentHistory.length === 0}
+                      >
+                        <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                        Exportar JSON
+                      </Button>
+                    </div>
+                    <div className="mb-4">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={loadExportAudits}
+                        disabled={exportAuditsLoading}
+                      >
+                        <Activity className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+                        {exportAuditsLoading ? 'Carregando histórico…' : 'Histórico de exportações'}
+                      </Button>
+                    </div>
+                    {exportAuditsOpen ? (
+                      <div
+                        className="mb-4 rounded-xl border border-slate-200 p-3"
+                        data-testid="banner-export-audit-history"
+                      >
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Downloads auditados
+                        </p>
+                        {exportAudits.length ? (
+                          exportAudits.map((audit) => (
+                            <div
+                              key={audit.id}
+                              className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2 text-xs last:border-0"
+                            >
+                              <span>
+                                {audit.format?.toUpperCase()} · {audit.record_count} incidentes · ator #
+                                {audit.actor_id ?? '—'}
+                              </span>
+                              <time dateTime={audit.created_at}>
+                                {new Date(audit.created_at).toLocaleString('pt-BR')}
+                              </time>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-slate-500">Nenhuma exportação registrada.</p>
+                        )}
+                      </div>
+                    ) : null}
+                    <ol className="space-y-2" data-testid="banner-incident-history">
+                      {filteredIncidentHistory
+                        .slice(-5)
+                        .reverse()
+                        .map((incident, index) => {
+                          const label =
+                            incident.type === 'discard_rate_high'
+                              ? 'Taxa de descarte alta'
+                              : incident.type === 'reconciliation_divergence'
+                                ? 'Divergência de reconciliação'
+                                : 'Agregado ausente';
+                          return (
+                            <li
+                              key={`${incident.date}-${incident.type}-${index}`}
+                              className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
+                            >
+                              <button
+                                type="button"
+                                className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
+                                onClick={() =>
+                                  setExpandedIncident(
+                                    expandedIncident === `${incident.date}-${incident.type}`
+                                      ? null
+                                      : `${incident.date}-${incident.type}`
+                                  )
+                                }
+                                aria-expanded={expandedIncident === `${incident.date}-${incident.type}`}
+                              >
+                                <span className="font-semibold text-slate-700">{label}</span>
+                                <span className="text-slate-500">
+                                  {incident.date} · {incident.value}
+                                </span>
+                              </button>
+                              {expandedIncident === `${incident.date}-${incident.type}` && (
+                                <div className="basis-full border-t border-slate-200 pt-2 text-[11px] text-slate-500">
+                                  {incident.affected_banners?.length
+                                    ? incident.affected_banners.map((banner) => (
+                                        <div key={banner.id}>
+                                          {banner.title}
+                                          {banner.event_count ? ` · ${banner.event_count} eventos` : ''}
+                                        </div>
+                                      ))
+                                    : 'Nenhum banner identificado'}
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                    </ol>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </div>
+          )}
 
           {/* Funnel */}
           <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
@@ -1631,24 +1661,39 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                       )}
 
                       {/* Metrics */}
-                      <div className="grid grid-cols-3 gap-2 mb-6">
+                      <div className="grid grid-cols-2 gap-2 mb-6">
                         <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
                           <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            Visitas
+                            Impressões
                           </div>
                           <div className="font-black text-sm">{banner.performance.impressions}</div>
                         </div>
                         <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
                           <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            Cliques
+                            Cliques (CTR)
                           </div>
-                          <div className="font-black text-sm">{banner.performance.clicks}</div>
+                          <div className="font-black text-sm">
+                            {banner.performance.clicks}{' '}
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              ({banner.performance.ctr}%)
+                            </span>
+                          </div>
                         </div>
                         <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
                           <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
                             Leads
                           </div>
                           <div className="font-black text-sm">{banner.performance.leads}</div>
+                        </div>
+                        <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
+                          <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                            CPL
+                          </div>
+                          <div className="font-black text-sm">
+                            {banner.performance.leads > 0
+                              ? formatMoney((banner.performance.investment_cents ?? 0) / banner.performance.leads)
+                              : '—'}
+                          </div>
                         </div>
                       </div>
 
