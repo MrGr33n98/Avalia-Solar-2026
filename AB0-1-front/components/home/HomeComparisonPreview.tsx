@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BadgeCheck,
   Star,
-  Check,
   Sparkles,
 } from 'lucide-react';
 
@@ -72,20 +71,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                 Reputação, resposta e cobertura usando os mesmos critérios para todas.
               </p>
             </div>
-            
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-extrabold text-blue-700">
-                <Check className="h-3 w-3" /> Dados verificados
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700">
-                <Check className="h-3 w-3" /> Sem viés
-              </span>
-              <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800 text-xs h-9">
-                <Link href="/compare">
-                  Exportar comparação
-                </Link>
-              </Button>
-            </div>
+
           </div>
 
           {/* Grid de Comparação */}
@@ -197,6 +183,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                         name={company.name}
                         size="custom"
                         badges={company.badges}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         verifiedBadgeUrl={(company as any).verified_badge_image_url || (company as any).verified_badge_url}
                         className="h-9 w-9 rounded-lg shadow-sm sm:h-12 sm:w-12"
                         badgeClassName="-right-1 -top-1 h-4 w-4 sm:-right-1.5 sm:-top-1.5 sm:h-5 sm:w-5"
