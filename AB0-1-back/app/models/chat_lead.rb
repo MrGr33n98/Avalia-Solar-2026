@@ -37,7 +37,7 @@ class ChatLead < ApplicationRecord
     %w[
       id chat_session_id name email phone city state vertical intent
       project_type monthly_bill lead_score lead_temperature sales_status
-      consent_given source_page utm_source utm_medium utm_campaign
+      consent_given assignment_source source_page utm_source utm_medium utm_campaign
       recommended_next_action created_at updated_at
     ]
   end

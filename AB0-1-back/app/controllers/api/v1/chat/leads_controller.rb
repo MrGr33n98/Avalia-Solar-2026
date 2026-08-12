@@ -38,7 +38,10 @@ module Api
             lead.assign_attributes(safe_params)
 
             assigned_company = resolve_assigned_company(lead_params[:metadata])
-            lead.assigned_company = assigned_company if assigned_company
+            if assigned_company
+              lead.assigned_company = assigned_company
+              lead.assignment_source = 'explicit_quote'
+            end
 
             # Preenche defaults de sessão apenas se não existirem
             lead.consent_given = true
@@ -62,7 +65,9 @@ module Api
           end
 
           assigned_company ||= resolve_assigned_company(lead_params[:metadata])
-          lead.update!(assigned_company: assigned_company) if assigned_company && lead.assigned_company_id != assigned_company.id
+          if assigned_company && lead.assigned_company_id != assigned_company.id
+            lead.update!(assigned_company: assigned_company, assignment_source: 'explicit_quote')
+          end
 
           attach_session_to_company!(session, lead)
           enqueue_live_inbox_notifications(lead)
@@ -136,9 +141,11 @@ module Api
 
         def resolve_assigned_company(metadata)
           raw = metadata.respond_to?(:to_h) ? metadata.to_h : {}
-          company_id = raw['quote_requested_company_id'] || raw[:quote_requested_company_id] ||
-                       Array(raw['recommended_company_ids'] || raw[:recommended_company_ids]).first
-          Company.find_by(id: company_id)
+          company_id = raw['quote_requested_company_id'] || raw[:quote_requested_company_id]
+          company = Company.find_by(id: company_id)
+          return nil unless company
+
+          company
         end
 
         def attach_session_to_company!(session, lead)
