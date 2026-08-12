@@ -43,6 +43,7 @@ type ProductEditorValues = {
   description: string;
   short_description: string;
   price: string;
+  price_mode: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
   stock: string;
   status: ProductStatus;
   category_id: string;
@@ -57,6 +58,7 @@ const EMPTY_EDITOR: ProductEditorValues = {
   description: '',
   short_description: '',
   price: '',
+  price_mode: 'fixed',
   stock: '0',
   status: 'draft',
   category_id: '',
@@ -167,6 +169,7 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       description: product.description || '',
       short_description: product.short_description || '',
       price: String(product.price ?? ''),
+      price_mode: (product as any).price_mode || 'fixed',
       stock: String(product.stock ?? 0),
       status: (product.status as ProductStatus) || 'draft',
       category_id: product.categories?.[0] ? String(product.categories[0].id) : '',
@@ -205,12 +208,12 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
   };
 
   const saveProduct = async () => {
-    if (!editor.name.trim() || !editor.sku.trim() || !editor.description.trim() || !editor.price || !editor.category_id) {
-      toast({ title: 'Preencha os campos obrigatórios', description: 'Nome, SKU, descrição, preço e categoria são necessários.', variant: 'destructive' });
+    if (!editor.name.trim() || !editor.sku.trim() || !editor.category_id) {
+      toast({ title: 'Preencha os campos obrigatórios', description: 'Nome, SKU e categoria são necessários.', variant: 'destructive' });
       return;
     }
-    if (Number(editor.price) <= 0 || Number(editor.stock) < 0) {
-      toast({ title: 'Confira os dados comerciais', description: 'Preço deve ser maior que zero e estoque não pode ser negativo.', variant: 'destructive' });
+    if (Number(editor.stock) < 0) {
+      toast({ title: 'Confira os dados comerciais', description: 'O estoque não pode ser negativo.', variant: 'destructive' });
       return;
     }
 
@@ -219,7 +222,8 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       sku: editor.sku.trim(),
       description: editor.description.trim(),
       short_description: editor.short_description.trim(),
-      price: Number(editor.price),
+      price: Number(editor.price || 0),
+      price_mode: editor.price_mode,
       stock: Number(editor.stock || 0),
       status: editor.status,
       category_ids: [editor.category_id],
@@ -338,7 +342,12 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                   <TableCell className="min-w-[110px]"><span className="mb-1 block text-xs font-semibold text-slate-700">{product.completeness ?? 0}%</span><Progress value={product.completeness ?? 0} className="h-1.5" /></TableCell>
                   <TableCell className="text-center text-sm text-slate-700">{product.images_count ?? product.image_urls?.length ?? 0}</TableCell>
                   <TableCell className="text-center text-sm text-slate-700">{product.specifications_count ?? 0}</TableCell>
-                  <TableCell className="font-semibold text-slate-900">{formatCurrency(product.price)}</TableCell>
+                  <TableCell className="font-semibold text-slate-900">
+                    {(product as any).price_mode === 'on_request' ? 'Sob consulta' : 
+                     (product as any).price_mode === 'hidden' ? '-' :
+                     (product as any).price_mode === 'starting_at' ? `A partir de ${formatCurrency(product.price)}` : 
+                     formatCurrency(product.price)}
+                  </TableCell>
                   <TableCell><span className={cn('font-semibold', Number(product.stock || 0) > 0 ? 'text-emerald-700' : 'text-rose-700')}>{product.stock ?? 0}</span></TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-slate-500">{formatDate(product.updated_at)}</TableCell>
                   <TableCell className="text-right"><div className="flex justify-end gap-1"><Button aria-label={`Editar ${product.name}`} size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(product)}><Pencil className="h-3.5 w-3.5" /></Button><Button aria-label={`Arquivar ${product.name}`} size="icon" variant="outline" className="h-8 w-8 text-slate-600" disabled={archivingId === product.id || product.status === 'archived'} onClick={() => handleArchive(product)}>{archivingId === product.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}</Button></div></TableCell>
@@ -358,7 +367,8 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-name">Nome *</Label><Input id="product-name" value={editor.name} onChange={(event) => setEditorField('name', event.target.value)} placeholder="Ex.: Inversor solar trifásico" /></div>
             <div className="space-y-2"><Label htmlFor="product-sku">SKU *</Label><Input id="product-sku" value={editor.sku} onChange={(event) => setEditorField('sku', event.target.value)} placeholder="Código único do produto" /></div>
             <div className="space-y-2"><Label>Categoria principal *</Label><Select value={editor.category_id || undefined} onValueChange={(value) => setEditorField('category_id', value)}><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger><SelectContent>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="product-price">Preço base (R$) *</Label><Input id="product-price" min="0.01" step="0.01" type="number" value={editor.price} onChange={(event) => setEditorField('price', event.target.value)} /></div>
+            <div className="space-y-2"><Label>Modo de Preço</Label><Select value={editor.price_mode} onValueChange={(value) => setEditorField('price_mode', value as any)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="fixed">Preço Fixo</SelectItem><SelectItem value="starting_at">A partir de</SelectItem><SelectItem value="on_request">Sob consulta</SelectItem><SelectItem value="hidden">Oculto</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="product-price">Preço base (R$)</Label><Input id="product-price" min="0" step="0.01" type="number" value={editor.price} onChange={(event) => setEditorField('price', event.target.value)} disabled={editor.price_mode === 'on_request' || editor.price_mode === 'hidden'} /></div>
             <div className="space-y-2"><Label htmlFor="product-stock">Estoque disponível</Label><Input id="product-stock" min="0" step="1" type="number" value={editor.stock} onChange={(event) => setEditorField('stock', event.target.value)} /></div>
             <div className="space-y-2"><Label>Status</Label><Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Rascunho</SelectItem><SelectItem value="active">Publicado</SelectItem><SelectItem value="archived">Arquivado</SelectItem><SelectItem value="disabled">Desativado</SelectItem></SelectContent></Select></div>
             <div className="space-y-3 sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4">

@@ -100,7 +100,7 @@ module Api
             disabled: product_list.count(&:disabled_status?),
             without_images: product_list.count { |product| product.image_urls.blank? },
             without_specifications: product_list.count { |product| product.product_specifications.empty? },
-            without_price: product_list.count { |product| product.price.blank? || product.price <= 0 },
+            without_price: product_list.count { |product| product.price_mode.in?(%w[fixed starting_at]) && (product.price.blank? || product.price <= 0) },
             unavailable_stock: product_list.count { |product| product.stock.blank? || product.stock <= 0 }
           }
         end
@@ -108,7 +108,7 @@ module Api
         def product_params
           params.require(:product).permit(
             :name, :description, :short_description, :price, :sku, :stock,
-            :status, :featured, :seo_title, :seo_description, :brand_id, :image_url,
+            :status, :featured, :seo_title, :seo_description, :brand_id, :image_url, :price_mode,
             category_ids: [], images: []
           )
         end

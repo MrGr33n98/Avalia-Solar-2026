@@ -41,8 +41,16 @@ class Product < ApplicationRecord
     disabled: 'disabled'
   }, _suffix: true
 
+  enum price_mode: {
+    fixed: 'fixed',
+    starting_at: 'starting_at',
+    on_request: 'on_request',
+    hidden: 'hidden'
+  }
+
   # Validations
-  validates :name, :price, :sku, presence: true
+  validates :name, :sku, presence: true
+  validates :price, presence: true, if: -> { price_mode.in?(%w[fixed starting_at]) }
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validates :sku, uniqueness: true
   validate :blocked_transition_guard

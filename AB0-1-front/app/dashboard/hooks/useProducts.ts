@@ -32,6 +32,7 @@ export type ProductInput = {
   description: string;
   short_description?: string;
   price: number;
+  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
   stock?: number;
   status: 'draft' | 'active' | 'archived' | 'disabled';
   featured?: boolean;
@@ -64,8 +65,10 @@ function toFormData(input: ProductInput) {
   payload.append('product[description]', input.description);
   payload.append('product[short_description]', input.short_description || '');
   payload.append('product[price]', String(input.price));
+  payload.append('product[price_mode]', input.price_mode || 'fixed');
   payload.append('product[stock]', String(input.stock ?? 0));
   payload.append('product[featured]', String(Boolean(input.featured)));
+  payload.append('product[status]', input.status);
   if (input.image_url !== undefined) {
     payload.append('product[image_url]', input.image_url);
   }
