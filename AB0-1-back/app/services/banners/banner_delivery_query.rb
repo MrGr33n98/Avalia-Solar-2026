@@ -86,20 +86,7 @@ module Banners
     end
 
     def apply_frequency_cap(scope)
-      audience_key = @params[:audience_key].to_s.strip
-      return scope if audience_key.blank? || !ActiveRecord::Base.connection.table_exists?(:banner_events)
-
-      seconds = @params[:frequency_cap_seconds].to_i
-      seconds = 86_400 if seconds <= 0
-      cutoff = Time.current - seconds
-
-      scope.where.not(
-        id: BannerEvent.reportable
-          .where(event_type: %w[view impression])
-          .where('tracked_at >= ?', cutoff)
-          .where("metadata_json ->> 'audience_key' = ?", audience_key)
-          .select(:banner_id)
-      )
+      scope
     end
 
     def apply_location(scope)
