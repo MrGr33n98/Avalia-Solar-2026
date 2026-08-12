@@ -75,7 +75,7 @@ module Chat
           latency_ms: llm_response[:latency_ms],
           safety_status: 'clean',
           intent_detected: 'success_onboarding',
-          metadata: {}
+          metadata: success_response_metadata
         )
 
         @session.increment_message_count!
@@ -106,7 +106,7 @@ module Chat
             role: 'assistant',
             content: assistant_msg.content,
             intent_detected: 'success_onboarding',
-            metadata: {},
+            metadata: assistant_msg.metadata,
             created_at: assistant_msg.created_at
           },
           should_trigger_lead: false,
@@ -354,6 +354,32 @@ module Chat
         'orchestrator_version' => 'v2',
         'router_version' => 'v2',
         'retrieval_version' => 'v2'
+      }
+    end
+
+    def success_response_metadata
+      company = @session.company
+      return {} unless company
+
+      health = CompanyHealthService.call(company)
+      actions = NextBestActionService.call(company)
+      {
+        'prompt_version' => Chat::Prompts.for('success').id,
+        'health' => {
+          'score' => health[:score],
+          'status' => health[:status],
+          'missing_items' => Array(health[:missing_items]).first(10)
+        },
+        'actions' => actions.map { |action| structured_success_action(action) }
+      }
+    end
+
+    def structured_success_action(action)
+      {
+        'type' => 'navigate',
+        'key' => action[:key] || action['key'] || action[:id] || action['id'],
+        'label' => action[:title] || action['title'],
+        'route_key' => action.dig(:destination) || action.dig('destination') || action.dig(:action_params, :tab) || action.dig('action_params', 'tab')
       }
     end
 
