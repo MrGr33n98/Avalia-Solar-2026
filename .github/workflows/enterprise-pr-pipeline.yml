@@ -126,6 +126,8 @@ jobs:
           RAILS_ENV: test
         run: |
           bundle exec rails db:create db:schema:load db:migrate
+          bundle exec rails zeitwerk:check
+          RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
           bundle exec rspec
 
   e2e-tests:

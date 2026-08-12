@@ -353,7 +353,7 @@ module Chat
     end
 
     def prompt_metadata
-      prompt = Chat::Prompts.for(@session.vertical)
+      prompt = Chat::Prompts::Registry.for(@session.vertical)
       {
         'prompt_version' => prompt.id,
         'orchestrator_version' => 'v2',
@@ -369,7 +369,7 @@ module Chat
       health = CompanyHealthService.call(company)
       actions = NextBestActionService.call(company)
       {
-        'prompt_version' => Chat::Prompts.for('success').id,
+        'prompt_version' => Chat::Prompts::Registry.for('success').id,
         'health' => {
           'score' => health[:score],
           'status' => health[:status],

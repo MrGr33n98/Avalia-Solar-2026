@@ -133,8 +133,55 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
           cache-to: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache,mode=max
 
+  zeitwerk-check:
+    name: Zeitwerk & Boot Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Run Zeitwerk & Boot Checks
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+        run: |
+          bundle exec rails db:create db:schema:load
+          bundle exec rails zeitwerk:check
+          RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
+
   deploy:
-    needs: build-and-push
+    needs: [build-and-push, zeitwerk-check]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
