@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw, LogIn } from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -276,6 +276,7 @@ function MainCategoriesView({
   onOpenCategory: (category: CategoryTreeNode) => void;
   onClose: () => void;
 }) {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="border-t border-slate-200">
       <nav aria-label="Navegação principal" className="grid grid-cols-2 gap-2 border-b border-slate-200 py-3">
@@ -346,22 +347,41 @@ function MainCategoriesView({
         );
       })}
 
-      <Link
-        href="/categories"
-        onClick={onClose}
-        className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-[#f0f0f0] text-neutral-700">
-          <Grid2X2 className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-medium text-slate-950">Ver todas as categorias</p>
-          <p className="mt-0.5 text-xs font-normal text-slate-500">
-            Explore todas as opções disponíveis
-          </p>
-        </div>
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
-      </Link>
+      {isAuthenticated ? (
+        <Link
+          href="/categories"
+          onClick={onClose}
+          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-[#f0f0f0] text-neutral-700">
+            <Grid2X2 className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-medium text-slate-950">Ver todas as categorias</p>
+            <p className="mt-0.5 text-xs font-normal text-slate-500">
+              Explore todas as opções disponíveis
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+        </Link>
+      ) : (
+        <Link
+          href="/login"
+          onClick={onClose}
+          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-blue-50 text-blue-600">
+            <LogIn className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-semibold text-slate-950">Login / Entrar</p>
+            <p className="mt-0.5 text-xs font-normal text-slate-500">
+              Acesse sua conta para ver mais
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+        </Link>
+      )}
     </div>
   );
 }
