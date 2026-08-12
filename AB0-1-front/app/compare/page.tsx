@@ -434,6 +434,7 @@ function CompareHero() {
         placement="compare_hero"
         limit={1}
         priority={true}
+        showLoadingSkeleton={false}
         className="mx-auto max-w-[1240px] px-4 pb-4 sm:px-6"
         fallback={defaultHero}
       />

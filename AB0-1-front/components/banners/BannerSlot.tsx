@@ -13,6 +13,7 @@ interface BannerSlotProps {
   priority?: boolean;
   companyId?: number;
   blockCompetitors?: boolean;
+  showLoadingSkeleton?: boolean;
 }
 
 export function BannerSlot({
@@ -23,6 +24,7 @@ export function BannerSlot({
   priority = false,
   companyId,
   blockCompetitors = false,
+  showLoadingSkeleton = true,
 }: BannerSlotProps) {
   const {
     data: banners,
@@ -35,6 +37,9 @@ export function BannerSlot({
 
   // Renderiza um skeleton suave de carregamento
   if (isLoading) {
+    if (!showLoadingSkeleton) {
+      return fallback ? <>{fallback}</> : null;
+    }
     return (
       <div className={cn('w-full py-2', className)}>
         <div
