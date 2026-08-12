@@ -54,7 +54,9 @@ module Chat
                         .map { |m| { role: m.role, content: m.content } }
 
       # 4. Get context from retrieval service (MVP: simple DB lookup)
+      retrieval_started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       context = Chat::RetrievalService.context_for(@session)
+      retrieval_time_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_started_at) * 1000).round
 
       # 4.5. Se for o assistente Success do Dashboard, desvia do fluxo de leads
       if @session.vertical == 'success'
@@ -73,6 +75,9 @@ module Chat
           model: llm_response[:model],
           token_count: llm_response[:token_count],
           latency_ms: llm_response[:latency_ms],
+          retrieval_time_ms: retrieval_time_ms,
+          ttft_ms: llm_response[:ttft_ms],
+          full_response_time_ms: llm_response[:latency_ms],
           safety_status: 'clean',
           intent_detected: 'success_onboarding',
           metadata: Chat::SourceProvenance.normalize(success_response_metadata)
@@ -313,7 +318,7 @@ module Chat
       @session.increment_message_count!
 
       # 9. Track PostHog event (async, non-blocking)
-      track_response_event(assistant_msg, llm_response, context)
+      track_response_event(assistant_msg, llm_response, context, retrieval_time_ms: retrieval_time_ms)
 
       # 10. Return response
       # should_trigger was already determined at step 6
@@ -448,7 +453,7 @@ module Chat
       }
     end
 
-    def track_response_event(msg, llm_response, context = nil)
+    def track_response_event(msg, llm_response, context = nil, retrieval_time_ms: nil)
       # 1. Track standard response event
       Chat::PosthogTrackingService.track(
         event: 'chat_assistant_response_generated',

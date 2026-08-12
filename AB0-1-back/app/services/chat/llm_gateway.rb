@@ -316,6 +316,7 @@ module Chat
         payload[:stream] = true
         full_content = +''
         buffer = +''
+        first_chunk_at = nil
 
         response = HTTParty.post(
           "#{base_url.gsub(%r{/+$}, '')}/chat/completions",
@@ -340,6 +341,7 @@ module Chat
                 delta = json.dig('choices', 0, 'delta', 'content')
                 if delta
                   full_content << delta
+                  first_chunk_at ||= Process.clock_gettime(Process::CLOCK_MONOTONIC)
                   yield(delta, false, nil)
                 end
               rescue JSON::ParserError
@@ -357,6 +359,7 @@ module Chat
             model: model_name,
             token_count: 0, # Tokens generally not returned in stream without extra config
             latency_ms: latency_ms,
+            ttft_ms: first_chunk_at ? ((first_chunk_at - start_time) * 1000).round : nil,
             success: true
           }
         else
