@@ -358,6 +358,8 @@ export default function LiveInbox() {
   const [selectedId, setSelectedId] = useState<number | null>(() => Number(searchParams.get('session_id')) || null);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [activities, setActivities] = useState<InboxActivity[]>([]);
+  const [messageCursor, setMessageCursor] = useState<string | null>(null);
+  const [sessionCursor, setSessionCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState('');
@@ -378,23 +380,26 @@ export default function LiveInbox() {
     if (!companyId) return;
     setLoading(true);
     try {
-      const response = await inboxApi.sessions(companyId, filter, query);
+      const response = await inboxApi.sessions(companyId, filter, query, sessionCursor || undefined);
       setSessions(response.sessions);
       setCounts(response.counts);
+      setSessionCursor(response.next_cursor || null);
       setSelectedId((current) => current && response.sessions.some((item) => item.id === current) ? current : response.sessions[0]?.id || null);
     } finally {
       setLoading(false);
     }
-  }, [companyId, filter, query]);
+  }, [companyId, filter, query, sessionCursor]);
 
   const loadMessages = useCallback(async () => {
     if (!companyId || !selectedId) {
       setMessages([]);
       setActivities([]);
+      setMessageCursor(null);
       return;
     }
     const response = await inboxApi.messages(companyId, selectedId);
     setMessages(response.messages);
+    setMessageCursor(response.next_cursor || null);
     const activityResponse = await inboxApi.activities(companyId, selectedId);
     setActivities(activityResponse.activities);
     void inboxApi.markRead(companyId, selectedId);
@@ -759,6 +764,7 @@ export default function LiveInbox() {
                       </div>
                     </div>
                   )}
+                  {messageCursor && <button type="button" className="mx-auto block rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600" onClick={async () => { if (!companyId || !selectedId) return; const response = await inboxApi.messages(companyId, selectedId, messageCursor); setMessages((current) => [...response.messages, ...current]); setMessageCursor(response.next_cursor || null); }}>Carregar mensagens anteriores</button>}
                   {messages.map((message) => <MessageBubble key={message.id} message={message} />)}
                   {customerTyping && <p className="text-xs text-slate-600">Cliente digitando…</p>}
                   <div ref={threadEndRef} />
