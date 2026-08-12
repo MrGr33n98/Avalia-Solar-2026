@@ -10,6 +10,8 @@ module Chat
     def self.context_for(session)
       parts = []
       dynamic_success = false
+      query = session.chat_messages.user_messages.last&.content.to_s
+      domains = domains_for(query, session.vertical)
 
       # 1. Tenta buscar o contexto dinâmico se a feature flag estiver habilitada
       if ActiveModel::Type::Boolean.new.cast(ENV.fetch('CHAT_DYNAMIC_CONTEXT_ENABLED', 'false'))
@@ -59,7 +61,7 @@ module Chat
       end
 
       if company.present?
-        parts << company_success_context(company)
+        parts << company_success_context(company, domains)
       elsif !dynamic_success && session.page_url&.include?('/companies/')
         slug = session.page_url.split('/companies/').last&.split('?')&.first
         comp = Company.find_by(slug: slug) if slug.present?
@@ -70,7 +72,7 @@ module Chat
       parts << vertical_context(session.vertical) if session.vertical.present?
 
       # Add general platform context
-      parts << platform_stats_context
+      parts << platform_stats_context unless session.vertical == 'success'
 
       parts.compact.join("\n\n")
     end
@@ -87,46 +89,40 @@ module Chat
       CTX
     end
 
-    def self.company_success_context(company)
-      categories = company.categories.map(&:name).join(', ')
-      coverage_states = company.coverage_states.presence || 'Não informado (Atende apenas a cidade sede)'
-      coverage_cities = company.coverage_cities.presence || 'Não informado (Atende apenas a cidade sede)'
-      niche_tags = Array(company.niche_tags).join(', ')
-      project_types = Array(company.project_types).join(', ')
-      services = Array(company.services_offered).join(', ')
-      products = begin
-        company.products.active.limit(10).map(&:name).join(', ')
-      rescue StandardError
-        ''
+    def self.company_success_context(company, domains)
+      fields = []
+      if domains.include?(:profile)
+        fields << "- Nome público: #{company.name}"
+        fields << "- Website: #{company.website || 'Não informado'}"
+        fields << "- Descrição: #{company.description.to_s.truncate(200)}"
+        fields << "- Categorias: #{company.categories.map(&:name).join(', ').presence || 'Nenhuma cadastrada'}"
       end
-      faqs = begin
-        company.company_faqs.limit(5).map { |f| "P: #{f.question} | R: #{f.answer}" }.join("\n")
-      rescue StandardError
-        ''
+      if domains.include?(:coverage)
+        fields << "- Cidade/Estado: #{company.city || 'Não informado'} - #{company.state || 'Não informado'}"
+        fields << "- Estados de atendimento: #{company.coverage_states.presence || 'Não informado'}"
+        fields << "- Cidades de atendimento: #{company.coverage_cities.presence || 'Não informado'}"
       end
+      if domains.include?(:plans) || domains.include?(:entitlements)
+        fields << "- Entitlements disponíveis: #{company.feature_access.keys.join(', ')}"
+      end
+      if domains.include?(:products)
+        products = company.products.active.limit(10).pluck(:name).join(', ') rescue ''
+        fields << "- Produtos: #{products.presence || 'Nenhum produto cadastrado'}"
+      end
+      return if fields.empty?
 
-      <<~CTX
-        PERFIL COMPLETO DA SUA EMPRESA (LOGADA):
-        - Nome Fantasia: #{company.name}
-        - Razão Social / CNPJ: #{company.cnpj || 'Não informado'}
-        - Status na Plataforma: #{company.status}
-        - Website: #{company.website || 'Não informado'}
-        - Contatos cadastrados:
-          * Telefone Comercial: #{company.phone || 'Não informado'}
-          * WhatsApp: #{company.whatsapp || 'Não informado'} (URL: #{company.whatsapp_url || 'Não configurada'})
-          * E-mail Público: #{company.email_public || 'Não informado'}
-        - Plano Atual: #{company.plan&.name || 'Nenhum / Free'} (Tier: #{company.inferred_plan_tier}, Status do Plano: #{company.respond_to?(:plan_status) ? company.plan_status : 'n/a'})
-        - Localização da Sede: #{company.city || 'Não informado'} - #{company.state || 'Não informado'}
-        - Categorias / Especialidades em que está inscrito: #{categories.presence || 'Nenhuma cadastrada'}
-        - Zonas de Cobertura Geográfica:
-          * Estados de Atendimento: #{coverage_states}
-          * Cidades de Atendimento: #{coverage_cities}
-        - Especialidades (Tags de Nicho): #{niche_tags.presence || 'Não configuradas'}
-        - Tipos de Projetos que Atende: #{project_types.presence || 'Não configurados'}
-        - Serviços Prestados: #{services.presence || 'Não configurados'}
-        - Produtos Cadastrados no Catálogo: #{products.presence || 'Nenhum produto cadastrado'}
-        #{"- Perguntas Frequentes (FAQs) Cadastradas:\n#{faqs}" if faqs.present?}
-      CTX
+      "CONTEXTO DA EMPRESA (somente campos necessários):\n#{fields.join('\n')}"
+    end
+
+    def self.domains_for(query, vertical)
+      text = query.to_s.downcase
+      return %i[health] if text.match?(/saúde|score|melhorar|recomend|health|ação/)
+      return %i[coverage] if text.match?(/cobertura|cidade|estado|atend/)
+      return %i[entitlements plans] if text.match?(/plano|recurso|entitlement|disponível|limite/)
+      return %i[products] if text.match?(/produto|catálogo|serviço/)
+      return %i[profile] if vertical.to_s == 'success'
+
+      %i[profile]
     end
 
     def self.vertical_context(vertical)
