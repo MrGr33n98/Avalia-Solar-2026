@@ -52,7 +52,7 @@ export default function GlobalChatWidget() {
   const [typingByCompany, setTypingByCompany] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isMobile: isMobileExperience, isPwa } = useAppExperience();
+  const { isMobile: isMobileExperience } = useAppExperience();
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
