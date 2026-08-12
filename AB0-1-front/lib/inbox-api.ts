@@ -70,10 +70,11 @@ export interface InboxCounts {
 }
 
 export const inboxApi = {
-  sessions: (companyId: number, status: string, query = '') => {
+  sessions: (companyId: number, status: string, query = '', cursor?: string) => {
     const params = new URLSearchParams({ company_id: String(companyId), status });
     if (query.trim()) params.set('q', query.trim());
-    return fetchApiSafe<{ sessions: InboxSession[]; counts: InboxCounts }>(
+    if (cursor) params.set('cursor', cursor);
+    return fetchApiSafe<{ sessions: InboxSession[]; counts: InboxCounts; next_cursor?: string | null }>(
       `inbox/sessions?${params.toString()}`,
       { noCache: true }
     );
@@ -83,9 +84,9 @@ export const inboxApi = {
       `inbox/sessions/${sessionId}/activities?company_id=${companyId}`,
       { noCache: true }
     ),
-  messages: (companyId: number, sessionId: number) =>
-    fetchApiSafe<{ messages: InboxMessage[] }>(
-      `inbox/sessions/${sessionId}/messages?company_id=${companyId}`,
+  messages: (companyId: number, sessionId: number, cursor?: string) =>
+    fetchApiSafe<{ messages: InboxMessage[]; next_cursor?: string | null }>(
+      `inbox/sessions/${sessionId}/messages?company_id=${companyId}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
       { noCache: true }
     ),
   send: (companyId: number, sessionId: number, content: string, clientMessageId: string, attachmentIds?: number[]) =>

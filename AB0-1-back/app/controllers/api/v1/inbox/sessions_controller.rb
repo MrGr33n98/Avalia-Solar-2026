@@ -25,19 +25,27 @@ module Api
           end
 
           limit = [[params.fetch(:limit, 30).to_i, 1].max, 100].min
-          sessions = scope.limit(limit).to_a
+          scope = apply_cursor(scope)
+          sessions = scope.limit(limit + 1).to_a
+          has_more = sessions.length > limit
+          sessions = sessions.first(limit)
           @last_messages_by_session = latest_messages_for(sessions.map(&:id))
           render json: {
             sessions: sessions.map { |session| serialize_session(session) },
-            counts: inbox_counts
+            counts: inbox_counts,
+            next_cursor: has_more ? encode_cursor(sessions.last) : nil
           }
         end
 
         def messages
           authorize @session, :show?
           limit = [[params.fetch(:limit, 50).to_i, 1].max, 100].min
-          records = @session.chat_messages.includes(:sender).order(created_at: :desc).limit(limit).reverse
-          render json: { messages: records.map { |message| serialize_message(message) } }
+          scope = @session.chat_messages.includes(:sender).order(created_at: :desc, id: :desc)
+          scope = apply_message_cursor(scope)
+          records = scope.limit(limit + 1).to_a
+          has_more = records.length > limit
+          records = records.first(limit).reverse
+          render json: { messages: records.map { |message| serialize_message(message) }, next_cursor: has_more ? encode_cursor(records.first) : nil }
         end
 
         def activities
@@ -124,6 +132,30 @@ module Api
 
         def set_session
           @session = @company.chat_sessions.find(params[:id])
+        end
+
+        def apply_cursor(scope)
+          return scope if params[:cursor].blank?
+          time, id = decode_cursor(params[:cursor])
+          scope.where('COALESCE(last_message_at, created_at) < ? OR (COALESCE(last_message_at, created_at) = ? AND id < ?)', time, time, id)
+        end
+
+        def apply_message_cursor(scope)
+          return scope if params[:cursor].blank?
+          time, id = decode_cursor(params[:cursor])
+          scope.where('created_at < ? OR (created_at = ? AND id < ?)', time, time, id)
+        end
+
+        def encode_cursor(record)
+          timestamp = record.respond_to?(:last_message_at) ? (record.last_message_at || record.created_at) : record.created_at
+          Base64.urlsafe_encode64("#{timestamp.iso8601}|#{record.id}")
+        end
+
+        def decode_cursor(cursor)
+          value = Base64.urlsafe_decode64(cursor.to_s).split('|', 2)
+          [Time.iso8601(value.fetch(0)), Integer(value.fetch(1))]
+        rescue ArgumentError, TypeError
+          raise ActionController::BadRequest, 'Cursor inválido.'
         end
 
         def normalized_status
