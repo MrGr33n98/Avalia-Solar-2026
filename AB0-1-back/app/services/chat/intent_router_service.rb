@@ -26,7 +26,8 @@ module Chat
     end
 
     def route
-      intent, score = detect_intent
+      intent, score, source = detect_intent
+      secondary = detect_secondary_intents(intent)
       urgency = detect_urgency
       location = extract_location
 
@@ -36,6 +37,9 @@ module Chat
       {
         intent: intent,
         confidence_score: score,
+        router_source: source,
+        primary_intent: intent,
+        secondary_intents: secondary,
         vertical: detect_vertical(intent),
         location: location,
         urgency: urgency,
@@ -77,10 +81,20 @@ module Chat
       }
 
       patterns.each do |intent_name, regex|
-        return [intent_name, 0.8] if @text.match?(regex)
+        return [intent_name, 0.8, 'rule'] if @text.match?(regex)
       end
 
-      ['fallback', 0.1]
+      ['fallback', 0.1, 'fallback']
+    end
+
+    def detect_secondary_intents(primary)
+      patterns = {
+        'financing_question' => /(?:financ|parcela|crédito solar|consórcio|banco|taxa)/,
+        'company_recommendation' => /(?:recomendar|indicar|melhor empresa|comparar instaladores)/,
+        'ev_charger_question' => /(?:carregador|wallbox|carro elétrico|recarga)/,
+        'lead_qualification' => /(?:orçamento|cotação|contratar|quero instalar)/
+      }
+      patterns.filter_map { |intent, regex| intent if intent != primary && @text.match?(regex) }
     end
 
     def detect_urgency
