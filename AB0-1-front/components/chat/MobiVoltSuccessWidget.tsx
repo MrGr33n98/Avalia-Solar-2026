@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useChatSession } from '@/hooks/useChatSession';
+import { useAppExperience } from '@/hooks/useAppExperience';
 import { track } from '@/lib/analytics/lazy';
 import { startDashboardTour } from '@/lib/tour';
 import MarkdownRenderer from './MarkdownRenderer';
@@ -19,6 +20,7 @@ interface SuccessAction {
 }
 
 export default function MobiVoltSuccessWidget() {
+  const { isPwa, isMobile } = useAppExperience();
   const {
     isOpen,
     setIsOpen,
@@ -137,7 +139,7 @@ export default function MobiVoltSuccessWidget() {
     >
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[480px] sm:h-[650px] max-h-[80vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto">
+        <div className={cn('pointer-events-auto w-full max-w-[360px] sm:max-w-none sm:w-[420px] h-[480px] sm:h-[650px] max-h-[80vh] sm:max-h-[700px] bg-white dark:bg-zinc-900 rounded-lg shadow-2xl border border-zinc-200/80 dark:border-zinc-800 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5 ml-auto', isPwa || isMobile ? 'fixed inset-0 h-[100dvh] max-h-none w-full max-w-none rounded-none pb-[var(--safe-area-inset-bottom)]' : '')}>
           {/* Header com Gradiente Premium Indigo/Cyan */}
           <div className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center space-x-3">

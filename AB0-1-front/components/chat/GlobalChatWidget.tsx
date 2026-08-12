@@ -7,6 +7,7 @@ import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/a
 import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppExperience } from '@/hooks/useAppExperience';
 
 import { FloatingChatTrigger } from './floating/FloatingChatTrigger';
 import { FloatingChatHeader } from './floating/FloatingChatHeader';
@@ -51,26 +52,7 @@ export default function GlobalChatWidget() {
   const [typingByCompany, setTypingByCompany] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMobileExperience, setIsMobileExperience] = useState(true);
-
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const standalone = window.matchMedia('(display-mode: standalone)');
-    const updateExperience = () => {
-      setIsMobileExperience(
-        media.matches || standalone.matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-      );
-    };
-
-    updateExperience();
-    media.addEventListener('change', updateExperience);
-    standalone.addEventListener('change', updateExperience);
-
-    return () => {
-      media.removeEventListener('change', updateExperience);
-      standalone.removeEventListener('change', updateExperience);
-    };
-  }, []);
+  const { isMobile: isMobileExperience, isPwa } = useAppExperience();
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);

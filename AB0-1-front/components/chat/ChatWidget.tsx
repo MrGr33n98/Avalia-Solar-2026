@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Minimize2, RotateCcw } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
+import { useAppExperience } from '@/hooks/useAppExperience';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
 import { OPEN_COMPARISON_DOCK_EVENT } from '@/lib/floating-widget-events';
@@ -38,6 +39,7 @@ const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 export default function ChatWidget() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
+  const { isPwa, isMobile } = useAppExperience();
   const {
     isOpen,
     setIsOpen,
