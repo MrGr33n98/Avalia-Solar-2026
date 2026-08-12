@@ -271,6 +271,10 @@ module Chat
       end
 
       provider = ENV.fetch('AI_PROVIDER', 'openai').to_s.downcase
+      unless ::Chat::CircuitBreaker.allow?(provider: provider)
+        Rails.logger.warn("[Chat::LlmGateway] Circuito aberto para #{provider}")
+        return fallback_response
+      end
       base_url = ENV.fetch('AI_BASE_URL', provider == 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1')
 
       model_name = model || (if is_fallback
@@ -374,6 +378,7 @@ module Chat
       latency_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
 
       if response.success?
+        ::Chat::CircuitBreaker.success!(provider: provider)
         body = response.parsed_response
         choice = body.dig('choices', 0, 'message')
         content = choice&.dig('content')
@@ -394,15 +399,18 @@ module Chat
           success: true
         }
       else
+        ::Chat::CircuitBreaker.failure!(provider: provider)
         handle_error_response(response, latency_ms)
         try_fallback(
           messages: messages, context: context, is_fallback: is_fallback, latency_ms: latency_ms, system_prompt: system_prompt, &
         )
       end
     rescue Net::OpenTimeout, Net::ReadTimeout => e
+      ::Chat::CircuitBreaker.failure!(provider: provider) if defined?(provider)
       Rails.logger.error("[Chat::LlmGateway] Timeout: #{e.message}")
       try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &)
     rescue StandardError => e
+      ::Chat::CircuitBreaker.failure!(provider: provider) if defined?(provider)
       Rails.logger.error("[Chat::LlmGateway] Error: #{e.class} - #{e.message}")
       try_fallback(messages: messages, context: context, is_fallback: is_fallback, system_prompt: system_prompt, &)
     end
