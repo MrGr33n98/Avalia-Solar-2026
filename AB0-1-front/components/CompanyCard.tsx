@@ -19,12 +19,12 @@ import {
   HelpCircle,
   Heart,
   PhoneCall,
-  ArrowLeftRight,
   BadgeCheck,
   CheckCircle,
   ChevronRight,
   User,
 } from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
@@ -479,7 +479,8 @@ export default function CompanyCard({
                 : 'border-slate-200 text-slate-600 hover:bg-slate-50'
             )}
           >
-            {selectedInComparison ? '✓ Selecionada' : '+ Comparar'}
+            <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
+            {selectedInComparison ? 'Selecionada' : 'Comparar'}
           </Button>
 
           <ReviewCompanyButton
@@ -629,7 +630,7 @@ export default function CompanyCard({
                   : 'border-slate-300 text-slate-600 hover:bg-slate-50'
               )}
             >
-              {selectedInComparison ? <Check className="h-3.5 w-3.5 mr-1" /> : '+ '}
+              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
             </Button>
 
@@ -800,6 +801,7 @@ export default function CompanyCard({
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50'
               )}
             >
+              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
               {selectedInComparison ? 'Selecionada' : 'Comparar'}
             </Button>
 

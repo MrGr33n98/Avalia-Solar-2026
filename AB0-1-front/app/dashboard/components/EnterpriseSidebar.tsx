@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, LogOut, ArrowLeftRight } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -349,7 +349,7 @@ export default function EnterpriseSidebar({
               isSidebarCollapsed && 'h-11 justify-center px-0'
             )}
           >
-            <ArrowLeftRight className={cn('shrink-0 text-blue-400', isSidebarCollapsed ? 'h-5 w-5' : isSidebarCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
+            <AnimatedCompareIcon size={isSidebarCollapsed ? 20 : isSidebarCompactRail ? 24 : 16} className="shrink-0" aria-hidden="true" />
             <span
               className={cn(
                 'min-w-0 truncate font-medium whitespace-nowrap text-slate-200 tabular-nums',

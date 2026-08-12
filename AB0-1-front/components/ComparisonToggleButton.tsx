@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeftRight, Check, Plus, Crown, Star } from 'lucide-react';
+import { Check, Plus, Crown, Star } from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
@@ -197,7 +198,7 @@ export default function ComparisonToggleButton({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
             >
-              <ArrowLeftRight className={iconClass} />
+              <AnimatedCompareIcon className={iconClass} size="sm" intensity="strong" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -236,7 +237,7 @@ export default function ComparisonToggleButton({
               exit={{ opacity: 0, scale: 0 }}
             >
               {compactLabel ? (
-                <ArrowLeftRight className={iconClass} />
+                <AnimatedCompareIcon className={iconClass} size="sm" />
               ) : isPremium ? (
                 <Crown className={iconClass} />
               ) : (

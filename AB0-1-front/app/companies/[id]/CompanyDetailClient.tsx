@@ -9,7 +9,6 @@ import {
   BarChart3,
   HelpCircle,
   AlertCircle,
-  ArrowLeftRight,
   MapPin,
 } from 'lucide-react';
 import { useComparison } from '@/hooks/useComparison';

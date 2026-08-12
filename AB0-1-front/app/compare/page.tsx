@@ -18,7 +18,6 @@ import {
   Loader2,
   Plus,
   RefreshCw,
-  ArrowLeftRight,
   Search,
   Share2,
   ShieldCheck,
@@ -54,6 +53,7 @@ import { companiesApi, type Company } from '@/lib/api';
 import { openLeadModal } from '@/lib/lead-engine';
 import { buildCompanyPath } from '@/lib/slug';
 import { absoluteUrl } from '@/lib/site';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
 const MAX_COMPANIES = 4;
 
@@ -407,7 +407,7 @@ function CompareHero() {
         <div className="grid min-h-[96px] items-center gap-4 lg:grid-cols-[1fr_auto] lg:min-h-[108px]">
           <div className="max-w-[620px]">
             <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">
-              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" /> Comparador de empresas
+              <AnimatedCompareIcon size={14} intensity="subtle" aria-hidden="true" /> Comparador de empresas
             </span>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               Compare antes de decidir.
@@ -469,7 +469,7 @@ function PageErrorState({ onRetry }: { onRetry: () => void }) {
 function EmptyComparisonState() {
   return (
     <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm">
-      <ArrowLeftRight className="h-10 w-10 text-blue-700" aria-hidden="true" />
+      <AnimatedCompareIcon size={40} aria-hidden="true" />
       <h2 className="mt-4 text-2xl font-black text-slate-950">Escolha empresas para comparar.</h2>
       <p className="mt-2 max-w-md text-sm text-slate-500">
         Use a busca e as recomendações para montar sua comparação.

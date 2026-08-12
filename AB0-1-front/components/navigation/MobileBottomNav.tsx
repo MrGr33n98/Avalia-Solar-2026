@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeftRight, Building2, Home, MessageCircle, Search } from 'lucide-react';
+import { Building2, Home, MessageCircle, Search } from 'lucide-react';
 import { useComparison } from '@/hooks/useComparison';
 import { openComparisonModal } from '@/lib/floating-widget-events';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -82,7 +82,7 @@ export default function MobileBottomNav() {
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <ArrowLeftRight className="h-5 w-5" strokeWidth={pathname.startsWith('/products/compare') ? 2.5 : 2} />
+          <AnimatedCompareIcon size="sm" active={pathname.startsWith('/products/compare')} aria-hidden="true" />
           <span className="truncate">Comparar</span>
           {count > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">

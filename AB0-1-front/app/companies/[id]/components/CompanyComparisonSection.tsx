@@ -13,7 +13,6 @@ import {
   Star, 
   Check, 
   X, 
-  ArrowLeftRight, 
   Search, 
   ArrowRight,
   Zap,
@@ -23,6 +22,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash/debounce';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
 interface CompanyComparisonSectionProps {
   currentCompany: Company;
@@ -97,7 +97,7 @@ export default function CompanyComparisonSection({
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-wider mb-4">
-              <ArrowLeftRight className="h-3.5 w-3.5" /> Comparativo de Mercado
+              <AnimatedCompareIcon size={14} intensity="subtle" aria-hidden="true" /> Comparativo de Mercado
             </div>
             <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">
               A decisão certa para o seu projeto

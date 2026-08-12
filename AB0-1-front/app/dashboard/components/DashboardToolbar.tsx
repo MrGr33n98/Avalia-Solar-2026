@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, HelpCircle, PanelLeft, Settings, ArrowLeftRight } from 'lucide-react';
+import { ChevronDown, HelpCircle, PanelLeft, Settings } from 'lucide-react';
 import { CommandMenu } from './CommandMenu';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -79,7 +79,7 @@ export default function DashboardToolbar({
                 Visão Geral
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => window.location.href = '/select-company'}>
-                <ArrowLeftRight className="mr-2 h-4 w-4" aria-hidden="true" />
+                <AnimatedCompareIcon className="mr-2" size={16} aria-hidden="true" />
                 Alternar Empresa
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -160,7 +160,7 @@ export default function DashboardToolbar({
                 Configurações
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => window.location.href = '/select-company'}>
-                <ArrowLeftRight className="mr-2 h-4 w-4" aria-hidden="true" />
+                <AnimatedCompareIcon className="mr-2" size={16} aria-hidden="true" />
                 Alternar Empresa
               </DropdownMenuItem>
             </DropdownMenuContent>
