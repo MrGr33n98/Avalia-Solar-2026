@@ -129,7 +129,7 @@ class NextBestActionService
     end
 
     # 9. No products (Low Priority)
-    if @company.products.empty? rescue true
+    if (@company.products.empty? rescue true)
       actions << {
         id: 'add_products',
         title: 'Cadastre produtos ou serviços',
@@ -143,7 +143,7 @@ class NextBestActionService
     end
 
     # 10. No projects (Low Priority)
-    if @company.company_projects.empty? rescue true
+    if (@company.company_projects.empty? rescue true)
       actions << {
         id: 'add_projects',
         title: 'Publique projetos realizados',
