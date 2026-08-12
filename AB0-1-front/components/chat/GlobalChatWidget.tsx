@@ -8,6 +8,7 @@ import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppExperience } from '@/hooks/useAppExperience';
+import { CommunicationSurfaceManager, useCommunicationSurface } from '@/lib/communication-surface-manager';
 
 import { FloatingChatTrigger } from './floating/FloatingChatTrigger';
 import { FloatingChatHeader } from './floating/FloatingChatHeader';
@@ -53,6 +54,13 @@ export default function GlobalChatWidget() {
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { isMobile: isMobileExperience } = useAppExperience();
+  const { isBlocked } = useCommunicationSurface('p2p');
+
+  useEffect(() => {
+    const open = chatState === 'expanded';
+    if (open) CommunicationSurfaceManager.open('p2p');
+    else CommunicationSurfaceManager.close('p2p');
+  }, [chatState]);
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
@@ -347,7 +355,7 @@ export default function GlobalChatWidget() {
     }
   };
 
-  if (!enabled || chatState === 'closed') return null;
+  if (!enabled || chatState === 'closed' || isBlocked) return null;
 
   // ESTADO MINIMIZADO
   if (chatState === 'minimized') {

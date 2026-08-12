@@ -10,6 +10,8 @@ export const FLOATING_WIDGET_POSITIONS = {
     MOBIVOLT: 60,
     CHAT: 70,
     EXPANDED_BUBBLE: 80,
+    SURFACE_ACTIVE: 90,
+    SURFACE_MODAL: 100,
   },
   // Responsive sizing classes
   WIDGET_SIZES: {

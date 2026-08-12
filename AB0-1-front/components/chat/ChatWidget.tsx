@@ -23,6 +23,7 @@ import MobiVoltSolarWizard from './MobiVoltSolarWizard';
 import MobiVoltEvWizard from './MobiVoltEvWizard';
 import MobiVoltReengagementPrompt from './MobiVoltReengagementPrompt';
 import { cn } from '@/lib/utils';
+import { CommunicationSurfaceManager, useCommunicationSurface } from '@/lib/communication-surface-manager';
 import { WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 
 type ChatInviteAction = {
@@ -40,6 +41,7 @@ export default function ChatWidget() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const { isPwa, isMobile } = useAppExperience();
+  const { isBlocked } = useCommunicationSurface('mobivolt');
   const {
     isOpen,
     setIsOpen,
@@ -62,6 +64,13 @@ export default function ChatWidget() {
   } = useChatSession();
 
   const [input, setInput] = useState('');
+
+  useEffect(() => {
+    if (isOpen) CommunicationSurfaceManager.open('mobivolt');
+    else CommunicationSurfaceManager.close('mobivolt');
+  }, [isOpen]);
+
+  useEffect(() => { if (isBlocked && isOpen) setIsOpen(false); }, [isBlocked, isOpen, setIsOpen]);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetInactivityTimer = useCallback(() => {
@@ -493,7 +502,7 @@ export default function ChatWidget() {
         isOpen ? 'z-[9010]' : 'z-[9000]'
       )}
     >
-      {isOpen && (
+      {isOpen && !isBlocked && (
         <div className={cn(
           'pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 w-[calc(100dvw-24px)] max-w-[340px] h-[56dvh] min-h-[420px] max-h-[520px] sm:w-[420px] sm:h-[650px] sm:max-h-[700px] sm:max-w-none mb-0 sm:mb-4',
           isPwa || isMobile ? 'fixed inset-0 h-[100dvh] max-h-none w-full max-w-none rounded-none pb-[var(--safe-area-inset-bottom)]' : ''
