@@ -101,8 +101,8 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     },
     enabled,
     initialData,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 1000,
+    gcTime: 5000,
     retry: (failureCount, error: unknown) => {
       const requestError = error as { status?: number; context?: { status?: number } };
       const status = requestError.status ?? requestError.context?.status;

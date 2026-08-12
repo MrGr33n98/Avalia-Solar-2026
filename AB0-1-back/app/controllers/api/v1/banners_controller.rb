@@ -16,7 +16,7 @@ class Api::V1::BannersController < Api::V1::BaseController
     cache_key = generate_cache_key
 
     # Busca do cache ou executa query
-    @banners = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+    @banners = Rails.cache.fetch(cache_key, expires_in: 1.second) do
       build_banners_query.to_a
     end
 
