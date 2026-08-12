@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import { BannerMedia } from '@/components/banners/BannerMedia';
 import { track } from '@/lib/analytics/lazy';
 import { analyticsApi } from '@/lib/api-analytics';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
@@ -140,19 +140,16 @@ export function BannerCarousel({ banners, loading, className }: BannerCarouselPr
 
 function BannerImageContent({ banner, isFirst }: { banner: Banner; isFirst: boolean }) {
   const imageUrl = getFullImageUrl(banner.image_url);
-  const [error, setError] = React.useState(false);
 
   return (
     <>
-      <OptimizedImage
-        src={error ? '/images/default-banner.svg' : imageUrl || '/images/default-banner.svg'}
+      <BannerMedia
+        src={imageUrl || '/images/default-banner.svg'}
         alt=""
-        fill
-        className="object-cover transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0"
         priority={isFirst}
         quality={90}
         fallbackSrc="/images/default-banner.svg"
-        onError={() => setError(true)}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 p-4 md:p-6 text-white pointer-events-none w-full">

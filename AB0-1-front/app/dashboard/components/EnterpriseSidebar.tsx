@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, LogOut } from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

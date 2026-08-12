@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import { BannerMedia } from '@/components/banners/BannerMedia';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { getFullImageUrl } from '@/utils/image';
 
@@ -55,14 +55,13 @@ export default function CategoryHero({
     // Item 1: Banner Hero próprio da Categoria
     items.push(
       <div key="category-default-hero" className="relative w-full h-full bg-slate-950">
-        <OptimizedImage
+        <BannerMedia
           src={resolvedCategoryBanner || FALLBACK_BANNER_SRC}
           alt={name}
-          fill
           priority
           quality={92}
           sizes="(max-width: 768px) 100vw, 1280px"
-          className="h-full w-full object-contain object-center"
+          className="absolute inset-0"
           fallbackSrc="/images/default-banner.svg"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-slate-950/10" />
@@ -76,13 +75,13 @@ export default function CategoryHero({
 
       const content = (
         <div className="relative w-full h-full bg-slate-950">
-          <OptimizedImage
+          <BannerMedia
             src={bannerSrc}
             alt={b.title || 'Banner Patrocinado'}
-            fill
+
             quality={92}
             sizes="(max-width: 768px) 100vw, 1280px"
-            className="h-full w-full object-contain object-center"
+            className="absolute inset-0"
             fallbackSrc="/images/default-banner.svg"
           />
           {b.sponsored !== false && (

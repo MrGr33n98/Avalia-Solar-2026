@@ -11,7 +11,7 @@ export interface AnimatedCompareIconProps {
   loading?: boolean;
   intensity?: 'subtle' | 'normal' | 'strong';
   className?: string;
-  'aria-hidden'?: boolean;
+  'aria-hidden'?: boolean | 'true' | 'false';
   'aria-label'?: string;
 }
 

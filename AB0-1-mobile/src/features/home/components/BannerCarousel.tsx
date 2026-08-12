@@ -122,7 +122,7 @@ export const BannerCarousel = ({
             <Image
               source={{ uri: banner.imageUrl }}
               style={styles.bannerImage}
-              contentFit="cover"
+              contentFit="contain"
               transition={200}
             />
           </TouchableOpacity>

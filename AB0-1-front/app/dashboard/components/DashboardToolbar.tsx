@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDown, HelpCircle, PanelLeft, Settings } from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { CommandMenu } from './CommandMenu';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

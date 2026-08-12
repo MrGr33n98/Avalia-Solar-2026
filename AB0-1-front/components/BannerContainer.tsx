@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React from 'react';
 import Link from 'next/link';
 import { analyticsApi } from '@/lib/api-analytics';
 import { track } from '@/lib/analytics/lazy';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { cn } from '@/lib/utils';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
+import { BannerMedia } from '@/components/banners/BannerMedia';
 
 interface BannerData {
   id: number | string;
@@ -88,28 +88,17 @@ function BannerImage({
   sizes: string;
   priority?: boolean;
 }) {
-  const [failed, setFailed] = useState(false);
-  const src = !banner.image_url || failed ? FALLBACK_BANNER_SRC : banner.image_url;
+  const src = banner.image_url || FALLBACK_BANNER_SRC;
 
   return (
-    <Image
+    <BannerMedia
       src={src}
-      unoptimized={src !== FALLBACK_BANNER_SRC}
       alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
-      fill
       priority={priority}
       sizes={sizes}
       quality={95}
       // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
-      className="object-contain object-center w-full h-full"
-      onError={() => {
-        if (failed || !banner.image_url) return;
-        console.warn(
-          '[BannerContainer] Failed to load banner image, showing fallback:',
-          banner.image_url
-        );
-        setFailed(true);
-      }}
+      className="absolute inset-0"
     />
   );
 }

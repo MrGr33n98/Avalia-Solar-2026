@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Building2, Home, MessageCircle, Search } from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { useComparison } from '@/hooks/useComparison';
 import { openComparisonModal } from '@/lib/floating-widget-events';
 import { useNotificationStore } from '@/store/notificationStore';

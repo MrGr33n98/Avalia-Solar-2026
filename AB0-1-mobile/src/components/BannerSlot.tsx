@@ -131,7 +131,7 @@ export function BannerSlot({ position, state, city }: BannerSlotProps) {
         <Image
           source={{ uri: banner.image_url }}
           style={themedStyles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         {banner.sponsored && (
           <View style={themedStyles.sponsoredBadge}>

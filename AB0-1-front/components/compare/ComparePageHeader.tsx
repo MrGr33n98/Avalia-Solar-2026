@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft } from 'lucide-react';
-import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon' from 'lucide-react';
+import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
