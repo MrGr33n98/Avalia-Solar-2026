@@ -167,6 +167,16 @@ module PlanFeatureCatalog
       group: 'conversion',
       aliases: %w[p2p_chat_enabled direct_chat customer_chat marketplace_chat]
     },
+    'ai_live_inbox' => {
+      label: 'Live Inbox de Leads MobiVolt',
+      description: 'Permite receber e atender oportunidades qualificadas em tempo real.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'conversion',
+      aliases: %w[live_inbox ai_human_handoff]
+    },
     'product_images_limit' => {
       label: 'Limite de Imagens por Produto',
       description: 'Quantidade máxima de imagens que podem ser anexadas a cada produto.',
@@ -412,6 +422,7 @@ module PlanFeatureCatalog
       'media_gallery' => false,
       'media_upload' => false,
       'p2p_chat' => false,
+      'ai_live_inbox' => false,
       'company_categories_limit' => 6,
       'service_area_states_limit' => 1,
       'service_area_cities_limit' => 10,
@@ -446,6 +457,7 @@ module PlanFeatureCatalog
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,
+      'ai_live_inbox' => true,
       'company_categories_limit' => 12,
       'service_area_states_limit' => 3,
       'service_area_cities_limit' => 30,
@@ -480,6 +492,7 @@ module PlanFeatureCatalog
       'media_gallery' => true,
       'media_upload' => true,
       'p2p_chat' => true,
+      'ai_live_inbox' => true,
       'company_categories_limit' => 999,
       'service_area_states_limit' => 999,
       'service_area_cities_limit' => 999,

@@ -52,7 +52,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'product-images': 'media_gallery',
   media: 'media_gallery',
   chat: 'p2p_chat',
-  'live-inbox': 'p2p_chat',
+  'live-inbox': 'ai_live_inbox',
 };
 
 const ALWAYS_VISIBLE_TABS = new Set<string>([]);

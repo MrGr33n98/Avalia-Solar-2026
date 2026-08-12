@@ -4,8 +4,11 @@ module Api
   module V1
     module Inbox
       class SessionsController < BaseController
+        include FeatureGateEnforceable
+
         before_action :authenticate_api_user
         before_action :set_company
+        before_action :require_live_inbox_feature
         before_action :set_session, except: :index
 
         def index
@@ -102,6 +105,10 @@ module Api
         end
 
         private
+
+        def require_live_inbox_feature
+          enforce_feature_access!('ai_live_inbox', company: @company)
+        end
 
         def set_company
           company_id = params[:company_id].presence || cookies.signed[:active_company_id]

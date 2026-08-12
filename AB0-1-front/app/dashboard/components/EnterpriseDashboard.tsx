@@ -135,7 +135,7 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   'product-images': 'media_gallery',
   media: 'media_gallery',
   chat: 'p2p_chat',
-  'live-inbox': 'p2p_chat',
+  'live-inbox': 'ai_live_inbox',
 };
 
 // A galeria deve continuar descoberta no menu mesmo quando o plano não a inclui:
@@ -179,6 +179,10 @@ const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: str
   media: {
     title: 'Galeria de midia bloqueada',
     description: 'Seu plano atual nao inclui upload e gestao completos de midia.',
+  },
+  'live-inbox': {
+    title: 'Live Inbox de Leads MobiVolt bloqueado',
+    description: 'Seu plano atual não inclui recebimento e atendimento de oportunidades em tempo real.',
   },
   chat: {
     title: 'Atendimento direto bloqueado',
