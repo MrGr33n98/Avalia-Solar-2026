@@ -232,6 +232,16 @@ module PlanFeatureCatalog
       group: 'public_profile',
       aliases: %w[company_links social_links]
     },
+    'profile_media_direct_update' => {
+      label: 'Atualização Direta de Mídias do Perfil',
+      description: 'Permite atualizar logo e banner sem aprovação prévia.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'public_profile',
+      aliases: %w[media_direct_update direct_media_update]
+    },
     'forum_highlight' => {
       label: 'Destaque no Fórum de Comunidade',
       description: 'Prioriza as respostas da empresa no fórum oficial.',
@@ -381,7 +391,8 @@ module PlanFeatureCatalog
       'service_area_states_limit' => 1,
       'service_area_cities_limit' => 3,
       'national_coverage' => false,
-      'local_seo_visibility' => false
+      'local_seo_visibility' => false,
+      'profile_media_direct_update' => false
     },
     'essential' => {
       'setup_fee' => 0,
@@ -414,7 +425,8 @@ module PlanFeatureCatalog
       'financing_simulation' => false,
       'sector_question_limit' => 0,
       'show_alternatives' => false,
-      'show_competitor_banners' => false
+      'show_competitor_banners' => false,
+      'profile_media_direct_update' => false
     },
     'pro' => {
       'setup_fee' => 499,
@@ -447,7 +459,8 @@ module PlanFeatureCatalog
       'financing_simulation' => true,
       'sector_question_limit' => 10,
       'show_alternatives' => false,
-      'show_competitor_banners' => false
+      'show_competitor_banners' => false,
+      'profile_media_direct_update' => false
     },
     'enterprise' => {
       'setup_fee' => 1499,
@@ -483,7 +496,8 @@ module PlanFeatureCatalog
       'intent_scores' => true,
       'sector_question_limit' => 25,
       'show_alternatives' => false,
-      'show_competitor_banners' => false
+      'show_competitor_banners' => false,
+      'profile_media_direct_update' => true
     }
   }.freeze
 

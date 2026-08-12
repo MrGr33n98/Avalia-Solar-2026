@@ -631,22 +631,45 @@ module Api
         permitted_company_params = company_params
         service_area_changed = service_area_change_requested?(permitted_company_params)
         service_area_limit = service_area_changed ? CompanyServiceAreaLimitService.new(@company).snapshot(attributes: permitted_company_params.to_h) : nil
-        requires_commercial_approval = service_area_limit.present? && service_area_limit[:exceeds_limit]
+        exceeds_service_limit = service_area_limit.present? && service_area_limit[:exceeds_limit]
 
-        if requires_commercial_approval
-          # Exclude service area fields from direct update
-          basic_info_params = permitted_company_params.except(
-            :coverage_states, :coverage_cities, :coverage_state_codes, :coverage_city_names
-          )
-          @company.update(basic_info_params) if basic_info_params.present?
+        policy = CompanyFieldPolicy.new(@company)
+        direct_update_params = {}
+        pending_params = {}
+
+        permitted_company_params.to_h.each do |key, value|
+          current_value = @company.respond_to?(key) ? @company.send(key) : nil
+          is_changed = false
+          if value.present? || current_value.present?
+            is_changed = case value
+                         when Array
+                           current_value.to_a.map(&:to_s) != value.map(&:to_s)
+                         else
+                           current_value.to_s != value.to_s
+                         end
+          end
+
+          if is_changed
+            field_decision = policy.decision(key, exceeds_limit: exceeds_service_limit)
+            if field_decision[:direct_update]
+              direct_update_params[key] = value
+            else
+              pending_params[key] = value
+            end
+          end
+        end
+
+        if pending_params.present?
+          @company.update!(direct_update_params) if direct_update_params.present?
 
           pending_change = create_idempotent_pending_change(
             change_type: 'company_info',
             data: {
-              attributes: permitted_company_params,
-              previous_values: @company.attributes.slice(*permitted_company_params.keys),
+              attributes: pending_params,
+              previous_values: @company.attributes.slice(*pending_params.keys),
               service_area_limit: service_area_limit,
-              requires_commercial_approval: true
+              requires_commercial_approval: true,
+              limit_exceeded: exceeds_service_limit
             }
           )
 
@@ -660,19 +683,21 @@ module Api
               change_type: 'company_info',
               service_area_limit: service_area_limit,
               requires_commercial_approval: true,
+              limit_exceeded: exceeds_service_limit,
               pending_change_id: pending_change.id
             )
           )
 
           render json: {
-            message: 'Alterações salvas. Abrangência extra enviada para aprovação comercial.',
+            message: 'Alterações enviadas para aprovação.',
             pending_change: pending_change,
             service_area_limit: service_area_limit,
             requires_commercial_approval: true,
+            limit_exceeded: exceeds_service_limit,
+            reason_code: exceeds_service_limit ? 'LIMIT_EXCEEDED' : nil,
             direct_update: false
-          }, status: pending_change.previously_persisted? ? :ok : :created
+          }.compact, status: pending_change.previously_persisted? ? :ok : :created
         else
-          # Direct update for everything (no commercial approval needed)
           @company.update!(permitted_company_params)
 
           Analytics::TrackEventService.call(
@@ -695,16 +720,19 @@ module Api
 
         category_ids = normalized_category_ids(params[:category_ids])
         limit_snapshot = CompanyCategoryLimitService.new(@company).snapshot(requested_category_ids: category_ids)
-        requires_commercial_approval = limit_snapshot[:exceeds_limit]
 
-        if requires_commercial_approval
+        policy = CompanyFieldPolicy.new(@company)
+        decision = policy.decision(:categories, exceeds_limit: limit_snapshot[:exceeds_limit])
+
+        unless decision[:direct_update]
           pending_change = create_idempotent_pending_change(
             change_type: 'categories',
             data: {
               action: 'add',
               category_ids: category_ids,
               category_limit: limit_snapshot,
-              requires_commercial_approval: true
+              requires_commercial_approval: true,
+              limit_exceeded: true
             }
           )
 
@@ -720,6 +748,7 @@ module Api
               category_ids: category_ids,
               category_limit: limit_snapshot,
               requires_commercial_approval: true,
+              limit_exceeded: true,
               pending_change_id: pending_change.id
             )
           )
@@ -729,6 +758,8 @@ module Api
             pending_change: pending_change,
             category_limit: limit_snapshot,
             requires_commercial_approval: true,
+            limit_exceeded: true,
+            reason_code: 'LIMIT_EXCEEDED',
             direct_update: false
           }, status: pending_change.previously_persisted? ? :ok : :created
         else
@@ -801,7 +832,10 @@ module Api
         blob = ActiveStorage::Blob.create_and_upload!(io: file, filename: file.original_filename,
                                                       content_type: file.content_type)
 
-        if @company.inferred_plan_tier == 'enterprise'
+        policy = CompanyFieldPolicy.new(@company)
+        decision = policy.decision(:logo)
+
+        if decision[:direct_update]
           @company.logo.attach(blob)
 
           Analytics::TrackEventService.call(
@@ -834,7 +868,8 @@ module Api
 
           render json: {
             message: 'Logo enviada para aprovação',
-            pending_change: pending_change
+            pending_change: pending_change,
+            direct_update: false
           }, status: pending_change.previously_persisted? ? :ok : :created
         end
       end
@@ -866,7 +901,10 @@ module Api
           Rails.logger.warn "Falha ao analisar dimensões do banner: #{e.message}"
         end
 
-        if @company.inferred_plan_tier == 'enterprise'
+        policy = CompanyFieldPolicy.new(@company)
+        decision = policy.decision(:banner)
+
+        if decision[:direct_update]
           @company.banner.attach(blob)
 
           Analytics::TrackEventService.call(
@@ -899,7 +937,8 @@ module Api
 
           render json: {
             message: 'Banner enviado para aprovação',
-            pending_change: pending_change
+            pending_change: pending_change,
+            direct_update: false
           }, status: pending_change.previously_persisted? ? :ok : :created
         end
       end

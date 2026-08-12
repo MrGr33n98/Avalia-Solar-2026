@@ -4,12 +4,13 @@ RSpec.describe PlanFeatureCatalog do
   describe '.normalize' do
     it 'maps legacy aliases into canonical keys' do
       normalized = described_class.normalize(
-        { active_admin: true, social_proof_enabled: true },
+        { active_admin: true, social_proof_enabled: true, media_direct_update: true },
         plan_tier: 'free'
       )
 
       expect(normalized['custom_ctas']).to be(true)
       expect(normalized['social_proof']).to be(true)
+      expect(normalized['profile_media_direct_update']).to be(true)
     end
 
     it 'applies tier defaults for pro plans' do

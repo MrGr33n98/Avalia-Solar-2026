@@ -73,6 +73,17 @@ RSpec.describe 'Company feature access API', type: :request do
       body = JSON.parse(response.body)
       expect(body['plan']).to eq('enterprise')
       expect(body['features'].dig('webhooks', 'state')).to eq('enabled')
+      expect(body['features'].dig('profile_media_direct_update', 'state')).to eq('enabled')
+    end
+
+    it 'returns locked status for profile_media_direct_update on Pro/Free plans' do
+      company.update!(plan: pro_plan, intent_tier: 'pro')
+
+      get "/api/v1/companies/#{company.id}/feature_access", headers: auth_headers_for(user)
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['features'].dig('profile_media_direct_update', 'state')).to eq('locked')
     end
 
     it 'includes subscription context when a billing subscription exists' do
