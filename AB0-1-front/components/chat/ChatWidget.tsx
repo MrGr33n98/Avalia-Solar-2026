@@ -494,7 +494,10 @@ export default function ChatWidget() {
       )}
     >
       {isOpen && (
-        <div className="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 w-[calc(100dvw-24px)] max-w-[340px] h-[56dvh] min-h-[420px] max-h-[520px] sm:w-[420px] sm:h-[650px] sm:max-h-[700px] sm:max-w-none mb-0 sm:mb-4">
+        <div className={cn(
+          'pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 dark:border-zinc-800 dark:bg-zinc-900 w-[calc(100dvw-24px)] max-w-[340px] h-[56dvh] min-h-[420px] max-h-[520px] sm:w-[420px] sm:h-[650px] sm:max-h-[700px] sm:max-w-none mb-0 sm:mb-4',
+          isPwa || isMobile ? 'fixed inset-0 h-[100dvh] max-h-none w-full max-w-none rounded-none pb-[var(--safe-area-inset-bottom)]' : ''
+        )}>
           {/* Header */}
           <div className="bg-blue-600 dark:bg-blue-700 text-white h-[76px] sm:h-[80px] flex items-center justify-between px-4 py-2 shadow-md">
             <div className="flex items-center space-x-3">
