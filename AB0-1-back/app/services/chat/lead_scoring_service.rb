@@ -129,10 +129,19 @@ module Chat
       total_score = fit_score + intent_score
 
       {
+        algorithm_version: 'lead_scoring_v2',
         total_score: total_score,
         intent_score: intent_score,
         fit_score: fit_score,
-        explanation: explanation
+        explanation: explanation,
+        score_contract: {
+          intent_score: 'intenção declarada e sinais de ação',
+          fit_score: 'aderência de perfil e contexto',
+          lead_score: 'composição operacional de intent_score + fit_score',
+          icp_match: nil
+        },
+        explicit_quote: !!wants_quote,
+        inferred_from_engagement: false
       }
     end
 
