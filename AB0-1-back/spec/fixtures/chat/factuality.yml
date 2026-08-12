@@ -1,0 +1,27 @@
+- id: organic_ranking
+  question: "Plano pago melhora ranking orgânico?"
+  must_include:
+    - "não"
+  must_not_include:
+    - "boost orgânico"
+
+- id: crm_boundary
+  question: "O Avalia Solar é um CRM?"
+  must_include:
+    - "não"
+    - "integra"
+
+- id: webhook_entitlement
+  question: "Posso usar webhook?"
+  must_include:
+    - "entitlement"
+
+- id: live_inbox_entitlement
+  question: "Posso usar Live Inbox?"
+  must_include:
+    - "ai_live_inbox"
+
+- id: category_limit
+  question: "Quantas categorias tenho?"
+  must_include:
+    - "company_categories_limit"
