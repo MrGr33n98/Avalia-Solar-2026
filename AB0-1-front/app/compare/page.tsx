@@ -390,38 +390,18 @@ function ComparePageContent() {
 }
 
 function CompareHero() {
-  const defaultHero = (
-    <div
-      className="mx-auto max-w-[1240px] bg-cover bg-center bg-no-repeat px-4 py-4 sm:px-6 lg:py-4"
-      style={{
-        backgroundImage:
-          "url('/assets/background-comparacao-empresas-2560x512-500kb.png')",
-      }}
-    >
-      <div className="grid min-h-[96px] items-center lg:grid-cols-[0.9fr_1.1fr] lg:min-h-[108px]">
-        <div className="max-w-[620px]">
-          <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">
-            <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" /> Comparador de empresas
-          </span>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-            Compare antes de decidir.
-          </h1>
-          <p className="mt-1.5 max-w-xl text-sm leading-5 text-slate-600">
-            Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
-            condições comerciais.
-          </p>
-        </div>
-        <div aria-hidden="true" />
-      </div>
-    </div>
-  );
-
   return (
     <header className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-[1240px] px-4 pt-4 sm:px-6">
+      <div
+        className="mx-auto max-w-[1240px] bg-cover bg-center bg-no-repeat px-4 py-4 sm:px-6 lg:py-4"
+        style={{
+          backgroundImage:
+            "url('/assets/background-comparacao-empresas-2560x512-500kb.png')",
+        }}
+      >
         <nav
           aria-label="Breadcrumb"
-          className="mb-2 flex items-center gap-2 text-[11px] text-slate-500"
+          className="mb-4 flex items-center gap-2 text-[11px] text-slate-500"
         >
           <Link href="/" className="hover:text-blue-700">
             Home
@@ -429,15 +409,30 @@ function CompareHero() {
           <span aria-hidden="true">›</span>
           <span>Comparar empresas</span>
         </nav>
+        <div className="grid min-h-[96px] items-center gap-4 lg:grid-cols-[1fr_auto] lg:min-h-[108px]">
+          <div className="max-w-[620px]">
+            <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">
+              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" /> Comparador de empresas
+            </span>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              Compare antes de decidir.
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-5 text-slate-600">
+              Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
+              condições comerciais.
+            </p>
+          </div>
+          <div className="flex w-full justify-center lg:justify-end">
+            <BannerSlot
+              placement="compare_hero"
+              limit={1}
+              priority={true}
+              showLoadingSkeleton={false}
+              className="w-full max-w-[500px] !py-0 [&>div]:rounded-lg [&>div]:border [&>div]:border-slate-200 [&>div]:shadow-sm"
+            />
+          </div>
+        </div>
       </div>
-      <BannerSlot
-        placement="compare_hero"
-        limit={1}
-        priority={true}
-        showLoadingSkeleton={false}
-        className="mx-auto max-w-[1240px] px-4 pb-4 sm:px-6"
-        fallback={defaultHero}
-      />
     </header>
   );
 }
