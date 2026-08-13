@@ -70,7 +70,7 @@ export default function AvaliacoesPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Total"
           value={totalReviews}
@@ -98,10 +98,12 @@ export default function AvaliacoesPage() {
         <MetricCard
           label="Votos úteis"
           value={helpfulVotes}
-          caption="Pessoas que acharam útil"
+          unavailable={summary?.impact?.helpful_votes === null || summary?.impact?.helpful_votes === undefined}
+          caption="Feedback positivo"
           icon={ThumbsUp}
-          iconColor="text-purple-600"
-          iconBgColor="bg-purple-50"
+          iconColor="text-green-600"
+          iconBgColor="bg-green-50"
+          highlight
         />
       </div>
 

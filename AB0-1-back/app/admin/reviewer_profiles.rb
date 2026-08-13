@@ -2,6 +2,12 @@ ActiveAdmin.register ReviewerProfile do
   menu label: 'Perfis de reviewers', parent: 'Reviews', priority: 3
   permit_params :user_id, :profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :public_profile
 
+  controller do
+    def scoped_collection
+      super.includes(:user)
+    end
+  end
+
   filter :user
   filter :profession
   filter :public_profile

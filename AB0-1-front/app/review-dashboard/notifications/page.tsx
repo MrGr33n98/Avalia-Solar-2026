@@ -59,7 +59,7 @@ export default function NotificacoesPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Notificações"
           value={notifications.length}
@@ -87,8 +87,8 @@ export default function NotificacoesPage() {
         />
         <MetricCard
           label="Preferências"
-          value="E-mail / Push"
-          caption="Configuração activa"
+          value="Ativas"
+          caption="E-mail / Push ativado"
           icon={Shield}
           iconColor="text-purple-600"
           iconBgColor="bg-purple-50"

@@ -53,10 +53,11 @@ export default function PublicacoesPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Publicações"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Total publicadas"
           icon={PenLine}
           iconColor="text-blue-600"
@@ -64,7 +65,8 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Visualizações"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Total de views"
           icon={Eye}
           iconColor="text-purple-600"
@@ -72,7 +74,8 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Curtidas"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Reações recebidas"
           icon={Heart}
           iconColor="text-pink-600"
@@ -80,7 +83,8 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Rascunhos"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Aguardando publicação"
           icon={FileText}
           iconColor="text-amber-600"

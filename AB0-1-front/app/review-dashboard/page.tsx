@@ -52,7 +52,7 @@ export default function MeuPainelPage() {
 
   const greenScore = summary?.gamification?.green_score ?? null;
   const reviewsCount = reviews.length;
-  const publicationsCount = null;
+
   const inAnalysisCount = reviews.filter(
     (r) => r.status === 'in_analysis' || r.status === 'pending'
   ).length;
@@ -80,10 +80,11 @@ export default function MeuPainelPage() {
       <ProfileSummary greenScore={greenScore} profileCompletion={profileCompletion} />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Green Score"
-          value={greenScore ?? 'Indisponível'}
+          value={greenScore}
+          unavailable={greenScore === null || greenScore === undefined}
           caption="Calculado por contribuições reais"
           icon={Leaf}
           iconColor="text-green-600"
@@ -100,8 +101,9 @@ export default function MeuPainelPage() {
         />
         <MetricCard
           label="Publicações"
-          value={publicationsCount ?? 'Indisponível'}
-          caption="Domínio ainda não disponível"
+          value="Em breve"
+          unavailable
+          caption="Domínio ainda em construção"
           icon={PenLine}
           iconColor="text-blue-600"
           iconBgColor="bg-blue-50"
@@ -174,7 +176,7 @@ export default function MeuPainelPage() {
           />
           <div className="space-y-3">
             {(summary?.gamification?.achievements ?? []).length > 0 ? (
-              (summary?.gamification?.achievements ?? []).slice(0, 2).map((achievement: any, index: number) => (
+              (summary?.gamification?.achievements ?? []).slice(0, 2).map((achievement: { title: string; subtitle: string; state: string }, index: number) => (
                 <AchievementItem
                   key={index}
                   title={achievement.title}
@@ -241,9 +243,9 @@ export default function MeuPainelPage() {
           />
           <div className="space-y-2.5">
             <ProfileCheckItem label="Dados pessoais completos" done={!!(user?.name && user?.email)} />
-            <ProfileCheckItem label="Foto de perfil cadastrada" done={summary?.profile?.items?.find((i: any) => i.key === 'avatar')?.completed ?? false} />
+            <ProfileCheckItem label="Foto de perfil cadastrada" done={summary?.profile?.items?.find((i: { key: string; completed: boolean }) => i.key === 'avatar')?.completed ?? false} />
             <ProfileCheckItem label="Localização definida" done={!!(user?.city && user?.state)} />
-            <ProfileCheckItem label="Profissão preenchida" done={summary?.profile?.items?.find((i: any) => i.key === 'profession')?.completed ?? false} />
+            <ProfileCheckItem label="Profissão preenchida" done={summary?.profile?.items?.find((i: { key: string; completed: boolean }) => i.key === 'profession')?.completed ?? false} />
             <ProfileCheckItem
               label="Soluções adicionadas"
               done={solutions.length > 0}

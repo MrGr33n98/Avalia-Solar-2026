@@ -14,8 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
-import { MobileDashboardNav } from './Navigation';
-import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
+
 import {
   CommandDialog,
   CommandInput,
@@ -317,8 +316,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     );
   }
 
-  // Calcula completude do perfil
-  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+
 
   const achievementStatuses = (summary?.gamification?.achievements ?? []).map(
     (achievement, index) => ({
@@ -352,21 +350,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         removingSolutionId,
       }}
     >
-      <div className="review-dashboard-enterprise min-h-screen w-full overflow-x-hidden bg-[#F6F7F9] text-slate-950 dark:bg-[#020617]">
-        {/* Barra de Onboarding com gradiente */}
-        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-          <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviews.length} />
-        </div>
+      {children}
 
-        {/* Shell Principal do Dashboard em Largura Total */}
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 w-full">
-          {/* Conteúdo Principal */}
-          <main className="w-full flex flex-col gap-6">{children}</main>
-        </div>
-
-        <MobileDashboardNav repliesCount={reviews.filter((r) => r.reply || r.replied_at).length} />
-
-        <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
           <CommandInput placeholder="Buscar ações, empresas e seções..." />
           <CommandList>
             <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
@@ -408,7 +394,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             </CommandGroup>
           </CommandList>
         </CommandDialog>
-      </div>
     </DashboardContext.Provider>
   );
 }

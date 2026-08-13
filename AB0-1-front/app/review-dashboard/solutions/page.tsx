@@ -77,7 +77,7 @@ export default function SolucoesPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Soluções cadastradas"
           value={solutions.length}
@@ -102,7 +102,8 @@ export default function SolucoesPage() {
         />
         <MetricCard
           label="Status de verificação"
-          value={solutions.length > 0 ? 'Em análise' : 'Sem dados'}
+          value={solutions.length > 0 ? 'Em análise' : null}
+          unavailable={solutions.length === 0}
           caption="Nenhuma pontuação é estimada localmente"
           icon={Leaf}
           iconColor="text-green-600"

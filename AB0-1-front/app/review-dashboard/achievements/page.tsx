@@ -53,7 +53,7 @@ export default function ConquistasPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Conquistas"
           value={`${unlockedCount}/${achievements.length}`}
@@ -64,7 +64,8 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="Green Score"
-          value={summary?.gamification?.green_score ?? 'Indisponível'}
+          value={summary?.gamification?.green_score}
+          unavailable={summary?.gamification?.green_score === null || summary?.gamification?.green_score === undefined}
           caption="Pontuação atual"
           icon={Award}
           iconColor="text-green-600"
@@ -73,7 +74,8 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="XP Acumulado"
-          value={summary?.gamification?.earned_points ?? 'Indisponível'}
+          value={summary?.gamification?.earned_points}
+          unavailable={summary?.gamification?.earned_points === null || summary?.gamification?.earned_points === undefined}
           caption="Pontos de experiência"
           icon={Zap}
           iconColor="text-blue-600"
@@ -81,7 +83,8 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="Próximo nível"
-          value={greenScore == null ? 'Indisponível' : greenScore >= 500 ? 'Ouro' : 'Prata'}
+          value={greenScore == null ? null : greenScore >= 500 ? 'Ouro' : 'Prata'}
+          unavailable={greenScore === null || greenScore === undefined}
           caption="Nível de avaliador"
           icon={Lock}
           iconColor="text-slate-500"

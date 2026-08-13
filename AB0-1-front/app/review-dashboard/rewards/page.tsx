@@ -49,10 +49,11 @@ export default function RecompensasPage() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Pontos disponíveis"
-          value={greenScore == null ? 'Indisponível' : (totalPoints ?? 'Indisponível')}
+          value={greenScore == null ? null : totalPoints}
+          unavailable={greenScore === null || greenScore === undefined}
           caption="Pontos para resgate"
           icon={Zap}
           iconColor="text-amber-500"
@@ -61,7 +62,8 @@ export default function RecompensasPage() {
         />
         <MetricCard
           label="Resgates efetuados"
-          value={claimedCount ?? 'Indisponível'}
+          value={claimedCount}
+          unavailable={claimedCount === null || claimedCount === undefined}
           caption="Total de prêmios resgatados"
           icon={Gift}
           iconColor="text-green-600"
@@ -69,7 +71,8 @@ export default function RecompensasPage() {
         />
         <MetricCard
           label="Próximo prêmio"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Ledger de recompensas ainda não disponível"
           icon={Gift}
           iconColor="text-blue-600"
@@ -77,7 +80,8 @@ export default function RecompensasPage() {
         />
         <MetricCard
           label="Pontos expirando"
-          value="Indisponível"
+          value="Em breve"
+          unavailable
           caption="Nenhum ponto expira nos próximos 30 dias"
           icon={Wallet}
           iconColor="text-slate-500"

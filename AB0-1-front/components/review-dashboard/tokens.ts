@@ -73,13 +73,14 @@ export const shadows = {
 } as const;
 
 export const typography = {
-  pageTitle: { size: '28px', weight: '700', lineHeight: '36px' },
-  sectionTitle: { size: '18px', weight: '600', lineHeight: '28px' },
-  cardTitle: { size: '15px', weight: '600', lineHeight: '22px' },
-  body: { size: '14px', weight: '400', lineHeight: '20px' },
-  helper: { size: '13px', weight: '400', lineHeight: '18px' },
-  kpiValue: { size: '32px', weight: '700', lineHeight: '40px' },
-  kpiLabel: { size: '13px', weight: '500', lineHeight: '18px' },
+  pageTitle: { size: '22px', smSize: '24px', weight: '700', lineHeight: '30px' },
+  sectionTitle: { size: '15px', smSize: '16px', weight: '600', lineHeight: '22px' },
+  cardTitle: { size: '13px', smSize: '14px', weight: '600', lineHeight: '20px' },
+  body: { size: '12px', smSize: '13px', weight: '400', lineHeight: '18px' },
+  helper: { size: '11px', smSize: '12px', weight: '400', lineHeight: '16px' },
+  kpiValueShort: { size: '22px', smSize: '24px', weight: '700', lineHeight: '30px' },
+  kpiValueText: { size: '16px', smSize: '20px', weight: '600', lineHeight: '24px' },
+  label: { size: '11px', smSize: '12px', weight: '500', lineHeight: '16px' },
 } as const;
 
 export const layout = {

@@ -2,6 +2,12 @@ ActiveAdmin.register ReviewerSolution do
   menu label: 'Soluções de reviewers', parent: 'Reviews', priority: 2
   permit_params :user_id, :name, :solution_type, :category, :verified, :company_id, :status
 
+  controller do
+    def scoped_collection
+      super.includes(:user)
+    end
+  end
+
   filter :user
   filter :solution_type, as: :select, collection: ReviewerSolution::TYPES
   filter :category
@@ -39,23 +45,29 @@ ActiveAdmin.register ReviewerSolution do
     f.actions
   end
   member_action :verify, method: :put do
-    old_status = resource.status
-    resource.update!(verified: true, status: 'active')
-    ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'verified', old_status: old_status, new_status: 'active')
+    ReviewerSolution.transaction do
+      old_status = resource.status
+      resource.update!(verified: true, status: 'active')
+      ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'verified', old_status: old_status, new_status: 'active')
+    end
     redirect_to resource_path(resource), notice: 'Solução verificada.'
   end
 
   member_action :reject, method: :put do
-    old_status = resource.status
-    resource.update!(verified: false, status: 'rejected')
-    ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'rejected', old_status: old_status, new_status: 'rejected')
+    ReviewerSolution.transaction do
+      old_status = resource.status
+      resource.update!(verified: false, status: 'rejected')
+      ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'rejected', old_status: old_status, new_status: 'rejected')
+    end
     redirect_to resource_path(resource), notice: 'Solução rejeitada.'
   end
 
   member_action :deactivate, method: :put do
-    old_status = resource.status
-    resource.update!(status: 'disabled')
-    ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'deactivated', old_status: old_status, new_status: 'disabled')
+    ReviewerSolution.transaction do
+      old_status = resource.status
+      resource.update!(status: 'disabled')
+      ReviewerSolutionEvent.create!(reviewer_solution: resource, actor: current_admin_user, action: 'deactivated', old_status: old_status, new_status: 'disabled')
+    end
     redirect_to resource_path(resource), notice: 'Solução desativada.'
   end
 
