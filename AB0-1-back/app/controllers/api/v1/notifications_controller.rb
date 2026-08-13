@@ -7,7 +7,7 @@ module Api
 
       # GET /api/v1/notifications
       def index
-        scope = current_user.notifications.active.recent.includes(:notifiable, :company)
+        scope = notification_scope.active.recent.includes(:notifiable, :company)
 
         # Filtro por aba
         case params[:filter].to_s
@@ -30,8 +30,8 @@ module Api
         render json: {
           data: notifications.map { |n| notification_json(n) },
           meta: {
-            total: current_user.notifications.active.count,
-            unread_count: current_user.notifications.unread.count,
+            total: notification_scope.active.count,
+            unread_count: notification_scope.unread.count,
             page: (params[:page] || 1).to_i,
             per_page: (params[:per_page] || 20).to_i,
             counts: filter_counts
@@ -41,7 +41,7 @@ module Api
 
       # GET /api/v1/notifications/unread_count
       def unread_count
-        render json: { unread_count: current_user.notifications.unread.count }
+        render json: { unread_count: notification_scope.unread.count }
       end
 
       # GET /api/v1/notifications/counts_by_filter
@@ -88,7 +88,7 @@ module Api
       private
 
       def filter_counts
-        base = current_user.notifications.active
+        base = notification_scope.active
         {
           all: base.count,
           unread: base.unread.count,
@@ -138,6 +138,10 @@ module Api
         end
       end
 
+      def notification_scope
+        ::Notification.where(user_id: current_user.id)
+      end
+
       def notifiable_json(notifiable)
         return nil unless notifiable
 
@@ -146,7 +150,7 @@ module Api
           { type: 'Review', id: notifiable.id, company_id: notifiable.company_id }
         when Lead
           { type: 'Lead', id: notifiable.id, company_id: notifiable.company_id }
-        when Company
+        when ::Company
           { type: 'Company', id: notifiable.id, name: notifiable.name }
         else
           { type: notifiable.class.name, id: notifiable.id }

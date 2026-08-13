@@ -2263,33 +2263,6 @@ export const authApi = {
   },
   me: async (): Promise<User | null> => {
     try {
-      if (apolloClient) {
-        try {
-          const { data } = await apolloClient.query({
-            query: gql`
-              query GetMe {
-                me {
-                  id
-                  name
-                  email
-                  phone
-                  avatar_url: avatarUrl
-                  city
-                  state
-                  role
-                  created_at: createdAt
-                }
-              }
-            `,
-            fetchPolicy: 'network-only',
-          });
-          if (data && data.me) {
-            return data.me;
-          }
-        } catch (err) {
-          console.warn('[authApi.me] GraphQL query failed, falling back to REST:', err);
-        }
-      }
 
       // First try the unified /auth/me endpoint
       const resp = await fetchApi<{ user: User } | null>('/auth/me', {
@@ -2301,15 +2274,7 @@ export const authApi = {
       });
       if (resp && (resp as any).user) return (resp as any).user;
 
-      // Fallback to /users/me if /auth/me doesn't return the user object directly
-      const userResp = await fetchApi<User | null>('/users/me', {
-        silentStatusCodes: [401],
-        fallbackOnStatus: { 401: null },
-        tag: 'auth.me.fallback',
-        retries: 2,
-        cacheTtlMs: 0,
-      });
-      return userResp as User | null;
+      return null;
     } catch (error: any) {
       const status = error?.status || error?.context?.status;
       const msg = error?.message || '';

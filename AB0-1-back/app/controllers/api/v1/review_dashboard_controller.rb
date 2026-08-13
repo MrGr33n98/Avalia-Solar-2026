@@ -28,7 +28,7 @@ module Api
 
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
-        recommendations = Company.where(status: 'active', verified: true)
+        recommendations = ::Company.where(status: 'active', verified: true)
                                  .order(rating_avg: :desc)
                                  .limit(3)
                                  .map do |c|
