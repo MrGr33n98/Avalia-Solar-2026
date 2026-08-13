@@ -100,9 +100,9 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
             </linearGradient>
 
             <linearGradient id="borderHighlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FDE047" />
-              <stop offset="50%" stopColor="#EAB308" />
-              <stop offset="100%" stopColor="#EA580C" />
+              <stop offset="0%" stopColor="#93C5FD" />
+              <stop offset="50%" stopColor="#2563EB" />
+              <stop offset="100%" stopColor="#1D4ED8" />
             </linearGradient>
             
             <style>
@@ -139,7 +139,7 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
             cy="12" 
             r="11.5" 
             fill="none" 
-            stroke="#fef08a" 
+            stroke="#BFDBFE" 
             strokeWidth="1" 
             className="opacity-40"
           />
@@ -160,19 +160,19 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
 
           {/* Seta Superior (Esquerda - Azul) */}
           <path
-            d="M8.5 8L5.5 10.5L8.5 13M5.5 10.5H15.5"
+            d="M8 6.5L4.5 9L8 11.5M4.5 9H16"
             stroke="url(#arrowBlueGrad)"
-            strokeWidth="1.35"
+            strokeWidth="1.25"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="arrow-top"
           />
 
-          {/* Seta Inferior (Direita - Amarela/Laranja) */}
+          {/* Seta Inferior (Direita - Azul) */}
           <path
-            d="M15.5 16L18.5 13.5L15.5 11M18.5 13.5H8.5"
+            d="M16 17.5L19.5 15L16 12.5M19.5 15H8"
             stroke="url(#arrowBlueSecondaryGrad)"
-            strokeWidth="1.35"
+            strokeWidth="1.25"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="arrow-bottom"
