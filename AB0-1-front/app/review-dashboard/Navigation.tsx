@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Sheet,
@@ -29,7 +28,6 @@ import {
   Menu,
   MessageCircle,
   Network,
-  Plus,
   RefreshCcw,
   Trophy,
   UserRound,
@@ -47,7 +45,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
-import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useNotificationStore } from '@/store/notificationStore';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
@@ -146,7 +143,7 @@ const bottomNav: DashboardNavItem[] = [
 export function Header({
   firstName = 'Felipe',
   user,
-  greenScore = 350,
+  greenScore = null,
   notificationsCount: propNotificationsCount = 4,
   refreshing = false,
   onRefresh,
@@ -155,7 +152,7 @@ export function Header({
 }: {
   firstName?: string;
   user?: (User & { avatar_url?: string }) | null;
-  greenScore?: number;
+  greenScore?: number | null;
   notificationsCount?: number;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -163,15 +160,12 @@ export function Header({
   onOpenMobileNav?: () => void;
 }) {
   const {
-    notifications,
     unreadCount,
     unreadMessagesCount,
     fetchNotifications,
     fetchUnreadCount,
     fetchUnreadMessagesCount,
     toggleChat,
-    markAsRead,
-    markAllAsRead,
   } = useNotificationStore();
 
   useEffect(() => {
@@ -273,7 +267,10 @@ export function Header({
                   </button>
                 </TooltipTrigger>
               </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 border-none bg-transparent shadow-none w-auto">
+              <PopoverContent
+                align="end"
+                className="p-0 border-none bg-transparent shadow-none w-auto"
+              >
                 <NotificationDropdown />
               </PopoverContent>
             </Popover>
@@ -302,9 +299,11 @@ export function Header({
               </AvatarFallback>
             </Avatar>
             <div className="hidden min-w-[100px] md:block">
-              <p className="truncate text-sm font-semibold text-slate-950">{user?.name || firstName}</p>
+              <p className="truncate text-sm font-semibold text-slate-950">
+                {user?.name || firstName}
+              </p>
               <p className="text-xs font-medium text-amber-600">
-                Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}
+                Nível {greenScore == null ? 'Indisponível' : greenScore >= 760 ? 'Ouro' : 'Prata'}
               </p>
             </div>
           </div>
@@ -447,12 +446,12 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
 ];
 
 function SidebarContent({
-  repliesCount,
-  notificationsCount,
+  _repliesCount,
+  _notificationsCount,
   onNavigate,
 }: {
-  repliesCount: number;
-  notificationsCount: number;
+  _repliesCount: number;
+  _notificationsCount: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -513,7 +512,12 @@ function SidebarContent({
                       : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950'
                   )}
                 >
-                  <Icon className={cn('h-4.5 w-4.5', isDirectActive ? 'text-blue-600' : 'text-slate-500')} />
+                  <Icon
+                    className={cn(
+                      'h-4.5 w-4.5',
+                      isDirectActive ? 'text-blue-600' : 'text-slate-500'
+                    )}
+                  />
                   <span>{group.label}</span>
                 </Link>
               );
@@ -530,9 +534,7 @@ function SidebarContent({
                     <Icon className="h-4.5 w-4.5 text-slate-500" />
                     <span>{group.label}</span>
                   </span>
-                  <span className="text-slate-400">
-                    {isOpen ? '▲' : '▼'}
-                  </span>
+                  <span className="text-slate-400">{isOpen ? '▲' : '▼'}</span>
                 </button>
 
                 {isOpen && group.items && (
@@ -588,7 +590,9 @@ export function MobileDashboardNav({ repliesCount }: { repliesCount: number }) {
               href={item.href}
               className={cn(
                 'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-none border-t-2 px-1 py-1.5 text-[11px] font-medium',
-                active ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-600 hover:text-blue-700'
+                active
+                  ? 'border-blue-600 text-blue-700'
+                  : 'border-transparent text-slate-600 hover:text-blue-700'
               )}
             >
               <span className="relative">

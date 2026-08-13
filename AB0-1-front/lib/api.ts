@@ -2570,3 +2570,17 @@ export const fetchCategoryBySlug = async (slug: string): Promise<Category> => {
 };
 
 export const fetchCompanies = (params?: any): Promise<Company[]> => companiesApi.getAll(params);
+
+export const reviewerSolutionsApi = {
+  list: () => fetchApi('/reviewer_solutions'),
+  create: (solution: { name: string; solution_type: string; category: string; company_id?: string }) =>
+    fetchApi('/reviewer_solutions', { method: 'POST', body: JSON.stringify({ solution }) }),
+  remove: (id: string) => fetchApi('/reviewer_solutions/' + id, { method: 'DELETE' }),
+};
+
+export const reviewerProfileApi = {
+  get: () => fetchApi('/reviewer/profile'),
+  update: (profile: Record<string, unknown>) => fetchApi('/reviewer/profile', { method: 'PATCH', body: JSON.stringify({ profile }) }),
+  uploadAvatar: (file: File) => { const body = new FormData(); body.append('avatar', file); return fetchApi('/reviewer/profile/avatar', { method: 'POST', body }); },
+  removeAvatar: () => fetchApi('/reviewer/profile/avatar', { method: 'DELETE' }),
+};

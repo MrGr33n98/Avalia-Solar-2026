@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
-import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardContext } from '../DashboardLayoutClient';
+import { reviewerProfileApi, usersApi } from '@/lib/api';
+import { toast } from 'sonner';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import {
   User,
@@ -24,49 +26,97 @@ import {
 
 export default function MeuPerfilPage() {
   const { user } = useAuth();
-  const { loading, solutions } = useDashboardContext();
+  const { loading, summary, reviews, solutions } = useDashboardContext();
+  const [saving, setSaving] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<Record<string, string>>({});
+  const profileUser = user as (typeof user & { profession?: string }) | null;
+  useEffect(() => {
+    void reviewerProfileApi
+      .get()
+      .then((payload: { profile?: Record<string, string> }) =>
+        setProfileData(payload.profile || {})
+      )
+      .catch(() => toast.error('Não foi possível carregar perfil profissional.'));
+  }, []);
 
   if (loading) return <DashboardSkeleton variant="page" />;
 
-  const reviewsCount = 0;
+  const reviewsCount = reviews.length;
   const profileItems = [
     { label: 'Informações pessoais', done: !!(user?.name && user?.email) },
     { label: 'Foto de perfil', done: !!user?.avatar_url },
-    { label: 'Informações profissionais', done: !!(user as any)?.profession },
+    {
+      label: 'Informações profissionais',
+      done: !!(user as { profession?: string } | null)?.profession,
+    },
     { label: 'Localização', done: !!(user?.city && user?.state) },
     { label: 'Redes sociais', done: false },
     { label: 'Soluções que usa', done: solutions.length > 0, detail: `${solutions.length}/5` },
     { label: 'Primeira avaliação', done: reviewsCount > 0 },
   ];
 
-  const completedCount = profileItems.filter((i) => i.done).length;
-  const profileCompletion = Math.round((completedCount / profileItems.length) * 100);
+  const profileCompletion = summary?.profile?.completion_percent ?? 0;
 
   return (
     <div className="space-y-6">
       <ReviewerPageHeader
         title="Meu perfil"
         description="Gerencie suas informações pessoais e profissionais."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Meu perfil' },
-        ]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu perfil' }]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         {/* Form principal */}
-        <div className="space-y-6">
+        <form
+          className="space-y-6"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!user) return;
+            setSaving(true);
+            const data = new FormData(event.currentTarget);
+            try {
+              await usersApi.update(user.id, {
+                name: String(data.get('name') || ''),
+                phone: String(data.get('phone') || ''),
+                city: String(data.get('city') || ''),
+                state: String(data.get('state') || ''),
+              });
+              await reviewerProfileApi.update({
+                profession: String(data.get('profession') || ''),
+                bio: String(data.get('bio') || ''),
+                linkedin_url: String(data.get('linkedin') || ''),
+                instagram_url: String(data.get('instagram') || ''),
+                website_url: String(data.get('website') || ''),
+              });
+              toast.success('Perfil atualizado com sucesso.');
+            } catch {
+              toast.error('Não foi possível atualizar o perfil.');
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
           {/* Informações pessoais */}
           <FormSection title="Informações pessoais">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Nome completo" icon={User} value={user?.name || ''} />
-              <FormField label="E-mail" icon={Mail} value={user?.email || ''} type="email" />
-              <FormField label="Telefone" icon={Phone} value={user?.phone || ''} type="tel" />
+              <FormField label="Nome completo" icon={User} name="name" value={user?.name || ''} />
               <FormField
-                label="Data de nascimento"
-                value=""
-                placeholder="dd/mm/aaaa"
+                label="E-mail"
+                icon={Mail}
+                name="email"
+                value={user?.email || ''}
+                type="email"
               />
+              <FormField
+                label="Telefone"
+                icon={Phone}
+                name="phone"
+                value={user?.phone || ''}
+                type="tel"
+              />
+              <FormField label="Data de nascimento" value="" placeholder="dd/mm/aaaa" />
             </div>
           </FormSection>
 
@@ -75,10 +125,13 @@ export default function MeuPerfilPage() {
             <h3 className="text-base font-semibold text-slate-900 mb-4">Foto de perfil</h3>
             <div className="flex items-center gap-5">
               <div className="relative">
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
+                {avatarPreview || user?.avatar_url ? (
+                  <Image
+                    src={avatarPreview || user.avatar_url || ''}
                     alt={user.name || 'Avatar'}
+                    width={80}
+                    height={80}
+                    unoptimized
                     className="h-20 w-20 rounded-full object-cover border-2 border-white shadow-sm"
                   />
                 ) : (
@@ -88,12 +141,50 @@ export default function MeuPerfilPage() {
                 )}
               </div>
               <div>
-                <p className="text-sm text-slate-600">JPG, PNG ou GIF. Max 5MB.</p>
+                <input
+                  ref={avatarInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error('Avatar excede 5 MB.');
+                      return;
+                    }
+                    setAvatarPreview(URL.createObjectURL(file));
+                    try {
+                      await reviewerProfileApi.uploadAvatar(file);
+                      toast.success('Foto atualizada.');
+                    } catch {
+                      setAvatarPreview(null);
+                      toast.error('Não foi possível enviar foto.');
+                    }
+                  }}
+                />
+                <p className="text-sm text-slate-600">JPG, PNG ou WebP. Máximo 5 MB.</p>
                 <div className="mt-2 flex gap-2">
-                  <button className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => avatarInput.current?.click()}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  >
                     Alterar foto
                   </button>
-                  <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await reviewerProfileApi.removeAvatar();
+                        setAvatarPreview(null);
+                        toast.success('Foto removida.');
+                      } catch {
+                        toast.error('Não foi possível remover foto.');
+                      }
+                    }}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
                     Remover
                   </button>
                 </div>
@@ -104,14 +195,25 @@ export default function MeuPerfilPage() {
           {/* Informações profissionais */}
           <FormSection title="Informações profissionais">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Profissão" icon={Briefcase} value={(user as any)?.profession || ''} />
-              <FormField label="Empresa" value="" placeholder="Onde você trabalha" />
+              <FormField
+                label="Profissão"
+                icon={Briefcase}
+                name="profession"
+                value={profileData.profession || profileUser?.profession || ''}
+              />
+              <FormField
+                label="Empresa"
+                value={profileData.company_name || ''}
+                placeholder="Onde você trabalha"
+              />
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Sobre você
                 </label>
                 <textarea
+                  name="bio"
                   rows={3}
+                  defaultValue={profileData.bio || ''}
                   placeholder="Conte um pouco sobre sua experiência com energia solar..."
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
                 />
@@ -122,8 +224,8 @@ export default function MeuPerfilPage() {
           {/* Localização */}
           <FormSection title="Localização">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField label="Cidade" icon={MapPin} value={user?.city || ''} />
-              <FormField label="Estado" value={user?.state || ''} />
+              <FormField label="Cidade" icon={MapPin} name="city" value={user?.city || ''} />
+              <FormField label="Estado" name="state" value={user?.state || ''} />
               <FormField label="País" value="Brasil" />
             </div>
           </FormSection>
@@ -131,9 +233,27 @@ export default function MeuPerfilPage() {
           {/* Redes sociais */}
           <FormSection title="Redes sociais">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="LinkedIn" icon={Linkedin} value="" placeholder="linkedin.com/in/" />
-              <FormField label="Instagram" icon={Instagram} value="" placeholder="@usuario" />
-              <FormField label="Website" icon={Globe} value="" placeholder="https://" />
+              <FormField
+                label="LinkedIn"
+                icon={Linkedin}
+                name="linkedin"
+                value={profileData.linkedin_url || ''}
+                placeholder="linkedin.com/in/"
+              />
+              <FormField
+                label="Instagram"
+                icon={Instagram}
+                name="instagram"
+                value={profileData.instagram_url || ''}
+                placeholder="@usuario"
+              />
+              <FormField
+                label="Website"
+                icon={Globe}
+                name="website"
+                value={profileData.website_url || ''}
+                placeholder="https://"
+              />
             </div>
           </FormSection>
 
@@ -148,13 +268,17 @@ export default function MeuPerfilPage() {
                 <Eye className="h-4 w-4" />
                 Pré-visualizar
               </button>
-              <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
                 <Save className="h-4 w-4" />
                 Salvar alterações
               </button>
             </div>
           </div>
-        </div>
+        </form>
 
         {/* Rail lateral — Progress */}
         <div className="space-y-6">
@@ -164,14 +288,7 @@ export default function MeuPerfilPage() {
               {/* Circular progress */}
               <div className="relative h-14 w-14 shrink-0">
                 <svg className="h-14 w-14 -rotate-90" viewBox="0 0 56 56">
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="24"
-                    fill="none"
-                    stroke="#E2E8F0"
-                    strokeWidth="4"
-                  />
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#E2E8F0" strokeWidth="4" />
                   <circle
                     cx="28"
                     cy="28"
@@ -204,9 +321,7 @@ export default function MeuPerfilPage() {
                     <CircleDot className="h-4 w-4 text-slate-300 shrink-0" />
                   )}
                   <span className="text-sm text-slate-600 flex-1">{item.label}</span>
-                  {item.detail && (
-                    <span className="text-xs text-slate-400">{item.detail}</span>
-                  )}
+                  {item.detail && <span className="text-xs text-slate-400">{item.detail}</span>}
                   <span
                     className={`text-xs font-medium ${item.done ? 'text-green-600' : 'text-slate-400'}`}
                   >
@@ -217,7 +332,7 @@ export default function MeuPerfilPage() {
             </div>
 
             <a
-              href="#"
+              href="/review-dashboard/profile"
               className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700"
             >
               Completar perfil →
@@ -237,7 +352,7 @@ export default function MeuPerfilPage() {
                   redes sociais.
                 </p>
                 <a
-                  href="#"
+                  href="/review-dashboard/profile"
                   className="mt-2 inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700"
                 >
                   Saber mais →
@@ -264,12 +379,14 @@ function FormField({
   label,
   icon: Icon,
   value,
+  name,
   placeholder,
   type = 'text',
 }: {
   label: string;
   icon?: typeof User;
   value: string;
+  name?: string;
   placeholder?: string;
   type?: string;
 }) {
@@ -282,6 +399,7 @@ function FormField({
         )}
         <input
           type={type}
+          name={name}
           defaultValue={value}
           placeholder={placeholder}
           className={`w-full rounded-lg border border-slate-200 bg-white py-2 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 ${

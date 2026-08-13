@@ -2,16 +2,17 @@
 
 import { cn } from '@/lib/utils';
 import { MapPin, Award } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileSummaryProps {
-  greenScore?: number;
+  greenScore?: number | null;
   profileCompletion?: number;
   className?: string;
 }
 
 export function ProfileSummary({
-  greenScore = 0,
+  greenScore = null,
   profileCompletion = 0,
   className,
 }: ProfileSummaryProps) {
@@ -29,15 +30,18 @@ export function ProfileSummary({
 
   // Derive level from green score
   const level =
-    greenScore >= 1500
-      ? 'Ouro'
-      : greenScore >= 500
-        ? 'Prata'
-        : greenScore >= 100
-          ? 'Bronze'
-          : 'Iniciante';
+    greenScore == null
+      ? 'Indisponível'
+      : greenScore >= 1500
+        ? 'Ouro'
+        : greenScore >= 500
+          ? 'Prata'
+          : greenScore >= 100
+            ? 'Bronze'
+            : 'Iniciante';
 
-  const specialty = (user as any)?.profession || 'Especialista Solar';
+  const specialty =
+    (user as (typeof user & { profession?: string }) | null)?.profession || 'Especialista Solar';
   const location = [user?.city, user?.state].filter(Boolean).join(', ') || 'Brasil';
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
@@ -55,9 +59,11 @@ export function ProfileSummary({
         {/* Avatar */}
         <div className="relative shrink-0">
           {avatarUrl ? (
-            <img
+            <Image
               src={avatarUrl}
               alt={name}
+              width={64}
+              height={64}
               className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-sm"
             />
           ) : (
@@ -89,9 +95,7 @@ export function ProfileSummary({
             <Award className="h-3 w-3 text-slate-400" />
             Nível {level}
           </div>
-          {memberSince && (
-            <p className="mt-1 text-xs text-slate-400">Membro desde {memberSince}</p>
-          )}
+          {memberSince && <p className="mt-1 text-xs text-slate-400">Membro desde {memberSince}</p>}
         </div>
       </div>
 

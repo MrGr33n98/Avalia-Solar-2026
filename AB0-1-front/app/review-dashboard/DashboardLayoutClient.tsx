@@ -2,13 +2,19 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { reviewsApi, leadsApi, reviewDashboardApi, Review, Lead } from '@/lib/api';
+import {
+  reviewsApi,
+  leadsApi,
+  reviewDashboardApi,
+  reviewerSolutionsApi,
+  Review,
+  Lead,
+} from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
 import { MobileDashboardNav } from './Navigation';
-import { ReviewerProfileCard } from '@/components/dashboard/ReviewerProfileCard';
 import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
 import {
   CommandDialog,
@@ -19,10 +25,8 @@ import {
   CommandItem,
 } from '@/components/ui/command';
 import { Plus, MessageCircle, Trophy, UserRound } from 'lucide-react';
-import { deriveAchievementStatuses } from '@/config/achievements';
 import type { UserSolution } from '@/components/profile/UserSolutionChip';
 import { canAccessReviewDashboard } from '@/lib/auth/role-access';
-
 
 export interface ReviewDashboardSummary {
   kpis?: {
@@ -76,7 +80,6 @@ export interface ReviewDashboardSummary {
   }>;
 }
 
-
 type ApiListResponse<T> = T[] | { data?: T[] };
 function normalizeApiList<T>(response: ApiListResponse<T>): T[] {
   if (Array.isArray(response)) return response;
@@ -93,8 +96,11 @@ interface DashboardContextType {
   onRefresh: () => void;
   unlockedBadgeIds?: string[];
   solutions: UserSolution[];
-  addSolution: (sol: UserSolution) => void;
-  removeSolution: (id: string) => void;
+  solutionsLoading: boolean;
+  solutionsError: string | null;
+  addSolution: (sol: UserSolution) => Promise<void>;
+  removeSolution: (id: string) => Promise<void>;
+  removingSolutionId: string | null;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -128,7 +134,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
 
   const [commandOpen, setCommandOpen] = useState(false);
   const [solutions, setSolutions] = useState<UserSolution[]>([]);
-  const [isLinkedInVerified, setIsLinkedInVerified] = useState(false);
+  const [solutionsLoading, setSolutionsLoading] = useState(true);
+  const [solutionsError, setSolutionsError] = useState<string | null>(null);
+  const [removingSolutionId, setRemovingSolutionId] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(
     async (isRefresh = false) => {
@@ -221,64 +229,62 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!user) {
       setSolutions([]);
-      setIsLinkedInVerified(false);
+      setSolutionsLoading(false);
       return;
     }
 
-    const cachedSolutions = localStorage.getItem(`reviewer_solutions_${user.id}`);
-    if (cachedSolutions) {
+    void (async () => {
+      setSolutionsLoading(true);
+      setSolutionsError(null);
       try {
-        const parsedSolutions: unknown = JSON.parse(cachedSolutions);
-        setSolutions(Array.isArray(parsedSolutions) ? parsedSolutions : []);
+        const response = await reviewerSolutionsApi.list();
+        const data = Array.isArray(response)
+          ? response
+          : (response as { data?: UserSolution[] }).data || [];
+        setSolutions(data);
       } catch (error) {
-        console.error('[ReviewDashboard] Invalid cached solutions', error);
+        console.error('[ReviewDashboard] Solutions unavailable', error);
         setSolutions([]);
+        setSolutionsError('Não foi possível carregar suas soluções.');
+      } finally {
+        setSolutionsLoading(false);
       }
-    } else {
-      setSolutions([]);
-    }
-
-    const cachedPrivacy = localStorage.getItem(`reviewer_privacy_${user.id}`);
-    if (cachedPrivacy) {
-      try {
-        const parsedPrivacy = JSON.parse(cachedPrivacy) as { publicProfile?: boolean };
-        setIsLinkedInVerified(Boolean(parsedPrivacy.publicProfile));
-      } catch (error) {
-        console.error('[ReviewDashboard] Invalid cached privacy settings', error);
-        setIsLinkedInVerified(false);
-      }
-    } else {
-      setIsLinkedInVerified(false);
-    }
+    })();
   }, [user]);
 
   const addSolution = useCallback(
-    (newSolution: UserSolution) => {
+    async (newSolution: UserSolution) => {
       if (!user) return;
-      setSolutions((previousSolutions) => {
-        if (previousSolutions.some((solution) => solution.id === newSolution.id)) {
-          toast.error('Esta solução já está cadastrada.');
-          return previousSolutions;
-        }
-        const updatedSolutions = [...previousSolutions, newSolution];
-        localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updatedSolutions));
-        return updatedSolutions;
-      });
+      try {
+        const response = await reviewerSolutionsApi.create({
+          name: newSolution.name,
+          solution_type: newSolution.type,
+          category: newSolution.category,
+          company_id: newSolution.companyId,
+        });
+        const created = response as UserSolution;
+        setSolutions((previous) =>
+          previous.some((item) => item.id === created.id) ? previous : [...previous, created]
+        );
+        toast.success('Solução adicionada com sucesso!');
+      } catch {
+        toast.error('Não foi possível adicionar solução.');
+      }
     },
     [user]
   );
 
-  const removeSolution = useCallback(
-    (id: string) => {
-      if (!user) return;
-      setSolutions((previousSolutions) => {
-        const updatedSolutions = previousSolutions.filter((solution) => solution.id !== id);
-        localStorage.setItem(`reviewer_solutions_${user.id}`, JSON.stringify(updatedSolutions));
-        return updatedSolutions;
-      });
-    },
-    [user]
-  );
+  const removeSolution = useCallback(async (id: string) => {
+    setRemovingSolutionId(id);
+    try {
+      await reviewerSolutionsApi.remove(id);
+      setSolutions((previous) => previous.filter((solution) => solution.id !== id));
+    } catch {
+      toast.error('Não foi possível remover solução.');
+    } finally {
+      setRemovingSolutionId(null);
+    }
+  }, []);
 
   if (authLoading || isRedirecting) {
     return (
@@ -308,51 +314,18 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     );
   }
 
-  const greenScore = summary?.gamification?.green_score ?? 0;
-  const companyReplies = reviews.filter((r) => r.reply || r.replied_at);
-
-  const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
-  const hasEVSolution = solutions.some(
-    (s) =>
-      s.category.toLowerCase().includes('mobilidade') ||
-      s.category.toLowerCase().includes('bateria')
-  );
-  const solarSolutionsCount = solutions.filter((s) =>
-    s.category.toLowerCase().includes('solar')
-  ).length;
-
-  const hasSolarReview = reviews.some((r) =>
-    (r.category_name || '').toLowerCase().includes('solar')
-  );
-  const hasMobilityReview = reviews.some(
-    (r) =>
-      (r.category_name || '').toLowerCase().includes('mobilidade') ||
-      (r.category_name || '').toLowerCase().includes('elétric')
-  );
-
   // Calcula completude do perfil
-  const baseCompletion = user
-    ? (user.name ? 50 : 0) + (user.email ? 15 : 0) + (user.phone ? 10 : 0)
-    : 75;
-  const locationCompletion = user?.city && user?.state ? 5 : 0;
-  const avatarCompletion = user?.avatar_url ? 10 : 0;
-  const solutionsCompletion = solutions.length > 0 ? Math.min(solutions.length * 5, 10) : 0;
-  const profileCompletion = Math.min(
-    baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion,
-    100
+  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+
+  const achievementStatuses = (summary?.gamification?.achievements ?? []).map(
+    (achievement, index) => ({
+      achievementId: achievement.title || `achievement-${index}`,
+      unlocked: achievement.state !== 'bloqueado',
+      unlockedAt: undefined,
+      progressCurrent: achievement.state !== 'bloqueado' ? 1 : 0,
+      progressTarget: 1,
+    })
   );
-
-  const achievementStatuses = deriveAchievementStatuses({
-    reviewsCount: Math.max(reviews.length, solarSolutionsCount >= 3 ? 3 : 0),
-    profileCompletionPercent: profileCompletion,
-    helpfulVotes: summary?.impact?.helpful_votes ?? 0,
-    greenScore,
-    hasSolarReview: hasSolarReview || hasSolarSolution,
-    hasMobilityReview: hasMobilityReview || hasEVSolution,
-    hasEVSolution,
-    isLinkedInVerified,
-  });
-
   const unlockedBadgeIds = achievementStatuses
     .filter((s) => s.unlocked)
     .map((s) => s.achievementId);
@@ -369,8 +342,11 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         onRefresh: () => fetchDashboardData(true),
         unlockedBadgeIds,
         solutions,
+        solutionsLoading,
+        solutionsError,
         addSolution,
         removeSolution,
+        removingSolutionId,
       }}
     >
       <div className="review-dashboard-enterprise min-h-screen w-full overflow-x-hidden bg-[#F6F7F9] text-slate-950 dark:bg-[#020617]">
@@ -429,8 +405,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             </CommandGroup>
           </CommandList>
         </CommandDialog>
-        
-
       </div>
     </DashboardContext.Provider>
   );

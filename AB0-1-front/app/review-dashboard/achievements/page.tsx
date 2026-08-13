@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
-import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
 import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import { Trophy, Award, Lock, CheckCircle2, Star, Zap } from 'lucide-react';
+import { Trophy, Award, Lock, Zap } from 'lucide-react';
 
 const tabs = [
   { id: 'all', label: 'Todas' },
@@ -21,74 +20,42 @@ const tabs = [
 type TabId = (typeof tabs)[number]['id'];
 
 export default function ConquistasPage() {
-  const { loading, summary, reviews, solutions } = useDashboardContext();
+  const { loading, summary, reviews } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
 
   if (loading) return <DashboardSkeleton variant="page" />;
 
-  const greenScore = summary?.gamification?.green_score ?? 0;
+  const greenScore = summary?.gamification?.green_score;
   const reviewsCount = reviews.length;
-  const solutionsCount = solutions.length;
 
-  const mockAchievements = [
-    {
-      id: 'first_review',
-      title: 'Primeira avaliação',
-      description: 'Publique sua primeira avaliação na plataforma.',
-      xp: 50,
-      unlocked: reviewsCount > 0,
-      icon: Star,
-    },
-    {
-      id: 'conscious_reviewer',
-      title: 'Avaliador consciente',
-      description: 'Publique 5 avaliações sobre soluções sustentáveis.',
-      xp: 150,
-      unlocked: reviewsCount >= 5,
-      icon: Trophy,
-    },
-    {
-      id: 'first_solution',
-      title: 'Primeira solução',
-      description: 'Cadastre sua primeira solução sustentável em uso.',
-      xp: 50,
-      unlocked: solutionsCount > 0,
-      icon: Zap,
-    },
-    {
-      id: 'green_pioneer',
-      title: 'Pioneiro verde',
-      description: 'Alcance 500 pontos no seu Green Score.',
-      xp: 200,
-      unlocked: greenScore >= 500,
-      icon: Award,
-    },
-  ];
+  const achievements = (summary?.gamification?.achievements ?? []).map((a, index) => ({
+    ...a,
+    id: a.title + index,
+    description: a.subtitle,
+    icon: index % 2 ? Trophy : Award,
+  }));
 
-  const filtered = mockAchievements.filter((a) => {
+  const filtered = achievements.filter((a) => {
     if (activeTab === 'unlocked') return a.unlocked;
     if (activeTab === 'locked') return !a.unlocked;
     return true;
   });
 
-  const unlockedCount = mockAchievements.filter((a) => a.unlocked).length;
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   return (
     <div className="space-y-6">
       <ReviewerPageHeader
         title="Conquistas"
-        description="Acompanhe suas conquistas e acumule pontos de experiência (XP)."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Conquistas' },
-        ]}
+        description="Acompanhe conquistas registradas no seu perfil."
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Conquistas' }]}
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
           label="Conquistas"
-          value={`${unlockedCount}/${mockAchievements.length}`}
+          value={`${unlockedCount}/${achievements.length}`}
           caption="Desbloqueadas"
           icon={Trophy}
           iconColor="text-amber-500"
@@ -96,7 +63,7 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="Green Score"
-          value={greenScore}
+          value={summary?.gamification?.green_score ?? 'Indisponível'}
           caption="Pontuação atual"
           icon={Award}
           iconColor="text-green-600"
@@ -105,7 +72,7 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="XP Acumulado"
-          value={unlockedCount * 50}
+          value="Indisponível"
           caption="Pontos de experiência"
           icon={Zap}
           iconColor="text-blue-600"
@@ -113,7 +80,7 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="Próximo nível"
-          value={greenScore >= 500 ? 'Ouro' : 'Prata'}
+          value={greenScore == null ? 'Indisponível' : greenScore >= 500 ? 'Ouro' : 'Prata'}
           caption="Nível de avaliador"
           icon={Lock}
           iconColor="text-slate-500"
@@ -161,10 +128,7 @@ export default function ConquistasPage() {
                     )}
                   >
                     <Icon
-                      className={cn(
-                        'h-6 w-6',
-                        a.unlocked ? 'text-amber-500' : 'text-slate-400'
-                      )}
+                      className={cn('h-6 w-6', a.unlocked ? 'text-amber-500' : 'text-slate-400')}
                     />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -178,7 +142,7 @@ export default function ConquistasPage() {
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-4">{a.description}</p>
                     <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                      +{a.xp} XP
+                      Conquista registrada
                     </span>
                   </div>
                 </div>
@@ -189,7 +153,7 @@ export default function ConquistasPage() {
 
         {/* Rail lateral */}
         <div className="space-y-6">
-          <TipCard title="Como ganhar XP?">
+          <TipCard title="Sobre conquistas">
             Publique avaliações completas, cadastre novas soluções em uso, e faça publicações na
             plataforma para acumular XP e subir de nível.
           </TipCard>
@@ -207,7 +171,7 @@ export default function ConquistasPage() {
               <ChallengeItem
                 title="Eco-líder"
                 description="Alcance 1000 no Green Score."
-                progress={greenScore}
+                progress={greenScore ?? 0}
                 target={1000}
               />
             </div>

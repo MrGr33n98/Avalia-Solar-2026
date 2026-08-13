@@ -83,3 +83,7 @@ docs/observability/*
 .kiro/
 agent/
 
+
+# Review Dashboard audit artifacts
+!docs/review-dashboard/
+!docs/review-dashboard/*.md

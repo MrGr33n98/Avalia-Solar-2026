@@ -4,13 +4,11 @@ import { useState } from 'react';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
-import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
-import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import { Gift, Wallet, ArrowRight, Zap, Star } from 'lucide-react';
+import { Gift, Wallet, Zap } from 'lucide-react';
 
 const tabs = [
   { id: 'all', label: 'Disponíveis' },
@@ -25,56 +23,27 @@ export default function RecompensasPage() {
 
   if (loading) return <DashboardSkeleton variant="page" />;
 
-  const greenScore = summary?.gamification?.green_score ?? 0;
-  // Simular pontos derivados do Green Score (2 pontos por score)
-  const totalPoints = greenScore * 2;
-  const claimedCount = 0;
+  const greenScore = summary?.gamification?.green_score;
+  const totalPoints = null;
+  const claimedCount = null;
 
-  const mockRewards = [
-    {
-      id: 'coupon_30',
-      title: 'Cupom 30% OFF',
-      description: '30% de desconto em consultorias e projetos solares.',
-      points: 150,
-      partner: 'WEG Solar',
-      available: totalPoints >= 150,
-    },
-    {
-      id: 'cashback_50',
-      title: 'Cashback R$ 50',
-      description: 'Cashback em manutenção ou limpeza de painéis.',
-      points: 300,
-      partner: 'Limpe Solar',
-      available: totalPoints >= 300,
-    },
-    {
-      id: 'gift_card_weg',
-      title: 'Gift Card WEG',
-      description: 'Vale-compras WEG de R$ 100.',
-      points: 500,
-      partner: 'WEG',
-      available: totalPoints >= 500,
-    },
-  ];
+  const rewards = [];
 
-  const filtered = activeTab === 'all' ? mockRewards : [];
+  const filtered = activeTab === 'all' ? rewards : [];
 
   return (
     <div className="space-y-6">
       <ReviewerPageHeader
         title="Recompensas"
         description="Troque seus pontos acumulados por cupons, descontos e prêmios."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Recompensas' },
-        ]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Recompensas' }]}
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
           label="Pontos disponíveis"
-          value={totalPoints}
+          value={greenScore == null ? 'Indisponível' : (totalPoints ?? 'Indisponível')}
           caption="Pontos para resgate"
           icon={Zap}
           iconColor="text-amber-500"
@@ -83,7 +52,7 @@ export default function RecompensasPage() {
         />
         <MetricCard
           label="Resgates efetuados"
-          value={claimedCount}
+          value={claimedCount ?? 'Indisponível'}
           caption="Total de prêmios resgatados"
           icon={Gift}
           iconColor="text-green-600"
@@ -91,15 +60,15 @@ export default function RecompensasPage() {
         />
         <MetricCard
           label="Próximo prêmio"
-          value="WEG Solar"
-          caption="Disponível com 150 pontos"
+          value="Indisponível"
+          caption="Ledger de recompensas ainda não disponível"
           icon={Gift}
           iconColor="text-blue-600"
           iconBgColor="bg-blue-50"
         />
         <MetricCard
           label="Pontos expirando"
-          value={0}
+          value="Indisponível"
           caption="Nenhum ponto expira nos próximos 30 dias"
           icon={Wallet}
           iconColor="text-slate-500"
@@ -132,8 +101,8 @@ export default function RecompensasPage() {
           {filtered.length === 0 ? (
             <EmptyStateCard
               icon={Gift}
-              title="Nenhuma recompensa resgatada"
-              description="Quando você acumular pontos e efetuar resgates, eles aparecerão aqui."
+              title="Programa de recompensas em desenvolvimento"
+              description="Resgates e parceiros serão exibidos quando existir um ledger auditável."
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -176,27 +145,6 @@ export default function RecompensasPage() {
             Cada 1 ponto de Green Score equivale a 2 pontos de resgate. Quanto mais avaliações e
             soluções você cadastrar, mais prêmios poderá obter.
           </TipCard>
-
-          {/* Histórico recente */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <SectionHeader title="Histórico de pontos" />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-semibold text-slate-700">Solução verificada</p>
-                  <p className="text-slate-400">Há pouco</p>
-                </div>
-                <span className="font-bold text-green-600">+40 pts</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-semibold text-slate-700">Primeira avaliação</p>
-                  <p className="text-slate-400">1 dia atrás</p>
-                </div>
-                <span className="font-bold text-green-600">+100 pts</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

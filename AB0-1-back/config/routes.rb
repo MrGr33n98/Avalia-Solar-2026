@@ -254,9 +254,16 @@ Rails.application.routes.draw do
       resources :banner_addons, only: %i[index]
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
+      resources :reviewer_solutions, only: %i[index create destroy]
+
 
       namespace :reviewer do
         resource :dashboard, only: [:show], controller: 'dashboard'
+        resource :profile, only: [:show], controller: 'profile'
+        patch :profile, to: 'profile#update'
+        put :profile, to: 'profile#update'
+        post 'profile/avatar', to: 'profile#avatar'
+        delete 'profile/avatar', to: 'profile#remove_avatar'
       end
 
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

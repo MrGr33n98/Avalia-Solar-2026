@@ -5,7 +5,6 @@ import { ProfileSummary } from '@/components/review-dashboard/profile/ProfileSum
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { ActionCard } from '@/components/review-dashboard/cards/ActionCard';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from './DashboardLayoutClient';
@@ -20,12 +19,10 @@ import {
   Activity,
   CheckCircle2,
   CircleDot,
-  ArrowUpRight,
 } from 'lucide-react';
 
 export default function MeuPainelPage() {
-  const { summary, reviews, leads, loading, error, onRefresh, solutions } =
-    useDashboardContext();
+  const { summary, reviews, leads, loading, error, onRefresh, solutions } = useDashboardContext();
 
   if (loading) {
     return <DashboardSkeleton variant="page" />;
@@ -51,14 +48,14 @@ export default function MeuPainelPage() {
     );
   }
 
-  const greenScore = summary?.gamification?.green_score ?? 0;
+  const greenScore = summary?.gamification?.green_score ?? null;
   const reviewsCount = reviews.length;
-  const publicationsCount = 0; // adapter: quando API disponível
+  const publicationsCount = null;
   const inAnalysisCount = reviews.filter(
     (r) => r.status === 'in_analysis' || r.status === 'pending'
   ).length;
   const proposalsCount = summary?.kpis?.quotes_total ?? leads.length;
-  const profileCompletion = summary?.profile?.completion_percent ?? 70;
+  const profileCompletion = summary?.profile?.completion_percent ?? 0;
 
   return (
     <div className="space-y-6">
@@ -84,7 +81,7 @@ export default function MeuPainelPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <MetricCard
           label="Green Score"
-          value={greenScore}
+          value={greenScore ?? 'Indisponível'}
           caption="Calculado por contribuições reais"
           icon={Leaf}
           iconColor="text-green-600"
@@ -101,8 +98,8 @@ export default function MeuPainelPage() {
         />
         <MetricCard
           label="Publicações"
-          value={publicationsCount}
-          caption="Total publicadas"
+          value={publicationsCount ?? 'Indisponível'}
+          caption="Domínio ainda não disponível"
           icon={PenLine}
           iconColor="text-blue-600"
           iconBgColor="bg-blue-50"
@@ -201,14 +198,14 @@ export default function MeuPainelPage() {
           ) : (
             <div className="space-y-3">
               {reviews.slice(0, 3).map((review) => (
-                <div
-                  key={review.id}
-                  className="flex items-start gap-2.5 text-sm"
-                >
+                <div key={review.id} className="flex items-start gap-2.5 text-sm">
                   <Star className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-slate-700 truncate">
-                      Avaliação: {typeof review.company === 'string' ? review.company : review.company?.name || 'Empresa'}
+                      Avaliação:{' '}
+                      {typeof review.company === 'string'
+                        ? review.company
+                        : review.company?.name || 'Empresa'}
                     </p>
                     <p className="text-xs text-slate-400">
                       {new Date(review.created_at).toLocaleDateString('pt-BR')}
@@ -265,14 +262,8 @@ function AchievementItem({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div
-        className={`rounded-xl p-2 shrink-0 ${
-          unlocked ? 'bg-green-50' : 'bg-slate-50'
-        }`}
-      >
-        <Trophy
-          className={`h-4 w-4 ${unlocked ? 'text-green-600' : 'text-slate-400'}`}
-        />
+      <div className={`rounded-xl p-2 shrink-0 ${unlocked ? 'bg-green-50' : 'bg-slate-50'}`}>
+        <Trophy className={`h-4 w-4 ${unlocked ? 'text-green-600' : 'text-slate-400'}`} />
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-slate-800">{title}</p>

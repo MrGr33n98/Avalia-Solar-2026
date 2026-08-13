@@ -19,6 +19,8 @@ class User < ApplicationRecord
   has_many :subscription_plans, foreign_key: :member_id, inverse_of: :member, dependent: :nullify
   has_many :sponsored_plans, foreign_key: :member_id, inverse_of: :member, dependent: :nullify
   has_many :reviews, dependent: :destroy
+  has_many :reviewer_solutions, dependent: :destroy
+  has_one :reviewer_profile, dependent: :destroy
   has_many :analytics_events, dependent: :destroy
   # By implementing this feature, users will be able to conveniently
   # associate and access all notifications directed towards them.
@@ -172,56 +174,28 @@ class User < ApplicationRecord
 
   # Gamification
   def calculate_green_score
-    base_score = 520
-    reviews_count = reviews.count
-    helpful_votes = reviews.sum(:helpful_count)
-    replies_count = reviews.where.not(reply: nil).where(reply_deleted_at: nil).count
-
-    base_score + (reviews_count * 35) + (helpful_votes * 2) + (replies_count * 18)
+    Reviewer::GreenScoreService.new(user: self).call[:score]
+  rescue StandardError => e
+    Rails.logger.error("[GreenScore] unavailable user=#{id}: #{e.class}: #{e.message}")
+    nil
   end
 
   def regional_ranking
-    return 1 if city.blank? || state.blank?
+    return nil if city.blank? || state.blank?
 
     Rails.cache.fetch("user:#{id}:regional_ranking:#{calculate_green_score}", expires_in: 30.minutes) do
       users_in_region = User.where(city: city, state: state, role: 'review')
-      if users_in_region.count <= 1
-        1
-      else
-        my_score = calculate_green_score
-        better_users = users_in_region.select { |u| u.calculate_green_score > my_score }.count
-        better_users + 1
-      end
+      my_score = calculate_green_score
+      next nil if my_score.nil?
+      users_in_region.count <= 1 ? 1 : users_in_region.select { |u| (u.calculate_green_score || -1) > my_score }.count + 1
     end
-  rescue StandardError
-    score = calculate_green_score
-    [1, 12 - (score / 120).floor].max
+  rescue StandardError => e
+    Rails.logger.error("[GreenScore] ranking unavailable user=#{id}: #{e.class}: #{e.message}")
+    nil
   end
 
   def achievements
-    score = calculate_green_score
-    count = reviews.count
-
-    list = [
-      { title: 'Primeira Avaliação', subtitle: 'Parabéns', state: count >= 1 ? 'desbloqueado' : 'bloqueado' },
-      { title: '5 Avaliações', subtitle: 'Consistência', state: count >= 5 ? 'raro' : 'bloqueado' },
-      { title: '10 Avaliações', subtitle: 'Incrível', state: count >= 10 ? 'premium' : 'bloqueado' },
-      { title: 'Solar Expert', subtitle: 'Energia Solar', state: count >= 3 ? 'lendário' : 'bloqueado' },
-      { title: 'Green House', subtitle: 'Sustentável', state: score >= 650 ? 'desbloqueado' : 'bloqueado' }
-    ]
-
-    user_leads = Lead.where(email: email)
-    has_ev = user_leads.where(
-      'LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ? OR LOWER(product_vertical) LIKE ?', '%car%', '%ev%', '%mobil%'
-    ).exists?
-    has_battery = user_leads.where('LOWER(product_vertical) LIKE ?', '%bater%').exists?
-
-    list << { title: 'EV Driver', subtitle: 'Mobilidade', state: has_ev ? 'premium' : 'bloqueado' }
-    list << { title: 'Energy Storage', subtitle: 'Armazenamento', state: has_battery ? 'lendário' : 'bloqueado' }
-    list << { title: 'Top Avaliador', subtitle: city.presence || 'Brasil',
-              state: regional_ranking <= 5 ? 'raro' : 'bloqueado' }
-
-    list
+    Reviewer::AchievementService.new(user: self).call
   end
 
   # Envia notificações do Devise de forma assíncrona (TASK-014)

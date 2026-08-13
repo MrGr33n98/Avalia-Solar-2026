@@ -65,16 +65,10 @@ module Api
         # Charts Data - Real activity data from AnalyticsEvent
         chart_data = safe_activity_chart(start_date: start_date, end_date: end_date)
 
-        # Profile Completion
-        missing_fields = []
-        missing_fields << 'avatar' unless avatar_attached?
-        missing_fields << 'city' if current_user.city.blank?
-        missing_fields << 'state' if current_user.state.blank?
-
-        completion_percent = 100
-        completion_percent -= 20 unless avatar_attached?
-        completion_percent -= 20 if current_user.city.blank?
-        completion_percent -= 10 if current_user.state.blank?
+        # Profile Completion — fonte única do domínio Reviewer
+        profile_completion = Reviewer::ProfileCompletionService.new(user: current_user).call
+        completion_percent = profile_completion[:percent]
+        missing_fields = profile_completion[:missing_fields]
 
         # Sustainable Journey
         has_ev = user_leads.where(
@@ -147,13 +141,14 @@ module Api
           },
           profile: {
             completion_percent: completion_percent,
-            missing_fields: missing_fields
+            missing_fields: missing_fields,
+            items: profile_completion[:items]
           },
           sustainable_journey: sustainable_journey
         }
       rescue StandardError => e
         Rails.logger.error("[ReviewDashboard] summary failed user=#{current_user&.id}: #{e.class} #{e.message}")
-        render json: fallback_summary, status: :ok
+        render json: { error: 'Não foi possível carregar o resumo do dashboard.', code: 'review_dashboard_summary_unavailable' }, status: :service_unavailable
       end
 
       private
@@ -200,47 +195,6 @@ module Api
         false
       end
 
-      def fallback_summary
-        {
-          kpis: {
-            quotes_total: 0,
-            quotes_open: 0,
-            quotes_replied: 0,
-            reviews_published: 0
-          },
-          gamification: {
-            green_score: 520,
-            regional_ranking: 1,
-            achievements: []
-          },
-          impact: {
-            helpful_votes: 0,
-            impacted_people: 0
-          },
-          recommendations: [],
-          recent_activities: [],
-          charts: {
-            activity_30d: empty_activity_chart(
-              start_date: 30.days.ago.beginning_of_day,
-              end_date: Time.current
-            )
-          },
-          profile: {
-            completion_percent: 0,
-            missing_fields: %w[avatar city state]
-          },
-          sustainable_journey: [
-            { id: 'solar', title: 'Energia Solar', state: 'Não iniciado', progress: 0,
-              details: ['Sem avaliações ainda'] },
-            { id: 'mobility', title: 'Mobilidade Elétrica', state: 'Não iniciado', progress: 0,
-              details: ['Sem propostas na área'] },
-            { id: 'battery', title: 'Bateria / Armazenamento', state: 'Não iniciado', progress: 0,
-              details: ['Sem propostas na área'] },
-            { id: 'consumption', title: 'Consumo Consciente', state: 'Não iniciado', progress: 0,
-              details: ['Perfil 0% preenchido'] }
-          ]
-        }
-      end
     end
   end
 end

@@ -53,7 +53,8 @@ module Reviewer
       missing_fields << 'city' if @user.city.blank?
       missing_fields << 'state' if @user.state.blank?
 
-      { completion_percent: 100 - (missing_fields.size * 20), missing_fields: missing_fields }
+      completion = Reviewer::ProfileCompletionService.new(user: @user).call
+      { completion_percent: completion[:percent], missing_fields: completion[:missing_fields], items: completion[:items] }
     end
 
     def next_best_action(reviews)

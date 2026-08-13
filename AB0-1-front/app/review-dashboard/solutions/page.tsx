@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { AddUserSolutionModal } from '@/components/profile/AddUserSolutionModal';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
-import { FilterBar } from '@/components/review-dashboard/FilterBar';
 import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
@@ -17,7 +17,6 @@ import {
   Battery,
   Leaf,
   Plus,
-  ArrowRight,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -31,10 +30,11 @@ const tabs = [
 type TabId = (typeof tabs)[number]['id'];
 
 export default function SolucoesPage() {
-  const { loading, solutions, addSolution, removeSolution } = useDashboardContext();
+  const { loading, solutions, solutionsLoading, solutionsError, addSolution, removeSolution, removingSolutionId } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
+  const [modalOpen, setModalOpen] = useState(false);
 
-  if (loading) return <DashboardSkeleton variant="page" />;
+  if (loading || solutionsLoading) return <DashboardSkeleton variant="page" />;
 
   const filtered =
     activeTab === 'all'
@@ -45,6 +45,7 @@ export default function SolucoesPage() {
 
   return (
     <div className="space-y-6">
+      <AddUserSolutionModal open={modalOpen} onOpenChange={setModalOpen} onAdd={addSolution} />
       <ReviewerPageHeader
         title="Soluções que uso"
         description="Cadastre as soluções de energia sustentável que você utiliza."
@@ -53,7 +54,7 @@ export default function SolucoesPage() {
           { label: 'Soluções que uso' },
         ]}
         action={
-          <button className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors">
+          <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors">
             <Plus className="h-4 w-4" />
             Adicionar solução
           </button>
@@ -70,8 +71,7 @@ export default function SolucoesPage() {
             Suas soluções impactam o futuro!
           </p>
           <p className="mt-0.5 text-xs text-green-700">
-            Cada solução cadastrada aumenta seu Green Score e ajuda outras pessoas a tomarem
-            decisões informadas sobre energia sustentável.
+            Cadastre soluções que você realmente utiliza. Elas poderão ser revisadas pela equipe.
           </p>
         </div>
       </div>
@@ -101,9 +101,9 @@ export default function SolucoesPage() {
           iconBgColor="bg-blue-50"
         />
         <MetricCard
-          label="Green Score boost"
-          value={`+${solutions.length * 20}`}
-          caption="Pontos extra por soluções"
+          label="Status de verificação"
+          value={solutions.length > 0 ? 'Em análise' : 'Sem dados'}
+          caption="Nenhuma pontuação é estimada localmente"
           icon={Leaf}
           iconColor="text-green-600"
           iconBgColor="bg-green-50"
@@ -137,12 +137,14 @@ export default function SolucoesPage() {
             ))}
           </div>
 
-          {/* Solutions */}
+          {solutionsError && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{solutionsError}</div>}
+
+      {/* Solutions */}
           {filtered.length === 0 ? (
             <EmptyStateCard
               icon={Zap}
               title="Nenhuma solução cadastrada"
-              description="Adicione as soluções de energia sustentável que você utiliza. Painéis solares, baterias, veículos elétricos e muito mais."
+              description="Adicione uma solução real que você utiliza."
               ctaLabel="Adicionar primeira solução"
             />
           ) : (
@@ -165,14 +167,14 @@ export default function SolucoesPage() {
                       </div>
                       <p className="mt-1 text-xs text-slate-500">
                         Adicionado em{' '}
-                        {new Date().toLocaleDateString('pt-BR')}
+                        {solution.created_at ? new Date(solution.created_at).toLocaleDateString('pt-BR') : 'Data indisponível'}
                       </p>
                     </div>
                     <button
-                      onClick={() => removeSolution(solution.id)}
+                      onClick={() => { if (window.confirm('Remover esta solução?')) void removeSolution(solution.id); }} disabled={removingSolutionId === solution.id}
                       className="shrink-0 text-xs text-slate-400 hover:text-red-500 transition-colors"
                     >
-                      Remover
+                      {removingSolutionId === solution.id ? 'Removendo...' : 'Remover'}
                     </button>
                   </div>
                 </div>

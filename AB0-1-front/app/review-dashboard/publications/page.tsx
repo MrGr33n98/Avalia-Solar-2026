@@ -45,10 +45,10 @@ export default function PublicacoesPage() {
           { label: 'Publicações' },
         ]}
         action={
-          <button className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors">
+          <a href="/conteudo" className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors">
             <Plus className="h-4 w-4" />
-            Nova publicação
-          </button>
+            Ver conteúdos
+          </a>
         }
       />
 
@@ -56,7 +56,7 @@ export default function PublicacoesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
           label="Publicações"
-          value={0}
+          value="Indisponível"
           caption="Total publicadas"
           icon={PenLine}
           iconColor="text-blue-600"
@@ -64,7 +64,7 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Visualizações"
-          value={0}
+          value="Indisponível"
           caption="Total de views"
           icon={Eye}
           iconColor="text-purple-600"
@@ -72,7 +72,7 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Curtidas"
-          value={0}
+          value="Indisponível"
           caption="Reações recebidas"
           icon={Heart}
           iconColor="text-pink-600"
@@ -80,7 +80,7 @@ export default function PublicacoesPage() {
         />
         <MetricCard
           label="Rascunhos"
-          value={0}
+          value="Indisponível"
           caption="Aguardando publicação"
           icon={FileText}
           iconColor="text-amber-600"
@@ -119,9 +119,9 @@ export default function PublicacoesPage() {
           {/* Empty state */}
           <EmptyStateCard
             icon={PenLine}
-            title="Nenhuma publicação ainda"
-            description="Compartilhe sua experiência com energia solar. Publique dicas, relatos e tutoriais para ajudar a comunidade."
-            ctaLabel="Criar publicação"
+            title="Publicações em breve"
+            description="O módulo de publicações ainda não está disponível para este perfil."
+
           />
         </div>
 

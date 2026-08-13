@@ -8,7 +8,7 @@ import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCa
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import { User, Shield, Bell, Lock, Globe, Trash2, Save } from 'lucide-react';
+import { User, Shield, Bell, Lock, Globe } from 'lucide-react';
 
 const tabs = [
   { id: 'profile', label: 'Perfil e conta', icon: User },
@@ -109,9 +109,13 @@ export default function ConfiguraçõesPage() {
                   Ao excluir sua conta, todos os seus dados, avaliações e conquistas serão removidos
                   permanentemente. Esta ação não pode ser desfeita.
                 </p>
-                <button className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
-                  <Trash2 className="h-4 w-4" />
-                  Excluir minha conta
+                <button
+                  type="button"
+                  disabled
+                  title="Exclusão de conta ainda não disponível"
+                  className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-500"
+                >
+                  Excluir minha conta (em breve)
                 </button>
               </div>
             </div>

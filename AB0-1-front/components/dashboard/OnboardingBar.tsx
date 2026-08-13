@@ -11,7 +11,7 @@ interface OnboardingBarProps {
 }
 
 export function OnboardingBar({
-  profileCompletion = 75,
+  profileCompletion = 0,
   reviewsCount = 0,
 }: OnboardingBarProps) {
   const { user } = useAuth();
@@ -34,8 +34,8 @@ export function OnboardingBar({
     },
     {
       label: 'Verificar conta',
-      done: false, // mock
-      href: '#',
+      done: false,
+      href: '/review-dashboard/profile',
     },
   ];
 

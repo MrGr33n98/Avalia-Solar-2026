@@ -28,13 +28,13 @@ function initialsFromName(name: string) {
 
 interface ReviewerProfileCardProps {
   profileCompletion?: number;
-  greenScore?: number;
+  greenScore?: number | null;
   unlockedBadgeIds?: string[];
 }
 
 export function ReviewerProfileCard({
-  profileCompletion = 75,
-  greenScore = 520,
+  profileCompletion = 0,
+  greenScore = null,
   unlockedBadgeIds = [],
 }: ReviewerProfileCardProps) {
   const { user } = useAuth();

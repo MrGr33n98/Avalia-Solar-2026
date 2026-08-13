@@ -9,7 +9,6 @@ import { useDashboardContext } from '../DashboardLayoutClient';
 import {
   HelpCircle,
   BookOpen,
-  MessageCircle,
   Video,
   FileText,
   Search,

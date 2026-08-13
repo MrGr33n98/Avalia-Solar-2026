@@ -41,6 +41,11 @@ class Rack::Attack
     end
   end
 
+  # Reviewer solution mutations: impede spam de cadastros por IP.
+  throttle('reviewer_solutions/create/ip', limit: 20, period: 1.minute) do |req|
+    req.ip if req.path == '/api/v1/reviewer_solutions' && req.post?
+  end
+
   # === Existing Rules ===
 
   # MCP tool gateway: protects public discovery tools and authenticated GTM flows.

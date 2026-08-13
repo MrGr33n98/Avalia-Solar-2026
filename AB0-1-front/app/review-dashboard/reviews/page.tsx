@@ -13,9 +13,6 @@ import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import {
   Star,
-  FileText,
-  Heart,
-  Bookmark,
   Clock,
   Building2,
   ThumbsUp,
@@ -23,12 +20,7 @@ import {
   Plus,
 } from 'lucide-react';
 
-const tabs = [
-  { id: 'all', label: 'Minhas avaliações', icon: Star },
-  { id: 'drafts', label: 'Rascunhos', icon: FileText },
-  { id: 'likes', label: 'Curtidas', icon: Heart },
-  { id: 'saved', label: 'Favoritas', icon: Bookmark },
-] as const;
+const tabs = [{ id: 'all', label: 'Minhas avaliações', icon: Star }] as const;
 
 type TabId = (typeof tabs)[number]['id'];
 
@@ -36,6 +28,7 @@ export default function AvaliacoesPage() {
   const { reviews, loading, summary } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [search, setSearch] = useState('');
+  const [expandedReviewId, setExpandedReviewId] = useState<number | null>(null);
 
   if (loading) return <DashboardSkeleton variant="page" />;
 
@@ -46,12 +39,7 @@ export default function AvaliacoesPage() {
   ).length;
   const helpfulVotes = summary?.impact?.helpful_votes ?? 0;
 
-  const filteredReviews =
-    activeTab === 'all'
-      ? reviews
-      : activeTab === 'drafts'
-        ? reviews.filter((r) => r.status === 'draft')
-        : [];
+  const filteredReviews = reviews;
 
   const searchedReviews = search
     ? filteredReviews.filter(
@@ -206,10 +194,16 @@ export default function AvaliacoesPage() {
                         )}
                       </div>
                     </div>
-                    <button className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                      Ver detalhes
+                    <button type="button" onClick={() => setExpandedReviewId(expandedReviewId === review.id ? null : review.id)} className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                      {expandedReviewId === review.id ? 'Ocultar detalhes' : 'Ver detalhes'}
                     </button>
                   </div>
+                  {expandedReviewId === review.id && (
+                    <div className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-600">
+                      <p>{review.comment || 'Sem comentário registrado.'}</p>
+                      {review.reply && <p className="mt-2 rounded-lg bg-slate-50 p-3"><strong>Resposta da empresa:</strong> {review.reply}</p>}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,20 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
-import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
+import { useNotificationStore } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
-import { Bell, CheckSquare, BellOff, ArrowRight, MessageSquare, Trophy, Shield } from 'lucide-react';
+import { Bell, CheckSquare, BellOff, ArrowRight, Shield } from 'lucide-react';
 
 const tabs = [
-  { id: 'all', label: 'Todas', badge: 3 },
-  { id: 'unread', label: 'Não lidas', badge: 2 },
+  { id: 'all', label: 'Todas' },
+  { id: 'unread', label: 'Não lidas' },
   { id: 'system', label: 'Sistema' },
   { id: 'replies', label: 'Respostas' },
 ] as const;
@@ -24,63 +24,28 @@ type TabId = (typeof tabs)[number]['id'];
 export default function NotificacoesPage() {
   const { loading } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
+  const { notifications, unreadCount, fetchNotifications, markAllAsRead } = useNotificationStore();
+
+  useEffect(() => {
+    fetchNotifications(
+      activeTab === 'replies' ? 'reviews' : activeTab === 'all' ? 'all' : activeTab
+    );
+  }, [activeTab, fetchNotifications]);
 
   if (loading) return <DashboardSkeleton variant="page" />;
-
-  const mockNotifications = [
-    {
-      id: 'n1',
-      title: 'Nova resposta na sua avaliação',
-      description: 'A empresa WEG Solar respondeu ao seu comentário na página deles.',
-      time: 'Há 10 minutos',
-      unread: true,
-      category: 'replies',
-      icon: MessageSquare,
-      iconBg: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-    },
-    {
-      id: 'n2',
-      title: 'Solução verificada com sucesso!',
-      description: 'Sua solução de painel solar fotovoltaico foi validada pela equipe técnica.',
-      time: 'Há 2 horas',
-      unread: true,
-      category: 'system',
-      icon: Shield,
-      iconBg: 'bg-green-50',
-      iconColor: 'text-green-600',
-    },
-    {
-      id: 'n3',
-      title: 'Nova conquista desbloqueada!',
-      description: 'Parabéns! Você desbloqueou a conquista "Primeira avaliação".',
-      time: '1 dia atrás',
-      unread: false,
-      category: 'system',
-      icon: Trophy,
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-    },
-  ];
-
-  const filtered = mockNotifications.filter((n) => {
-    if (activeTab === 'unread') return n.unread;
-    if (activeTab === 'system') return n.category === 'system';
-    if (activeTab === 'replies') return n.category === 'replies';
-    return true;
-  });
+  const filtered = notifications;
 
   return (
     <div className="space-y-6">
       <ReviewerPageHeader
         title="Notificações"
         description="Fique por dentro de tudo o que acontece na plataforma Avalia Solar."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Notificações' },
-        ]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Notificações' }]}
         action={
-          <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+          <button
+            onClick={() => markAllAsRead()}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
             <CheckSquare className="h-4 w-4" />
             Marcar todas como lidas
           </button>
@@ -91,7 +56,7 @@ export default function NotificacoesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
           label="Notificações"
-          value={mockNotifications.length}
+          value={notifications.length}
           caption="Total recebido"
           icon={Bell}
           iconColor="text-slate-500"
@@ -99,7 +64,7 @@ export default function NotificacoesPage() {
         />
         <MetricCard
           label="Não lidas"
-          value={mockNotifications.filter((n) => n.unread).length}
+          value={unreadCount}
           caption="Aguardando leitura"
           icon={Bell}
           iconColor="text-blue-600"
@@ -108,7 +73,7 @@ export default function NotificacoesPage() {
         />
         <MetricCard
           label="Lidas"
-          value={mockNotifications.filter((n) => !n.unread).length}
+          value={notifications.filter((n) => n.read).length}
           caption="Histórico de leitura"
           icon={CheckSquare}
           iconColor="text-green-600"
@@ -141,11 +106,6 @@ export default function NotificacoesPage() {
                 )}
               >
                 {tab.label}
-                {(tab as any).badge && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                    {(tab as any).badge}
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -160,13 +120,13 @@ export default function NotificacoesPage() {
           ) : (
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100">
               {filtered.map((n) => {
-                const Icon = n.icon;
+                const Icon = Bell;
                 return (
                   <div
                     key={n.id}
                     className={cn(
                       'p-4 flex items-start gap-4 transition-colors',
-                      n.unread ? 'bg-blue-50/10' : 'bg-white'
+                      !n.read ? 'bg-blue-50/10' : 'bg-white'
                     )}
                   >
                     {/* Unread indicator */}
@@ -174,24 +134,27 @@ export default function NotificacoesPage() {
                       <span
                         className={cn(
                           'block h-2 w-2 rounded-full',
-                          n.unread ? 'bg-blue-600 animate-pulse' : 'bg-transparent'
+                          !n.read ? 'bg-blue-600 animate-pulse' : 'bg-transparent'
                         )}
                       />
                     </div>
 
-                    <div className={cn('rounded-xl p-2.5 shrink-0', n.iconBg)}>
-                      <Icon className={cn('h-5 w-5', n.iconColor)} />
+                    <div className={cn('rounded-xl p-2.5 shrink-0', 'bg-blue-50')}>
+                      <Icon className={cn('h-5 w-5', 'text-blue-600')} />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-slate-900 leading-5">{n.title}</p>
-                      <p className="mt-0.5 text-xs text-slate-500 leading-4">{n.description}</p>
+                      <p className="mt-0.5 text-xs text-slate-500 leading-4">{n.body}</p>
                       <span className="mt-1.5 inline-block text-[11px] text-slate-400">
-                        {n.time}
+                        {new Date(n.created_at).toLocaleString('pt-BR')}
                       </span>
                     </div>
 
-                    <button className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                    <button
+                      onClick={() => !n.read && useNotificationStore.getState().markAsRead(n.id)}
+                      className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                    >
                       Ver detalhe
                     </button>
                   </div>
@@ -212,15 +175,27 @@ export default function NotificacoesPage() {
             <SectionHeader title="Notificações por e-mail" />
             <div className="space-y-3">
               <label className="flex items-center gap-3 text-xs text-slate-600">
-                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
                 Respostas de empresas
               </label>
               <label className="flex items-center gap-3 text-xs text-slate-600">
-                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
                 Novas conquistas
               </label>
               <label className="flex items-center gap-3 text-xs text-slate-600">
-                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
                 Atualizações de sistema
               </label>
             </div>

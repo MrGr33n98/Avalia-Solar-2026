@@ -2,7 +2,6 @@
 
 import { ReactNode, useMemo, useState } from 'react';
 import { AchievementsStrip } from '@/components/achievements/AchievementsStrip';
-import { deriveAchievementStatuses } from '@/config/achievements';
 import Link from 'next/link';
 import {
   Accordion,
@@ -58,7 +57,6 @@ import {
   Flame,
   Leaf,
   Lock,
-  MapPin,
   MessageCircle,
   MoreHorizontal,
   Recycle,
@@ -72,7 +70,6 @@ import {
   ThumbsUp,
   Trash2,
   Trophy,
-  Users,
   Laptop,
   Gift,
   UserRound,
@@ -89,7 +86,6 @@ import { cn } from '@/lib/utils';
 import { type ReviewDashboardSummary } from '../DashboardLayoutClient';
 import { UserSolutionChip, type UserSolution } from '@/components/profile/UserSolutionChip';
 import { AddUserSolutionModal } from '@/components/profile/AddUserSolutionModal';
-import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 import { useDashboardContext } from '../DashboardLayoutClient';
 
 interface ReputationDashboardProps {
@@ -123,23 +119,6 @@ interface CompanyRow {
   reply?: string;
 }
 
-type ReviewDashboardTab =
-  | 'overview'
-  | 'companies'
-  | 'reviews'
-  | 'proposals'
-  | 'reputation'
-  | 'profile';
-
-type ReviewKpi = {
-  label: string;
-  value: string;
-  suffix: string;
-  helper: string;
-  icon: LucideIcon;
-  iconClass: string;
-};
-
 function initialsFromName(name?: unknown) {
   const str = typeof name === 'string' ? name.trim() : String(name || '').trim();
   const safeName = str || 'Usuário';
@@ -155,14 +134,6 @@ function formatDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Hoje';
   return date.toLocaleDateString('pt-BR');
-}
-
-function formatMonthYear(value?: string) {
-  if (!value) return 'Jun/2024';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Jun/2024';
-  const month = date.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
-  return `${month.charAt(0).toUpperCase()}${month.slice(1)}/${date.getFullYear()}`;
 }
 
 function isRecent(value?: string) {
@@ -193,9 +164,15 @@ function getCompanyInfo(review: Review) {
 
 function getLeadCompanyName(lead: Lead) {
   if (typeof lead.company === 'string' && lead.company.trim()) return lead.company;
-  if (lead.company && typeof lead.company === 'object' && typeof lead.company.name === 'string' && lead.company.name.trim())
+  if (
+    lead.company &&
+    typeof lead.company === 'object' &&
+    typeof lead.company.name === 'string' &&
+    lead.company.name.trim()
+  )
     return lead.company.name;
-  if (lead.company_obj?.name && typeof lead.company_obj.name === 'string') return lead.company_obj.name;
+  if (lead.company_obj?.name && typeof lead.company_obj.name === 'string')
+    return lead.company_obj.name;
   return 'Empresa recomendada';
 }
 
@@ -350,13 +327,11 @@ export function ReputationDashboard({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [categoryFilter, setCategoryFilter] = useState('todos');
-  const [activeTab, setActiveTab] = useState<ReviewDashboardTab>('overview');
   const profileUser = user as User & { city?: string; state?: string; avatar_url?: string };
-  const { solutions, addSolution, removeSolution, unlockedBadgeIds } = useDashboardContext();
+  const { solutions, addSolution, removeSolution } = useDashboardContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const rows = useMemo(() => buildCompanyRows(reviews, leads), [reviews, leads]);
-  const monthlyReviews = reviews.filter((review) => isRecent(review.created_at)).length;
   const commentsCount = reviews.filter(
     (review) => review.comment || review.headline || review.buyer_tip
   ).length;
@@ -365,119 +340,32 @@ export function ReputationDashboard({
   const helpfulVotes = summary?.impact?.helpful_votes ?? null;
   const impactedPeople = summary?.impact?.impacted_people ?? null;
   const greenScore = summary?.gamification?.green_score ?? null;
-  const rankingPosition = summary?.gamification?.regional_ranking ?? null;
   const recommendationsList = summary?.recommendations || [];
   const recentActivitiesList = summary?.recent_activities || [];
 
   const companyReplies = rows.filter((row) => row.reply || row.status.includes('Respond'));
-  const profileViews = summary?.charts?.activity_30d?.reduce(
-    (total, point) => total + (point.profile_views ?? 0),
-    0
-  ) ?? null;
-  const responseRate = reviews.length > 0 ? Math.round((companyReplies.length / reviews.length) * 100) : null;
-
-  const hasSolarSolution = solutions.some((s) => s.category.toLowerCase().includes('solar'));
-  const hasEVSolution = solutions.some((s) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
-  const solarSolutionsCount = solutions.filter((s) => s.category.toLowerCase().includes('solar')).length;
+  const profileViews =
+    summary?.charts?.activity_30d?.reduce(
+      (total, point) => total + (point.profile_views ?? 0),
+      0
+    ) ?? null;
+  const responseRate =
+    reviews.length > 0 ? Math.round((companyReplies.length / reviews.length) * 100) : null;
 
   const hasSolarReview = reviews.some((r) =>
     (r.category_name || '').toLowerCase().includes('solar')
   );
-  const hasMobilityReview = reviews.some(
-    (r) =>
-      (r.category_name || '').toLowerCase().includes('mobilidade') ||
-      (r.category_name || '').toLowerCase().includes('elétric')
+  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+
+  const achievementStatuses = (summary?.gamification?.achievements ?? []).map(
+    (achievement, index) => ({
+      achievementId: achievement.title || `achievement-${index}`,
+      unlocked: achievement.state !== 'bloqueado',
+      unlockedAt: undefined,
+      progressCurrent: achievement.state !== 'bloqueado' ? 1 : 0,
+      progressTarget: 1,
+    })
   );
-
-  const baseCompletion = profileUser ? ((profileUser.name ? 50 : 0) + (profileUser.email ? 15 : 0) + (profileUser.phone ? 10 : 0)) : 75;
-  const locationCompletion = profileUser?.city && profileUser?.state ? 5 : 0;
-  const avatarCompletion = profileUser?.avatar_url ? 10 : 0;
-  const solutionsCompletion = solutions.length > 0 ? Math.min(solutions.length * 5, 10) : 0;
-  const profileCompletion = Math.min(baseCompletion + locationCompletion + avatarCompletion + solutionsCompletion, 100);
-
-  const isLinkedInVerified = summary?.gamification?.achievements?.some((a) => a.title === 'Cliente Verificado' && a.state !== 'bloqueado') ?? false;
-
-  const achievementStatuses = deriveAchievementStatuses({
-    reviewsCount: Math.max(reviews.length, solarSolutionsCount >= 3 ? 3 : 0),
-    profileCompletionPercent: profileCompletion,
-    helpfulVotes,
-    greenScore,
-    hasSolarReview: hasSolarReview || hasSolarSolution,
-    hasMobilityReview: hasMobilityReview || hasEVSolution,
-    hasEVSolution,
-    isLinkedInVerified,
-  });
-
-  const userLocation = [profileUser.city, profileUser.state].filter(Boolean).join(', ') || 'Brasil';
-
-  const safeGreenScore = greenScore ?? 0;
-  const safeHelpfulVotes = helpfulVotes ?? 0;
-  const safeImpactedPeople = impactedPeople ?? 0;
-  const safeRankingPosition = rankingPosition ?? null;
-
-  const kpis = [
-    {
-      label: 'Green Score',
-      value: greenScore === null ? '—' : `${safeGreenScore}`,
-      suffix: 'score',
-      helper:
-        greenScore === null
-          ? 'dados indisponíveis'
-          : safeGreenScore >= 760
-            ? 'Eco Expert'
-            : safeGreenScore >= 650
-              ? 'Green Pro'
-              : 'Em evolução',
-      icon: Leaf,
-      iconClass: 'bg-green-100 text-green-700',
-    },
-    {
-      label: 'Avaliações',
-      value: `${reviews.length}`,
-      suffix: 'total',
-      helper: monthlyReviews > 0 ? `+${monthlyReviews} recentes` : 'registradas',
-      icon: Star,
-      iconClass: 'bg-amber-100 text-amber-700',
-    },
-    {
-      label: 'Votos úteis',
-      value: helpfulVotes === null ? '—' : `${safeHelpfulVotes}`,
-      suffix: 'votos',
-      helper: 'recebidos',
-      icon: ThumbsUp,
-      iconClass: 'bg-orange-100 text-orange-700',
-    },
-    {
-      label: 'Impactados',
-      value: impactedPeople === null ? '—' : safeImpactedPeople.toLocaleString('pt-BR'),
-      suffix: 'pessoas',
-      helper: 'pessoas',
-      icon: Users,
-      iconClass: 'bg-rose-100 text-rose-700',
-    },
-    {
-      label: 'Comentários',
-      value: `${commentsCount}`,
-      suffix: 'feitos',
-      helper: safeRankingPosition === null ? 'ranking indisponível' : `ranking ${safeRankingPosition}º`,
-      icon: MessageCircle,
-      iconClass: 'bg-blue-100 text-blue-700',
-    },
-  ];
-
-  const categories = Array.from(
-    new Set(
-      rows
-        .map((row) => (typeof row.category === 'string' ? row.category.trim() : ''))
-        .filter(Boolean)
-    )
-  );
-  const filteredRows = rows.filter((row) => {
-    const matchesSearch = row.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'todos' || row.status === statusFilter;
-    const matchesCategory = categoryFilter === 'todos' || row.category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
 
   const recommendations = recommendationsList;
 
@@ -503,7 +391,10 @@ export function ReputationDashboard({
   };
 
   const sustainableItems = (summary?.sustainable_journey || []).map((item) => {
-    const meta = sustainableJourneyIcons[item.id] || { icon: Sun, tone: 'bg-slate-100 text-slate-700' };
+    const meta = sustainableJourneyIcons[item.id] || {
+      icon: Sun,
+      tone: 'bg-slate-100 text-slate-700',
+    };
     return {
       id: item.id,
       title: item.title,
@@ -560,42 +451,6 @@ export function ReputationDashboard({
     />
   );
 
-  const renderReputation = () => (
-    <div className="space-y-4 md:space-y-6">
-      <GreenScoreCompact greenScore={greenScore} rankingPosition={rankingPosition} />
-      <SustainableJourney items={sustainableItems} />
-      <AchievementsStrip statuses={achievementStatuses} />
-      <ActivityFeed events={activityEvents} />
-      <GreenHouseCertification greenScore={greenScore} />
-    </div>
-  );
-
-  const renderMobileTabContent = () => {
-    if (activeTab === 'companies') return renderCompanies();
-    if (activeTab === 'reviews') return renderReviews();
-    if (activeTab === 'proposals') return renderProposals();
-    if (activeTab === 'reputation') return renderReputation();
-    if (activeTab === 'profile') {
-      return (
-        <ProfileSummaryPanel
-          user={profileUser}
-          greenScore={greenScore}
-          profileCompletion={profileCompletion}
-          location={userLocation}
-        />
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {renderCompanies()}
-        {renderProposals()}
-        {renderImpact()}
-        <AiRecommendations recommendations={recommendations} />
-      </div>
-    );
-  };
-
   return (
     <div className="flex w-full flex-col gap-4 pb-20 pt-3 md:gap-6">
       {error && (
@@ -606,8 +461,6 @@ export function ReputationDashboard({
           </CardContent>
         </Card>
       )}
-
-
 
       {/* Layout Principal Unificado (Mobile e Desktop) */}
       <div className="w-full space-y-6">
@@ -635,7 +488,9 @@ export function ReputationDashboard({
 
             {/* Ações Rápidas */}
             <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Ações rápidas</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                Ações rápidas
+              </p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Link
                   href="/review-dashboard/profile"
@@ -654,7 +509,9 @@ export function ReputationDashboard({
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                     <ClipboardList className="h-6 w-6" />
                   </div>
-                  <span className="mt-3 text-xs font-semibold text-slate-800">Minhas avaliações</span>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">
+                    Minhas avaliações
+                  </span>
                 </Link>
 
                 <Link
@@ -667,7 +524,9 @@ export function ReputationDashboard({
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                     <FileText className="h-6 w-6" />
                   </div>
-                  <span className="mt-3 text-xs font-semibold text-slate-800">Propostas recebidas</span>
+                  <span className="mt-3 text-xs font-semibold text-slate-800">
+                    Propostas recebidas
+                  </span>
                 </Link>
 
                 <Link
@@ -688,7 +547,9 @@ export function ReputationDashboard({
             {/* Resumo do seu perfil */}
             <Card className="rounded-2xl border-slate-200 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-slate-900">Resumo do seu perfil</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Resumo do seu perfil
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -728,7 +589,9 @@ export function ReputationDashboard({
             <Card className="rounded-2xl border-slate-200 shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-bold text-slate-900">Etapas do perfil</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Etapas do perfil
+                  </CardTitle>
                   <span className="text-xs font-medium text-slate-500">4 de 6 concluídas</span>
                 </div>
               </CardHeader>
@@ -747,7 +610,9 @@ export function ReputationDashboard({
                     ) : (
                       <CircleHelp className="h-5 w-5 text-slate-300" />
                     )}
-                    <span className={cn('font-medium', step.done ? 'text-slate-800' : 'text-slate-400')}>
+                    <span
+                      className={cn('font-medium', step.done ? 'text-slate-800' : 'text-slate-400')}
+                    >
                       {step.label}
                     </span>
                   </div>
@@ -840,212 +705,6 @@ export function ReputationDashboard({
         onAdd={addSolution}
       />
     </div>
-  );
-}
-
-function ReviewMobileStatsStrip({ kpis, loading }: { kpis: ReviewKpi[]; loading: boolean }) {
-  return (
-    <div className="flex min-w-0 max-w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-3 md:gap-4 md:overflow-visible xl:grid-cols-5 [&::-webkit-scrollbar]:hidden">
-      {loading
-        ? Array.from({ length: 5 }).map((_, index) => (
-            <Card
-              key={index}
-              className="h-[82px] min-w-[118px] rounded-2xl border-slate-200 bg-white shadow-none md:h-[118px] md:min-w-0 md:shadow-sm"
-            >
-              <CardContent className="flex h-full flex-col justify-between p-3 md:p-4">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-6 w-14" />
-                <Skeleton className="h-3 w-20" />
-              </CardContent>
-            </Card>
-          ))
-        : kpis.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <Card
-                key={kpi.label}
-                className="h-[82px] min-w-[118px] rounded-2xl border-slate-200 bg-white shadow-none md:h-[118px] md:min-w-0 md:shadow-sm"
-              >
-                <CardContent className="flex h-full flex-col justify-between p-3 md:p-4">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full md:h-9 md:w-9',
-                        kpi.iconClass
-                      )}
-                    >
-                      <Icon className="h-3 w-3 md:h-4 md:w-4" />
-                    </span>
-                    <p className="truncate text-[10px] font-medium uppercase tracking-[0.03em] text-slate-500 md:text-xs">
-                      {kpi.label}
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-xl font-semibold leading-none text-slate-950 md:text-3xl">
-                        {kpi.value}
-                      </span>
-                      <span className="truncate text-[10px] font-normal text-slate-500 md:text-xs">
-                        {kpi.suffix}
-                      </span>
-                    </div>
-                    <p className="mt-1 truncate text-[10px] font-medium text-emerald-700 md:text-xs">
-                      {kpi.helper}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-    </div>
-  );
-}
-
-function ReviewTabsCompact({
-  activeTab,
-  onChange,
-}: {
-  activeTab: ReviewDashboardTab;
-  onChange: (tab: ReviewDashboardTab) => void;
-}) {
-  const tabs: Array<{ value: ReviewDashboardTab; label: string }> = [
-    { value: 'overview', label: 'Visão geral' },
-    { value: 'companies', label: 'Empresas' },
-    { value: 'reviews', label: 'Avaliações' },
-    { value: 'proposals', label: 'Propostas' },
-    { value: 'reputation', label: 'Reputação' },
-    { value: 'profile', label: 'Perfil' },
-  ];
-
-  return (
-    <nav
-      aria-label="Seções da central de reputação"
-      className="-mx-4 flex w-[calc(100%+2rem)] max-w-[calc(100%+2rem)] gap-2 overflow-x-auto border-y border-slate-200 bg-white px-4 py-2 [-ms-overflow-style:none] [scrollbar-width:none] md:mx-0 md:w-full md:max-w-full md:rounded-2xl md:border md:px-3 md:shadow-sm [&::-webkit-scrollbar]:hidden"
-    >
-      {tabs.map((tab) => {
-        const active = activeTab === tab.value;
-        return (
-          <button
-            key={tab.value}
-            type="button"
-            onClick={() => onChange(tab.value)}
-            className={cn(
-              'h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition-colors md:h-10 md:px-4',
-              active
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-100 hover:text-slate-800'
-            )}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function HeroProfile({
-  user,
-  reviewsCount,
-  companiesCount,
-  helpfulVotes,
-  impactedPeople,
-  repliesCount,
-  onOpenReplies,
-  unlockedBadgeIds = [],
-}: {
-  user: User & { city?: string; state?: string; avatar_url?: string };
-  reviewsCount: number;
-  companiesCount: number;
-  helpfulVotes: number;
-  impactedPeople: number;
-  repliesCount: number;
-  onOpenReplies: () => void;
-  unlockedBadgeIds?: string[];
-}) {
-  const location = [user.city, user.state].filter(Boolean).join(', ') || 'Brasil';
-
-  return (
-    <section
-      id="reputation"
-      className="overflow-hidden rounded-[18px] border border-emerald-900/10 bg-[linear-gradient(135deg,#052E2B,#0F5B53_58%,#064E3B)] p-4 text-white shadow-sm md:min-h-[150px] md:rounded-[20px] md:p-5"
-    >
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 items-center gap-3 md:gap-4">
-          <Avatar className="h-16 w-16 shrink-0 border-[3px] border-white/25 md:h-20 md:w-20 md:border-4">
-            <AvatarImage src={user.avatar_url || ''} alt={user.name} />
-            <AvatarFallback className="bg-white text-lg font-semibold text-emerald-900 md:text-2xl">
-              {initialsFromName(user.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 space-y-2">
-            <div>
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="truncate text-lg font-semibold md:text-2xl">{user.name}</h2>
-                <CheckCircle2 className="h-4 w-4 shrink-0 fill-emerald-400 text-emerald-400 md:h-5 md:w-5" />
-              </div>
-              <p className="text-xs font-medium text-white/80 md:text-sm">
-                Especialista Solar · Membro desde {formatMonthYear(user.created_at)}
-              </p>
-              <p className="mt-1 flex items-center gap-1 text-xs font-normal text-white/75 md:text-sm">
-                <MapPin className="h-3.5 w-3.5" />
-                {location}
-              </p>
-            </div>
-            {unlockedBadgeIds.length > 0 && (
-              <div className="pt-1 flex flex-wrap gap-1">
-                <PublicUserBadges unlockedBadgeIds={unlockedBadgeIds} maxVisible={3} size="sm" />
-              </div>
-            )}
-            <p className="text-[11px] font-medium text-emerald-100 md:hidden">
-              {reviewsCount} avaliação registrada · {impactedPeople.toLocaleString('pt-BR')} pessoas
-              impactadas
-            </p>
-          </div>
-        </div>
-
-        <div className="hidden grid-cols-2 gap-4 sm:grid-cols-4 md:grid xl:min-w-[390px]">
-          {[
-            ['Avaliações', reviewsCount],
-            ['Empresas', companiesCount],
-            ['Votos úteis', helpfulVotes],
-            ['Impactados', impactedPeople.toLocaleString('pt-BR')],
-          ].map(([label, value]) => (
-            <div key={label} className="text-center">
-              <p className="text-2xl font-semibold">{value}</p>
-              <p className="text-xs font-medium text-white/70">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenReplies}
-          className={cn(
-            'group hidden min-h-[68px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.08] p-4 text-left transition hover:bg-white/[0.12] md:flex xl:max-w-[430px]',
-            repliesCount > 0 && 'ring-1 ring-emerald-300/50'
-          )}
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white">
-              <MessageCircle className="h-6 w-6" />
-            </span>
-            <span>
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                Respostas das Empresas
-                {repliesCount > 0 && (
-                  <Badge className="animate-pulse bg-red-600 text-white">{repliesCount}</Badge>
-                )}
-              </span>
-              <span className="text-xs font-semibold text-white/72">
-                Empresas responderam suas avaliações
-              </span>
-            </span>
-          </span>
-          <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-        </button>
-      </div>
-    </section>
   );
 }
 
@@ -1388,64 +1047,6 @@ function RowActions({
   );
 }
 
-function GreenScoreCompact({
-  greenScore,
-  rankingPosition,
-}: {
-  greenScore: number | null;
-  rankingPosition: number | null;
-}) {
-  const safeScore = greenScore ?? 0;
-  const level =
-    safeScore >= 900
-      ? 'Platinum'
-      : safeScore >= 760
-        ? 'Gold'
-        : safeScore >= 650
-          ? 'Green Pro'
-          : 'Em evolução';
-  const progress = Math.min(100, Math.max(0, Math.round((safeScore / 900) * 100)));
-
-  return (
-    <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 md:h-14 md:w-14">
-            <Leaf className="h-6 w-6" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.03em] text-slate-500">
-                  Green Score
-                </p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <p className="text-3xl font-semibold leading-none text-slate-950">
-                    {greenScore === null ? '—' : safeScore}
-                  </p>
-                  <span className="text-xs font-medium text-emerald-700">
-                    {greenScore === null ? 'dados indisponíveis' : level}
-                  </span>
-                </div>
-              </div>
-              <Badge
-                variant="outline"
-                className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700"
-              >
-                {rankingPosition === null ? '—' : `${rankingPosition}º`}
-              </Badge>
-            </div>
-            <div className="mt-3 flex items-center gap-3">
-              <Progress value={progress} className="h-2 flex-1 bg-slate-100" />
-              <span className="text-[11px] font-medium text-slate-500">{progress}%</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ReviewsPanel({
   rows,
   reviews,
@@ -1610,97 +1211,6 @@ function ReviewsPanel({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function ProfileSummaryPanel({
-  user,
-  greenScore,
-  profileCompletion,
-  location,
-}: {
-  user: User & { city?: string | null; state?: string | null; avatar_url?: string | null };
-  greenScore: number | null;
-  profileCompletion: number;
-  location: string;
-}) {
-  const safeScore = greenScore ?? 0;
-  const level =
-    safeScore >= 760 ? 'Avançado' : safeScore >= 650 ? 'Intermediário' : 'Em evolução';
-  const rows = [
-    ['Nome', user.name],
-    ['Email', user.email],
-    ['Telefone', user.phone || 'Não informado'],
-    ['Membro desde', formatDate(user.created_at)],
-    ['Localização', location],
-    ['Nível', level],
-  ];
-
-  return (
-    <div className="space-y-4">
-      <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
-            Informações pessoais
-          </CardTitle>
-          <Button
-            asChild
-            variant="ghost"
-            className="h-8 rounded-xl px-2 text-xs font-medium text-emerald-700"
-          >
-            <Link href="/review-dashboard/profile">
-              <Edit3 className="mr-1.5 h-3.5 w-3.5" />
-              Editar perfil
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-1 p-4 pt-0 md:p-6 md:pt-0">
-          {rows.map(([label, value]) => (
-            <div
-              key={label}
-              className="flex items-center justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0"
-            >
-              <span className="text-xs font-medium text-slate-500">{label}</span>
-              <span className="min-w-0 truncate text-right text-sm font-normal text-slate-900">
-                {value}
-              </span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-[18px] border-slate-200 bg-white shadow-none md:shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-          <CardTitle className="text-base font-semibold text-slate-950 md:text-lg">
-            Foto e reputação
-          </CardTitle>
-          <Button
-            asChild
-            variant="ghost"
-            className="h-8 rounded-xl px-2 text-xs font-medium text-emerald-700"
-          >
-            <Link href="/review-dashboard/profile">Alterar foto</Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <Avatar className="h-20 w-20 border-[3px] border-white shadow-sm">
-              <AvatarImage src={user.avatar_url || ''} alt={user.name} />
-              <AvatarFallback className="bg-emerald-50 text-lg font-semibold text-emerald-800">
-                {initialsFromName(user.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-950">{user.name}</p>
-              <p className="mt-1 text-xs font-normal text-slate-500">
-                Green Score {greenScore === null ? '—' : safeScore} · Perfil {profileCompletion}% completo
-              </p>
-              <Progress value={profileCompletion} className="mt-3 h-2 bg-slate-200" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
   );
 }
 
@@ -2242,7 +1752,11 @@ function SolutionsCard({
             Adicione as tecnologias sustentáveis que você possui instaladas.
           </p>
         </div>
-        <Button size="sm" onClick={onAddClick} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
+        <Button
+          size="sm"
+          onClick={onAddClick}
+          className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white"
+        >
           + Adicionar
         </Button>
       </div>
@@ -2254,13 +1768,23 @@ function SolutionsCard({
           </div>
           <h4 className="text-sm font-bold text-gray-900">Nenhuma solução cadastrada</h4>
           <p className="max-w-md mx-auto text-xs text-gray-500 mt-1 leading-normal px-4">
-            Cadastre empresas, produtos ou tecnologias que você utiliza para receber recomendações melhores, desbloquear conquistas e fortalecer sua reputação.
+            Cadastre empresas, produtos ou tecnologias que você utiliza para receber recomendações
+            melhores, desbloquear conquistas e fortalecer sua reputação.
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
-            <Button size="sm" onClick={onAddClick} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">
+            <Button
+              size="sm"
+              onClick={onAddClick}
+              className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white"
+            >
               + Adicionar solução
             </Button>
-            <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs font-semibold" asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-lg text-xs font-semibold"
+              asChild
+            >
               <Link href="/companies">Buscar empresa</Link>
             </Button>
           </div>
@@ -2286,7 +1810,9 @@ function RewardsCard() {
   return (
     <Card id="rewards" className="rounded-2xl border-slate-200 bg-white shadow-sm p-5">
       <div className="p-0 mb-3">
-        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Minhas Recompensas</h3>
+        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+          Minhas Recompensas
+        </h3>
       </div>
       <div className="p-0 py-6 text-center border border-dashed border-gray-150 rounded-xl bg-slate-50/50">
         <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
@@ -2294,7 +1820,8 @@ function RewardsCard() {
         </div>
         <h4 className="text-xs font-bold text-gray-900">Nenhuma recompensa ativa</h4>
         <p className="text-[11px] text-gray-500 mt-1 px-4 leading-normal">
-          Acompanhe cupons, pontos extras e benefícios exclusivos aqui assim que publicar avaliações úteis.
+          Acompanhe cupons, pontos extras e benefícios exclusivos aqui assim que publicar avaliações
+          úteis.
         </p>
       </div>
     </Card>
