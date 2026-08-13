@@ -39,6 +39,7 @@ export interface ReviewDashboardSummary {
   gamification?: {
     green_score: number | null;
     regional_ranking: number | null;
+    earned_points?: number;
     achievements: Array<{
       title: string;
       subtitle: string;
@@ -361,7 +362,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           <main className="w-full flex flex-col gap-6">{children}</main>
         </div>
 
-        <MobileDashboardNav repliesCount={companyReplies.length} />
+        <MobileDashboardNav repliesCount={reviews.filter((r) => r.reply || r.replied_at).length} />
 
         <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
           <CommandInput placeholder="Buscar ações, empresas e seções..." />

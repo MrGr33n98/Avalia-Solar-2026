@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { reviewerProfileApi, usersApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics/lazy';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import {
   User,
@@ -90,6 +91,7 @@ export default function MeuPerfilPage() {
                 instagram_url: String(data.get('instagram') || ''),
                 website_url: String(data.get('website') || ''),
               });
+              track('reviewer_profile_updated', { route: '/review-dashboard/profile' });
               toast.success('Perfil atualizado com sucesso.');
             } catch {
               toast.error('Não foi possível atualizar o perfil.');
@@ -127,8 +129,8 @@ export default function MeuPerfilPage() {
               <div className="relative">
                 {avatarPreview || user?.avatar_url ? (
                   <Image
-                    src={avatarPreview || user.avatar_url || ''}
-                    alt={user.name || 'Avatar'}
+                    src={avatarPreview || user?.avatar_url || ''}
+                    alt={user?.name || 'Avatar'}
                     width={80}
                     height={80}
                     unoptimized

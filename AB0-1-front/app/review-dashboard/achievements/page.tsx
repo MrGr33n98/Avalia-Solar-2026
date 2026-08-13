@@ -33,6 +33,7 @@ export default function ConquistasPage() {
     id: a.title + index,
     description: a.subtitle,
     icon: index % 2 ? Trophy : Award,
+    unlocked: a.state === 'unlocked',
   }));
 
   const filtered = achievements.filter((a) => {
@@ -72,7 +73,7 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="XP Acumulado"
-          value="Indisponível"
+          value={summary?.gamification?.earned_points ?? 'Indisponível'}
           caption="Pontos de experiência"
           icon={Zap}
           iconColor="text-blue-600"

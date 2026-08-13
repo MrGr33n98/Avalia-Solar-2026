@@ -336,6 +336,35 @@ export function ReputationDashboard({
     (review) => review.comment || review.headline || review.buyer_tip
   ).length;
 
+  const categories = useMemo(() => {
+    const list = rows.map((r) => r.category).filter(Boolean);
+    return Array.from(new Set(list));
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const matchesName = row.name.toLowerCase().includes(term);
+        const matchesCategory = row.category.toLowerCase().includes(term);
+        if (!matchesName && !matchesCategory) return false;
+      }
+      if (statusFilter && statusFilter !== 'todos') {
+        if (statusFilter === 'Respondeu') {
+          if (row.status !== 'Respondeu' && row.status !== 'Respondida recentemente') return false;
+        } else if (statusFilter === 'Não respondeu') {
+          if (row.status !== 'Não respondeu') return false;
+        } else if (row.status !== statusFilter) {
+          return false;
+        }
+      }
+      if (categoryFilter && categoryFilter !== 'todos') {
+        if (row.category !== categoryFilter) return false;
+      }
+      return true;
+    });
+  }, [rows, searchTerm, statusFilter, categoryFilter]);
+
   // Real values from the API summary
   const helpfulVotes = summary?.impact?.helpful_votes ?? null;
   const impactedPeople = summary?.impact?.impacted_people ?? null;

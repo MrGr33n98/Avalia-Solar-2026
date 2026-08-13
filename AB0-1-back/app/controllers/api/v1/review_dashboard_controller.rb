@@ -128,7 +128,8 @@ module Api
           gamification: {
             green_score: green_score,
             regional_ranking: regional_ranking,
-            achievements: achievements
+            achievements: achievements,
+            earned_points: achievements.sum { |achievement| achievement[:xp].to_i }
           },
           impact: {
             helpful_votes: helpful_votes,

@@ -79,7 +79,7 @@ export function ReviewerProfileCard({
 
         <h3 className="text-base font-semibold leading-snug text-slate-950">{user.name}</h3>
         <p className="mt-1 text-xs font-medium text-slate-600">
-          Especialista Solar · Nível {greenScore >= 760 ? 'Ouro' : 'Prata'}
+          Especialista Solar · Nível {(greenScore ?? 0) >= 760 ? 'Ouro' : 'Prata'}
         </p>
         <p className="text-[11px] text-gray-400 mt-0.5">
           {location}

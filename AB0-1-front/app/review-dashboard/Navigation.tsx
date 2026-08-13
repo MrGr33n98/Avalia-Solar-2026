@@ -446,12 +446,12 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
 ];
 
 function SidebarContent({
-  _repliesCount,
-  _notificationsCount,
+  repliesCount: _repliesCount,
+  notificationsCount: _notificationsCount,
   onNavigate,
 }: {
-  _repliesCount: number;
-  _notificationsCount: number;
+  repliesCount: number;
+  notificationsCount: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();

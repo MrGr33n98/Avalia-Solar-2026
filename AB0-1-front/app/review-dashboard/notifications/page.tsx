@@ -10,6 +10,7 @@ import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkelet
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { useNotificationStore } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics/lazy';
 import { Bell, CheckSquare, BellOff, ArrowRight, Shield } from 'lucide-react';
 
 const tabs = [
@@ -43,7 +44,12 @@ export default function NotificacoesPage() {
         breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Notificações' }]}
         action={
           <button
-            onClick={() => markAllAsRead()}
+            onClick={() => {
+              track('reviewer_notifications_marked_all_read', {
+                route: '/review-dashboard/notifications',
+              });
+              void markAllAsRead();
+            }}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <CheckSquare className="h-4 w-4" />
@@ -152,7 +158,15 @@ export default function NotificacoesPage() {
                     </div>
 
                     <button
-                      onClick={() => !n.read && useNotificationStore.getState().markAsRead(n.id)}
+                      onClick={() => {
+                        if (!n.read) {
+                          track('reviewer_notification_opened', {
+                            entity_id: n.id,
+                            entity_type: 'notification',
+                          });
+                          void useNotificationStore.getState().markAsRead(n.id);
+                        }
+                      }}
                       className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       Ver detalhe

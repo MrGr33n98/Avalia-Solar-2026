@@ -27,7 +27,16 @@ export default function RecompensasPage() {
   const totalPoints = null;
   const claimedCount = null;
 
-  const rewards = [];
+  interface RewardItem {
+    id: string;
+    partner: string;
+    points: number;
+    title: string;
+    description: string;
+    available: boolean;
+  }
+
+  const rewards: RewardItem[] = [];
 
   const filtered = activeTab === 'all' ? rewards : [];
 

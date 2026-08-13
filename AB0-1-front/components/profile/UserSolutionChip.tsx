@@ -21,6 +21,7 @@ export interface UserSolution {
   verified: boolean;
   logo_url?: string;
   companyId?: string; // para redirecionar para a avaliação se for empresa
+  created_at?: string;
 }
 
 interface UserSolutionChipProps {
