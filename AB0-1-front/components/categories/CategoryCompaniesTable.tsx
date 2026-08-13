@@ -3,7 +3,17 @@
 import { useState } from 'react';
 import { Company } from '@/lib/api';
 import Link from 'next/link';
-import { BadgeCheck, Star, ChevronLeft, ChevronRight, Info, MapPin, Globe, Clock, Building2 } from 'lucide-react';
+import {
+  BadgeCheck,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  MapPin,
+  Globe,
+  Clock,
+  Building2,
+} from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
@@ -116,11 +126,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
       </div>
 
       {/* Responsive Table Wrapper */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full border-collapse text-left text-sm text-slate-600">
+      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-left text-sm text-slate-600 xl:min-w-[1120px]">
           <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
             <tr>
-              <th scope="col" className="py-3.5 px-4 w-12 text-center">#</th>
+              <th scope="col" className="py-3.5 px-4 w-12 text-center">
+                #
+              </th>
               <th scope="col" className="py-3.5 px-4">
                 <div className="flex items-center gap-1">
                   Empresa
@@ -134,7 +146,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </Popover>
                 </div>
               </th>
-              <th scope="col" className="py-3.5 px-4">
+              <th scope="col" className="hidden py-3.5 px-4 lg:table-cell">
                 <div className="flex items-center gap-1">
                   Localização
                   <Popover>
@@ -160,7 +172,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </Popover>
                 </div>
               </th>
-              <th scope="col" className="py-3.5 px-4 w-32">
+              <th scope="col" className="hidden py-3.5 px-4 w-32 xl:table-cell">
                 <div className="flex items-center gap-1">
                   Projetos
                   <Popover>
@@ -173,57 +185,62 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   </Popover>
                 </div>
               </th>
-              <th scope="col" className="py-3.5 px-4 w-32">Status</th>
+              <th scope="col" className="py-3.5 px-4 w-32">
+                Status
+              </th>
               <th scope="col" className="py-3.5 px-4 w-80 text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
             {paginatedCompanies.map((company, index) => {
               const globalIndex = startIndex + index + 1;
-              const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
+              const rating = Number(
+                company.rating_avg || company.rating || company.average_rating || 0
+              );
               const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
-              const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
+              const reviewCount =
+                company.rating_count || company.reviews_count || company.total_reviews || 0;
               const location = [company.city, company.state].filter(Boolean).join(', ');
               const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const isVerified = Boolean(company.verified || (company as any).trust?.verification_status === 'verified');
+              const isVerified = Boolean(
+                company.verified || (company as any).trust?.verification_status === 'verified'
+              );
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const projectsCount = company.delivered_projects_count ?? (company as any).projects_count ?? (company as any).project_count;
-
-              // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const canRequestQuote = hasPaidPlan(company as any);
+              const projectsCount =
+                company.delivered_projects_count ??
+                (company as any).projects_count ??
+                (company as any).project_count;
 
               return (
-                <tr
-                  key={company.id}
-                  className="transition-colors hover:bg-slate-50/50"
-                >
+                <tr key={company.id} className="transition-colors hover:bg-slate-50/50">
                   {/* # Rank */}
-                  <td className="py-4 px-4 text-center font-bold text-slate-400">
-                    {globalIndex}
-                  </td>
-
-                   {/* Logo + Name */}
+                  <td className="py-4 px-4 text-center font-bold text-slate-400">{globalIndex}</td>
+                  {/* Logo + Name */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                       <Link href={href} className="shrink-0">
+                      <Link href={href} className="shrink-0">
                         <CompanyLogo
                           logoUrl={company.logo_url}
                           name={company.name}
                           size="sm"
                           badges={company.badges}
-                          verifiedBadgeUrl={company.verified_badge_image_url || company.verified_badge_url}
+                          verifiedBadgeUrl={
+                            company.verified_badge_image_url || company.verified_badge_url
+                          }
                           className="border border-slate-200/80 bg-white"
                         />
                       </Link>
-                      <div className="flex items-center gap-1">
+                      <div className="flex min-w-0 flex-col items-start gap-0.5">
                         <Link
                           href={href}
                           className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
                         >
                           {company.name}
                         </Link>
+                        <span className="block truncate text-[11px] font-medium text-slate-500 lg:hidden">
+                          {location || 'Brasil'}
+                        </span>
                         <Popover>
                           <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
                             <Info className="w-3.5 h-3.5" />
@@ -238,33 +255,57 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                   className="border border-slate-100 bg-white"
                                 />
                                 <div>
-                                  <div className="font-bold text-slate-900 text-sm leading-tight">{company.name}</div>
+                                  <div className="font-bold text-slate-900 text-sm leading-tight">
+                                    {company.name}
+                                  </div>
                                   <div className="text-[10px] text-slate-400 mt-0.5">
-                                    {company.founded_year ? `Desde ${company.founded_year} no Brasil` : 'Empresa credenciada Avalia Solar'}
+                                    {company.founded_year
+                                      ? `Desde ${company.founded_year} no Brasil`
+                                      : 'Empresa credenciada Avalia Solar'}
                                   </div>
                                 </div>
                               </div>
                               <p className="text-[11px] text-slate-500 leading-relaxed">
-                                {company.description || `${company.name} é uma empresa parceira cadastrada na plataforma Avalia Solar.`}
+                                {company.description ||
+                                  `${company.name} é uma empresa parceira cadastrada na plataforma Avalia Solar.`}
                               </p>
                               <div className="border-t border-slate-100 pt-3 space-y-2 text-[11px]">
                                 <div className="flex justify-between">
                                   <span className="text-slate-400 font-semibold">Fundação</span>
-                                  <span className="font-bold text-slate-900">{company.founded_year || 'Não informado'}</span>
+                                  <span className="font-bold text-slate-900">
+                                    {company.founded_year || 'Não informado'}
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400 font-semibold">Sede</span>
-                                  <span className="font-bold text-slate-900">{company.city || 'Não informado'}</span>
+                                  <span className="font-bold text-slate-900">
+                                    {company.city || 'Não informado'}
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-400 font-semibold">Presença no Brasil</span>
-                                  <span className="font-bold text-slate-900">{company.founded_year ? `Desde ${company.founded_year}` : 'Não informado'}</span>
+                                  <span className="text-slate-400 font-semibold">
+                                    Presença no Brasil
+                                  </span>
+                                  <span className="font-bold text-slate-900">
+                                    {company.founded_year
+                                      ? `Desde ${company.founded_year}`
+                                      : 'Não informado'}
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400 font-semibold">Site oficial</span>
                                   {company.website ? (
-                                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:underline flex items-center gap-0.5">
-                                      {company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                                    <a
+                                      href={company.website}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-bold text-blue-600 hover:underline flex items-center gap-0.5"
+                                    >
+                                      {
+                                        company.website
+                                          .replace(/^https?:\/\/(www\.)?/, '')
+                                          .split('/')[0]
+                                      }
                                       <Globe className="w-3 h-3 text-blue-500" />
                                     </a>
                                   ) : (
@@ -278,9 +319,8 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                       </div>
                     </div>
                   </td>
-
                   {/* Location */}
-                  <td className="py-4 px-4 text-slate-500 text-xs">
+                  <td className="hidden py-4 px-4 text-slate-500 text-xs lg:table-cell">
                     <div className="flex items-center gap-1">
                       <span>{location || 'Brasil'}</span>
                       <Popover>
@@ -292,11 +332,15 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                             <div className="flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-slate-500" />
                               <div>
-                                <div className="font-bold text-slate-900 text-sm">{location || 'Brasil'}</div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">Unidade Principal / Sede</div>
+                                <div className="font-bold text-slate-900 text-sm">
+                                  {location || 'Brasil'}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  Unidade Principal / Sede
+                                </div>
                               </div>
                             </div>
-                            
+
                             {/* Google Map Iframe */}
                             <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 shadow-inner">
                               <iframe
@@ -311,15 +355,18 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                             </div>
 
                             <div className="text-[11px] text-slate-500 leading-normal">
-                              <span className="font-bold text-slate-700 block mb-1">Endereço de Homologação:</span>
-                              {company.city ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}` : 'Abrangência nacional, sede sob consulta comercial.'}
+                              <span className="font-bold text-slate-700 block mb-1">
+                                Endereço de Homologação:
+                              </span>
+                              {company.city
+                                ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}`
+                                : 'Abrangência nacional, sede sob consulta comercial.'}
                             </div>
                           </div>
                         </PopoverContent>
                       </Popover>
                     </div>
                   </td>
-
                   {/* Rating star/label */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-1.5">
@@ -329,10 +376,10 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           <Star
                             key={i}
                             className={cn(
-                              "w-3.5 h-3.5",
+                              'w-3.5 h-3.5',
                               i < Math.floor(rating)
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-slate-200 fill-slate-200"
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-slate-200 fill-slate-200'
                             )}
                           />
                         ))}
@@ -345,22 +392,26 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                         <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <span className="text-3xl font-black text-slate-900 leading-none">{ratingLabel}</span>
+                              <span className="text-3xl font-black text-slate-900 leading-none">
+                                {ratingLabel}
+                              </span>
                               <div>
                                 <div className="flex items-center">
                                   {Array.from({ length: 5 }).map((_, i) => (
                                     <Star
                                       key={i}
                                       className={cn(
-                                        "w-3.5 h-3.5",
+                                        'w-3.5 h-3.5',
                                         i < Math.floor(rating)
-                                          ? "fill-amber-400 text-amber-400"
-                                          : "text-slate-200 fill-slate-200"
+                                          ? 'fill-amber-400 text-amber-400'
+                                          : 'text-slate-200 fill-slate-200'
                                       )}
                                     />
                                   ))}
                                 </div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">({reviewCount} avaliações registradas)</div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  ({reviewCount} avaliações registradas)
+                                </div>
                               </div>
                             </div>
 
@@ -371,14 +422,24 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 { label: '4 estrelas', pct: '3%' },
                                 { label: '3 estrelas', pct: '1%' },
                                 { label: '2 estrelas', pct: '0%' },
-                                { label: '1 estrela', pct: '0%' }
+                                { label: '1 estrela', pct: '0%' },
                               ].map((starRow) => (
-                                <div key={starRow.label} className="flex items-center gap-3 text-[10px]">
-                                  <span className="w-16 text-slate-400 font-semibold">{starRow.label}</span>
+                                <div
+                                  key={starRow.label}
+                                  className="flex items-center gap-3 text-[10px]"
+                                >
+                                  <span className="w-16 text-slate-400 font-semibold">
+                                    {starRow.label}
+                                  </span>
                                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="bg-amber-400 h-full rounded-full" style={{ width: starRow.pct }} />
+                                    <div
+                                      className="bg-amber-400 h-full rounded-full"
+                                      style={{ width: starRow.pct }}
+                                    />
                                   </div>
-                                  <span className="w-8 text-right text-slate-500 font-bold">{starRow.pct}</span>
+                                  <span className="w-8 text-right text-slate-500 font-bold">
+                                    {starRow.pct}
+                                  </span>
                                 </div>
                               ))}
                             </div>
@@ -388,7 +449,12 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                                 Última avaliação: recente
                               </span>
-                              <Button asChild size="sm" variant="link" className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto">
+                              <Button
+                                asChild
+                                size="sm"
+                                variant="link"
+                                className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
+                              >
                                 <Link href={href}>Ver todas as avaliações</Link>
                               </Button>
                             </div>
@@ -397,9 +463,8 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                       </Popover>
                     </div>
                   </td>
-
                   {/* Projects/Cases count */}
-                  <td className="py-4 px-4">
+                  <td className="hidden py-4 px-4 xl:table-cell">
                     <div className="flex items-center gap-1.5">
                       {projectsCount && projectsCount > 0 ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100/50">
@@ -417,8 +482,12 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                             <div className="flex items-center gap-2">
                               <Building2 className="w-4 h-4 text-slate-500" />
                               <div>
-                                <div className="font-bold text-slate-900 text-sm">Projetos Realizados</div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">Destaques do portfólio</div>
+                                <div className="font-bold text-slate-900 text-sm">
+                                  Projetos Realizados
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  Destaques do portfólio
+                                </div>
                               </div>
                             </div>
 
@@ -426,25 +495,53 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                               <>
                                 <div className="space-y-3 pt-2">
                                   {[
-                                    { title: 'Usina Solar Boa Vista', desc: '1,2 MWp • Roraima', cat: 'Usina Fotovoltaica' },
-                                    { title: 'Condomínio Reserva Verde', desc: '312 kWp • São Paulo, SP', cat: 'Residencial' },
-                                    { title: 'Indústria Metalúrgica ABC', desc: '800 kWp • Minas Gerais', cat: 'Comercial' }
+                                    {
+                                      title: 'Usina Solar Boa Vista',
+                                      desc: '1,2 MWp • Roraima',
+                                      cat: 'Usina Fotovoltaica',
+                                    },
+                                    {
+                                      title: 'Condomínio Reserva Verde',
+                                      desc: '312 kWp • São Paulo, SP',
+                                      cat: 'Residencial',
+                                    },
+                                    {
+                                      title: 'Indústria Metalúrgica ABC',
+                                      desc: '800 kWp • Minas Gerais',
+                                      cat: 'Comercial',
+                                    },
                                   ].map((p, idx) => (
-                                    <div key={idx} className="flex gap-2.5 items-start bg-slate-50/50 border border-slate-100 p-2.5 rounded-xl">
+                                    <div
+                                      key={idx}
+                                      className="flex gap-2.5 items-start bg-slate-50/50 border border-slate-100 p-2.5 rounded-xl"
+                                    >
                                       <div className="h-10 w-12 rounded bg-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-bold shrink-0">
                                         Solar
                                       </div>
                                       <div className="space-y-0.5">
-                                        <div className="font-bold text-slate-900 text-[11px] leading-tight line-clamp-1">{p.title}</div>
-                                        <div className="text-[10px] text-slate-500 font-medium">{p.desc}</div>
-                                        <div className="text-[8px] font-black uppercase text-slate-400 tracking-wider leading-none mt-0.5">{p.cat}</div>
+                                        <div className="font-bold text-slate-900 text-[11px] leading-tight line-clamp-1">
+                                          {p.title}
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-medium">
+                                          {p.desc}
+                                        </div>
+                                        <div className="text-[8px] font-black uppercase text-slate-400 tracking-wider leading-none mt-0.5">
+                                          {p.cat}
+                                        </div>
                                       </div>
                                     </div>
                                   ))}
                                 </div>
                                 <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
-                                  <span className="text-[10px] text-slate-500 font-extrabold">+{projectsCount} homologados</span>
-                                  <Button asChild size="sm" variant="link" className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto">
+                                  <span className="text-[10px] text-slate-500 font-extrabold">
+                                    +{projectsCount} homologados
+                                  </span>
+                                  <Button
+                                    asChild
+                                    size="sm"
+                                    variant="link"
+                                    className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
+                                  >
                                     <Link href={href}>Ver todos os projetos</Link>
                                   </Button>
                                 </div>
@@ -459,7 +556,6 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                       </Popover>
                     </div>
                   </td>
-
                   {/* Verification Status */}
                   <td className="py-4 px-4">
                     {isVerified ? (
@@ -468,42 +564,28 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                         Verificada
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-slate-400">
-                        Padrão
-                      </span>
+                      <span className="text-[11px] font-semibold text-slate-400">Padrão</span>
                     )}
                   </td>
-
                   {/* Button Link & Comparison */}
-                  <td className="py-4 px-4 text-right w-[19rem]">
-                    <div className="grid grid-cols-[7rem_minmax(0,10rem)] items-center justify-end gap-2">
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
-                      {canRequestQuote ? (
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openLeadModal({
-                              preferredCompanyId: company.id,
-                              source: 'category-table',
-                              type: 'quick',
-                            });
-                          }}
-                          className="min-w-0 max-w-full min-h-9 md:min-h-10 h-auto whitespace-normal break-normal px-2 md:px-3 py-1.5 md:py-2 text-center leading-tight rounded-lg text-[10px] md:text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-none"
-                        >
-                          Solicitar orçamento
-                        </Button>
-                      ) : (
-                        <span aria-hidden="true" className="h-8" />
-                      )}
-                    </div>
+                  <td className="py-4 px-4 text-right w-[9rem] min-w-[9rem] lg:w-[19rem] lg:min-w-[19rem]">
+                    <CategoryCompanyActions company={company} />
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {paginatedCompanies.map((company, index) => (
+          <CategoryCompanyCard
+            key={company.id}
+            company={company}
+            position={startIndex + index + 1}
+          />
+        ))}
       </div>
 
       {/* Pagination Controls */}
@@ -544,10 +626,10 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   key={`page-${pageNum}`}
                   onClick={() => handlePageChange(pageNum)}
                   className={cn(
-                    "w-9 h-9 rounded-xl text-xs font-bold p-0 shadow-none transition-all",
+                    'w-9 h-9 rounded-xl text-xs font-bold p-0 shadow-none transition-all',
                     currentPage === pageNum
-                      ? "bg-blue-600 text-white hover:bg-blue-700 font-extrabold"
-                      : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 font-extrabold'
+                      : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
                   )}
                 >
                   {pageNum}
@@ -570,5 +652,103 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
         </nav>
       )}
     </section>
+  );
+}
+
+function CategoryCompanyCard({ company, position }: { company: Company; position: number }) {
+  const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
+  const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
+  const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
+  const location = [company.city, company.state].filter(Boolean).join(', ') || 'Brasil';
+  const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
+  const projectsCount = company.delivered_projects_count;
+  const isVerified = Boolean(company.verified);
+
+  return (
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex min-w-0 items-start gap-3">
+        <Link href={href} className="shrink-0" aria-label={`Abrir perfil de ${company.name}`}>
+          <CompanyLogo
+            logoUrl={company.logo_url}
+            name={company.name}
+            size="sm"
+            className="border border-slate-200"
+          />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <Link href={href} className="block truncate text-sm font-bold text-slate-900">
+                {company.name}
+              </Link>
+              <span className="block truncate text-xs text-slate-500">{location}</span>
+            </div>
+            <span className="shrink-0 text-xs font-bold text-slate-400">#{position}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+            <span className="inline-flex items-center gap-1 font-bold text-slate-900">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {ratingLabel} ({reviewCount})
+            </span>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 font-semibold',
+                isVerified ? 'text-emerald-600' : 'text-slate-500'
+              )}
+            >
+              {isVerified && <BadgeCheck className="h-4 w-4" />}
+              {isVerified ? 'Verificada' : 'Padrão'}
+            </span>
+            {projectsCount != null && (
+              <span className="text-slate-500">
+                {projectsCount} {projectsCount === 1 ? 'projeto' : 'projetos'}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <CategoryCompanyActions company={company} mobile />
+    </article>
+  );
+}
+
+function CategoryCompanyActions({
+  company,
+  mobile = false,
+}: {
+  company: Company;
+  mobile?: boolean;
+}) {
+  const canRequestQuote = hasPaidPlan(company as any);
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-end gap-1 lg:flex-row lg:items-center',
+        mobile ? 'mt-4 flex-col-reverse items-stretch' : ''
+      )}
+    >
+      <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
+      {canRequestQuote && (
+        <Button
+          size="sm"
+          onClick={(event) => {
+            event.stopPropagation();
+            openLeadModal({
+              preferredCompanyId: company.id,
+              source: 'category-table',
+              type: 'quick',
+            });
+          }}
+          className={cn(
+            'min-h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-3 py-2 text-center text-[11px] font-bold text-white hover:bg-blue-700',
+            'w-full lg:w-auto',
+            mobile && 'w-full'
+          )}
+        >
+          <span className="lg:hidden">Orçamento</span>
+          <span className="hidden lg:inline">Solicitar orçamento</span>
+        </Button>
+      )}
+    </div>
   );
 }
