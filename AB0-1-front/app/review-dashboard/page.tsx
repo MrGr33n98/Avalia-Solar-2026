@@ -8,6 +8,7 @@ import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from './DashboardLayoutClient';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Leaf,
   Star,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function MeuPainelPage() {
+  const { user } = useAuth();
   const { summary, reviews, leads, loading, error, onRefresh, solutions } = useDashboardContext();
 
   if (loading) {
@@ -171,16 +173,29 @@ export default function MeuPainelPage() {
             linkHref="/review-dashboard/achievements"
           />
           <div className="space-y-3">
-            <AchievementItem
-              title="Primeira avaliação"
-              description="Publique sua primeira avaliação."
-              unlocked={reviewsCount > 0}
-            />
-            <AchievementItem
-              title="Avaliador consciente"
-              description="Publique 5 avaliações."
-              unlocked={reviewsCount >= 5}
-            />
+            {(summary?.gamification?.achievements ?? []).length > 0 ? (
+              (summary?.gamification?.achievements ?? []).slice(0, 2).map((achievement: any, index: number) => (
+                <AchievementItem
+                  key={index}
+                  title={achievement.title}
+                  description={achievement.subtitle}
+                  unlocked={achievement.state !== 'bloqueado'}
+                />
+              ))
+            ) : (
+              <>
+                <AchievementItem
+                  title="Primeira avaliação"
+                  description="Publique sua primeira avaliação."
+                  unlocked={reviewsCount > 0}
+                />
+                <AchievementItem
+                  title="Avaliador consciente"
+                  description="Publique 3 avaliações."
+                  unlocked={reviewsCount >= 3}
+                />
+              </>
+            )}
           </div>
         </div>
 
@@ -225,10 +240,10 @@ export default function MeuPainelPage() {
             linkHref="/review-dashboard/profile"
           />
           <div className="space-y-2.5">
-            <ProfileCheckItem label="Dados pessoais completos" done />
-            <ProfileCheckItem label="Dados da empresa completos" done />
-            <ProfileCheckItem label="Localização definida" done />
-            <ProfileCheckItem label="Redes sociais conectadas" done />
+            <ProfileCheckItem label="Dados pessoais completos" done={!!(user?.name && user?.email)} />
+            <ProfileCheckItem label="Foto de perfil cadastrada" done={summary?.profile?.items?.find((i: any) => i.key === 'avatar')?.completed ?? false} />
+            <ProfileCheckItem label="Localização definida" done={!!(user?.city && user?.state)} />
+            <ProfileCheckItem label="Profissão preenchida" done={summary?.profile?.items?.find((i: any) => i.key === 'profession')?.completed ?? false} />
             <ProfileCheckItem
               label="Soluções adicionadas"
               done={solutions.length > 0}

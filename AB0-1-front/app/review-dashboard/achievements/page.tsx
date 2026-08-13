@@ -33,7 +33,7 @@ export default function ConquistasPage() {
     id: a.title + index,
     description: a.subtitle,
     icon: index % 2 ? Trophy : Award,
-    unlocked: a.state === 'unlocked',
+    unlocked: a.state !== 'bloqueado',
   }));
 
   const filtered = achievements.filter((a) => {

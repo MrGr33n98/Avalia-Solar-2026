@@ -19,10 +19,10 @@ ActiveAdmin.register ReviewerSolution do
     column :verified
     column :status
     column :created_at
-    actions do
-      item "Verificar", verify_admin_reviewer_solution_path(resource), method: :put unless resource.verified
-      item "Rejeitar", reject_admin_reviewer_solution_path(resource), method: :put if resource.status == 'active'
-      item "Desativar", deactivate_admin_reviewer_solution_path(resource), method: :put if resource.status != 'disabled'
+    actions do |solution|
+      item "Verificar", verify_admin_reviewer_solution_path(solution), method: :put unless solution.verified
+      item "Rejeitar", reject_admin_reviewer_solution_path(solution), method: :put if solution.status == 'active'
+      item "Desativar", deactivate_admin_reviewer_solution_path(solution), method: :put if solution.status != 'disabled'
     end
   end
 

@@ -53,7 +53,10 @@ export default function MeuPerfilPage() {
       done: !!(user as { profession?: string } | null)?.profession,
     },
     { label: 'Localização', done: !!(user?.city && user?.state) },
-    { label: 'Redes sociais', done: false },
+    {
+      label: 'Redes sociais',
+      done: !!(profileData.linkedin_url || profileData.instagram_url || profileData.website_url),
+    },
     { label: 'Soluções que usa', done: solutions.length > 0, detail: `${solutions.length}/5` },
     { label: 'Primeira avaliação', done: reviewsCount > 0 },
   ];

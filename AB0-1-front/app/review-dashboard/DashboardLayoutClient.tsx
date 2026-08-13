@@ -63,6 +63,8 @@ export interface ReviewDashboardSummary {
   }>;
   profile?: {
     completion_percent?: number;
+    items?: Array<{ key: string; label: string; completed: boolean }>;
+    missing_fields?: string[];
   };
   charts?: {
     activity_30d?: Array<{

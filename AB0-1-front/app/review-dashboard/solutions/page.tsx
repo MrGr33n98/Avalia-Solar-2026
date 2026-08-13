@@ -191,14 +191,14 @@ export default function SolucoesPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">CO₂ evitado</span>
-                <span className="text-sm font-bold text-green-700">
-                  {solutions.length * 2.5}t/ano
+                <span className="text-sm font-bold text-slate-400">
+                  Indisponível
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Energia limpa</span>
-                <span className="text-sm font-bold text-green-700">
-                  {solutions.length * 4.2} MWh/ano
+                <span className="text-sm font-bold text-slate-400">
+                  Indisponível
                 </span>
               </div>
             </div>
