@@ -70,7 +70,36 @@ module Banners
       return scope unless @params[:category_id].present?
 
       if Banner.reflect_on_association(:categories) && ActiveRecord::Base.connection.table_exists?(:banners_categories)
-        scope.left_joins(:categories).where('categories.id = ? OR categories.id IS NULL', @params[:category_id]).distinct
+        category_id = @params[:category_id].to_i
+        if Banner.column_names.include?('category_id')
+          scope.where(<<~SQL.squish, cat_id: category_id)
+            EXISTS (
+              SELECT 1 FROM banners_categories
+              WHERE banners_categories.banner_id = banners.id
+                AND banners_categories.category_id = :cat_id
+            )
+            OR banners.category_id = :cat_id
+            OR (
+              NOT EXISTS (
+                SELECT 1 FROM banners_categories
+                WHERE banners_categories.banner_id = banners.id
+              )
+              AND banners.category_id IS NULL
+            )
+          SQL
+        else
+          scope.where(<<~SQL.squish, cat_id: category_id)
+            EXISTS (
+              SELECT 1 FROM banners_categories
+              WHERE banners_categories.banner_id = banners.id
+                AND banners_categories.category_id = :cat_id
+            )
+            OR NOT EXISTS (
+              SELECT 1 FROM banners_categories
+              WHERE banners_categories.banner_id = banners.id
+            )
+          SQL
+        end
       else
         scope.where(category_id: @params[:category_id])
       end

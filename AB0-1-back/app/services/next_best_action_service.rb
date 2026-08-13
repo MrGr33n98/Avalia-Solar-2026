@@ -171,7 +171,10 @@ class NextBestActionService
 
     # 11. Banners/Expiring Campaigns (High Priority)
     # Check if there are active banners expiring in less than 3 days
-    expiring_banners = @company.banners.where(status: 'active').where('expires_at < ?', 3.days.from_now) rescue []
+    expiring_banners = @company.banners
+                               .where(active: true)
+                               .where(moderation_status: 'approved')
+                               .where(end_date: Time.current..3.days.from_now)
     if expiring_banners.any?
       actions << {
         id: 'renew_campaigns',
