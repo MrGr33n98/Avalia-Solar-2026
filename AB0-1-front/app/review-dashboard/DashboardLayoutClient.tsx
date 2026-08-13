@@ -379,21 +379,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviews.length} />
         </div>
 
-        {/* Shell Principal do Dashboard em Duas Colunas */}
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
-          {/* Coluna Esquerda: Profile Card / Menu lateral */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-[88px]">
-              <ReviewerProfileCard
-                profileCompletion={profileCompletion}
-                greenScore={greenScore}
-                unlockedBadgeIds={unlockedBadgeIds}
-              />
-            </div>
-          </aside>
-
-          {/* Coluna Direita: Conteúdo Principal */}
-          <main className="min-w-0 flex flex-col gap-6">{children}</main>
+        {/* Shell Principal do Dashboard em Largura Total */}
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 w-full">
+          {/* Conteúdo Principal */}
+          <main className="w-full flex flex-col gap-6">{children}</main>
         </div>
 
         <MobileDashboardNav repliesCount={companyReplies.length} />
