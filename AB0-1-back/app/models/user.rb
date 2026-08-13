@@ -187,7 +187,16 @@ class User < ApplicationRecord
       users_in_region = User.where(city: city, state: state, role: 'review')
       my_score = calculate_green_score
       next nil if my_score.nil?
-      users_in_region.count <= 1 ? 1 : users_in_region.select { |u| (u.calculate_green_score || -1) > my_score }.count + 1
+
+      review_counts = Review.where(user_id: users_in_region.select(:id)).group(:user_id).count
+      helpful_counts = ReviewVote.joins(:review)
+                                 .where(reviews: { user_id: users_in_region.select(:id) }, vote_type: 'useful')
+                                 .group('reviews.user_id').count
+      scores = users_in_region.pluck(:id, :name, :city, :state).to_h do |user_id, name, user_city, user_state|
+        profile_points = [name, user_city, user_state].count(&:present?) * 20
+        [user_id, review_counts.fetch(user_id, 0) * 35 + helpful_counts.fetch(user_id, 0) * 2 + profile_points]
+      end
+      scores.values.count { |score| score > my_score } + 1
     end
   rescue StandardError => e
     Rails.logger.error("[GreenScore] ranking unavailable user=#{id}: #{e.class}: #{e.message}")

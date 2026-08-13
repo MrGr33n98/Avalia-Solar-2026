@@ -14,17 +14,17 @@ module Api
 
         # KPIs
         user_leads = Lead.where(email: current_user.email)
-        quotes_total = safe_count(user_leads)
-        quotes_open = safe_count(user_leads.where(wizard_status: %w[draft pending_otp verified]))
-        quotes_replied = safe_count(user_leads.where(wizard_status: 'proposal_sent'))
-        reviews_published = safe_count(current_user.reviews.where(status: :approved))
+        quotes_total = measure_summary_step('lead_kpis') { safe_count(user_leads) }
+        quotes_open = measure_summary_step('lead_kpis') { safe_count(user_leads.where(wizard_status: %w[draft pending_otp verified])) }
+        quotes_replied = measure_summary_step('lead_kpis') { safe_count(user_leads.where(wizard_status: 'proposal_sent')) }
+        reviews_published = measure_summary_step('reviews_published') { safe_count(current_user.reviews.where(status: :approved)) }
 
         # Gamification & Impact
-        green_score = current_user.calculate_green_score
-        regional_ranking = current_user.regional_ranking
-        achievements = current_user.achievements
-        helpful_votes = current_user.reviews.sum(:helpful_count)
-        impacted_people = current_user.reviews.sum(:read_count)
+        green_score = measure_summary_step('green_score') { current_user.calculate_green_score }
+        regional_ranking = measure_summary_step('regional_ranking') { current_user.regional_ranking }
+        achievements = measure_summary_step('achievements') { current_user.achievements }
+        helpful_votes = measure_summary_step('impact_helpful_votes') { current_user.reviews.sum(:helpful_count) }
+        impacted_people = measure_summary_step('impact_read_count') { current_user.reviews.sum(:read_count) }
 
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
@@ -63,10 +63,10 @@ module Api
         end
 
         # Charts Data - Real activity data from AnalyticsEvent
-        chart_data = safe_activity_chart(start_date: start_date, end_date: end_date)
+        chart_data = measure_summary_step('activity_chart') { safe_activity_chart(start_date: start_date, end_date: end_date) }
 
         # Profile Completion — fonte única do domínio Reviewer
-        profile_completion = Reviewer::ProfileCompletionService.new(user: current_user).call
+        profile_completion = measure_summary_step('profile_completion') { Reviewer::ProfileCompletionService.new(user: current_user).call }
         completion_percent = profile_completion[:percent]
         missing_fields = profile_completion[:missing_fields]
 
@@ -153,6 +153,14 @@ module Api
       end
 
       private
+
+      def measure_summary_step(step)
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        result = yield
+        duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round(2)
+        Rails.logger.info({ event: 'review_dashboard_step', step: step, duration_ms: duration_ms, user_id: current_user.id }.to_json)
+        result
+      end
 
       def require_review_role
         require_role('review', 'admin')

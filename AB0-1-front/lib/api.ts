@@ -1937,39 +1937,7 @@ export const categoriesApi = {
 
 export const leadsApi = {
   getAll: () => fetchApi('/leads'),
-  mine: async (): Promise<Lead[]> => {
-    try {
-      if (apolloClient) {
-        const { data } = await apolloClient.query({
-          query: gql`
-            query GetMyLeads {
-              myLeads(page: 1, perPage: 100) {
-                nodes {
-                  id
-                  status
-                  message
-                  city
-                  state
-                  product_vertical: service_type
-                  created_at: createdAt
-                  company {
-                    id
-                    name
-                    logo_url: logoUrl
-                  }
-                }
-              }
-            }
-          `,
-          fetchPolicy: 'network-only',
-        });
-        return data?.myLeads?.nodes || [];
-      }
-    } catch (err) {
-      console.warn('[leadsApi.mine] GraphQL failed, falling back to REST:', err);
-    }
-    return fetchApi<Lead[]>('/leads/mine');
-  },
+  mine: (): Promise<Lead[]> => fetchApi<Lead[]>('/leads/mine'),
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
