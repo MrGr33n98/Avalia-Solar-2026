@@ -5,7 +5,7 @@ module Api
     module Chat
       class MessagesController < BaseController
         include ActionController::Live
-        include ChatSessionAuthorization
+        include ::ChatSessionAuthorization
 
         before_action :find_session
         before_action :authorize_session!, only: [:create]

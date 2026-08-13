@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -628,6 +628,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id"
+    t.string "target_url"
+    t.integer "priority", default: 0
     t.index ["company_id"], name: "index_campaigns_on_company_id"
   end
 
@@ -792,6 +794,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
     t.index ["utm_source"], name: "index_chat_leads_on_utm_source"
     t.index ["vertical", "created_at"], name: "index_chat_leads_on_vertical_and_created_at"
     t.index ["vertical"], name: "index_chat_leads_on_vertical"
+    t.string "assignment_source"
+    t.index ["assignment_source"], name: "index_chat_leads_on_assignment_source"
   end
 
   create_table "chat_messages", force: :cascade do |t|
@@ -850,6 +854,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
     t.datetime "last_agent_message_at"
     t.datetime "archived_at"
     t.integer "lock_version", default: 0, null: false
+    t.string "visitor_nonce"
+    t.integer "access_token_version", default: 1, null: false
     t.index ["assigned_agent_id"], name: "index_chat_sessions_on_assigned_agent_id"
     t.index ["company_id", "company_unread_count"], name: "index_chat_sessions_company_unread"
     t.index ["company_id", "inbox_status", "last_message_at"], name: "index_chat_sessions_live_inbox"
@@ -863,6 +869,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
     t.index ["vertical"], name: "index_chat_sessions_on_vertical"
     t.index ["visitor_id", "created_at"], name: "index_chat_sessions_on_visitor_id_and_created_at"
     t.index ["visitor_id"], name: "index_chat_sessions_on_visitor_id"
+    t.index ["visitor_nonce"], name: "index_chat_sessions_on_visitor_nonce", unique: true
   end
 
   create_table "classified_topics", force: :cascade do |t|
@@ -2706,6 +2713,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_10_110000) do
     t.string "image_url"
     t.text "meta_description"
     t.bigint "brand_id"
+    t.string "price_mode", default: "fixed", null: false
     t.index ["brand_id"], name: "index_products_on_brand_id"
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true

@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "Api::V1::Chat::LeadsController", type: :request do
-  let(:session) { ChatSession.create!(visitor_id: 'visitor-123') }
+  let(:session) { create(:chat_session) }
 
   describe "POST /api/v1/chat/leads" do
     let(:valid_params) do

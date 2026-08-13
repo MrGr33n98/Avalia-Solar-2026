@@ -4,7 +4,7 @@ module Api
   module V1
     module Chat
       class SessionsController < BaseController
-        include ChatSessionAuthorization
+        include ::ChatSessionAuthorization
 
         # POST /api/v1/chat/sessions
         def create
