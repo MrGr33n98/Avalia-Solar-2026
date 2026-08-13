@@ -14,7 +14,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { ComparisonSponsoredRecommendation } from '@/components/compare/ComparisonSponsoredRecommendation';
 import { CompanyLogo } from '@/components/CompanyLogo';
@@ -134,6 +134,8 @@ export default function ComparisonFloatingBar() {
   } = useComparison();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dockState, setDockState] = useState<'expanded' | 'minimized' | 'hidden'>('minimized');
+  const [isClosedByUser, setIsClosedByUser] = useState(false);
+  const prevCountRef = useRef(count);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isForcedOpen, setIsForcedOpen] = useState(false);
   const [isMobileExperience, setIsMobileExperience] = useState(true);
@@ -161,6 +163,7 @@ export default function ComparisonFloatingBar() {
     const openComparison = () => {
       setIsForcedOpen(true);
       setIsModalOpen(false);
+      setIsClosedByUser(false);
       setDockState('expanded');
       track('compare_popover_opened', { comparison_count: count });
     };
@@ -186,13 +189,19 @@ export default function ComparisonFloatingBar() {
     };
   }, [count]);
 
-  // Reexibe o botão minimizado quando empresas são adicionadas com o dock fechado
+  // Reexibe o botão minimizado apenas se o count aumentou (nova empresa adicionada)
   useEffect(() => {
-    if (count > 0 && dockState === 'hidden') {
-      setDockState('minimized');
+    if (count > prevCountRef.current) {
+      setIsClosedByUser(false);
+      if (dockState === 'hidden') {
+        setDockState('minimized');
+      }
+    } else if (count === 0) {
+      setIsClosedByUser(false);
+      setDockState('hidden');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [count]);
+    prevCountRef.current = count;
+  }, [count, dockState]);
 
   const companyLabel = count === 1 ? 'empresa' : 'empresas';
   const handleComparisonPageClick = () => {
@@ -214,11 +223,13 @@ export default function ComparisonFloatingBar() {
       placement: 'comparison_dock',
     });
     setIsForcedOpen(false);
+    setIsClosedByUser(false);
     setDockState('minimized');
     router.push('/search?tab=companies');
   };
 
   const closeDock = () => {
+    setIsClosedByUser(true);
     setIsForcedOpen(false);
     setDockState('hidden');
     track('compare_popover_closed', { comparison_count: count });
@@ -232,12 +243,13 @@ export default function ComparisonFloatingBar() {
 
   const handleOpenDock = () => {
     track('compare_floating_clicked', { comparison_count: count });
+    setIsClosedByUser(false);
     openComparisonDock();
   };
 
   return (
     <>
-      {!isMobileExperience ? (
+      {!isMobileExperience && !isClosedByUser ? (
         <AnimatePresence>
           {dockState === 'minimized' ? (
           <div 
