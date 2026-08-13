@@ -4,7 +4,7 @@ module Api
   module V1
     module Chat
       class LeadsController < BaseController
-        include ChatSessionAuthorization
+        include ::ChatSessionAuthorization
         # POST /api/v1/chat/leads
         def create
           unless ENV.fetch('CHAT_CAPTURE_LEADS_ENABLED', 'true') == 'true'
@@ -15,7 +15,7 @@ module Api
             )
           end
 
-          session = ChatSession.find(params[:chat_session_id])
+          session = ::ChatSession.find(params[:chat_session_id])
           return unless authorize_chat_session!(session)
 
           # LGPD: Exigir consentimento
@@ -142,7 +142,7 @@ module Api
         def resolve_assigned_company(metadata)
           raw = metadata.respond_to?(:to_h) ? metadata.to_h : {}
           company_id = raw['quote_requested_company_id'] || raw[:quote_requested_company_id]
-          company = Company.find_by(id: company_id)
+          company = ::Company.find_by(id: company_id)
           return nil unless company
 
           company

@@ -114,9 +114,9 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     };
   }, [session?.id, session?.realtime_token]);
 
-  const fetchSessionMessages = useCallback(async (sessionId: number) => {
+  const fetchSessionMessages = useCallback(async (sessionId: number, accessToken?: string) => {
     try {
-      const response = await fetchApiSafe<{ messages: ChatMessage[]; realtime_token?: string; access_token?: string }>(`chat/sessions/${sessionId}`, { headers: session?.access_token ? { 'X-Chat-Session-Token': session.access_token } : {} });
+      const response = await fetchApiSafe<{ messages: ChatMessage[]; realtime_token?: string; access_token?: string }>(`chat/sessions/${sessionId}`, { headers: accessToken ? { 'X-Chat-Session-Token': accessToken } : {} });
       if (response && response.messages) {
         setMessages(response.messages);
         if (response.access_token || response.realtime_token) {
@@ -128,8 +128,15 @@ export function useChatSession(sessionKey = 'as_chat_session') {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Chat] Failed to fetch messages:', error);
+      if (error?.status === 401 || error?.status === 403) {
+        console.warn('[Chat] Invalid or expired session token. Clearing legacy session state.');
+        sessionStorage.removeItem(sessionKey);
+        localStorage.removeItem(sessionKey);
+        setSession(null);
+        setMessages([]);
+      }
     }
   }, [sessionKey]);
 
@@ -139,11 +146,16 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
+        if (!parsed.access_token) {
+          // Sessões antigas não podem ser autorizadas com segurança. Recomeçar no próximo envio.
+          sessionStorage.removeItem(sessionKey);
+          localStorage.removeItem(sessionKey);
+          return;
+        }
         setSession(parsed);
         sessionStorage.setItem(sessionKey, savedSession);
         localStorage.removeItem(sessionKey); // Migrate existing to sessionStorage
-        // Load messages for this session
-        fetchSessionMessages(parsed.id);
+        fetchSessionMessages(parsed.id, parsed.access_token);
       } catch {
         sessionStorage.removeItem(sessionKey);
         localStorage.removeItem(sessionKey);
@@ -386,53 +398,61 @@ export function useChatSession(sessionKey = 'as_chat_session') {
     consent_given: boolean;
     metadata?: Record<string, unknown>;
   }) => {
-    if (!session) return false;
+    let activeSession = session;
+    if (!activeSession?.access_token) {
+      if (activeSession) {
+        sessionStorage.removeItem(sessionKey);
+        localStorage.removeItem(sessionKey);
+        setSession(null);
+      }
+      await startSession(activeSession?.vertical);
+      const saved = sessionStorage.getItem(sessionKey);
+      activeSession = saved ? JSON.parse(saved) : null;
+    }
+    if (!activeSession?.access_token) return false;
 
     setIsLoading(true);
     try {
       const attribution = getCurrentUTMs();
       const payload = {
-        chat_session_id: session.id,
+        chat_session_id: activeSession.id,
         ...leadData,
         source_page: typeof window !== 'undefined' ? window.location.href : '',
         utm_source: attribution.utm_source || '',
         utm_medium: attribution.utm_medium || '',
         utm_campaign: attribution.utm_campaign || '',
       };
-
       const response = await fetchApiSafe<{ success?: boolean; lead_id?: number; id?: number }>('chat/leads', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(session.access_token ? { 'X-Chat-Session-Token': session.access_token } : {}) },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json', 'X-Chat-Session-Token': activeSession.access_token },
+        body: JSON.stringify(payload),
       });
 
       const leadId = response?.lead_id || response?.id;
       if (response && (response.success || leadId)) {
         setHasLeadCaptured(true);
         setShowLeadForm(false);
-        trackCanonical('ai_lead_captured', {
-          session_id: session.id,
-          lead_id: leadId
-        });
-        
-        // Add a friendly thank you system message from AI
-        const systemThanks: ChatMessage = {
-          id: Date.now(),
-          role: 'assistant',
+        trackCanonical('ai_lead_captured', { session_id: activeSession.id, lead_id: leadId });
+        setMessages((prev) => [...prev, {
+          id: Date.now(), role: 'assistant',
           content: `Obrigado pelos seus dados, ${leadData.name.split(' ')[0]}! Um de nossos consultores especializados vai analisar suas informações e entrar em contato em breve para te ajudar com seu projeto. Enquanto isso, fique à vontade para continuar tirando suas dúvidas comigo!`,
-          created_at: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, systemThanks]);
+          created_at: new Date().toISOString(),
+        }]);
         return true;
       }
       return false;
     } catch (error) {
       console.error('[Chat] Failed to submit lead:', error);
+      if ((error as { status?: number })?.status === 401 || (error as { status?: number })?.status === 403) {
+        sessionStorage.removeItem(sessionKey);
+        localStorage.removeItem(sessionKey);
+        setSession(null);
+      }
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [session]);
+  }, [session, sessionKey, startSession]);
 
   const clearSession = useCallback(() => {
     abortControllerRef.current?.abort();
