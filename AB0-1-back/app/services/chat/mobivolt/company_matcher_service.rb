@@ -13,7 +13,7 @@ module Chat
     # Returns up to MAX_RESULTS companies ordered by priority_score / sponsorship.
     #
     class CompanyMatcherService
-      MAX_RESULTS = 5
+      MAX_RESULTS = 3
       INSTALLER_MIN = 3
 
       def self.match(entities)

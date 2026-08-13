@@ -179,16 +179,6 @@ export default function ChatLeadQualificationWizard({
       },
     ];
 
-    if (vertical === 'solar') {
-      baseSteps.push({
-        id: 'roof_type',
-        title: 'Tipo de telhado:',
-        subtitle: 'Selecione o tipo de superfície para instalação',
-        options: ROOF_TYPES,
-        layout: 'visual_grid',
-      });
-    }
-
     baseSteps.push(specificStep);
 
     baseSteps.push({
@@ -198,12 +188,6 @@ export default function ChatLeadQualificationWizard({
       options: vertical === 'solar' ? SOLAR_TIMELINES : TIMELINES,
     });
 
-    baseSteps.push({
-      id: 'review_interest',
-      title: 'Que tipo de avaliação você quer ver?',
-      subtitle: 'Isso ajuda a filtrar as empresas antes do orçamento.',
-      options: REVIEW_INTERESTS,
-    });
 
     return baseSteps;
   }, [needOptions, profileOptions, vertical]);
@@ -232,12 +216,8 @@ export default function ChatLeadQualificationWizard({
       setErrorMsg('Você precisa aceitar os termos da LGPD para continuar.');
       return;
     }
-    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
-      setErrorMsg('Por favor, preencha nome, e-mail e WhatsApp.');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())) {
-      setErrorMsg('Por favor, informe um e-mail válido.');
+    if (!contact.name.trim() || !contact.phone.trim()) {
+      setErrorMsg('Por favor, preencha nome e WhatsApp.');
       return;
     }
     const phoneDigits = contact.phone.replace(/\D/g, '');
@@ -285,7 +265,7 @@ export default function ChatLeadQualificationWizard({
     try {
       const success = await onSubmit({
         name: contact.name.trim(),
-        email: contact.email.trim(),
+        email: contact.email.trim() || undefined,
         phone: normalizedPhone,
         city: contact.city.trim(),
         state: contact.state.trim().toUpperCase(),
@@ -422,7 +402,6 @@ export default function ChatLeadQualificationWizard({
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Usaremos seus dados para conectar você às opções mais aderentes.</p>
           </div>
           <input required value={contact.name} onChange={(event) => updateContact('name', event.target.value)} placeholder="Nome completo" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
-          <input required type="email" value={contact.email} onChange={(event) => updateContact('email', event.target.value)} placeholder="E-mail" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <input required type="tel" value={contact.phone} onChange={(event) => updateContact('phone', event.target.value)} placeholder="WhatsApp com DDD" className="w-full text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <textarea required={answers.need === 'other'} value={contact.summary} onChange={(event) => updateContact('summary', event.target.value)} placeholder={answers.need === 'other' ? 'Conte brevemente o que você procura.' : 'Quer complementar? Escreva brevemente o que procura.'} rows={3} className="w-full resize-none text-xs px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
           <label className="flex items-start space-x-2 cursor-pointer">
@@ -435,7 +414,7 @@ export default function ChatLeadQualificationWizard({
             </div>
           )}
           <button disabled={isSubmitting} type="submit" className="w-full bg-gradient-to-r from-brand-yellow to-amber-500 hover:from-amber-500 hover:to-amber-600 disabled:opacity-60 text-zinc-900 font-bold py-2.5 rounded-lg text-xs shadow-md transition-colors">
-            {isSubmitting ? 'Enviando...' : 'Encontrar empresas e reviews'}
+            {isSubmitting ? 'Buscando empresas...' : 'Encontrar 3 empresas para mim'}
           </button>
         </form>
       )}

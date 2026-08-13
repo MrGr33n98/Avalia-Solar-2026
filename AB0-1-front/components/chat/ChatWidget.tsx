@@ -134,6 +134,12 @@ export default function ChatWidget() {
     .filter(msg => msg.metadata?.type === 'company_recommendations')
     .flatMap(msg => msg.metadata?.companies || []);
 
+  // Após envio lead, confirmação fica antes cards novo match.
+  const latestRecommendationIndex = messages.reduce((latest, message, index) =>
+    message.metadata?.type === 'company_recommendations' ? index : latest,
+    -1
+  );
+
   // Auto-scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -571,7 +577,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50 dark:bg-zinc-950">
+          <div className="flex flex-col flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50 dark:bg-zinc-950">
             {messages.length === 0 && !isLoading && !hasAcceptedTerms && (
               <div className="flex flex-col items-center justify-center h-full space-y-5 py-10 px-6 text-center animate-in fade-in zoom-in-95 duration-300">
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-1 border-2 border-brand-blue/20">
@@ -702,7 +708,7 @@ export default function ChatWidget() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-2`}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-2 ${hasLeadCaptured && messages.indexOf(msg) === latestRecommendationIndex ? 'order-2' : ''}`}
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
@@ -843,7 +849,7 @@ export default function ChatWidget() {
 
             {/* Success State (Conversion) */}
             {hasLeadCaptured && (
-              <div className="bg-white dark:bg-zinc-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg space-y-4 animate-in fade-in zoom-in-95 mt-4">
+              <div className="order-1 bg-white dark:bg-zinc-900 border border-emerald-500/30 rounded-2xl p-5 shadow-lg space-y-4 animate-in fade-in zoom-in-95 mt-4">
                 <div className="flex flex-col items-center justify-center text-center space-y-2">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-500 mb-2">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

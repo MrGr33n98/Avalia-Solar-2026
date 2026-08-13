@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { companyAccessApi, type CompanyAccessSuggestedCompany } from '@/lib/api';
+import { companyAccessApi, type CompanyAccessSuggestedCompany, type Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,8 +35,20 @@ const includesQuery = (candidate: string | null | undefined, query: string) => {
   return normalizeText(candidate).includes(query);
 };
 
+interface ApiErrorShape {
+  context?: {
+    details?: {
+      message?: string;
+      error?: string;
+      errors?: string[];
+    };
+    message?: string;
+  };
+  message?: string;
+}
+
 const extractErrorMessage = (error: unknown, fallback: string) => {
-  const maybeError = error as any;
+  const maybeError = error as ApiErrorShape;
   const detailedMessage =
     maybeError?.context?.details?.message ||
     maybeError?.context?.details?.error ||
@@ -175,7 +187,7 @@ export default function SelectCompanyPage() {
     );
   }, [normalizedQuery.length, searchResults, suggestedCompanies, companies]);
 
-  const handleSelect = async (company: any) => {
+  const handleSelect = async (company: Company) => {
     if (selectingId || requestingId) return;
 
     try {
@@ -295,7 +307,7 @@ export default function SelectCompanyPage() {
                 return (
                   <div
                     key={company.id}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all"
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/20 transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="relative h-11 w-11 rounded-full border border-gray-100 bg-white overflow-hidden flex items-center justify-center shrink-0">
@@ -326,7 +338,7 @@ export default function SelectCompanyPage() {
 
                     <Button
                       type="button"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold min-w-[160px]"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold min-w-[160px]"
                       disabled={isSelecting || requestingId !== null}
                       onClick={() => handleSelect(company)}
                     >
@@ -446,12 +458,21 @@ export default function SelectCompanyPage() {
         </div>
 
         <div className="p-6 sm:p-8 bg-gray-50/80 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
-          <p className="text-gray-500 font-medium text-sm sm:text-base">
-            Nao encontrou sua empresa na busca?
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-gray-500 font-medium text-sm sm:text-base">
+              Não encontrou sua empresa na busca?
+            </p>
+            <button
+              type="button"
+              className="text-xs text-blue-600 hover:underline text-left"
+              onClick={() => router.push('/select-company/requests')}
+            >
+              Acompanhar solicitações enviadas
+            </button>
+          </div>
           <Button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-2"
-            onClick={() => router.push('/register')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
+            onClick={() => router.push('/register-company')}
           >
             <Plus className="h-4 w-4" />
             Cadastrar empresa
