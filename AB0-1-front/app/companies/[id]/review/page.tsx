@@ -205,13 +205,13 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   }
 
   return (
-    <div className="border border-slate-300 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-8">
+    <div className="rounded-xl border border-[#D0D5DD] bg-white shadow-[0_10px_30px_rgba(13,46,103,0.12)]">
+      <div className="flex items-center justify-between border-b border-[#D0D5DD] px-5 py-3 sm:px-7">
         <div className="flex gap-1" aria-label={`Passo ${step} de 3`}>
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`h-1 w-10 transition-colors ${step >= i ? 'bg-[#0B1F4B]' : 'bg-slate-200'}`}
+              className={`h-1 w-10 transition-colors ${step >= i ? 'bg-[#155EEF]' : 'bg-slate-200'}`}
             />
           ))}
         </div>
@@ -220,12 +220,12 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         </span>
       </div>
 
-      <Card className="overflow-hidden rounded-none border-0 bg-white shadow-none">
-        <CardContent className="p-5 sm:p-8 lg:p-10">
+      <Card className="overflow-hidden rounded-b-xl border border-t-0 border-[#D0D5DD] bg-white shadow-[0_10px_30px_rgba(13,46,103,0.12)]">
+        <CardContent className="max-h-[calc(100dvh-220px)] overflow-y-auto p-4 sm:p-6">
           {step === 1 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
                   Sobre qual serviço você deseja falar?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -260,11 +260,11 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 </div>
               )}
 
-              <div className="flex justify-end pt-4">
+              <div className="sticky bottom-0 flex justify-end bg-white/95 pt-3">
                 <Button
                   onClick={nextStep}
                   disabled={!categoryId || !!errorCategoryId}
-                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
+                  className="h-11 rounded-lg bg-[#155EEF] px-8 font-bold shadow-none hover:bg-[#0D4ED8] focus-visible:ring-2 focus-visible:ring-[#2970FF] focus-visible:ring-offset-2 gap-2"
                 >
                   Próximo: Notas
                   <ArrowRight className="h-4 w-4" />
@@ -274,9 +274,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 2 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
                   Como foi o desempenho técnico?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -297,7 +297,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                       aria-label={`${star} estrela${star > 1 ? 's' : ''} de 5`}
                       role="radio"
                       aria-checked={rating === star}
-                      className="flex h-11 w-11 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+                      className="flex h-11 w-11 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2970FF]"
                     >
                       <Star
                         aria-hidden="true"
@@ -320,18 +320,18 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 />
               )}
 
-              <div className="flex justify-between gap-3 border-t border-slate-200 pt-6">
+              <div className="sticky bottom-0 flex justify-between gap-3 border-t border-slate-200 bg-white/95 pt-4">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
-                  className="h-12 rounded-[2px] px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+                  className="h-11 rounded-lg px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#2970FF]"
                 >
                   Voltar
                 </Button>
                 <Button
                   onClick={nextStep}
                   disabled={rating === 0}
-                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
+                  className="h-11 rounded-lg bg-[#155EEF] px-8 font-bold shadow-none hover:bg-[#0D4ED8] focus-visible:ring-2 focus-visible:ring-[#2970FF] focus-visible:ring-offset-2 gap-2"
                 >
                   Próximo: Texto
                   <ArrowRight className="h-4 w-4" />
@@ -341,9 +341,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 3 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[28px]">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
                   Agora, conte-nos em palavras
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -363,11 +363,11 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 </div>
               )}
 
-              <div className="flex flex-col-reverse justify-between gap-3 border-t border-slate-200 pt-6 sm:flex-row">
+              <div className="sticky bottom-0 flex flex-col-reverse justify-between gap-3 border-t border-slate-200 bg-white/95 pt-4 sm:flex-row">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
-                  className="h-12 rounded-[2px] px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+                  className="h-11 rounded-lg px-6 text-slate-600 focus-visible:ring-2 focus-visible:ring-[#2970FF]"
                 >
                   Voltar
                 </Button>
@@ -375,7 +375,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                   onClick={handleSubmit}
                   disabled={isSubmitting || editorialData.comment.length < 10}
                   aria-busy={isSubmitting}
-                  className="h-12 rounded-[2px] bg-[#0B1F4B] px-10 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2 gap-2"
+                  className="h-11 rounded-lg bg-[#155EEF] px-10 font-bold shadow-none hover:bg-[#0D4ED8] focus-visible:ring-2 focus-visible:ring-[#2970FF] focus-visible:ring-offset-2 gap-2"
                 >
                   {isSubmitting ? 'Enviando...' : 'Finalizar Avaliação'}
                   <CheckCircle2 className="h-4 w-4" />
@@ -388,10 +388,10 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
 
       <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
         <DialogContent
-          className="max-w-md overflow-hidden rounded-[2px] border border-slate-300 p-0 shadow-none"
+          className="max-w-md overflow-hidden rounded-xl border border-[#D0D5DD] p-0 shadow-[0_10px_30px_rgba(13,46,103,0.12)]"
           overlayClassName="bg-slate-950/60 backdrop-blur-sm"
         >
-          <div className="flex justify-center border-b border-slate-200 bg-green-700 p-8">
+          <div className="flex justify-center border-b border-slate-200 bg-[#EFF8FF] p-7">
             <div className="flex h-16 w-16 items-center justify-center border border-white/40">
               <CheckCircle2 className="h-10 w-10 text-white" />
             </div>
@@ -409,7 +409,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
             <DialogFooter className="pt-4">
               <Button
                 onClick={handleCloseModal}
-                className="h-12 w-full rounded-[2px] bg-[#0B1F4B] font-bold"
+                className="h-11 w-full rounded-lg bg-[#155EEF] font-bold"
               >
                 Entendi, voltar para a empresa
               </Button>
@@ -430,7 +430,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
   if (loading) {
     return (
       <div className="container mx-auto py-20 px-4">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-2xl mx-auto space-y-5">
           <div className="h-10 bg-slate-200 animate-pulse rounded-full w-1/3" />
           <div className="h-[500px] bg-slate-100 animate-pulse rounded-3xl w-full" />
         </div>
@@ -463,17 +463,17 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-0 py-0 sm:px-6 sm:py-8 lg:py-12">
-      <div className="mx-auto max-w-[1040px] space-y-0">
-        <header className="border-x border-t border-slate-300 bg-white px-5 py-6 sm:px-8">
+    <div className="min-h-[100dvh] bg-[#F8FAFC] px-3 py-3 sm:px-5 sm:py-6 lg:py-10">
+      <div className="mx-auto flex max-w-[760px] flex-col space-y-0">
+        <header className="rounded-t-xl border border-[#D0D5DD] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:px-7">
           <Link
             href={companyPath}
-            className="mb-5 flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+            className="mb-3 flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2970FF]"
           >
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
             Voltar para {company.name}
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[30px]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0A1F44] sm:text-[24px]">
             Avaliar empresa
           </h1>
           <p className="mt-1 text-sm text-slate-500 sm:text-base">

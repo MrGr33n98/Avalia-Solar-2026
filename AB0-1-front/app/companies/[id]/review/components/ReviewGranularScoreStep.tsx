@@ -59,11 +59,11 @@ export function ReviewGranularScoreStep({
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold">Avalie os detalhes do serviço</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="space-y-3 border border-slate-200 p-4">
+            <div key={i} className="space-y-2 rounded-lg border border-[#D0D5DD] p-3">
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-3 w-3/4" />
               <div className="flex gap-1">
@@ -100,18 +100,18 @@ export function ReviewGranularScoreStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h3 className="text-lg font-semibold text-[#0B1F4B]">Critérios de avaliação</h3>
-      <div className="grid border-l border-t border-slate-300 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2">
         {criteria.map((criterion) => (
-          <div key={criterion.id} className="border-b border-r border-slate-300 bg-white p-4">
-            <Label className="text-sm font-bold flex items-center justify-between mb-1">
+          <div key={criterion.id} className="border border-[#D0D5DD] bg-white px-3 py-2">
+            <Label className="text-sm font-semibold flex items-center justify-between mb-0">
               <span>
                 {criterion.title} {criterion.required && <span className="text-red-500">*</span>}
               </span>
             </Label>
             {criterion.help_text && (
-              <p className="text-xs text-muted-foreground mb-3">{criterion.help_text}</p>
+              <p className="text-xs text-[#667085] mb-1">{criterion.help_text}</p>
             )}
             <div className="flex gap-0.5" role="radiogroup" aria-label={criterion.title}>
               {[1, 2, 3, 4, 5].map((star) => (
@@ -122,7 +122,7 @@ export function ReviewGranularScoreStep({
                   aria-label={`${star} estrela${star > 1 ? 's' : ''} para ${criterion.title}`}
                   role="radio"
                   aria-checked={(values[criterion.id] || 0) === star}
-                  className="flex h-11 w-9 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+                  className="flex h-11 w-9 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2970FF]"
                 >
                   <Star
                     aria-hidden="true"
