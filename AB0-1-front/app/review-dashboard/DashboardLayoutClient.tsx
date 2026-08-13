@@ -105,6 +105,14 @@ export function useDashboardContext() {
   return ctx;
 }
 
+/**
+ * Pure data provider without layout UI.
+ * Used by the new ReviewerDashboardShell architecture.
+ */
+export function DashboardDataProvider({ children }: { children: React.ReactNode }) {
+  return <DashboardLayoutClient>{children}</DashboardLayoutClient>;
+}
+
 export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();

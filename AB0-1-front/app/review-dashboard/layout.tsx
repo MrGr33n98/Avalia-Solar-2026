@@ -1,5 +1,10 @@
-import { DashboardLayoutClient } from './DashboardLayoutClient';
+import { ReviewerDashboardShell } from '@/components/review-dashboard/layout/ReviewerDashboardShell';
+import { DashboardDataProvider } from './DashboardLayoutClient';
 
 export default function ReviewDashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardLayoutClient>{children}</DashboardLayoutClient>;
+  return (
+    <DashboardDataProvider>
+      <ReviewerDashboardShell>{children}</ReviewerDashboardShell>
+    </DashboardDataProvider>
+  );
 }
