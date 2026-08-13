@@ -8,6 +8,42 @@ module ReviewDashboard
       @user = user
     end
 
+    def recent_events(limit: 10)
+      review_events = user.reviews.includes(:company).flat_map do |review|
+        events = [{
+          type: 'review_created',
+          title: "Avaliação enviada para #{review.company&.name || 'Empresa'}",
+          created_at: review.created_at,
+          review_id: review.id,
+          company_id: review.company_id
+        }]
+        if review.reply_active?
+          events << {
+            type: 'review_answered',
+            title: "#{review.company&.name || 'Empresa'} respondeu sua avaliação",
+            created_at: review.active_replied_at,
+            review_id: review.id,
+            company_id: review.company_id
+          }
+        end
+        events
+      end
+
+      notification_events = user.notifications.active.recent.limit(limit).map do |notification|
+        {
+          type: notification.notification_type,
+          title: notification.title,
+          created_at: notification.created_at,
+          notification_id: notification.id
+        }
+      end
+
+      (review_events + notification_events).sort_by { |event| event[:created_at] || Time.at(0) }.reverse.first(limit)
+    rescue StandardError => e
+      Rails.logger.error("[ReviewDashboard] recent events failed: #{e.class} #{e.message}")
+      []
+    end
+
     def activity_chart_data(start_date: 30.days.ago, end_date: Time.current)
       start_date = start_date.beginning_of_day
       end_date = end_date.end_of_day

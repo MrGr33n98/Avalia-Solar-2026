@@ -1,0 +1,5 @@
+'use client';
+import Link from 'next/link';
+import { ReviewerShell } from '@/components/reviewer/ReviewerShell';
+import { useReviewerDashboard } from '@/hooks/reviewer/useReviewerDashboard';
+export default function AchievementsPage() { const { data, loading, error } = useReviewerDashboard(); return <ReviewerShell><Link href="/review-dashboard" className="text-sm font-semibold text-blue-600">Voltar ao painel</Link><h1 className="mt-3 text-3xl font-bold text-slate-950">Conquistas</h1>{loading ? <p className="mt-6">Carregando...</p> : error ? <p role="alert" className="mt-6 text-red-700">Não foi possível carregar conquistas.</p> : <div className="mt-6 grid gap-4 sm:grid-cols-2">{data?.achievements.map((item) => <article key={item.code} className="rounded-2xl bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-950">{item.name}</h2><p className="mt-2 text-sm text-slate-600">{item.description}</p><p className="mt-3 text-xs font-bold text-blue-700">{item.unlocked ? 'Desbloqueada' : 'Ainda bloqueada'}</p></article>)}</div>}</ReviewerShell>; }

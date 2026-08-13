@@ -1450,6 +1450,7 @@ export const dashboardApi = {
 
 export const reviewDashboardApi = {
   getSummary: () => fetchApi('/review_dashboard/summary'),
+  getDashboard: () => fetchApi<import('@/types/reviewer').ReviewerDashboard>('/reviewer/dashboard'),
 };
 
 export interface CompanyAnalyticsOverview {

@@ -255,6 +255,10 @@ Rails.application.routes.draw do
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
 
+      namespace :reviewer do
+        resource :dashboard, only: [:show], controller: 'dashboard'
+      end
+
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       # Chat IA endpoints
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

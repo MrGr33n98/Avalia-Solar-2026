@@ -1,0 +1,6 @@
+'use client';
+import Link from 'next/link';
+import { ReviewerShell } from '@/components/reviewer/ReviewerShell';
+import { ReviewerSkeleton } from '@/components/reviewer/ReviewerSkeleton';
+import { useReviewerDashboard } from '@/hooks/reviewer/useReviewerDashboard';
+export default function JourneyPage() { const { data, loading, error } = useReviewerDashboard(); return <ReviewerShell><Link href="/review-dashboard" className="text-sm font-semibold text-blue-600">Voltar ao painel</Link><h1 className="mt-3 text-3xl font-bold text-slate-950">Jornadas sustentáveis</h1>{loading ? <ReviewerSkeleton /> : error ? <p role="alert" className="mt-6 text-red-700">Não foi possível carregar jornadas.</p> : <div className="mt-6 grid gap-4 md:grid-cols-2">{data?.journeys.map((journey) => <article key={journey.id} className="rounded-2xl bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-950">{journey.title}</h2><p className="mt-2 text-sm text-slate-600">{journey.progress}% concluído</p><div className="mt-3 h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${journey.progress}%` }} /></div><p className="mt-3 text-xs text-slate-500">{journey.next_step ? `Próximo passo: ${journey.next_step}` : 'Jornada concluída'}</p></article>)}</div>}</ReviewerShell>; }

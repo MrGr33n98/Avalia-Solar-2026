@@ -1,0 +1,6 @@
+'use client';
+import Link from 'next/link';
+import { ReviewerShell } from '@/components/reviewer/ReviewerShell';
+import { ReviewerSkeleton } from '@/components/reviewer/ReviewerSkeleton';
+import { useReviewerDashboard } from '@/hooks/reviewer/useReviewerDashboard';
+export default function GreenScorePage() { const { data, loading, error } = useReviewerDashboard(); return <ReviewerShell><Link href="/review-dashboard" className="text-sm font-semibold text-blue-600">Voltar ao painel</Link><h1 className="mt-3 text-3xl font-bold text-slate-950">Green Score</h1>{loading ? <ReviewerSkeleton /> : error ? <p role="alert" className="mt-6 text-red-700">Não foi possível carregar seu score.</p> : data && <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm"><p className="text-sm text-slate-500">Score calculado por contribuições reais</p><p className="mt-2 text-5xl font-bold text-blue-700">{data.green_score.score}</p><h2 className="mt-8 font-bold text-slate-950">Componentes</h2><dl className="mt-3 space-y-3">{Object.entries(data.green_score.components).map(([name, value]) => <div key={name} className="flex justify-between border-b border-slate-100 pb-2 text-sm"><dt className="text-slate-600">{name}</dt><dd className="font-semibold text-slate-900">{value}</dd></div>)}</dl></section>}</ReviewerShell>; }
