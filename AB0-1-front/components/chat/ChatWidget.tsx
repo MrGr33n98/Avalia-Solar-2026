@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Minimize2, RotateCcw } from 'lucide-react';
+import { X, Minimize2, RotateCcw, Star, Search, FileText, ChevronRight } from 'lucide-react';
 import { useChatSession } from '@/hooks/useChatSession';
 import { useAppExperience } from '@/hooks/useAppExperience';
 import { useComparison } from '@/hooks/useComparison';
@@ -990,23 +990,29 @@ export default function ChatWidget() {
       )}
 
       {!isOpen && canShowInvite && showInviteBubble && (
-        <div className="pointer-events-auto w-full max-w-[360px] rounded-2xl border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-950/10 animate-in fade-in slide-in-from-bottom-3 duration-300 sm:mb-3 sm:max-w-[360px] sm:block">
+        <div className="pointer-events-auto w-[calc(100vw-32px)] sm:w-[360px] max-w-[360px] rounded-2xl border border-[#64748B] bg-[#172033] p-5 shadow-2xl shadow-slate-950/40 animate-in fade-in slide-in-from-bottom-3 duration-300 sm:mb-3 sm:block">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-black text-slate-950">Olá! Precisa de ajuda?</h3>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Posso ajudar você a encontrar empresas de energia solar ou mobilidade elétrica, comparar avaliações e pedir orçamento com segurança.
-              </p>
+            <div className="flex items-start gap-3">
+              {/* Speech bubble avatar icon on the left */}
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-[#222D42]">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-white leading-tight">Olá! Precisa de ajuda?</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#CBD5E1]">
+                  Posso ajudar você a encontrar empresas de energia solar ou mobilidade elétrica, comparar avaliações e pedir orçamento com segurança.
+                </p>
+              </div>
             </div>
             <button
               type="button"
               onClick={dismissInviteBubble}
-              className="rounded-full p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="rounded-full p-1 text-[#CBD5E1] transition-colors hover:bg-[#222D42] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Fechar convite do chat"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-4 w-4" />
             </button>
           </div>
           <div className="mt-4 grid gap-2">
@@ -1015,9 +1021,23 @@ export default function ChatWidget() {
                 key={action.label}
                 type="button"
                 onClick={() => handleInviteAction(action)}
-                className="rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2 text-left text-xs font-bold text-brand-blue transition-all hover:border-brand-blue/30 hover:bg-blue-100 active:scale-95"
+                className="w-full flex items-center justify-between rounded-xl border border-[#64748B] bg-[#222D42] p-3.5 text-left transition-all duration-200 hover:bg-[#2d3c56] hover:border-[#3B82F6] hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033]"
               >
-                {action.label}
+                <div className="flex items-center gap-3">
+                  {action.label === 'Ver avaliações' && (
+                    <Star className="w-5 h-5 text-[#3B82F6] fill-[#3B82F6]" />
+                  )}
+                  {action.label === 'Comparar empresas' && (
+                    <Search className="w-5 h-5 text-[#3B82F6]" />
+                  )}
+                  {action.label === 'Pedir orçamento' && (
+                    <FileText className="w-5 h-5 text-[#3B82F6]" />
+                  )}
+                  <span className="text-sm font-semibold text-white">
+                    {action.label}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#CBD5E1]" />
               </button>
             ))}
           </div>
