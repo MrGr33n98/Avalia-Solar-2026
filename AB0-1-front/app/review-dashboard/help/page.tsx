@@ -4,7 +4,6 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { ActionCard } from '@/components/review-dashboard/cards/ActionCard';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import {
   HelpCircle,
@@ -22,8 +21,6 @@ import { cn } from '@/lib/utils';
 export default function AjudaPage() {
   const { loading } = useDashboardContext();
   const [search, setSearch] = useState('');
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   const faqs = [
     {

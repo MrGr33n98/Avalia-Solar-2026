@@ -5,7 +5,6 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Zap } from 'lucide-react';
@@ -20,8 +19,6 @@ type TabId = (typeof tabs)[number]['id'];
 export default function RecompensasPage() {
   const { loading, summary } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   const greenScore = summary?.gamification?.green_score;
   const totalPoints = null;

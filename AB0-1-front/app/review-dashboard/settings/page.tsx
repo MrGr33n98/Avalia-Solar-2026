@@ -5,7 +5,6 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import { User, Shield, Bell, Lock, Globe } from 'lucide-react';
@@ -23,8 +22,6 @@ type TabId = (typeof tabs)[number]['id'];
 export default function ConfiguraçõesPage() {
   const { loading } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   return (
     <div className="space-y-6">

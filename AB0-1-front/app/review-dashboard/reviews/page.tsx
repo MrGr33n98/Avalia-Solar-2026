@@ -8,17 +8,9 @@ import { FilterBar } from '@/components/review-dashboard/FilterBar';
 import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import {
-  Star,
-  Clock,
-  Building2,
-  ThumbsUp,
-  ArrowRight,
-  Plus,
-} from 'lucide-react';
+import { Star, Clock, Building2, ThumbsUp, ArrowRight, Plus } from 'lucide-react';
 
 const tabs = [{ id: 'all', label: 'Minhas avaliações', icon: Star }] as const;
 
@@ -29,8 +21,6 @@ export default function AvaliacoesPage() {
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [search, setSearch] = useState('');
   const [expandedReviewId, setExpandedReviewId] = useState<number | null>(null);
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   const totalReviews = reviews.length;
   const approvedCount = reviews.filter((r) => r.status === 'approved').length;
@@ -44,7 +34,9 @@ export default function AvaliacoesPage() {
   const searchedReviews = search
     ? filteredReviews.filter(
         (r) =>
-          (typeof r.company === 'string' ? r.company : r.company?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+          (typeof r.company === 'string' ? r.company : r.company?.name || '')
+            .toLowerCase()
+            .includes(search.toLowerCase()) ||
           (r.headline || '').toLowerCase().includes(search.toLowerCase())
       )
     : filteredReviews;
@@ -54,10 +46,7 @@ export default function AvaliacoesPage() {
       <ReviewerPageHeader
         title="Avaliações"
         description="Gerencie e acompanhe suas avaliações de empresas e soluções."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Avaliações' },
-        ]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Avaliações' }]}
         action={
           <a
             href="/companies"
@@ -98,7 +87,9 @@ export default function AvaliacoesPage() {
         <MetricCard
           label="Votos úteis"
           value={helpfulVotes}
-          unavailable={summary?.impact?.helpful_votes === null || summary?.impact?.helpful_votes === undefined}
+          unavailable={
+            summary?.impact?.helpful_votes === null || summary?.impact?.helpful_votes === undefined
+          }
           caption="Feedback positivo"
           icon={ThumbsUp}
           iconColor="text-green-600"
@@ -170,11 +161,13 @@ export default function AvaliacoesPage() {
                       </div>
                       <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                         <Building2 className="h-3 w-3" />
-                        <span>{typeof review.company === 'string' ? review.company : review.company?.name || 'Empresa'}</span>
-                        <span className="text-slate-300">•</span>
                         <span>
-                          {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                          {typeof review.company === 'string'
+                            ? review.company
+                            : review.company?.name || 'Empresa'}
                         </span>
+                        <span className="text-slate-300">•</span>
+                        <span>{new Date(review.created_at).toLocaleDateString('pt-BR')}</span>
                       </div>
                       {/* Rating */}
                       <div className="mt-2 flex items-center gap-1">
@@ -196,14 +189,24 @@ export default function AvaliacoesPage() {
                         )}
                       </div>
                     </div>
-                    <button type="button" onClick={() => setExpandedReviewId(expandedReviewId === review.id ? null : review.id)} className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedReviewId(expandedReviewId === review.id ? null : review.id)
+                      }
+                      className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
                       {expandedReviewId === review.id ? 'Ocultar detalhes' : 'Ver detalhes'}
                     </button>
                   </div>
                   {expandedReviewId === review.id && (
                     <div className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-600">
                       <p>{review.comment || 'Sem comentário registrado.'}</p>
-                      {review.reply && <p className="mt-2 rounded-lg bg-slate-50 p-3"><strong>Resposta da empresa:</strong> {review.reply}</p>}
+                      {review.reply && (
+                        <p className="mt-2 rounded-lg bg-slate-50 p-3">
+                          <strong>Resposta da empresa:</strong> {review.reply}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -239,21 +242,16 @@ export default function AvaliacoesPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <SectionHeader title="Categorias populares" />
             <div className="flex flex-wrap gap-2">
-              {[
-                'Energia Solar',
-                'Inversor',
-                'Painéis',
-                'Bateria',
-                'Instalação',
-                'Manutenção',
-              ].map((cat) => (
-                <span
-                  key={cat}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"
-                >
-                  {cat}
-                </span>
-              ))}
+              {['Energia Solar', 'Inversor', 'Painéis', 'Bateria', 'Instalação', 'Manutenção'].map(
+                (cat) => (
+                  <span
+                    key={cat}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"
+                  >
+                    {cat}
+                  </span>
+                )
+              )}
             </div>
           </div>
         </div>

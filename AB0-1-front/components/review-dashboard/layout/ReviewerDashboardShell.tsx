@@ -7,7 +7,7 @@ import { useDashboardContext } from '@/app/review-dashboard/DashboardLayoutClien
 import { OnboardingBar } from '@/components/dashboard/OnboardingBar';
 
 export function ReviewerDashboardShell({ children }: { children: React.ReactNode }) {
-  const { summary, reviews, loading } = useDashboardContext();
+  const { summary, reviews } = useDashboardContext();
 
   const profileCompletion = summary?.profile?.completion_percent ?? 0;
   const reviewsCount = reviews?.length ?? 0;
@@ -19,13 +19,10 @@ export function ReviewerDashboardShell({ children }: { children: React.ReactNode
 
       {/* Main content wrapper */}
       <div className="flex-1 min-w-0 w-full flex flex-col overflow-x-clip">
-        
         {/* Onboarding Bar */}
-        {!loading && (
-          <div className="w-full max-w-[1280px] mx-auto px-4 pt-6 sm:px-6 lg:px-8">
-            <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviewsCount} />
-          </div>
-        )}
+        <div className="w-full max-w-[1280px] mx-auto px-4 pt-6 sm:px-6 lg:px-8">
+          <OnboardingBar profileCompletion={profileCompletion} reviewsCount={reviewsCount} />
+        </div>
 
         {/* Content area */}
         <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-6 overflow-x-clip">

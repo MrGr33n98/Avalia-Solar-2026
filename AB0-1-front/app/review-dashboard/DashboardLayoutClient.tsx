@@ -159,7 +159,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           setSummary((await reviewDashboardApi.getSummary()) as ReviewDashboardSummary);
         } catch (err) {
           console.warn('[ReviewDashboard] Summary unavailable', err);
-          setSummary(null);
         } finally {
           setSummaryLoading(false);
         }
@@ -175,7 +174,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           );
         } catch (err) {
           console.warn('[ReviewDashboard] Reviews unavailable', err);
-          setReviews([]);
         } finally {
           setReviewsLoading(false);
         }
@@ -191,7 +189,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           );
         } catch (err) {
           console.warn('[ReviewDashboard] Leads unavailable', err);
-          setLeads([]);
         } finally {
           setLeadsLoading(false);
         }
@@ -245,7 +242,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setSolutions(data);
       } catch (error) {
         console.error('[ReviewDashboard] Solutions unavailable', error);
-        setSolutions([]);
         setSolutionsError('Não foi possível carregar suas soluções.');
       } finally {
         setSolutionsLoading(false);

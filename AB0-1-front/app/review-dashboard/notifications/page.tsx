@@ -6,7 +6,6 @@ import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { useNotificationStore } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
@@ -33,7 +32,6 @@ export default function NotificacoesPage() {
     );
   }, [activeTab, fetchNotifications]);
 
-  if (loading) return <DashboardSkeleton variant="page" />;
   const filtered = notifications;
 
   return (

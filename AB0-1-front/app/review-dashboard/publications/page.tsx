@@ -7,7 +7,6 @@ import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCa
 import { FilterBar } from '@/components/review-dashboard/FilterBar';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import {
@@ -33,19 +32,17 @@ export default function PublicacoesPage() {
   const { loading } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('published');
 
-  if (loading) return <DashboardSkeleton variant="page" />;
-
   return (
     <div className="space-y-6">
       <ReviewerPageHeader
         title="Publicações"
         description="Compartilhe sua experiência com energia solar e ajude a comunidade."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/review-dashboard' },
-          { label: 'Publicações' },
-        ]}
+        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Publicações' }]}
         action={
-          <a href="/conteudo" className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors">
+          <a
+            href="/conteudo"
+            className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors"
+          >
             <Plus className="h-4 w-4" />
             Ver conteúdos
           </a>
@@ -125,7 +122,6 @@ export default function PublicacoesPage() {
             icon={PenLine}
             title="Publicações em breve"
             description="O módulo de publicações ainda não está disponível para este perfil."
-
           />
         </div>
 

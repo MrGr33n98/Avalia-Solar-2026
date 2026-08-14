@@ -8,7 +8,6 @@ import { useDashboardContext } from '../DashboardLayoutClient';
 import { reviewerProfileApi, usersApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { track } from '@/lib/analytics/lazy';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import {
   User,
   Mail,
@@ -41,8 +40,6 @@ export default function MeuPerfilPage() {
       )
       .catch(() => toast.error('Não foi possível carregar perfil profissional.'));
   }, []);
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   const reviewsCount = reviews.length;
   const profileItems = [

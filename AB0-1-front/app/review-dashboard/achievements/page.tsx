@@ -6,7 +6,6 @@ import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import { Trophy, Award, Lock, Zap } from 'lucide-react';
@@ -22,8 +21,6 @@ type TabId = (typeof tabs)[number]['id'];
 export default function ConquistasPage() {
   const { loading, summary, reviews } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
-
-  if (loading) return <DashboardSkeleton variant="page" />;
 
   const greenScore = summary?.gamification?.green_score;
   const reviewsCount = reviews.length;
@@ -65,7 +62,10 @@ export default function ConquistasPage() {
         <MetricCard
           label="Green Score"
           value={summary?.gamification?.green_score}
-          unavailable={summary?.gamification?.green_score === null || summary?.gamification?.green_score === undefined}
+          unavailable={
+            summary?.gamification?.green_score === null ||
+            summary?.gamification?.green_score === undefined
+          }
           caption="Pontuação atual"
           icon={Award}
           iconColor="text-green-600"
@@ -75,7 +75,10 @@ export default function ConquistasPage() {
         <MetricCard
           label="XP Acumulado"
           value={summary?.gamification?.earned_points}
-          unavailable={summary?.gamification?.earned_points === null || summary?.gamification?.earned_points === undefined}
+          unavailable={
+            summary?.gamification?.earned_points === null ||
+            summary?.gamification?.earned_points === undefined
+          }
           caption="Pontos de experiência"
           icon={Zap}
           iconColor="text-blue-600"
