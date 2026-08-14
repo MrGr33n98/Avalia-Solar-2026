@@ -6,7 +6,6 @@ import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { ActionCard } from '@/components/review-dashboard/cards/ActionCard';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
-import { DashboardSkeleton } from '@/components/review-dashboard/DashboardSkeleton';
 import { useDashboardContext } from './DashboardLayoutClient';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -24,13 +23,19 @@ import {
 
 export default function MeuPainelPage() {
   const { user } = useAuth();
-  const { summary, reviews, leads, loading, error, onRefresh, solutions } = useDashboardContext();
+  const {
+    summary,
+    reviews,
+    leads,
+    error,
+    onRefresh,
+    solutions,
+    summaryLoading,
+    reviewsLoading,
+    leadsLoading,
+  } = useDashboardContext();
 
-  if (loading) {
-    return <DashboardSkeleton variant="page" />;
-  }
-
-  if (error) {
+  if (error && !summary && !reviewsLoading && !leadsLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="rounded-2xl bg-red-50 p-4 mb-4">
@@ -84,7 +89,7 @@ export default function MeuPainelPage() {
         <MetricCard
           label="Green Score"
           value={greenScore}
-          unavailable={greenScore === null || greenScore === undefined}
+          unavailable={summaryLoading || greenScore === null || greenScore === undefined}
           caption="Calculado por contribuições reais"
           icon={Leaf}
           iconColor="text-green-600"
@@ -93,7 +98,7 @@ export default function MeuPainelPage() {
         />
         <MetricCard
           label="Avaliações"
-          value={reviewsCount}
+          value={reviewsLoading ? null : reviewsCount}
           caption="Total realizadas"
           icon={Star}
           iconColor="text-amber-500"
@@ -118,7 +123,7 @@ export default function MeuPainelPage() {
         />
         <MetricCard
           label="Propostas"
-          value={proposalsCount}
+          value={leadsLoading ? null : proposalsCount}
           caption="Recebidas"
           icon={FileText}
           iconColor="text-blue-600"
@@ -176,14 +181,21 @@ export default function MeuPainelPage() {
           />
           <div className="space-y-3">
             {(summary?.gamification?.achievements ?? []).length > 0 ? (
-              (summary?.gamification?.achievements ?? []).slice(0, 2).map((achievement: { title: string; subtitle: string; state: string }, index: number) => (
-                <AchievementItem
-                  key={index}
-                  title={achievement.title}
-                  description={achievement.subtitle}
-                  unlocked={achievement.state !== 'bloqueado'}
-                />
-              ))
+              (summary?.gamification?.achievements ?? [])
+                .slice(0, 2)
+                .map(
+                  (
+                    achievement: { title: string; subtitle: string; state: string },
+                    index: number
+                  ) => (
+                    <AchievementItem
+                      key={index}
+                      title={achievement.title}
+                      description={achievement.subtitle}
+                      unlocked={achievement.state !== 'bloqueado'}
+                    />
+                  )
+                )
             ) : (
               <>
                 <AchievementItem
@@ -242,10 +254,27 @@ export default function MeuPainelPage() {
             linkHref="/review-dashboard/profile"
           />
           <div className="space-y-2.5">
-            <ProfileCheckItem label="Dados pessoais completos" done={!!(user?.name && user?.email)} />
-            <ProfileCheckItem label="Foto de perfil cadastrada" done={summary?.profile?.items?.find((i: { key: string; completed: boolean }) => i.key === 'avatar')?.completed ?? false} />
+            <ProfileCheckItem
+              label="Dados pessoais completos"
+              done={!!(user?.name && user?.email)}
+            />
+            <ProfileCheckItem
+              label="Foto de perfil cadastrada"
+              done={
+                summary?.profile?.items?.find(
+                  (i: { key: string; completed: boolean }) => i.key === 'avatar'
+                )?.completed ?? false
+              }
+            />
             <ProfileCheckItem label="Localização definida" done={!!(user?.city && user?.state)} />
-            <ProfileCheckItem label="Profissão preenchida" done={summary?.profile?.items?.find((i: { key: string; completed: boolean }) => i.key === 'profession')?.completed ?? false} />
+            <ProfileCheckItem
+              label="Profissão preenchida"
+              done={
+                summary?.profile?.items?.find(
+                  (i: { key: string; completed: boolean }) => i.key === 'profession'
+                )?.completed ?? false
+              }
+            />
             <ProfileCheckItem
               label="Soluções adicionadas"
               done={solutions.length > 0}

@@ -103,6 +103,9 @@ interface DashboardContextType {
   addSolution: (sol: UserSolution) => Promise<void>;
   removeSolution: (id: string) => Promise<void>;
   removingSolutionId: string | null;
+  summaryLoading: boolean;
+  reviewsLoading: boolean;
+  leadsLoading: boolean;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -133,6 +136,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [leadsLoading, setLeadsLoading] = useState(true);
 
   const [commandOpen, setCommandOpen] = useState(false);
   const [solutions, setSolutions] = useState<UserSolution[]>([]);
@@ -147,77 +153,70 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
       else setLoading(true);
       setError(null);
 
-      try {
-        const [summaryRes, reviewsRes, leadsRes] = await Promise.allSettled([
-          reviewDashboardApi.getSummary(),
-          reviewsApi.getAll({ mine: true, limit: 100 }),
-          leadsApi.mine(),
-        ]);
-
-        const failures = [];
-
-        if (summaryRes.status === 'fulfilled') {
-          const apiSummary = summaryRes.value;
-          setSummary(apiSummary as ReviewDashboardSummary);
-        } else {
-          console.warn('[ReviewDashboard] Summary unavailable', summaryRes.reason);
+      const loadSummary = async () => {
+        setSummaryLoading(true);
+        try {
+          setSummary((await reviewDashboardApi.getSummary()) as ReviewDashboardSummary);
+        } catch (err) {
+          console.warn('[ReviewDashboard] Summary unavailable', err);
           setSummary(null);
-          failures.push('summary');
+        } finally {
+          setSummaryLoading(false);
         }
-
-        if (reviewsRes.status === 'fulfilled') {
+      };
+      const loadReviews = async () => {
+        setReviewsLoading(true);
+        try {
+          const response = await reviewsApi.getAll({ mine: true, limit: 100 });
           setReviews(
-            normalizeApiList(reviewsRes.value as ApiListResponse<Review>).sort(
+            normalizeApiList(response as ApiListResponse<Review>).sort(
               (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )
           );
-        } else {
-          console.warn('[ReviewDashboard] Reviews unavailable', reviewsRes.reason);
+        } catch (err) {
+          console.warn('[ReviewDashboard] Reviews unavailable', err);
           setReviews([]);
-          failures.push('reviews');
+        } finally {
+          setReviewsLoading(false);
         }
-
-        if (leadsRes.status === 'fulfilled') {
+      };
+      const loadLeads = async () => {
+        setLeadsLoading(true);
+        try {
+          const response = await leadsApi.mine();
           setLeads(
-            normalizeApiList(leadsRes.value as ApiListResponse<Lead>).sort(
+            normalizeApiList(response as ApiListResponse<Lead>).sort(
               (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )
           );
-        } else {
-          console.warn('[ReviewDashboard] Leads unavailable', leadsRes.reason);
+        } catch (err) {
+          console.warn('[ReviewDashboard] Leads unavailable', err);
           setLeads([]);
-          failures.push('leads');
+        } finally {
+          setLeadsLoading(false);
         }
+      };
 
-        if (failures.length === 3) {
-          setError('Não foi possível carregar os dados do painel agora.');
-        }
-
-        if (isRefresh) {
-          if (failures.length > 0) {
-            toast.warning('Painel atualizado parcialmente.');
-          } else {
-            toast.success('Painel atualizado com sucesso!');
+      void Promise.all([loadSummary(), loadReviews(), loadLeads()])
+        .then(() => {
+          if (isRefresh) {
+            toast.success('Painel atualizado.');
+            track('review_dashboard_refresh', { user_id: user.id });
           }
-          track('review_dashboard_refresh', { user_id: user?.id });
-        }
-      } catch (err: unknown) {
-        console.error('[ReviewDashboard] Failed to load data', err);
-        const apiError = err as { status?: number; message?: string };
-        if (apiError.status === 401) {
-          setIsRedirecting(true);
-          router.push(
-            `/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`
-          );
-          return;
-        }
-
-        const errorMessage = apiError.message || 'Não foi possível carregar os dados do painel.';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
+        })
+        .catch((err: unknown) => {
+          const apiError = err as { status?: number };
+          if (apiError.status === 401) {
+            setIsRedirecting(true);
+            router.push(
+              `/login?redirect=${encodeURIComponent('/review-dashboard')}&error=session_expired`
+            );
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+          setRefreshing(false);
+        });
     },
     [user, router]
   );
@@ -316,8 +315,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     );
   }
 
-
-
   const achievementStatuses = (summary?.gamification?.achievements ?? []).map(
     (achievement, index) => ({
       achievementId: achievement.title || `achievement-${index}`,
@@ -348,52 +345,55 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         addSolution,
         removeSolution,
         removingSolutionId,
+        summaryLoading,
+        reviewsLoading,
+        leadsLoading,
       }}
     >
       {children}
 
       <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
-          <CommandInput placeholder="Buscar ações, empresas e seções..." />
-          <CommandList>
-            <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-            <CommandGroup heading="Ações rápidas">
-              {[
-                { label: 'Avaliar empresa', href: '/companies', icon: Plus },
-                {
-                  label: 'Ver respostas das empresas',
-                  href: '/review-dashboard#company-replies',
-                  icon: MessageCircle,
-                },
-                { label: 'Abrir conquistas', href: '/review-dashboard#achievements', icon: Trophy },
-                { label: 'Completar perfil', href: '/review-dashboard/profile', icon: UserRound },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <CommandItem
-                    key={item.label}
-                    onSelect={() => {
-                      setCommandOpen(false);
-                      if (item.href.includes('#')) {
-                        const path = item.href.split('#')[0];
-                        const hash = '#' + item.href.split('#')[1];
-                        if (pathname === path) {
-                          document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                          router.push(item.href);
-                        }
+        <CommandInput placeholder="Buscar ações, empresas e seções..." />
+        <CommandList>
+          <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+          <CommandGroup heading="Ações rápidas">
+            {[
+              { label: 'Avaliar empresa', href: '/companies', icon: Plus },
+              {
+                label: 'Ver respostas das empresas',
+                href: '/review-dashboard#company-replies',
+                icon: MessageCircle,
+              },
+              { label: 'Abrir conquistas', href: '/review-dashboard#achievements', icon: Trophy },
+              { label: 'Completar perfil', href: '/review-dashboard/profile', icon: UserRound },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <CommandItem
+                  key={item.label}
+                  onSelect={() => {
+                    setCommandOpen(false);
+                    if (item.href.includes('#')) {
+                      const path = item.href.split('#')[0];
+                      const hash = '#' + item.href.split('#')[1];
+                      if (pathname === path) {
+                        document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' });
                       } else {
                         router.push(item.href);
                       }
-                    }}
-                  >
-                    <Icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
+                    } else {
+                      router.push(item.href);
+                    }
+                  }}
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </DashboardContext.Provider>
   );
 }

@@ -14,9 +14,10 @@ module Api
 
         # KPIs
         user_leads = Lead.where(email: current_user.email)
-        quotes_total = measure_summary_step('lead_kpis') { safe_count(user_leads) }
-        quotes_open = measure_summary_step('lead_kpis') { safe_count(user_leads.where(wizard_status: %w[draft pending_otp verified])) }
-        quotes_replied = measure_summary_step('lead_kpis') { safe_count(user_leads.where(wizard_status: 'proposal_sent')) }
+        lead_counts = measure_summary_step('lead_kpis') { user_leads.group(:wizard_status).count }
+        quotes_total = lead_counts.values.sum
+        quotes_open = lead_counts.values_at('draft', 'pending_otp', 'verified').compact.sum
+        quotes_replied = lead_counts.fetch('proposal_sent', 0)
         reviews_published = measure_summary_step('reviews_published') { safe_count(current_user.reviews.where(status: :approved)) }
 
         # Gamification & Impact
@@ -28,7 +29,7 @@ module Api
 
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
-        recommendations = ::Company.where(status: 'active', verified: true)
+        recommendations = measure_summary_step('recommendations') { ::Company.where(status: 'active', verified: true)
                                  .order(rating_avg: :desc)
                                  .limit(3)
                                  .map do |c|
@@ -38,28 +39,32 @@ module Api
                                      rating: c.rating_avg.to_f,
                                      badge: c.featured ? 'Popular' : 'Verificada'
                                    }
-        end
+        end }
 
         # Recent activities feed
-        recent_activities = []
+        recent_activities = measure_summary_step('recent_activities') do
+          activities = []
         recent_replies = Review.where(user_id: current_user.id, reply_deleted_at: nil)
                                .where.not(reply: nil)
+                               .includes(:company)
                                .order(replied_at: :desc)
                                .limit(2)
         recent_replies.each do |r|
           company_name = r.company&.name || 'Empresa'
-          recent_activities << {
+          activities << {
             icon: 'MessageCircle',
             title: "#{company_name} respondeu sua avaliação",
             time: r.replied_at.to_date == Time.zone.today ? 'hoje' : "há #{(Time.zone.today - r.replied_at.to_date).to_i} dias"
           }
         end
         if helpful_votes.positive?
-          recent_activities << {
+          activities << {
             icon: 'ThumbsUp',
             title: "Suas avaliações receberam #{helpful_votes} votos úteis",
             time: 'recentemente'
           }
+        end
+          activities
         end
 
         # Charts Data - Real activity data from AnalyticsEvent
