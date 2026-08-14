@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useReviewDraft } from './hooks/useReviewDraft';
+import { track } from '@/lib/analytics/consolidated';
 
 type PublicReviewForm = {
   id: number;
@@ -21,6 +23,8 @@ type PublicReviewForm = {
     comment_required: boolean;
     thank_you_message: string;
   };
+  criteria?: Array<{ id: number; slug: string; title: string; weight?: number; required?: boolean }>;
+  branding?: { logo_url?: string | null; cover_url?: string | null; accent_color?: string; company_name?: string };
   company: { id: number; name: string; slug: string; logo_url?: string | null };
 };
 
@@ -44,8 +48,24 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   const [realExperience, setRealExperience] = useState(false);
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState('');
+  const [draftDismissed, setDraftDismissed] = useState(false);
+  const { draft, save, clear } = useReviewDraft(params.token);
+  const criteria = form?.criteria || [];
 
   useEffect(() => {
+    if (!draft) return;
+    setRating(draft.rating); setAnswers(draft.answers); setComment(draft.comment);
+  }, [draft]);
+
+  useEffect(() => {
+    if (!form || submittedMessage) return;
+    const timer = window.setTimeout(() => save({ step: 1, rating, answers, comment }), 500);
+    return () => window.clearTimeout(timer);
+  }, [answers, comment, form, rating, save, submittedMessage]);
+  const accentColor = form?.branding?.accent_color || '#155EEF';
+
+  useEffect(() => {
+    track('review_wizard_opened', { source });
     fetchApi<{ review_form: PublicReviewForm }>(`/review_forms/${params.token}/public`, {
       params: { source },
       retries: 1,
@@ -60,6 +80,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   const markStarted = () => {
     if (started) return;
     setStarted(true);
+    track('review_started', { source });
     void fetchApi(`/review_forms/${params.token}/event`, {
       method: 'POST',
       body: JSON.stringify({ event_type: 'review_started', source }),
@@ -92,6 +113,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
     if (!canSubmit) return;
     try {
       setSubmitting(true);
+      track('review_submit_attempted', { source });
       setError('');
       const response = await fetchApi<{ review_id: number; message: string }>(
         `/review_forms/${params.token}/submit`,
@@ -115,8 +137,11 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           skipAuthRefresh: true,
         }
       );
+      clear();
+      track('review_submit_success', { source });
       setSubmittedMessage(response.message || 'Obrigado! Sua avaliação foi enviada.');
     } catch (requestError) {
+      track('review_submit_error', { source });
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -173,7 +198,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
         <div className="mb-6 flex items-center gap-3">
           {form.company.logo_url ? (
             <Image
-              src={form.company.logo_url}
+              src={form.branding?.logo_url || form.company.logo_url}
               alt={form.company.name}
               width={56}
               height={56}
@@ -194,7 +219,13 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <div className="rounded-xl border border-[#D0D5DD] bg-white p-4 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:p-6">
+          {draft && !draftDismissed && !started && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#D1E9FF] bg-[#EFF8FF] p-3 text-sm text-[#0A1F44]">
+              <span>Você tem uma avaliação não finalizada. Dados salvos foram restaurados.</span>
+              <button type="button" className="text-xs font-semibold underline" onClick={() => { clear(); setDraftDismissed(true); }}>Descartar</button>
+            </div>
+          )}
           <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
             {form.public_title}
           </h1>
@@ -202,12 +233,13 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
 
           <form onSubmit={submit} onFocus={markStarted} className="mt-8 space-y-7">
             <RatingField label="Nota geral" value={rating} onChange={setRating} required />
-            {form.settings.criteria.map((criterion) => (
+            {criteria.map((criterion) => (
               <RatingField
-                key={criterion}
-                label={criterion}
-                value={answers[criterion] || 0}
-                onChange={(value) => setAnswers((current) => ({ ...current, [criterion]: value }))}
+                key={criterion.id}
+                label={criterion.title}
+                value={answers[String(criterion.id)] || 0}
+                onChange={(value) => setAnswers((current) => ({ ...current, [String(criterion.id)]: value }))}
+                required={criterion.required}
               />
             ))}
 
@@ -309,7 +341,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
             <Button
               type="submit"
               disabled={!canSubmit || submitting}
-              className="h-12 w-full bg-blue-600 text-base font-bold hover:bg-blue-700"
+              style={{ backgroundColor: accentColor }} className="h-11 w-full rounded-lg text-base font-bold hover:opacity-90"
             >
               {submitting ? (
                 <>
@@ -333,8 +365,8 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-slate-50 px-4">
-      <div className="mx-auto flex max-w-6xl justify-center border-b border-slate-200 py-4">
+    <main className="min-h-[100dvh] bg-[#F8FAFC] px-3 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex max-w-6xl justify-center border-b border-[#D0D5DD] py-3">
         <BrandLogo className="h-8" priority />
       </div>
       {children}
@@ -354,7 +386,7 @@ function RatingField({
   required?: boolean;
 }) {
   return (
-    <fieldset>
+    <fieldset role="radiogroup" aria-label={label}>
       <legend className="text-sm font-bold text-slate-900">
         {label} {required && <span className="text-red-500">*</span>}
       </legend>

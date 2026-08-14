@@ -4,6 +4,10 @@ module Api
       class ReviewFormsController < BaseController
         before_action :set_review_form, only: %i[show update destroy duplicate event]
 
+        def templates
+          render json: { templates: ReviewForms::TemplateCatalog.all }
+        end
+
         def index
           forms = policy_scope(@company.review_forms).recent_first
           recent_forms_count = @company.review_forms.where(created_at: 7.days.ago..Time.current).count

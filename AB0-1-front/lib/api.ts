@@ -2171,6 +2171,20 @@ export const usersApi = {
   delete: (id: number) => fetchApi(`/users/${id}`, { method: 'DELETE' }),
 };
 
+export type ReviewFormTemplate = {
+  key: string;
+  name: string;
+  description: string;
+  recommended_category_kind?: string | null;
+  criteria: string[];
+  enabled_fields: string[];
+  recommended_copy: string;
+};
+
+export const reviewFormTemplatesApi = {
+  list: () => fetchApi<{ templates: ReviewFormTemplate[] }>('/company_admin/review_forms/templates'),
+};
+
 export const authApi = {
   login: (email: string, password: string) =>
     fetchApi('/auth/login', {

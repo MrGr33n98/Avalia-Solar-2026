@@ -43,15 +43,22 @@ class ReviewForm < ApplicationRecord
     "/f/#{token}"
   end
 
-  def metrics
-    views = review_form_events.where(event_type: %w[form_viewed qr_scanned]).count
-    submissions = reviews.count
+  def normalized_settings
+    ReviewForms::SettingsNormalizer.call(settings)
+  end
 
-    {
-      views: views,
-      submissions: submissions,
-      conversion_rate: views.positive? ? ((submissions.to_f / views) * 100).round(1) : 0.0
-    }
+  def experience_category
+    category_id = normalized_settings.dig('experience', 'category_id')
+    category = company.categories.find_by(id: category_id) if category_id.present?
+    return category if category
+
+    Rails.logger.warn("[ReviewForms] legacy category fallback form=#{id} company=#{company_id}")
+    company.categories.first
+  end
+
+  def metrics
+    metrics = ReviewForms::MetricsService.call(review_form: self)
+    metrics.slice(:views, :submissions, :conversion_rate).merge(metrics.slice(:starts, :approved, :rejected, :start_rate, :completion_rate, :approval_rate))
   end
 
   private
@@ -68,6 +75,6 @@ class ReviewForm < ApplicationRecord
   end
 
   def normalize_settings
-    self.settings = DEFAULT_SETTINGS.deep_merge((settings || {}).deep_stringify_keys)
+    self.settings = ReviewForms::SettingsNormalizer.call(settings)
   end
 end

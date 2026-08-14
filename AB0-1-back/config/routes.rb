@@ -466,6 +466,7 @@ Rails.application.routes.draw do
         resources :assets, only: %i[create update destroy]
 
         resources :review_forms, only: %i[index show create update destroy] do
+          collection { get :templates }
           member do
             post :duplicate
             post :event

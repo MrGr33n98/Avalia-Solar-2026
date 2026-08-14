@@ -24,62 +24,12 @@ module Api
         return render json: { errors: ['Informe e-mail ou WhatsApp.'] }, status: :unprocessable_entity if params[:contact].blank?
 
         source = params[:source] == 'qr' ? 'qr_code_form' : 'custom_review_form'
-        category = @review_form.company.categories.first
-        review = @review_form.reviews.new(
-          company: @review_form.company,
-          category: category,
-          rating: params[:rating],
-          comment: params[:comment],
-          nps_score: params[:nps_score],
-          capture_flow_source: source,
-          is_legacy: category.nil?,
-          form_answers: permitted_answers,
-          verification_status: 'pending',
-          metadata: {
-            reviewer_name: params[:reviewer_name].to_s.strip,
-            reviewer_contact: params[:contact].to_s.strip,
-            city: params[:city].to_s.strip,
-            state: params[:state].to_s.strip.upcase.first(2),
-            real_experience_confirmed: ActiveModel::Type::Boolean.new.cast(params[:real_experience]),
-            lgpd_consent: true,
-            lgpd_consent_at: Time.current.iso8601,
-            source_channel: source,
-            source_token: @review_form.token,
-            landing_path: request.path.to_s.first(500),
-            referrer: request.referer.to_s.first(500),
-            user_agent: request.user_agent.to_s.first(500),
-            ip_hash: hashed_ip,
-            submitted_at: Time.current.iso8601
-          }
-        )
+        review = ReviewForms::SubmissionService.new(
+          review_form: @review_form, params: params, source: source,
+          request_context: Struct.new(:path, :referrer, :user_agent, :ip_hash).new(request.path, request.referer, request.user_agent, hashed_ip)
+        ).call
 
-        scores_hash = nil
-        if params[:criterion_scores].is_a?(Hash)
-          scores_hash = params[:criterion_scores]
-        elsif permitted_answers.is_a?(Hash)
-          scores_hash = permitted_answers[:criterion_scores].is_a?(Hash) ? permitted_answers[:criterion_scores] : permitted_answers
-        end
-
-        if scores_hash.present?
-          scores_hash.each do |slug, score_val|
-            next if score_val.blank?
-            c_slug = slug.to_s.parameterize
-            criterion = RatingCriterion.find_by(category_id: category&.id, slug: c_slug) ||
-                        RatingCriterion.find_by(slug: c_slug) ||
-                        RatingCriterion.find_by(category_id: category&.id, slug: slug.to_s) ||
-                        RatingCriterion.find_by(slug: slug.to_s)
-            if criterion
-              review.review_criterion_scores.build(
-                rating_criterion: criterion,
-                score: score_val.to_f,
-                title_snapshot: criterion.title,
-                weight_snapshot: criterion.weight
-              )
-            end
-          end
-        end
-
-        if review.save
+        if review.persisted?
           record_event('review_submitted', review_id: review.id)
           run_moderation(review)
           track_posthog('public_review_form_submitted', review)
@@ -87,6 +37,8 @@ module Api
         else
           render json: { errors: review.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
       end
 
       def event
@@ -120,9 +72,16 @@ module Api
           public_title: form.public_title,
           public_description: form.public_description,
           form_type: form.form_type,
-          settings: form.settings,
+          settings: form.normalized_settings,
+          criteria: ReviewForms::CriteriaResolver.call(review_form: form).map { |criterion| serialize_criterion(criterion) },
+          branding: ReviewForms::BrandingResolver.call(form),
           company: { id: form.company.id, name: form.company.name, slug: form.company.slug, logo_url: form.company.logo_url }
         }
+      end
+
+      def serialize_criterion(criterion)
+        { id: criterion.id, slug: criterion.slug, title: criterion.title, weight: criterion.weight,
+          required: criterion.respond_to?(:required) ? criterion.required : true }
       end
 
       def permitted_answers
@@ -130,14 +89,14 @@ module Api
       end
 
       def record_event(event_type, metadata = {})
-        @review_form.review_form_events.create!(
-          company: @review_form.company,
+        ReviewForms::EventRecorder.call(
+          review_form: @review_form,
           event_type: event_type,
-          source: params[:source].presence || 'link',
-          ip_hash: hashed_ip,
-          referrer: request.referer.to_s.first(500),
-          user_agent: request.user_agent.to_s.first(500),
-          metadata: metadata
+          source: params[:source],
+          metadata: metadata,
+          request_context: Struct.new(:ip_hash, :referrer, :user_agent).new(
+            hashed_ip, request.referer, request.user_agent
+          )
         )
       rescue StandardError => e
         Rails.logger.warn("[ReviewForms] failed to record #{event_type}: #{e.message}")
