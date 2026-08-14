@@ -1303,12 +1303,12 @@ export async function fetchApi<T = any>(endpoint: string, options: any = {}): Pr
 
     // If a fallback is provided, return it instead of throwing
     if (options.fallback !== undefined) {
-      console.warn(`[API] Using fallback for ${url} due to error:`, error.message);
+      console.warn(`[API] Using fallback for ${url} due to error:`, error?.message);
       return options.fallback;
     }
 
     // Log the error with full context
-    const errorContext = error.context || {
+    const errorContext = error?.context || {
       url,
       method: options.method || 'GET',
       params: options.params,

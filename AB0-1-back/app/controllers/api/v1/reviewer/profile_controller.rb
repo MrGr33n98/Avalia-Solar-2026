@@ -9,13 +9,16 @@ module Api
 
         def update
           profile = current_user.reviewer_profile || current_user.build_reviewer_profile
-          if profile.update(profile_params)
-            Reviewer::PublicSlugService.new(profile).call if profile.creator_enabled?
-            Creator::PublicProfileService.invalidate(profile)
-            render json: profile_payload
-          else
-            render json: { errors: profile.errors.full_messages }, status: :unprocessable_entity
+          ReviewerProfile.transaction do
+            profile.assign_attributes(profile_params)
+            profile.save!
+            ::Reviewer::PublicSlugService.new(profile).call if profile.creator_enabled? && profile.public_slug.blank?
           end
+
+          ::Creator::PublicProfileService.invalidate(profile)
+          render json: profile_payload
+        rescue ActiveRecord::RecordInvalid => e
+          render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
         end
 
         def avatar
