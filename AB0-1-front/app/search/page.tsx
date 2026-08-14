@@ -407,27 +407,26 @@ function SearchPageContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section
-        className="relative min-h-[280px] overflow-hidden bg-[#071e4a] bg-no-repeat bg-[length:auto_100%] bg-[position:right_center] max-md:bg-none text-white"
-        style={{
-          backgroundImage: "url('/assets/avalia_symbol_search_banner_avalia_solar.webp')",
-          backgroundSize: 'auto 100%',
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      <section className="relative min-h-[280px] overflow-hidden bg-[#071e4a] text-white">
         <div className="relative mx-auto max-w-[1440px] px-4 py-9 sm:px-6 sm:py-12">
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[42%] bg-contain bg-right bg-no-repeat lg:block"
+            style={{
+              backgroundImage: "url('/assets/avalia_symbol_search_banner_avalia_solar.webp')",
+            }}
+          />
+          <h1 className="relative z-10 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
             Encontre a empresa certa para você.
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
+          <p className="relative z-10 mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
             Busque empresas, produtos e avaliações verificadas de energia solar e mobilidade
             elétrica.
           </p>
 
           <form
             onSubmit={handleSubmit}
-            className="mt-7 grid max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl sm:grid-cols-[1fr_0.8fr_auto]"
+            className="relative z-10 mt-7 grid max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl sm:grid-cols-[1fr_0.8fr_auto]"
           >
             <label className="relative border-b border-slate-200 sm:border-b-0 sm:border-r">
               <span className="sr-only">Buscar empresa, produto ou serviço</span>
