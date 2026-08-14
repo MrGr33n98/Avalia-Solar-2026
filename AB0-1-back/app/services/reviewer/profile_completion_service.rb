@@ -8,7 +8,11 @@ module Reviewer
       ['city', 'Cidade'],
       ['state', 'Estado'],
       ['avatar', 'Foto de perfil'],
-      ['profession', 'Profissão']
+      ['profession', 'Profissão'],
+      ['bio', 'Sobre você'],
+      ['social', 'Redes sociais'],
+      ['solutions', 'Soluções que usa'],
+      ['review', 'Primeira avaliação']
     ].freeze
 
     def initialize(user:)
@@ -24,9 +28,14 @@ module Reviewer
     private
 
     def completed?(key)
-      return @user.avatar.attached? if key == 'avatar'
-      value = key == 'profession' ? @user.reviewer_profile&.profession : @user.public_send(key)
-      value.present?
+      return @user.avatar.attached? || @user.avatar_url.present? if key == 'avatar'
+      return @user.reviewer_profile&.profession.present? if key == 'profession'
+      return @user.reviewer_profile&.bio.present? if key == 'bio'
+      return %w[linkedin_url instagram_url website_url whatsapp_url].any? { |field| @user.reviewer_profile&.public_send(field).present? } if key == 'social'
+      return @user.reviewer_solutions.exists? if key == 'solutions'
+      return @user.reviews.exists? if key == 'review'
+
+      @user.public_send(key).present?
     end
   end
 end

@@ -30,7 +30,7 @@ import {
 export default function MeuPerfilPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { loading, summary, reviews, solutions } = useDashboardContext();
+  const { loading, summary, reviews, solutions, onRefresh } = useDashboardContext();
   const [saving, setSaving] = useState(false);
   const [publicSaving, setPublicSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -345,6 +345,7 @@ export default function MeuPerfilPage() {
                 setCompletion(responseCompletion.percent);
               setDirty(false);
               setSaveStatus('saved');
+              await onRefresh();
               track('reviewer_profile_updated', { route: '/review-dashboard/profile' });
               toast.success('Perfil atualizado com sucesso.');
             } catch {
