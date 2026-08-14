@@ -20,6 +20,7 @@ class User < ApplicationRecord
   has_many :sponsored_plans, foreign_key: :member_id, inverse_of: :member, dependent: :nullify
   has_many :reviews, dependent: :destroy
   has_many :reviewer_solutions, dependent: :destroy
+  has_many :reviewer_publications, dependent: :destroy
   has_one :reviewer_profile, dependent: :destroy
   has_many :analytics_events, dependent: :destroy
   # By implementing this feature, users will be able to conveniently

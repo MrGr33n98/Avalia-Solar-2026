@@ -46,6 +46,15 @@ class Rack::Attack
     req.ip if req.path == '/api/v1/reviewer_solutions' && req.post?
   end
 
+  throttle('creator_leads/ip', limit: 5, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{A/api/v1/creators/[^/]+/leadsz}) && req.post?
+  end
+
+  throttle('creator_comments/ip', limit: 10, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{A/api/v1/creators/[^/]+/publications/[^/]+/commentsz}) && req.post?
+  end
+
+
   # === Existing Rules ===
 
   # MCP tool gateway: protects public discovery tools and authenticated GTM flows.

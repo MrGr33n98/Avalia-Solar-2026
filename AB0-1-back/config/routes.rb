@@ -255,6 +255,19 @@ Rails.application.routes.draw do
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
       resources :reviewer_solutions, only: %i[index create destroy]
+      namespace :reviewer do
+        resources :creator_leads, only: %i[index update], controller: 'creator_leads'
+        resources :publications, only: %i[index show create update]
+        post 'publications/:id/publish', to: 'publications#publish'
+        post 'publications/:id/archive', to: 'publications#archive'
+      end
+      get 'creators/:creator_slug/publications/:publication_slug/comments', to: 'creator_comments#index'
+      post 'creators/:creator_slug/publications/:publication_slug/comments', to: 'creator_comments#create'
+      post 'creators/:creator_slug/leads', to: 'creator_leads#create'
+      get 'creators', to: 'creators#index'
+      get 'creators/:slug', to: 'creators#show'
+      get 'creators/:slug/publications', to: 'creators#publications'
+      get 'creators/:slug/publications/:publication_slug', to: 'creators#publication'
 
 
       namespace :reviewer do

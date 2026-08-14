@@ -10,6 +10,7 @@ module Api
         def update
           profile = current_user.reviewer_profile || current_user.build_reviewer_profile
           if profile.update(profile_params)
+            Creator::PublicProfileService.invalidate(profile)
             render json: profile_payload
           else
             render json: { errors: profile.errors.full_messages }, status: :unprocessable_entity
@@ -35,12 +36,12 @@ module Api
 
 
         def profile_params
-          params.require(:profile).permit(:profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :public_profile)
+          params.require(:profile).permit(:profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :youtube_url, :public_profile, :public_headline, :public_bio, :public_email_enabled, :lead_capture_enabled, :creator_enabled)
         end
 
         def profile_payload
           profile = current_user.reviewer_profile
-          { user: { id: current_user.id, name: current_user.name, email: current_user.email, phone: current_user.phone, city: current_user.city, state: current_user.state, avatar_url: current_user.respond_to?(:avatar_url) ? current_user.avatar_url : nil }, profile: profile&.attributes&.slice('profession', 'company_name', 'bio', 'birth_date', 'linkedin_url', 'instagram_url', 'website_url', 'public_profile') || {} }
+          { user: { id: current_user.id, name: current_user.name, email: current_user.email, phone: current_user.phone, city: current_user.city, state: current_user.state, avatar_url: current_user.respond_to?(:avatar_url) ? current_user.avatar_url : nil }, profile: profile&.attributes&.slice('profession', 'company_name', 'bio', 'birth_date', 'linkedin_url', 'instagram_url', 'website_url', 'youtube_url', 'public_profile', 'public_slug', 'creator_enabled', 'public_headline', 'public_bio', 'public_email_enabled', 'lead_capture_enabled') || {} }
         end
       end
     end

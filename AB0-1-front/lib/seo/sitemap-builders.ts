@@ -19,6 +19,7 @@ export const SITEMAP_SECTIONS = [
   'local-rankings',
   'companies',
   'local-solar',
+  'creators',
 ] as const;
 
 export type SitemapSection = (typeof SITEMAP_SECTIONS)[number];
@@ -317,6 +318,16 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
   return normalizeSitemapEntries(checks.filter((entry): entry is SitemapEntry => Boolean(entry)));
 }
 
+export async function getCreatorSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  const creators = await fetchRecords('creators?per_page=100');
+  return normalizeSitemapEntries(creators.flatMap((creator) => {
+    const slug = getString(creator, 'public_slug');
+    if (!slug || creator.creator_enabled !== true) return [];
+    return [{ url: absoluteUrl('/creators/' + slug), priority: 0.7, changeFrequency: 'weekly' as const }];
+  }));
+}
+
+
 export async function getSitemapEntriesBySection(
   section: SitemapSection
 ): Promise<MetadataRoute.Sitemap> {
@@ -335,6 +346,8 @@ export async function getSitemapEntriesBySection(
       return getCompanySitemapEntries();
     case 'local-solar':
       return getLocalSolarSitemapEntries();
+    case 'creators':
+      return getCreatorSitemapEntries();
   }
 }
 
