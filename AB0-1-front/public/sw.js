@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-08-06-v3';
+const SW_VERSION = '2026-08-14-v4';
 const APP_SHELL_CACHE = `avalia-app-shell-${SW_VERSION}`;
 const STATIC_CACHE = `avalia-static-${SW_VERSION}`;
 const API_CACHE = `avalia-api-${SW_VERSION}`;
@@ -8,7 +8,16 @@ const OFFLINE_SYNC_TAG = 'avalia-offline-sync';
 const OFFLINE_FALLBACK_ROUTE = '/offline';
 const NAVIGATION_PRECACHE_TIMEOUT_MS = 5000;
 const OFFLINE_SUPPORTED_ROUTES = ['/', '/categories', '/companies', '/compare', '/blog', '/dashboard'];
-const PRECACHE_URLS = [...OFFLINE_SUPPORTED_ROUTES, OFFLINE_FALLBACK_ROUTE, '/favicon.ico'];
+const PRECACHE_URLS = [
+  ...OFFLINE_SUPPORTED_ROUTES,
+  OFFLINE_FALLBACK_ROUTE,
+  '/favicon.ico',
+  '/manifest.webmanifest',
+  '/icons/avalia-solar-192x192.png',
+  '/icons/avalia-solar-512x512.png',
+  '/icons/avalia-solar-maskable-192x192.png',
+  '/icons/avalia-solar-maskable-512x512.png',
+];
 
 const normalizePath = (value) => {
   try {

@@ -1,7 +1,6 @@
 module Api
   module V1
     class CreatorsController < Api::V1::BaseController
-      skip_before_action :authenticate_api_user, only: %i[index show publications publication]
       around_action :log_creator_request
       def index
         render json: ReviewerProfile.where(creator_enabled: true).select(:public_slug, :creator_enabled)

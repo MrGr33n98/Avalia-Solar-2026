@@ -20,19 +20,26 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icons/avalia-solar-192x192.png',
         sizes: '192x192',
         type: 'image/png',
+        purpose: 'any',
       },
       {
         src: '/icons/avalia-solar-512x512.png',
         sizes: '512x512',
         type: 'image/png',
+        purpose: 'any',
       },
-      // TODO(PWA): adicionar ícone maskable 512x512 com safe-zone quando o asset for entregue.
-      // {
-      //   src: '/icons/avalia-solar-maskable-512x512.png',
-      //   sizes: '512x512',
-      //   type: 'image/png',
-      //   purpose: 'maskable',
-      // },
+      {
+        src: '/icons/avalia-solar-maskable-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+      {
+        src: '/icons/avalia-solar-maskable-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
     shortcuts: [
       {

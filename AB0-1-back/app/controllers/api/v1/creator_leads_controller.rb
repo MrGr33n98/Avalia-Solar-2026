@@ -1,7 +1,6 @@
 module Api
   module V1
     class CreatorLeadsController < Api::V1::BaseController
-      skip_before_action :authenticate_api_user, only: :create
 
       def create
         profile = ReviewerProfile.find_by(public_slug: params[:creator_slug], creator_enabled: true)
