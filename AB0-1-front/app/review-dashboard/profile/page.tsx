@@ -77,8 +77,8 @@ export default function MeuPerfilPage() {
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === 'true' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{profileData.creator_enabled === 'true' ? 'Público' : 'Desativado'}</span>
         </div>
         <div className="mt-4 grid gap-4">
-          <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" />
-          <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" defaultValue={profileData.public_bio || ''} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
+          <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => setProfileData((current) => ({ ...current, public_headline: event.target.value }))} />
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => setProfileData((current) => ({ ...current, public_bio: event.target.value }))} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
         </div>
         {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{`${window.location.origin}/creators/${publicSlug}`}</a></p>}
         <div className="mt-4 flex flex-wrap gap-3">
@@ -403,6 +403,7 @@ function FormField({
   name,
   placeholder,
   type = 'text',
+  onChange,
 }: {
   label: string;
   icon?: typeof User;
@@ -422,6 +423,7 @@ function FormField({
           type={type}
           name={name}
           defaultValue={value}
+          onChange={onChange}
           placeholder={placeholder}
           className={`w-full rounded-lg border border-slate-200 bg-white py-2 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 ${
             Icon ? 'pl-9' : 'pl-3'

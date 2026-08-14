@@ -9,7 +9,9 @@ ActiveAdmin.register CreatorLead do
   filter :status
 
   scope :all, default: true
-  CreatorLead::STATUSES.each { |status| scope status.to_sym, -> { where(status: status) } }
+  CreatorLead::STATUSES.each do |status|
+    scope "status_#{status}".to_sym
+  end
 
   member_action :mark_contacted, method: :post do
     resource.update!(status: 'contacted', handled_at: Time.current)

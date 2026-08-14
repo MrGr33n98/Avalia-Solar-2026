@@ -11,6 +11,7 @@ class CreatorLead < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   scope :recent, -> { order(created_at: :desc) }
   scope :open, -> { where.not(status: %w[converted lost]) }
+  STATUSES.each { |status_name| scope "status_#{status_name}", -> { where(status: status_name) } }
   after_create_commit :enqueue_notification
 
   private
