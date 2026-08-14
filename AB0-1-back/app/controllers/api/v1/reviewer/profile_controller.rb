@@ -10,6 +10,7 @@ module Api
         def update
           profile = current_user.reviewer_profile || current_user.build_reviewer_profile
           if profile.update(profile_params)
+            Reviewer::PublicSlugService.new(profile).call if profile.creator_enabled?
             Creator::PublicProfileService.invalidate(profile)
             render json: profile_payload
           else
