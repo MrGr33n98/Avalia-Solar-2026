@@ -21,9 +21,9 @@ export function CreatorHero({ creator, publicationCount, reviewCount }: Props) {
           </div>
         </div>
         <div className="mt-4 pb-5">
-          <h1 className="break-words text-2xl font-bold leading-tight text-slate-900 lg:text-3xl">{creator.name}</h1>
+          <h1 className="flex flex-wrap items-center gap-2 break-words text-2xl font-bold leading-tight text-slate-900 lg:text-3xl">{creator.name} <CheckCircle2 aria-label="Creator verificado" role="img" className="h-5 w-5 shrink-0 fill-blue-600 text-white lg:h-6 lg:w-6" /></h1>
           <p className="mt-1 text-base text-slate-600 lg:text-lg">{creator.public_headline || 'Especialista em Energia Solar'}</p>
-          <p className="mt-1 text-sm text-slate-500">⌖ {location} <span aria-hidden="true">·</span> <CheckCircle2 aria-label="Creator verificado" role="img" className="inline-block h-4 w-4 align-[-3px] fill-blue-600 text-white" /></p>
+          <p className="mt-1 text-sm text-slate-500">⌖ {location}</p>
         </div>
         <nav aria-label="Seções do perfil" className="-mx-4 flex min-w-0 gap-6 overflow-x-auto border-t border-slate-100 px-4 pt-4 text-sm font-semibold sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <a className="whitespace-nowrap border-b-2 border-blue-600 pb-3 text-blue-600" href="#sobre">Visão geral</a>
