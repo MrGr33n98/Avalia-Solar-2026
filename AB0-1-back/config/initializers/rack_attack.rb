@@ -47,11 +47,11 @@ class Rack::Attack
   end
 
   throttle('creator_leads/ip', limit: 5, period: 1.minute) do |req|
-    req.ip if req.path.match?(%r{A/api/v1/creators/[^/]+/leadsz}) && req.post?
+    req.ip if req.path.match?(%r{\A/api/v1/creators/[^/]+/leads\z}) && req.post?
   end
 
   throttle('creator_comments/ip', limit: 10, period: 1.minute) do |req|
-    req.ip if req.path.match?(%r{A/api/v1/creators/[^/]+/publications/[^/]+/commentsz}) && req.post?
+    req.ip if req.path.match?(%r{\A/api/v1/creators/[^/]+/publications/[^/]+/comments\z}) && req.post?
   end
 
 

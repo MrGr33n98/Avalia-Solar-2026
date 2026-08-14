@@ -16,14 +16,15 @@ module Api
       def publications
         profile = public_profile
         return head :not_found unless profile
-        render json: profile.user.reviewer_publications.published.order(published_at: :desc)
+        render json: profile.user.reviewer_publications.published.order(published_at: :desc).map { |publication| PublicCreatorPublicationSerializer.new(publication).as_json }
       end
 
       def publication
         profile = public_profile
         publication = profile&.user&.reviewer_publications&.published&.find_by(slug: params[:publication_slug])
         return head :not_found unless publication
-        render json: publication
+        ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_view', ip_address: request.remote_ip)
+        render json: PublicCreatorPublicationSerializer.new(publication).as_json
       end
 
       private

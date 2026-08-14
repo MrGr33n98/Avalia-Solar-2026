@@ -33,7 +33,7 @@ module Creator
     end
 
     def publications
-      @user.reviewer_publications.published.select(:id, :title, :slug, :excerpt, :category, :published_at).order(published_at: :desc).limit(6).as_json(only: %i[id title slug excerpt category published_at])
+      @user.reviewer_publications.published.select(:id, :title, :slug, :excerpt, :category, :publication_type, :published_at).order(published_at: :desc).limit(6).as_json(only: %i[id title slug excerpt category publication_type published_at])
     end
 
     def reviews

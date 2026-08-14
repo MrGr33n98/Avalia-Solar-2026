@@ -9,4 +9,13 @@ RSpec.describe ReviewerPublication, type: :model do
     expect(persisted.status).to eq('published')
     expect(persisted.reload.title).to eq(publication.title)
   end
+
+  it 'publishes and archives through lifecycle methods' do
+    publication = create(:reviewer_publication, status: 'draft')
+    publication.publish!
+    expect(publication.reload).to have_attributes(status: 'published')
+    expect(publication.published_at).to be_present
+    publication.archive!
+    expect(publication.reload.status).to eq('archived')
+  end
 end

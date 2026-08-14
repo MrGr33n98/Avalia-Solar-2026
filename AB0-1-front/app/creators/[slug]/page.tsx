@@ -5,7 +5,6 @@ import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { CreatorHero } from '@/components/creator/CreatorHero';
 import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact';
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
-import { Globe, Instagram, Linkedin } from 'lucide-react';
 
 type CreatorData = {
   creator: {
@@ -23,7 +22,14 @@ type CreatorData = {
     youtube_url?: string;
   };
   stats: Record<string, number | null>;
-  recent_publications: Array<{ id: number; title: string; slug: string; excerpt?: string }>;
+  recent_publications: Array<{
+    id: number;
+    title: string;
+    slug: string;
+    excerpt?: string;
+    publication_type?: string;
+    published_at?: string;
+  }>;
   recent_reviews: Array<{
     id: number;
     title?: string;
@@ -63,13 +69,19 @@ export default async function CreatorPage({ params }: { params: { slug: string }
   const { creator, stats } = data;
   const socialLinks = [
     creator.linkedin_url
-      ? { label: 'LinkedIn', value: creator.linkedin_url, icon: Linkedin }
+      ? { label: 'LinkedIn', value: creator.linkedin_url, icon: 'linkedin' as const }
       : null,
     creator.instagram_url
-      ? { label: 'Instagram', value: creator.instagram_url, icon: Instagram }
+      ? { label: 'Instagram', value: creator.instagram_url, icon: 'instagram' as const }
       : null,
-    creator.website_url ? { label: 'Site', value: creator.website_url, icon: Globe } : null,
-  ].filter(Boolean) as Array<{ label: string; value: string; icon: typeof Globe }>;
+    creator.website_url
+      ? { label: 'Site', value: creator.website_url, icon: 'website' as const }
+      : null,
+  ].filter(Boolean) as Array<{
+    label: string;
+    value: string;
+    icon: 'linkedin' | 'instagram' | 'website';
+  }>;
   return (
     <main className="min-h-screen bg-[#f8fafc] pb-20 text-[#0b1730]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -119,10 +131,24 @@ export default async function CreatorPage({ params }: { params: { slug: string }
               <div className="mt-4 space-y-3">
                 {data.recent_publications.length ? (
                   data.recent_publications.map((post) => (
-                    <article key={post.id} className="border-b border-slate-200/70 pb-3">
-                      <h3 className="font-semibold">{post.title}</h3>
+                    <a
+                      key={post.id}
+                      href={`/creators/${params.slug}/posts/${post.slug}`}
+                      className="group block border-b border-slate-200/70 pb-3 last:border-0"
+                    >
+                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1e5eff]">
+                        <span>{post.publication_type || 'Artigo'}</span>
+                        {post.published_at && (
+                          <span className="font-normal text-[#718096]">
+                            {new Date(post.published_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-1 font-semibold group-hover:text-[#1e5eff]">
+                        {post.title}
+                      </h3>
                       <p className="mt-1 text-sm text-[#53627a]">{post.excerpt}</p>
-                    </article>
+                    </a>
                   ))
                 ) : (
                   <p className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-[#53627a]">

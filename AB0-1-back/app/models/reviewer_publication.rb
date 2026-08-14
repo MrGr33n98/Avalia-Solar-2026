@@ -7,12 +7,26 @@ class ReviewerPublication < ApplicationRecord
   STATUSES = %w[draft published archived].freeze
   TYPES = %w[article case_study tip project].freeze
 
-  validates :title, :body, :slug, presence: true
-  validates :slug, uniqueness: { scope: :user_id }, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
+  validates :title, presence: true, length: { maximum: 120 }
+  validates :excerpt, length: { maximum: 500 }, allow_blank: true
+  validates :body, presence: true, length: { maximum: 100_000 }
+  validates :slug, presence: true, uniqueness: { scope: :user_id }, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
   validates :status, inclusion: { in: STATUSES }
   validates :publication_type, inclusion: { in: TYPES }
   scope :published, -> { where(status: 'published').where.not(published_at: nil) }
   after_commit :invalidate_creator_cache
+
+  def publish!
+    update!(status: 'published', published_at: Time.current)
+  end
+
+  def archive!
+    update!(status: 'archived')
+  end
+
+  def restore_to_draft!
+    update!(status: 'draft', published_at: nil)
+  end
 
   private
 

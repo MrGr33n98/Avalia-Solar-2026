@@ -257,7 +257,7 @@ Rails.application.routes.draw do
       resources :reviewer_solutions, only: %i[index create destroy]
       namespace :reviewer do
         resources :creator_leads, only: %i[index update], controller: 'creator_leads'
-        resources :publications, only: %i[index show create update]
+        resources :publications, only: %i[index show create update destroy]
         post 'publications/:id/publish', to: 'publications#publish'
         post 'publications/:id/archive', to: 'publications#archive'
       end

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { buildApiUrl } from '@/lib/api-config';
-import { ExternalLink, type LucideIcon } from 'lucide-react';
+import { ExternalLink, Globe, Instagram, Linkedin } from 'lucide-react';
 
 export function CreatorContactForm({
   creatorSlug,
@@ -11,7 +11,7 @@ export function CreatorContactForm({
 }: {
   creatorSlug: string;
   whatsappUrl?: string;
-  socialLinks?: Array<{ label: string; value: string; icon: LucideIcon }>;
+  socialLinks?: Array<{ label: string; value: string; icon: 'linkedin' | 'instagram' | 'website' }>;
 }) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -49,6 +49,31 @@ export function CreatorContactForm({
         >
           Falar no WhatsApp
         </a>
+      )}
+      {socialLinks.length > 0 && (
+        <div className="mt-4 border-t border-slate-200/70 pt-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            Conecte-se
+          </p>
+          {socialLinks.map(({ label, value, icon }) => {
+            const Icon = icon === 'linkedin' ? Linkedin : icon === 'instagram' ? Instagram : Globe;
+            return (
+              <a
+                key={label}
+                href={value}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center gap-2 border-b border-slate-100 px-1 py-2 text-xs font-semibold text-slate-700 last:border-0 hover:bg-slate-50"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">{label}</span>
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+              </a>
+            );
+          })}
+        </div>
       )}
       <p className="mt-2 text-sm text-slate-600">Tire dúvidas ou fale sobre seu projeto.</p>
       <form onSubmit={submit} className="mt-4 space-y-3">
