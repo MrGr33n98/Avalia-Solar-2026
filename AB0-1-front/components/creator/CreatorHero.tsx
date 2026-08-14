@@ -1,7 +1,8 @@
 import Image from 'next/image';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Instagram, Linkedin } from 'lucide-react';
+import { CreatorShareButton } from './CreatorShareButton';
 
-type Creator = { name: string; public_headline?: string; city?: string; state?: string; avatar_url?: string; public_banner_url?: string };
+type Creator = { name: string; public_headline?: string; city?: string; state?: string; avatar_url?: string; public_banner_url?: string; website_url?: string; linkedin_url?: string; instagram_url?: string };
 
 type Props = { creator: Creator; publicationCount: number; reviewCount: number };
 
