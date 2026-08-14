@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { buildApiUrl } from '@/lib/api-config';
+import { ExternalLink, type LucideIcon } from 'lucide-react';
 
 export function CreatorContactForm({
   creatorSlug,
   whatsappUrl,
+  socialLinks = [],
 }: {
   creatorSlug: string;
   whatsappUrl?: string;
+  socialLinks?: Array<{ label: string; value: string; icon: LucideIcon }>;
 }) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
