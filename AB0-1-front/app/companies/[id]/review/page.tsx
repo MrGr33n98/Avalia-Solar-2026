@@ -221,7 +221,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
       </div>
 
       <Card className="overflow-hidden rounded-b-xl border border-t-0 border-[#D0D5DD] bg-white shadow-[0_10px_30px_rgba(13,46,103,0.12)]">
-        <CardContent className="max-h-[calc(100dvh-300px)] overflow-y-auto p-3 sm:p-4">
+        <CardContent className="max-h-[calc(100dvh-180px)] sm:max-h-[calc(100dvh-300px)] overflow-y-auto p-3 sm:p-4">
           {step === 1 && (
             <div className="space-y-3">
               <div className="space-y-2">
@@ -464,7 +464,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
 
   return (
     <div className="min-h-[100dvh] bg-[#F8FAFC] px-3 py-3 sm:px-5 sm:py-6 lg:py-10">
-      <div className="mx-auto flex max-w-[560px] flex-col space-y-0">
+      <div className="mx-auto flex w-[calc(100vw-24px)] max-w-[560px] flex-col space-y-0">
         <header className="rounded-t-xl border border-[#D0D5DD] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:px-5">
           <Link
             href={companyPath}
