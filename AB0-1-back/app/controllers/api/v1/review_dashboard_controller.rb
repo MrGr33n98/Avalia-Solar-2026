@@ -22,7 +22,7 @@ module Api
 
         # Gamification & Impact
         green_score = measure_summary_step('green_score') { current_user.calculate_green_score }
-        regional_ranking = measure_summary_step('regional_ranking') { current_user.regional_ranking }
+        regional_ranking = measure_summary_step('regional_ranking') { current_user.regional_ranking(score: green_score) }
         achievements = measure_summary_step('achievements') { current_user.achievements }
         helpful_votes = measure_summary_step('impact_helpful_votes') { current_user.reviews.sum(:helpful_count) }
         impacted_people = measure_summary_step('impact_read_count') { current_user.reviews.sum(:read_count) }
@@ -30,6 +30,7 @@ module Api
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
         recommendations = measure_summary_step('recommendations') { ::Company.where(status: 'active', verified: true)
+                                 .select(:name, :city, :state, :rating_avg, :featured)
                                  .order(rating_avg: :desc)
                                  .limit(3)
                                  .map do |c|

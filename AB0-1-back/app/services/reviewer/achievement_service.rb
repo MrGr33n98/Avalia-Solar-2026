@@ -12,15 +12,16 @@ module Reviewer
     end
 
     def call
-      approved_reviews = @user.reviews.where(status: :approved).order(:created_at)
+      approved_reviews = @user.reviews.where(status: :approved)
       review_count = approved_reviews.count
+      milestone_dates = approved_reviews.order(:created_at).limit(DEFINITIONS.map { |definition| definition[:target] }.max).pluck(:created_at)
       DEFINITIONS.map do |definition|
         progress = [review_count, definition[:target]].min
         unlocked = review_count >= definition[:target]
         definition.merge(
           subtitle: definition[:description], state: unlocked ? 'desbloqueado' : 'bloqueado',
           unlocked: unlocked, progress: progress, xp: unlocked ? definition[:points] : 0,
-          unlocked_at: unlocked ? approved_reviews[definition[:target] - 1]&.created_at&.iso8601 : nil
+          unlocked_at: unlocked ? milestone_dates[definition[:target] - 1]&.iso8601 : nil
         )
       end
     end

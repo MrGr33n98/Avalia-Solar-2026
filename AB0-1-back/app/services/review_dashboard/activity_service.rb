@@ -67,8 +67,7 @@ module ReviewDashboard
     private
 
     def aggregate_events(event_type, start_date, end_date)
-      # Get companies that user owns reviews for
-      company_ids = Review.where(user_id: user.id).distinct.pluck(:company_id)
+      company_ids = @company_ids ||= Review.where(user_id: user.id).where.not(company_id: nil).distinct.pluck(:company_id)
 
       return {} if company_ids.empty?
 

@@ -180,12 +180,13 @@ class User < ApplicationRecord
     nil
   end
 
-  def regional_ranking
+  def regional_ranking(score: nil)
     return nil if city.blank? || state.blank?
 
-    Rails.cache.fetch("user:#{id}:regional_ranking:#{calculate_green_score}", expires_in: 30.minutes) do
+    ranking_score = score || calculate_green_score
+    Rails.cache.fetch("user:#{id}:regional_ranking:#{ranking_score}", expires_in: 30.minutes) do
       users_in_region = User.where(city: city, state: state, role: 'review')
-      my_score = calculate_green_score
+      my_score = ranking_score
       next nil if my_score.nil?
 
       review_counts = Review.where(user_id: users_in_region.select(:id)).group(:user_id).count

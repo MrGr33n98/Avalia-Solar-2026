@@ -1449,7 +1449,7 @@ export const dashboardApi = {
 };
 
 export const reviewDashboardApi = {
-  getSummary: () => fetchApi('/review_dashboard/summary'),
+  getSummary: () => fetchApi('/review_dashboard/summary', { timeout: 8000, retries: 0 }),
   getDashboard: () => fetchApi<import('@/types/reviewer').ReviewerDashboard>('/reviewer/dashboard'),
 };
 
@@ -1937,7 +1937,7 @@ export const categoriesApi = {
 
 export const leadsApi = {
   getAll: () => fetchApi('/leads'),
-  mine: (): Promise<Lead[]> => fetchApi<Lead[]>('/leads/mine'),
+  mine: (): Promise<Lead[]> => fetchApi<Lead[]>('/leads/mine', { timeout: 5000, retries: 0 }),
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
@@ -1953,7 +1953,7 @@ export const leadsApi = {
 };
 
 export const reviewsApi = {
-  getAll: (params: any = {}) => fetchApi('/reviews', { params }),
+  getAll: (params: any = {}) => fetchApi('/reviews', { params, timeout: 5000, retries: 0 }),
   listMine: async (params: any = {}): Promise<Review[]> => {
     try {
       if (apolloClient) {
@@ -2182,7 +2182,8 @@ export type ReviewFormTemplate = {
 };
 
 export const reviewFormTemplatesApi = {
-  list: () => fetchApi<{ templates: ReviewFormTemplate[] }>('/company_admin/review_forms/templates'),
+  list: () =>
+    fetchApi<{ templates: ReviewFormTemplate[] }>('/company_admin/review_forms/templates'),
 };
 
 export const authApi = {
@@ -2245,7 +2246,6 @@ export const authApi = {
   },
   me: async (): Promise<User | null> => {
     try {
-
       // First try the unified /auth/me endpoint
       const resp = await fetchApi<{ user: User } | null>('/auth/me', {
         silentStatusCodes: [401],
@@ -2520,14 +2520,23 @@ export const fetchCompanies = (params?: any): Promise<Company[]> => companiesApi
 
 export const reviewerSolutionsApi = {
   list: () => fetchApi('/reviewer_solutions'),
-  create: (solution: { name: string; solution_type: string; category: string; company_id?: string }) =>
-    fetchApi('/reviewer_solutions', { method: 'POST', body: JSON.stringify({ solution }) }),
+  create: (solution: {
+    name: string;
+    solution_type: string;
+    category: string;
+    company_id?: string;
+  }) => fetchApi('/reviewer_solutions', { method: 'POST', body: JSON.stringify({ solution }) }),
   remove: (id: string) => fetchApi('/reviewer_solutions/' + id, { method: 'DELETE' }),
 };
 
 export const reviewerProfileApi = {
   get: () => fetchApi('/reviewer/profile'),
-  update: (profile: Record<string, unknown>) => fetchApi('/reviewer/profile', { method: 'PATCH', body: JSON.stringify({ profile }) }),
-  uploadAvatar: (file: File) => { const body = new FormData(); body.append('avatar', file); return fetchApi('/reviewer/profile/avatar', { method: 'POST', body }); },
+  update: (profile: Record<string, unknown>) =>
+    fetchApi('/reviewer/profile', { method: 'PATCH', body: JSON.stringify({ profile }) }),
+  uploadAvatar: (file: File) => {
+    const body = new FormData();
+    body.append('avatar', file);
+    return fetchApi('/reviewer/profile/avatar', { method: 'POST', body });
+  },
   removeAvatar: () => fetchApi('/reviewer/profile/avatar', { method: 'DELETE' }),
 };
