@@ -38,16 +38,28 @@ export default function MeuPerfilPage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [publicSlug, setPublicSlug] = useState('');
   const [completion, setCompletion] = useState(summary?.profile?.completion_percent ?? 0);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>(
+    'idle'
+  );
   const avatarObjectUrl = useRef<string | null>(null);
   const bannerObjectUrl = useRef<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   type ReviewerProfileData = {
-  public_slug?: string;
-  bio?: string; company_name?: string; public_headline?: string; public_bio?: string; public_banner_url?: string; avatar_url?: string;
-  creator_enabled?: boolean; profession?: string; linkedin_url?: string; instagram_url?: string; website_url?: string;
-};
+    public_slug?: string;
+    bio?: string;
+    company_name?: string;
+    public_headline?: string;
+    public_bio?: string;
+    public_banner_url?: string;
+    whatsapp_url?: string;
+    avatar_url?: string;
+    creator_enabled?: boolean;
+    profession?: string;
+    linkedin_url?: string;
+    instagram_url?: string;
+    website_url?: string;
+  };
 
   const [profileData, setProfileData] = useState<ReviewerProfileData>({});
   const profileUser = user as (typeof user & { profession?: string }) | null;
@@ -73,9 +85,15 @@ export default function MeuPerfilPage() {
     setBannerUploading(true);
     if (bannerObjectUrl.current) URL.revokeObjectURL(bannerObjectUrl.current);
     bannerObjectUrl.current = URL.createObjectURL(file);
-    setProfileData((current) => ({ ...current, public_banner_url: bannerObjectUrl.current || current.public_banner_url }));
+    setProfileData((current) => ({
+      ...current,
+      public_banner_url: bannerObjectUrl.current || current.public_banner_url,
+    }));
     try {
-      const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: ReviewerProfileData; completion?: { percent?: number } };
+      const result = (await reviewerProfileApi.uploadPublicBanner(file)) as {
+        profile?: ReviewerProfileData;
+        completion?: { percent?: number };
+      };
       setProfileData((current) => ({ ...current, ...(result.profile || {}) }));
       setCompletion(result.completion?.percent ?? completion);
       toast.success('Banner atualizado.');
@@ -84,14 +102,21 @@ export default function MeuPerfilPage() {
       toast.error('Não foi possível enviar o banner.');
     } finally {
       setBannerUploading(false);
-      if (bannerObjectUrl.current) { URL.revokeObjectURL(bannerObjectUrl.current); bannerObjectUrl.current = null; }
+      if (bannerObjectUrl.current) {
+        URL.revokeObjectURL(bannerObjectUrl.current);
+        bannerObjectUrl.current = null;
+      }
     }
   };
 
   const activatePublicProfile = async () => {
     setPublicSaving(true);
     try {
-      const result = await reviewerProfileApi.update({ creator_enabled: true, public_headline: profileData.public_headline || '', public_bio: profileData.public_bio || '' }) as { profile?: ReviewerProfileData; completion?: { percent?: number } };
+      const result = (await reviewerProfileApi.update({
+        creator_enabled: true,
+        public_headline: profileData.public_headline || '',
+        public_bio: profileData.public_bio || '',
+      })) as { profile?: ReviewerProfileData; completion?: { percent?: number } };
       const nextProfile = result.profile || {};
       setProfileData((current) => ({ ...current, ...nextProfile, creator_enabled: true }));
       setPublicSlug(String(nextProfile.public_slug || profileData.public_slug || ''));
@@ -151,26 +176,129 @@ export default function MeuPerfilPage() {
         description="Gerencie suas informações pessoais e profissionais."
         breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu perfil' }]}
       />
-      <p aria-live="polite" className="text-sm text-slate-500">{saveStatus === 'dirty' && 'Alterações não salvas'}{saveStatus === 'saving' && 'Salvando...'}{saveStatus === 'saved' && 'Salvo agora'}{saveStatus === 'error' && 'Não foi possível salvar. Suas alterações continuam nesta tela.'}</p>
+      <p aria-live="polite" className="text-sm text-slate-500">
+        {saveStatus === 'dirty' && 'Alterações não salvas'}
+        {saveStatus === 'saving' && 'Salvando...'}
+        {saveStatus === 'saved' && 'Salvo agora'}
+        {saveStatus === 'error' && 'Não foi possível salvar. Suas alterações continuam nesta tela.'}
+      </p>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6" aria-labelledby="public-profile-title">
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-6"
+        aria-labelledby="public-profile-title"
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div><h2 id="public-profile-title" className="text-base font-semibold text-slate-900">Perfil público</h2><p className="mt-1 text-sm text-slate-600">Mostre sua autoridade, avaliações e soluções em uma URL pública.</p></div>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === true ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{profileData.creator_enabled === true ? 'Público' : 'Desativado'}</span>
+          <div>
+            <h2 id="public-profile-title" className="text-base font-semibold text-slate-900">
+              Perfil público
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Mostre sua autoridade, avaliações e soluções em uma URL pública.
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === true ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}
+          >
+            {profileData.creator_enabled === true ? 'Público' : 'Desativado'}
+          </span>
         </div>
         <div className="mt-4 grid gap-4">
-          <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => { setDirty(true); setSaveStatus('dirty'); setProfileData((current) => ({ ...current, public_headline: event.target.value })); }} />
+          <FormField
+            label="Headline pública"
+            name="public_headline"
+            value={profileData.public_headline || ''}
+            placeholder="Especialista em Energia Solar"
+            onChange={(event) => {
+              setDirty(true);
+              setSaveStatus('dirty');
+              setProfileData((current) => ({ ...current, public_headline: event.target.value }));
+            }}
+          />
           <div className="rounded-lg border border-dashed border-slate-300 p-4">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="public_banner">{bannerUploading ? 'Enviando banner...' : 'Banner do perfil público'}</label>
-            <input id="public_banner" type="file" disabled={bannerUploading} accept="image/jpeg,image/png,image/webp" onChange={handlePublicBannerUpload} className="block w-full text-sm disabled:opacity-50" />
-            {profileData.public_banner_url && <Image src={profileData.public_banner_url} alt="Banner do perfil público" width={1200} height={320} unoptimized className="mt-3 h-28 w-full rounded-lg object-cover" />}
+            <label
+              className="mb-1.5 block text-sm font-medium text-slate-700"
+              htmlFor="public_banner"
+            >
+              {bannerUploading ? 'Enviando banner...' : 'Banner do perfil público'}
+            </label>
+            <input
+              id="public_banner"
+              type="file"
+              disabled={bannerUploading}
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePublicBannerUpload}
+              className="block w-full text-sm disabled:opacity-50"
+            />
+            {profileData.public_banner_url && (
+              <Image
+                src={profileData.public_banner_url}
+                alt="Banner do perfil público"
+                width={1200}
+                height={320}
+                unoptimized
+                className="mt-3 h-28 w-full rounded-lg object-cover"
+              />
+            )}
           </div>
-          <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => { setDirty(true); setProfileData((current) => ({ ...current, public_bio: event.target.value })); }} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">
+              Bio pública
+            </label>
+            <textarea
+              id="public_bio"
+              name="public_bio"
+              value={profileData.public_bio || ''}
+              onChange={(event) => {
+                setDirty(true);
+                setProfileData((current) => ({ ...current, public_bio: event.target.value }));
+              }}
+              rows={3}
+              placeholder="Conte sua experiência..."
+              className="w-full rounded-lg border border-slate-200 p-3 text-sm"
+            />
+          </div>
         </div>
-        {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{'/creators/' + publicSlug}</a></p>}
+        {publicSlug && (
+          <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+            URL:{' '}
+            <a
+              className="font-semibold text-blue-600 underline"
+              href={`/creators/${publicSlug}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {'/creators/' + publicSlug}
+            </a>
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" disabled={publicSaving} onClick={activatePublicProfile} className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{publicSaving ? 'Ativando...' : 'Ativar perfil público'}</button>
-          {publicSlug && <><a href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Pré-visualizar</a><button type="button" onClick={copyPublicProfileUrl} className="min-h-11 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Copiar link</button></>}
+          <button
+            type="button"
+            disabled={publicSaving}
+            onClick={activatePublicProfile}
+            className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {publicSaving ? 'Ativando...' : 'Ativar perfil público'}
+          </button>
+          {publicSlug && (
+            <>
+              <a
+                href={`/creators/${publicSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Pré-visualizar
+              </a>
+              <button
+                type="button"
+                onClick={copyPublicProfileUrl}
+                className="min-h-11 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Copiar link
+              </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -191,21 +319,39 @@ export default function MeuPerfilPage() {
                 city: String(data.get('city') || ''),
                 state: String(data.get('state') || ''),
               });
-              const originalProfile = { profession: profileData.profession || '', bio: profileData.bio || '', linkedin_url: profileData.linkedin_url || '', instagram_url: profileData.instagram_url || '', website_url: profileData.website_url || '' };
-              const draftProfile = { profession: String(data.get('profession') || ''), bio: String(data.get('bio') || ''), linkedin_url: String(data.get('linkedin') || ''), instagram_url: String(data.get('instagram') || ''), website_url: String(data.get('website') || '') };
+              const originalProfile = {
+                profession: profileData.profession || '',
+                bio: profileData.bio || '',
+                linkedin_url: profileData.linkedin_url || '',
+                instagram_url: profileData.instagram_url || '',
+                website_url: profileData.website_url || '',
+                whatsapp_url: profileData.whatsapp_url || '',
+              };
+              const draftProfile = {
+                profession: String(data.get('profession') || ''),
+                bio: String(data.get('bio') || ''),
+                linkedin_url: String(data.get('linkedin') || ''),
+                instagram_url: String(data.get('instagram') || ''),
+                website_url: String(data.get('website') || ''),
+                whatsapp_url: String(data.get('whatsapp') || ''),
+              };
               const profilePatch = buildProfilePatch(originalProfile, draftProfile);
               const profileResult = await reviewerProfileApi.update(profilePatch);
               const updatedProfile = (profileResult as { profile?: ReviewerProfileData }).profile;
               if (updatedProfile) setProfileData((current) => ({ ...current, ...updatedProfile }));
-              const responseCompletion = (profileResult as { completion?: { percent?: number } }).completion;
-              if (responseCompletion?.percent !== undefined) setCompletion(responseCompletion.percent);
+              const responseCompletion = (profileResult as { completion?: { percent?: number } })
+                .completion;
+              if (responseCompletion?.percent !== undefined)
+                setCompletion(responseCompletion.percent);
               setDirty(false);
               setSaveStatus('saved');
               track('reviewer_profile_updated', { route: '/review-dashboard/profile' });
               toast.success('Perfil atualizado com sucesso.');
             } catch {
               setSaveStatus('error');
-              toast.error('Não foi possível atualizar o perfil. Suas alterações continuam nesta tela.');
+              toast.error(
+                'Não foi possível atualizar o perfil. Suas alterações continuam nesta tela.'
+              );
             } finally {
               setSaving(false);
             }
@@ -271,17 +417,27 @@ export default function MeuPerfilPage() {
                     avatarObjectUrl.current = URL.createObjectURL(file);
                     setAvatarPreview(avatarObjectUrl.current);
                     try {
-                      const avatarResult = await reviewerProfileApi.uploadAvatar(file) as { profile?: ReviewerProfileData; user?: { avatar_url?: string } };
+                      const avatarResult = (await reviewerProfileApi.uploadAvatar(file)) as {
+                        profile?: ReviewerProfileData;
+                        user?: { avatar_url?: string };
+                      };
                       setAvatarPreview(avatarResult.user?.avatar_url || user?.avatar_url || null);
-                      if (avatarResult.profile) setProfileData((current) => ({ ...current, ...avatarResult.profile }));
+                      if (avatarResult.profile)
+                        setProfileData((current) => ({ ...current, ...avatarResult.profile }));
                       toast.success('Foto atualizada.');
                     } catch {
                       setAvatarPreview(user?.avatar_url || null);
-                      if (avatarObjectUrl.current) { URL.revokeObjectURL(avatarObjectUrl.current); avatarObjectUrl.current = null; }
+                      if (avatarObjectUrl.current) {
+                        URL.revokeObjectURL(avatarObjectUrl.current);
+                        avatarObjectUrl.current = null;
+                      }
                       toast.error('Não foi possível enviar foto.');
                     } finally {
                       setAvatarUploading(false);
-                      if (avatarObjectUrl.current) { URL.revokeObjectURL(avatarObjectUrl.current); avatarObjectUrl.current = null; }
+                      if (avatarObjectUrl.current) {
+                        URL.revokeObjectURL(avatarObjectUrl.current);
+                        avatarObjectUrl.current = null;
+                      }
                     }
                   }}
                 />
@@ -370,6 +526,13 @@ export default function MeuPerfilPage() {
                 placeholder="@usuario"
               />
               <FormField
+                label="WhatsApp"
+                icon={Phone}
+                name="whatsapp"
+                value={profileData.whatsapp_url || ''}
+                placeholder="https://wa.me/5511999999999"
+              />
+              <FormField
                 label="Website"
                 icon={Globe}
                 name="website"
@@ -386,7 +549,20 @@ export default function MeuPerfilPage() {
               Cancelar
             </button>
             <div className="flex gap-3">
-              <button type="button" onClick={() => { if (publicSlug) { window.open(`/creators/${publicSlug}`, '_blank', 'noopener,noreferrer'); } else { document.getElementById('public-profile-title')?.scrollIntoView({ behavior: 'smooth' }); toast.info('Ative seu perfil público primeiro.'); } }} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+              <button
+                type="button"
+                onClick={() => {
+                  if (publicSlug) {
+                    window.open(`/creators/${publicSlug}`, '_blank', 'noopener,noreferrer');
+                  } else {
+                    document
+                      .getElementById('public-profile-title')
+                      ?.scrollIntoView({ behavior: 'smooth' });
+                    toast.info('Ative seu perfil público primeiro.');
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
                 <Eye className="h-4 w-4" />
                 Pré-visualizar
               </button>

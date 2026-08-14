@@ -15,6 +15,7 @@ type CreatorData = {
     state?: string;
     avatar_url?: string;
     public_banner_url?: string;
+    whatsapp_url?: string;
     website_url?: string;
     linkedin_url?: string;
     instagram_url?: string;
@@ -133,7 +134,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
             </section>
           </div>
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
-            <CreatorContactForm creatorSlug={params.slug} />
+            <CreatorContactForm creatorSlug={params.slug} whatsappUrl={creator.whatsapp_url} />
             <section id="solucoes" className="rounded-xl border border-slate-200 bg-white p-5">
               <h2 className="font-bold">Soluções</h2>
               {data.solutions.length ? (
