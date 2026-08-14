@@ -52,12 +52,12 @@ module Api
 
 
         def profile_params
-          params.require(:profile).permit(:profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :youtube_url, :public_profile, :public_headline, :public_bio, :public_email_enabled, :lead_capture_enabled, :creator_enabled)
+          params.require(:profile).permit(:profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :youtube_url, :whatsapp_url, :public_profile, :public_headline, :public_bio, :public_email_enabled, :lead_capture_enabled, :creator_enabled)
         end
 
         def profile_payload
           profile = current_user.reviewer_profile
-          profile_data = profile&.attributes&.slice('profession', 'company_name', 'bio', 'birth_date', 'linkedin_url', 'instagram_url', 'website_url', 'youtube_url', 'public_profile', 'public_slug', 'creator_enabled', 'public_headline', 'public_bio', 'public_email_enabled', 'lead_capture_enabled') || {}
+          profile_data = profile&.attributes&.slice('profession', 'company_name', 'bio', 'birth_date', 'linkedin_url', 'instagram_url', 'website_url', 'youtube_url', 'whatsapp_url', 'public_profile', 'public_slug', 'creator_enabled', 'public_headline', 'public_bio', 'public_email_enabled', 'lead_capture_enabled') || {}
           profile_data['public_banner_url'] = profile.public_banner.attached? ? rails_blob_url(profile.public_banner) : nil if profile
           { user: { id: current_user.id, name: current_user.name, email: current_user.email, phone: current_user.phone, city: current_user.city, state: current_user.state, avatar_url: current_user.respond_to?(:avatar_url) ? current_user.avatar_url : nil }, profile: profile_data, completion: ::Reviewer::ProfileCompletionService.new(user: current_user).call }
         end
