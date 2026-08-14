@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, ChangeEventHandler } from 'react';
 import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,17 +33,63 @@ export default function MeuPerfilPage() {
   const [publicSlug, setPublicSlug] = useState('');
   const avatarInput = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [profileData, setProfileData] = useState<Record<string, string>>({});
+  type ReviewerProfileData = {
+  public_slug?: string;
+  bio?: string; company_name?: string; public_headline?: string; public_bio?: string; public_banner_url?: string;
+  creator_enabled?: boolean; profession?: string; linkedin_url?: string; instagram_url?: string; website_url?: string;
+};
+
+  const [profileData, setProfileData] = useState<ReviewerProfileData>({});
   const profileUser = user as (typeof user & { profession?: string }) | null;
   useEffect(() => {
     void reviewerProfileApi
       .get()
-      .then((payload: { profile?: Record<string, string> }) => {
+      .then((payload: { profile?: ReviewerProfileData }) => {
         setProfileData(payload.profile || {});
         setPublicSlug(String(payload.profile?.public_slug || ''));
       })
       .catch(() => toast.error('Não foi possível carregar perfil profissional.'));
   }, []);
+
+  const handlePublicBannerUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error('Banner excede 8 MB.');
+      return;
+    }
+    setPublicSaving(true);
+    try {
+      const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: ReviewerProfileData };
+      setProfileData((current) => ({ ...current, ...(result.profile || {}) }));
+      toast.success('Banner atualizado.');
+    } catch {
+      toast.error('Não foi possível enviar o banner.');
+    } finally {
+      setPublicSaving(false);
+    }
+  };
+
+  const activatePublicProfile = async () => {
+    setPublicSaving(true);
+    try {
+      const result = await reviewerProfileApi.update({ creator_enabled: true, public_headline: profileData.public_headline || '', public_bio: profileData.public_bio || '' }) as { profile?: ReviewerProfileData };
+      const nextProfile = result.profile || {};
+      setProfileData((current) => ({ ...current, ...nextProfile, creator_enabled: true }));
+      setPublicSlug(String(nextProfile.public_slug || profileData.public_slug || ''));
+      toast.success('Perfil público ativado.');
+    } catch {
+      toast.error('Não foi possível ativar perfil público.');
+    } finally {
+      setPublicSaving(false);
+    }
+  };
+
+  const copyPublicProfileUrl = async () => {
+    if (!publicSlug) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/creators/${publicSlug}`);
+    toast.success('Link copiado.');
+  };
 
   const reviewsCount = reviews.length;
   const profileItems = [
@@ -74,17 +121,21 @@ export default function MeuPerfilPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6" aria-labelledby="public-profile-title">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div><h2 id="public-profile-title" className="text-base font-semibold text-slate-900">Perfil público</h2><p className="mt-1 text-sm text-slate-600">Mostre sua autoridade, avaliações e soluções em uma URL pública.</p></div>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === 'true' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{profileData.creator_enabled === 'true' ? 'Público' : 'Desativado'}</span>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === true ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{profileData.creator_enabled === true ? 'Público' : 'Desativado'}</span>
         </div>
         <div className="mt-4 grid gap-4">
           <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => setProfileData((current) => ({ ...current, public_headline: event.target.value }))} />
-          <div className="rounded-lg border border-dashed border-slate-300 p-4"><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_banner">Banner do perfil público</label><input id="public_banner" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 8 * 1024 * 1024) { toast.error('Banner excede 8 MB.'); return; } setPublicSaving(true); try { const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: Record<string, string> }; setProfileData((current) => ({ ...current, ...(result.profile || {}) })); toast.success('Banner atualizado.'); } catch { toast.error('Não foi possível enviar o banner.'); } finally { setPublicSaving(false); } }} className="block w-full text-sm" />{profileData.public_banner_url && <img src={profileData.public_banner_url} alt="Banner do perfil público" className="mt-3 h-28 w-full rounded-lg object-cover" />}</div>
+          <div className="rounded-lg border border-dashed border-slate-300 p-4">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="public_banner">Banner do perfil público</label>
+            <input id="public_banner" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePublicBannerUpload} className="block w-full text-sm" />
+            {profileData.public_banner_url && <Image src={profileData.public_banner_url} alt="Banner do perfil público" width={1200} height={320} unoptimized className="mt-3 h-28 w-full rounded-lg object-cover" />}
+          </div>
           <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => setProfileData((current) => ({ ...current, public_bio: event.target.value }))} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
         </div>
-        {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{`${window.location.origin}/creators/${publicSlug}`}</a></p>}
+        {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{'/creators/' + publicSlug}</a></p>}
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" disabled={publicSaving} onClick={async () => { setPublicSaving(true); try { const profile = { creator_enabled: true, public_headline: profileData.public_headline || '', public_bio: profileData.public_bio || '' }; const result = await reviewerProfileApi.update(profile); const nextProfile = (result as { profile?: Record<string, string> }).profile || {}; setProfileData((current) => ({ ...current, ...nextProfile, creator_enabled: 'true' })); setPublicSlug(String(nextProfile.public_slug || profileData.public_slug || '')); toast.success('Perfil público ativado.'); } catch { toast.error('Não foi possível ativar perfil público.'); } finally { setPublicSaving(false); } }} className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{publicSaving ? 'Ativando...' : 'Ativar perfil público'}</button>
-          {publicSlug && <><a href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Pré-visualizar</a><button type="button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/creators/${publicSlug}`).then(() => toast.success('Link copiado.'))} className="min-h-11 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Copiar link</button></>}
+          <button type="button" disabled={publicSaving} onClick={activatePublicProfile} className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{publicSaving ? 'Ativando...' : 'Ativar perfil público'}</button>
+          {publicSlug && <><a href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Pré-visualizar</a><button type="button" onClick={copyPublicProfileUrl} className="min-h-11 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700">Copiar link</button></>}
         </div>
       </section>
 
@@ -412,6 +463,7 @@ function FormField({
   name?: string;
   placeholder?: string;
   type?: string;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
 }) {
   return (
     <div>
