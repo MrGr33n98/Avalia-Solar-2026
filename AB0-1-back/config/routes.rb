@@ -276,6 +276,7 @@ Rails.application.routes.draw do
         patch :profile, to: 'profile#update'
         put :profile, to: 'profile#update'
         post 'profile/avatar', to: 'profile#avatar'
+        post 'profile/public_banner', to: 'profile#public_banner'
         delete 'profile/avatar', to: 'profile#remove_avatar'
       end
 

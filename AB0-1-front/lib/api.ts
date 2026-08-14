@@ -2538,5 +2538,10 @@ export const reviewerProfileApi = {
     body.append('avatar', file);
     return fetchApi('/reviewer/profile/avatar', { method: 'POST', body });
   },
+  uploadPublicBanner: (file: File) => {
+    const body = new FormData();
+    body.append('public_banner', file);
+    return fetchApi('/reviewer/profile/public_banner', { method: 'POST', body });
+  },
   removeAvatar: () => fetchApi('/reviewer/profile/avatar', { method: 'DELETE' }),
 };

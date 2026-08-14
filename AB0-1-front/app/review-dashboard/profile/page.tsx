@@ -37,10 +37,10 @@ export default function MeuPerfilPage() {
   useEffect(() => {
     void reviewerProfileApi
       .get()
-      .then((payload: { profile?: Record<string, string> }) =>
-        setProfileData(payload.profile || {})
-        setPublicSlug(String(payload.profile?.public_slug || ''))
-      )
+      .then((payload: { profile?: Record<string, string> }) => {
+        setProfileData(payload.profile || {});
+        setPublicSlug(String(payload.profile?.public_slug || ''));
+      })
       .catch(() => toast.error('Não foi possível carregar perfil profissional.'));
   }, []);
 
@@ -78,6 +78,7 @@ export default function MeuPerfilPage() {
         </div>
         <div className="mt-4 grid gap-4">
           <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => setProfileData((current) => ({ ...current, public_headline: event.target.value }))} />
+          <div className="rounded-lg border border-dashed border-slate-300 p-4"><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_banner">Banner do perfil público</label><input id="public_banner" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 8 * 1024 * 1024) { toast.error('Banner excede 8 MB.'); return; } setPublicSaving(true); try { const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: Record<string, string> }; setProfileData((current) => ({ ...current, ...(result.profile || {}) })); toast.success('Banner atualizado.'); } catch { toast.error('Não foi possível enviar o banner.'); } finally { setPublicSaving(false); } }} className="block w-full text-sm" />{profileData.public_banner_url && <img src={profileData.public_banner_url} alt="Banner do perfil público" className="mt-3 h-28 w-full rounded-lg object-cover" />}</div>
           <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => setProfileData((current) => ({ ...current, public_bio: event.target.value }))} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
         </div>
         {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{`${window.location.origin}/creators/${publicSlug}`}</a></p>}
