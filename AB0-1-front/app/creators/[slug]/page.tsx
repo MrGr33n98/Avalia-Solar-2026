@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
-import Image from 'next/image';
+import { CreatorHero } from '@/components/creator/CreatorHero';
 import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact';
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
 
@@ -26,13 +26,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
   return <main className="min-h-screen bg-slate-50 pb-20 text-slate-900">
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       <nav className="mb-4 text-sm text-slate-500">Início <span className="mx-2">›</span> Reviews <span className="mx-2">›</span> Criadores <span className="mx-2">›</span> <span className="font-medium text-slate-700">{creator.name}</span></nav>
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="h-64 bg-cover bg-center sm:h-80" style={{ backgroundImage: `url(${creator.public_banner_url || '/images/banner-placeholder.svg'})` }} />
-        <div className="relative px-5 pb-0 sm:px-10">
-          <div className="-mt-16 flex flex-col gap-4 sm:flex-row sm:items-end"><div className="rounded-full border-4 border-white bg-white shadow-lg">{creator.avatar_url ? <Image src={creator.avatar_url} alt={creator.name} width={144} height={144} className="h-32 w-32 rounded-full object-cover sm:h-36 sm:w-36" unoptimized /> : <div className="flex h-32 w-32 items-center justify-center rounded-full bg-amber-400 text-5xl font-bold sm:h-36 sm:w-36">{creator.name.slice(0, 1)}</div>}</div><div className="pb-3"><h1 className="text-3xl font-bold sm:text-4xl">{creator.name}</h1><p className="mt-1 text-lg text-slate-600">{creator.public_headline || 'Especialista em Energia Solar'}</p><p className="mt-2 text-sm text-slate-500">⌖ {[creator.city, creator.state].filter(Boolean).join(', ') || 'Brasil'} · Creator verificado</p></div></div>
-          <div className="sticky top-0 z-20 -mx-6 mt-5 flex gap-6 overflow-x-auto border-t border-slate-100 pt-4 text-sm font-semibold"><a className="border-b-2 border-blue-600 pb-3 text-blue-600" href="#sobre">Visão geral</a><a className="whitespace-nowrap pb-3" href="#publicacoes">Publicações <span className="text-slate-400">{data.recent_publications.length}</span></a><a className="whitespace-nowrap pb-3" href="#avaliacoes">Avaliações <span className="text-slate-400">{stats.review_count ?? 0}</span></a><a className="whitespace-nowrap pb-3" href="#solucoes">Soluções</a><a className="whitespace-nowrap pb-3" href="#conquistas">Conquistas</a></div>
-        </div>
-      </section>
+      <CreatorHero creator={creator} publicationCount={data.recent_publications.length} reviewCount={stats.review_count ?? 0} />
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_320px]">
         <div className="space-y-6"><section id="sobre" className="rounded-xl border border-slate-200 bg-white p-6"><h2 className="text-xl font-bold">Sobre {creator.name.split(' ')[0]}</h2><p className="mt-4 whitespace-pre-line leading-7 text-slate-600">{creator.public_bio || 'Perfil público do avaliador Avalia Solar.'}</p><div className="mt-5 flex flex-wrap gap-2">{[creator.website_url, creator.linkedin_url, creator.instagram_url, creator.youtube_url].filter(Boolean).map((url) => <a key={url} href={url} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-blue-700">{url}</a>)}</div></section>
           <section className="grid grid-cols-3 rounded-xl border border-slate-200 bg-white p-5 text-center"><div><strong className="block text-2xl">{data.recent_publications.length}</strong><span className="text-xs text-slate-500">Publicações</span></div><div><strong className="block text-2xl">{stats.review_count ?? 0}</strong><span className="text-xs text-slate-500">Avaliações</span></div><div><strong className="block text-2xl">{stats.achievement_count ?? 0}</strong><span className="text-xs text-slate-500">Conquistas</span></div></section>
