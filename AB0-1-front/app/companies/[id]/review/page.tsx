@@ -206,7 +206,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
 
   return (
     <div className="rounded-xl border border-[#D0D5DD] bg-white shadow-[0_10px_30px_rgba(13,46,103,0.12)]">
-      <div className="flex items-center justify-between border-b border-[#D0D5DD] px-5 py-3 sm:px-7">
+      <div className="flex items-center justify-between border-b border-[#D0D5DD] px-5 py-3 sm:px-5">
         <div className="flex gap-1" aria-label={`Passo ${step} de 3`}>
           {[1, 2, 3].map((i) => (
             <div
@@ -221,11 +221,11 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
       </div>
 
       <Card className="overflow-hidden rounded-b-xl border border-t-0 border-[#D0D5DD] bg-white shadow-[0_10px_30px_rgba(13,46,103,0.12)]">
-        <CardContent className="max-h-[calc(100dvh-220px)] overflow-y-auto p-4 sm:p-6">
+        <CardContent className="max-h-[calc(100dvh-300px)] overflow-y-auto p-3 sm:p-4">
           {step === 1 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
+                <h2 className="text-xl font-bold tracking-tight text-[#0B1F4B] sm:text-[22px]">
                   Sobre qual serviço você deseja falar?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -274,9 +274,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
+                <h2 className="text-xl font-bold tracking-tight text-[#0B1F4B] sm:text-[22px]">
                   Como foi o desempenho técnico?
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -320,7 +320,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 />
               )}
 
-              <div className="sticky bottom-0 flex justify-between gap-3 border-t border-slate-200 bg-white/95 pt-4">
+              <div className="sticky bottom-0 flex justify-between gap-3 border-t border-slate-200 bg-white/95 pt-2">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
@@ -341,9 +341,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           )}
 
           {step === 3 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0B1F4B] sm:text-[24px]">
+                <h2 className="text-xl font-bold tracking-tight text-[#0B1F4B] sm:text-[22px]">
                   Agora, conte-nos em palavras
                 </h2>
                 <p className="text-slate-500 text-sm">
@@ -363,7 +363,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 </div>
               )}
 
-              <div className="sticky bottom-0 flex flex-col-reverse justify-between gap-3 border-t border-slate-200 bg-white/95 pt-4 sm:flex-row">
+              <div className="sticky bottom-0 flex flex-col-reverse justify-between gap-3 border-t border-slate-200 bg-white/95 pt-2 sm:flex-row">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
@@ -406,7 +406,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 publicação em breve.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-2">
               <Button
                 onClick={handleCloseModal}
                 className="h-11 w-full rounded-lg bg-[#155EEF] font-bold"
@@ -430,7 +430,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
   if (loading) {
     return (
       <div className="container mx-auto py-20 px-4">
-        <div className="max-w-2xl mx-auto space-y-5">
+        <div className="max-w-2xl mx-auto space-y-3">
           <div className="h-10 bg-slate-200 animate-pulse rounded-full w-1/3" />
           <div className="h-[500px] bg-slate-100 animate-pulse rounded-3xl w-full" />
         </div>
@@ -464,8 +464,8 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
 
   return (
     <div className="min-h-[100dvh] bg-[#F8FAFC] px-3 py-3 sm:px-5 sm:py-6 lg:py-10">
-      <div className="mx-auto flex max-w-[760px] flex-col space-y-0">
-        <header className="rounded-t-xl border border-[#D0D5DD] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:px-7">
+      <div className="mx-auto flex max-w-[560px] flex-col space-y-0">
+        <header className="rounded-t-xl border border-[#D0D5DD] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:px-5">
           <Link
             href={companyPath}
             className="mb-3 flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2970FF]"
@@ -473,7 +473,7 @@ export default function CompanyReviewPage({ params }: { params: { id: string } }
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
             Voltar para {company.name}
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0A1F44] sm:text-[24px]">
+          <h1 className="text-xl font-bold tracking-tight text-[#0A1F44] sm:text-[22px]">
             Avaliar empresa
           </h1>
           <p className="mt-1 text-sm text-slate-500 sm:text-base">

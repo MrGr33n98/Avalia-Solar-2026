@@ -59,7 +59,7 @@ export function ReviewGranularScoreStep({
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-lg font-semibold">Avalie os detalhes do serviço</h3>
         <div className="grid gap-2">
           {[1, 2, 3, 4].map((i) => (
@@ -100,7 +100,7 @@ export function ReviewGranularScoreStep({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <h3 className="text-lg font-semibold text-[#0B1F4B]">Critérios de avaliação</h3>
       <div className="grid gap-2">
         {criteria.map((criterion) => (

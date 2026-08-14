@@ -51,7 +51,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div className="space-y-3 border-b border-slate-200 pb-4">
         <h3 className="text-lg font-semibold text-[#0B1F4B]">Sua experiência em detalhes</h3>
 
@@ -71,7 +71,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Prós */}
-        <div className="min-h-[110px] space-y-2 rounded-xl border border-[#D0D5DD] bg-white p-3 sm:p-4">
+        <div className="min-h-[84px] space-y-2 rounded-xl border border-[#D0D5DD] bg-white p-3 sm:p-4">
           <Label
             htmlFor="pro-input"
             className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
@@ -122,7 +122,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         </div>
 
         {/* Contras */}
-        <div className="min-h-[110px] space-y-2 rounded-xl border border-[#D0D5DD] bg-white p-3 sm:p-4">
+        <div className="min-h-[84px] space-y-2 rounded-xl border border-[#D0D5DD] bg-white p-3 sm:p-4">
           <Label
             htmlFor="con-input"
             className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]"
@@ -183,7 +183,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
           value={data.comment}
           onChange={(e) => onChange({ ...data, comment: e.target.value })}
           aria-describedby="comment-requirement"
-          className="min-h-[110px] rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-[#2970FF]"
+          className="min-h-[84px] rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-[#2970FF]"
         />
         <p id="comment-requirement" className="text-right text-[11px] text-slate-500">
           Mínimo de 10 caracteres
@@ -207,7 +207,7 @@ export function ReviewEditorialStep({ data, onChange }: ReviewEditorialStepProps
         <Textarea
           id="buyerTip"
           placeholder="Ex: Peça o cronograma detalhado antes de assinar o contrato."
-          className="h-20 resize-none rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm focus:ring-2 focus:ring-[#2970FF]"
+          className="h-16 resize-none rounded-lg border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm focus:ring-2 focus:ring-[#2970FF]"
           value={data.buyerTip}
           maxLength={500}
           onChange={(e) => onChange({ ...data, buyerTip: e.target.value })}
