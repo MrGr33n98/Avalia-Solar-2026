@@ -12,4 +12,11 @@ class ReviewerPublication < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :publication_type, inclusion: { in: TYPES }
   scope :published, -> { where(status: 'published').where.not(published_at: nil) }
+  after_commit :invalidate_creator_cache
+
+  private
+
+  def invalidate_creator_cache
+    Creator::PublicProfileService.invalidate_for_user(user)
+  end
 end

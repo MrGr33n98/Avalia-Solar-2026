@@ -7,6 +7,7 @@ ActiveAdmin.register CreatorLead do
   filter :email
   filter :created_at
   filter :status
+  includes :creator_user, :publication
 
   scope :all, default: true
   CreatorLead::STATUSES.each do |status|

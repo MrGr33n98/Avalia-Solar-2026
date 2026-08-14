@@ -22,4 +22,11 @@ class ReviewerSolution < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     %w[user events]
   end
+  after_commit :invalidate_creator_cache
+
+  private
+
+  def invalidate_creator_cache
+    Creator::PublicProfileService.invalidate_for_user(user)
+  end
 end

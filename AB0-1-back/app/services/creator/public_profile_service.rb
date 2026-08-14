@@ -4,6 +4,10 @@ module Creator
       Rails.cache.delete("creator/public-profile/#{profile.public_slug}/v2") if profile&.public_slug.present?
     end
 
+    def self.invalidate_for_user(user)
+      invalidate(user.reviewer_profile) if user&.reviewer_profile&.creator_enabled?
+    end
+
     def initialize(profile)
       @profile = profile
       @user = profile.user
@@ -29,11 +33,11 @@ module Creator
     end
 
     def publications
-      @user.reviewer_publications.published.order(published_at: :desc).limit(6).as_json(only: %i[id title slug excerpt category published_at])
+      @user.reviewer_publications.published.select(:id, :title, :slug, :excerpt, :category, :published_at).order(published_at: :desc).limit(6).as_json(only: %i[id title slug excerpt category published_at])
     end
 
     def reviews
-      @user.reviews.approved_only.includes(:company).order(created_at: :desc).limit(3).map do |review|
+      @user.reviews.approved_only.select(:id, :headline, :comment, :rating, :company_id, :created_at).includes(:company).order(created_at: :desc).limit(3).map do |review|
         { id: review.id, title: review.headline, excerpt: review.comment, rating: review.rating, company: review.company&.name, created_at: review.created_at }
       end
     end
