@@ -236,7 +236,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           href={href}
                           className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
                         >
-                          {company.name}
+                              {company.name}
                         </Link>
                         <span className="block truncate text-[11px] font-medium text-slate-500 lg:hidden">
                           {location || 'Brasil'}
@@ -256,7 +256,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 />
                                 <div>
                                   <div className="font-bold text-slate-900 text-sm leading-tight">
-                                    {company.name}
+                                        {company.name}
                                   </div>
                                   <div className="text-[10px] text-slate-400 mt-0.5">
                                     {company.founded_year
@@ -677,13 +677,19 @@ function CategoryCompanyCard({ company, position }: { company: Company; position
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <Link href={href} className="block truncate text-sm font-bold text-slate-900">
                 {company.name}
               </Link>
+              <span className="shrink-0 text-[10px] font-semibold text-slate-400">#{position}</span>
               <span className="block truncate text-xs text-slate-500">{location}</span>
             </div>
-            <span className="shrink-0 text-xs font-bold text-slate-400">#{position}</span>
+            <ComparisonToggleButton
+              company={company as any}
+              variant="minimal"
+              size="sm"
+              className="h-8 w-8 min-h-8 min-w-8 shrink-0 p-0"
+            />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
             <span className="inline-flex items-center gap-1 font-bold text-slate-900">
@@ -727,7 +733,9 @@ function CategoryCompanyActions({
         mobile ? 'mt-4 flex-col-reverse items-stretch' : ''
       )}
     >
-      <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
+      {!mobile && (
+        <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
+      )}
       {canRequestQuote && (
         <Button
           size="sm"
