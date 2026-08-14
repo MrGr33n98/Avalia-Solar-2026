@@ -5,6 +5,7 @@ import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { CreatorHero } from '@/components/creator/CreatorHero';
 import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact';
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
+import { ExternalLink, Globe, Instagram, Linkedin } from 'lucide-react';
 
 type CreatorData = {
   creator: {
@@ -60,10 +61,21 @@ export default async function CreatorPage({ params }: { params: { slug: string }
   const data = await getCreator(params.slug);
   if (!data) notFound();
   const { creator, stats } = data;
+  const socialLinks = [
+    creator.linkedin_url
+      ? { label: 'LinkedIn', value: creator.linkedin_url, icon: Linkedin }
+      : null,
+    creator.instagram_url
+      ? { label: 'Instagram', value: creator.instagram_url, icon: Instagram }
+      : null,
+    creator.website_url ? { label: 'Site', value: creator.website_url, icon: Globe } : null,
+  ].filter(Boolean) as Array<{ label: string; value: string; icon: typeof Globe }>;
+  const displayUrl = (value: string) =>
+    value.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
   return (
-    <main className="min-h-screen bg-slate-50 pb-20 text-slate-900">
+    <main className="min-h-screen bg-[#f8fafc] pb-20 text-[#0b1730]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <nav className="mb-4 text-sm text-slate-500">
+        <nav className="mb-4 text-sm text-[#718096]">
           Início <span className="mx-2">›</span> Reviews <span className="mx-2">›</span> Criadores{' '}
           <span className="mx-2">›</span>{' '}
           <span className="font-medium text-slate-700">{creator.name}</span>
@@ -78,79 +90,131 @@ export default async function CreatorPage({ params }: { params: { slug: string }
             <section
               id="overview"
               aria-labelledby="sobre-heading"
-              className="rounded-xl border border-slate-200 bg-white p-6"
+              className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
             >
               <h2 id="sobre-heading" className="text-xl font-bold">
                 Sobre {creator.name.split(' ')[0]}
               </h2>
-              <p className="mt-4 whitespace-pre-line leading-7 text-slate-600">
+              <p className="mt-4 whitespace-pre-line leading-7 text-[#53627a]">
                 {creator.public_bio || 'Perfil público do avaliador Avalia Solar.'}
               </p>
             </section>
-            <section className="grid grid-cols-3 rounded-xl border border-slate-200 bg-white p-5 text-center">
+            <section className="grid grid-cols-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.03)] text-center">
               <div>
                 <strong className="block text-2xl">{data.recent_publications.length}</strong>
-                <span className="text-xs text-slate-500">Publicações</span>
+                <span className="text-xs text-[#718096]">Publicações</span>
               </div>
               <div>
                 <strong className="block text-2xl">{stats.review_count ?? 0}</strong>
-                <span className="text-xs text-slate-500">Avaliações</span>
+                <span className="text-xs text-[#718096]">Avaliações</span>
               </div>
               <div>
                 <strong className="block text-2xl">{stats.achievement_count ?? 0}</strong>
-                <span className="text-xs text-slate-500">Conquistas</span>
+                <span className="text-xs text-[#718096]">Conquistas</span>
               </div>
             </section>
-            <section id="publicacoes" className="rounded-xl border border-slate-200 bg-white p-6">
+            <section
+              id="publicacoes"
+              className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
+            >
               <h2 className="text-xl font-bold">Publicações mais recentes</h2>
               <div className="mt-4 space-y-3">
                 {data.recent_publications.length ? (
                   data.recent_publications.map((post) => (
-                    <article key={post.id} className="border-b border-slate-100 pb-3">
+                    <article key={post.id} className="border-b border-slate-200/70 pb-3">
                       <h3 className="font-semibold">{post.title}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{post.excerpt}</p>
+                      <p className="mt-1 text-sm text-[#53627a]">{post.excerpt}</p>
                     </article>
                   ))
                 ) : (
-                  <p className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+                  <p className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-[#53627a]">
                     Este creator ainda não publicou conteúdo.
                   </p>
                 )}
               </div>
             </section>
-            <section id="avaliacoes" className="rounded-xl border border-slate-200 bg-white p-6">
+            <section
+              id="avaliacoes"
+              className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
+            >
               <h2 className="text-xl font-bold">
                 Avaliações publicadas por {creator.name.split(' ')[0]}
               </h2>
               <div className="mt-4 space-y-3">
                 {data.recent_reviews.map((review) => (
-                  <article key={review.id} className="border-b border-slate-100 pb-3">
+                  <article key={review.id} className="border-b border-slate-200/70 pb-3">
                     <p className="text-amber-500">{'★'.repeat(review.rating || 0)}</p>
                     <p className="font-medium">{review.title || 'Avaliação publicada'}</p>
-                    <p className="text-sm text-slate-600">{review.excerpt}</p>
+                    <p className="text-sm text-[#53627a]">{review.excerpt}</p>
                   </article>
                 ))}
               </div>
             </section>
           </div>
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+            <section className="rounded-2xl border border-blue-300 bg-white p-3 shadow-sm">
+              <div className="px-2 pb-2">
+                <h2 className="text-sm font-bold text-[#0b1730]">
+                  Conecte-se com {creator.name.split(' ')[0]}
+                </h2>
+                <p className="mt-1 text-xs text-[#718096]">
+                  Tire dúvidas, solicite orçamentos ou agende uma consultoria.
+                </p>
+              </div>
+              {creator.whatsapp_url && (
+                <a
+                  href={creator.whatsapp_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mx-1 mb-2 flex min-h-10 items-center justify-center rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+                >
+                  Falar no WhatsApp
+                </a>
+              )}
+              {socialLinks.map(({ label, value, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={value}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center gap-2 border-t border-slate-200/70 px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block">{label}</span>
+                    <span className="block truncate font-normal text-slate-400">
+                      {displayUrl(value)}
+                    </span>
+                  </span>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                </a>
+              ))}
+            </section>
             <CreatorContactForm creatorSlug={params.slug} whatsappUrl={creator.whatsapp_url} />
-            <section id="solucoes" className="rounded-xl border border-slate-200 bg-white p-5">
+            <section
+              id="solucoes"
+              className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
+            >
               <h2 className="font-bold">Soluções</h2>
               {data.solutions.length ? (
                 data.solutions.map((solution) => (
                   <div key={solution.id} className="mt-3 rounded-lg bg-slate-50 p-3">
                     <p className="font-medium">{solution.name}</p>
                     {solution.category && (
-                      <p className="mt-1 text-xs text-slate-500">{solution.category}</p>
+                      <p className="mt-1 text-xs text-[#718096]">{solution.category}</p>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="mt-3 text-sm text-slate-500">Nenhuma solução publicada ainda.</p>
+                <p className="mt-3 text-sm text-[#718096]">Nenhuma solução publicada ainda.</p>
               )}
             </section>
-            <section id="conquistas" className="rounded-xl border border-slate-200 bg-white p-5">
+            <section
+              id="conquistas"
+              className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
+            >
               <h2 className="font-bold">Conquistas</h2>
               {data.achievements.map((achievement) => (
                 <p key={achievement.id} className="mt-3 text-sm">
