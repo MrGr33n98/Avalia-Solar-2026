@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ChangeEvent, ChangeEventHandler } from 'react';
 import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
@@ -26,16 +27,24 @@ import {
 } from 'lucide-react';
 
 export default function MeuPerfilPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { loading, summary, reviews, solutions } = useDashboardContext();
   const [saving, setSaving] = useState(false);
   const [publicSaving, setPublicSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [publicSlug, setPublicSlug] = useState('');
+  const [completion, setCompletion] = useState(summary?.profile?.completion_percent ?? 0);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>('idle');
+  const avatarObjectUrl = useRef<string | null>(null);
+  const bannerObjectUrl = useRef<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   type ReviewerProfileData = {
   public_slug?: string;
-  bio?: string; company_name?: string; public_headline?: string; public_bio?: string; public_banner_url?: string;
+  bio?: string; company_name?: string; public_headline?: string; public_bio?: string; public_banner_url?: string; avatar_url?: string;
   creator_enabled?: boolean; profession?: string; linkedin_url?: string; instagram_url?: string; website_url?: string;
 };
 
@@ -44,8 +53,9 @@ export default function MeuPerfilPage() {
   useEffect(() => {
     void reviewerProfileApi
       .get()
-      .then((payload: { profile?: ReviewerProfileData }) => {
+      .then((payload: { profile?: ReviewerProfileData; completion?: { percent?: number } }) => {
         setProfileData(payload.profile || {});
+        setCompletion(payload.completion?.percent ?? 0);
         setPublicSlug(String(payload.profile?.public_slug || ''));
       })
       .catch(() => toast.error('Não foi possível carregar perfil profissional.'));
@@ -58,25 +68,34 @@ export default function MeuPerfilPage() {
       toast.error('Banner excede 8 MB.');
       return;
     }
-    setPublicSaving(true);
+    const previousBannerUrl = profileData.public_banner_url;
+    setBannerUploading(true);
+    if (bannerObjectUrl.current) URL.revokeObjectURL(bannerObjectUrl.current);
+    bannerObjectUrl.current = URL.createObjectURL(file);
+    setProfileData((current) => ({ ...current, public_banner_url: bannerObjectUrl.current || current.public_banner_url }));
     try {
-      const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: ReviewerProfileData };
+      const result = await reviewerProfileApi.uploadPublicBanner(file) as { profile?: ReviewerProfileData; completion?: { percent?: number } };
       setProfileData((current) => ({ ...current, ...(result.profile || {}) }));
+      setCompletion(result.completion?.percent ?? completion);
       toast.success('Banner atualizado.');
     } catch {
+      setProfileData((current) => ({ ...current, public_banner_url: previousBannerUrl }));
       toast.error('Não foi possível enviar o banner.');
     } finally {
-      setPublicSaving(false);
+      setBannerUploading(false);
+      if (bannerObjectUrl.current) { URL.revokeObjectURL(bannerObjectUrl.current); bannerObjectUrl.current = null; }
     }
   };
 
   const activatePublicProfile = async () => {
     setPublicSaving(true);
     try {
-      const result = await reviewerProfileApi.update({ creator_enabled: true, public_headline: profileData.public_headline || '', public_bio: profileData.public_bio || '' }) as { profile?: ReviewerProfileData };
+      const result = await reviewerProfileApi.update({ creator_enabled: true, public_headline: profileData.public_headline || '', public_bio: profileData.public_bio || '' }) as { profile?: ReviewerProfileData; completion?: { percent?: number } };
       const nextProfile = result.profile || {};
       setProfileData((current) => ({ ...current, ...nextProfile, creator_enabled: true }));
       setPublicSlug(String(nextProfile.public_slug || profileData.public_slug || ''));
+      setCompletion(result.completion?.percent ?? completion);
+      if (nextProfile.public_slug) router.prefetch(`/creators/${nextProfile.public_slug}`);
       toast.success('Perfil público ativado.');
     } catch {
       toast.error('Não foi possível ativar perfil público.');
@@ -108,7 +127,21 @@ export default function MeuPerfilPage() {
     { label: 'Primeira avaliação', done: reviewsCount > 0 },
   ];
 
-  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+  const profileCompletion = completion || summary?.profile?.completion_percent || 0;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (avatarObjectUrl.current) URL.revokeObjectURL(avatarObjectUrl.current);
+      if (bannerObjectUrl.current) URL.revokeObjectURL(bannerObjectUrl.current);
+    };
+  }, [dirty]);
 
   return (
     <div className="space-y-6">
@@ -117,6 +150,7 @@ export default function MeuPerfilPage() {
         description="Gerencie suas informações pessoais e profissionais."
         breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu perfil' }]}
       />
+      <p aria-live="polite" className="text-sm text-slate-500">{saveStatus === 'dirty' && 'Alterações não salvas'}{saveStatus === 'saving' && 'Salvando...'}{saveStatus === 'saved' && 'Salvo agora'}{saveStatus === 'error' && 'Não foi possível salvar. Suas alterações continuam nesta tela.'}</p>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6" aria-labelledby="public-profile-title">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -124,13 +158,13 @@ export default function MeuPerfilPage() {
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profileData.creator_enabled === true ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{profileData.creator_enabled === true ? 'Público' : 'Desativado'}</span>
         </div>
         <div className="mt-4 grid gap-4">
-          <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => setProfileData((current) => ({ ...current, public_headline: event.target.value }))} />
+          <FormField label="Headline pública" name="public_headline" value={profileData.public_headline || ''} placeholder="Especialista em Energia Solar" onChange={(event) => { setDirty(true); setSaveStatus('dirty'); setProfileData((current) => ({ ...current, public_headline: event.target.value })); }} />
           <div className="rounded-lg border border-dashed border-slate-300 p-4">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="public_banner">Banner do perfil público</label>
-            <input id="public_banner" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePublicBannerUpload} className="block w-full text-sm" />
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="public_banner">{bannerUploading ? 'Enviando banner...' : 'Banner do perfil público'}</label>
+            <input id="public_banner" type="file" disabled={bannerUploading} accept="image/jpeg,image/png,image/webp" onChange={handlePublicBannerUpload} className="block w-full text-sm disabled:opacity-50" />
             {profileData.public_banner_url && <Image src={profileData.public_banner_url} alt="Banner do perfil público" width={1200} height={320} unoptimized className="mt-3 h-28 w-full rounded-lg object-cover" />}
           </div>
-          <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => setProfileData((current) => ({ ...current, public_bio: event.target.value }))} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
+          <div><label className="block text-sm font-medium text-slate-700 mb-1.5" htmlFor="public_bio">Bio pública</label><textarea id="public_bio" name="public_bio" value={profileData.public_bio || ''} onChange={(event) => { setDirty(true); setProfileData((current) => ({ ...current, public_bio: event.target.value })); }} rows={3} placeholder="Conte sua experiência..." className="w-full rounded-lg border border-slate-200 p-3 text-sm" /></div>
         </div>
         {publicSlug && <p className="mt-4 break-all rounded-lg bg-slate-50 p-3 text-sm text-slate-700">URL: <a className="font-semibold text-blue-600 underline" href={`/creators/${publicSlug}`} target="_blank" rel="noreferrer">{'/creators/' + publicSlug}</a></p>}
         <div className="mt-4 flex flex-wrap gap-3">
@@ -147,6 +181,7 @@ export default function MeuPerfilPage() {
             event.preventDefault();
             if (!user) return;
             setSaving(true);
+            setSaveStatus('saving');
             const data = new FormData(event.currentTarget);
             try {
               await usersApi.update(user.id, {
@@ -155,17 +190,24 @@ export default function MeuPerfilPage() {
                 city: String(data.get('city') || ''),
                 state: String(data.get('state') || ''),
               });
-              await reviewerProfileApi.update({
+              const profileResult = await reviewerProfileApi.update({
                 profession: String(data.get('profession') || ''),
                 bio: String(data.get('bio') || ''),
                 linkedin_url: String(data.get('linkedin') || ''),
                 instagram_url: String(data.get('instagram') || ''),
                 website_url: String(data.get('website') || ''),
               });
+              const updatedProfile = (profileResult as { profile?: ReviewerProfileData }).profile;
+              if (updatedProfile) setProfileData((current) => ({ ...current, ...updatedProfile }));
+              const responseCompletion = (profileResult as { completion?: { percent?: number } }).completion;
+              if (responseCompletion?.percent !== undefined) setCompletion(responseCompletion.percent);
+              setDirty(false);
+              setSaveStatus('saved');
               track('reviewer_profile_updated', { route: '/review-dashboard/profile' });
               toast.success('Perfil atualizado com sucesso.');
             } catch {
-              toast.error('Não foi possível atualizar o perfil.');
+              setSaveStatus('error');
+              toast.error('Não foi possível atualizar o perfil. Suas alterações continuam nesta tela.');
             } finally {
               setSaving(false);
             }
@@ -226,13 +268,22 @@ export default function MeuPerfilPage() {
                       toast.error('Avatar excede 5 MB.');
                       return;
                     }
-                    setAvatarPreview(URL.createObjectURL(file));
+                    setAvatarUploading(true);
+                    if (avatarObjectUrl.current) URL.revokeObjectURL(avatarObjectUrl.current);
+                    avatarObjectUrl.current = URL.createObjectURL(file);
+                    setAvatarPreview(avatarObjectUrl.current);
                     try {
-                      await reviewerProfileApi.uploadAvatar(file);
+                      const avatarResult = await reviewerProfileApi.uploadAvatar(file) as { profile?: ReviewerProfileData; user?: { avatar_url?: string } };
+                      setAvatarPreview(avatarResult.user?.avatar_url || user?.avatar_url || null);
+                      if (avatarResult.profile) setProfileData((current) => ({ ...current, ...avatarResult.profile }));
                       toast.success('Foto atualizada.');
                     } catch {
-                      setAvatarPreview(null);
+                      setAvatarPreview(user?.avatar_url || null);
+                      if (avatarObjectUrl.current) { URL.revokeObjectURL(avatarObjectUrl.current); avatarObjectUrl.current = null; }
                       toast.error('Não foi possível enviar foto.');
+                    } finally {
+                      setAvatarUploading(false);
+                      if (avatarObjectUrl.current) { URL.revokeObjectURL(avatarObjectUrl.current); avatarObjectUrl.current = null; }
                     }
                   }}
                 />
@@ -243,7 +294,7 @@ export default function MeuPerfilPage() {
                     onClick={() => avatarInput.current?.click()}
                     className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
                   >
-                    Alterar foto
+                    {avatarUploading ? 'Enviando... ' : 'Alterar foto'}
                   </button>
                   <button
                     type="button"
