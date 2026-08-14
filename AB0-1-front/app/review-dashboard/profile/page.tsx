@@ -8,6 +8,7 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { reviewerProfileApi, usersApi } from '@/lib/api';
+import { buildProfilePatch } from '@/lib/profile-delta';
 import { toast } from 'sonner';
 import { track } from '@/lib/analytics/lazy';
 import {
@@ -190,13 +191,10 @@ export default function MeuPerfilPage() {
                 city: String(data.get('city') || ''),
                 state: String(data.get('state') || ''),
               });
-              const profileResult = await reviewerProfileApi.update({
-                profession: String(data.get('profession') || ''),
-                bio: String(data.get('bio') || ''),
-                linkedin_url: String(data.get('linkedin') || ''),
-                instagram_url: String(data.get('instagram') || ''),
-                website_url: String(data.get('website') || ''),
-              });
+              const originalProfile = { profession: profileData.profession || '', bio: profileData.bio || '', linkedin_url: profileData.linkedin_url || '', instagram_url: profileData.instagram_url || '', website_url: profileData.website_url || '' };
+              const draftProfile = { profession: String(data.get('profession') || ''), bio: String(data.get('bio') || ''), linkedin_url: String(data.get('linkedin') || ''), instagram_url: String(data.get('instagram') || ''), website_url: String(data.get('website') || '') };
+              const profilePatch = buildProfilePatch(originalProfile, draftProfile);
+              const profileResult = await reviewerProfileApi.update(profilePatch);
               const updatedProfile = (profileResult as { profile?: ReviewerProfileData }).profile;
               if (updatedProfile) setProfileData((current) => ({ ...current, ...updatedProfile }));
               const responseCompletion = (profileResult as { completion?: { percent?: number } }).completion;
