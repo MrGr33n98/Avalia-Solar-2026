@@ -196,15 +196,17 @@ function SearchPageContent() {
           : [];
 
       const mergedCompanies = mergeUniqueCompanies(companies, fallbackCompanies);
-      const rawCount = response.counts?.companies ??
+      const rawCount =
+        response.counts?.companies ??
         (typeof response.meta?.total_count === 'object'
           ? response.meta.total_count.companies
           : typeof response.meta?.total_count === 'number'
-          ? response.meta.total_count
-          : undefined);
+            ? response.meta.total_count
+            : undefined);
 
       const totalCompaniesCount = typeof rawCount === 'number' ? rawCount : mergedCompanies.length;
-      const totalPagesVal = response.pagination?.total_pages ||
+      const totalPagesVal =
+        response.pagination?.total_pages ||
         response.meta?.total_pages ||
         Math.max(1, Math.ceil(totalCompaniesCount / 24));
 
@@ -401,17 +403,20 @@ function SearchPageContent() {
   const visibleCount =
     (showProducts ? filteredProducts.length : 0) +
     (showCompanies ? filteredCompanies.length : 0) +
-    (showReviews ? (results.reviews?.length || 0) : 0);
+    (showReviews ? results.reviews?.length || 0 : 0);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section
-        className="relative overflow-hidden bg-[#071e4a] bg-cover bg-[position:center_55%] text-white"
+        className="relative min-h-[280px] overflow-hidden bg-[#071e4a] bg-no-repeat bg-[length:auto_100%] bg-[position:right_center] max-md:bg-none text-white"
         style={{
           backgroundImage: "url('/assets/avalia_symbol_search_banner_avalia_solar.webp')",
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'right center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="relative mx-auto max-w-[1240px] px-4 py-9 sm:px-6 sm:py-12">
+        <div className="relative mx-auto max-w-[1440px] px-4 py-9 sm:px-6 sm:py-12">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
             Encontre a empresa certa para você.
           </h1>
@@ -551,10 +556,7 @@ function SearchPageContent() {
                       >
                         <div className="flex flex-col gap-4">
                           {filteredCompanies.map((company) => (
-                            <SearchCompanyListCard
-                              key={company.id}
-                              company={company}
-                            />
+                            <SearchCompanyListCard key={company.id} company={company} />
                           ))}
                         </div>
 
@@ -567,36 +569,48 @@ function SearchPageContent() {
                                     href="#"
                                     onClick={(e) => {
                                       e.preventDefault();
-                                      if (paginationMeta.page > 1) handlePageChange(paginationMeta.page - 1);
+                                      if (paginationMeta.page > 1)
+                                        handlePageChange(paginationMeta.page - 1);
                                     }}
-                                    className={paginationMeta.page <= 1 ? 'pointer-events-none opacity-50' : ''}
+                                    className={
+                                      paginationMeta.page <= 1
+                                        ? 'pointer-events-none opacity-50'
+                                        : ''
+                                    }
                                   />
                                 </PaginationItem>
-                                {Array.from({ length: paginationMeta.total_pages }).map((_, idx) => {
-                                  const p = idx + 1;
-                                  return (
-                                    <PaginationItem key={p}>
-                                      <PaginationLink
-                                        href="#"
-                                        isActive={p === paginationMeta.page}
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          handlePageChange(p);
-                                        }}
-                                      >
-                                        {p}
-                                      </PaginationLink>
-                                    </PaginationItem>
-                                  );
-                                })}
+                                {Array.from({ length: paginationMeta.total_pages }).map(
+                                  (_, idx) => {
+                                    const p = idx + 1;
+                                    return (
+                                      <PaginationItem key={p}>
+                                        <PaginationLink
+                                          href="#"
+                                          isActive={p === paginationMeta.page}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            handlePageChange(p);
+                                          }}
+                                        >
+                                          {p}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                  }
+                                )}
                                 <PaginationItem>
                                   <PaginationNext
                                     href="#"
                                     onClick={(e) => {
                                       e.preventDefault();
-                                      if (paginationMeta.page < paginationMeta.total_pages) handlePageChange(paginationMeta.page + 1);
+                                      if (paginationMeta.page < paginationMeta.total_pages)
+                                        handlePageChange(paginationMeta.page + 1);
                                     }}
-                                    className={paginationMeta.page >= paginationMeta.total_pages ? 'pointer-events-none opacity-50' : ''}
+                                    className={
+                                      paginationMeta.page >= paginationMeta.total_pages
+                                        ? 'pointer-events-none opacity-50'
+                                        : ''
+                                    }
                                   />
                                 </PaginationItem>
                               </PaginationContent>

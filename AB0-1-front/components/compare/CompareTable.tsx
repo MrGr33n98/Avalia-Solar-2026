@@ -140,10 +140,10 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
       <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
         Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
       </p>
-      <div className="relative overflow-hidden border border-slate-200 bg-white">
+      <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="w-full touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth">
           <table
-            className="table-fixed border-collapse text-left"
+            className="w-max min-w-full table-fixed border-collapse text-left"
             style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}
           >
             <caption className="sr-only">
@@ -181,7 +181,12 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                     <div className="flex items-center gap-2 pr-7 md:gap-3">
-                      <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
+                      <CompanyLogo
+                        logoUrl={company.logoUrl}
+                        name={company.name}
+                        size="sm"
+                        badges={company.badges}
+                      />
                       <div className="min-w-0">
                         <Link
                           href={`/companies/${company.slug || company.id}`}
@@ -223,19 +228,27 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   Próximo passo
                 </th>
                 {companies.map((company) => (
-                  <td key={company.id} className="border-l border-slate-200 p-3">
+                  <td
+                    key={company.id}
+                    className="min-w-[200px] border-l border-slate-200 p-3 align-top"
+                  >
                     {/* Botão de orçamento: apenas para empresas em plano pago */}
                     {company.premium && (
                       <Button
                         size="sm"
-                        className="w-full"
+                        className="w-full min-w-0 whitespace-normal break-words text-center leading-tight"
                         onClick={() => onQuote(company)}
                         aria-label={`Solicitar orçamento da ${company.name}`}
                       >
                         Solicitar orçamento
                       </Button>
                     )}
-                    <Button asChild size="sm" variant="ghost" className={`mt-1 w-full text-blue-700 ${company.premium ? '' : 'col-span-2'}`}>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="ghost"
+                      className={`mt-1 w-full text-blue-700 ${company.premium ? '' : 'col-span-2'}`}
+                    >
                       <Link href={`/companies/${company.slug || company.id}`}>
                         Ver perfil completo
                       </Link>
@@ -243,7 +256,6 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   </td>
                 ))}
               </tr>
-
             </tbody>
           </table>
         </div>

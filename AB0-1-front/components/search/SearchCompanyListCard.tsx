@@ -1,7 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, MapPin, Clock, FileText, CheckCircle, ShieldCheck, ChevronRight, Info, Globe, Building2 } from 'lucide-react';
+import {
+  Star,
+  MapPin,
+  Clock,
+  FileText,
+  CheckCircle,
+  ShieldCheck,
+  ChevronRight,
+  Info,
+  Globe,
+  Building2,
+} from 'lucide-react';
 import { Company } from '@/lib/api';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
@@ -25,8 +36,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   const reviewsHref = `${href}#avaliacoes`;
 
   const location = [company.city, company.state].filter(Boolean).join(', ');
-  const description = company.description || company.about || 'Especialista em soluções de energia solar e eficiência energética.';
-  const slaLabel = (company as any).operations?.sla_label || (company as any).response_time_sla || '24h';
+  const description =
+    company.description ||
+    company.about ||
+    'Especialista em soluções de energia solar e eficiência energética.';
+  const slaLabel =
+    (company as any).operations?.sla_label || (company as any).response_time_sla || '24h';
   const coverageLabel = 'Consulte'; // Could map from API if available
 
   // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
@@ -35,7 +50,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   return (
     <article
       className={cn(
-        "flex flex-col lg:flex-row items-stretch overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300",
+        'flex min-w-0 flex-col lg:flex-row items-stretch overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300',
         className
       )}
     >
@@ -73,30 +88,46 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                         className="border border-slate-100 bg-white"
                       />
                       <div>
-                        <div className="font-bold text-slate-900 text-sm leading-tight">{company.name}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">Desde {company.founded_year || 2018} no Brasil</div>
+                        <div className="font-bold text-slate-900 text-sm leading-tight">
+                          {company.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          Desde {company.founded_year || 2018} no Brasil
+                        </div>
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {company.description || `${company.name} é uma empresa parceira credenciada, especializada em homologação, projetos e instalações fotovoltaicas de alta eficiência.`}
+                      {company.description ||
+                        `${company.name} é uma empresa parceira credenciada, especializada em homologação, projetos e instalações fotovoltaicas de alta eficiência.`}
                     </p>
                     <div className="border-t border-slate-100 pt-3 space-y-2 text-[11px]">
                       <div className="flex justify-between">
                         <span className="text-slate-400 font-semibold">Fundação</span>
-                        <span className="font-bold text-slate-900">{company.founded_year || 'Não informado'}</span>
+                        <span className="font-bold text-slate-900">
+                          {company.founded_year || 'Não informado'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400 font-semibold">Sede</span>
-                        <span className="font-bold text-slate-900">{company.city || 'Não informado'}</span>
+                        <span className="font-bold text-slate-900">
+                          {company.city || 'Não informado'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400 font-semibold">Presença no Brasil</span>
-                        <span className="font-bold text-slate-900">Desde {company.founded_year || 2018}</span>
+                        <span className="font-bold text-slate-900">
+                          Desde {company.founded_year || 2018}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400 font-semibold">Site oficial</span>
                         {company.website ? (
-                          <a href={company.website} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+                          <a
+                            href={company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-blue-600 hover:underline flex items-center gap-0.5"
+                          >
                             {company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                             <Globe className="w-3 h-3 text-blue-500" />
                           </a>
@@ -109,7 +140,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                 </PopoverContent>
               </Popover>
             </div>
-            
+
             <div className="mt-1 flex items-center gap-2 text-[11px] sm:text-xs text-slate-500">
               <span className="flex items-center gap-1 font-bold text-slate-900">
                 <Star className="w-3.5 h-3.5 fill-slate-900 text-slate-900" />
@@ -124,22 +155,26 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                 <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl font-black text-slate-900 leading-none">{ratingLabel}</span>
+                      <span className="text-3xl font-black text-slate-900 leading-none">
+                        {ratingLabel}
+                      </span>
                       <div>
                         <div className="flex items-center">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}
                               className={cn(
-                                "w-3.5 h-3.5",
+                                'w-3.5 h-3.5',
                                 i < Math.floor(rating)
-                                  ? "fill-amber-400 text-amber-400"
-                                  : "text-slate-200 fill-slate-200"
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-slate-200 fill-slate-200'
                               )}
                             />
                           ))}
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">({reviewCount} avaliações registradas)</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          ({reviewCount} avaliações registradas)
+                        </div>
                       </div>
                     </div>
 
@@ -150,14 +185,19 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                         { label: '4 estrelas', pct: '3%' },
                         { label: '3 estrelas', pct: '1%' },
                         { label: '2 estrelas', pct: '0%' },
-                        { label: '1 estrela', pct: '0%' }
+                        { label: '1 estrela', pct: '0%' },
                       ].map((starRow) => (
                         <div key={starRow.label} className="flex items-center gap-3 text-[10px]">
                           <span className="w-16 text-slate-400 font-semibold">{starRow.label}</span>
                           <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="bg-amber-400 h-full rounded-full" style={{ width: starRow.pct }} />
+                            <div
+                              className="bg-amber-400 h-full rounded-full"
+                              style={{ width: starRow.pct }}
+                            />
                           </div>
-                          <span className="w-8 text-right text-slate-500 font-bold">{starRow.pct}</span>
+                          <span className="w-8 text-right text-slate-500 font-bold">
+                            {starRow.pct}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -167,7 +207,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         Última avaliação: recente
                       </span>
-                      <Button asChild size="sm" variant="link" className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto">
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="link"
+                        className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
+                      >
                         <Link href={href}>Ver todas as avaliações</Link>
                       </Button>
                     </div>
@@ -188,11 +233,15 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-slate-500" />
                       <div>
-                        <div className="font-bold text-slate-900 text-sm">{location || 'Brasil'}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">Unidade Principal / Sede</div>
+                        <div className="font-bold text-slate-900 text-sm">
+                          {location || 'Brasil'}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          Unidade Principal / Sede
+                        </div>
                       </div>
                     </div>
-                    
+
                     {/* Google Map Iframe */}
                     <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 shadow-inner">
                       <iframe
@@ -207,8 +256,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                     </div>
 
                     <div className="text-[11px] text-slate-500 leading-normal">
-                      <span className="font-bold text-slate-700 block mb-1">Endereço de Homologação:</span>
-                      {company.city ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}` : 'Abrangência nacional, sede sob consulta comercial.'}
+                      <span className="font-bold text-slate-700 block mb-1">
+                        Endereço de Homologação:
+                      </span>
+                      {company.city
+                        ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}`
+                        : 'Abrangência nacional, sede sob consulta comercial.'}
                     </div>
                   </div>
                 </PopoverContent>
@@ -241,24 +294,20 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
           <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Respostas
           </span>
-          <span className="font-bold text-slate-900 text-sm">
-            {slaLabel}
-          </span>
+          <span className="font-bold text-slate-900 text-sm">{slaLabel}</span>
         </div>
         <div>
           <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Cobertura
           </span>
-          <span className="font-bold text-slate-900 text-sm">
-            {coverageLabel}
-          </span>
+          <span className="font-bold text-slate-900 text-sm">{coverageLabel}</span>
         </div>
       </div>
 
       {/* Middle Column 3: Secondary Actions */}
       <div className="hidden lg:flex flex-col justify-center gap-2 p-4 border-r border-slate-100 w-[140px]">
-        <ComparisonToggleButton 
-          company={company as any} 
+        <ComparisonToggleButton
+          company={company as any}
           variant="default"
           className="w-full h-8 text-[11px] rounded-lg"
         />
@@ -276,15 +325,17 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Right Column: Primary CTA — desktop only (lg+) */}
-      <div className="hidden lg:flex w-[180px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
+      <div className="hidden min-w-0 shrink-0 lg:flex lg:w-[180px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
         {canRequestQuote && (
           <Button
-            onClick={() => openLeadModal({
-              preferredCompanyId: company.id,
-              source: 'search-list-card',
-              type: 'quick',
-            })}
-            className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 transition-all"
+            onClick={() =>
+              openLeadModal({
+                preferredCompanyId: company.id,
+                source: 'search-list-card',
+                type: 'quick',
+              })
+            }
+            className="w-full min-w-0 h-auto min-h-10 whitespace-normal break-words rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 transition-all"
           >
             Solicitar orçamento
           </Button>
@@ -292,12 +343,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
 
         <Button
           asChild
-          variant={canRequestQuote ? "outline" : "default"}
+          variant={canRequestQuote ? 'outline' : 'default'}
           className={cn(
-            "w-full h-10 rounded-xl font-bold text-xs shadow-none gap-1.5 transition-all",
+            'w-full h-10 rounded-xl font-bold text-xs shadow-none gap-1.5 transition-all',
             canRequestQuote
-              ? "border-blue-200 text-blue-600 hover:bg-blue-50 bg-white hover:text-blue-700"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
+              ? 'border-blue-200 text-blue-600 hover:bg-blue-50 bg-white hover:text-blue-700'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
           )}
         >
           <Link href={reviewsHref}>
@@ -329,11 +380,13 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
               </Button>
             </div>
             <Button
-              onClick={() => openLeadModal({
-                preferredCompanyId: company.id,
-                source: 'search-list-card-mobile',
-                type: 'quick',
-              })}
+              onClick={() =>
+                openLeadModal({
+                  preferredCompanyId: company.id,
+                  source: 'search-list-card-mobile',
+                  type: 'quick',
+                })
+              }
               className="h-11 px-4 rounded-none bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 border-l border-blue-500 shrink-0"
             >
               Orçamento
