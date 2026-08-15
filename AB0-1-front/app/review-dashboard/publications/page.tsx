@@ -16,6 +16,7 @@ export default function PublicacoesPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
+  const [summary, setSummary] = useState<Record<string, number>>({});
   const load = async () => {
     setBusy(true);
     try {
@@ -24,6 +25,7 @@ export default function PublicacoesPage() {
         query: query || undefined,
       });
       setItems(response.items || []);
+      setSummary(response.summary || {});
       setError('');
     } catch {
       setError('Não foi possível carregar publicações.');
@@ -61,15 +63,15 @@ export default function PublicacoesPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <MetricCard
           label="Publicadas"
-          value={items.filter((item) => item.status === 'published').length}
-          caption="Nesta visualização"
+          value={summary.published || 0}
+          caption="Total do perfil"
           icon={PenLine}
           iconColor="text-blue-600"
           iconBgColor="bg-blue-50"
         />
         <MetricCard
           label="Rascunhos"
-          value={items.filter((item) => item.status === 'draft').length}
+          value={summary.draft || 0}
           caption="Prontas para editar"
           icon={FileText}
           iconColor="text-amber-600"

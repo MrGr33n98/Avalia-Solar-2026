@@ -8,7 +8,12 @@ module Api
           scope = current_user.reviewer_publications.order(created_at: :desc)
           scope = scope.where(status: params[:status]) if ReviewerPublication::STATUSES.include?(params[:status])
           scope = scope.where('title ILIKE ?', "%#{ActiveRecord::Base.sanitize_sql_like(params[:query].to_s)}%") if params[:query].present?
-          render json: { items: scope.limit(100).map { |item| ReviewerPublicationSerializer.new(item).as_json }, summary: summary }
+          page = [params.fetch(:page, 1).to_i, 1].max
+          per_page = [[params.fetch(:per_page, 20).to_i, 1].max, 50].min
+          total = scope.count
+          items = scope.offset((page - 1) * per_page).limit(per_page)
+          render json: { items: items.map { |item| ReviewerPublicationSerializer.new(item).as_json }, summary: summary,
+                         pagination: { page: page, per_page: per_page, total: total, total_pages: (total.to_f / per_page).ceil } }
         end
 
         def show
@@ -27,7 +32,7 @@ module Api
         end
 
         def update
-          return render json: { error: 'Publicação publicada deve ser editada como rascunho.' }, status: :unprocessable_entity if @publication.published?
+          return render json: { error: 'Somente rascunhos podem ser editados.' }, status: :unprocessable_entity unless @publication.draft?
           if @publication.update(publication_params)
             attach_files(@publication)
             render json: ReviewerPublicationSerializer.new(@publication).as_json
@@ -66,7 +71,8 @@ module Api
             publication.cover_image.attach(params[:cover_image])
           end
           Array(params[:attachments]).first(5).each do |file|
-            publication.attachments.attach(file) if file.respond_to?(:content_type) && file.size <= 10.megabytes
+            allowed = %w[application/pdf image/jpeg image/png image/webp]
+            publication.attachments.attach(file) if file.respond_to?(:content_type) && allowed.include?(file.content_type) && file.size <= 10.megabytes
           end
         end
 

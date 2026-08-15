@@ -13,14 +13,15 @@ export function usePublicationAutosave({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   useEffect(() => {
     if (!draftId || !enabled) return;
+    let active = true;
     setStatus('saving');
     const timer = window.setTimeout(() => {
       reviewerPublicationsApi
         .update(draftId, payload)
-        .then(() => setStatus('saved'))
-        .catch(() => setStatus('error'));
+        .then(() => active && setStatus('saved'))
+        .catch(() => active && setStatus('error'));
     }, 1200);
-    return () => window.clearTimeout(timer);
+    return () => { active = false; window.clearTimeout(timer); };
   }, [draftId, enabled, payload]);
   return status;
 }

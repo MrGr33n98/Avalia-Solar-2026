@@ -6,8 +6,16 @@ module Api
         profile = ReviewerProfile.includes(:user).find_by!(public_slug: params[:creator_slug], creator_enabled: true)
         publication = profile.user.reviewer_publications.published.find_by!(slug: params[:publication_slug])
         comments = publication.reviewer_publication_comments.where(status: 'active').order(created_at: :desc).limit(100)
-        ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_view', ip_address: request.remote_ip)
         render json: comments.map { |comment| comment.attributes.slice('id', 'name', 'body', 'created_at') }
+      end
+
+      def share
+        profile = ReviewerProfile.includes(:user).find_by!(public_slug: params[:creator_slug], creator_enabled: true)
+        publication = profile.user.reviewer_publications.published.find_by!(slug: params[:publication_slug])
+        channel = params.dig(:share, :channel).to_s
+        channel = 'unknown' unless %w[native copy linkedin whatsapp].include?(channel)
+        ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_share', channel: channel, ip_address: request.remote_ip)
+        head :no_content
       end
 
       def create

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import Link from 'next/link';
 import { PublicationComments } from '@/components/creator/PublicationComments';
+import { CreatorShareButton } from '@/components/creator/CreatorShareButton';
 
 type Post = {
   title: string;
@@ -13,6 +14,9 @@ type Post = {
   publication_type?: string;
   category?: string;
   cover_image?: string | null;
+  comments_enabled?: boolean;
+  author?: { id: number; name: string };
+  attachments?: Array<{ id: number; filename: string; url: string }>;
 };
 async function getPost(creator: string, slug: string): Promise<Post | null> {
   const response = await fetch(
@@ -55,7 +59,7 @@ export default async function CreatorPostPage({
         </Link>{' '}
         / Publicação
       </p>
-      <h1 className="mt-3 text-4xl font-bold text-slate-900">{post.title}</h1>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4"><h1 className="text-4xl font-bold text-slate-900">{post.title}</h1><CreatorShareButton endpoint={`/api/v1/creators/${params.slug}/publications/${params.postSlug}/share`} /></div>
       {post.excerpt && <p className="mt-4 text-xl text-slate-600">{post.excerpt}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
         <span>
@@ -70,9 +74,12 @@ export default async function CreatorPostPage({
           className="mt-8 max-h-[420px] w-full rounded-2xl object-cover"
         />
       )}
+      {post.author && <p className="mt-4 text-sm text-slate-500">Por {post.author.name}</p>}
       <article className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 whitespace-pre-wrap text-lg leading-relaxed text-slate-700 shadow-sm">
         {post.body}
       </article>
+      {post.attachments?.length ? <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6"><h2 className="font-semibold text-slate-900">Materiais complementares</h2><div className="mt-3 grid gap-2">{post.attachments.map((attachment) => <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer" className="min-h-11 rounded-xl border border-slate-200 px-3 py-3 text-sm text-blue-700 hover:bg-slate-50">{attachment.filename}</a>)}</div></section> : null}
+      <PublicationComments creatorSlug={params.slug} publicationSlug={params.postSlug} enabled={post.comments_enabled ?? false} />
     </main>
   );
 }

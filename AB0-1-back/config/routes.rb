@@ -263,6 +263,7 @@ Rails.application.routes.draw do
       end
       get 'creators/:creator_slug/publications/:publication_slug/comments', to: 'creator_comments#index'
       post 'creators/:creator_slug/publications/:publication_slug/comments', to: 'creator_comments#create'
+      post 'creators/:creator_slug/publications/:publication_slug/share', to: 'creator_comments#share'
       post 'creators/:creator_slug/leads', to: 'creator_leads#create'
       get 'creators', to: 'creators#index'
       get 'creators/:slug', to: 'creators#show'

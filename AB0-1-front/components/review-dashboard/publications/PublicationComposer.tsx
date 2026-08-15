@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { usePublicationAutosave } from '@/hooks/usePublicationAutosave';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, ImagePlus, Save, Send, X } from 'lucide-react';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
@@ -10,6 +9,7 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [cover, setCover] = useState<File>();
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [preview, setPreview] = useState(false);
   const [form, setForm] = useState({
     title: publication?.title || '',
@@ -20,12 +20,6 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
     comments_enabled: publication?.comments_enabled ?? true,
     lead_capture_enabled: publication?.lead_capture_enabled ?? false,
   });
-  useEffect(
-    () => () => {
-      if (cover) URL.revokeObjectURL(URL.createObjectURL(cover));
-    },
-    [cover]
-  );
   const set = (key: string, value: unknown) => setForm((current) => ({ ...current, [key]: value }));
   const save = async (publish = false) => {
     if (!form.title.trim() || !form.body.trim()) {
@@ -36,8 +30,8 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
     setError('');
     try {
       const saved = publication
-        ? await reviewerPublicationsApi.update(publication.id, form, { cover })
-        : await reviewerPublicationsApi.create(form, { cover });
+        ? await reviewerPublicationsApi.update(publication.id, form, { cover, attachments })
+        : await reviewerPublicationsApi.create(form, { cover, attachments });
       if (publish) {
         await reviewerPublicationsApi.publish(saved.id);
       }
@@ -139,6 +133,12 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
             className="sr-only"
           />
           {cover && <span className="truncate text-xs text-blue-600">{cover.name}</span>}
+        </label>
+        <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 px-4 text-sm text-slate-600">
+          <ImagePlus className="h-5 w-5 text-slate-400" />
+          Adicionar anexos (até 5)
+          <input type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setAttachments(Array.from(e.target.files || []).slice(0, 5))} className="sr-only" />
+          {attachments.length > 0 && <span className="truncate text-xs text-blue-600">{attachments.length} arquivo(s) selecionado(s)</span>}
         </label>
         <div className="flex flex-wrap gap-4 text-sm text-slate-600">
           <label className="flex items-center gap-2">
