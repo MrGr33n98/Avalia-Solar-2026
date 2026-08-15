@@ -48,10 +48,6 @@ export default function StickyCTA({
       element_type: 'button',
       action_type: 'click',
     });
-    openQuoteWizard({
-      preferredCompanyId: company.id,
-      source: 'sticky-cta',
-    });
   };
 
   return (
