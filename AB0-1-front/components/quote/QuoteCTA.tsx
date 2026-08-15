@@ -39,7 +39,7 @@ const contextClasses: Record<QuoteCTAContext, string> = {
 
 export function QuoteCTA({
   companyId,
-  _productId,
+  productId: _productId,
   source,
   context = 'default',
   shortLabel = 'Orçamento',
