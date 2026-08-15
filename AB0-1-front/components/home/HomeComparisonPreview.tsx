@@ -2,16 +2,15 @@
 
 import Link from 'next/link';
 import {
-  ArrowRight,
   BadgeCheck,
   Star,
   Sparkles,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 
 type HomeComparisonPreviewProps = {
   companies: Company[];
@@ -354,12 +353,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
             
             <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
               <span className="text-slate-500 hidden lg:inline">Não encontrou o que procura?</span>
-              <Button 
-                onClick={() => openQuoteWizard({ source: 'home_comparison' })}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 h-10 w-full md:w-auto rounded-xl"
-              >
-                Pedir orçamentos gratuitos <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <QuoteCTA context="hero" source="home_comparison" shortLabel="Orçamento" />
             </div>
           </div>
 

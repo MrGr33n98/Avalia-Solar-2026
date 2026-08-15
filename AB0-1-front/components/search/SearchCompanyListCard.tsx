@@ -1,18 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Star,
-  MapPin,
-  Clock,
-  FileText,
-  CheckCircle,
-  ShieldCheck,
-  ChevronRight,
-  Info,
-  Globe,
-  Building2,
-} from 'lucide-react';
+import { Star, MapPin, Clock, CheckCircle, ChevronRight, Info, Globe } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
@@ -20,7 +9,8 @@ import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
-import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
+import { hasPaidPlan } from '@/lib/feature-access';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface SearchCompanyListCardProps {
@@ -325,20 +315,19 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Right Column: Primary CTA — desktop only (lg+) */}
-      <div className="hidden min-w-0 shrink-0 lg:flex lg:w-[180px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
+      <div className="hidden min-w-0 shrink-0 lg:flex lg:w-[196px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
         {canRequestQuote && (
-          <Button
-            onClick={() =>
+          <QuoteCTA
+            context="card"
+            source="search-list-card"
+            onRequest={() =>
               openLeadModal({
                 preferredCompanyId: company.id,
                 source: 'search-list-card',
                 type: 'quick',
               })
             }
-            className="w-full min-w-0 h-auto min-h-10 whitespace-normal break-words rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-none gap-1.5 transition-all"
-          >
-            Solicitar orçamento
-          </Button>
+          />
         )}
 
         <Button

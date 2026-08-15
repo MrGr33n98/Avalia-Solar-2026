@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import {
   Select,
   SelectContent,
@@ -236,7 +237,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                           href={href}
                           className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
                         >
-                              {company.name}
+                          {company.name}
                         </Link>
                         <span className="block truncate text-[11px] font-medium text-slate-500 lg:hidden">
                           {location || 'Brasil'}
@@ -256,7 +257,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                                 />
                                 <div>
                                   <div className="font-bold text-slate-900 text-sm leading-tight">
-                                        {company.name}
+                                    {company.name}
                                   </div>
                                   <div className="text-[10px] text-slate-400 mt-0.5">
                                     {company.founded_year
@@ -733,29 +734,20 @@ function CategoryCompanyActions({
         mobile ? 'mt-4 flex-col-reverse items-stretch' : ''
       )}
     >
-      {!mobile && (
-        <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />
-      )}
+      {!mobile && <ComparisonToggleButton company={company as any} variant="minimal" size="sm" />}
       {canRequestQuote && (
-        <Button
-          size="sm"
-          onClick={(event) => {
-            event.stopPropagation();
+        <QuoteCTA
+          context="table"
+          source="category-company-table"
+          onRequest={() =>
             openLeadModal({
               preferredCompanyId: company.id,
               source: 'category-table',
               type: 'quick',
-            });
-          }}
-          className={cn(
-            'min-h-10 shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-3 py-2 text-center text-[11px] font-bold text-white hover:bg-blue-700',
-            'w-full lg:w-auto',
-            mobile && 'w-full'
-          )}
-        >
-          <span className="lg:hidden">Orçamento</span>
-          <span className="hidden lg:inline">Solicitar orçamento</span>
-        </Button>
+            })
+          }
+          className={cn(mobile && 'w-full')}
+        />
       )}
     </div>
   );

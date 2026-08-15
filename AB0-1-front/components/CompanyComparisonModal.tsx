@@ -20,6 +20,7 @@ import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 
 const getCoverageCount = (company: ComparisonCompany) => {
   const cities = Array.isArray(company.coverage_cities)
@@ -229,7 +230,7 @@ function MobileComparisonContent({
                       className="h-8 rounded-md px-1 text-[9px] font-bold leading-tight"
                     />
                   ) : (
-                    <Button onClick={() => onQuote(company.id)} aria-label={`Solicitar orçamento da ${company.name}`} className="h-8 w-full rounded-md border border-[#FDBA74] bg-[#FFF7ED] px-1 text-[9px] font-bold leading-tight text-[#C2410C] hover:bg-[#FFEED5]">Solicitar orçamento</Button>
+                    <QuoteCTA context="comparison" shortLabel="Orçamento" onRequest={() => onQuote(company.id)} />
                   )
                 ) : (
                   <span className="block px-1 py-2 text-center text-[9px] font-medium text-slate-400">Indisponível</span>

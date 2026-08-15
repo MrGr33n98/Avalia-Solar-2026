@@ -137,7 +137,7 @@ export default function ProductDetailScreen() {
           style={[styles.quoteButton, { backgroundColor: colors.brandDarkBlue || colors.brandDarkBlue }]}
           onPress={() => router.push('/request-quote')}
         >
-          <ThemedText style={styles.quoteButtonText}>Solicitar Orçamento</ThemedText>
+          <ThemedText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82} style={styles.quoteButtonText}>Solicitar orçamento</ThemedText>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 132,
   },
   imageContainer: {
     width: '100%',

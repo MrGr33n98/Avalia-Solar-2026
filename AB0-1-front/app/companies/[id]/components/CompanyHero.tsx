@@ -11,7 +11,6 @@ import {
   Star,
   BadgeCheck,
   Diamond,
-  ClipboardList,
 } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
@@ -26,6 +25,7 @@ import { trackCTAClick, trackCompanyProfileView } from '@/lib/analytics/track-ct
 import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -353,12 +353,12 @@ export default function CompanyHero({
             <div className="flex w-full flex-wrap items-center justify-start gap-3 border-t border-slate-100 pt-4 lg:w-auto lg:flex-nowrap lg:justify-end lg:border-0 lg:pt-0">
               {/* CTA Primário: Solicitar orçamento */}
               {canRequestQuote ? (
-                <Button
-                  size="default"
-                  className="h-12 shrink-0 whitespace-nowrap rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.28)]"
+                <QuoteCTA
+
+
                   onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                   onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
-                  onClick={async () => {
+                  onRequest={async () => {
                     await trackCTAClick({
                       ctaType: 'quote',
                       ctaLocation: 'hero',
@@ -372,10 +372,10 @@ export default function CompanyHero({
                       type: 'wizard',
                     });
                   }}
-                >
-                  <ClipboardList className="mr-1.5 h-4 w-4" />
-                  Solicitar orçamento
-                </Button>
+                />
+
+
+
               ) : null}
 
               {/* Avaliar empresa */}
@@ -407,8 +407,8 @@ export default function CompanyHero({
               {/* Chat — botão verde simples */}
               {directChatVisible && (
                 <Button
-                  size="default"
-                  className="h-12 shrink-0 whitespace-nowrap rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+
+
                   onClick={() => {
                     track('company_direct_chat_click', {
                       company_id: company.id,

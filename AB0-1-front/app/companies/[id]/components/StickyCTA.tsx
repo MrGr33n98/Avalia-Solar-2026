@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
-import { openQuoteWizard } from '@/lib/quote-wizard';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { track } from '@/lib/analytics/lazy';
 import WhatsappButton from '@/components/WhatsappButton';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
@@ -92,13 +90,7 @@ export default function StickyCTA({
 
             <div className="flex flex-1 md:flex-none items-center gap-2 md:gap-3">
               {quoteEnabled ? (
-                <Button
-                  onClick={handleQuoteClick}
-                  className="flex-1 md:flex-none bg-primary hover:bg-primary/90 text-white font-bold h-11 md:h-10 px-6 shadow-sm"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Pedir Orçamento
-                </Button>
+                <QuoteCTA context="sticky" companyId={company.id} source="company-sticky" onRequest={handleQuoteClick} />
               ) : (
                 <ReviewCompanyButton
                   company={company}

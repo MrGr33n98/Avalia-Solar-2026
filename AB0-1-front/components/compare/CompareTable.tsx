@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { CheckCircle2, ChevronDown, MinusCircle, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 
@@ -234,14 +235,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   >
                     {/* Botão de orçamento: apenas para empresas em plano pago */}
                     {company.premium && (
-                      <Button
-                        size="sm"
-                        className="w-full min-w-0 whitespace-normal break-words text-center leading-tight"
-                        onClick={() => onQuote(company)}
-                        aria-label={`Solicitar orçamento da ${company.name}`}
-                      >
-                        Solicitar orçamento
-                      </Button>
+                      <QuoteCTA context="comparison" onRequest={() => onQuote(company)} />
                     )}
                     <Button
                       asChild

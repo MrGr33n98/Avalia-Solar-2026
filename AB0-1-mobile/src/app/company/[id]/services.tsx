@@ -151,7 +151,7 @@ export default function CompanyServicesScreen() {
           style={styles.quoteButton}
           onPress={() => router.push(`/company/${id}/lead`)}
         >
-          <ThemedText style={styles.quoteButtonText}>Solicitar Orçamento Geral</ThemedText>
+          <ThemedText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82} style={styles.quoteButtonText}>Solicitar orçamento</ThemedText>
         </TouchableOpacity>}
       </View>
     </SafeAreaView>
@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: colors.backgroundElement,
     padding: 16,
+    paddingBottom: 20,
     borderTopWidth: 1,
     elevation: 10,
     shadowColor: '#000000',

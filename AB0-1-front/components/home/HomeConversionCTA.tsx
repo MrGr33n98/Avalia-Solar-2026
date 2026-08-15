@@ -1,14 +1,9 @@
 'use client';
 
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import { openQuoteWizard } from '@/lib/quote-wizard';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 
 export function HomeConversionCTA() {
   return (
-    <CTAPrimaryButton
-      label="Pedir orçamento gratuito"
-      className="h-auto w-full rounded-none border-[#FFC82C] bg-[#FFC82C] px-8 py-4 text-base font-semibold text-[#070B16] shadow-none hover:border-[#FFD65A] hover:bg-[#FFD65A] lg:w-auto"
-      onClick={() => openQuoteWizard({ source: 'home_bottom_banner' })}
-    />
+    <QuoteCTA context="hero" source="home_bottom_banner" shortLabel="Orçamento" className="w-full rounded-none border-[#FFC82C] bg-[#FFC82C] text-[#070B16] hover:bg-[#FFD65A] hover:text-[#070B16] lg:w-auto" />
   );
 }

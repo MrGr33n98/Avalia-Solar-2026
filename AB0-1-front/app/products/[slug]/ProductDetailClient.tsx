@@ -11,8 +11,6 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
-  MessageSquare,
-  ShieldCheck,
   Star,
 } from 'lucide-react';
 import type {
@@ -26,6 +24,7 @@ import type {
 } from '@/lib/api';
 import { buildCategoryPath, buildCompanyPath, buildProductPath } from '@/lib/slug';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { cn } from '@/lib/utils';
 import { useProductTracking } from './useProductTracking';
 import PremiumBadge from '@/components/PremiumBadge';
@@ -965,14 +964,7 @@ export default function ProductDetailClient({
                   </div>
                 ) : null}
 
-                <button
-                  type="button"
-                  onClick={handleQuoteRequest}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Solicitar orçamento
-                </button>
+                <QuoteCTA context="card" source="product-detail" onRequest={handleQuoteRequest} />
 
                 <p className={hintClass}>O contato é iniciado no fluxo de lead do marketplace.</p>
               </div>
@@ -1083,14 +1075,7 @@ export default function ProductDetailClient({
               {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleQuoteRequest}
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Solicitar orçamento
-          </button>
+          <QuoteCTA context="sticky" source="product-detail-sticky" onRequest={handleQuoteRequest} />
         </div>
       </div>
 

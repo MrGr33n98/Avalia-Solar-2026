@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { hasPaidPlan } from '@/lib/feature-access';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 
 interface Props {
   company: Company;
@@ -161,15 +162,7 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
             <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
           </Button>
           {canRequestQuote ? (
-            <Button
-              className="h-10 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] font-bold text-xs shadow-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' });
-              }}
-            >
-              Pedir orçamento
-            </Button>
+            <QuoteCTA context="card" source="top-company-card" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' })} />
           ) : null}
           <ReviewCompanyButton
             company={company}

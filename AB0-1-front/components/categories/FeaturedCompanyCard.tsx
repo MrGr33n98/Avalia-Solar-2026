@@ -4,8 +4,7 @@ import { Company } from '@/lib/api';
 import Link from 'next/link';
 import { BadgeCheck, Star, Clock, FileText, Globe } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
-import { Button } from '@/components/ui/button';
-import { openQuoteWizard } from '@/lib/quote-wizard';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import CompanyViewCounter from '@/app/companies/[id]/components/CompanyViewCounter';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
@@ -31,7 +30,7 @@ export default function FeaturedCompanyCard({
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
   const hasRating = rating > 0 && reviewCount > 0;
   const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
-  
+
   const location = [company.city, company.state].filter(Boolean).join(', ');
 
   // Extract tags from services or project types, defaulting dynamically to category name
@@ -40,23 +39,28 @@ export default function FeaturedCompanyCard({
     ? rawCategoryTag.charAt(0).toUpperCase() + rawCategoryTag.slice(1)
     : 'Energia Solar';
 
-  const tags = Array.isArray(company.services_offered) && company.services_offered.length > 0
-    ? company.services_offered.slice(0, 3)
-    : Array.isArray(company.project_types) && company.project_types.length > 0
-      ? company.project_types.slice(0, 3)
-      : [fallbackCategoryTag];
+  const tags =
+    Array.isArray(company.services_offered) && company.services_offered.length > 0
+      ? company.services_offered.slice(0, 3)
+      : Array.isArray(company.project_types) && company.project_types.length > 0
+        ? company.project_types.slice(0, 3)
+        : [fallbackCategoryTag];
 
   // SLA Label & Coverage Label (conditional, no fake hardcoding)
-  const slaLabel = (company as any).operations?.sla_label || (company as any).response_time_sla || null;
-  const coverageLabel = (company as any).coverage?.states?.length > 0 || (company as any).coverage?.cities?.length > 0
-    ? 'Atendimento regional'
-    : (company as any).nationwide ? 'Atende todo o Brasil' : null;
+  const slaLabel =
+    (company as any).operations?.sla_label || (company as any).response_time_sla || null;
+  const coverageLabel =
+    (company as any).coverage?.states?.length > 0 || (company as any).coverage?.cities?.length > 0
+      ? 'Atendimento regional'
+      : (company as any).nationwide
+        ? 'Atende todo o Brasil'
+        : null;
 
   return (
     <article
       className={cn(
-        "relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300",
-        showFeaturedBadge && "border-amber-200 bg-gradient-to-b from-amber-50/10 to-white"
+        'relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300',
+        showFeaturedBadge && 'border-amber-200 bg-gradient-to-b from-amber-50/10 to-white'
       )}
     >
       {/* Compare Button */}
@@ -101,9 +105,7 @@ export default function FeaturedCompanyCard({
               )}
             </div>
             {location && (
-              <span className="text-[11px] font-medium text-slate-500 block mt-1">
-                {location}
-              </span>
+              <span className="text-[11px] font-medium text-slate-500 block mt-1">{location}</span>
             )}
           </div>
         </div>
@@ -118,10 +120,10 @@ export default function FeaturedCompanyCard({
                   <Star
                     key={i}
                     className={cn(
-                      "w-3.5 h-3.5",
+                      'w-3.5 h-3.5',
                       i < Math.floor(rating)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-slate-200 fill-slate-200"
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-slate-200 fill-slate-200'
                     )}
                   />
                 ))}
@@ -171,12 +173,7 @@ export default function FeaturedCompanyCard({
       <div>
         {/* Primary CTA */}
         {canRequestQuote && (
-          <Button
-            onClick={() => openQuoteWizard({ source: 'category-featured-card' })}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 rounded-xl transition-all shadow-none mb-3"
-          >
-            Solicitar orçamento
-          </Button>
+          <QuoteCTA context="card" source="category-featured-card" className="mb-3" />
         )}
 
         {/* Secondary Link */}

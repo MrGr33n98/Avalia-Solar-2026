@@ -9,10 +9,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Building2, ShoppingCart, Info } from 'lucide-react';
+import { Check, Building2, Info } from 'lucide-react';
 import Image from 'next/image';
 import type { Product } from '@/lib/api';
-import { openQuoteWizard } from '@/lib/quote-wizard';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { track } from '@/lib/analytics/lazy';
 
 interface ProductQuickViewProps {
@@ -132,10 +132,7 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                     Continuar navegando
                 </Button>
-                <Button className="w-full gap-2" onClick={handleQuoteRequest}>
-                    <ShoppingCart className="w-4 h-4" />
-                    Solicitar Orçamento
-                </Button>
+                <QuoteCTA context="card" source="product-quick-view" onRequest={handleQuoteRequest} />
             </div>
           </div>
         </div>

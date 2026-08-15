@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { getBestMatch } from './compare-insights';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 
@@ -38,13 +39,7 @@ export default function BestMatchCard({ companies, city, onQuote }: BestMatchCar
         </Button>
         {/* Botão de orçamento: apenas para empresas em plano pago */}
         {company.premium && (
-          <Button
-            size="sm"
-            onClick={() => onQuote(company)}
-            aria-label={`Solicitar orçamento da ${company.name}`}
-          >
-            Solicitar orçamento
-          </Button>
+          <QuoteCTA context="comparison" onRequest={() => onQuote(company)} />
         )}
       </div>
     </section>

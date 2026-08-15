@@ -49,6 +49,7 @@ import WhatsappButton from '@/components/WhatsappButton';
 import { track } from '@/lib/analytics/lazy';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
 import { openSignupGate } from '@/lib/signup-gate';
@@ -635,19 +636,7 @@ export default function CompanyCard({
             </Button>
 
             {canRequestQuote ? (
-              <Button
-                className="flex-1 h-9 font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-none text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openLeadModal({
-                    preferredCompanyId: id,
-                    source: 'company-card-standard',
-                    type: 'quick',
-                  });
-                }}
-              >
-                Pedir orçamento
-              </Button>
+              <QuoteCTA context="card" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-standard", type: "quick" })} />
             ) : null}
 
             <ReviewCompanyButton
@@ -806,19 +795,7 @@ export default function CompanyCard({
             </Button>
 
             {canRequestQuote ? (
-              <Button
-                className="h-7 font-bold text-[10px] rounded-lg shadow-none bg-[#FFF7ED] hover:bg-[#FFEED5] border border-[#FDBA74] text-[#C2410C] w-full justify-center"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openLeadModal({
-                    preferredCompanyId: id,
-                    source: 'company-card-expanded',
-                    type: 'quick',
-                  });
-                }}
-              >
-                Pedir orçamento
-              </Button>
+              <QuoteCTA context="compact" source="company-card-expanded" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-expanded", type: "quick" })} />
             ) : null}
             <ReviewCompanyButton
               company={company}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ClipboardList, Share2, Star, MessageCircle } from 'lucide-react';
+import { Share2, Star, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
@@ -10,6 +10,7 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { track } from '@/lib/analytics/lazy';
 import { buildCompanySubPath } from '@/lib/slug';
+import { QuoteCTA } from '@/components/quote/QuoteCTA';
 
 interface CompanyCTAGroupProps {
   company: Company;
@@ -85,21 +86,16 @@ export default function CompanyCTAGroup({ company, canRequestQuote }: CompanyCTA
   return (
     <div
       id="company-cta-group"
-      className="flex w-full flex-nowrap items-center justify-start gap-2 sm:gap-3 lg:w-auto lg:justify-end"
+      className="flex w-full flex-wrap items-stretch justify-start gap-2 sm:gap-3 lg:w-auto lg:justify-end"
     >
       {/* Solicitar orçamento — feature paga, só renderiza quando ativa */}
       {canRequestQuote && (
-        <Button
-          type="button"
-          size="default"
-          onClick={handleRequestQuote}
-          className="h-11 flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition-colors hover:bg-blue-700 sm:gap-2 sm:px-4 sm:flex-initial sm:min-w-[200px] lg:flex-none"
-        >
-          <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {/* Texto curto no mobile, completo a partir de sm */}
-          <span className="truncate sm:hidden">Orçamento</span>
-          <span className="hidden sm:inline truncate">Solicitar orçamento</span>
-        </Button>
+        <QuoteCTA
+          context="sticky"
+          companyId={company.id}
+          source="company-hero"
+          onRequest={handleRequestQuote}
+        />
       )}
 
       {/* WhatsApp - feature paga estrita */}
