@@ -7,6 +7,7 @@ class PublicCreatorPublicationSerializer
     { id: @publication.id, title: @publication.title, slug: @publication.slug, excerpt: @publication.excerpt,
       body: @publication.body, comments_enabled: @publication.comments_enabled, publication_type: @publication.publication_type, category: @publication.category,
       published_at: @publication.published_at&.iso8601, updated_at: @publication.updated_at&.iso8601,
+      likes_count: @publication.likes_count, reading_time_minutes: [(@publication.body.to_s.split.size / 200.0).ceil, 1].max,
       cover_image: cover_image, attachments: attachments,
       author: { id: @publication.user_id, name: @publication.user.name },
       canonical_path: canonical_path }
