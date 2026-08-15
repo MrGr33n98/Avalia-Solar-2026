@@ -90,6 +90,10 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
     ],
   },
   {
+    title: 'Conteúdo',
+    items: [{ label: 'Publicações', href: '/review-dashboard/publications', icon: FileText }],
+  },
+  {
     title: 'Oportunidades',
     items: [
       { label: 'Minhas Propostas', href: '/review-dashboard#opportunities', icon: MessageCircle },

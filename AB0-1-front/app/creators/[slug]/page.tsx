@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
@@ -127,7 +128,10 @@ export default async function CreatorPage({ params }: { params: { slug: string }
               id="publicacoes"
               className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
             >
-              <h2 className="text-xl font-bold">Publicações mais recentes</h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-bold">Publicações mais recentes</h2>
+                <Link href="/review-dashboard/publications/new" className="inline-flex min-h-10 items-center rounded-lg bg-[#1e5eff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#174dcc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e5eff] focus-visible:ring-offset-2">Criar publicação</Link>
+              </div>
               <div className="mt-4 space-y-3">
                 {data.recent_publications.length ? (
                   data.recent_publications.map((post) => (
