@@ -886,6 +886,10 @@ export interface User {
   updated_at: string;
 }
 
+export interface ReviewerProfileResponse {
+  profile?: { creator_enabled?: boolean; public_slug?: string | null } | null;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
@@ -2189,7 +2193,7 @@ export const reviewFormTemplatesApi = {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    fetchApi('/auth/login', {
+    fetchApi<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
@@ -2531,7 +2535,7 @@ export const reviewerSolutionsApi = {
 };
 
 export const reviewerProfileApi = {
-  get: () => fetchApi('/reviewer/profile'),
+  get: () => fetchApi<ReviewerProfileResponse>('/reviewer/profile'),
   update: (profile: Record<string, unknown>) =>
     fetchApi('/reviewer/profile', { method: 'PATCH', body: JSON.stringify({ profile }) }),
   uploadAvatar: (file: File) => {

@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
-    if (nextUser.role === 'review' && !nextUser.creator) {
+    if (nextUser.role === 'review') {
       try {
         const profileResponse = await reviewerProfileApi.get();
         const profile = profileResponse?.profile;
@@ -191,8 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return resolvePostAuthDestination({
       user: nextUser,
       returnTo,
-      creatorEnabled: nextUser.creator?.enabled,
-      creatorSlug: nextUser.creator?.public_slug,
     });
   };
 
@@ -200,9 +198,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       nextAuthRequest();
       setError(null);
-      const response: any = await authApi.login(email, password);
+      const response = await authApi.login(email, password);
       setRealtimeAuthToken(response?.token);
-      const nextUser: User | null = response?.user || (await checkAuth());
+      const nextUser: User | null = response.user || (await checkAuth());
 
       if (!nextUser) {
         throw new Error('Falha ao obter dados do usuario apos login.');
