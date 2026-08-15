@@ -39,13 +39,19 @@ export function resolvePostAuthDestination({
   user,
   returnTo,
   activeCompanyId,
+  creatorEnabled,
+  creatorSlug,
 }: {
   user: User;
   returnTo?: string | null;
   activeCompanyId?: number | null;
+  creatorEnabled?: boolean;
+  creatorSlug?: string | null;
 }): string {
   if (isSafeReturnTo(returnTo) && isReturnToCompatibleWithRole(returnTo, user.role))
     return returnTo;
+  if (user.role === 'review' && creatorEnabled && creatorSlug)
+    return '/creators/' + encodeURIComponent(creatorSlug);
   if (user.role === 'review') return '/review-dashboard';
   if (user.role === 'company')
     return activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company';

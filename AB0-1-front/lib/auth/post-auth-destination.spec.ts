@@ -15,6 +15,25 @@ describe('resolvePostAuthDestination', () => {
     expect(resolvePostAuthDestination({ user: user('review') })).toBe('/review-dashboard');
   });
 
+  it('direciona creator habilitado para perfil público', () => {
+    expect(
+      resolvePostAuthDestination({
+        user: user('review'),
+        creatorEnabled: true,
+        creatorSlug: 'felipe-henrique-morais-almeida',
+      })
+    ).toBe('/creators/felipe-henrique-morais-almeida');
+  });
+
+  it('usa dashboard quando creator não está habilitado ou slug ausente', () => {
+    expect(resolvePostAuthDestination({ user: user('review'), creatorEnabled: false })).toBe(
+      '/review-dashboard'
+    );
+    expect(resolvePostAuthDestination({ user: user('review'), creatorEnabled: true })).toBe(
+      '/review-dashboard'
+    );
+  });
+
   it('direciona empresa vinculada para a empresa ativa', () => {
     expect(resolvePostAuthDestination({ user: user('company'), activeCompanyId: 42 })).toBe(
       '/dashboard?company_id=42'

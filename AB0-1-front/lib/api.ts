@@ -784,6 +784,7 @@ export interface Category {
   } | null;
   created_at: string;
   updated_at: string;
+  creator?: { enabled?: boolean; public_slug?: string | null } | null;
 }
 
 export type { Banner } from './api-banner-types';

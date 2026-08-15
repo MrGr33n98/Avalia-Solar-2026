@@ -10,6 +10,7 @@ import {
   companyAccessApi,
   hasPossibleAuthSession,
   setAuthSessionHint,
+  reviewerProfileApi,
 } from '@/lib/api';
 import { getApiOrigin } from '@/lib/api-config';
 import { identify, track, reset } from '@/lib/analytics/lazy';
@@ -170,7 +171,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
-    return resolvePostAuthDestination({ user: nextUser, returnTo });
+    if (nextUser.role === 'review' && !nextUser.creator) {
+      try {
+        const profileResponse = await reviewerProfileApi.get();
+        const profile = profileResponse?.profile;
+        return resolvePostAuthDestination({
+          user: nextUser,
+          returnTo,
+          creatorEnabled: profile?.creator_enabled,
+          creatorSlug: profile?.public_slug,
+        });
+      } catch (profileError) {
+        logError(profileError instanceof Error ? profileError : new Error(String(profileError)), {
+          action: 'creator_profile_route_after_login_failed',
+          metadata: { user_id: nextUser.id },
+        });
+      }
+    }
+    return resolvePostAuthDestination({
+      user: nextUser,
+      returnTo,
+      creatorEnabled: nextUser.creator?.enabled,
+      creatorSlug: nextUser.creator?.public_slug,
+    });
   };
 
   const login = async (email: string, password: string) => {
