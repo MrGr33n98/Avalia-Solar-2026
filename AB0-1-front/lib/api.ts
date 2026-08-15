@@ -888,6 +888,7 @@ export interface User {
 
 export interface ReviewerProfileResponse {
   profile?: { creator_enabled?: boolean; public_slug?: string | null } | null;
+  completion?: { percent?: number };
 }
 
 export interface AuthResponse {

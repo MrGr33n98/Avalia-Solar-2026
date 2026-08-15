@@ -46,7 +46,7 @@ export default function MeuPerfilPage() {
   const avatarInput = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   type ReviewerProfileData = {
-    public_slug?: string;
+    public_slug?: string | null;
     bio?: string;
     company_name?: string;
     public_headline?: string;
@@ -66,7 +66,7 @@ export default function MeuPerfilPage() {
   useEffect(() => {
     void reviewerProfileApi
       .get()
-      .then((payload: { profile?: ReviewerProfileData; completion?: { percent?: number } }) => {
+      .then((payload) => {
         setProfileData(payload.profile || {});
         setCompletion(payload.completion?.percent ?? 0);
         setPublicSlug(String(payload.profile?.public_slug || ''));
