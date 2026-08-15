@@ -37,10 +37,6 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
       click_type: 'quick_view_budget',
       price_available: priceAvailable,
     });
-    openQuoteWizard({
-      preferredCompanyId: product.company?.id,
-      source: 'product_quick_view',
-    });
     onOpenChange(false);
   };
 
