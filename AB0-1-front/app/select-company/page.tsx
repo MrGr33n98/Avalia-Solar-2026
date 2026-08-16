@@ -140,6 +140,7 @@ export default function SelectCompanyPage() {
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       setFlowState('searching');
+      setSubmittedSearch(trimmed);
       setSearchLoading(true);
       setSearchError(null);
       try {
@@ -255,7 +256,7 @@ export default function SelectCompanyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="w-full max-w-[820px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+      <div className="w-full max-w-[1100px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
         <div className="p-6 sm:p-8 pb-4 space-y-2">
           <div className="mb-4 flex items-center gap-2 overflow-x-auto text-[10px] font-bold uppercase tracking-wide text-blue-600">{['Busca inicial', 'Buscando', 'Resultados', 'Não encontrada', 'Próximos passos'].map((step, index) => <span key={step} className="flex shrink-0 items-center gap-1"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">{index + 1}</span>{step}{index < 4 && <span className="px-1 text-slate-300">→</span>}</span>)}</div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -267,11 +268,11 @@ export default function SelectCompanyPage() {
         </div>
 
         <div className="px-6 sm:px-8 pb-6 space-y-5">
-          <div className="relative">
+          <div className="relative flex gap-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar por nome da empresa ou CNPJ"
-              className="pl-10 h-11 bg-gray-50 border-gray-200 focus-visible:ring-primary/20"
+              className="flex-1 pl-10 h-11 bg-gray-50 border-gray-200 focus-visible:ring-primary/20"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
