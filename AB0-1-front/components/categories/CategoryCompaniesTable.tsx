@@ -127,8 +127,8 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
       </div>
 
       {/* Responsive Table Wrapper */}
-      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full border-collapse text-left text-sm text-slate-600 xl:min-w-[1120px]">
+      <div className="hidden min-w-0 md:block overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[980px] border-collapse text-left text-sm text-slate-600">
           <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
             <tr>
               <th scope="col" className="py-3.5 px-4 w-12 text-center">
@@ -569,7 +569,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                     )}
                   </td>
                   {/* Button Link & Comparison */}
-                  <td className="py-4 px-4 text-right w-[9rem] min-w-[9rem] lg:w-[19rem] lg:min-w-[19rem]">
+                  <td className="w-[12rem] min-w-[12rem] py-4 px-4 text-right">
                     <CategoryCompanyActions company={company} />
                   </td>
                 </tr>
@@ -730,7 +730,7 @@ function CategoryCompanyActions({
   return (
     <div
       className={cn(
-        'flex flex-col items-end gap-1 lg:flex-row lg:items-center',
+        'flex items-center justify-end gap-2',
         mobile ? 'mt-4 flex-col-reverse items-stretch' : ''
       )}
     >
