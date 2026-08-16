@@ -256,6 +256,13 @@ export default function SelectCompanyPage() {
   }
 
 
+  const submitSearch = () => {
+    const value = search.trim();
+    if (value.length < SEARCH_MIN_LENGTH) return;
+    setSubmittedSearch(value);
+    setFlowState('searching');
+  };
+
   const journeyHeader = (<header className="mb-4 text-center"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0755f5]">Search - Todos os fluxos</p><h1 className="mt-1 text-xl font-bold text-[#10265b]">Encontre a empresa que você busca</h1><p className="mt-1 text-xs text-[#60708f]">Encontre ou solicite acesso a empresas do setor solar.</p></header>);
   const searchForm = (<form onSubmit={(event) => { event.preventDefault(); submitSearch(); }} className="flex gap-2"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome da empresa ou CNPJ" className="h-9 pl-8 text-xs" /></div><Button type="submit" disabled={search.trim().length < SEARCH_MIN_LENGTH || searchLoading} className="h-9 bg-[#0755f5] px-3 text-xs text-white">Buscar</Button></form>);
   if (flowState === 'initial') return <main className="min-h-screen bg-[#f8faff] px-4 py-8"><div className="mx-auto max-w-[1100px]">{journeyHeader}<div className="grid gap-4 md:grid-cols-3"><SearchInitialPanel>{searchForm}</SearchInitialPanel><div className="hidden min-h-[370px] rounded-xl border border-[#d8e4f8] bg-white md:block" /><div className="hidden min-h-[370px] rounded-xl border border-[#d8e4f8] bg-white md:block" /></div></div></main>;
