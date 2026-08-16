@@ -39,13 +39,6 @@ import { PricingTrustStrip } from './PricingTrustStrip';
 import { PricingAdsSection } from './PricingAdsSection';
 import { PricingFinalCTA } from './PricingFinalCTA';
 
-// ─── Variantes de Animação ──────────────────────────────────────────────────
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
 const modalVariant: Variants = {
   hidden: { opacity: 0, scale: 0.96, y: 16 },
   visible: {
@@ -386,141 +379,9 @@ export default function PricingPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] pb-12 font-sans antialiased text-slate-800">
       <PricingHero
         onViewPlans={() =>
-          document.getElementById('pricing-plans')?.scrollIntoView({ behavior: 'smooth' })
+          document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })
         }
       />
-      <PricingHero
-        onViewPlans={() =>
-          document.getElementById('pricing-plans')?.scrollIntoView({ behavior: 'smooth' })
-        }
-      />
-      {/* ── 1. HERO SECTION ────────────────── */}
-      <section className="hidden relative pb-16 pt-20 border-b border-slate-200/50 bg-[#eef4fa] overflow-hidden">
-        <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-[1160px]">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-            {/* Left Column: Copy & Actions */}
-            <motion.div className="space-y-6" initial="hidden" animate="visible" variants={stagger}>
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  <Link href="/" className="hover:text-slate-900">
-                    Home
-                  </Link>{' '}
-                  › <span className="text-slate-800">Planos e preços</span>
-                </p>
-                <span className="block text-xs font-bold uppercase tracking-[.1em] text-amber-600">
-                  Plataforma de aquisição de clientes para energia solar
-                </span>
-              </div>
-
-              <h1 className="text-balance text-4xl font-black tracking-tight text-slate-900 md:text-5xl lg:text-[2.75rem] leading-[1.15]">
-                Mais orçamentos, mais vendas, menos CAC
-              </h1>
-
-              <p className="mt-4 text-base sm:text-[17.5px] leading-relaxed text-slate-500 font-medium">
-                Todos os dias, consumidores comparam empresas na Avalia Solar antes de fechar
-                negócio. Um plano pago coloca a sua empresa na frente deles — e transforma visitas
-                em contatos no seu WhatsApp.
-              </p>
-
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border-0 shadow-md h-12 rounded-lg px-8 w-full sm:w-auto text-sm transition-transform duration-150 active:scale-[0.98]"
-                >
-                  <Link href={isAuthenticated ? '/dashboard' : '/register'}>
-                    Criar meu perfil grátis
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-slate-300 hover:bg-slate-50 h-12 rounded-lg px-8 w-full sm:w-auto font-bold text-sm bg-white text-slate-800 shadow-sm"
-                >
-                  <Link href="/contact?subject=commercial" className="flex items-center gap-1.5">
-                    Falar com vendas
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              {/* Microbadges */}
-              <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13.5px] text-slate-500 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600 font-bold">✓</span> Sem fidelidade
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600 font-bold">✓</span> Ativação em minutos
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600 font-bold">✓</span> Cancele quando quiser
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-600 font-bold">✓</span> Suporte humano
-                </span>
-              </div>
-            </motion.div>
-
-            {/* Right Column: Visual Mockup */}
-            <div className="relative w-full min-h-[320px] sm:min-h-[400px] flex items-center justify-center lg:justify-end">
-              <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center">
-                {/* Notebook CSS Mockup */}
-                <div className="relative w-[min(320px,100%)] sm:w-[420px] h-[200px] sm:h-[260px] rounded-2xl border border-slate-350 bg-slate-900 shadow-2xl p-2 flex flex-col group overflow-hidden">
-                  <div className="flex-1 rounded-lg bg-[#F5F8FC] overflow-hidden flex flex-col p-3 relative">
-                    <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
-                      <span className="h-2 w-2 rounded-full bg-red-400" />
-                      <span className="h-2 w-2 rounded-full bg-yellow-400" />
-                      <span className="h-2 w-2 rounded-full bg-green-400" />
-                      <span className="h-3 w-40 sm:w-60 bg-white border border-slate-200 rounded text-[7px] text-slate-400 pl-1.5 flex items-center">
-                        avaliasolar.com.br/solare-energia
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-start gap-3">
-                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-300 shrink-0 shadow animate-pulse" />
-                      <div className="space-y-1.5 w-full">
-                        <div className="text-[11px] sm:text-xs font-black text-slate-900 flex items-center gap-1.5">
-                          Solare Energia Solar
-                          <span className="h-3 w-3 rounded-full bg-[#1668e8] flex items-center justify-center text-white text-[7px] font-bold">
-                            ✓
-                          </span>
-                        </div>
-                        <div className="text-[8px] sm:text-[9px] text-slate-500 font-medium">
-                          96% dos usuários recomendam
-                        </div>
-                        <div className="h-8 sm:h-12 bg-white rounded-lg border border-slate-200 p-2 text-[7px] sm:text-[8px] text-slate-400 leading-relaxed overflow-hidden">
-                          Projetos residenciais e comerciais de alta eficiência com suporte e
-                          homologação inclusos...
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[min(360px,100%)] sm:w-[460px] h-[8px] bg-slate-800 rounded-b-xl border-t border-slate-700 shadow-md" />
-                </div>
-
-                {/* Smartphone CSS Mockup */}
-                <div className="absolute -bottom-4 right-4 sm:right-10 w-[100px] sm:w-[120px] h-[180px] sm:h-[220px] rounded-[24px] border-[4px] border-slate-900 bg-white shadow-2xl p-1.5 flex flex-col overflow-hidden z-20">
-                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-10 h-2 bg-slate-900 rounded-full flex items-center justify-center" />
-                  <div className="flex-1 rounded-[16px] bg-[#F5F8FC] overflow-hidden flex flex-col p-2 pt-4 relative">
-                    <div className="h-6 w-6 rounded-lg bg-slate-350 shrink-0 mb-1.5 animate-pulse" />
-                    <div className="text-[8px] font-black text-slate-900 leading-none">
-                      Solare Energia
-                    </div>
-                    <div className="text-[5px] text-slate-500 font-bold mb-1">96% aprovação</div>
-                    <div className="h-12 bg-white rounded-md border border-slate-200 p-1 text-[5px] text-slate-400 overflow-hidden leading-snug">
-                      Ideal para começar a garantir presença no maior portal...
-                    </div>
-                    <div className="mt-auto h-4 w-full rounded bg-[#1668e8] flex items-center justify-center text-[5px] font-bold text-white shadow-sm">
-                      Falar no WhatsApp
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── 2. PROOF STRIP ────────────────── */}
       <section className="bg-white border-b border-slate-200/60 py-8">
         <div className="max-w-[1160px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -779,10 +640,7 @@ export default function PricingPage() {
       </section>
 
       {/* ── 6. PRICING PLANS GRID ────────────────── */}
-      <section
-        className="py-20 bg-slate-50 border-t border-b border-slate-200/50"
-        id="pricing-plans"
-      >
+      <section className="py-20 bg-slate-50 border-t border-b border-slate-200/50">
         <div className="max-w-[1160px] mx-auto px-6">
           <div className="text-center max-w-[720px] mx-auto mb-12 space-y-3">
             <span className="text-xs font-bold uppercase tracking-[.1em] text-amber-600">
@@ -1287,7 +1145,7 @@ export default function PricingPage() {
         <PricingAdsSection />
         <PricingFinalCTA
           onCompare={() =>
-            document.getElementById('pricing-plans')?.scrollIntoView({ behavior: 'smooth' })
+            document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })
           }
         />
       </section>

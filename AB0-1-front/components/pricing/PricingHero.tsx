@@ -12,7 +12,8 @@ export function PricingHero({ onViewPlans }: { onViewPlans: () => void }) {
             Avalia Solar para empresas
           </p>
           <h1 className="max-w-xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
-            Transforme seu perfil em um canal de aquisição de clientes.
+            Transforme seu perfil em um canal de{' '}
+            <span className="text-brand-yellow">aquisição de clientes.</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-relaxed text-blue-100">
             Apareça com mais destaque, facilite o contato e acompanhe os resultados da sua empresa
