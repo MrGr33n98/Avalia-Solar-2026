@@ -37,7 +37,7 @@ module Api
           
           now = Time.current
           active_addons = b.banner_addon_subscriptions.select do |sub|
-            sub.status == 'active' && sub.starts_at <= now && (sub.ends_at.nil? || sub.ends_at >= now)
+            sub.status == 'active' && (sub.starts_at.nil? || sub.starts_at <= now) && (sub.ends_at.nil? || sub.ends_at >= now)
           end.map do |sub|
             {
               id: sub.banner_addon_id,
