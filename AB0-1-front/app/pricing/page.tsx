@@ -4,16 +4,21 @@ import dynamic from 'next/dynamic';
 
 const PricingPage = dynamic(() => import('@/components/pricing/PricingPage'), {
   ssr: false,
-  loading: () => <div className="min-h-[60vh] animate-pulse bg-slate-50" aria-label="Carregando planos" />,
+  loading: () => (
+    <div className="min-h-[60vh] animate-pulse bg-slate-50" aria-label="Carregando planos" />
+  ),
 });
-const PricingIntentTracker = dynamic(() => import('@/components/pricing/PricingIntentTracker').then((mod) => mod.PricingIntentTracker), {
-  ssr: false,
-});
+const PricingIntentTracker = dynamic(
+  () => import('@/components/pricing/PricingIntentTracker').then((mod) => mod.PricingIntentTracker),
+  {
+    ssr: false,
+  }
+);
 
 export const metadata: Metadata = {
-  title: 'Planos e Precos | Avalia Solar',
+  title: 'Planos e Preços | Avalia Solar',
   description:
-    'Compare os planos Gratuito, Pro e Enterprise da Avalia Solar e entenda quais recursos de vitrine, conversao, analytics e integracao cada nivel libera.',
+    'Compare os planos Gratuito, Essencial, Pro e Enterprise da Avalia Solar e escolha os recursos ideais para sua empresa.',
 };
 
 export default function PricingRoutePage() {

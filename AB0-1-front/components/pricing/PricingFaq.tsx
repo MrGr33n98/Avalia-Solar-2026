@@ -56,7 +56,6 @@ export function PricingFaq() {
     <section className="py-16 md:py-20">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-start">
-
           {/* Esquerda: FAQ */}
           <div>
             <h2 className="mb-2 text-2xl font-black tracking-tight text-slate-950">
@@ -78,7 +77,6 @@ export function PricingFaq() {
             href="/contact?subject=commercial"
             className="lg:sticky lg:top-24"
           />
-
         </div>
       </div>
     </section>

@@ -20,7 +20,7 @@ const fadeUp: Variants = {
 
 const stagger: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.10 } },
+  visible: { transition: { staggerChildren: 0.1 } },
 };
 
 // ─── Cell Component ────────────────────────────────────────────────────────
@@ -127,7 +127,8 @@ export function FeatureComparisonTable() {
             variants={fadeUp}
             className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 font-medium"
           >
-            Escolha o nível que melhor atende aos objetivos de captação e inteligência comercial de sua empresa.
+            Escolha o nível que melhor atende aos objetivos de captação e inteligência comercial de
+            sua empresa.
           </motion.p>
         </motion.div>
 
@@ -141,7 +142,11 @@ export function FeatureComparisonTable() {
             variant="outline"
             className="rounded-full px-6 py-5 font-bold border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-all duration-300 gap-2 shadow-sm"
           >
-            <span>{showAllFeatures ? 'Ocultar comparativo completo' : 'Ver comparativo de todas as funcionalidades'}</span>
+            <span>
+              {showAllFeatures
+                ? 'Ocultar comparativo completo'
+                : 'Ver comparativo de todas as funcionalidades'}
+            </span>
             <motion.div
               animate={{ rotate: showAllFeatures ? 180 : 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
@@ -182,7 +187,7 @@ export function FeatureComparisonTable() {
                     <motion.div
                       key={group.id}
                       variants={fadeUp}
-                      className="clay-precision overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/75 backdrop-blur-md shadow-sm transition-all duration-300"
+                      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300"
                     >
                       {/* Clickable Accordion Header */}
                       <button
@@ -217,7 +222,7 @@ export function FeatureComparisonTable() {
                             className="overflow-hidden"
                           >
                             <div className="overflow-x-auto">
-                              <table className="min-w-[800px] w-full border-separate border-spacing-y-2 p-4">
+                              <table className="min-w-0 w-full border-separate border-spacing-y-2 p-4">
                                 <thead>
                                   <tr>
                                     <th className="pb-1 pl-5 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 w-[40%]">

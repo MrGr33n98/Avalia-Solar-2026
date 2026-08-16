@@ -18,33 +18,73 @@ export function CompactComparison() {
       name: 'Presença e Visibilidade',
       description: 'Como sua empresa aparece na busca',
       free: <span className="text-slate-500 font-medium text-xs">Orgânica Básica</span>,
-      essential: <span className="text-emerald-600 font-bold text-xs flex items-center justify-center gap-1">✓ Destaque Visual</span>,
-      pro: <span className="text-brand-blue font-black text-xs flex items-center justify-center gap-1">★ Vitrine Premium</span>,
-      enterprise: <span className="text-slate-900 font-black text-xs flex items-center justify-center gap-1">✦ Posicionamento Exclusivo</span>,
+      essential: (
+        <span className="text-emerald-600 font-bold text-xs flex items-center justify-center gap-1">
+          ✓ Destaque Visual
+        </span>
+      ),
+      pro: (
+        <span className="text-brand-blue font-black text-xs flex items-center justify-center gap-1">
+          ★ Vitrine Premium
+        </span>
+      ),
+      enterprise: (
+        <span className="text-slate-900 font-black text-xs flex items-center justify-center gap-1">
+          ✦ Posicionamento Exclusivo
+        </span>
+      ),
     },
     {
       name: 'Geração de Contatos (CTA)',
       description: 'Botões de ação direta no perfil',
-      free: <span className="text-slate-400 text-xs flex items-center justify-center"><X className="h-3.5 w-3.5 mr-1" /> Indisponível</span>,
+      free: (
+        <span className="text-slate-400 text-xs flex items-center justify-center">
+          <X className="h-3.5 w-3.5 mr-1" /> Indisponível
+        </span>
+      ),
       essential: <span className="text-emerald-600 font-bold text-xs">Botão de WhatsApp</span>,
       pro: <span className="text-brand-blue font-bold text-xs">CTAs Dinâmicos + WhatsApp</span>,
-      enterprise: <span className="text-slate-900 font-bold text-xs">CTAs Customizados Ilimitados</span>,
+      enterprise: (
+        <span className="text-slate-900 font-bold text-xs">CTAs Customizados Ilimitados</span>
+      ),
     },
     {
       name: 'Fuga de Atenção (Concorrentes)',
       description: 'Exibição de alternativas no seu perfil',
       free: <span className="text-red-500 font-medium text-xs">Com Anúncios de Concorrentes</span>,
-      essential: <span className="text-emerald-600 font-bold text-xs flex items-center justify-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes</span>,
-      pro: <span className="text-brand-blue font-bold text-xs flex items-center justify-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes</span>,
-      enterprise: <span className="text-slate-900 font-bold text-xs flex items-center justify-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes</span>,
+      essential: (
+        <span className="text-emerald-600 font-bold text-xs flex items-center justify-center gap-1">
+          <ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes
+        </span>
+      ),
+      pro: (
+        <span className="text-brand-blue font-bold text-xs flex items-center justify-center gap-1">
+          <ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes
+        </span>
+      ),
+      enterprise: (
+        <span className="text-slate-900 font-bold text-xs flex items-center justify-center gap-1">
+          <ShieldCheck className="h-3.5 w-3.5" /> Sem Concorrentes
+        </span>
+      ),
     },
     {
       name: 'Leads e Integrações',
       description: 'Métricas, CRM e equipe comercial',
-      free: <span className="text-slate-400 text-xs flex items-center justify-center"><X className="h-3.5 w-3.5 mr-1" /> Indisponível</span>,
-      essential: <span className="text-slate-400 text-xs flex items-center justify-center"><X className="h-3.5 w-3.5 mr-1" /> Indisponível</span>,
+      free: (
+        <span className="text-slate-400 text-xs flex items-center justify-center">
+          <X className="h-3.5 w-3.5 mr-1" /> Indisponível
+        </span>
+      ),
+      essential: (
+        <span className="text-slate-400 text-xs flex items-center justify-center">
+          <X className="h-3.5 w-3.5 mr-1" /> Indisponível
+        </span>
+      ),
       pro: <span className="text-brand-blue font-semibold text-xs">Analytics de Tráfego</span>,
-      enterprise: <span className="text-slate-900 font-black text-xs">Webhooks + Sinais de Intenção</span>,
+      enterprise: (
+        <span className="text-slate-900 font-black text-xs">Webhooks + Sinais de Intenção</span>
+      ),
     },
   ];
 
@@ -69,11 +109,21 @@ export function CompactComparison() {
         <table className="w-full min-w-[700px] border-collapse">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 w-[30%]">Diferencial</th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Gratuito</th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-emerald-600">Essencial</th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-brand-blue">Pro</th>
-              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-900">Enterprise</th>
+              <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 w-[30%]">
+                Diferencial
+              </th>
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Gratuito
+              </th>
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                Essencial
+              </th>
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-brand-blue">
+                Pro
+              </th>
+              <th className="pb-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-900">
+                Enterprise
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100/60">
@@ -81,12 +131,22 @@ export function CompactComparison() {
               <tr key={idx} className="hover:bg-slate-50/40 transition-colors duration-150">
                 <td className="py-4 pr-4">
                   <div className="text-xs font-black text-slate-900">{feature.name}</div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">{feature.description}</div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    {feature.description}
+                  </div>
                 </td>
-                <td className="py-4 text-center text-xs font-semibold text-slate-600 bg-slate-50/10">{feature.free}</td>
-                <td className="py-4 text-center text-xs font-bold text-teal-700 bg-emerald-50/5">{feature.essential}</td>
-                <td className="py-4 text-center text-xs font-extrabold text-brand-blue-dark bg-brand-blue/5">{feature.pro}</td>
-                <td className="py-4 text-center text-xs font-black text-slate-950 bg-slate-900/5">{feature.enterprise}</td>
+                <td className="py-4 text-center text-xs font-semibold text-slate-600 bg-slate-50/10">
+                  {feature.free}
+                </td>
+                <td className="py-4 text-center text-xs font-bold text-teal-700 bg-emerald-50/5">
+                  {feature.essential}
+                </td>
+                <td className="py-4 text-center text-xs font-extrabold text-brand-blue-dark bg-brand-blue/5">
+                  {feature.pro}
+                </td>
+                <td className="py-4 text-center text-xs font-black text-slate-950 bg-slate-900/5">
+                  {feature.enterprise}
+                </td>
               </tr>
             ))}
           </tbody>

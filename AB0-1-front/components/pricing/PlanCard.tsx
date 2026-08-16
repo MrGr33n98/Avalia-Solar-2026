@@ -49,23 +49,24 @@ const planConfig: Record<PlanSlug, PlanVisualConfig> = {
     priceCls: 'text-slate-900',
   },
   essential: {
-    topBar: 'bg-slate-950',
+    topBar: 'bg-transparent',
     iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
-    topBadgeCls: 'bg-slate-950 text-white',
-    ringCls: 'border-2 border-slate-950',
-    shadowCls: 'shadow-md',
-    ctaCls: 'bg-slate-950 hover:bg-slate-900 text-white border-0 font-bold shadow-sm',
+    topBadgeCls: 'bg-brand-blue text-white',
+    ringCls: 'border border-brand-blue/30',
+    shadowCls: 'shadow-sm',
+    ctaCls:
+      'border border-brand-blue bg-white hover:bg-brand-blue/5 text-brand-blue font-bold shadow-none',
     checkBg: 'bg-slate-50',
     checkText: 'text-slate-600',
     priceCls: 'text-slate-900',
   },
   pro: {
-    topBar: 'bg-slate-950',
+    topBar: 'bg-brand-blue',
     iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
-    topBadgeCls: 'bg-slate-950 text-white',
-    ringCls: 'border-2 border-slate-950',
-    shadowCls: 'shadow-md',
-    ctaCls: 'bg-slate-950 hover:bg-slate-900 text-white border-0 font-bold shadow-sm',
+    topBadgeCls: 'bg-brand-yellow text-slate-950',
+    ringCls: 'border-2 border-brand-blue',
+    shadowCls: 'shadow-lg',
+    ctaCls: 'bg-brand-yellow hover:bg-yellow-400 text-slate-950 border-0 font-bold shadow-sm',
     checkBg: 'bg-slate-50',
     checkText: 'text-slate-600',
     priceCls: 'text-slate-900',
@@ -86,7 +87,9 @@ const planConfig: Record<PlanSlug, PlanVisualConfig> = {
 const cardVariant = {
   hidden: { opacity: 0, y: 36, scale: 0.96 },
   visible: {
-    opacity: 1, y: 0, scale: 1,
+    opacity: 1,
+    y: 0,
+    scale: 1,
     transition: { type: 'spring' as const, stiffness: 280, damping: 26 },
   },
 };
@@ -95,7 +98,7 @@ export function PlanCard({
   slug,
   name,
   priceLabel,
-  billingNote,
+  billingNote: _billingNote,
   summary,
   badge,
   featured,
@@ -110,17 +113,24 @@ export function PlanCard({
   savingBadge,
 }: PlanCardProps) {
   const cfg = planConfig[slug] || planConfig.free;
-  const showTopBadge = badge && cfg.topBadgeCls && (slug === 'essential' || slug === 'pro');
+  const isProFeatured = slug === 'pro' && featured;
+  const showTopBadge = badge && cfg.topBadgeCls && featured;
 
   const getStatusLabel = () => {
     if (!subscriptionStatus) return '';
     switch (subscriptionStatus) {
-      case 'trialing': return ' (Período de Teste)';
-      case 'past_due': return ' (Pagamento Pendente)';
-      case 'unpaid': return ' (Inadimplente)';
-      case 'canceled': return ' (Cancelada)';
-      case 'enterprise_lead': return ' (Lead Solicitado)';
-      default: return '';
+      case 'trialing':
+        return ' (Período de Teste)';
+      case 'past_due':
+        return ' (Pagamento Pendente)';
+      case 'unpaid':
+        return ' (Inadimplente)';
+      case 'canceled':
+        return ' (Cancelada)';
+      case 'enterprise_lead':
+        return ' (Lead Solicitado)';
+      default:
+        return '';
     }
   };
 
@@ -129,8 +139,9 @@ export function PlanCard({
       variants={cardVariant}
       className={[
         'relative flex flex-col overflow-hidden rounded-[24px] h-full',
-        'bg-white transition-all duration-300',
-        slug === 'pro' || slug === 'essential' ? 'z-10' : 'hover:shadow-md',
+        'transition-all duration-300',
+        isProFeatured ? 'bg-gradient-to-br from-brand-blue to-blue-700 text-white' : 'bg-white',
+        featured ? 'z-10' : 'hover:shadow-md',
         cfg.ringCls,
         cfg.shadowCls,
         isCurrentPlan ? 'ring-2 ring-brand-blue/30' : '',
@@ -138,7 +149,9 @@ export function PlanCard({
     >
       {/* Badge superior destacado (MAIS ESCOLHIDO / MAIS VENDIDO) */}
       {showTopBadge && (
-        <div className={`w-full py-2 text-center text-[10px] font-black uppercase tracking-[0.2em] ${cfg.topBadgeCls}`}>
+        <div
+          className={`w-full py-2 text-center text-[10px] font-black uppercase tracking-[0.2em] ${cfg.topBadgeCls}`}
+        >
           {badge}
         </div>
       )}
@@ -150,22 +163,29 @@ export function PlanCard({
         {/* Ícone + Nome + Subtítulo */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <div className="text-lg font-black tracking-tight text-slate-950 flex items-center gap-1.5">
+            <div className="text-lg font-black tracking-tight text-inherit flex items-center gap-1.5">
               {name}
               {isCurrentPlan && (
-                <span className="h-2 w-2 rounded-full bg-brand-blue animate-pulse" title="Seu plano ativo" />
+                <span
+                  className="h-2 w-2 rounded-full bg-brand-blue animate-pulse"
+                  title="Seu plano ativo"
+                />
               )}
             </div>
-            <div className="text-xs text-slate-500 font-medium">{summary}</div>
+            <div className="text-xs font-medium text-slate-500 ">{summary}</div>
           </div>
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${cfg.iconBg}`}>
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${cfg.iconBg}`}
+          >
             <Icon className="h-4.5 w-4.5" />
           </div>
         </div>
 
         {/* Preço — hierarquia: valor mensal grande > anual secundário > savings badge */}
         <div className="mb-5">
-          <div className={`text-4xl font-black tracking-tight leading-none ${cfg.priceCls}`}>
+          <div
+            className={`text-4xl font-black tracking-tight leading-none ${isProFeatured ? 'text-white' : 'text-slate-900'}`}
+          >
             {priceLabel}
             {slug !== 'free' && slug !== 'enterprise' && (
               <span className="text-base font-semibold text-slate-500 ml-0.5">/mês</span>
@@ -173,21 +193,27 @@ export function PlanCard({
           </div>
 
           {slug === 'free' && (
-            <div className="mt-1 text-sm text-slate-500 font-medium">para sempre</div>
+            <div className="mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'} ">
+              para sempre
+            </div>
           )}
           {slug === 'enterprise' && (
-            <div className="mt-1 text-sm text-slate-500 font-medium">Fale com nosso time</div>
+            <div className="mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'} ">
+              Fale com nosso time
+            </div>
           )}
 
           {yearlyPriceLabel && (
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500 font-medium">{yearlyPriceLabel}</span>
+              <span className="text-xs font-medium text-slate-500 ">{yearlyPriceLabel}</span>
               {savingBadge && (
-                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                  slug === 'essential'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-sky-50 text-brand-blue border border-brand-blue/20'
-                }`}>
+                <span
+                  className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                    slug === 'essential'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-sky-50 text-brand-blue border border-brand-blue/20'
+                  }`}
+                >
                   {savingBadge}
                 </span>
               )}
@@ -200,8 +226,10 @@ export function PlanCard({
         {/* Highlights / Features */}
         <ul className="flex-1 space-y-3 mb-7">
           {highlights.map((h) => (
-            <li key={h} className="flex items-start gap-3 text-sm text-slate-700">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${cfg.checkBg} ${cfg.checkText}`}>
+            <li key={h} className="flex items-start gap-3 text-sm ">
+              <span
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${cfg.checkBg} ${cfg.checkText}`}
+              >
                 <Check className="h-3 w-3" />
               </span>
               <span>{h}</span>
@@ -216,7 +244,9 @@ export function PlanCard({
           size="lg"
           className={[
             'h-12 w-full rounded-full font-bold text-sm transition-all',
-            isCurrentPlan ? 'bg-slate-100 text-slate-500 hover:bg-slate-100 border-0 cursor-default shadow-none' : cfg.ctaCls,
+            isCurrentPlan
+              ? 'bg-slate-100 text-slate-500 hover:bg-slate-100 border-0 cursor-default shadow-none'
+              : cfg.ctaCls,
           ].join(' ')}
         >
           {isLoading ? (
