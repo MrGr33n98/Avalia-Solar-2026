@@ -168,7 +168,9 @@ export default function SelectCompanyPage() {
                 { retries: 3, timeout: 20000, useClientCache: false }
               )
             ).suggested_companies || []
-          : normalizeCompanySelectionList(await companiesApi.getAll({ q: trimmed, limit: 20 }));
+          : normalizeCompanySelectionList(
+              await companiesApi.searchForSelection({ q: trimmed, limit: 20 })
+            );
         if (cancelled) return;
 
         setSearchResults(suggestedCompanies);

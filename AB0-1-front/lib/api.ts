@@ -714,6 +714,17 @@ export interface CompanyAccessPendingRequest {
   requested_at?: string;
 }
 
+export interface CompanySelectionApiResponse {
+  id: number;
+  name: string;
+  slug?: string | null;
+  city?: string | null;
+  state?: string | null;
+  verified?: boolean | null;
+  logo_url?: string | null;
+  rating_avg?: number | null;
+}
+
 export interface CompanyAccessSuggestedCompany {
   company_id: number;
   company_name: string;
@@ -1752,6 +1763,24 @@ export const companiesApi = {
       console.error('Error fetching companies:', error);
       return [];
     }
+  },
+  searchForSelection: async (params: {
+    q: string;
+    limit?: number;
+  }): Promise<CompanySelectionApiResponse[]> => {
+    const response = await fetchApi<
+      CompanySelectionApiResponse[] | { companies: CompanySelectionApiResponse[] }
+    >('/companies', { params });
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (response && Array.isArray(response.companies)) {
+      return response.companies;
+    }
+
+    return [];
   },
   mine: async (params?: any): Promise<Company[]> => {
     try {
