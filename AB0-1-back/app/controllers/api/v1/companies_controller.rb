@@ -258,14 +258,6 @@ module Api
                 Rails.logger.info "[Audit] User ID #{current_user.id} assigned as owner of Company ID #{@company.id}"
               end
 
-              PendingChange.create!(
-                company: @company,
-                user_id: current_user&.id,
-                change_type: 'company_create',
-                data: { requested_at: Time.current },
-                status: 'pending'
-              )
-
               begin
                 AdminUser.find_each do |admin|
                   NotificationMailer.admin_alert(

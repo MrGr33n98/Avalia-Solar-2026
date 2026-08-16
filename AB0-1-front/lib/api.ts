@@ -725,6 +725,19 @@ export interface CompanySelectionApiResponse {
   rating_avg?: number | null;
 }
 
+export interface CreateCompanyPayload {
+  name: string;
+  cnpj: string;
+  email: string;
+  state: string;
+  city: string;
+  category_ids: number[];
+  phone: string;
+  email_public: string;
+  website?: string;
+  description: string;
+}
+
 export interface CompanyAccessSuggestedCompany {
   company_id: number;
   company_name: string;
@@ -1853,7 +1866,7 @@ export const companiesApi = {
       return Promise.resolve([]);
     }
   },
-  create: (company: Partial<Company>) => {
+  create: (company: CreateCompanyPayload) => {
     try {
       return fetchApi('/companies', {
         method: 'POST',

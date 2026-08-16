@@ -684,7 +684,7 @@ export default function RegisterCompanyPage() {
     setSubmitError(null);
 
     try {
-      await (companiesApi.create as unknown as (c: unknown) => Promise<unknown>)({
+      await companiesApi.create({
         name: step1.razao_social.trim(),
         cnpj: step1.cnpj.replace(/\D/g, ''),
         email: step1.email.trim(),
@@ -696,7 +696,7 @@ export default function RegisterCompanyPage() {
         email_public: step2.email_corporativo.trim(),
         description: step1.nome_comercial
           ? `Nome comercial: ${step1.nome_comercial.trim()}`
-          : undefined,
+          : `Cadastro inicial da empresa ${step1.razao_social.trim()}.`,
       });
       setCreatedCompanyName(step1.razao_social);
       setStep(3);
