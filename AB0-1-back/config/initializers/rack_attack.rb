@@ -165,7 +165,20 @@ class Rack::Attack
   # Protege contra DDoS e scraping agressivo
   throttle('req/ip', limit: 300, period: 5.minutes) do |req|
     # Não aplicar throttle em assets estáticos
-    req.ip unless req.path.start_with?('/assets', '/rails/active_storage')
+    # Leituras públicas possuem cache/deduplicação e limites próprios; não
+    # devem consumir a cota geral compartilhada por NAT/CDN.
+    next if req.path.start_with?('/assets', '/rails/active_storage')
+    next if req.get? && %r{\A/api/v1/(banners|auth/me)\z}.match?(req.path)
+
+    req.ip
+  end
+
+  # Leituras públicas de alta frequência: proteção dedicada, sem bloquear
+  # páginas que fazem banner e sessão em paralelo.
+  throttle('public_reads/ip', limit: 600, period: 1.minute) do |req|
+    if req.get? && %r{\A/api/v1/(banners|auth/me)\z}.match?(req.path)
+      req.ip
+    end
   end
 
   # Limitar requests de API por usuário autenticado

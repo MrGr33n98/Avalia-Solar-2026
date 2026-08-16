@@ -39,6 +39,8 @@ interface UseBannersQueryOptions {
  * @returns Query result com dados, loading, error
  */
 const BANNER_REQUEST_TIMEOUT_MS = 5000;
+const BANNER_STALE_TIME_MS = 60 * 1000;
+const BANNER_GC_TIME_MS = 10 * 60 * 1000;
 
 function normalizeBanners(payload: unknown): Banner[] {
   if (Array.isArray(payload)) return payload as Banner[];
@@ -95,14 +97,14 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
         url: `/banners?${params.toString()}`,
         method: 'GET',
         timeout: BANNER_REQUEST_TIMEOUT_MS,
-        noCache: true,
+        cacheTtlMs: BANNER_STALE_TIME_MS,
       });
       return normalizeBanners(response.data);
     },
     enabled,
     initialData,
-    staleTime: 1000,
-    gcTime: 5000,
+    staleTime: BANNER_STALE_TIME_MS,
+    gcTime: BANNER_GC_TIME_MS,
     retry: (failureCount, error: unknown) => {
       const requestError = error as { status?: number; context?: { status?: number } };
       const status = requestError.status ?? requestError.context?.status;
