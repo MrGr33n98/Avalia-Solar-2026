@@ -16,6 +16,7 @@ import {
   Plus,
   Loader2,
   AlertCircle,
+  ArrowRight,
   Send,
 } from 'lucide-react';
 import Image from 'next/image';
