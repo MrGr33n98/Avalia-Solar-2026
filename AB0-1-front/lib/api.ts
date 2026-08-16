@@ -1613,6 +1613,11 @@ export interface RankingData {
   insights?: { strengths: string[]; opportunities: string[]; next_best_action?: string };
   rank_position: number | null;
   ranking_score: number | null;
+  scope?: { type: "global" | "category"; id?: string | number | null } | "global" | "category" | null;
+  definition?: RankingData["transparency"];
+  breakdown?: Record<string, unknown>;
+  history?: RankingData["historical_data"];
+  quadrant?: { points: RankingData["magic_quadrant_points"]; meta?: RankingData["quadrant_meta"] };
   magic_quadrant_points: Array<{
     id: number;
     name: string;
@@ -1634,13 +1639,13 @@ export interface RankingData {
   category_rankings?: Array<{
     category_id: number;
     category_name: string;
-    position: number;
-    total: number;
-    percentile: number;
+    position: number | null;
+    total: number | null;
+    percentile: number | null;
     criterion_slug?: string;
     criterion_title?: string;
   }>;
-  historical_data?: any[];
+  historical_data?: Array<{ week: string; position: number | null; score: number | null; percentile: number | null }>;
   transparency?: {
     definition_version: string;
     purpose: 'organic_performance' | 'criterion_quadrant_preview';

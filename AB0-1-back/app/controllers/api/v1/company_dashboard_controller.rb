@@ -236,7 +236,7 @@ module Api
             error: data[:error],
             ranking: { position: data[:current_position], population: data[:total_companies], score: data[:score], percentile: data[:percentile] },
             rank_position: data[:current_position],
-            ranking_score: data[:percentile],
+            ranking_score: data[:score],
             magic_quadrant_points: data[:magic_quadrant_competitors],
             quadrant_meta: data[:quadrant_meta],
             category_rankings: data[:category_rankings],

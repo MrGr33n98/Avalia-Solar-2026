@@ -167,9 +167,10 @@ module CompanyDashboard
           {
             category_id: category.id,
             category_name: category.name,
-            position: position,
-            total: total,
-            percentile: total.zero? ? 0 : ((total - position + 1).to_f / total * 100).round(1),
+            position: nil,
+            total: nil,
+            percentile: nil,
+            unavailable: true,
             criterion_slug: criterion_slug,
             criterion_title: scoped_service.send(:criterion_title)
           }
@@ -189,24 +190,13 @@ module CompanyDashboard
             }
           end
 
-          position = Company.active
-                            .joins(:categories)
-                            .where(categories: { id: category.id })
-                            .where('rating_avg > ? OR (rating_avg = ? AND rating_count > ?)',
-                                   comparison_rating(company), comparison_rating(company), company.rating_count)
-                            .count + 1
-
-          total = Company.active
-                         .joins(:categories)
-                         .where(categories: { id: category.id })
-                         .count
-
           {
             category_id: category.id,
             category_name: category.name,
-            position: position,
-            total: total,
-            percentile: total.zero? ? 0 : ((total - position + 1).to_f / total * 100).round(1)
+            position: nil,
+            total: nil,
+            percentile: nil,
+            unavailable: true
           }
         end
       end
