@@ -42,7 +42,7 @@ interface CriteriaResponse { criteria?: Criterion[] }
 interface TooltipEntry { color?: string; name: string; value: string | number }
 interface Props {
   company: Company;
-  stats?: DashboardStats;
+  stats?: DashboardStats | null;
   themeMode?: 'light' | 'dark';
 }
 
