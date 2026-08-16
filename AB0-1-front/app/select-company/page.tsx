@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Send,
 } from 'lucide-react';
+import { normalizeCompanySelectionList } from './company-selection';
 import Image from 'next/image';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { SearchEmptyPanel, SearchInitialPanel, SearchLoadingPanel } from './FlowPanels';
@@ -167,17 +168,7 @@ export default function SelectCompanyPage() {
                 { retries: 3, timeout: 20000, useClientCache: false }
               )
             ).suggested_companies || []
-          : (await companiesApi.getAll({ q: trimmed, limit: 20 })).map((company) => ({
-              company_id: company.id,
-              company_name: company.name,
-              company_slug: company.slug,
-              city: company.city,
-              state: company.state,
-              verified: company.verified,
-              logo_url: company.logo_url,
-              cnpj: company.cnpj,
-              rating: company.rating_avg,
-            }));
+          : normalizeCompanySelectionList(await companiesApi.getAll({ q: trimmed, limit: 20 }));
         if (cancelled) return;
 
         setSearchResults(suggestedCompanies);
@@ -328,7 +319,7 @@ export default function SelectCompanyPage() {
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por nome da empresa ou CNPJ"
+          placeholder="Buscar por nome da empresa"
           className="h-9 pl-8 text-xs"
         />
       </div>
@@ -464,8 +455,7 @@ export default function SelectCompanyPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-bold">{company.company_name}</p>
                   <p className="text-[10px] text-[#60708f]">
-                    {company.city || '-'}, {company.state || '-'} · CNPJ{' '}
-                    {company.cnpj || 'não informado'}
+                    {company.city || '-'}, {company.state || '-'}
                   </p>
                   {company.verified && <PremiumBadge className="mt-1 px-1 py-0" />}
                 </div>

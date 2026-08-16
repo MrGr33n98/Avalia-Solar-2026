@@ -59,7 +59,6 @@
               city: company_has_column?(company, :city) ? company.city : nil,
               state: company_has_column?(company, :state) ? company.state : nil,
               verified: company_has_column?(company, :verified) ? company.verified : false,
-              cnpj: company_has_column?(company, :cnpj) ? company.cnpj : nil,
               rating: company_has_column?(company, :rating_avg) ? company.rating_avg : nil,
               member_count: company.respond_to?(:company_members) ? company.company_members.size : nil,
               logo_url: company.logo_url
@@ -155,7 +154,6 @@
         columns << :city if company_columns.include?('city')
         columns << :state if company_columns.include?('state')
         columns << :verified if company_columns.include?('verified')
-        columns << :cnpj if company_columns.include?('cnpj')
         columns << :rating_avg if company_columns.include?('rating_avg')
         columns << :rating_count if company_columns.include?('rating_count')
         columns << :employees_count if company_columns.include?('employees_count')

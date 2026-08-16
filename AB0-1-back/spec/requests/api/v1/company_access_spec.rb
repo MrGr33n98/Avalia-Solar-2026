@@ -78,8 +78,8 @@ RSpec.describe 'Company Access API', type: :request do
   end
 
   describe 'GET /api/v1/company_access/context' do
-    it 'returns context for review users' do
-      create_active_company(name: 'Empresa Contexto')
+    it 'returns the minimum company selection contract without exposing cnpj' do
+      create_active_company(name: 'Empresa Contexto', cnpj: '11222333000181', logo: nil, rating_avg: nil)
       auth = auth_headers(review_user)
       get '/api/v1/company_access/context', headers: auth
 
@@ -88,7 +88,12 @@ RSpec.describe 'Company Access API', type: :request do
       expect(body['active_memberships']).to be_an(Array)
       expect(body['pending_requests']).to be_an(Array)
       expect(body['suggested_companies']).to be_an(Array)
-      expect(body['suggested_companies'].first).to include('logo_url')
+      expect(body['suggested_companies'].first).to include(
+        'company_id', 'company_name', 'verified', 'logo_url', 'rating'
+      )
+      expect(body['suggested_companies'].first['logo_url']).to be_nil
+      expect(body['suggested_companies'].first['rating']).to be_nil
+      expect(body['suggested_companies'].first).not_to have_key('cnpj')
     end
 
     it 'returns active memberships and pending requests' do

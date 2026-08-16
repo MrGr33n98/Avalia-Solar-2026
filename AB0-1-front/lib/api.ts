@@ -723,7 +723,6 @@ export interface CompanyAccessSuggestedCompany {
   verified?: boolean;
   match_reason?: string;
   logo_url?: string | null;
-  cnpj?: string | null;
   rating?: number | null;
   member_count?: number | null;
 }
@@ -1612,18 +1611,27 @@ export interface CertificationProgress {
 export interface RankingData {
   status?: 'ready' | 'unavailable' | 'locked';
   error?: { code: string };
-  ranking?: { position: number | null; population: number | null; score: number | null; percentile: number | null };
+  ranking?: {
+    position: number | null;
+    population: number | null;
+    score: number | null;
+    percentile: number | null;
+  };
   quality?: { flags: string[]; computed_at?: string | null; data_through?: string | null };
   leaders?: RankingData['magic_quadrant_points'];
   neighbors?: RankingData['magic_quadrant_points'];
   insights?: { strengths: string[]; opportunities: string[]; next_best_action?: string };
   rank_position: number | null;
   ranking_score: number | null;
-  scope?: { type: "global" | "category"; id?: string | number | null } | "global" | "category" | null;
-  definition?: RankingData["transparency"];
+  scope?:
+    | { type: 'global' | 'category'; id?: string | number | null }
+    | 'global'
+    | 'category'
+    | null;
+  definition?: RankingData['transparency'];
   breakdown?: Record<string, unknown>;
-  history?: RankingData["historical_data"];
-  quadrant?: { points: RankingData["magic_quadrant_points"]; meta?: RankingData["quadrant_meta"] };
+  history?: RankingData['historical_data'];
+  quadrant?: { points: RankingData['magic_quadrant_points']; meta?: RankingData['quadrant_meta'] };
   magic_quadrant_points: Array<{
     id: number;
     name: string;
@@ -1652,7 +1660,12 @@ export interface RankingData {
     criterion_slug?: string;
     criterion_title?: string;
   }>;
-  historical_data?: Array<{ week: string; position: number | null; score: number | null; percentile: number | null }>;
+  historical_data?: Array<{
+    week: string;
+    position: number | null;
+    score: number | null;
+    percentile: number | null;
+  }>;
   transparency?: {
     definition_version: string;
     purpose: 'organic_performance' | 'criterion_quadrant_preview';
