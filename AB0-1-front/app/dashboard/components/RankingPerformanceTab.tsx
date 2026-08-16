@@ -53,6 +53,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [historyDays, setHistoryDays] = useState<string>('90');
+  const [quadrantMode, setQuadrantMode] = useState<'default' | 'reviews'>('default');
 
   const criteriaQuery = useQuery({
     queryKey: ['category-evaluation-context', selectedCategoryId],
@@ -68,7 +69,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
   }, [selectedCategoryId]);
 
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, selectedCity, selectedSector, historyDays],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, selectedCity, selectedSector, quadrantMode, historyDays],
     queryFn: async () => {
       return companyDashboardApi.getRanking(
         company.id,
@@ -77,6 +78,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
         selectedState !== 'all' ? selectedState : undefined,
         selectedCity.trim() !== '' ? selectedCity.trim() : undefined,
         selectedSector !== 'all' ? selectedSector : undefined,
+        quadrantMode,
         Number(historyDays)
       );
     },
@@ -415,6 +417,18 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
                   onChange={(e) => setSelectedCity(e.target.value)}
                   className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30 focus:outline-none"
                 />
+              </div>
+
+              <div className="relative group">
+                <Select value={quadrantMode} onValueChange={(value) => setQuadrantMode(value as 'default' | 'reviews')}>
+                  <SelectTrigger className="w-full h-11 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest">
+                    <SelectValue placeholder="BASE DO QUADRANTE" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Autoridade e execução</SelectItem>
+                    <SelectItem value="reviews">Somente reviews</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="relative group">

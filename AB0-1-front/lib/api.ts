@@ -1635,6 +1635,7 @@ export interface RankingData {
     criterion_title?: string;
     x_axis_label?: string;
     y_axis_label?: string;
+    mode?: 'default' | 'reviews';
   };
   category_rankings?: Array<{
     category_id: number;
@@ -1691,6 +1692,7 @@ export const companyDashboardApi = {
     state?: string,
     city?: string,
     sector?: string,
+    quadrantMode?: 'default' | 'reviews',
     historyDays: number = 90
   ) =>
     fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
@@ -1701,6 +1703,7 @@ export const companyDashboardApi = {
         state: state,
         city: city,
         sector: sector,
+        quadrant_mode: quadrantMode,
         history_days: historyDays,
       },
     }),

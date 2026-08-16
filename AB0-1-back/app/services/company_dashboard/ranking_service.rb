@@ -7,9 +7,9 @@ module CompanyDashboard
     MAX_EXECUTION_VIEWS = 2_000.0
     MAX_EXECUTION_CLICKS = 300.0
 
-    attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector
+    attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector, :quadrant_mode
 
-    def initialize(company:, category_id: nil, criterion_slug: nil, state: nil, city: nil, sector: nil, history_days: 90)
+    def initialize(company:, category_id: nil, criterion_slug: nil, state: nil, city: nil, sector: nil, history_days: 90, quadrant_mode: nil)
       @company = company
       @category_id = category_id
       @criterion_slug = criterion_slug
@@ -17,6 +17,7 @@ module CompanyDashboard
       @city = city
       @sector = sector
       @history_days = [[history_days.to_i, 7].max, 365].min
+      @quadrant_mode = quadrant_mode == 'reviews' ? 'reviews' : 'default'
     end
 
     def ad_hoc_preview?
@@ -133,6 +134,8 @@ module CompanyDashboard
     end
 
     def calculate_vision_score(comp)
+      return review_quadrant_authority(comp) if quadrant_mode == 'reviews'
+
       criterion_component = criterion_slug.present? ? normalize_criterion_score(criterion_score_for(comp)) * 15.0 : 0.0
 
       score =
@@ -147,6 +150,8 @@ module CompanyDashboard
     end
 
     def calculate_execution_score(comp)
+      return review_quadrant_strength(comp) if quadrant_mode == 'reviews'
+
       leads_signal = normalize(comp.leads_count.to_f, MAX_EXECUTION_LEADS) * 35.0
       engagement_signal = blended_engagement_score_for(comp) * 25.0
       conversion_signal = conversion_efficiency_score_for(comp) * 20.0
@@ -155,6 +160,18 @@ module CompanyDashboard
 
       score = leads_signal + engagement_signal + conversion_signal + trust_operational_signal + category_fit_signal
       [score, 100.0].min.round(1)
+    end
+
+    def review_quadrant_authority(comp)
+      rating = normalize(comp.rating_avg.to_f, 5.0) * 70.0
+      volume = normalize_log(comp.reviews_count.to_f, 200.0) * 30.0
+      (rating + volume).round(1)
+    end
+
+    def review_quadrant_strength(comp)
+      volume = normalize_log(comp.reviews_count.to_f, 200.0) * 45.0
+      credibility = review_credibility_score_for(comp) * 0.55
+      (volume + credibility).round(1)
     end
 
     def category_rankings
@@ -340,8 +357,9 @@ module CompanyDashboard
         category_id: category_id,
         criterion_slug: criterion_slug,
         criterion_title: criterion_title,
-        x_axis_label: criterion_slug.present? ? "Autoridade de Confiança · #{criterion_title || criterion_slug.to_s.humanize}" : 'Autoridade de Confiança',
-        y_axis_label: 'Poder de Execução'
+        mode: quadrant_mode,
+        x_axis_label: quadrant_mode == 'reviews' ? 'Autoridade das Reviews' : (criterion_slug.present? ? "Autoridade de Confiança · #{criterion_title || criterion_slug.to_s.humanize}" : 'Autoridade de Confiança'),
+        y_axis_label: quadrant_mode == 'reviews' ? 'Força das Reviews' : 'Poder de Execução'
       }
     end
   end

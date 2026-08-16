@@ -219,6 +219,7 @@ module Api
           state = params[:state].presence
           city = params[:city].presence
           sector = params[:sector].presence
+          quadrant_mode = params[:quadrant_mode].presence
           history_days = [[params.fetch(:history_days, 90).to_i, 7].max, 365].min
           service = ::CompanyDashboard::RankingService.new(
             company: @company,
@@ -227,7 +228,8 @@ module Api
             state: state,
             city: city,
             sector: sector,
-            history_days: history_days
+            history_days: history_days,
+            quadrant_mode: quadrant_mode
           )
           data = service.ranking_data
 
