@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { track } from '@/lib/analytics/lazy';
 import { buildArticleLink } from '@/lib/blog/article-links';
+import BannerByLocation from '@/components/BannerByLocation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 
@@ -157,7 +158,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
               <Link
                 key={post.id}
                 href={link.url}
-                className="group flex gap-4 bg-white border border-gray-100 hover:border-gray-200 transition-colors p-4"
+                className="group flex gap-4 bg-white border border-gray-100 rounded-lg hover:border-[#0047bb] transition-colors p-4"
                 onClick={() =>
                   track('blog_article_click', {
                     post_id: post.id,

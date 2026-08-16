@@ -33,8 +33,8 @@ export function CategoryHighlights() {
                 href={item.href}
                 className="
                   whitespace-nowrap px-4 py-3.5 text-sm text-gray-500
-                  hover:text-gray-900 font-medium border-b-2 border-transparent
-                  hover:border-blue-500 transition-colors duration-150 shrink-0
+                  hover:text-gray-900 font-medium border-2 border-transparent
+                  hover:border-[#0047bb] transition-colors duration-150 shrink-0 rounded-full mx-1 my-2 bg-slate-50 hover:bg-blue-50
                 "
                 onClick={() =>
                   track('blog_category_click', {

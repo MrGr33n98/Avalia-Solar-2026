@@ -37,7 +37,7 @@ export function BlogHero() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-none px-5 h-9 shadow-none"
+                className="bg-[#0047bb] hover:bg-[#003b9d] text-white font-medium rounded-lg px-5 h-9 shadow-none"
                 onClick={() => openQuoteWizard({ source: 'blog_hero' })}
               >
                 Simular Economia
@@ -45,7 +45,7 @@ export function BlogHero() {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-none border-gray-300 text-gray-700 font-medium px-5 h-9 hover:bg-gray-50 shadow-none"
+                className="rounded-lg border-gray-300 text-gray-700 font-medium px-5 h-9 hover:bg-gray-50 shadow-none"
                 asChild
               >
                 <a href="/blog?category=guias">Ver Guias</a>

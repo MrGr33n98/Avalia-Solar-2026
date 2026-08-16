@@ -50,7 +50,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
         });
       }}
     >
-      <article className="h-full flex flex-col bg-white border border-gray-100 group-hover:border-gray-200 transition-colors">
+      <article className="h-full flex flex-col bg-white border border-gray-100 rounded-lg overflow-hidden group-hover:border-[#0047bb] transition-colors">
         {/* Cover Image */}
         <div className="relative h-44 w-full overflow-hidden bg-gray-100 shrink-0">
           {post.cover_image_url || post.image_url ? (

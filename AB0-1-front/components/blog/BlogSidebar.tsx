@@ -27,12 +27,12 @@ export function BlogSidebar({ verifiedCompanies = [] }: BlogSidebarProps) {
   return (
     <aside className="space-y-5">
       {/* Ad Banner */}
-      <div className="border border-gray-100 overflow-hidden">
+      <div className="border border-gray-100 rounded-lg overflow-hidden">
         <BannerByLocation location="sidebar" limit={1} />
       </div>
 
       {/* 1. Simulador de Economia */}
-      <div className="border border-gray-100 bg-white p-5 space-y-4">
+      <div className="border border-gray-100 rounded-lg bg-white p-5 space-y-4">
         <div className="flex items-center gap-2 border-b border-gray-50 pb-4">
           <Calculator className="w-4 h-4 text-blue-600 shrink-0" aria-hidden="true" />
           <div>
