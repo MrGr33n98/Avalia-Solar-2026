@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState, type ChangeEvent, type ReactNode } from 'react';
 import Image from 'next/image';
 import {
   Activity,
@@ -265,17 +265,18 @@ function SectionCard({
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(true);
+  const contentId = useId();
 
   return (
     <Card
       className={cn(
-        'min-w-0 overflow-hidden rounded-none border border-slate-200 bg-white shadow-none [&_.rounded-2xl]:rounded-none [&_.rounded-full]:rounded-none [&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none',
+        'min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
         className
       )}
     >
       <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-blue-50 text-brand-blue">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-brand-blue">
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -288,16 +289,21 @@ function SectionCard({
           <Button
             type="button"
             variant="outline"
-            className="h-9 rounded-none border-slate-200 px-3 text-xs font-bold uppercase tracking-wide text-slate-600"
+            className="h-11 rounded-lg border-slate-200 px-3 text-xs font-bold uppercase tracking-wide text-slate-600"
             onClick={() => setIsOpen((current) => !current)}
             aria-expanded={isOpen}
+            aria-controls={contentId}
           >
-            {isOpen ? 'Fechar' : 'Abrir'}
+            {isOpen ? 'Recolher' : 'Expandir'}
             <ChevronDown className={cn('ml-2 h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
           </Button>
         </div>
       </CardHeader>
-      {isOpen ? <CardContent className="p-4 sm:p-5">{children}</CardContent> : null}
+      {isOpen ? (
+        <CardContent id={contentId} className="p-4 sm:p-5">
+          {children}
+        </CardContent>
+      ) : null}
     </Card>
   );
 }
@@ -394,7 +400,7 @@ function UploadAction({
   return (
     <label
       htmlFor={inputId}
-      className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-brand-blue transition hover:bg-blue-50 sm:w-auto"
+      className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-brand-blue transition hover:bg-blue-50 sm:h-10 sm:w-auto"
     >
       <Upload className="h-4 w-4" />
       {children}
@@ -736,7 +742,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const primaryLocation = [currentData.city, currentData.state].filter(Boolean).join(', ') || TO_DEFINE;
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] min-w-0 space-y-5 pb-24">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6 pb-24">
       <AnimatePresence>
         {pendingApproval && (
           <motion.div
@@ -793,15 +799,16 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
         <SectionCard
           title="Ativo Corporativo da Marca"
           description={`Atualizado em: ${formatDateTime(currentData.updated_at)}`}
           icon={ImageIcon}
           actions={<UploadAction inputId={bannerInputId} onChange={handleBannerUpload}>Alterar imagem</UploadAction>}
+          className="lg:col-span-2"
         >
           <div className="min-w-0 space-y-4">
-            <div className="relative min-h-[180px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+            <div className="relative aspect-[16/5] min-h-[180px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
               {currentData.banner_url ? (
                 <>
                   <Image
@@ -876,7 +883,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         </SectionCard>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
           title="Informações Técnicas Essenciais"
           description="Dados jurídicos, descrição institucional e conformidade."

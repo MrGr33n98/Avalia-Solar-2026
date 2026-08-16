@@ -518,17 +518,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="product-general" className="mt-0 focus-visible:outline-none">
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Informações gerais
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Atualize as informações principais do seu produto/empresa no Avaliasolar.
-                    </p>
-                  </div>
-                  <CompanyInfo companyId={companyId} />
-                </div>
+                <CompanyInfo companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="product-categories" className="mt-0 focus-visible:outline-none">
