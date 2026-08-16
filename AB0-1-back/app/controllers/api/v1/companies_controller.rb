@@ -186,6 +186,13 @@ module Api
       # POST /api/v1/companies
       def create
         Rails.logger.info '[Audit] Initing company creation'
+
+        requested_category_ids = Array(params.dig(:company, :category_ids)).map(&:to_i).uniq
+        existing_category_ids = ::Category.where(id: requested_category_ids).pluck(:id)
+        if requested_category_ids.any? && (requested_category_ids - existing_category_ids).any?
+          return render json: { error: 'validation_error', message: 'Revise os campos destacados.', errors: ['Selecione categorias válidas.'], field_errors: { category_ids: ['Selecione categorias válidas.'] } }, status: :unprocessable_entity
+        end
+
         @company = ::Company.new(company_params)
 
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada

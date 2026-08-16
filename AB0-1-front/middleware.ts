@@ -85,7 +85,10 @@ async function resolveCategorySlugIndex(request: NextRequest): Promise<Record<nu
   }
 }
 
-function buildCompaniesCategoriesPath(categoryIds: number[], slugById: Record<number, string>): string {
+function buildCompaniesCategoriesPath(
+  categoryIds: number[],
+  slugById: Record<number, string>
+): string {
   if (categoryIds.length === 0) return LEGACY_COMPANIES_PATH;
 
   const segments = categoryIds.map((id) => {
@@ -107,7 +110,8 @@ export async function middleware(request: NextRequest) {
   });
   // Get the token from httpOnly cookie
   const token = request.cookies.get('jwt_token')?.value;
-  const isRscRequest = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc');
+  const isRscRequest =
+    request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc');
   const isServerActionRequest = request.headers.has('next-action');
   const shouldDisableCache = isRscRequest || isServerActionRequest;
 
@@ -121,16 +125,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define protected routes
-  const protectedPaths = [
-    '/dashboard',
-    '/profile',
-    '/company-dashboard',
-    '/review-dashboard',
-    '/select-company',
-  ];
-  
+  const protectedPaths = ['/dashboard', '/profile', '/company-dashboard', '/review-dashboard'];
+
   // Check if the current path is protected
-  const isProtectedRoute = protectedPaths.some(path => 
+  const isProtectedRoute = protectedPaths.some((path) =>
     pathname.startsWith(path.replace('[id]', ''))
   );
 
@@ -178,25 +176,31 @@ export async function middleware(request: NextRequest) {
         redirectUrl.searchParams.append(key, value);
       });
 
-      return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.redirect(redirectUrl, 301)));
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(redirectUrl, 301))
+      );
     }
   }
-  
+
   if (isProtectedRoute) {
     if (!token) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[Middleware] Unauthorized access to protected route: ${pathname}. Redirecting to /login`);
+        console.warn(
+          `[Middleware] Unauthorized access to protected route: ${pathname}. Redirecting to /login`
+        );
       }
       const loginUrl = new URL('/login', request.url);
       const redirectTo = pathname + request.nextUrl.search;
       loginUrl.searchParams.set('redirect', redirectTo);
-      return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.redirect(loginUrl)));
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(loginUrl))
+      );
     }
     if (process.env.NODE_ENV === 'development') {
       console.log(`[Middleware] Authorized access to: ${pathname}`);
     }
   }
-  
+
   // Continue with the request
   return maybeAttachHomeHeroExperimentCookie(applyNoStoreHeaders(NextResponse.next()));
 }

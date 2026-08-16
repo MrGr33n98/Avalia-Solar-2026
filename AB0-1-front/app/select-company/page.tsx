@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { companyAccessApi, type CompanyAccessSuggestedCompany, type Company } from '@/lib/api';
+import {
+  companiesApi,
+  companyAccessApi,
+  type CompanyAccessSuggestedCompany,
+  type Company,
+} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -67,7 +72,7 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
 
 export default function SelectCompanyPage() {
   const router = useRouter();
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const { companies, selectCompany, isLoading } = useCompanyContext();
 
   const [search, setSearch] = useState('');
@@ -95,6 +100,13 @@ export default function SelectCompanyPage() {
     if (authLoading) return;
 
     let cancelled = false;
+
+    if (!isAuthenticated) {
+      setContextLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const loadContext = async () => {
       setContextLoading(true);
@@ -130,7 +142,7 @@ export default function SelectCompanyPage() {
     return () => {
       cancelled = true;
     };
-  }, [authLoading]);
+  }, [authLoading, isAuthenticated]);
 
   useEffect(() => {
     const trimmed = search.trim();
@@ -148,20 +160,32 @@ export default function SelectCompanyPage() {
       setSearchLoading(true);
       setSearchError(null);
       try {
-        const context = await companyAccessApi.context(
-          { q: trimmed, limit: 20 },
-          { retries: 3, timeout: 20000, useClientCache: false }
-        );
+        const suggestedCompanies = isAuthenticated
+          ? (
+              await companyAccessApi.context(
+                { q: trimmed, limit: 20 },
+                { retries: 3, timeout: 20000, useClientCache: false }
+              )
+            ).suggested_companies || []
+          : (await companiesApi.getAll({ q: trimmed, limit: 20 })).map((company) => ({
+              company_id: company.id,
+              company_name: company.name,
+              company_slug: company.slug,
+              city: company.city,
+              state: company.state,
+              verified: company.verified,
+              logo_url: company.logo_url,
+              cnpj: company.cnpj,
+              rating: company.rating_avg,
+            }));
         if (cancelled) return;
 
-        setSearchResults(context?.suggested_companies || []);
-        setFlowState(context?.suggested_companies?.length ? 'results' : 'empty');
-        track(context?.suggested_companies?.length ? 'search_performed' : 'search_no_results', {
+        setSearchResults(suggestedCompanies);
+        setFlowState(suggestedCompanies.length ? 'results' : 'empty');
+        track(suggestedCompanies.length ? 'search_performed' : 'search_no_results', {
           source: 'select_company',
           query_length: trimmed.length,
         });
-        const pendingIds = (context?.pending_requests || []).map((request) => request.company_id);
-        setPendingRequestIds((current) => Array.from(new Set([...current, ...pendingIds])));
       } catch (error) {
         if (cancelled) return;
         setSearchResults([]);
@@ -183,7 +207,7 @@ export default function SelectCompanyPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [search]);
+  }, [search, isAuthenticated]);
 
   const filteredMyCompanies = useMemo(() => {
     if (!normalizedQuery) return companies;

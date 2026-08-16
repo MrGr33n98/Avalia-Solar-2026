@@ -251,6 +251,7 @@ end
   validate :validate_ready_for_activation, if: -> { status == 'active' }
   validate :validate_featured_requires_active
   validate :validate_category_ids_format
+  validate :validate_category_ids_exist
   validate :validate_attachments
 
   validates :website,
@@ -539,6 +540,15 @@ end
     return unless category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
 
     errors.add(:category_ids, 'contém identificadores inválidos')
+  end
+
+  def validate_category_ids_exist
+    return if category_ids.blank? || !category_ids.is_a?(Array)
+
+    requested_ids = category_ids.map(&:to_i).uniq
+    existing_ids = Category.where(id: requested_ids).pluck(:id)
+    invalid_ids = requested_ids - existing_ids
+    errors.add(:category_ids, 'contém categorias inexistentes') if invalid_ids.any?
   end
 
   def normalize_company_fields

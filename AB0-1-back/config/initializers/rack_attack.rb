@@ -54,6 +54,11 @@ class Rack::Attack
     req.ip if req.path.match?(%r{\A/api/v1/creators/[^/]+/publications/[^/]+/comments\z}) && req.post?
   end
 
+  # Cadastro público de empresas: limita spam sem bloquear busca/leitura.
+  throttle('company_registration/ip', limit: 5, period: 10.minutes) do |req|
+    req.ip if req.path == '/api/v1/companies' && req.post?
+  end
+
 
   # === Existing Rules ===
 

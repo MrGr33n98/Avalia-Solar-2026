@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { companiesApi } from '@/lib/api';
+import { companiesApi, type Category } from '@/lib/api';
+import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -101,6 +102,146 @@ function StepIndicator({ current, total }: { current: WizardStep; total: number 
   );
 }
 
+function CategoryPicker({
+  categories,
+  selectedIds,
+  loading,
+  error,
+  onRetry,
+  onChange,
+  errorMessage,
+}: {
+  categories: Category[];
+  selectedIds: number[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  onChange: (ids: number[]) => void;
+  errorMessage?: string;
+}) {
+  const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const selected = categories.filter((category) => selectedIds.includes(category.id));
+  const normalizedQuery = query
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const options = categories.filter(
+    (category) =>
+      !selectedIds.includes(category.id) &&
+      (!normalizedQuery ||
+        category.name
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .includes(normalizedQuery))
+  );
+  const toggle = (id: number) =>
+    onChange(
+      selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]
+    );
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (options.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((index) => (index + 1) % options.length);
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((index) => (index - 1 + options.length) % options.length);
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      toggle(options[activeIndex]?.id);
+    }
+    if (event.key === 'Escape') event.currentTarget.blur();
+  };
+  return (
+    <div>
+      <Label htmlFor="company_categories_search">Categorias *</Label>
+      {selected.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2" aria-label="Categorias selecionadas">
+          {selected.map((category) => (
+            <span
+              key={category.id}
+              className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700"
+            >
+              {category.name}
+              <button
+                type="button"
+                aria-label={'Remover ' + category.name}
+                onClick={() => toggle(category.id)}
+                className="rounded-full p-0.5 hover:bg-blue-100"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {loading ? (
+        <p className="mt-2 rounded-md border border-gray-200 p-3 text-sm text-gray-500">
+          Carregando categorias...
+        </p>
+      ) : error ? (
+        <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <p>Não foi possível carregar as categorias.</p>
+          <button type="button" onClick={onRetry} className="mt-2 font-semibold underline">
+            Tentar novamente
+          </button>
+        </div>
+      ) : categories.length === 0 ? (
+        <p className="mt-2 rounded-md border border-gray-200 p-3 text-sm text-gray-500">
+          Nenhuma categoria disponível no momento.
+        </p>
+      ) : (
+        <>
+          <Input
+            id="company_categories_search"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="company_categories_options"
+            aria-activedescendant={
+              options[activeIndex] ? `category-option-${options[activeIndex].id}` : undefined
+            }
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar categorias..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="h-11 mt-2"
+          />
+          <div
+            id="company_categories_options"
+            className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-200 p-1"
+            role="listbox"
+            aria-label="Categorias disponíveis"
+          >
+            {options.length === 0 ? (
+              <p className="p-3 text-sm text-gray-500">Nenhuma categoria encontrada.</p>
+            ) : (
+              options.map((category) => (
+                <button
+                  key={category.id}
+                  id={`category-option-${category.id}`}
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  onClick={() => toggle(category.id)}
+                  className="block min-h-11 w-full rounded px-3 py-2 text-left text-sm hover:bg-blue-50"
+                >
+                  {category.name}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      )}
+      {errorMessage && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
+    </div>
+  );
+}
+
 // ─── Etapa 1: Dados da empresa ────────────────────────────────────────────────
 
 function Step1({
@@ -108,11 +249,19 @@ function Step1({
   onChange,
   onNext,
   errors,
+  categories,
+  categoriesLoading,
+  categoriesError,
+  onRetryCategories,
 }: {
   data: Step1Data;
   onChange: (patch: Partial<Step1Data>) => void;
   onNext: () => void;
   errors: Partial<Record<keyof Step1Data, string>>;
+  categories: Category[];
+  categoriesLoading: boolean;
+  categoriesError: string | null;
+  onRetryCategories: () => void;
 }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,19 +368,15 @@ function Step1({
           {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
         </div>
       </div>
-      <div>
-        <Label htmlFor="company_categories">Categorias *</Label>
-        <Input
-          id="company_categories"
-          placeholder="IDs separados por vírgula"
-          value={data.category_ids.join(',')}
-          onChange={(e) =>
-            onChange({ category_ids: e.target.value.split(',').map(Number).filter(Boolean) })
-          }
-          className="h-11 mt-1"
-        />
-        {errors.category_ids && <p className="text-xs text-red-500 mt-1">{errors.category_ids}</p>}
-      </div>
+      <CategoryPicker
+        categories={categories}
+        selectedIds={data.category_ids}
+        loading={categoriesLoading}
+        error={categoriesError}
+        onRetry={onRetryCategories}
+        onChange={(category_ids) => onChange({ category_ids })}
+        errorMessage={errors.category_ids}
+      />
 
       <Button
         type="submit"
@@ -469,6 +614,12 @@ export default function RegisterCompanyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdCompanyName, setCreatedCompanyName] = useState('');
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesLoadError,
+    refresh: refreshCategories,
+  } = useCategories(true);
 
   const [step1, setStep1] = useState<Step1Data>({
     razao_social: '',
@@ -598,6 +749,10 @@ export default function RegisterCompanyPage() {
               onChange={(p) => setStep1((prev) => ({ ...prev, ...p }))}
               onNext={handleNextFromStep1}
               errors={errors1}
+              categories={categories}
+              categoriesLoading={categoriesLoading}
+              categoriesError={categoriesLoadError?.message ?? null}
+              onRetryCategories={() => void refreshCategories()}
             />
           )}
 
