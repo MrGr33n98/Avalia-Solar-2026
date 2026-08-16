@@ -62,6 +62,8 @@ export function getBannerAspectRatio(position?: string) {
       return 'aspect-[20/3]';
     case 'home_top':
       return 'aspect-[15/2]';
+    case 'company_profile_about_inline':
+      return 'aspect-[15/2]';
     case 'companies_top':
       return 'h-[88px] max-h-[88px] w-full sm:h-[104px] sm:max-h-[104px] md:h-[120px] md:max-h-[120px] lg:h-[136px] lg:max-h-[136px]';
     case 'search_mid':
