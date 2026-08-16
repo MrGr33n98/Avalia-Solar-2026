@@ -187,6 +187,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
           <UnifiedHeroBanner
             categoryName={catalog.category.name}
             categorySlug={catalog.category.seo_url}
+            categoryId={catalog.category.id}
             companyId={catalog.company.id}
             companyName={catalog.company.name}
           />

@@ -12,6 +12,7 @@ interface BannerSlotProps {
   limit?: number;
   priority?: boolean;
   companyId?: number;
+  categoryId?: number;
   blockCompetitors?: boolean;
   showLoadingSkeleton?: boolean;
 }
@@ -23,6 +24,7 @@ export function BannerSlot({
   limit = 3,
   priority = false,
   companyId,
+  categoryId,
   blockCompetitors = false,
   showLoadingSkeleton = true,
 }: BannerSlotProps) {
@@ -33,6 +35,8 @@ export function BannerSlot({
   } = useBannersQuery({
     position: placement,
     limit,
+    category_id: categoryId,
+    company_id: companyId,
   });
 
   // Renderiza um skeleton suave de carregamento
