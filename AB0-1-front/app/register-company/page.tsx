@@ -29,6 +29,10 @@ interface Step1Data {
   nome_comercial: string;
   cnpj: string;
   website: string;
+  email: string;
+  state: string;
+  city: string;
+  category_ids: number[];
 }
 
 interface Step2Data {
@@ -90,7 +94,9 @@ function StepIndicator({ current, total }: { current: WizardStep; total: number 
           </div>
         );
       })}
-      <span className="ml-2 text-xs text-gray-400 font-medium">{current}/{total}</span>
+      <span className="ml-2 text-xs text-gray-400 font-medium">
+        {current}/{total}
+      </span>
     </div>
   );
 }
@@ -129,9 +135,7 @@ function Step1({
           onChange={(e) => onChange({ razao_social: e.target.value })}
           className={`h-11 ${errors.razao_social ? 'border-red-400 focus-visible:ring-red-300' : 'focus-visible:ring-blue-200'}`}
         />
-        {errors.razao_social && (
-          <p className="text-xs text-red-500 mt-1">{errors.razao_social}</p>
-        )}
+        {errors.razao_social && <p className="text-xs text-red-500 mt-1">{errors.razao_social}</p>}
       </div>
 
       <div>
@@ -148,7 +152,9 @@ function Step1({
           onChange={(e) => onChange({ nome_comercial: e.target.value })}
           className="h-11 focus-visible:ring-blue-200"
         />
-        <p className="text-xs text-gray-400 mt-1">Nome pelo qual a empresa é conhecida no mercado (opcional)</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Nome pelo qual a empresa é conhecida no mercado (opcional)
+        </p>
       </div>
 
       <div>
@@ -179,6 +185,54 @@ function Step1({
         />
       </div>
 
+      <div>
+        <Label htmlFor="company_email">E-mail da empresa *</Label>
+        <Input
+          id="company_email"
+          type="email"
+          value={data.email}
+          onChange={(e) => onChange({ email: e.target.value })}
+          className="h-11 mt-1"
+        />
+        {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="company_state">Estado *</Label>
+          <Input
+            id="company_state"
+            maxLength={2}
+            value={data.state}
+            onChange={(e) => onChange({ state: e.target.value.toUpperCase() })}
+            className="h-11 mt-1"
+          />
+          {errors.state && <p className="text-xs text-red-500 mt-1">{errors.state}</p>}
+        </div>
+        <div>
+          <Label htmlFor="company_city">Cidade *</Label>
+          <Input
+            id="company_city"
+            value={data.city}
+            onChange={(e) => onChange({ city: e.target.value })}
+            className="h-11 mt-1"
+          />
+          {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="company_categories">Categorias *</Label>
+        <Input
+          id="company_categories"
+          placeholder="IDs separados por vírgula"
+          value={data.category_ids.join(',')}
+          onChange={(e) =>
+            onChange({ category_ids: e.target.value.split(',').map(Number).filter(Boolean) })
+          }
+          className="h-11 mt-1"
+        />
+        {errors.category_ids && <p className="text-xs text-red-500 mt-1">{errors.category_ids}</p>}
+      </div>
+
       <Button
         type="submit"
         className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
@@ -198,6 +252,7 @@ function Step2({
   onNext,
   onBack,
   errors,
+  isSubmitting,
 }: {
   data: Step2Data;
   onChange: (patch: Partial<Step2Data>) => void;
@@ -226,7 +281,9 @@ function Step2({
           onChange={(e) => onChange({ nome_completo: e.target.value })}
           className={`h-11 ${errors.nome_completo ? 'border-red-400' : 'focus-visible:ring-blue-200'}`}
         />
-        {errors.nome_completo && <p className="text-xs text-red-500 mt-1">{errors.nome_completo}</p>}
+        {errors.nome_completo && (
+          <p className="text-xs text-red-500 mt-1">{errors.nome_completo}</p>
+        )}
       </div>
 
       <div>
@@ -312,26 +369,24 @@ function Step2({
         <Label htmlFor="declaracao" className="text-sm text-gray-600 font-normal cursor-pointer">
           Declaro que as informações fornecidas são verdadeiras
           {errors.declaracao_verdadeira && (
-            <span className="block text-xs text-red-500 mt-0.5">{errors.declaracao_verdadeira}</span>
+            <span className="block text-xs text-red-500 mt-0.5">
+              {errors.declaracao_verdadeira}
+            </span>
           )}
         </Label>
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="flex-1 h-11 gap-2"
-          onClick={onBack}
-        >
+        <Button type="button" variant="outline" className="flex-1 h-11 gap-2" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </Button>
         <Button
           type="submit"
           className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
+          disabled={isSubmitting}
         >
-          Enviar para análise
+          {isSubmitting ? 'Enviando...' : 'Enviar para análise'}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
@@ -386,11 +441,7 @@ function Step3({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 w-full">
-        <Button
-          variant="outline"
-          className="flex-1 h-11"
-          onClick={onHome}
-        >
+        <Button variant="outline" className="flex-1 h-11" onClick={onHome}>
           Voltar para início
         </Button>
         <Button
@@ -423,6 +474,10 @@ export default function RegisterCompanyPage() {
     nome_comercial: '',
     cnpj: '',
     website: '',
+    email: '',
+    state: '',
+    city: '',
+    category_ids: [],
   });
 
   const [step2, setStep2] = useState<Step2Data>({
@@ -443,6 +498,10 @@ export default function RegisterCompanyPage() {
     if (!step1.razao_social.trim()) errs.razao_social = 'Razão social é obrigatória';
     const digits = step1.cnpj.replace(/\D/g, '');
     if (digits.length !== 14) errs.cnpj = 'CNPJ deve ter 14 dígitos';
+    if (!step1.email.includes('@')) errs.email = 'E-mail inválido';
+    if (!step1.state.trim()) errs.state = 'Selecione um estado';
+    if (!step1.city.trim()) errs.city = 'Selecione uma cidade';
+    if (step1.category_ids.length === 0) errs.category_ids = 'Selecione pelo menos uma categoria';
     setErrors1(errs);
     return Object.keys(errs).length === 0;
   };
@@ -476,6 +535,10 @@ export default function RegisterCompanyPage() {
       await (companiesApi.create as unknown as (c: unknown) => Promise<unknown>)({
         name: step1.razao_social.trim(),
         cnpj: step1.cnpj.replace(/\D/g, ''),
+        email: step1.email.trim(),
+        state: step1.state.trim().toUpperCase(),
+        city: step1.city.trim(),
+        category_ids: step1.category_ids,
         website: step1.website.trim() || undefined,
         phone: step2.telefone.replace(/\D/g, ''),
         email_public: step2.email_corporativo.trim(),
@@ -486,9 +549,11 @@ export default function RegisterCompanyPage() {
       setCreatedCompanyName(step1.razao_social);
       setStep(3);
     } catch (error: unknown) {
-      const err = error as { message?: string };
+      const err = error as { message?: string; context?: { details?: { message?: string } } };
+      const message = err?.context?.details?.message || err?.message || '';
       setSubmitError(
-        err?.message ?? 'Erro ao cadastrar empresa. Verifique os dados e tente novamente.'
+        message.replace(/^\[422\]\s*/, '') ||
+          'Não foi possível enviar o cadastro. Revise os campos destacados e tente novamente.'
       );
     } finally {
       setIsSubmitting(false);
@@ -512,9 +577,7 @@ export default function RegisterCompanyPage() {
             <h1 className="text-xl font-bold text-gray-900">
               {step === 3 ? 'Cadastro concluído' : 'Cadastrar nova empresa'}
             </h1>
-            {step < 3 && (
-              <p className="text-sm text-gray-500">{STEP_LABELS[step - 1]}</p>
-            )}
+            {step < 3 && <p className="text-sm text-gray-500">{STEP_LABELS[step - 1]}</p>}
           </div>
         </div>
 
@@ -549,6 +612,7 @@ export default function RegisterCompanyPage() {
                 data={step2}
                 onChange={(p) => setStep2((prev) => ({ ...prev, ...p }))}
                 onNext={handleNextFromStep2}
+                isSubmitting={isSubmitting}
                 onBack={() => setStep(1)}
                 errors={errors2}
               />

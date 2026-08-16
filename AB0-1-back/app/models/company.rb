@@ -259,7 +259,7 @@ end
             allow_blank: true
   validates :phone,
             format: { with: /\A\d{10,15}\z/,
-                      message: 'must contain only digits (DDD + nÃƒÂºmero)' },
+                      message: 'must contain only digits (DDD + número)' },
             allow_blank: true
 
   validates :whatsapp,
@@ -280,7 +280,7 @@ end
   validates :whatsapp_url,
             presence: true,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
-                      message: 'deve ser uma URL vÃƒÂ¡lida (ex: https://wa.me/)' },
+                      message: 'deve ser uma URL válida (ex: https://wa.me/)' },
             if: :whatsapp_enabled?,
             allow_blank: false
 
@@ -298,7 +298,7 @@ end
 
     return unless minimum_ticket > maximum_ticket
 
-    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket mÃƒÂ¡ximo')
+    errors.add(:minimum_ticket, 'deve ser menor ou igual ao ticket máximo')
   end
 
   # Scopes
@@ -494,35 +494,35 @@ end
   def validate_ready_for_activation
     if name.blank? || name.length < 2
       errors.add(:name,
-                 'ÃƒÂ© obrigatÃƒÂ³rio para ativaÃƒÂ§ÃƒÂ£o (mÃƒÂ­nimo 2 caracteres)')
+                 'é obrigatório para ativação (mínimo 2 caracteres)')
     end
 
     if email.blank? || !SIMPLE_EMAIL_REGEX.match?(email)
       errors.add(:email,
-                 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o')
+                 'inválido ou ausente para ativação')
     end
 
-    errors.add(:state, 'invÃƒÂ¡lido ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_state?(state)
+    errors.add(:state, 'inválido ou ausente para ativação') unless Locations::BrLocations.valid_state?(state)
 
-    errors.add(:city, 'invÃƒÂ¡lida ou ausente para ativaÃƒÂ§ÃƒÂ£o') unless Locations::BrLocations.valid_city?(state,
+    errors.add(:city, 'inválida ou ausente para ativação') unless Locations::BrLocations.valid_city?(state,
                                                                                                               city)
 
-    errors.add(:categories, 'pelo menos uma categoria ÃƒÂ© necessÃƒÂ¡ria para ativaÃƒÂ§ÃƒÂ£o') unless categories.any?
+    errors.add(:categories, 'pelo menos uma categoria é necessária para ativação') unless categories.any?
 
     return if phone.present? || whatsapp.present? || email_public.present?
 
     errors.add(:base,
-               'Pelo menos um contato (Telefone, WhatsApp ou Email PÃƒÂºblico) ÃƒÂ© necessÃƒÂ¡rio para ativaÃƒÂ§ÃƒÂ£o')
+               'Pelo menos um contato (Telefone, WhatsApp ou Email Público) é necessário para ativação')
   end
 
   def validate_featured_requires_active
     return unless featured
     return if status == 'active'
 
-    errors.add(:featured, 'sÃƒÂ³ pode ser verdadeiro quando o status ÃƒÂ© active')
+    errors.add(:featured, 'só pode ser verdadeiro quando o status é active')
   end
 
-  # FIX #6: Adicionar validaÃƒÂ§ÃƒÂ£o robusta de category_ids format em Company
+  # FIX #6: Adicionar validação robusta de category_ids format em Company
   def validate_category_ids_format
     # We use raw category_ids if available, or just check the association
     # Active Record's category_ids usually returns an array.
@@ -532,13 +532,13 @@ end
     return if category_ids.nil?
 
     unless category_ids.is_a?(Array)
-      errors.add(:category_ids, 'formato invÃƒÂ¡lido: deve ser um array')
+      errors.add(:category_ids, 'formato inválido: deve ser um array')
       return
     end
 
     return unless category_ids.any? { |id| id.to_s.present? && !id.to_s.match?(/\A\d+\z/) }
 
-    errors.add(:category_ids, 'contÃƒÂ©m identificadores invÃƒÂ¡lidos')
+    errors.add(:category_ids, 'contém identificadores inválidos')
   end
 
   def normalize_company_fields
@@ -653,7 +653,7 @@ end
       allowed_types: ALLOWED_LOGO_CONTENT_TYPES,
       max_size: LOGO_MAX_SIZE,
       invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
-      invalid_size_message: 'tamanho mÃƒÂ¡ximo ÃƒÂ© 5MB'
+      invalid_size_message: 'tamanho máximo é 5MB'
     )
     validate_minimum_dimensions(
       attribute: :logo,
@@ -673,7 +673,7 @@ end
       allowed_types: ALLOWED_BANNER_CONTENT_TYPES,
       max_size: BANNER_MAX_SIZE,
       invalid_type_message: 'deve ser PNG, JPG, SVG ou WEBP',
-      invalid_size_message: 'tamanho mÃƒÂ¡ximo ÃƒÂ© 10MB'
+      invalid_size_message: 'tamanho máximo é 10MB'
     )
     validate_minimum_dimensions(
       attribute: :banner,
@@ -731,9 +731,9 @@ end
     errors.add(:niche_tags, "valores inválidos: #{invalid.join(', ')}") if invalid.any?
   end
 
-  # MÃƒâ€°TODOS DE VALIDAÃƒâ€¡ÃƒÆ’O (Corrigidos para usar self.)
+  # MÉTODOS DE VALIDAÇÃO (Corrigidos para usar self.)
   def validate_project_types
-    # O erro 'undefined local variable' acontece aqui se nÃƒÂ£o usarmos 'self.' ou se o atributo nÃƒÂ£o estiver definido.
+    # O erro 'undefined local variable' acontece aqui se não usarmos 'self.' ou se o atributo não estiver definido.
     # Usando 'self.project_types' resolve o escopo.
     return if project_types.blank?
 
@@ -753,27 +753,27 @@ end
 
     return if CNPJ.valid?(cnpj)
 
-    errors.add(:cnpj, 'invÃƒÂ¡lido')
+    errors.add(:cnpj, 'inválido')
   end
 
   def validate_state_in_dataset
     return if state.blank?
     return if Locations::BrLocations.valid_state?(state)
 
-    errors.add(:state, 'invÃƒÂ¡lido')
+    errors.add(:state, 'inválido')
   end
 
   def validate_city_in_dataset
     return if city.blank?
 
     if state.blank?
-      errors.add(:city, 'requer um estado vÃƒÂ¡lido')
+      errors.add(:city, 'requer um estado válido')
       return
     end
 
     return if Locations::BrLocations.valid_city?(state, city)
 
-    errors.add(:city, 'invÃƒÂ¡lida para o estado selecionado')
+    errors.add(:city, 'inválida para o estado selecionado')
   end
 
   def has_paid_plan?
@@ -1120,7 +1120,7 @@ end
 
     return unless verified_badge.blob.byte_size > 2.megabytes
 
-    errors.add(:verified_badge, 'deve ter no mÃƒÂ¡ximo 2MB')
+    errors.add(:verified_badge, 'deve ter no máximo 2MB')
   end
 
   def ensure_slug
@@ -1259,7 +1259,7 @@ end
     errors.add(attribute, invalid_size_message) if blob.byte_size.to_i > max_size
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar blob atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
-    errors.add(attribute, 'arquivo invÃƒÂ¡lido ou corrompido')
+    errors.add(attribute, 'arquivo inválido ou corrompido')
   end
 
   def validate_minimum_dimensions(attribute:, blob:, min_width:, min_height:, recommendation:)
@@ -1274,7 +1274,7 @@ end
     return if width >= min_width && height >= min_height
 
     errors.add(attribute,
-               "dimensÃƒÂµes muito pequenas (#{width}x#{height}px). MÃƒÂ­nimo recomendado: #{recommendation}")
+               "dimensões muito pequenas (#{width}x#{height}px). Mínimo recomendado: #{recommendation}")
   rescue StandardError => e
     Rails.logger.warn("[Company] Falha ao validar dimensoes atributo=#{attribute} id=#{id} erro=#{e.class}: #{e.message}")
   end

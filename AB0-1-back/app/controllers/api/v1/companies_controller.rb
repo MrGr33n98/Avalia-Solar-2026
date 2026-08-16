@@ -199,7 +199,7 @@ module Api
           end
         end
 
-        @company.status = 'pending' if @company.status.blank?
+        @company.status = 'pending' unless current_user&.admin?
 
         if params[:company][:logo].present?
           Rails.logger.info "[Audit] Company logo detected in request for new company: #{@company.name}"
@@ -291,7 +291,7 @@ module Api
               render json: { company: company_json }, status: :created
             else
               Rails.logger.warn "[Audit] Company creation failed: #{@company.errors.full_messages.join(', ')}"
-              render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
+              render json: { error: 'validation_error', message: 'Revise os campos destacados.', errors: @company.errors.full_messages, field_errors: @company.errors.to_hash(true) }, status: :unprocessable_entity
             end
           end
         rescue ActiveRecord::RecordInvalid => e
@@ -817,7 +817,7 @@ module Api
         permitted = [
           :name, :description, :website, :phone, :address, :state, :city,
           :founded_year, :employees_count,
-          :cnpj, :email_public, :instagram, :facebook, :linkedin,
+          :cnpj, :email, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications,
           :cta_whatsapp_enabled, :cta_whatsapp_url,
           :logo, :coverage_states, :coverage_cities,
@@ -825,7 +825,7 @@ module Api
               variant bg_color text_color border_color
               hover_bg_color icon_color rounded_px
             ],
-            project_types: [], services_offered: [],
+            project_types: [], services_offered: [], category_ids: [],
             coverage_state_codes: [], coverage_city_names: [] }
         ]
 
