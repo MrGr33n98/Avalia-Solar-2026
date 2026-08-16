@@ -53,8 +53,8 @@ export function SmartEmptyCatalog({ catalog, favorites, onToggleFavorite }: Smar
   };
 
   return (
-    <div className="min-w-0 space-y-7">
-      <section className="border border-slate-200 bg-white p-6 text-center sm:p-8">
+    <div className="min-w-0 space-y-6">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 text-center sm:p-7">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
           <PackageSearch className="h-7 w-7 text-[#0B1F4B]" aria-hidden="true" />
         </div>
@@ -68,7 +68,7 @@ export function SmartEmptyCatalog({ catalog, favorites, onToggleFavorite }: Smar
             <>Enquanto isso, você pode solicitar uma proposta personalizada ou explorar outras soluções da empresa.</>
           )}
         </p>
-        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+        <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
           <button
             type="button"
             onClick={handleQuoteClick}
@@ -88,13 +88,16 @@ export function SmartEmptyCatalog({ catalog, favorites, onToggleFavorite }: Smar
 
       {suggestedProducts.length > 0 && (
         <section aria-labelledby="suggested-products-title">
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
             <Lightbulb className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            <h2 id="suggested-products-title" className="text-lg font-bold text-[#0B1F4B]">
+            <h2 id="suggested-products-title" className="truncate text-lg font-bold text-[#0B1F4B]">
               Outros produtos da {company.name}
             </h2>
+            </div>
+            <span className="hidden shrink-0 text-xs font-semibold text-blue-700 sm:inline">Ver outras soluções →</span>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {suggestedProducts.map((product) => (
               <ProductCardEnhanced
                 key={product.id}

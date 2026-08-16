@@ -116,7 +116,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
         />
       )}
-      <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
         <nav className="mb-5 text-sm text-slate-600" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-2">
             {[
@@ -183,7 +183,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
             Voltar para a empresa
           </Link>
         </header>
-        <div className="mt-6">
+        <div className="mt-5">
           <UnifiedHeroBanner
             categoryName={catalog.category.name}
             categorySlug={catalog.category.seo_url}
@@ -191,7 +191,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
             companyId={catalog.company.id}
             companyName={catalog.company.name}
           />
-          <div className="mt-6"><CatalogClient catalog={catalog} /></div>
+          <div className="mt-5"><CatalogClient catalog={catalog} /></div>
         </div>
       </div>
     </main>

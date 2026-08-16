@@ -128,8 +128,11 @@ export function PremiumBannerCarousel({
   return (
     <div 
       ref={containerRef}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Banners em destaque"
       className={cn(
-        "group relative mb-0 w-full overflow-hidden !rounded-none shadow-sm transition-shadow hover:shadow-md",
+        "group relative mb-0 w-full min-w-0 overflow-hidden rounded-xl shadow-sm transition-shadow hover:shadow-md",
         className
       )}
       onMouseEnter={() => setIsPaused(true)}
@@ -145,7 +148,7 @@ export function PremiumBannerCarousel({
           {items.map((item, index) => (
             <CarouselItem 
               key={index} 
-              className="pl-0 cursor-pointer"
+              className="min-w-0 cursor-pointer pl-0"
               onClick={() => onItemClick?.(index)}
             >
               <div className={cn("relative w-full overflow-hidden", aspectRatio)}>

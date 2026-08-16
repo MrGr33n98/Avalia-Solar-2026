@@ -28,7 +28,7 @@ export function ProductCardEnhanced({
   const href = buildProductPath(product.id, product.name);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
+    <article className="group flex min-w-0 h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
       <div className="relative aspect-[4/3] bg-white p-5">
         <Image
           src={product.image_url || '/images/product-placeholder.svg'}

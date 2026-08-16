@@ -127,7 +127,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
 
   if (isCategoryEmpty) {
     return (
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="min-w-0 space-y-4">
           <label className="relative block">
             <span className="sr-only">{searchPlaceholder}</span>
@@ -143,8 +143,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
               className="h-11 w-full rounded-[2px] border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
             />
           </label>
-          {suggestedProducts.length > 0 && (
-            <div className="border border-slate-300 bg-white p-5">
+          <div className="border border-slate-200 bg-white p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]">
                 Resultados da busca
               </p>
@@ -153,8 +152,22 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
                 {suggestedProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
                 {debouncedQuery ? ` para "${debouncedQuery}"` : ''}.
               </p>
-            </div>
-          )}
+          </div>
+          <div className="border border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#0B1F4B]">
+              Precisa de ajuda?
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Fale com a {catalog.company.name} para encontrar a solução ideal.
+            </p>
+            <button
+              type="button"
+              onClick={handleQuoteClick}
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#0B1F4B] px-4 text-sm font-semibold text-white hover:bg-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+            >
+              Solicitar orçamento
+            </button>
+          </div>
         </aside>
         <SmartEmptyCatalog
           catalog={filteredEmptyCatalog}
@@ -201,7 +214,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
           </button>
         </div>
       </aside>
-      <div className="min-w-0 space-y-6">
+      <div className="min-w-0 space-y-5">
         {services.length > 0 && (
           <section aria-labelledby="services-title">
             <h2 id="services-title" className="mb-4 text-xl font-bold text-[#0B1F4B]">
@@ -238,7 +251,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
             </span>
           </div>
           {products.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {products.map((product) => (
                 <ProductCardEnhanced
                   key={product.id}
