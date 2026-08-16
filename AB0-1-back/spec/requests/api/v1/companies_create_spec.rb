@@ -31,6 +31,8 @@ RSpec.describe 'Companies create API', type: :request do
     company = Company.find(body.dig('company', 'id'))
     expect(company.status).to eq('pending')
     expect(company.category_ids).to contain_exactly(category.id)
+    expect(company.moderation_status).to eq('pending_review')
+    expect(company.submitted_at).to be_present
     expect(PendingChange.where(company: company)).to be_empty
   end
 end

@@ -206,7 +206,11 @@ module Api
           end
         end
 
-        @company.status = 'pending' unless current_user&.admin?
+        unless current_user&.admin?
+          @company.status = 'pending'
+          @company.moderation_status = 'pending_review'
+          @company.submitted_at = Time.current
+        end
 
         if params[:company][:logo].present?
           Rails.logger.info "[Audit] Company logo detected in request for new company: #{@company.name}"
