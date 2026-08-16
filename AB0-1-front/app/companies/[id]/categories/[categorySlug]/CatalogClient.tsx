@@ -7,7 +7,11 @@ import type { CompanyCatalogResponse } from '@/lib/api';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
-import { trackCompanyCategorySearch, trackCompanyCategoryFavoriteToggled, trackCompanyCategoryQuoteStarted } from '@/lib/analytics/company-category';
+import {
+  trackCompanyCategorySearch,
+  trackCompanyCategoryFavoriteToggled,
+  trackCompanyCategoryQuoteStarted,
+} from '@/lib/analytics/company-category';
 import { SmartEmptyCatalog } from './components/SmartEmptyCatalog';
 
 const FAVORITES_STORAGE_KEY = 'avalia_solar_category_favorites';
@@ -16,21 +20,15 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   const [query, setQuery] = useState('');
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const debouncedQuery = useDebounce(query, 250);
-  const needle = debouncedQuery.trim().toLocaleLowerCase('pt-BR');
+  const needle = normalizeSearchText(debouncedQuery);
 
   const searchableProducts = useMemo(
     () => [...(catalog.products || []), ...(catalog.suggested_products || [])],
     [catalog.products, catalog.suggested_products]
   );
 
-  const products = useMemo(
-    () => filterItems(catalog.products, needle),
-    [catalog.products, needle]
-  );
-  const services = useMemo(
-    () => filterItems(catalog.services, needle),
-    [catalog.services, needle]
-  );
+  const products = useMemo(() => filterItems(catalog.products, needle), [catalog.products, needle]);
+  const services = useMemo(() => filterItems(catalog.services, needle), [catalog.services, needle]);
   const suggestedProducts = useMemo(
     () => filterItems(catalog.suggested_products || [], needle),
     [catalog.suggested_products, needle]
@@ -73,25 +71,37 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
       query: debouncedQuery,
       result_count: resultCount,
     });
-  }, [debouncedQuery, products.length, services.length, suggestedProducts.length, catalog.company.id, catalog.company.name, catalog.category.id, catalog.category.name]);
+  }, [
+    debouncedQuery,
+    products.length,
+    services.length,
+    suggestedProducts.length,
+    catalog.company.id,
+    catalog.company.name,
+    catalog.category.id,
+    catalog.category.name,
+  ]);
 
-  const toggleFavorite = useCallback((id: number, productName: string) => {
-    setFavorites((current) => {
-      const next = new Set(current);
-      const isAdding = !next.has(id);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  const toggleFavorite = useCallback(
+    (id: number, productName: string) => {
+      setFavorites((current) => {
+        const next = new Set(current);
+        const isAdding = !next.has(id);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
 
-      trackCompanyCategoryFavoriteToggled({
-        company_id: catalog.company.id,
-        product_id: id,
-        product_name: productName,
-        is_favorite: isAdding,
+        trackCompanyCategoryFavoriteToggled({
+          company_id: catalog.company.id,
+          product_id: id,
+          product_name: productName,
+          is_favorite: isAdding,
+        });
+
+        return next;
       });
-
-      return next;
-    });
-  }, [catalog.company.id]);
+    },
+    [catalog.company.id]
+  );
 
   const handleQuoteClick = useCallback(() => {
     trackCompanyCategoryQuoteStarted({
@@ -108,12 +118,12 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   }, [catalog.company.id, catalog.company.name, catalog.category.id, catalog.category.name]);
 
   const searchPlaceholder = isCategoryEmpty
-    ? `Buscar em todas as categorias da ${catalog.company.name}`
+    ? `Buscar entre as sugestões da ${catalog.company.name}`
     : 'Buscar nesta categoria';
 
   if (isCategoryEmpty) {
     return (
-      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="space-y-5">
           <label className="relative block">
             <span className="sr-only">{searchPlaceholder}</span>
@@ -155,7 +165,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+    <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
       <aside className="space-y-5">
         <label className="relative block">
           <span className="sr-only">{searchPlaceholder}</span>
@@ -247,8 +257,19 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   );
 }
 
-function filterItems<T extends { name: string }>(items: T[] | undefined | null, needle: string): T[] {
+export function normalizeSearchText(value: string): string {
+  return value
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[0300-036f]/g, '')
+    .trim();
+}
+
+function filterItems<T extends { name: string; description?: string | null }>(
+  items: T[] | undefined | null,
+  needle: string
+): T[] {
   if (!items) return [];
   if (!needle) return items;
-  return items.filter((item) => item.name.toLocaleLowerCase('pt-BR').includes(needle));
+  return items.filter((item) => normalizeSearchText().includes(needle));
 }

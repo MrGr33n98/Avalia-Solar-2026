@@ -38,21 +38,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     catalog.category.seo_url,
     catalog.company.id
   );
-  const hasContent =
-    catalog.products.length > 0 ||
-    catalog.services.length > 0 ||
-    (catalog.suggested_products || []).length > 0 ||
-    (catalog.similar_companies || []).length > 0;
+  const hasDirectCategoryContent = catalog.products.length > 0 || catalog.services.length > 0;
 
-  const description = hasContent
+  const description = hasDirectCategoryContent
     ? `${catalog.category.name} da ${catalog.company.name}: produtos, serviços e soluções disponíveis no catálogo Avalia Solar.`
     : `${catalog.category.name} da ${catalog.company.name}: catálogo em atualização. Solicite um orçamento personalizado.`;
 
   return {
     title: `${catalog.category.name} da ${catalog.company.name} | Avalia Solar`,
     description,
-    keywords: [catalog.category.name, catalog.company.name, 'energia solar', 'catálogo', 'orçamento'],
-    robots: hasContent ? { index: true, follow: true } : { index: false, follow: true },
+    keywords: [
+      catalog.category.name,
+      catalog.company.name,
+      'energia solar',
+      'catálogo',
+      'orçamento',
+    ],
+    robots: hasDirectCategoryContent
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     alternates: { canonical: `${siteUrl}${path}` },
     openGraph: {
       title: `${catalog.category.name} — ${catalog.company.name}`,
@@ -129,9 +133,7 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
                 ) : (
                   <span aria-current="page">{item.label}</span>
                 )}
-                {index < items.length - 1 && (
-                  <span aria-hidden="true">/</span>
-                )}
+                {index < items.length - 1 && <span aria-hidden="true">/</span>}
               </li>
             ))}
           </ol>
@@ -153,7 +155,9 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
               <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
                 <span className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  {Number(catalog.company.rating_avg || 0).toFixed(1)}
+                  {(catalog.company.rating_count ?? 0) > 0
+                    ? `${Number(catalog.company.rating_avg || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} · ${catalog.company.rating_count} ${catalog.company.rating_count === 1 ? 'avaliação' : 'avaliações'}`
+                    : 'Sem avaliações'}
                 </span>
                 {catalog.company.city && (
                   <span className="flex items-center gap-1">
