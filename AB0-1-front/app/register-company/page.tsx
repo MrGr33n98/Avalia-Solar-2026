@@ -256,9 +256,10 @@ function Step2({
 }: {
   data: Step2Data;
   onChange: (patch: Partial<Step2Data>) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
   errors: Partial<Record<keyof Step2Data, string>>;
+  isSubmitting: boolean;
 }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
