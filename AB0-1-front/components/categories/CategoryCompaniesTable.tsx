@@ -189,7 +189,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
               <th scope="col" className="py-3.5 px-4 w-32">
                 Status
               </th>
-              <th scope="col" className="py-3.5 px-4 w-80 text-right"></th>
+              <th scope="col" className="sticky right-0 z-20 w-[15rem] bg-slate-50 py-3.5 px-4 text-right shadow-[-6px_0_12px_-10px_rgba(15,23,42,0.35)]"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
@@ -569,7 +569,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                     )}
                   </td>
                   {/* Button Link & Comparison */}
-                  <td className="w-[12rem] min-w-[12rem] py-4 px-4 text-right">
+                  <td className="sticky right-0 z-10 w-[15rem] min-w-[15rem] bg-white py-4 px-4 text-right shadow-[-6px_0_12px_-10px_rgba(15,23,42,0.35)]">
                     <CategoryCompanyActions company={company} />
                   </td>
                 </tr>
