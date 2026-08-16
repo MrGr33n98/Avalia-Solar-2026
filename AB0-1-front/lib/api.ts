@@ -1604,8 +1604,15 @@ export interface CertificationProgress {
 
 // Ranking Data Types
 export interface RankingData {
-  rank_position: number;
-  ranking_score: number;
+  status?: 'ready' | 'unavailable' | 'locked';
+  error?: { code: string };
+  ranking?: { position: number | null; population: number | null; score: number | null; percentile: number | null };
+  quality?: { flags: string[]; computed_at?: string | null; data_through?: string | null };
+  leaders?: RankingData['magic_quadrant_points'];
+  neighbors?: RankingData['magic_quadrant_points'];
+  insights?: { strengths: string[]; opportunities: string[]; next_best_action?: string };
+  rank_position: number | null;
+  ranking_score: number | null;
   magic_quadrant_points: Array<{
     id: number;
     name: string;

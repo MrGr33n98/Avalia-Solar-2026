@@ -25,18 +25,28 @@ module CompanyDashboard
 
     def ranking_data
       snapshot = latest_snapshot
+      position = ad_hoc_preview? ? current_position : snapshot&.rank_position
+      population = ad_hoc_preview? ? total_companies : snapshot&.population_size
+      unavailable = snapshot.nil? || (ad_hoc_preview? && (current_position.nil? || total_companies.zero?))
       {
         # Do not silently substitute the legacy rating ranking when the auditable
         # snapshot is absent. Criterion filtering remains a quadrant preview until
         # criterion-level snapshots are materialized.
-        current_position: ad_hoc_preview? ? current_position : snapshot&.rank_position,
-        total_companies: ad_hoc_preview? ? total_companies : snapshot&.population_size,
-        percentile: ad_hoc_preview? ? percentile : snapshot&.percentile.to_f,
+        current_position: position,
+        total_companies: population,
+        score: ad_hoc_preview? ? canonical_score_for(company) : snapshot&.score,
+        percentile: ad_hoc_preview? ? percentile : snapshot&.percentile,
         category_rankings: category_rankings,
         magic_quadrant_competitors: competitors_for_quadrant,
         quadrant_meta: quadrant_meta,
         historical_data: historical_data,
-        transparency: transparency(snapshot)
+        transparency: transparency(snapshot),
+        status: unavailable ? 'unavailable' : 'ready',
+        error: unavailable ? { code: 'RANKING_SNAPSHOT_UNAVAILABLE' } : nil,
+        quality: { flags: transparency(snapshot)[:quality_flags], computed_at: snapshot&.computed_at, data_through: snapshot&.data_through },
+        leaders: competitors_for_quadrant.first(3),
+        neighbors: competitors_for_quadrant.select { |item| !item[:is_current_company] }.first(5),
+        insights: { strengths: [], opportunities: [], next_best_action: unavailable ? 'Aguardar processamento do snapshot orgânico.' : 'Acompanhar evolução dos sinais orgânicos.' }
       }
     end
 
@@ -81,26 +91,26 @@ module CompanyDashboard
         computed_at: snapshot&.computed_at, data_through: snapshot&.data_through,
         quality_flags: (snapshot&.quality_flags || []) + (ad_hoc_preview? ? ['local_ranking_preview_not_persisted'] : (snapshot ? [] : ['snapshot_unavailable'])),
         breakdown: snapshot&.breakdown || {},
-        is_ad_hoc_preview: ad_hoc_preview?
+        is_ad_hoc_preview: ad_hoc_preview?, position_semantics: criterion_slug.present? ? 'quadrant_preview_without_official_position' : 'canonical_organic_snapshot'
       }
     end
 
     def current_position
-      return current_position_by_criterion if criterion_slug.present?
+      return nil if criterion_slug.present?
 
-      base_scope
-        .where('rating_avg > ? OR (rating_avg = ? AND rating_count > ?)',
-               comparison_rating(company), comparison_rating(company), company.rating_count.to_i)
-        .count + 1
+      score = canonical_score_for(company)
+      return nil if score.nil?
+
+      scored_scope.where('crs.score > ? OR (crs.score = ? AND crs.company_id < ?)', score, score, company.id).count + 1
     end
 
     def total_companies
-      base_scope.count
+      scored_scope.count
     end
 
     def percentile
       total = total_companies
-      return 0 if total.zero?
+      return nil if total.zero? || current_position.nil?
       
       ((total - current_position + 1).to_f / total * 100).round(1)
     end
@@ -203,11 +213,15 @@ module CompanyDashboard
     end
 
     def ranked_companies
-      @ranked_companies ||= if criterion_slug.present?
-                              base_scope.includes(:company_badges, :review_aggregates).to_a.sort_by { |comp| [-comparison_rating(comp).to_f, -comp.rating_count.to_i] }
-                            else
-                              base_scope.includes(:company_badges, :review_aggregates).order(rating_avg: :desc, rating_count: :desc).to_a
-                            end
+      @ranked_companies ||= scored_scope.includes(:company_badges, :review_aggregates).order(Arel.sql('crs.score DESC, crs.company_id ASC')).to_a
+    end
+
+    def scored_scope
+      @scored_scope ||= base_scope.joins('INNER JOIN company_ranking_score crs ON crs.company_id = companies.id')
+    end
+
+    def canonical_score_for(comp)
+      ActiveRecord::Base.connection.select_value(ActiveRecord::Base.sanitize_sql_array(['SELECT score FROM company_ranking_score WHERE company_id = ?', comp.id]))&.to_f
     end
 
     def current_position_by_criterion

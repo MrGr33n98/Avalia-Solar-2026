@@ -2,41 +2,31 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trophy, 
-  TrendingUp, 
-  Users, 
-  MousePointerClick, 
-  Zap, 
   BarChart3, 
   Target,
   Globe,
   Activity,
   Award,
   Filter,
-  ArrowUpRight,
   ShieldCheck,
   ZapIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Company, fetchApi, companyDashboardApi } from '@/lib/api';
+import { Company, fetchApi, companyDashboardApi, RankingData } from '@/lib/api';
 import MagicQuadrant from './MagicQuadrant';
 import MetricCard from './MetricCard';
 import { 
   ResponsiveContainer, 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   Tooltip as RechartsTooltip, 
   CartesianGrid, 
   Area, 
   AreaChart,
-  ReferenceLine
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -46,13 +36,17 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 
+interface DashboardStats { conversionRate?: number; profileViews?: number }
+interface Criterion { slug: string; title: string }
+interface CriteriaResponse { criteria?: Criterion[] }
+interface TooltipEntry { color?: string; name: string; value: string | number }
 interface Props {
   company: Company;
-  stats?: any;
+  stats?: DashboardStats;
   themeMode?: 'light' | 'dark';
 }
 
-export default function RankingPerformanceTab({ company, stats, themeMode = 'dark' }: Props) {
+export default function RankingPerformanceTab({ company, stats, themeMode: _themeMode = 'dark' }: Props) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>('all');
   const [selectedState, setSelectedState] = useState<string>('all');
@@ -64,7 +58,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
     queryKey: ['category-evaluation-context', selectedCategoryId],
     queryFn: async () => {
       if (selectedCategoryId === 'all') return { criteria: [] };
-      return fetchApi<any>(`/categories/${selectedCategoryId}/evaluation_context`);
+      return fetchApi<CriteriaResponse>(`/categories/${selectedCategoryId}/evaluation_context`);
     },
     enabled: selectedCategoryId !== 'all',
   });
@@ -92,7 +86,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
   const { data, isLoading } = rankingQuery;
   const transparency = data?.transparency;
   const rankingLabel = data?.rank_position ? `${data.rank_position}º` : '--';
-  const hasSnapshot = !transparency?.quality_flags?.includes('snapshot_unavailable');
+  const hasSnapshot = data?.status === 'ready' && !transparency?.quality_flags?.includes('snapshot_unavailable');
 
   const quadrantData = useMemo(() => {
     if (!data?.magic_quadrant_points) return [];
@@ -104,7 +98,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
     return data.historical_data;
   }, [data]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-lg shadow-lg min-w-[180px]">
@@ -112,7 +106,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
             Temporal Logic: {label}
           </p>
           <div className="space-y-3">
-            {payload.map((entry: any, index: number) => (
+            {payload.map((entry: TooltipEntry, index: number) => (
               <div key={index} className="flex items-center justify-between gap-4">
                  <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -144,8 +138,20 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
     );
   }
 
+  const rankingUnavailable = data?.status === 'unavailable';
+  const rankingLocked = data?.status === 'locked';
+
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-20">
+      {(rankingUnavailable || rankingLocked) && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <CardContent className="p-5">
+            <p className="font-semibold text-amber-900 dark:text-amber-200">{rankingLocked ? 'Ranking avançado bloqueado' : 'Ranking ainda indisponível'}</p>
+            <p className="mt-1 text-sm text-amber-800/80 dark:text-amber-200/80">{rankingLocked ? 'Faça upgrade para acessar benchmarking orgânico.' : 'Ainda não há snapshot confiável para este escopo.'}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Cabeçalho estratégico */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
@@ -189,8 +195,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
           delay={0.1}
         />
         <MetricCard 
-          title="Eficiência de Conversão"
-          value={stats?.leadsReceived !== undefined ? stats.leadsReceived.toString() : '0'}
+          title="Taxa de conversão"
+          value={stats?.conversionRate !== undefined ? `${Number(stats.conversionRate).toFixed(1)}%` : '—'}
           icon={Target}
           change="Últimos dados disponíveis"
           changeType="neutral"
@@ -199,8 +205,8 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
         />
         <MetricCard 
           title={data?.quadrant_meta?.criterion_title || 'Completude de Visão'}
-          value={quadrantData.find((q: any) => q.is_current_company) 
-            ? Number(quadrantData.find((q: any) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: any) => q.is_current_company)?.completeness_of_vision ?? 0).toFixed(1)
+          value={quadrantData.find((q: RankingData['magic_quadrant_points'][number]) => q.is_current_company) 
+            ? Number(quadrantData.find((q: RankingData['magic_quadrant_points'][number]) => q.is_current_company)?.criterion_score ?? quadrantData.find((q: RankingData['magic_quadrant_points'][number]) => q.is_current_company)?.completeness_of_vision ?? 0).toFixed(1)
             : '--'}
           icon={ZapIcon}
           change={selectedCriterionSlug !== 'all' ? 'Critério aplicado' : 'Sem filtro de critério'}
@@ -360,7 +366,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                   </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                     <SelectItem value="all" className="text-[10px] font-bold uppercase">ESCOPO GLOBAL</SelectItem>
-                    {company.categories?.map((cat: any) => (
+                    {company.categories?.map((cat: { id: string | number; name: string }) => (
                       <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-bold uppercase">
                         {cat.name}
                       </SelectItem>
@@ -432,7 +438,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode = 'dar
                   </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                     <SelectItem value="all" className="text-[10px] font-bold uppercase">TODOS OS CRITÉRIOS</SelectItem>
-                    {(criteriaQuery.data?.criteria || []).map((criterion: any) => (
+                    {(criteriaQuery.data?.criteria || []).map((criterion: Criterion) => (
                       <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-bold uppercase">
                         {criterion.title}
                       </SelectItem>

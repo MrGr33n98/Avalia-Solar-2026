@@ -207,6 +207,8 @@ module Api
           # ✅ FEATURE GATE: Ranking só para enterprise
           unless FeatureGateService.can_access?(@company, 'advanced_analytics')
             return render json: default_ranking_payload.merge(
+              status: 'locked',
+              error: { code: 'RANKING_UPGRADE_REQUIRED' },
               is_premium_analytics: false,
               upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
             ), status: :ok
@@ -230,6 +232,9 @@ module Api
           data = service.ranking_data
 
           render json: {
+            status: data[:status],
+            error: data[:error],
+            ranking: { position: data[:current_position], population: data[:total_companies], score: data[:score], percentile: data[:percentile] },
             rank_position: data[:current_position],
             ranking_score: data[:percentile],
             magic_quadrant_points: data[:magic_quadrant_competitors],
@@ -237,6 +242,15 @@ module Api
             category_rankings: data[:category_rankings],
             historical_data: data[:historical_data],
             transparency: data[:transparency],
+            quality: data[:quality],
+            scope: data[:transparency][:scope],
+            definition: data[:transparency],
+            breakdown: data[:transparency][:breakdown] || {},
+            history: data[:historical_data],
+            quadrant: { points: data[:magic_quadrant_competitors], meta: data[:quadrant_meta] },
+            leaders: data[:leaders],
+            neighbors: data[:neighbors],
+            insights: data[:insights],
             is_premium_analytics: true
           }
         rescue StandardError => e
@@ -1767,8 +1781,11 @@ module Api
 
       def default_ranking_payload
         {
+          status: 'unavailable',
+          error: { code: 'RANKING_SNAPSHOT_UNAVAILABLE' },
+          ranking: { position: nil, population: nil, score: nil, percentile: nil },
           rank_position: nil,
-          ranking_score: 0,
+          ranking_score: nil,
           magic_quadrant_points: [],
           quadrant_meta: {},
           category_rankings: [],
