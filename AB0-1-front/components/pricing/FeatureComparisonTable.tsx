@@ -34,7 +34,6 @@ export function AvailabilityCell({ value }: AvailabilityCellProps) {
     return (
       <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-blue/10 px-2.5 py-1.5 text-xs font-semibold text-brand-blue ring-1 ring-brand-blue/20">
         <Check className="h-3.5 w-3.5 shrink-0" />
-        <span className="hidden md:inline">Incluído</span>
       </span>
     );
   }
@@ -42,7 +41,6 @@ export function AvailabilityCell({ value }: AvailabilityCellProps) {
     return (
       <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-900/10 px-2.5 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-900/20">
         <Lock className="h-3.5 w-3.5 shrink-0" />
-        <span className="hidden md:inline">Comercial</span>
       </span>
     );
   }
