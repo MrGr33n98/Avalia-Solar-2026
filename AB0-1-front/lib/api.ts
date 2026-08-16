@@ -69,6 +69,9 @@ export interface CompanyFinancingPartner {
   active?: boolean;
   badge?: string | null;
   logo_url?: string | null;
+  cnpj?: string | null;
+  rating?: number | null;
+  member_count?: number | null;
 }
 
 export interface CompanyFinancingOffer {
@@ -720,6 +723,9 @@ export interface CompanyAccessSuggestedCompany {
   verified?: boolean;
   match_reason?: string;
   logo_url?: string | null;
+  cnpj?: string | null;
+  rating?: number | null;
+  member_count?: number | null;
 }
 
 export interface CompanyAccessContext {

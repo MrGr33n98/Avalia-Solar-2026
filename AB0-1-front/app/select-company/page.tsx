@@ -20,9 +20,11 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { PremiumBadge } from '@/components/PremiumBadge';
+import { track } from '@/lib/analytics';
 
 const SEARCH_MIN_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
+type FlowState = 'initial' | 'searching' | 'results' | 'empty';
 
 const normalizeText = (value: string) =>
   value
@@ -80,6 +82,8 @@ export default function SelectCompanyPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<CompanyAccessSuggestedCompany[]>([]);
+  const [flowState, setFlowState] = useState<FlowState>('initial');
+  const [submittedSearch, setSubmittedSearch] = useState('');
 
   const normalizedQuery = useMemo(() => normalizeText(search.trim()), [search]);
 
@@ -135,6 +139,7 @@ export default function SelectCompanyPage() {
 
     let cancelled = false;
     const timer = window.setTimeout(async () => {
+      setFlowState('searching');
       setSearchLoading(true);
       setSearchError(null);
       try {
@@ -145,11 +150,14 @@ export default function SelectCompanyPage() {
         if (cancelled) return;
 
         setSearchResults(context?.suggested_companies || []);
+        setFlowState(context?.suggested_companies?.length ? 'results' : 'empty');
+        track(context?.suggested_companies?.length ? 'search_performed' : 'search_no_results', { source: 'select_company', query_length: trimmed.length });
         const pendingIds = (context?.pending_requests || []).map((request) => request.company_id);
         setPendingRequestIds((current) => Array.from(new Set([...current, ...pendingIds])));
       } catch (error) {
         if (cancelled) return;
         setSearchResults([]);
+        setFlowState('empty');
         setSearchError(
           extractErrorMessage(
             error,
@@ -223,7 +231,7 @@ export default function SelectCompanyPage() {
 
       setPendingRequestIds((current) => Array.from(new Set([...current, companyId])));
       setActionSuccess(
-        `Solicitacao enviada para aprovacao do admin da empresa ${company.company_name}.`
+        `Solicitação enviada para aprovação do admin da empresa ${company.company_name}.`
       );
     } catch (error) {
       setActionError(
@@ -249,11 +257,12 @@ export default function SelectCompanyPage() {
     <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="w-full max-w-[820px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
         <div className="p-6 sm:p-8 pb-4 space-y-2">
+          <div className="mb-4 flex items-center gap-2 overflow-x-auto text-[10px] font-bold uppercase tracking-wide text-blue-600">{['Busca inicial', 'Buscando', 'Resultados', 'Não encontrada', 'Próximos passos'].map((step, index) => <span key={step} className="flex shrink-0 items-center gap-1"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">{index + 1}</span>{step}{index < 4 && <span className="px-1 text-slate-300">→</span>}</span>)}</div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Escolha a empresa para administrar
+            Encontre a empresa que você busca
           </h1>
           <p className="text-gray-500 text-sm sm:text-base">
-            Busque por nome, selecione uma empresa sua ou solicite acesso para aprovacao.
+            Pesquise pelo nome ou CNPJ para solicitar acesso ou conhecer mais detalhes.
           </p>
         </div>
 
@@ -261,11 +270,12 @@ export default function SelectCompanyPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar empresa por nome..."
+              placeholder="Buscar por nome da empresa ou CNPJ"
               className="pl-10 h-11 bg-gray-50 border-gray-200 focus-visible:ring-primary/20"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
+            <Button type="button" disabled={search.trim().length < SEARCH_MIN_LENGTH || searchLoading} className="bg-blue-600 text-white" onClick={() => { setFlowState('searching'); setSubmittedSearch(search.trim()); }}>Buscar</Button>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -273,7 +283,7 @@ export default function SelectCompanyPage() {
               Minhas empresas: {companies.length}
             </Badge>
             <Badge variant="secondary" className="px-3 py-1 bg-gray-100 text-gray-600">
-              Solicitacoes pendentes: {pendingRequestIds.length}
+              Solicitações pendentes: {pendingRequestIds.length}
             </Badge>
           </div>
 
@@ -363,14 +373,16 @@ export default function SelectCompanyPage() {
 
           <div className="space-y-3 pt-2">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">
-              Empresas para solicitar acesso
+              Resultados encontrados
             </h4>
 
             {searchLoading && (
-              <div className="flex items-center justify-center py-6 text-sm text-gray-500">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Buscando empresas...
-              </div>
+              <div className="space-y-3">{[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center gap-3 rounded-xl border border-blue-50 p-4">
+                  <div className="h-11 w-11 animate-pulse rounded-xl bg-blue-50" />
+                  <div className="flex-1 space-y-2"><div className="h-3 w-2/3 animate-pulse rounded bg-blue-50" /><div className="h-2 w-1/2 animate-pulse rounded bg-slate-100" /></div>
+                </div>
+              ))}</div>
             )}
 
             {searchError && !searchLoading && (
@@ -420,6 +432,8 @@ export default function SelectCompanyPage() {
                         </div>
                       </div>
 
+                      <Button type="button" variant="outline" className="font-semibold" onClick={() => { track('company_viewed', { source: 'select_company' }); router.push(`/companies/${company.company_slug || companyId}`); }}>Ver detalhes</Button>
+
                       <Button
                         type="button"
                         variant={isPending ? 'secondary' : 'outline'}
@@ -433,7 +447,7 @@ export default function SelectCompanyPage() {
                             Enviando...
                           </span>
                         ) : isPending ? (
-                          'Solicitacao pendente'
+                          'Solicitação pendente'
                         ) : (
                           <span className="flex items-center gap-2">
                             <Send className="h-4 w-4" />
@@ -449,8 +463,8 @@ export default function SelectCompanyPage() {
 
             {!searchLoading && !searchError && visibleSuggestedCompanies.length === 0 && (
               <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-sm text-gray-500">
-                {search.trim().length >= SEARCH_MIN_LENGTH
-                  ? 'Nenhuma empresa encontrada com esse nome.'
+                {flowState === 'empty' && submittedSearch
+                  ? <>Nenhuma empresa encontrada para “{submittedSearch}”. <Button className="ml-2 bg-amber-400 text-slate-900" onClick={() => router.push('/register-company')}>Cadastrar empresa</Button></>
                   : 'Digite pelo menos 2 caracteres para buscar empresas pelo nome.'}
               </div>
             )}
@@ -460,7 +474,7 @@ export default function SelectCompanyPage() {
         <div className="p-6 sm:p-8 bg-gray-50/80 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
           <div className="flex flex-col gap-1">
             <p className="text-gray-500 font-medium text-sm sm:text-base">
-              Não encontrou sua empresa na busca?
+              Ainda não encontrou sua empresa?
             </p>
             <button
               type="button"
@@ -472,7 +486,7 @@ export default function SelectCompanyPage() {
           </div>
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
-            onClick={() => router.push('/register-company')}
+            onClick={() => { track('company_registration_started', { source: 'select_company' }); router.push('/register-company'); }}
           >
             <Plus className="h-4 w-4" />
             Cadastrar empresa

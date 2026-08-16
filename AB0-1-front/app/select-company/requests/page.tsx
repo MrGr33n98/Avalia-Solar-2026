@@ -14,6 +14,7 @@ import {
   AlertCircle,
   RefreshCw,
   ChevronRight,
+  Ban,
 } from 'lucide-react';
 
 // ─── Status config ───────────────────────────────────────────────────────────
@@ -40,6 +41,12 @@ const STATUS_CONFIG: Record<
     icon: <XCircle className="w-5 h-5 text-red-500" />,
     badge: 'bg-red-100 text-red-700',
   },
+  cancelled: {
+    label: 'Cancelada',
+    color: 'text-gray-600 bg-gray-50 border-gray-200',
+    icon: <Ban className="w-5 h-5 text-gray-400" />,
+    badge: 'bg-gray-200 text-gray-600',
+  },
 };
 
 function getStatusConfig(status: string) {
@@ -61,23 +68,43 @@ function formatDate(dateStr?: string): string {
   }
 }
 
+function RequestTimeline({ status }: { status: string }) {
+  const steps = ['Solicitação enviada', 'Em análise', 'Acesso liberado'];
+  const current = status === 'approved' ? 2 : status === 'rejected' ? 1 : 0;
+
+  return (
+    <ol className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-100 pt-4" aria-label="Progresso da solicitação">
+      {steps.map((label, index) => (
+        <li key={label} className="flex items-start gap-1.5 text-xs text-gray-500">
+          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${index <= current ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-200 bg-white text-gray-300'}`}>
+            {index < current ? '✓' : index + 1}
+          </span>
+          <span className={index === current ? 'font-semibold text-gray-800' : ''}>{label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 // ─── Componente de card de solicitação ───────────────────────────────────────
 
 function RequestCard({
   request,
   onCancel,
   onAccess,
+  onSearch,
   cancelling,
 }: {
   request: CompanyAccessPendingRequest;
   onCancel: (id: number) => void;
   onAccess: (id: number) => void;
+  onSearch: () => void;
   cancelling: boolean;
 }) {
   const cfg = getStatusConfig(request.status);
 
   return (
-    <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center gap-4 ${cfg.color}`}>
+    <div className={`rounded-xl border p-4 ${cfg.color}`}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center shrink-0">
           {cfg.icon}
@@ -108,6 +135,11 @@ function RequestCard({
             <ChevronRight className="w-3 h-3" />
           </Button>
         )}
+        {request.status === 'rejected' && (
+          <Button size="sm" variant="outline" className="gap-1.5 border-blue-200 text-blue-700 text-xs" onClick={onSearch}>
+            Buscar outra empresa <ChevronRight className="w-3 h-3" />
+          </Button>
+        )}
         {request.status === 'pending' && (
           <Button
             size="sm"
@@ -120,6 +152,7 @@ function RequestCard({
           </Button>
         )}
       </div>
+      <RequestTimeline status={request.status} />
     </div>
   );
 }
@@ -167,12 +200,13 @@ export default function RequestsPage() {
   };
 
   const handleAccess = (companyId: number) => {
-    router.push(`/select-company?access=${companyId}`);
+    router.push(`/dashboard?company_id=${companyId}`);
   };
 
   const pending = requests.filter((r) => r.status === 'pending');
   const approved = requests.filter((r) => r.status === 'approved');
   const rejected = requests.filter((r) => r.status === 'rejected');
+  const cancelled = requests.filter((r) => r.status === 'cancelled');
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 px-4 flex items-start justify-center">
@@ -189,7 +223,7 @@ export default function RequestsPage() {
           </button>
           <div className="flex-1">
             <h1 className="text-xl font-bold text-gray-900">Acompanhar solicitações</h1>
-            <p className="text-sm text-gray-500">Status das suas solicitações de acesso</p>
+            <p className="text-sm text-gray-500">Acompanhe acesso às empresas solicitadas.</p>
           </div>
           <button
             type="button"
@@ -209,6 +243,7 @@ export default function RequestsPage() {
             { label: 'Em análise', count: pending.length },
             { label: 'Aprovadas', count: approved.length },
             { label: 'Rejeitadas', count: rejected.length },
+            { label: 'Canceladas', count: cancelled.length },
           ].map((tab) => (
             <div
               key={tab.label}
@@ -246,7 +281,7 @@ export default function RequestsPage() {
               <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
                 <Building2 className="w-7 h-7 text-gray-300" />
               </div>
-              <p className="text-sm text-gray-500">Nenhuma solicitação enviada ainda.</p>
+              <p className="text-sm text-gray-500">Você ainda não enviou solicitações de acesso.</p>
               <Button
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
@@ -265,6 +300,7 @@ export default function RequestsPage() {
                 request={req}
                 onCancel={handleCancel}
                 onAccess={handleAccess}
+                onSearch={() => router.push('/select-company')}
                 cancelling={cancellingId === req.id}
               />
             ))}
