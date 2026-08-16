@@ -27,7 +27,7 @@ export function UnifiedHeroBanner({
         placement="company_profile_about_inline"
         categoryId={categoryId}
         companyId={companyId}
-        limit={1}
+        limit={6}
         priority={true}
         fallback={null}
       />
