@@ -138,21 +138,28 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
             ))}
           </ol>
         </nav>
-        <header className="border border-slate-300 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:p-6">
-          <div className="flex items-center gap-4">
+        <header className="rounded-xl border border-slate-200 bg-white p-4 sm:flex sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0 flex items-start gap-3 sm:gap-4">
             <CompanyLogo
               logoUrl={catalog.company.logo_url}
               name={catalog.company.name}
               size="lg"
-              className="h-16 w-16 rounded-[2px]"
+              className="h-14 w-14 shrink-0 rounded-lg sm:h-[72px] sm:w-[72px]"
               badges={catalog.company.badges}
             />
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">
+              <p className="inline-flex max-w-full truncate rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-700">
                 {catalog.company.name}
               </p>
-              <h1 className="text-2xl font-bold text-[#0B1F4B]">{catalog.category.name}</h1>
-              <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
+              <h1 className="mt-1 text-[22px] font-bold leading-tight text-[#0B1F4B] sm:text-[30px]">
+                {catalog.category.name}
+              </h1>
+              {(catalog.category.short_description || catalog.category.description) && (
+                <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                  {catalog.category.short_description || catalog.category.description}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 sm:text-sm">
                 <span className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
                   {(catalog.company.rating_count ?? 0) > 0
@@ -176,24 +183,14 @@ export default async function CompanyCategoryCatalogPage({ params }: Props) {
             Voltar para a empresa
           </Link>
         </header>
-        <section className="border-x border-b border-slate-300 bg-white px-5 py-8 sm:px-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-700">
-            Produtos e serviços
-          </p>
-          {(catalog.category.short_description || catalog.category.description) && (
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
-              {catalog.category.short_description || catalog.category.description}
-            </p>
-          )}
-        </section>
-        <div className="mt-8">
+        <div className="mt-6">
           <UnifiedHeroBanner
             categoryName={catalog.category.name}
             categorySlug={catalog.category.seo_url}
             companyId={catalog.company.id}
             companyName={catalog.company.name}
           />
-          <CatalogClient catalog={catalog} />
+          <div className="mt-6"><CatalogClient catalog={catalog} /></div>
         </div>
       </div>
     </main>

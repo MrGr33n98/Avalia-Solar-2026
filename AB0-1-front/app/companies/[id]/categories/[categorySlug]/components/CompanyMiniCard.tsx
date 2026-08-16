@@ -14,13 +14,13 @@ export function CompanyMiniCard({ company }: CompanyMiniCardProps) {
   return (
     <Link
       href={companyPath}
-      className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+      className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:border-blue-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
     >
       <CompanyLogo
         logoUrl={company.logo_url}
         name={company.name}
         size="md"
-        className="h-14 w-14"
+        className="h-12 w-12 shrink-0"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">

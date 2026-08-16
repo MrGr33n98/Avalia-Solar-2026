@@ -53,20 +53,20 @@ export function SmartEmptyCatalog({ catalog, favorites, onToggleFavorite }: Smar
   };
 
   return (
-    <div className="space-y-10">
-      <section className="border border-slate-300 bg-white p-8 text-center sm:p-10">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+    <div className="min-w-0 space-y-7">
+      <section className="border border-slate-200 bg-white p-6 text-center sm:p-8">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
           <PackageSearch className="h-7 w-7 text-[#0B1F4B]" aria-hidden="true" />
         </div>
-        <h2 className="mt-5 text-xl font-bold text-[#0B1F4B]">
-          {category.name}
+        <h2 className="mx-auto mt-4 max-w-2xl text-lg font-bold text-[#0B1F4B] sm:text-xl">
+          A {company.name} ainda não publicou soluções específicas para {category.name}.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
-          A <strong className="text-slate-900">{company.name}</strong> ainda não publicou produtos
-          ou serviços em <strong className="text-slate-900">{category.name}</strong>.
-          {!hasSuggestions
-            ? ' Solicite um orçamento personalizado e seja avisado quando novas opções estiverem disponíveis.'
-            : ' Enquanto isso, confira as opções abaixo.'}
+          {!hasSuggestions ? (
+            <>Precisa de uma solução para sua empresa? Solicite uma proposta personalizada diretamente à <strong className="text-slate-900">{company.name}</strong>.</>
+          ) : (
+            <>Enquanto isso, você pode solicitar uma proposta personalizada ou explorar outras soluções da empresa.</>
+          )}
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <button
@@ -74,7 +74,7 @@ export function SmartEmptyCatalog({ catalog, favorites, onToggleFavorite }: Smar
             onClick={handleQuoteClick}
             className="inline-flex min-h-11 items-center justify-center rounded-[2px] bg-[#0B1F4B] px-6 text-sm font-semibold text-white hover:bg-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
           >
-            Solicitar orçamento para {category.name}
+            Solicitar orçamento
           </button>
           <Link
             href={companyPath}

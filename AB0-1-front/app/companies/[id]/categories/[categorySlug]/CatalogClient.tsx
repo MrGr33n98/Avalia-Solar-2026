@@ -35,6 +35,10 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   );
 
   const isCategoryEmpty = catalog.products?.length === 0 && catalog.services?.length === 0;
+  const filteredEmptyCatalog = useMemo(
+    () => ({ ...catalog, suggested_products: suggestedProducts }),
+    [catalog, suggestedProducts]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -123,8 +127,8 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
 
   if (isCategoryEmpty) {
     return (
-      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="space-y-5">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="min-w-0 space-y-4">
           <label className="relative block">
             <span className="sr-only">{searchPlaceholder}</span>
             <Search
@@ -153,7 +157,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
           )}
         </aside>
         <SmartEmptyCatalog
-          catalog={catalog}
+          catalog={filteredEmptyCatalog}
           favorites={favorites}
           onToggleFavorite={(id) => {
             const product = searchableProducts.find((p) => p.id === id);
@@ -165,8 +169,8 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="space-y-5">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside className="min-w-0 space-y-4">
         <label className="relative block">
           <span className="sr-only">{searchPlaceholder}</span>
           <Search
@@ -197,7 +201,7 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
           </button>
         </div>
       </aside>
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-6">
         {services.length > 0 && (
           <section aria-labelledby="services-title">
             <h2 id="services-title" className="mb-4 text-xl font-bold text-[#0B1F4B]">
@@ -205,14 +209,20 @@ export default function CatalogClient({ catalog }: { catalog: CompanyCatalogResp
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {services.map((service) => (
-                <article key={service.id} className="border border-slate-300 bg-white p-5">
+                <article key={service.id} className="flex min-h-40 flex-col border border-slate-200 bg-white p-4">
                   <BriefcaseBusiness className="h-5 w-5 text-[#0B1F4B]" aria-hidden="true" />
-                  <h3 className="mt-4 font-bold text-slate-950">{service.name}</h3>
+                  <h3 className="mt-3 font-bold text-slate-950">{service.name}</h3>
                   {service.description && (
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-600">
                       {service.description}
                     </p>
                   )}
+                  <div className="mt-auto space-y-1 pt-3 text-xs text-slate-600">
+                    {service.coverage?.length ? <p>Atendimento: {service.coverage.join(', ')}</p> : null}
+                    {service.price_from != null && service.price_from > 0 ? (
+                      <p>A partir de {service.price_from.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    ) : null}
+                  </div>
                 </article>
               ))}
             </div>
@@ -261,7 +271,7 @@ export function normalizeSearchText(value: string): string {
   return value
     .toLocaleLowerCase('pt-BR')
     .normalize('NFD')
-    .replace(/[0300-036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .trim();
 }
 
@@ -271,5 +281,8 @@ function filterItems<T extends { name: string; description?: string | null }>(
 ): T[] {
   if (!items) return [];
   if (!needle) return items;
-  return items.filter((item) => normalizeSearchText().includes(needle));
+  return items.filter((item) => {
+    const searchableText = [item.name, item.description].filter(Boolean).join(' ');
+    return normalizeSearchText(searchableText).includes(needle);
+  });
 }
