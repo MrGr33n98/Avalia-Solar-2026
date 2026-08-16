@@ -10,7 +10,7 @@ export function PricingTrustStrip() {
     <section className="grid gap-4 rounded-2xl bg-brand-blue p-5 text-white sm:grid-cols-2 lg:grid-cols-4">
       {items.map(([label, Icon]) => (
         <div key={label} className="flex items-center gap-3">
-          <Icon className="h-6 w-6 text-brand-yellow" />
+          <Icon className="h-6 w-6 text-amber-400" />
           <span className="text-xs font-bold">{label}</span>
         </div>
       ))}

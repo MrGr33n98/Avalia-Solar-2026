@@ -63,10 +63,10 @@ const planConfig: Record<PlanSlug, PlanVisualConfig> = {
   pro: {
     topBar: 'bg-brand-blue',
     iconBg: 'border border-slate-100 bg-white text-slate-700 shadow-sm',
-    topBadgeCls: 'bg-brand-yellow text-slate-950',
+    topBadgeCls: 'bg-amber-400 text-slate-950',
     ringCls: 'border-2 border-brand-blue',
     shadowCls: 'shadow-lg',
-    ctaCls: 'bg-brand-yellow hover:bg-yellow-400 text-slate-950 border-0 font-bold shadow-sm',
+    ctaCls: 'bg-amber-400 hover:bg-yellow-400 text-slate-950 border-0 font-bold shadow-sm',
     checkBg: 'bg-slate-50',
     checkText: 'text-slate-600',
     priceCls: 'text-slate-900',

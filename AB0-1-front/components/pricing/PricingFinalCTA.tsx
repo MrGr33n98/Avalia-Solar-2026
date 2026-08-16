@@ -9,7 +9,7 @@ export function PricingFinalCTA({ onCompare }: { onCompare: () => void }) {
       <div className="flex flex-col gap-2 sm:flex-row">
         <Link
           href="/register?plan=free"
-          className="rounded-lg bg-brand-yellow px-5 py-3 text-center text-sm font-bold text-slate-950"
+          className="rounded-lg bg-amber-400 px-5 py-3 text-center text-sm font-bold text-slate-950"
         >
           Criar perfil gratuito
         </Link>

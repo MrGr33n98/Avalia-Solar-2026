@@ -8,12 +8,12 @@ export function PricingHero({ onViewPlans }: { onViewPlans: () => void }) {
     <section className="bg-brand-blue text-white">
       <div className="mx-auto grid max-w-[1180px] gap-8 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-16">
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-yellow">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-amber-400">
             Avalia Solar para empresas
           </p>
           <h1 className="max-w-xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
             Transforme seu perfil em um canal de{' '}
-            <span className="text-brand-yellow">aquisição de clientes.</span>
+            <span className="text-amber-400">aquisição de clientes.</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-relaxed text-blue-100">
             Apareça com mais destaque, facilite o contato e acompanhe os resultados da sua empresa
@@ -22,7 +22,7 @@ export function PricingHero({ onViewPlans }: { onViewPlans: () => void }) {
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button
               onClick={onViewPlans}
-              className="h-11 bg-brand-yellow px-6 font-bold text-slate-950 hover:bg-yellow-400"
+              className="h-11 bg-amber-400 px-6 font-bold text-slate-950 hover:bg-yellow-400"
             >
               Ver planos <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -37,7 +37,7 @@ export function PricingHero({ onViewPlans }: { onViewPlans: () => void }) {
           <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-blue-100">
             {['Sem fidelidade', 'Upgrade a qualquer momento', 'Cadastro gratuito'].map((item) => (
               <span key={item} className="inline-flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-brand-yellow" />
+                <Check className="h-3.5 w-3.5 text-amber-400" />
                 {item}
               </span>
             ))}
