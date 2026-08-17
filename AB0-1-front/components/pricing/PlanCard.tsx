@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, ChevronRight, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type PlanSlug } from '@/lib/pricing/catalog';
+import type { BillingPeriod } from '@/lib/pricing/billing';
 
 export interface PlanCardProps {
   slug: PlanSlug;
@@ -19,8 +20,9 @@ export interface PlanCardProps {
   isCurrentPlan: boolean;
   subscriptionStatus?: string;
   isLoading?: boolean;
+  isDisabled?: boolean;
   onCtaClick: () => void;
-  billingCycle: 'monthly' | 'yearly';
+  billingPeriod: BillingPeriod;
   billingDetail?: string;
   savingBadge?: string;
   ctaNote?: string;
@@ -110,8 +112,9 @@ export function PlanCard({
   isCurrentPlan,
   subscriptionStatus,
   isLoading = false,
+  isDisabled = false,
   onCtaClick,
-  billingCycle,
+  billingPeriod: _billingPeriod,
   billingDetail,
   savingBadge,
   ctaNote,
@@ -192,17 +195,19 @@ export function PlanCard({
           >
             <span className={isProFeatured ? 'text-white' : 'text-slate-900'}>{priceLabel}</span>
             {slug !== 'free' && slug !== 'enterprise' && (
-              <span className={`ml-1 text-base font-semibold ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>/mês</span>
+              <span className={`ml-1 text-base font-semibold ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>
+                /mês equivalente
+              </span>
             )}
           </div>
 
           {slug === 'free' && (
-            <div className="mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'} ">
+            <div className={`mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>
               para sempre
             </div>
           )}
           {slug === 'enterprise' && (
-            <div className="mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'} ">
+            <div className={`mt-1 text-sm font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>
               Fale com nosso time
             </div>
           )}
@@ -244,7 +249,7 @@ export function PlanCard({
         {/* CTA */}
         <Button
           onClick={onCtaClick}
-          disabled={isLoading}
+          disabled={isLoading || isDisabled}
           size="lg"
           className={[
             'h-12 w-full rounded-full font-bold text-sm transition-all',
@@ -256,7 +261,7 @@ export function PlanCard({
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
-              Carregando...
+              Redirecionando...
             </span>
           ) : (
             <span className="flex items-center justify-center">

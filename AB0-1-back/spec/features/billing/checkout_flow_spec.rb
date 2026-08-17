@@ -48,7 +48,8 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
       name: 'Pro',
       price: 499.00,
       stripe_product_id: 'prod_pro123',
-      stripe_price_id_monthly: 'price_pro123',
+      stripe_price_id_monthly: 'price_pro_six_months',
+      stripe_price_id_yearly: 'price_pro_twelve_months',
       is_public: true,
       display_order: 1,
       features_json: { custom_ctas: true, show_competitor_banners: false }
@@ -84,7 +85,7 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
         allow(Stripe::Checkout::Session).to receive(:create).and_return(mock_session)
 
         post '/api/v1/billing/checkout',
-             params: { company_id: company.id, plan_id: plan.id }.to_json,
+             params: { company_id: company.id, plan_id: plan.id, billing_period: 'six_months' }.to_json,
              headers: headers
 
         expect(response).to have_http_status(:ok)
@@ -104,7 +105,7 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
         )
 
         post '/api/v1/billing/checkout',
-             params: { company_id: company.id, plan_id: unconfigured_plan.id }.to_json,
+             params: { company_id: company.id, plan_id: unconfigured_plan.id, billing_period: 'six_months' }.to_json,
              headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
@@ -130,7 +131,7 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
         other_company.save!
 
         post '/api/v1/billing/checkout',
-             params: { company_id: other_company.id, plan_id: plan.id }.to_json,
+             params: { company_id: other_company.id, plan_id: plan.id, billing_period: 'six_months' }.to_json,
              headers: headers
 
         expect(response).to have_http_status(:forbidden)
@@ -140,7 +141,7 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
     context 'when user is not authenticated' do
       it 'returns unauthorized status' do
         post '/api/v1/billing/checkout',
-             params: { company_id: company.id, plan_id: plan.id }.to_json,
+             params: { company_id: company.id, plan_id: plan.id, billing_period: 'six_months' }.to_json,
              headers: { 'Content-Type' => 'application/json' }
 
         expect(response).to have_http_status(:unauthorized)

@@ -16,7 +16,8 @@ describe('billingApi', () => {
       10,
       2,
       'https://www.avaliasolar.com.br/dashboard?checkout=success',
-      'https://www.avaliasolar.com.br/pricing'
+      'https://www.avaliasolar.com.br/pricing',
+      'six_months'
     );
 
     expect(fetchApiSafe).toHaveBeenCalledWith(
@@ -29,7 +30,7 @@ describe('billingApi', () => {
         body: JSON.stringify({
           company_id: 10,
           plan_id: 2,
-          billing_cycle: 'monthly',
+          billing_period: 'six_months',
           success_url: 'https://www.avaliasolar.com.br/dashboard?checkout=success',
           cancel_url: 'https://www.avaliasolar.com.br/pricing',
         }),

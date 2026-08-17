@@ -109,8 +109,8 @@ ActiveAdmin.register Plan do
       row('Tier Inferido') { status_tag(resource.inferred_plan_tier) }
       row('Total de Recursos') { resource.enabled_feature_keys.count }
       row('Stripe Product ID') { resource.stripe_product_id.presence || 'Não configurado' }
-      row('Stripe Price ID Principal') { resource.stripe_price_id_monthly.presence || 'Não configurado' }
-      row('Stripe Price ID Anual Alternativo') { resource.stripe_price_id_yearly.presence || 'Não configurado' }
+      row('Stripe Price ID — 6 meses') { resource.stripe_price_id_monthly.presence || 'Não configurado' }
+      row('Stripe Price ID — 12 meses') { resource.stripe_price_id_yearly.presence || 'Não configurado' }
       row('Exibir no /pricing') { resource.is_public ? '✅ Sim' : '❌ Não' }
       row('Ordem de exibição') { resource.display_order }
       row('Data de Criação') { resource.created_at }
@@ -120,9 +120,9 @@ ActiveAdmin.register Plan do
     panel "Origem dos preços" do
       attributes_table do
         row("Catálogo anual") { number_to_currency(resource.price, unit: "R$ ", separator: ",", delimiter: ".") }
-        row("Stripe mensal") { resource.stripe_price_id_monthly.presence || "Não configurado" }
-        row("Stripe anual") { resource.stripe_price_id_yearly.presence || "Não configurado" }
-        row("Fonte efetiva") { resource.stripe_price_id_monthly.present? ? "Stripe Price ID Principal" : "Catálogo local" }
+        row("Stripe — 6 meses") { resource.stripe_price_id_monthly.presence || "Não configurado" }
+        row("Stripe — 12 meses") { resource.stripe_price_id_yearly.presence || "Não configurado" }
+        row("Fonte efetiva") { resource.stripe_price_id_monthly.present? ? "Stripe Prices configurados" : "Catálogo local" }
       end
     end
 
@@ -288,10 +288,10 @@ ActiveAdmin.register Plan do
 
     f.inputs 'Integração Stripe (Faturamento)' do
       f.input :stripe_product_id, label: 'Stripe Product ID', hint: 'Ex: prod_XXXX'
-      f.input :stripe_price_id_monthly, label: 'Stripe Price ID Principal',
-                                        hint: 'Use o price_ anual que será usado no checkout.'
-      f.input :stripe_price_id_yearly, label: 'Stripe Price ID Anual Alternativo',
-                                       hint: 'Opcional; mantenha vazio se o principal já for anual.'
+      f.input :stripe_price_id_monthly, label: 'Stripe Price ID — 6 meses',
+                    hint: 'Price usado para cobrança a cada 6 meses.'
+      f.input :stripe_price_id_yearly, label: 'Stripe Price ID — 12 meses',
+                   hint: 'Price usado para cobrança a cada 12 meses.'
       f.input :is_public, as: :boolean, label: 'Exibir publicamente no site (/pricing)'
       f.input :display_order, label: 'Ordem de exibição', hint: 'Menor número aparece primeiro no carrossel.'
     end

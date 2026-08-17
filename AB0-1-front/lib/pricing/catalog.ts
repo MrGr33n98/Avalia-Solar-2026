@@ -410,9 +410,9 @@ export const pricingFaqs: PricingFaq[] = [
       'A partir do plano Essencial, seu perfil exibe um botão de WhatsApp. O cliente clica e fala direto com a sua equipe — sem intermediário e sem comissão por lead.',
   },
   {
-    question: 'Qual a vantagem do plano anual?',
+    question: 'Quais são os períodos de contratação?',
     answer:
-      'No pagamento anual você economiza 17% — o equivalente a 2 meses grátis. O Essencial sai por R$ 49/mês e o Pro por R$ 125/mês.',
+      'Você pode contratar por 6 ou 12 meses. O Essencial custa R$ 330 a cada 6 meses ou R$ 590 a cada 12 meses. O Pro custa R$ 840 a cada 6 meses ou R$ 1.500 a cada 12 meses. Os valores mensais exibidos são equivalências para facilitar a comparação.',
   },
   {
     question: 'Preciso do Enterprise para integrar com meu CRM?',

@@ -1,7 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe Billing::CheckoutService, type: :service do
-  let(:plan) { Plan.find_by(name: 'Checkout Service Plan') || create(:plan, name: 'Checkout Service Plan', stripe_price_id_monthly: 'price_123') }
+  let(:plan) do
+    Plan.find_by(name: 'Checkout Service Plan') || create(
+      :plan,
+      name: 'Checkout Service Plan',
+      stripe_price_id_monthly: 'price_six_months',
+      stripe_price_id_yearly: 'price_twelve_months'
+    )
+  end
   let(:company) { create(:company, plan: plan) }
   let(:user) { create(:user, company: company) }
 
@@ -9,17 +16,36 @@ RSpec.describe Billing::CheckoutService, type: :service do
 
   describe '#call' do
     context 'quando o plano não tem stripe_price_id_monthly configurado' do
-      let(:invalid_plan) { Plan.find_by(name: 'Invalid Plan') || create(:plan, name: 'Invalid Plan', stripe_price_id_monthly: nil) }
-      let(:service) { described_class.new(company: company, plan: invalid_plan, current_user: user) }
+      let(:invalid_plan) do
+        Plan.find_by(name: 'Invalid Plan') || create(
+          :plan,
+          name: 'Invalid Plan',
+          stripe_price_id_monthly: nil,
+          stripe_price_id_yearly: nil
+        )
+      end
+      let(:service) do
+        described_class.new(company: company, plan: invalid_plan, current_user: user, billing_period: 'six_months')
+      end
 
       it 'lança erro PlanNotConfigured' do
+        expect(Stripe::Checkout::Session).not_to receive(:create)
         expect { service.call }.to raise_error(Billing::Errors::PlanNotConfigured)
       end
     end
 
     context 'quando o plano é válido e a empresa já possui stripe_customer_id no banco' do
-      let!(:subscription) { Billing::CompanySubscription.create!(company: company, plan: plan, stripe_customer_id: 'cust_existente', status: 'incomplete') }
-      let(:service) { described_class.new(company: company, plan: plan, current_user: user) }
+      let!(:subscription) do
+        Billing::CompanySubscription.create!(
+          company: company,
+          plan: plan,
+          stripe_customer_id: 'cust_existente',
+          status: 'incomplete'
+        )
+      end
+      let(:service) do
+        described_class.new(company: company, plan: plan, current_user: user, billing_period: 'six_months')
+      end
 
       before do
         # Mocka a chamada de criação de sessão do Stripe
@@ -31,7 +57,14 @@ RSpec.describe Billing::CheckoutService, type: :service do
       it 'reutiliza o customer_id existente e cria a checkout session com sucesso' do
         expect(Stripe::Customer).not_to receive(:create)
         expect(Stripe::Checkout::Session).to receive(:create).with(
-          hash_including(customer: 'cust_existente')
+          hash_including(
+            customer: 'cust_existente',
+            line_items: [{ price: 'price_six_months', quantity: 1 }],
+            metadata: hash_including(billing_period: 'six_months'),
+            subscription_data: hash_including(
+              metadata: hash_including(billing_period: 'six_months')
+            )
+          )
         )
 
         url = service.call
@@ -54,7 +87,9 @@ RSpec.describe Billing::CheckoutService, type: :service do
     end
 
     context 'quando o plano é válido e a empresa NÃO possui stripe_customer_id' do
-      let(:service) { described_class.new(company: company, plan: plan, current_user: user) }
+      let(:service) do
+        described_class.new(company: company, plan: plan, current_user: user, billing_period: 'six_months')
+      end
 
       before do
         # Mocka a criação de customer no Stripe
@@ -86,7 +121,14 @@ RSpec.describe Billing::CheckoutService, type: :service do
     end
 
     context 'quando o redirect usa a variante www do FRONTEND_URL' do
-      let!(:subscription) { Billing::CompanySubscription.create!(company: company, plan: plan, stripe_customer_id: 'cust_existente', status: 'incomplete') }
+      let!(:subscription) do
+        Billing::CompanySubscription.create!(
+          company: company,
+          plan: plan,
+          stripe_customer_id: 'cust_existente',
+          status: 'incomplete'
+        )
+      end
       let(:success_url) { 'https://www.avaliasolar.com.br/dashboard?checkout=success' }
       let(:cancel_url) { 'https://www.avaliasolar.com.br/pricing' }
       let(:service) do
@@ -94,6 +136,7 @@ RSpec.describe Billing::CheckoutService, type: :service do
           company: company,
           plan: plan,
           current_user: user,
+          billing_period: 'six_months',
           success_url: success_url,
           cancel_url: cancel_url
         )
@@ -123,7 +166,9 @@ RSpec.describe Billing::CheckoutService, type: :service do
     end
 
     context 'quando o Stripe rejeita a chave de API' do
-      let(:service) { described_class.new(company: company, plan: plan, current_user: user) }
+      let(:service) do
+        described_class.new(company: company, plan: plan, current_user: user, billing_period: 'six_months')
+      end
 
       before do
         allow(Stripe::Customer).to receive(:create).and_raise(
@@ -141,6 +186,108 @@ RSpec.describe Billing::CheckoutService, type: :service do
 
         expect(captured_error.message).not_to include('sk_test')
         expect(captured_error.message).not_to include('XXXX')
+      end
+    end
+
+    context 'quando o período de cobrança é doze meses' do
+      let!(:subscription) do
+        Billing::CompanySubscription.create!(
+          company: company,
+          plan: plan,
+          stripe_customer_id: 'cust_existente',
+          status: 'incomplete'
+        )
+      end
+      let(:service) do
+        described_class.new(company: company, plan: plan, current_user: user, billing_period: 'twelve_months')
+      end
+
+      before do
+        allow(Stripe::Checkout::Session).to receive(:create).and_return(
+          double('Stripe::Checkout::Session', url: 'https://checkout.stripe.com/pay/session_yearly')
+        )
+      end
+
+      it 'usa o Price de doze meses e inclui o período nos metadados' do
+        service.call
+
+        expect(Stripe::Checkout::Session).to have_received(:create).with(
+          hash_including(
+            line_items: [{ price: 'price_twelve_months', quantity: 1 }],
+            metadata: hash_including(billing_period: 'twelve_months'),
+            subscription_data: hash_including(
+              metadata: hash_including(billing_period: 'twelve_months')
+            )
+          )
+        )
+      end
+    end
+
+    context 'quando o período de cobrança é inválido' do
+      %w[monthly yearly].push(nil).each do |invalid_period|
+        it "rejeita #{invalid_period.inspect}" do
+          service = described_class.new(
+            company: company,
+            plan: plan,
+            current_user: user,
+            billing_period: invalid_period
+          )
+
+          expect(Stripe::Checkout::Session).not_to receive(:create)
+          expect { service.call }.to raise_error(Billing::Errors::PlanNotConfigured, 'Período de cobrança inválido.')
+        end
+      end
+    end
+
+    context 'quando o Price de doze meses não está configurado' do
+      let(:invalid_plan) do
+        create(
+          :plan,
+          name: "Invalid Twelve Months #{SecureRandom.hex(4)}",
+          stripe_price_id_monthly: 'price_six_months',
+          stripe_price_id_yearly: nil
+        )
+      end
+      let(:service) do
+        described_class.new(company: company, plan: invalid_plan, current_user: user, billing_period: 'twelve_months')
+      end
+
+      it 'não chama o Stripe' do
+        expect(Stripe::Checkout::Session).not_to receive(:create)
+        expect { service.call }.to raise_error(
+          Billing::Errors::PlanNotConfigured,
+          'Este período ainda não está configurado para este plano.'
+        )
+      end
+    end
+
+    context 'quando os Prices dos períodos são diferentes' do
+      let!(:subscription) do
+        Billing::CompanySubscription.create!(
+          company: company,
+          plan: plan,
+          stripe_customer_id: 'cust_existente',
+          status: 'incomplete'
+        )
+      end
+
+      before do
+        allow(Stripe::Checkout::Session).to receive(:create) do |params|
+          double('Stripe::Checkout::Session', url: "https://checkout.stripe.com/#{params[:line_items].first[:price]}")
+        end
+      end
+
+      it 'não reutiliza a sessão de seis meses para doze meses' do
+        six_months = described_class.new(
+          company: company, plan: plan, current_user: user, billing_period: 'six_months'
+        )
+        twelve_months = described_class.new(
+          company: company, plan: plan, current_user: user, billing_period: 'twelve_months'
+        )
+
+        expect(six_months.call).to include('price_six_months')
+        expect(twelve_months.call).to include('price_twelve_months')
+        expect(Stripe::Checkout::Session).to have_received(:create).twice
       end
     end
   end

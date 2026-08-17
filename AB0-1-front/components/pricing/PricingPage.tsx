@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { billingApi, type BillingPlan, type BillingSubscription } from '@/lib/api/billing';
 import { pricingPlans, type PlanSlug } from '@/lib/pricing/catalog';
-import { billingCycleFromQuery, formatBRL, formatBRLWithoutCents, pricingByPlan, type BillingCycle } from '@/lib/pricing/billing';
+import { billingPeriodFromQuery, formatBRL, formatBRLWithoutCents, pricingByPlan, type BillingPeriod } from '@/lib/pricing/billing';
 
 // Importa os subcomponentes modulares e slots resilientes
 import { PlanCard, PlanCardSkeleton } from './PlanCard';
@@ -108,7 +108,7 @@ export default function PricingPage() {
   const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Estados locais
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('twelve_months');
   const [plans, setPlans] = useState<CombinedPlan[]>([]);
   const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,8 +138,10 @@ export default function PricingPage() {
 
   // Carrega planos e assinatura
   useEffect(() => {
-    const queryCycle = billingCycleFromQuery(new URLSearchParams(window.location.search).get('billing'));
-    if (queryCycle) setBillingCycle(queryCycle);
+    const queryPeriod = billingPeriodFromQuery(
+      new URLSearchParams(window.location.search).get('billing_period')
+    );
+    if (queryPeriod) setBillingPeriod(queryPeriod);
   }, []);
 
   useEffect(() => {
@@ -225,9 +227,9 @@ export default function PricingPage() {
   }, [isAuthenticated, user?.company_id]);
 
   // Handler para os cliques em CTA de planos
-  const handleBillingCycleChange = (cycle: BillingCycle) => {
-    setBillingCycle(cycle);
-    track('pricing_billing_cycle_changed', { billing_cycle: cycle });
+  const handleBillingPeriodChange = (period: BillingPeriod) => {
+    setBillingPeriod(period);
+    track('pricing_billing_period_changed', { billing_period: period });
   };
 
   const handlePlanCta = async (plan: BillingPlan) => {
@@ -247,12 +249,6 @@ export default function PricingPage() {
     setCheckoutError(null);
     setLastFailedPlan(plan);
 
-    if (billingCycle === 'yearly' && (plan.slug === 'essential' || plan.slug === 'pro')) {
-      setCheckoutError('O checkout anual será habilitado após a conexão dos Prices anuais no backend.');
-      setActionLoadingPlanId(null);
-      return;
-    }
-
     try {
       const hasFreshSession = await refreshAuth();
       if (!hasFreshSession) {
@@ -268,7 +264,7 @@ export default function PricingPage() {
 
       if (plan.slug === 'essential') {
         // Se o essencial tiver stripe_price_id_monthly (produção), inicia checkout Stripe
-        if (plan.stripe_price_id_monthly) {
+        if (plan.id) {
           const successUrl = `${window.location.origin}/dashboard?company_id=${user.company_id}&checkout=success`;
           const cancelUrl = window.location.href;
           const { checkout_url } = await billingApi.createCheckoutSession(
@@ -276,7 +272,7 @@ export default function PricingPage() {
             plan.id,
             successUrl,
             cancelUrl,
-            billingCycle
+            billingPeriod
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
@@ -311,7 +307,7 @@ export default function PricingPage() {
             plan.id,
             successUrl,
             cancelUrl,
-            billingCycle
+            billingPeriod
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
@@ -332,8 +328,11 @@ export default function PricingPage() {
     } catch (err) {
       const error = err as Error & { message?: string };
       console.error('[PricingPage] Erro ao processar faturamento:', error);
+      const message = error?.message || '';
       setCheckoutError(
-        error?.message || 'Falha ao processar solicitação. Por favor, tente novamente.'
+        message.toLowerCase().includes('price') || message.toLowerCase().includes('período')
+          ? 'Este período ainda não está disponível para contratação.'
+          : 'Não foi possível iniciar o pagamento. Tente novamente em alguns instantes.'
       );
     } finally {
       setActionLoadingPlanId(null);
@@ -676,10 +675,7 @@ export default function PricingPage() {
 
           {/* Monthly/Yearly Cycle Toggle Selector */}
           <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
-            <BillingCycleToggle value={billingCycle} onChange={handleBillingCycleChange} />
-            <span className="text-[12.5px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              Economize até 17%
-            </span>
+            <BillingCycleToggle value={billingPeriod} onChange={handleBillingPeriodChange} />
           </div>
 
           <div className="mb-10 max-w-2xl mx-auto space-y-4">
@@ -690,6 +686,7 @@ export default function PricingPage() {
             )}
             <ErrorBanner
               error={checkoutError}
+              title="Não foi possível iniciar o pagamento."
               onRetry={() => lastFailedPlan && handlePlanCta(lastFailedPlan)}
               onDismiss={() => setCheckoutError(null)}
             />
@@ -735,32 +732,24 @@ export default function PricingPage() {
                 // Preços com base na seleção do ciclo
                 let priceLabel = plan.price_label;
                 let billingDetail: string | undefined;
-                let savingText: string | undefined;
-                let ctaNote: string | undefined;
 
                 if (plan.slug === 'free') {
                   priceLabel = 'R$ 0';
                 } else if (plan.slug === 'essential') {
-                  if (billingCycle === 'monthly') {
-                    priceLabel = 'R$ 59';
-                    priceLabel = formatBRLWithoutCents(pricingByPlan.essential.monthly.amount);
-                    billingDetail = 'Cobrança mensal';
+                  if (billingPeriod === 'six_months') {
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.essential.six_months.monthlyEquivalent);
+                    billingDetail = `${formatBRLWithoutCents(pricingByPlan.essential.six_months.amount)} cobrados a cada 6 meses`;
                   } else {
-                    priceLabel = formatBRL(pricingByPlan.essential.yearly.monthlyEquivalent);
-                    billingDetail = `Cobrado ${formatBRLWithoutCents(pricingByPlan.essential.yearly.amount)} por ano`;
-                    savingText = `Economize ${formatBRLWithoutCents(pricingByPlan.essential.yearly.savings)}/ano`;
-                    ctaNote = 'Checkout anual em preparação';
+                    priceLabel = formatBRL(pricingByPlan.essential.twelve_months.monthlyEquivalent);
+                    billingDetail = `${formatBRLWithoutCents(pricingByPlan.essential.twelve_months.amount)} cobrados por ano`;
                   }
                 } else if (plan.slug === 'pro') {
-                  if (billingCycle === 'monthly') {
-                    priceLabel = 'R$ 150';
-                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.monthly.amount);
-                    billingDetail = 'Cobrança mensal';
+                  if (billingPeriod === 'six_months') {
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.six_months.monthlyEquivalent);
+                    billingDetail = `${formatBRLWithoutCents(pricingByPlan.pro.six_months.amount)} cobrados a cada 6 meses`;
                   } else {
-                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.yearly.monthlyEquivalent);
-                    billingDetail = `Cobrado ${formatBRLWithoutCents(pricingByPlan.pro.yearly.amount)} por ano`;
-                    savingText = `Economize ${formatBRLWithoutCents(pricingByPlan.pro.yearly.savings)}/ano`;
-                    ctaNote = 'Checkout anual em preparação';
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.twelve_months.monthlyEquivalent);
+                    billingDetail = `${formatBRLWithoutCents(pricingByPlan.pro.twelve_months.amount)} cobrados por ano`;
                   }
                 } else if (plan.slug === 'enterprise') {
                   priceLabel = 'Sob consulta';
@@ -783,10 +772,9 @@ export default function PricingPage() {
                     subscriptionStatus={isCurrent ? subscription?.status : undefined}
                     isLoading={actionLoadingPlanId === plan.id}
                     onCtaClick={() => handlePlanCta(plan)}
-                    billingCycle={billingCycle}
+                    billingPeriod={billingPeriod}
+                    isDisabled={Boolean(actionLoadingPlanId && actionLoadingPlanId !== plan.id)}
                     billingDetail={billingDetail}
-                    savingBadge={savingText}
-                    ctaNote={ctaNote}
                   />
                 );
               })

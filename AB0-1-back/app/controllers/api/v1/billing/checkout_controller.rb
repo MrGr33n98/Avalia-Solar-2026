@@ -19,6 +19,7 @@ module Api
             metadata: {
               ip_address: request.remote_ip,
               user_agent: request.user_agent,
+              billing_period: params[:billing_period],
               timestamp: Time.current.iso8601
             }
           )
@@ -27,6 +28,7 @@ module Api
             company: company,
             plan: plan,
             current_user: current_user,
+            billing_period: params[:billing_period],
             success_url: params[:success_url],
             cancel_url: params[:cancel_url]
           ).call

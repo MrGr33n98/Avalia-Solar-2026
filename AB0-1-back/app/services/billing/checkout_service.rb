@@ -3,10 +3,13 @@ require 'uri'
 
 module Billing
   class CheckoutService
-    def initialize(company:, plan:, current_user:, success_url: nil, cancel_url: nil)
+    VALID_BILLING_PERIODS = %w[six_months twelve_months].freeze
+
+    def initialize(company:, plan:, current_user:, billing_period:, success_url: nil, cancel_url: nil)
       @company = company
       @plan    = plan
       @user    = current_user
+      @billing_period = billing_period.to_s
       @success_url = success_url
       @cancel_url = cancel_url
     end
@@ -40,10 +43,13 @@ module Billing
     end
 
     def validate_plan_configuration!
-      return unless @plan.stripe_price_id_monthly.blank?
+      return if stripe_price_id.present?
 
-      Rails.logger.error("[Billing::CheckoutService] Plan plan_id=#{@plan.id} has no stripe_price_id_monthly configured.")
-      raise Billing::Errors::PlanNotConfigured, 'Este plano não está configurado para cobrança digital.'
+      Rails.logger.error(
+        '[Billing::CheckoutService] ' \
+          "Plan plan_id=#{@plan.id} billing_period=#{@billing_period} has no Stripe Price configured."
+      )
+      raise Billing::Errors::PlanNotConfigured, 'Este período ainda não está configurado para este plano.'
     end
 
     def find_or_initialize_subscription
@@ -70,12 +76,13 @@ module Billing
     def create_checkout_session(stripe_customer_id)
       success_url = checkout_success_url
       cancel_url = checkout_cancel_url
-      cache_key = "checkout_session:#{@company.id}:#{@plan.id}:#{Digest::SHA256.hexdigest("#{success_url}|#{cancel_url}")}"
+      redirect_digest = Digest::SHA256.hexdigest("#{success_url}|#{cancel_url}")
+      cache_key = "checkout_session:#{@company.id}:#{@plan.id}:#{@billing_period}:#{redirect_digest}"
 
       cached_url = Rails.cache.read(cache_key)
       return cached_url if cached_url.present?
 
-      items = [{ price: @plan.stripe_price_id_monthly, quantity: 1 }]
+      items = [{ price: stripe_price_id, quantity: 1 }]
 
       # Adiciona a Taxa de Setup dinamicamente no Checkout (Pagamento único)
       if @plan.respond_to?(:setup_fee) && @plan.setup_fee.to_i.positive? && !@plan.setup_included
@@ -99,7 +106,8 @@ module Billing
         subscription_data: {
           metadata: {
             company_id: @company.id.to_s,
-            plan_id: @plan.id.to_s
+            plan_id: @plan.id.to_s,
+            billing_period: @billing_period
           }
         },
         success_url: success_url,
@@ -108,6 +116,7 @@ module Billing
         metadata: {
           company_id: @company.id.to_s,
           plan_id: @plan.id.to_s,
+          billing_period: @billing_period,
           initiated_by: @user.id.to_s
         }
       )
@@ -115,6 +124,22 @@ module Billing
       Rails.cache.write(cache_key, session.url, expires_in: 30.minutes)
 
       session.url
+    end
+
+    def stripe_price_id
+      unless VALID_BILLING_PERIODS.include?(@billing_period)
+        raise Billing::Errors::PlanNotConfigured, 'Período de cobrança inválido.'
+      end
+
+      # Legacy mapping:
+      # stripe_price_id_monthly currently stores the 6-month Price.
+      # stripe_price_id_yearly stores the 12-month Price.
+      case @billing_period
+      when 'six_months'
+        @plan.stripe_price_id_monthly
+      when 'twelve_months'
+        @plan.stripe_price_id_yearly
+      end
     end
 
     def checkout_success_url
@@ -166,7 +191,9 @@ module Billing
     end
 
     def stripe_error_log_message(error)
-      "[Billing::CheckoutService] #{error.class} company_id=#{@company.id} plan_id=#{@plan.id} #{stripe_key_diagnostic}: #{redact_secret(error.message)}"
+      "[Billing::CheckoutService] #{error.class} " \
+        "company_id=#{@company.id} plan_id=#{@plan.id} " \
+        "billing_period=#{@billing_period} #{stripe_key_diagnostic}: #{redact_secret(error.message)}"
     end
 
     def stripe_key_diagnostic

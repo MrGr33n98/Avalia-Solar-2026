@@ -1,32 +1,24 @@
-export type BillingCycle = 'monthly' | 'yearly';
+export type BillingPeriod = 'six_months' | 'twelve_months';
 
 export interface PlanPricing {
-  monthly: {
-    amount: number;
-  };
-  yearly: {
+  six_months: {
     amount: number;
     monthlyEquivalent: number;
-    savings: number;
+  };
+  twelve_months: {
+    amount: number;
+    monthlyEquivalent: number;
   };
 }
 
 export const pricingByPlan = {
   essential: {
-    monthly: { amount: 59 },
-    yearly: {
-      amount: 590,
-      monthlyEquivalent: 590 / 12,
-      savings: 59 * 12 - 590,
-    },
+    six_months: { amount: 330, monthlyEquivalent: 330 / 6 },
+    twelve_months: { amount: 590, monthlyEquivalent: 590 / 12 },
   },
   pro: {
-    monthly: { amount: 150 },
-    yearly: {
-      amount: 1500,
-      monthlyEquivalent: 1500 / 12,
-      savings: 150 * 12 - 1500,
-    },
+    six_months: { amount: 840, monthlyEquivalent: 840 / 6 },
+    twelve_months: { amount: 1500, monthlyEquivalent: 1500 / 12 },
   },
 } satisfies Record<'essential' | 'pro', PlanPricing>;
 
@@ -50,7 +42,7 @@ export const formatBRLWithoutCents = (amount: number): string =>
     .format(amount)
     .replace(/\u00a0/g, ' ');
 
-export const billingCycleFromQuery = (value: string | null): BillingCycle | null => {
-  if (value === 'monthly' || value === 'yearly') return value;
+export const billingPeriodFromQuery = (value: string | null): BillingPeriod | null => {
+  if (value === 'six_months' || value === 'twelve_months') return value;
   return null;
 };

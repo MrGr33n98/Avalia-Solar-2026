@@ -5,12 +5,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface ErrorBannerProps {
   error: string | null;
+  title?: string;
   onRetry?: () => void;
   onDismiss?: () => void;
   className?: string;
 }
 
-export const ErrorBanner = ({ error, onRetry, onDismiss, className = '' }: ErrorBannerProps) => {
+export const ErrorBanner = ({
+  error,
+  title = 'Ocorreu um erro',
+  onRetry,
+  onDismiss,
+  className = '',
+}: ErrorBannerProps) => {
   if (!error) return null;
 
   return (
@@ -27,7 +34,7 @@ export const ErrorBanner = ({ error, onRetry, onDismiss, className = '' }: Error
           </div>
           
           <div className="flex-1 space-y-1">
-            <h3 className="font-bold text-red-900 tracking-tight">Ocorreu um erro</h3>
+            <h3 className="font-bold text-red-900 tracking-tight">{title}</h3>
             <p className="text-sm leading-relaxed text-red-800/80">
               {error}
             </p>

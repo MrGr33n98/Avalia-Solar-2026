@@ -1,7 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request do
-  let(:plan) { Plan.find_by(name: 'Integration Plan') || create(:plan, name: 'Integration Plan', stripe_price_id_monthly: 'price_integration') }
+  let(:plan) do
+    Plan.find_by(name: 'Integration Plan') || create(
+      :plan,
+      name: 'Integration Plan',
+      stripe_price_id_monthly: 'price_integration_six_months',
+      stripe_price_id_yearly: 'price_integration_twelve_months'
+    )
+  end
   let(:company) { create(:company, plan: plan) }
   let(:user) { create(:user, role: :company, company: company) }
   
@@ -19,7 +26,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
   let!(:membership) { create(:company_member, company: company, user: user, role: :owner, status: 'active') }
 
   describe 'POST /api/v1/billing/checkout' do
-    let(:params) { { company_id: company.id, plan_id: plan.id }.to_json }
+    let(:params) { { company_id: company.id, plan_id: plan.id, billing_period: 'six_months' }.to_json }
 
     context 'quando não autenticado' do
       it 'retorna 401 unauthorized' do
@@ -73,6 +80,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
              params: {
                company_id: company.id,
                plan_id: plan.id,
+               billing_period: 'six_months',
                success_url: success_url,
                cancel_url: cancel_url
              }.to_json,
@@ -87,11 +95,47 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
       it 'retorna 422 quando o plano nao tem Stripe Price mensal' do
         invalid_plan = create(:plan, name: "Invalid Checkout #{SecureRandom.hex(4)}", stripe_price_id_monthly: nil)
 
-        post '/api/v1/billing/checkout',
-             params: { company_id: company.id, plan_id: invalid_plan.id }.to_json,
+           post '/api/v1/billing/checkout',
+             params: { company_id: company.id, plan_id: invalid_plan.id, billing_period: 'six_months' }.to_json,
              headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'retorna 422 quando o período de doze meses não tem Price configurado' do
+        invalid_plan = create(
+          :plan,
+          name: "Invalid Twelve Months #{SecureRandom.hex(4)}",
+          stripe_price_id_monthly: 'price_six_months',
+          stripe_price_id_yearly: nil
+        )
+
+        post '/api/v1/billing/checkout',
+             params: { company_id: company.id, plan_id: invalid_plan.id, billing_period: 'twelve_months' }.to_json,
+             headers: auth_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Stripe::Checkout::Session).not_to have_received(:create)
+      end
+
+      it 'seleciona o Price de doze meses quando billing_period é twelve_months' do
+        post '/api/v1/billing/checkout',
+             params: { company_id: company.id, plan_id: plan.id, billing_period: 'twelve_months' }.to_json,
+             headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        expect(Stripe::Checkout::Session).to have_received(:create).with(
+          hash_including(line_items: [{ price: 'price_integration_twelve_months', quantity: 1 }])
+        )
+      end
+
+      it 'rejeita billing_period mensal' do
+        post '/api/v1/billing/checkout',
+             params: { company_id: company.id, plan_id: plan.id, billing_period: 'monthly' }.to_json,
+             headers: auth_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Stripe::Checkout::Session).not_to have_received(:create)
       end
 
       it 'retorna erro seguro quando a chave Stripe é inválida' do
