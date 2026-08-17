@@ -1,6 +1,6 @@
 import { ApiError, toApiError } from './api-error';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
-import type { Category, Company, Review } from './api';
+import type { Category, CategorySolutionType, Company, Review } from './api';
 import type { Banner } from './api-banner-types';
 import type { LocalSolarPageResponse } from './api-client';
 
@@ -459,6 +459,73 @@ export const publicCategoriesApi = {
       silent: options?.silent,
     });
     return unwrapArray<Banner>(payload, 'banners');
+  },
+
+  getSolutionTypes: async (
+    id: number,
+    options?: PublicFetchOptions<CategorySolutionType[]>
+  ): Promise<CategorySolutionType[]> => {
+    const payload = await fetchApiPublic<unknown, CategorySolutionType[]>(
+      `categories/${id}/solution_types`,
+      {
+        revalidate: options?.revalidate ?? 1800,
+        tags: options?.tags || [`category-${id}`, 'category-solution-types'],
+        fallback: options?.fallback || [],
+        silent: options?.silent,
+      }
+    );
+    return unwrapArray<CategorySolutionType>(payload, 'solution_types');
+  },
+
+  compareSolutionTypes: async (
+    id: number,
+    slugs: string[],
+    options?: PublicFetchOptions<{
+      category: { id: number; name: string; slug: string };
+      solutions: CategorySolutionType[];
+      comparison_schema: Array<{ key: string; label: string }>;
+      disclaimer: string;
+    }>
+  ) => {
+    const payload = await fetchApiPublic<unknown, {
+      category: { id: number; name: string; slug: string };
+      solutions: CategorySolutionType[];
+      comparison_schema: Array<{ key: string; label: string }>;
+      disclaimer: string;
+    }>(`categories/${id}/solution_types/compare`, {
+      params: { slugs: slugs.slice(0, 3) },
+      revalidate: options?.revalidate ?? 1800,
+      tags: options?.tags || [`category-${id}`, 'category-solution-types'],
+      fallback: options?.fallback || {
+        category: { id, name: '', slug: '' },
+        solutions: [],
+        comparison_schema: [],
+        disclaimer: 'Os dados variam conforme fabricante, modelo e requisitos do projeto.',
+      },
+      silent: options?.silent,
+    });
+    return payload;
+  },
+
+  matchCompanies: async (
+    id: number,
+    context: {
+      solution_type?: string;
+      application?: string;
+      daily_demand?: string;
+      services?: string[];
+      location?: { state?: string; city?: string; radius_km?: number };
+    }
+  ) => {
+    const response = await fetch(buildApiUrl(`categories/${id}/company_matches`), {
+      method: 'POST',
+      headers: { ...getApiRequestHeaders(), 'Content-Type': 'application/json' },
+      credentials: 'omit',
+      body: JSON.stringify(context),
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new ApiError('Não foi possível calcular o matching', { status: response.status, url: response.url, method: 'POST' });
+    return response.json() as Promise<{ query_id: string; matches: unknown[]; sponsored: unknown[]; meta: Record<string, unknown> }>;
   },
 };
 

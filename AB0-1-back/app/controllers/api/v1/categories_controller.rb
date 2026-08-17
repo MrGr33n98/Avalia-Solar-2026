@@ -12,7 +12,7 @@ module Api
 
       before_action :authenticate_api_user, only: %i[create update destroy]
       before_action :require_admin, only: %i[create update destroy]
-      before_action :set_category, only: %i[show update destroy companies products banners evaluation_context]
+      before_action :set_category, only: %i[show update destroy companies products banners evaluation_context solution_types compare_solution_types company_matches]
 
       after_action :expire_categories_cache, only: %i[create update destroy]
 
@@ -124,6 +124,14 @@ module Api
           # Busca se o array jsonb contém a tag
           companies_scope = companies_scope.where('niche_tags @> ?', [params[:niche_tag]].to_json)
         end
+
+        if params[:project_type].present? && ::Company.column_names.include?('project_types')
+          project_type = params[:project_type].to_s
+          allowed_types = ::Company.const_defined?(:PROJECT_TYPES) ? ::Company::PROJECT_TYPES : []
+          companies_scope = companies_scope.where('project_types @> ?', [project_type].to_json) if allowed_types.include?(project_type)
+        end
+
+        companies_scope = apply_company_sort(companies_scope)
         # Log count before limit/pagination
         total_count = companies_scope.count
         Rails.logger.info("✅ [CategoriesController#companies] Found #{total_count} companies (before limit/pagination)")
@@ -227,6 +235,44 @@ module Api
         end
       end
 
+      # GET /categories/:id/solution_types
+      def solution_types
+        render json: @category.category_solution_types.active.ordered.map { |solution| solution_type_json(solution) }, status: :ok
+      end
+
+      # GET /categories/:id/solution_types/compare?slugs[]=...
+      def compare_solution_types
+        slugs = Array(params[:slugs]).map(&:to_s).reject(&:blank?).first(3)
+        solutions = @category.category_solution_types.active.where(slug: slugs).ordered
+        render json: {
+          category: { id: @category.id, name: @category.name, slug: @category.seo_url },
+          solutions: solutions.map { |solution| solution_type_json(solution) },
+          comparison_schema: comparison_schema(solutions),
+          disclaimer: 'Os dados variam conforme fabricante, modelo e requisitos do projeto.'
+        }, status: :ok
+      end
+
+      # POST /categories/:id/company_matches
+      def company_matches
+        context = params.permit(
+          :solution_type, :application, :daily_demand,
+          services: [], location: %i[state city radius_km]
+        ).to_h.deep_symbolize_keys
+
+        radius = context.dig(:location, :radius_km).to_i
+        if radius.positive? && radius > 200
+          return render json: { error: 'O raio máximo permitido é 200 km' }, status: :unprocessable_entity
+        end
+
+        result = CategoryCompanyMatchingService.new(category: @category, context: context).call
+        render json: {
+          query_id: result[:query_id],
+          matches: serialize_matches(result[:matches]),
+          sponsored: serialize_matches(result[:sponsored]),
+          meta: result[:meta]
+        }, status: :ok
+      end
+
       def serialize_criterion(rc)
         {
           id: rc.id,
@@ -238,6 +284,41 @@ module Api
           weight: rc.weight.to_f,
           position: rc.position
         }
+      end
+
+      def solution_type_json(solution)
+        {
+          id: solution.id,
+          name: solution.name,
+          slug: solution.slug,
+          short_description: solution.short_description,
+          description: solution.description,
+          visual_key: solution.visual_key,
+          technology_family: solution.technology_family,
+          speed_class: solution.speed_class,
+          position: solution.position,
+          featured: solution.featured,
+          attributes: solution.attributes_json,
+          use_cases: solution.use_cases
+        }
+      end
+
+      def serialize_matches(matches)
+        matches.map do |match|
+          {
+            company: CompanyListSerializer.new(match.company).as_json,
+            score: match.score,
+            score_band: match.score_band,
+            reason_codes: match.reason_codes,
+            reason_labels: match.reason_labels,
+            sponsored: match.sponsored
+          }
+        end
+      end
+
+      def comparison_schema(solutions)
+        keys = solutions.flat_map { |solution| solution.attributes_json.keys }.uniq
+        keys.map { |key| { key: key, label: key.to_s.humanize } }
       end
 
       # =========================
@@ -356,9 +437,28 @@ module Api
           name: category.name,
           slug: category.seo_url,
           icon_url: category.try(:icon_url),
+          visual_key: category.respond_to?(:visual_key) ? category.visual_key : nil,
           companies_count: category.companies_count || 0,
+          verified_companies_count: verified_companies_count(category),
+          average_rating: category.average_rating.presence,
+          reviews_count: category.total_reviews_count.presence,
           children: children_data
         }
+      end
+
+      def apply_company_sort(scope)
+        case params[:sort].to_s
+        when 'name_asc' then scope.order(name: :asc)
+        when 'reviews_desc' then scope.order(rating_count: :desc, rating_avg: :desc, name: :asc)
+        when 'rating_desc' then scope.order(rating_avg: :desc, rating_count: :desc, name: :asc)
+        else scope.order(featured: :desc, rating_avg: :desc, rating_count: :desc, name: :asc)
+        end
+      end
+
+      def verified_companies_count(category)
+        return nil unless ::Company.column_names.include?('verified')
+
+        category.companies.where(verified: true).where(status: 'active').count
       end
 
       def set_category

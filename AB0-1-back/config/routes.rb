@@ -174,6 +174,9 @@ Rails.application.routes.draw do
           get :products
           get :banners
           get :evaluation_context
+          get :solution_types
+          get 'solution_types/compare', to: 'categories#compare_solution_types'
+          post :company_matches
         end
 
         collection do

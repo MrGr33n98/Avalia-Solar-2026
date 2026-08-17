@@ -7,7 +7,8 @@ class CategorySerializer < ActiveModel::Serializer
              :average_rating, :reviews_count, :articles_count,
              :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url, :home_carousel_banner_url,
-             :parent, :subcategories, :faqs
+             :visual_key,
+             :parent, :subcategories, :faqs, :solution_types
   # :banner_sponsored, :banners  # Temporarily commented out
 
   # Remove has_many associations that cause N+1 queries and complex serialization
@@ -17,6 +18,31 @@ class CategorySerializer < ActiveModel::Serializer
 
   def reviews_count
     object.total_reviews_count
+  end
+
+  def visual_key
+    object.respond_to?(:visual_key) ? object.visual_key : nil
+  end
+
+  def solution_types
+    return [] unless object.respond_to?(:category_solution_types)
+
+    object.category_solution_types.active.ordered.map do |solution|
+      {
+        id: solution.id,
+        name: solution.name,
+        slug: solution.slug,
+        short_description: solution.short_description,
+        description: solution.description,
+        visual_key: solution.visual_key,
+        technology_family: solution.technology_family,
+        speed_class: solution.speed_class,
+        position: solution.position,
+        featured: solution.featured,
+        attributes: solution.attributes_json,
+        use_cases: solution.use_cases
+      }
+    end
   end
 
   def articles_count

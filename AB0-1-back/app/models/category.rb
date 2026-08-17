@@ -34,8 +34,11 @@ class Category < ApplicationRecord
   has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :category
   has_one :category_lead_wizard, dependent: :destroy, inverse_of: :category
   has_many :category_faqs, dependent: :destroy, inverse_of: :category
+  has_many :category_solution_types, dependent: :destroy, inverse_of: :category
+  has_many :company_category_capabilities, dependent: :destroy
 
   accepts_nested_attributes_for :category_faqs, allow_destroy: true
+  accepts_nested_attributes_for :category_solution_types, allow_destroy: true
 
   def latest_published_lead_wizard_version
     lead_wizard_versions.published.latest_first.first

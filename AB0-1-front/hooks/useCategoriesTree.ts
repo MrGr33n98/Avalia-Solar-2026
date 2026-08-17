@@ -18,6 +18,8 @@ type CategoryCardLike = {
   icon_url?: string | null;
   average_rating?: number;
   reviews_count?: number;
+  verified_companies_count?: number;
+  visual_key?: string | null;
   children?: CategoryTreeNode[];
 };
 
@@ -29,30 +31,36 @@ const DEFAULT_PUBLIC_API_BASE =
 const sortByCompaniesCount = (items: CategoryTreeNode[]) =>
   [...items].sort((a, b) => (b?.companies_count || 0) - (a?.companies_count || 0));
 
-const normalizeTreeNode = (item: any): CategoryTreeNode | null => {
-  if (!item || typeof item !== 'object') return null;
+type UnknownRecord = Record<string, unknown>;
 
-  const id = Number(item.id);
-  const name = String(item.name || '').trim();
-  const slug = String(item.slug || item.seo_url || '').trim();
+const normalizeTreeNode = (item: unknown): CategoryTreeNode | null => {
+  const record = item && typeof item === 'object' ? (item as UnknownRecord) : null;
+  if (!record) return null;
+
+  const id = Number(record.id);
+  const name = String(record.name || '').trim();
+  const slug = String(record.slug || record.seo_url || '').trim();
 
   if (!Number.isFinite(id) || !name || !slug) return null;
 
-  const children = Array.isArray(item.children)
-    ? item.children.map(normalizeTreeNode).filter(Boolean)
+  const children = Array.isArray(record.children)
+    ? record.children.map(normalizeTreeNode).filter(Boolean)
     : [];
 
   return {
     id,
     name,
     slug,
-    seo_url: item.seo_url ? String(item.seo_url) : undefined,
-    parent_id: item.parent_id ?? null,
-    companies_count: Number(item.companies_count || 0),
-    products_count: Number(item.products_count || 0),
-    icon_url: item.icon_url ? String(item.icon_url) : undefined,
-    average_rating: item.average_rating !== undefined ? Number(item.average_rating) : undefined,
-    reviews_count: item.reviews_count !== undefined ? Number(item.reviews_count) : undefined,
+    seo_url: record.seo_url ? String(record.seo_url) : undefined,
+    parent_id: (record.parent_id as number | null | undefined) ?? null,
+    companies_count: Number(record.companies_count || 0),
+    products_count: Number(record.products_count || 0),
+    icon_url: record.icon_url ? String(record.icon_url) : undefined,
+    average_rating: record.average_rating !== undefined ? Number(record.average_rating) : undefined,
+    reviews_count: record.reviews_count !== undefined ? Number(record.reviews_count) : undefined,
+    verified_companies_count:
+      record.verified_companies_count !== undefined ? Number(record.verified_companies_count) : undefined,
+    visual_key: record.visual_key ? String(record.visual_key) : undefined,
     children: children as CategoryTreeNode[],
   };
 };
@@ -63,10 +71,10 @@ const normalizeTreePayload = (payload: unknown): CategoryTreeNode[] => {
 };
 
 const normalizeCardsPayload = (payload: unknown): CategoryTreeNode[] => {
-  const rawItems = Array.isArray(payload)
+  const rawItems: CategoryCardLike[] = Array.isArray(payload)
     ? payload
-    : payload && typeof payload === 'object' && Array.isArray((payload as any).data)
-      ? (payload as any).data
+    : payload && typeof payload === 'object' && Array.isArray((payload as UnknownRecord).data)
+    ? (payload as UnknownRecord).data as CategoryCardLike[]
       : [];
 
   return sortByCompaniesCount(
@@ -89,6 +97,9 @@ const normalizeCardsPayload = (payload: unknown): CategoryTreeNode[] => {
           icon_url: item?.icon_url ? String(item.icon_url) : undefined,
           average_rating: item?.average_rating !== undefined ? Number(item.average_rating) : undefined,
           reviews_count: item?.reviews_count !== undefined ? Number(item.reviews_count) : undefined,
+          verified_companies_count:
+            item?.verified_companies_count !== undefined ? Number(item.verified_companies_count) : undefined,
+          visual_key: item?.visual_key ? String(item.visual_key) : undefined,
           children: [],
         };
       })
@@ -138,6 +149,7 @@ export function useCategoriesTree() {
   const [categories, setCategories] = useState<CategoryTreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [dataSource, setDataSource] = useState<'tree' | 'cards' | 'static' | 'error'>('tree');
 
   const fetchTree = useCallback(async () => {
     try {
@@ -146,9 +158,11 @@ export function useCategoriesTree() {
 
       let capturedError: Error | null = null;
       let resolvedCategories: CategoryTreeNode[] = [];
+      let resolvedSource: 'tree' | 'cards' | 'static' | 'error' = 'error';
 
       try {
         resolvedCategories = normalizeTreePayload(await fetchApiSafe<CategoryTreeNode[]>('/categories/tree'));
+        if (resolvedCategories.length > 0) resolvedSource = 'tree';
       } catch (err) {
         capturedError = err instanceof Error ? err : new Error('Failed to fetch categories tree');
         logFetchFailure('Primary tree endpoint failed', err);
@@ -157,6 +171,7 @@ export function useCategoriesTree() {
       if (resolvedCategories.length === 0) {
         try {
           resolvedCategories = normalizeTreePayload(await fetchDirectJson('/categories/tree'));
+          if (resolvedCategories.length > 0) resolvedSource = 'tree';
         } catch (err) {
           if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct tree');
           logFetchFailure('Direct tree endpoint failed', err);
@@ -168,6 +183,7 @@ export function useCategoriesTree() {
           resolvedCategories = normalizeCardsPayload(
             await fetchApiSafe('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
           );
+          if (resolvedCategories.length > 0) resolvedSource = 'cards';
         } catch (err) {
           if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch categories cards');
           logFetchFailure('Cards endpoint fallback failed', err);
@@ -179,6 +195,7 @@ export function useCategoriesTree() {
           resolvedCategories = normalizeCardsPayload(
             await fetchDirectJson('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
           );
+          if (resolvedCategories.length > 0) resolvedSource = 'cards';
         } catch (err) {
           if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct category cards');
           logFetchFailure('Direct cards endpoint fallback failed', err);
@@ -187,6 +204,10 @@ export function useCategoriesTree() {
 
       if (resolvedCategories.length === 0) {
         resolvedCategories = getStaticFallbackTree();
+        resolvedSource = 'static';
+        console.error('[useCategoriesTree] API indisponível; fallback estático ativado', {
+          data_source: resolvedSource,
+        });
       }
 
       if (capturedError) {
@@ -194,9 +215,11 @@ export function useCategoriesTree() {
       }
 
       setCategories(resolvedCategories);
+      setDataSource(resolvedSource);
     } catch (err) {
       console.error('[useCategoriesTree] Critical error in hook logic:', err);
       setError(err instanceof Error ? err : new Error('Failed to process categories tree'));
+      setDataSource('static');
       setCategories(getStaticFallbackTree());
     } finally {
       setLoading(false);
@@ -235,6 +258,7 @@ export function useCategoriesTree() {
     categories,
     loading,
     error,
+    dataSource,
     refresh: fetchTree,
     filterCategories
   };

@@ -29,6 +29,8 @@ export interface CategoryTreeNode {
   icon_url?: string;
   average_rating?: number;
   reviews_count?: number;
+  verified_companies_count?: number;
+  visual_key?: string;
   children: CategoryTreeNode[];
 }
 

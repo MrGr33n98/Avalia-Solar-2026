@@ -6,7 +6,8 @@ ActiveAdmin.register Category, namespace: :admin do
   menu false
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
                 :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: [],
-                category_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy]
+                category_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
+                category_solution_types_attributes: %i[id name slug short_description description visual_key technology_family speed_class position active featured attributes_json use_cases _destroy]
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
@@ -116,6 +117,23 @@ ActiveAdmin.register Category, namespace: :admin do
       end
     end
 
+    f.inputs 'Tipos de soluções' do
+      f.has_many :category_solution_types, allow_destroy: true, heading: false, new_record: 'Adicionar solução' do |solution|
+        solution.input :name
+        solution.input :slug
+        solution.input :short_description
+        solution.input :description, as: :text
+        solution.input :visual_key
+        solution.input :technology_family
+        solution.input :speed_class
+        solution.input :position
+        solution.input :active
+        solution.input :featured
+        solution.input :attributes_json, as: :text
+        solution.input :use_cases, as: :text
+      end
+    end
+
     f.inputs 'Permission Settings' do
       f.input :permissions_config, as: :text, input_html: { rows: 5 }
     end
@@ -198,6 +216,23 @@ ActiveAdmin.register Category, namespace: :admin do
         end
       else
         para 'Nenhum FAQ cadastrado para esta categoria.'
+      end
+    end
+
+    panel 'Tipos de soluções' do
+      solutions = category.category_solution_types.ordered
+      if solutions.any?
+        table_for solutions do
+          column :position
+          column :name
+          column :slug
+          column :technology_family
+          column :speed_class
+          column :active
+          column :featured
+        end
+      else
+        para 'Nenhum tipo de solução cadastrado para esta categoria.'
       end
     end
   end

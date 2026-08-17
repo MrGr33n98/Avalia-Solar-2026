@@ -2,26 +2,11 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Battery,
-  Car,
-  Building2,
-  Plug,
-  Zap,
-  ChevronRight,
-  Search,
-  Star,
-  Home,
-  Wrench,
-  TrendingUp,
-  ShieldCheck,
-  Lightbulb,
-  FileText,
-  Check,
-  Compass
-} from 'lucide-react';
+import { Building2, ChevronRight, Search, Star, Check } from 'lucide-react';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import { useFeaturedCategoriesQuery } from '@/hooks/useCategoriesQuery';
+import CategoryVisualAsset from '@/components/categories/CategoryVisualAsset';
+import BannerByLocation from '@/components/BannerByLocation';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -48,45 +33,9 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-/** Retorna o ícone Lucide apropriado baseado no nome ou slug da categoria */
-function getCategoryIcon(slug: string = '', name: string = '') {
-  const s = (slug || name).toLowerCase();
-  if (s.includes('bateria') || s.includes('armazenamento')) return Battery;
-  if (s.includes('carport') || s.includes('cobertura')) return Car;
-  if (s.includes('comercial') || s.includes('condominio')) return Building2;
-  if (s.includes('residencial') || s.includes('wallbox') || s.includes('plug')) return Plug;
-  if (s.includes('bomba')) return Wrench;
-  if (s.includes('painel') || s.includes('modulo') || s.includes('fotovoltaico')) return Compass;
-  if (s.includes('inversor')) return Zap;
-  if (s.includes('estrutura') || s.includes('fixacao')) return Wrench;
-  if (s.includes('monitoramento') || s.includes('o&m') || s.includes('gestao') || s.includes('operacao')) return TrendingUp;
-  if (s.includes('financiamento') || s.includes('credito') || s.includes('consorcio')) return TrendingUp;
-  if (s.includes('seguradora') || s.includes('seguro') || s.includes('garantia')) return ShieldCheck;
-  if (s.includes('iluminacao') || s.includes('led')) return Lightbulb;
-  if (s.includes('legislacao') || s.includes('norma')) return FileText;
-  if (s.includes('casa') || s.includes('off-grid') || s.includes('offgrid') || s.includes('sustentavel')) return Home;
-  return Zap;
-}
-
-/** Gera classificação e reviews realistas caso não existam no banco */
-function getCategoryRatingAndReviews(category: CategoryTreeNode) {
-  const rating = category.average_rating && category.average_rating > 0
-    ? category.average_rating
-    : (4.3 + (category.id % 7) * 0.1); // Fallback determinístico realista entre 4.3 e 4.9
-  
-  const reviews = category.reviews_count && category.reviews_count > 0
-    ? category.reviews_count
-    : (5 + (category.id % 15) * 4); // Fallback determinístico realista entre 5 e 65
-    
-  return {
-    average_rating: parseFloat(rating.toFixed(1)),
-    reviews_count: reviews
-  };
-}
-
 /** Filtro para determinar se um nó da categoria deve ser considerado "com avaliações" */
 function hasEvaluations(category: CategoryTreeNode) {
-  return (category.reviews_count !== undefined && category.reviews_count > 0) || (category.id % 2 === 0);
+  return Number(category.reviews_count || 0) > 0;
 }
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────
@@ -127,8 +76,8 @@ interface FeaturedCardProps {
 
 function FeaturedCard({ category }: FeaturedCardProps) {
   const href = getCategoryHref(category.seo_url, category.slug);
-  const IconComponent = getCategoryIcon(category.slug, category.name);
-  const { average_rating, reviews_count } = getCategoryRatingAndReviews(category);
+  const averageRating = Number(category.average_rating || 0);
+  const reviewsCount = Number(category.reviews_count || 0);
 
   return (
     <Link
@@ -136,9 +85,8 @@ function FeaturedCard({ category }: FeaturedCardProps) {
       className="group flex flex-col bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-6 transition-all duration-200 shadow-sm hover:shadow-md h-full min-h-[240px]"
     >
       <div className="flex flex-col flex-1">
-        {/* Icon wrapper */}
-        <div className="w-12 h-12 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-xl mb-4 text-slate-800 group-hover:bg-[#1668e8]/5 group-hover:text-[#1668e8] group-hover:border-[#1668e8]/10 transition-colors duration-150">
-          <IconComponent className="w-6 h-6 stroke-[1.5]" />
+        <div className="relative h-32 rounded-xl bg-slate-50 border border-slate-100 mb-4 overflow-hidden">
+          <CategoryVisualAsset category={category} priority />
         </div>
 
         {/* Title */}
@@ -153,12 +101,16 @@ function FeaturedCard({ category }: FeaturedCardProps) {
 
         {/* Stars evaluation info */}
         <div className="flex items-center gap-1.5 text-[12.5px] text-slate-700 mb-4 font-medium mt-auto">
-          <Star className="w-4 h-4 fill-amber-400 stroke-amber-400" />
-          <span>{average_rating}</span>
-          <span className="text-slate-300">•</span>
-          <span className="text-slate-500">
-            {reviews_count} {reviews_count === 1 ? 'avaliação' : 'avaliações'}
-          </span>
+          {reviewsCount > 0 && averageRating > 0 ? (
+            <>
+              <Star className="w-4 h-4 fill-amber-400 stroke-amber-400" />
+              <span>{averageRating.toFixed(1)}</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500">{reviewsCount} {reviewsCount === 1 ? 'avaliação' : 'avaliações'}</span>
+            </>
+          ) : (
+            <span className="text-slate-500">Sem avaliações ainda</span>
+          )}
         </div>
       </div>
 
@@ -186,7 +138,6 @@ function CategoryRow({
   idx: string;
 }) {
   const href = getCategoryHref(category.seo_url, category.slug);
-  const IconComponent = getCategoryIcon(category.slug, category.name);
 
   return (
     <Link
@@ -199,9 +150,8 @@ function CategoryRow({
           {idx}
         </span>
         
-        {/* Icon */}
-        <div className="w-10 h-10 shrink-0 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg text-slate-700 group-hover:bg-white group-hover:text-[#1668e8] group-hover:border-[#1668e8]/10 transition-colors duration-150">
-          <IconComponent className="w-5 h-5 stroke-[1.5]" />
+        <div className="relative w-12 h-12 shrink-0 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden">
+          <CategoryVisualAsset category={category} />
         </div>
 
         {/* Text info */}
@@ -238,7 +188,7 @@ export default function CategoriesIndexWithSidebar() {
   const debouncedSearch = useDebounce(searchTerm, 350);
 
   // Árvore de categorias (pai → filhos)
-  const { categories: tree, loading: treeLoading } = useCategoriesTree();
+  const { categories: tree, loading: treeLoading, dataSource } = useCategoriesTree();
 
   // Categorias em destaque (4 cards)
   const { data: featuredData, isLoading: featuredLoading } = useFeaturedCategoriesQuery(4);
@@ -447,8 +397,18 @@ export default function CategoriesIndexWithSidebar() {
         </div>
       </div>
 
+      {dataSource === 'static' && (
+        <div role="status" className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-center text-xs text-amber-900">
+          Não foi possível atualizar o catálogo agora. Exibindo a última estrutura disponível; tente novamente em instantes.
+        </div>
+      )}
+
       {/* ===== CONTENT ===== */}
       <div className="max-w-[1240px] mx-auto px-5">
+
+        <div className="pt-6">
+          <BannerByLocation location="categories_top" limit={1} />
+        </div>
 
         {/* ── Destaques ── */}
         {!showSearch && featuredCategories.length > 0 && (

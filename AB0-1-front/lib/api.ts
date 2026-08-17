@@ -773,6 +773,21 @@ export interface CategoryFaq {
   position?: number;
 }
 
+export interface CategorySolutionType {
+  id: number;
+  name: string;
+  slug: string;
+  short_description?: string | null;
+  description?: string | null;
+  visual_key?: string | null;
+  technology_family?: string | null;
+  speed_class?: string | null;
+  position?: number;
+  featured?: boolean;
+  attributes?: Record<string, unknown>;
+  use_cases?: string[];
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -792,6 +807,7 @@ export interface Category {
   companies?: Company[];
   products?: Product[];
   faqs?: CategoryFaq[];
+  solution_types?: CategorySolutionType[];
   kind: string;
   status: string;
   featured: boolean;

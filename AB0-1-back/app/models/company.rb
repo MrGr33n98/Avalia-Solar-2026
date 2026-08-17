@@ -7,6 +7,8 @@ class Company < ApplicationRecord
   include QueryCacheable # TASK-016: Query Caching
   include Moderation
 
+  has_many :company_category_capabilities, dependent: :destroy
+
   # OpenSearch Integration (Searchkick)
   searchkick word_start: %i[name city city_normalized state description category_names],
              callbacks: :async,

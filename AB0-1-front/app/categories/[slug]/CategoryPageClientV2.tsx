@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
@@ -32,6 +32,70 @@ import { Banner, Category, Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
 
+function CategoryMobileFiltersSheet({
+  open,
+  filters,
+  onChange,
+  onClear,
+  onClose,
+}: {
+  open: boolean;
+  filters: { verified: boolean; minRating: number; state: string; projectType?: string };
+  onChange: (key: string, value: SidebarFilterValue) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filtros da categoria">
+      <button type="button" className="absolute inset-0 bg-slate-950/40" aria-label="Fechar filtros" onClick={onClose} />
+      <section className="absolute inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-950">Filtrar empresas</h2>
+          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Fechar filtros"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="space-y-5">
+          <label className="block text-sm font-semibold text-slate-800">
+            Estado
+            <input value={filters.state} onChange={(event) => onChange('state', event.target.value.toUpperCase())} placeholder="Ex.: SC" maxLength={2} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 uppercase outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="flex min-h-11 items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-800">
+            Somente empresas verificadas
+            <input type="checkbox" checked={filters.verified} onChange={(event) => onChange('verified', event.target.checked)} className="h-5 w-5 accent-blue-600" />
+          </label>
+          <label className="block text-sm font-semibold text-slate-800">
+            Avaliação mínima
+            <select value={filters.minRating || 0} onChange={(event) => onChange('minRating', Number(event.target.value))} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-600">
+              <option value={0}>Qualquer avaliação</option>
+              <option value={4}>4,0 ou mais</option>
+              <option value={4.5}>4,5 ou mais</option>
+            </select>
+          </label>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button type="button" onClick={onClear} className="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700">Limpar</button>
+          <button type="button" onClick={onClose} className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">Aplicar filtros</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 type CategoryBanner = Banner & { company_id?: number };
 type SidebarFilterValue = string | number | boolean | undefined;
 
@@ -50,6 +114,7 @@ export default function CategoryPageClient({
 }: CategoryPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const slug = initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
@@ -65,6 +130,7 @@ export default function CategoryPageClient({
     projectType: searchParams.get('project_type') || undefined,
   }));
   const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'rating_desc');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const isLoading = false;
 
   // Helper: sync filter state to URL without full navigation
@@ -78,9 +144,9 @@ export default function CategoryPageClient({
           params.set(key, value);
         }
       });
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [searchParams, router]
+    [searchParams, router, pathname]
   );
 
   // Sync search term to URL after debounce
@@ -101,67 +167,12 @@ export default function CategoryPageClient({
 
   // Estado de busca e filtros
   const filteredCompanies = useMemo(() => {
-    let result = [...initialCompanies];
+    const result = [...initialCompanies];
 
-    // Busca por nome
-    if (debouncedSearchTerm) {
-      result = result.filter((c) =>
-        c.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      );
-    }
-
-    // Mapeamento robusto para lidar com singular/plural e variações do banco/API
-    const mappedTypes: Record<string, string[]> = {
-      Residencial: ['residencial', 'residenciais'],
-      Comercial: ['comercial', 'comerciais'],
-      Industrial: ['industrial', 'industriais'],
-      Agronegócio: ['rural', 'rurais', 'rural/agro', 'agronegócio', 'agronegócios'],
-    };
-
-    const matchProjectType = (c: Company, type: string) => {
-      const searchTerms = mappedTypes[type] || [type.toLowerCase()];
-      return (
-        c.project_types?.some((pt) => searchTerms.includes(pt.toLowerCase())) ||
-        c.services_offered?.some((so) => searchTerms.includes(so.toLowerCase())) ||
-        searchTerms.some((term) => c.description?.toLowerCase().includes(term))
-      );
-    };
-
-    // Filtros sidebar
-    if (sidebarFilters.verified) {
-      result = result.filter((c) => c.verified);
-    }
-    if (sidebarFilters.minRating > 0) {
-      result = result.filter(
-        (c) =>
-          (Number(c.rating_avg) || 0) >= sidebarFilters.minRating &&
-          (Number(c.rating_count) || 0) > 0
-      );
-    }
-    if (sidebarFilters.state) {
-      result = result.filter(
-        (c) => c.state?.trim().toUpperCase() === sidebarFilters.state.trim().toUpperCase()
-      );
-    }
-    if (sidebarFilters.projectType) {
-      result = result.filter((c) => matchProjectType(c, sidebarFilters.projectType!));
-    }
-
-    // Ordenação
-    switch (sortBy) {
-      case 'name_asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'rating_desc':
-        result.sort((a, b) => (Number(b.rating_avg) || 0) - (Number(a.rating_avg) || 0));
-        break;
-      case 'reviews_desc':
-        result.sort((a, b) => (Number(b.rating_count) || 0) - (Number(a.rating_count) || 0));
-        break;
-    }
-
+    // O backend é a fonte de verdade para filtros, busca, paginação e ordenação.
+    // Mantemos apenas os dados recebidos pela página atual durante a transição SSR.
     return result;
-  }, [initialCompanies, debouncedSearchTerm, sidebarFilters, sortBy]);
+  }, [initialCompanies]);
 
   const handleSidebarFilterChange = (key: string, value: SidebarFilterValue) => {
     setSidebarFilters((prev) => ({ ...prev, [key]: value }));
@@ -257,6 +268,22 @@ export default function CategoryPageClient({
             }
           />
 
+          <nav aria-label="Navegação da categoria" className="mx-auto flex max-w-[1280px] gap-2 overflow-x-auto px-4 py-3 sm:px-6">
+            {[
+              ['Empresas', `/categories/${slug}`],
+              ['Sobre a categoria', `/categories/${slug}/about`],
+              ['Tipos de soluções', `/categories/${slug}/solutions`],
+              ['Comparar soluções', `/categories/${slug}/compare`],
+              ['Guias e conteúdo', `/categories/${slug}/guides`],
+              ['Avaliações', `/categories/${slug}/reviews`],
+              ['Empresas para seu projeto', `/categories/${slug}/matching`],
+            ].map(([label, href]) => (
+              <Link key={href} href={href} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">
+                {label}
+              </Link>
+            ))}
+          </nav>
+
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 
           <DecisionChips
@@ -264,11 +291,16 @@ export default function CategoryPageClient({
             onFilterChange={handleSidebarFilterChange}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
-            onOpenMoreFilters={() => {
-              // TODO: Acionar sidebar mobile real
-              alert('Abrir painel lateral de filtros (A ser implementado no layout global)');
-            }}
+            onOpenMoreFilters={() => setMobileFiltersOpen(true)}
             activeFiltersCount={activeFiltersCount}
+          />
+
+          <CategoryMobileFiltersSheet
+            open={mobileFiltersOpen}
+            filters={sidebarFilters}
+            onChange={handleSidebarFilterChange}
+            onClear={handleClearFilters}
+            onClose={() => setMobileFiltersOpen(false)}
           />
 
           <div data-testid="category-filter-banner-mobile" className="lg:hidden">
