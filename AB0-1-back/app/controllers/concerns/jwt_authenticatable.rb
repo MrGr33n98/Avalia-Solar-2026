@@ -88,11 +88,8 @@ module JwtAuthenticatable
     }
 
     # Enable cross-subdomain cookies in production or if COOKIE_DOMAIN is set
-    if ENV['COOKIE_DOMAIN'].present?
-      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
-    elsif Rails.env.production?
-      cookie_opts[:domain] = :all
-    end
+    cookie_domain = ENV['COOKIE_DOMAIN'].presence
+    cookie_opts[:domain] = cookie_domain if cookie_domain
 
     cookies.signed[:jwt_token] = cookie_opts
   end
@@ -107,11 +104,8 @@ module JwtAuthenticatable
       path: '/'
     }
 
-    if ENV['COOKIE_DOMAIN'].present?
-      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
-    elsif Rails.env.production?
-      cookie_opts[:domain] = :all
-    end
+    cookie_domain = ENV['COOKIE_DOMAIN'].presence
+    cookie_opts[:domain] = cookie_domain if cookie_domain
 
     cookies.signed[:refresh_token] = cookie_opts
   end
@@ -120,11 +114,8 @@ module JwtAuthenticatable
   def clear_auth_cookies
     cookie_opts = { path: '/' }
 
-    if ENV['COOKIE_DOMAIN'].present?
-      cookie_opts[:domain] = ENV['COOKIE_DOMAIN']
-    elsif Rails.env.production?
-      cookie_opts[:domain] = :all
-    end
+    cookie_domain = ENV['COOKIE_DOMAIN'].presence
+    cookie_opts[:domain] = cookie_domain if cookie_domain
 
     cookies.delete(:jwt_token, cookie_opts)
     cookies.delete(:refresh_token, cookie_opts)

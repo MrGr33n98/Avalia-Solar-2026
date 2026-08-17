@@ -62,6 +62,7 @@ services:
       RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
       APP_HOST: "https://api.avaliasolar.com.br"
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.avaliasolar.com.br}
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200

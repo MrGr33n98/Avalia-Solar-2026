@@ -252,7 +252,7 @@ module Api
         payload = jwt_decode(refresh_token)
         unless payload && payload['typ'] == 'refresh'
           return render_error_response(
-            message: 'Refresh token invÃ¡lido',
+            message: 'Refresh token inválido',
             status: :unauthorized,
             code: 'INVALID_REFRESH_TOKEN'
           )
@@ -269,18 +269,43 @@ module Api
         user = User.find_by(id: payload['user_id'])
         if user.nil? || (user.respond_to?(:active_status?) && !user.active_status?)
           return render_error_response(
-            message: 'UsuÃ¡rio nÃ£o estÃ¡ ativo',
+            message: 'Usuário não está ativo',
             status: :forbidden,
-            code: 'USER_INACTIVE'
+            code: user_status_code(user)
           )
         end
 
-        tokens = issue_tokens_for(user, rotate_refresh: true, previous_refresh_token: refresh_token)
+        revoked_at = JwtBlacklistService.user_tokens_revoked_at(user.id)
+        if revoked_at && payload['iat'].to_i < revoked_at.to_i
+          return render_error_response(
+            message: 'Sessão expirada. Faça login novamente.',
+            status: :unauthorized,
+            code: 'SESSION_EXPIRED'
+          )
+        end
+
+        if !Rails.env.development? && !user.confirmed?
+          return render_error_response(
+            message: 'Por favor, confirme seu e-mail antes de atualizar a sessão.',
+            status: :forbidden,
+            code: 'EMAIL_NOT_CONFIRMED'
+          )
+        end
+
+        unless JwtBlacklistService.claim_token(refresh_token)
+          return render_error_response(
+            message: 'Refresh token revogado',
+            status: :unauthorized,
+            code: 'REFRESH_TOKEN_REVOKED'
+          )
+        end
+
+        tokens = issue_tokens_for(user, rotate_refresh: true)
         render json: { token: tokens[:access_token], user: serialized_user(user), state: 'authenticated', code: 'AUTHENTICATED' }, status: :ok
       rescue StandardError => e
         Rails.logger.error("[Auth] refresh failure: #{e.class}: #{e.message}")
         render_error_response(
-          message: 'Erro ao atualizar sessÃ£o',
+          message: 'Erro ao atualizar sessão',
           status: :internal_server_error,
           code: 'REFRESH_FAILED'
         )
@@ -324,13 +349,13 @@ module Api
         password = params[:password]
         password_confirmation = params[:password_confirmation]
 
-        # Se n?o houver no header, validar se token veio via query string (bloqueado)
+        # Se não houver no header, validar se token veio via query string (bloqueado)
         if token.blank?
           query_token = request.query_parameters['reset_password_token'] || request.query_parameters['token']
           if query_token.present?
             Rails.logger.warn '[Security] Password reset token rejected from query string'
             return render_error_response(
-              message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
+              message: 'Token deve ser enviado no header Authorization ou no corpo da requisição.',
               status: :unprocessable_entity,
               code: 'TOKEN_IN_QUERY'
             )
@@ -405,13 +430,13 @@ module Api
       def confirm_email
         # SEGURANÇA: Priorizar token no header Authorization (hash fragment)
         token = extract_token_from_header
-        # Se n?o houver no header, validar se token veio via query string (bloqueado)
+        # Se não houver no header, validar se token veio via query string (bloqueado)
         if token.blank?
           query_token = request.query_parameters['confirmation_token'] || request.query_parameters['token']
           if query_token.present?
             Rails.logger.warn '[Security] Confirmation token rejected from query string'
             return render_error_response(
-              message: 'Token deve ser enviado no header Authorization ou no corpo da requisi??o.',
+              message: 'Token deve ser enviado no header Authorization ou no corpo da requisição.',
               status: :unprocessable_entity,
               code: 'TOKEN_IN_QUERY'
             )
@@ -564,6 +589,15 @@ module Api
 
       def extract_refresh_token
         cookies.signed[:refresh_token].presence || extract_token_from_header
+      end
+
+      def user_status_code(user)
+        case user.status
+        when 'pending' then 'USER_NOT_APPROVED'
+        when 'rejected' then 'USER_REJECTED'
+        when 'blocked' then 'USER_BLOCKED'
+        else 'USER_INACTIVE'
+        end
       end
 
       def revoke_refresh_token

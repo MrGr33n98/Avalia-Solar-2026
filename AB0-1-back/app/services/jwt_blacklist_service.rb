@@ -57,6 +57,30 @@ class JwtBlacklistService
       false
     end
 
+    # Atomically consume a token during refresh rotation.
+    # Only the first concurrent request may claim the refresh token.
+    # @param token [String] The refresh token to consume
+    # @return [Boolean] true when this request claimed the token
+    def claim_token(token)
+      return false unless redis_available?
+
+      jti = extract_jti(token)
+      return false unless jti
+
+      ttl = calculate_ttl(token)
+      return false if ttl <= 0
+
+      result = RedisHelper.with_redis do |redis|
+        redis.set("#{REDIS_PREFIX}#{jti}", '1', nx: true, ex: ttl)
+      end
+
+      result == 'OK'
+    rescue StandardError => e
+      Rails.logger.error("[JWT:Blacklist] Claim error: #{e.message}")
+      Sentry.capture_exception(e) if defined?(Sentry)
+      false
+    end
+
     # Revoke all tokens for a user
     # @param user_id [Integer] The user ID
     # @return [Boolean] true if revoked successfully

@@ -35,7 +35,12 @@ const registerSchema = z
     email: z.string().email('E-mail inválido').refine(isCorporateEmail, {
       message: 'Por favor, use um e-mail corporativo (não @gmail, @hotmail, etc.)',
     }),
-    password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+    password: z
+      .string()
+      .min(8, 'Senha deve ter pelo menos 8 caracteres')
+      .regex(/[A-Z]/, 'Inclua ao menos 1 letra maiúscula')
+      .regex(/[a-z]/, 'Inclua ao menos 1 letra minúscula')
+      .regex(/\d/, 'Inclua ao menos 1 número'),
     passwordConfirmation: z.string(),
     phone: z.string().min(10, 'Telefone inválido'),
     termsAccepted: z.boolean().refine((v) => v === true, {

@@ -1,6 +1,6 @@
-<% content_for :preheader, 'Sua conta foi aprovada e já pode ser acessada.' %>
+<% content_for :preheader, 'Sua conta foi aprovada. Confirme seu e-mail para acessar.' %>
 <p style="margin:0 0 8px;color:#15803D;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Conta aprovada</p>
 <h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;line-height:1.2;">Seu acesso foi liberado</h1>
 <p style="margin:0 0 14px;">Olá, <strong><%= @user.name.presence || @user.email %></strong>.</p>
-<p style="margin:0 0 22px;color:#667085;">Sua conta foi aprovada. Você já pode entrar e utilizar os recursos disponíveis.</p>
+<p style="margin:0 0 22px;color:#667085;">Sua conta foi aprovada. Confirme seu e-mail pelo link enviado separadamente e, depois, entre no Avalia Solar.</p>
 <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0A66C2"><a href="<%= frontend_url('/login') %>" style="display:inline-block;padding:13px 22px;color:#FFFFFF;text-decoration:none;font-weight:bold;">Entrar no Avalia Solar</a></td></tr></table>

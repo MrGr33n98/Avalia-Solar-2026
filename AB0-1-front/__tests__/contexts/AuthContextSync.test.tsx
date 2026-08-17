@@ -12,6 +12,10 @@ jest.mock('@/lib/api', () => ({
     resetPassword: jest.fn(),
     resendConfirmation: jest.fn(),
   },
+  clearAuthSessionHint: jest.fn(),
+  hasPossibleAuthSession: jest.fn(() => true),
+  invalidateAuthRefresh: jest.fn(),
+  setAuthSessionHint: jest.fn(),
   companyAccessApi: {
     context: jest.fn(),
   }

@@ -9,6 +9,7 @@ import {
   clearAuthSessionHint,
   companyAccessApi,
   hasPossibleAuthSession,
+  invalidateAuthRefresh,
   setAuthSessionHint,
   reviewerProfileApi,
 } from '@/lib/api';
@@ -49,10 +50,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authRequestId = useRef(0);
   const stitchedIdentitySignature = useRef<string | null>(null);
 
-  const nextAuthRequest = () => {
+  const nextAuthRequest = useCallback(() => {
     authRequestId.current += 1;
     return authRequestId.current;
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      nextAuthRequest();
+      invalidateAnalyticsAvailability();
+      clearAuthSessionHint();
+      clearRealtimeAuthToken();
+      reset();
+      setUser(null);
+      setLoading(false);
+      setError('Sua sessão expirou. Faça login novamente.');
+    };
+
+    window.addEventListener('avalia:auth-session-expired', handleSessionExpired);
+    return () => window.removeEventListener('avalia:auth-session-expired', handleSessionExpired);
+  }, [nextAuthRequest]);
 
   useEffect(() => {
     if (user?.id) {
@@ -120,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearAuthSessionHint();
         }
       }
-      return userData || null;
+      return requestId === authRequestId.current ? userData || null : null;
     } catch (authError) {
       if (requestId === authRequestId.current) {
         invalidateAnalyticsAvailability();
@@ -135,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [nextAuthRequest]);
 
   useEffect(() => {
     void checkAuth();
@@ -237,6 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     nextAuthRequest();
+    invalidateAuthRefresh();
     invalidateAnalyticsAvailability();
     track('Logout Performed');
     reset();
@@ -249,6 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshAuth = async (): Promise<boolean> => {
+    if (!hasPossibleAuthSession()) return false;
     const nextUser = await checkAuth();
     return !!nextUser;
   };

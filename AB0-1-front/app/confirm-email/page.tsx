@@ -47,8 +47,6 @@ function ConfirmEmailContent() {
         }
 
         const token = decodeURIComponent(tokenMatch[1]);
-        console.log('[ConfirmEmail] Token extracted from hash fragment');
-
         // Remover hash imediatamente da URL (segurança)
         window.history.replaceState({}, document.title, '/confirm-email');
 
@@ -76,7 +74,6 @@ function ConfirmEmailContent() {
         }
 
         if (response.ok) {
-          console.log('[ConfirmEmail] Email confirmed successfully');
           setStatus('success');
           setMessage(data.message || 'Email confirmado com sucesso!');
 

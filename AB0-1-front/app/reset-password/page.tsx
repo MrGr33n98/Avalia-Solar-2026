@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
 import { buildApiUrl } from '@/lib/api-config';
+import { setAuthSessionHint } from '@/lib/api';
+import { setRealtimeAuthToken } from '@/lib/realtime-auth';
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -53,8 +55,6 @@ function ResetPasswordContent() {
 
     const extractedToken = decodeURIComponent(tokenMatch[1]);
     setToken(extractedToken);
-    console.log('[ResetPassword] Token extracted from hash fragment');
-
     // Remover hash imediatamente da URL (segurança)
     window.history.replaceState({}, document.title, '/reset-password');
   }, [searchParams]);
@@ -101,7 +101,6 @@ function ResetPasswordContent() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('[ResetPassword] Password reset successfully');
         setStatus('success');
         setMessage(data.message || 'Senha redefinida com sucesso!');
 
@@ -109,10 +108,12 @@ function ResetPasswordContent() {
         if (data.auto_login && data.token) {
           setAutoLoginToken(data.token);
           setUserRole(data.user?.role || null);
+          setAuthSessionHint();
+          setRealtimeAuthToken(data.token);
 
-          // Redirecionar para dashboard após 2 segundos
+          // Recarregar a aplicação para validar os cookies HttpOnly no AuthContext.
           setTimeout(() => {
-            router.push(data.user?.role === 'review' ? '/review-dashboard' : '/select-company');
+            window.location.assign(data.user?.role === 'review' ? '/review-dashboard' : '/select-company');
           }, 2000);
         } else {
           // Redirecionar para login após 3 segundos

@@ -64,7 +64,7 @@ module Api
       end
 
       def current_user
-        @current_user ||= User.find_by(id: decoded_token[:user_id]) if decoded_token
+        @current_user ||= User.find_by(id: decoded_token[:user_id]) if access_token_payload?
       end
 
       def jwt_decode(token)
@@ -85,6 +85,10 @@ module Api
         # Try to get token from cookie first (new method)
         token = cookies.signed[:jwt_token]
         jwt_decode(token) if token.present?
+      end
+
+      def access_token_payload?
+        decoded_token&.[](:typ) == 'access'
       end
 
       def render_error(message, status = :unprocessable_entity, code: nil)

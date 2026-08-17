@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
@@ -47,9 +46,9 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
   useEffect(() => {
     const errorCode = searchParams.get('error');
     if (errorCode === 'session_expired') {
-      setError('Sua sessao expirou. Por favor, faca login novamente.');
+      setError('Sua sessão expirou. Por favor, faça login novamente.');
     } else if (errorCode === 'unauthorized') {
-      setError('Voce nao tem permissao para acessar esta pagina.');
+      setError('Você não tem permissão para acessar esta página.');
     }
   }, [searchParams]);
 
@@ -73,11 +72,17 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
       const err = error as LoginError;
       const code = err.context?.details?.code || err.status || 'UNKNOWN';
 
-      if (code === 'EMAIL_NOT_CONFIRMED' || err.message?.includes('confirm seu e-mail')) {
+      if (code === 'EMAIL_NOT_CONFIRMED' || err.message?.includes('confirme seu e-mail')) {
         setNeedsConfirmation(true);
         setError(
-          'Seu e-mail ainda nao foi confirmado. Verifique sua caixa de entrada ou reenvie o link.'
+          'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada ou reenvie o link.'
         );
+      } else if (code === 'USER_NOT_APPROVED') {
+        setError('Seu cadastro está aguardando aprovação.');
+      } else if (code === 'USER_REJECTED') {
+        setError('Seu cadastro foi rejeitado. Entre em contato com o suporte.');
+      } else if (code === 'USER_BLOCKED') {
+        setError('Sua conta está bloqueada. Entre em contato com o suporte.');
       } else if (code === 401 || code === 'INVALID_CREDENTIALS') {
         setError('E-mail ou senha invalidos. Por favor, tente novamente.');
       } else if (code === 403) {
@@ -96,7 +101,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
     setResendMessage(null);
     try {
       await resendConfirmation(email);
-      setResendMessage('Se o e-mail existir, enviaremos um novo link de confirmacao.');
+      setResendMessage('Se o e-mail existir, enviaremos um novo link de confirmação.');
     } catch (error: unknown) {
       const err = error as LoginError;
       const status = err.context?.status;
@@ -104,7 +109,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
       if (status === 429 || `${message}`.includes('[429]')) {
         setResendMessage('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
       } else {
-        setResendMessage('Nao foi possivel reenviar agora. Tente novamente em alguns minutos.');
+        setResendMessage('Não foi possível reenviar agora. Tente novamente em alguns minutos.');
       }
     } finally {
       setIsResending(false);
@@ -205,7 +210,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
                     Reenviando...
                   </>
                 ) : (
-                  'Reenviar confirmacao'
+                  'Reenviar confirmação'
                 )}
               </Button>
               {resendMessage && <span className="text-sm">{resendMessage}</span>}
@@ -255,15 +260,6 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="remember" />
-            <label
-              htmlFor="remember"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600"
-            >
-              Lembrar-me
-            </label>
           </div>
           <Button
             type="submit"

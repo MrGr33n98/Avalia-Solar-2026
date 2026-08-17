@@ -1,5 +1,6 @@
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { ApiError } from './api-error';
+import { refreshAuthSession } from './api';
 
 type BannerRequestOptions = {
   method?: string;
@@ -7,19 +8,6 @@ type BannerRequestOptions = {
   body?: BodyInit | Record<string, unknown> | null;
   params?: Record<string, string | number | boolean | null | undefined>;
   timeout?: number;
-};
-
-const refreshSession = async () => {
-  try {
-    const response = await fetch(buildApiUrl('/auth/refresh'), {
-      method: 'POST',
-      headers: getApiRequestHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
 };
 
 export async function fetchBannerApi<T = unknown>(
@@ -57,8 +45,11 @@ export async function fetchBannerApi<T = unknown>(
       signal: controller.signal,
     });
 
-    if (response.status === 401 && !hasRetried && (await refreshSession())) {
+    if (response.status === 401 && !hasRetried) {
+      const refreshed = await refreshAuthSession();
+      if (refreshed) {
       return fetchBannerApi<T>(endpoint, options, true);
+      }
     }
 
     const raw = await response.text();

@@ -3,6 +3,7 @@
 // =======================
 import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
 import { ApiError, toApiError } from './api-error';
+import { clearRealtimeAuthToken } from './realtime-auth';
 import * as Sentry from '@sentry/nextjs';
 import { logError } from './error-handler';
 import { apolloClient } from './apollo-client';
@@ -927,6 +928,7 @@ export interface User {
   role: 'review' | 'company' | 'admin';
   company_id?: number | null;
   approved_by_admin?: boolean;
+  status?: 'pending' | 'active' | 'rejected' | 'blocked';
   created_at: string;
   updated_at: string;
 }
@@ -1026,7 +1028,35 @@ export const hasPossibleAuthSession = () => {
   return localStorage.getItem(AUTH_HINT_KEY) === '1' || hasAuthCookieHint();
 };
 
+let refreshInFlight: Promise<boolean> | null = null;
+let refreshGeneration = 0;
+
+export const invalidateAuthRefresh = () => {
+  refreshGeneration += 1;
+};
+
+const expireAuthSession = () => {
+  clearAuthSessionHint();
+  clearRealtimeAuthToken();
+
+  if (typeof window === 'undefined') return;
+
+  window.dispatchEvent(new CustomEvent('avalia:auth-session-expired'));
+  const pathname = window.location.pathname;
+  const isAuthRoute = ['/login', '/register', '/signup'].some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+  if (!isAuthRoute) {
+    const returnTo = `${pathname}${window.location.search}`;
+    window.location.replace(`/login?return_to=${encodeURIComponent(returnTo)}`);
+  }
+};
+
 const attemptRefresh = async (): Promise<boolean> => {
+  if (refreshInFlight) return refreshInFlight;
+
+  const generationAtStart = refreshGeneration;
+  refreshInFlight = (async () => {
   try {
     const url = buildApiUrl('/auth/refresh');
     const response = await fetch(url, {
@@ -1048,15 +1078,24 @@ const attemptRefresh = async (): Promise<boolean> => {
     // O backend retorna { token: string, user: User }
     // Como estamos usando credentials: 'include', o browser atualizarÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ os cookies (jwt_token e refresh_token)
     // automaticamente se o backend enviar os headers Set-Cookie correspondentes.
-    const data = await response.json().catch(() => ({}));
-    console.log('[API] Session refreshed successfully');
+    if (typeof response.json === 'function') {
+      await response.json().catch(() => ({}));
+    }
+
+    if (generationAtStart !== refreshGeneration) return false;
 
     return true;
-  } catch (error) {
-    console.warn('[API] Refresh failed due to network or parsing error:', error);
+  } catch {
     return false;
+  } finally {
+    refreshInFlight = null;
   }
+  })();
+
+  return refreshInFlight;
 };
+
+export const refreshAuthSession = () => attemptRefresh();
 
 export const api = {
   baseUrl: API_BASE_URL,
@@ -1177,6 +1216,7 @@ export const api = {
               if (refreshed) {
                 return await api.request({ ...config, _retry: true });
               }
+              expireAuthSession();
             }
 
             let details: any = null;
@@ -2337,6 +2377,7 @@ export const authApi = {
     }),
   logout: async () => {
     try {
+      invalidateAuthRefresh();
       await fetchApi('/auth/logout', { method: 'POST' });
     } catch (error) {
       console.warn('Logout endpoint error:', error);

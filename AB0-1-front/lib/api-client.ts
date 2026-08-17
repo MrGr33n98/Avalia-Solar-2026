@@ -18,6 +18,7 @@ import {
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
 import { ApiError, toApiError } from './api-error';
+import { refreshAuthSession } from './api';
 
 // Re-export types so they can be imported from api-client
 export type {
@@ -282,8 +283,6 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
         });
 
         const responseBody = await response.json().catch(() => null);
-        console.log('[API] Response data:', responseBody);
-
         if (!response.ok) {
           if (response.status === 429) {
             const retryAfterRaw = response.headers.get('retry-after');
@@ -296,6 +295,10 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
           }
 
           if (response.status === 401 && responseBody) {
+            if (options.skipAuthRefresh !== true && !options._retry && (await refreshAuthSession())) {
+              return fetchApiSafe<T>(endpoint, { ...options, _retry: true });
+            }
+
             const errorCode = responseBody.code;
             const errorMsg = responseBody.error || responseBody.message || '';
             if (
