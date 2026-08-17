@@ -237,6 +237,7 @@ export default function IcpPage() {
             company={company}
             stats={stats}
             onTabChange={() => {}}
+            onOpenNavigation={() => setSidebarOpen(true)}
             visibleTabIds={visibleTabIds}
           />
 
