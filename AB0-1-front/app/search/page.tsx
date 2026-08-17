@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Building2,
@@ -407,27 +408,21 @@ function SearchPageContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative min-h-[280px] overflow-hidden bg-[#071e4a] text-white">
-        <div className="relative mx-auto max-w-[1440px] px-4 py-9 sm:px-6 sm:py-12">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[42%] bg-contain bg-right bg-no-repeat lg:block"
-            style={{
-              backgroundImage: "url('/assets/avalia_symbol_search_banner_avalia_solar.webp')",
-            }}
-          />
-          <h1 className="relative z-10 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
-            Encontre a empresa certa para você.
-          </h1>
-          <p className="relative z-10 mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
-            Busque empresas, produtos e avaliações verificadas de energia solar e mobilidade
-            elétrica.
-          </p>
+      <section className="overflow-hidden bg-[#071e4a] text-white">
+        <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-[minmax(0,1fr)_160px] md:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10 lg:px-8 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
+          <div className="min-w-0">
+            <h1 className="max-w-2xl text-[28px] font-black leading-tight tracking-tight sm:text-4xl">
+              Encontre a empresa certa para você.
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+              Busque empresas, produtos e avaliações verificadas de energia solar e mobilidade
+              elétrica.
+            </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="relative z-10 mt-7 grid max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl sm:grid-cols-[1fr_0.8fr_auto]"
-          >
+            <form
+              onSubmit={handleSubmit}
+              className="mt-6 grid w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl lg:mt-7 lg:grid-cols-[minmax(0,1fr)_minmax(170px,0.8fr)_auto]"
+            >
             <label className="relative border-b border-slate-200 sm:border-b-0 sm:border-r">
               <span className="sr-only">Buscar empresa, produto ou serviço</span>
               <Search
@@ -438,7 +433,7 @@ function SearchPageContent() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Buscar empresa, produto ou serviço..."
-                className="h-14 w-full bg-transparent pl-12 pr-12 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                className="h-14 w-full min-w-0 bg-transparent pl-12 pr-12 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
               />
               {searchTerm ? (
                 <button
@@ -461,16 +456,28 @@ function SearchPageContent() {
                 value={locationTerm}
                 onChange={(event) => setLocationTerm(event.target.value)}
                 placeholder="CEP ou cidade..."
-                className="h-14 w-full bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                className="h-14 w-full min-w-0 bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
               />
             </label>
             <Button
               type="submit"
-              className="m-1.5 h-11 rounded-lg bg-blue-600 px-8 font-bold hover:bg-blue-700"
+              className="m-1.5 h-11 min-h-11 rounded-lg bg-blue-600 px-8 font-bold hover:bg-blue-700"
             >
               Buscar
             </Button>
-          </form>
+            </form>
+          </div>
+
+          <div className="relative h-20 min-w-0 overflow-hidden rounded-lg md:h-36 lg:h-56 xl:h-64 2xl:h-72">
+            <Image
+              src="/assets/avalia_symbol_search_banner_avalia_solar.webp"
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="(min-width: 1536px) 500px, (min-width: 1280px) 440px, (min-width: 1024px) 360px, (min-width: 768px) 160px, 100vw"
+              className="object-cover object-right opacity-90 md:object-contain"
+            />
+          </div>
         </div>
       </section>
 
