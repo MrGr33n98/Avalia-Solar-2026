@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Review } from '@/lib/api';
+import ReviewCard from '@/components/ReviewCard';
 import { buildCompanySubPath } from '@/lib/slug';
 import { EditorialReviewCard, ReviewV2 } from '@/components/EditorialReviewCard';
 import { LegacyReviewCard, ReviewV1 } from '@/components/LegacyReviewCard';
@@ -101,7 +102,7 @@ export default function CompanyReviews({
             return isV2 ? (
               <EditorialReviewCard key={review.id} review={review as ReviewV2} />
             ) : (
-              <LegacyReviewCard key={review.id} review={review as ReviewV1} />
+              <ReviewCard key={review.id} review={review} />
             );
           })}
         </div>

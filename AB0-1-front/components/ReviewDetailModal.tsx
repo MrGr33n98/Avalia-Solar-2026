@@ -22,6 +22,7 @@ import {
 import type { Review } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
 
 interface ReviewDetailModalProps {
   review: Review;
@@ -222,22 +223,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           </div>
 
           {/* Photos */}
-          {review.photo_urls && review.photo_urls.length > 0 && (
-            <div>
-              <h4 className="font-bold text-slate-900 mb-3">Fotos do projeto ({review.photo_urls.length})</h4>
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {review.photo_urls.slice(0, 3).map((url, idx) => (
-                  <img key={idx} src={url} alt={`Foto ${idx+1}`} className="w-40 h-32 object-cover rounded-xl border border-slate-200" />
-                ))}
-                {review.photo_urls.length > 3 && (
-                  <div className="w-40 h-32 rounded-xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-blue-600 bg-blue-50/50 cursor-pointer hover:bg-blue-50 transition-colors">
-                    <Camera className="w-6 h-6 mb-2" />
-                    <span className="text-sm font-medium">Ver todas as fotos</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <ReviewMediaGallery media={review.media} companyName={review.company?.toString() || 'empresa'} />
           
           <hr className="border-slate-100" />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Share2, Star, ThumbsUp, X, Camera } from 'lucide-react';
+import { Check, Share2, Star, ThumbsUp, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';

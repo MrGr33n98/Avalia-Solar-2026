@@ -4,7 +4,7 @@ class ReviewUploadSession < ApplicationRecord
   EXPIRATION = 24.hours
 
   belongs_to :user
-  has_many :review_media, dependent: :destroy
+  has_many :review_media, class_name: 'ReviewMedia', dependent: :destroy
 
   enum status: {
     active: 'active',
