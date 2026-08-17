@@ -29,6 +29,7 @@ describe('billingApi', () => {
         body: JSON.stringify({
           company_id: 10,
           plan_id: 2,
+          billing_cycle: 'monthly',
           success_url: 'https://www.avaliasolar.com.br/dashboard?checkout=success',
           cancel_url: 'https://www.avaliasolar.com.br/pricing',
         }),

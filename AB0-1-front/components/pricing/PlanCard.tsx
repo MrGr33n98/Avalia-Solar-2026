@@ -20,8 +20,10 @@ export interface PlanCardProps {
   subscriptionStatus?: string;
   isLoading?: boolean;
   onCtaClick: () => void;
-  yearlyPriceLabel?: string;
+  billingCycle: 'monthly' | 'yearly';
+  billingDetail?: string;
   savingBadge?: string;
+  ctaNote?: string;
 }
 
 interface PlanVisualConfig {
@@ -109,8 +111,10 @@ export function PlanCard({
   subscriptionStatus,
   isLoading = false,
   onCtaClick,
-  yearlyPriceLabel,
+  billingCycle,
+  billingDetail,
   savingBadge,
+  ctaNote,
 }: PlanCardProps) {
   const cfg = planConfig[slug] || planConfig.free;
   const isProFeatured = slug === 'pro' && featured;
@@ -140,7 +144,7 @@ export function PlanCard({
       className={[
         'relative flex flex-col overflow-hidden rounded-[24px] h-full',
         'transition-all duration-300',
-        isProFeatured ? 'bg-gradient-to-br from-brand-blue to-blue-700 text-white' : 'bg-white',
+        isProFeatured ? 'bg-brand-blue text-white' : 'bg-white',
         featured ? 'z-10' : 'hover:shadow-md',
         cfg.ringCls,
         cfg.shadowCls,
@@ -172,7 +176,7 @@ export function PlanCard({
                 />
               )}
             </div>
-            <div className="text-xs font-medium text-slate-500 ">{summary}</div>
+            <div className={`text-xs font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>{summary}</div>
           </div>
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${cfg.iconBg}`}
@@ -186,9 +190,9 @@ export function PlanCard({
           <div
             className={`text-4xl font-black tracking-tight leading-none ${isProFeatured ? 'text-white' : 'text-slate-900'}`}
           >
-            {priceLabel}
+            <span className={isProFeatured ? 'text-white' : 'text-slate-900'}>{priceLabel}</span>
             {slug !== 'free' && slug !== 'enterprise' && (
-              <span className="text-base font-semibold text-slate-500 ml-0.5">/mês</span>
+              <span className={`ml-1 text-base font-semibold ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>/mês</span>
             )}
           </div>
 
@@ -203,9 +207,9 @@ export function PlanCard({
             </div>
           )}
 
-          {yearlyPriceLabel && (
+          {billingDetail && (
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-slate-500 ">{yearlyPriceLabel}</span>
+              <span className={`text-xs font-medium ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>{billingDetail}</span>
               {savingBadge && (
                 <span
                   className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
@@ -232,7 +236,7 @@ export function PlanCard({
               >
                 <Check className="h-3 w-3" />
               </span>
-              <span>{h}</span>
+              <span className={isProFeatured ? 'text-blue-50' : 'text-slate-700'}>{h}</span>
             </li>
           ))}
         </ul>
@@ -261,6 +265,7 @@ export function PlanCard({
             </span>
           )}
         </Button>
+        {ctaNote && <p className={`mt-3 text-center text-[11px] ${isProFeatured ? 'text-blue-100' : 'text-slate-500'}`}>{ctaNote}</p>}
       </div>
     </motion.div>
   );

@@ -21,13 +21,14 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { billingApi, type BillingPlan, type BillingSubscription } from '@/lib/api/billing';
 import { pricingPlans, type PlanSlug } from '@/lib/pricing/catalog';
+import { billingCycleFromQuery, formatBRL, formatBRLWithoutCents, pricingByPlan, type BillingCycle } from '@/lib/pricing/billing';
 
 // Importa os subcomponentes modulares e slots resilientes
 import { PlanCard, PlanCardSkeleton } from './PlanCard';
 import { FeatureComparisonTable } from './FeatureComparisonTable';
 import { PricingFaq } from './PricingFaq';
 import { ErrorBanner } from '@/components/billing/ErrorBanner';
-import { trackCheckoutStarted } from '@/lib/analytics/consolidated';
+import { track, trackCheckoutStarted } from '@/lib/analytics/consolidated';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import { DefaultPricingAdBanner } from '@/components/banners/DefaultPricingAdBanner';
 import { PricingHero } from './PricingHero';
@@ -107,7 +108,7 @@ export default function PricingPage() {
   const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Estados locais
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
   const [plans, setPlans] = useState<CombinedPlan[]>([]);
   const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,6 +137,11 @@ export default function PricingPage() {
   const roiValue = roiRevenue > 0 ? (roiRevenue / 150 - 1) * 100 : 0;
 
   // Carrega planos e assinatura
+  useEffect(() => {
+    const queryCycle = billingCycleFromQuery(new URLSearchParams(window.location.search).get('billing'));
+    if (queryCycle) setBillingCycle(queryCycle);
+  }, []);
+
   useEffect(() => {
     async function loadPricingData() {
       setLoading(true);
@@ -219,6 +225,11 @@ export default function PricingPage() {
   }, [isAuthenticated, user?.company_id]);
 
   // Handler para os cliques em CTA de planos
+  const handleBillingCycleChange = (cycle: BillingCycle) => {
+    setBillingCycle(cycle);
+    track('pricing_billing_cycle_changed', { billing_cycle: cycle });
+  };
+
   const handlePlanCta = async (plan: BillingPlan) => {
     if (!isAuthenticated) {
       router.push(`/register?plan=${plan.slug}`);
@@ -235,6 +246,12 @@ export default function PricingPage() {
     setActionLoadingPlanId(plan.id);
     setCheckoutError(null);
     setLastFailedPlan(plan);
+
+    if (billingCycle === 'yearly' && (plan.slug === 'essential' || plan.slug === 'pro')) {
+      setCheckoutError('O checkout anual será habilitado após a conexão dos Prices anuais no backend.');
+      setActionLoadingPlanId(null);
+      return;
+    }
 
     try {
       const hasFreshSession = await refreshAuth();
@@ -258,7 +275,8 @@ export default function PricingPage() {
             user.company_id,
             plan.id,
             successUrl,
-            cancelUrl
+            cancelUrl,
+            billingCycle
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
@@ -292,7 +310,8 @@ export default function PricingPage() {
             user.company_id,
             plan.id,
             successUrl,
-            cancelUrl
+            cancelUrl,
+            billingCycle
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
@@ -657,9 +676,9 @@ export default function PricingPage() {
 
           {/* Monthly/Yearly Cycle Toggle Selector */}
           <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
-            <BillingCycleToggle value={billingCycle} onChange={setBillingCycle} />
-            <span className="text-[12.5px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-250">
-              Anual: 2 meses grátis (17% off)
+            <BillingCycleToggle value={billingCycle} onChange={handleBillingCycleChange} />
+            <span className="text-[12.5px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              Economize até 17%
             </span>
           </div>
 
@@ -715,28 +734,33 @@ export default function PricingPage() {
 
                 // Preços com base na seleção do ciclo
                 let priceLabel = plan.price_label;
-                let yearlyPrice = undefined;
-                let savingText = undefined;
+                let billingDetail: string | undefined;
+                let savingText: string | undefined;
+                let ctaNote: string | undefined;
 
                 if (plan.slug === 'free') {
                   priceLabel = 'R$ 0';
                 } else if (plan.slug === 'essential') {
                   if (billingCycle === 'monthly') {
                     priceLabel = 'R$ 59';
-                    yearlyPrice = 'ou R$ 49/mês no plano anual';
-                    savingText = 'ECONOMIZE 17%';
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.essential.monthly.amount);
+                    billingDetail = 'Cobrança mensal';
                   } else {
-                    priceLabel = 'R$ 49';
-                    yearlyPrice = 'cobrado anualmente (R$ 588/ano)';
+                    priceLabel = formatBRL(pricingByPlan.essential.yearly.monthlyEquivalent);
+                    billingDetail = `Cobrado ${formatBRLWithoutCents(pricingByPlan.essential.yearly.amount)} por ano`;
+                    savingText = `Economize ${formatBRLWithoutCents(pricingByPlan.essential.yearly.savings)}/ano`;
+                    ctaNote = 'Checkout anual em preparação';
                   }
                 } else if (plan.slug === 'pro') {
                   if (billingCycle === 'monthly') {
                     priceLabel = 'R$ 150';
-                    yearlyPrice = 'ou R$ 125/mês no plano anual';
-                    savingText = 'ECONOMIZE 17%';
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.monthly.amount);
+                    billingDetail = 'Cobrança mensal';
                   } else {
-                    priceLabel = 'R$ 125';
-                    yearlyPrice = 'cobrado anualmente (R$ 1.500/ano)';
+                    priceLabel = formatBRLWithoutCents(pricingByPlan.pro.yearly.monthlyEquivalent);
+                    billingDetail = `Cobrado ${formatBRLWithoutCents(pricingByPlan.pro.yearly.amount)} por ano`;
+                    savingText = `Economize ${formatBRLWithoutCents(pricingByPlan.pro.yearly.savings)}/ano`;
+                    ctaNote = 'Checkout anual em preparação';
                   }
                 } else if (plan.slug === 'enterprise') {
                   priceLabel = 'Sob consulta';
@@ -759,8 +783,10 @@ export default function PricingPage() {
                     subscriptionStatus={isCurrent ? subscription?.status : undefined}
                     isLoading={actionLoadingPlanId === plan.id}
                     onCtaClick={() => handlePlanCta(plan)}
-                    yearlyPriceLabel={yearlyPrice}
+                    billingCycle={billingCycle}
+                    billingDetail={billingDetail}
                     savingBadge={savingText}
+                    ctaNote={ctaNote}
                   />
                 );
               })

@@ -1,4 +1,5 @@
 import { fetchApiSafe } from '../api-client';
+import type { BillingCycle } from '@/lib/pricing/billing';
 
 export type PlanSlug = 'free' | 'essential' | 'pro' | 'enterprise';
 
@@ -65,7 +66,8 @@ export const billingApi = {
     companyId: number,
     planId: number,
     successUrl?: string,
-    cancelUrl?: string
+    cancelUrl?: string,
+    billingCycle: BillingCycle = 'monthly'
   ): Promise<{ checkout_url: string }> => {
     return fetchApiSafe<{ checkout_url: string }>('billing/checkout', {
       method: 'POST',
@@ -75,6 +77,7 @@ export const billingApi = {
       body: JSON.stringify({
         company_id: companyId,
         plan_id: planId,
+        billing_cycle: billingCycle,
         success_url: successUrl,
         cancel_url: cancelUrl,
       }),
