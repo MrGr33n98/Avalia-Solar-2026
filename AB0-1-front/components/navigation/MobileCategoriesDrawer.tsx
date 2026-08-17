@@ -10,15 +10,12 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
-import {
-  getCategoryIcon,
-  getPreferredCategoryIcon,
-  normalizeCategoryKey,
-} from '@/lib/categoryIcons';
+import { getCategoryIcon, normalizeCategoryKey } from '@/lib/categoryIcons';
 import {
   CategoryMonochromeIcon,
   getMonochromeIconKey,
 } from '@/components/categories/CategoryMonochromeIcon';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
 
@@ -298,11 +295,7 @@ function MainCategoriesView({
       </nav>
 
       {categories.map((category) => {
-        const iconSrc = getPreferredCategoryIcon(
-          category.slug || category.seo_url,
-          category.icon_url,
-          category.name
-        );
+        const iconSrc = getCategoryVisualAsset(category.slug || category.seo_url, category.name);
         const hasChildren = category.children && category.children.length > 0;
 
         const content = (
@@ -412,11 +405,7 @@ function SubcategoryView({
       </Link>
 
       {subcategories.map((subcategory) => {
-        const iconSrc = getPreferredCategoryIcon(
-          subcategory.slug || subcategory.seo_url,
-          subcategory.icon_url,
-          subcategory.name
-        );
+        const iconSrc = getCategoryVisualAsset(subcategory.slug || subcategory.seo_url, subcategory.name);
         return (
           <Link
             key={subcategory.id}
@@ -462,9 +451,7 @@ function CategoryIcon({
       className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)]`}
       aria-hidden="true"
     >
-      {monochromeKey ? (
-        <CategoryMonochromeIcon icon={monochromeKey} className="h-full w-full" />
-      ) : fallbackIcon ? (
+      {fallbackIcon ? (
         <Image
           src={fallbackIcon}
           alt=""
@@ -472,6 +459,8 @@ function CategoryIcon({
           className="object-contain p-1"
           sizes={imageSize}
         />
+      ) : monochromeKey ? (
+        <CategoryMonochromeIcon icon={monochromeKey} className="h-full w-full" />
       ) : (
         <Grid2X2 className="h-5 w-5 text-neutral-700" aria-hidden="true" />
       )}

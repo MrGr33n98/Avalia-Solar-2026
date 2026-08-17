@@ -111,15 +111,6 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
   );
 }
 
-function TrustItem({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
-      <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-      {children}
-    </span>
-  );
-}
-
 export default function ComparisonFloatingBar() {
   const router = useRouter();
   const {
@@ -368,6 +359,21 @@ export default function ComparisonFloatingBar() {
                   ) : null}
                   <button
                     type="button"
+                    onClick={handleDetailsClick}
+                    disabled={count === 0}
+                    className={cn(
+                      'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-colors disabled:cursor-not-allowed',
+                      count > 0
+                        ? 'border-slate-300 bg-white text-slate-950 hover:border-slate-400 hover:bg-slate-50'
+                        : 'border-slate-800 bg-slate-800 text-slate-500',
+                      !canAddMore && 'min-[380px]:col-span-2'
+                    )}
+                  >
+                    <List className="h-3.5 w-3.5" aria-hidden="true" />
+                    Ver detalhes
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleComparisonPageClick}
                     disabled={count < 2}
                     aria-label="Ver comparação completa"
@@ -468,7 +474,7 @@ export default function ComparisonFloatingBar() {
                   <Button
                     variant="outline"
                     onClick={handleDetailsClick}
-                    className="h-10 rounded-md border-slate-800 px-4 text-sm font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 hover:text-white"
+                    className="h-10 rounded-md border-slate-300 bg-white px-4 text-sm font-bold text-slate-950 shadow-sm hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950"
                   >
                     <List className="mr-2 h-4 w-4" aria-hidden="true" />
                     Ver detalhes

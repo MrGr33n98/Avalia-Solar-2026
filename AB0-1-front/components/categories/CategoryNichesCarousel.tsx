@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { getCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryNiche {
   id?: number;
@@ -74,7 +74,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
           <div className="flex gap-3">
             {displayNiches.map((niche) => {
               const label = getShortName(niche.name);
-              const iconSrc = getCategoryIcon(niche.seo_url || niche.slug, niche.name);
+              const iconSrc = getCategoryVisualAsset(niche.seo_url || niche.slug, niche.name);
 
               return (
                 <Link
@@ -82,7 +82,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
                   href={getNicheHref(niche)}
                   className="group flex w-[86px] shrink-0 flex-col items-center text-center sm:w-24"
                 >
-                  <span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-1.5 shadow-sm transition-all group-hover:border-blue-200 group-hover:shadow-md">
+                  <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-1.5 shadow-sm transition-all group-hover:border-blue-200 group-hover:shadow-md">
                     {iconSrc ? (
                       <Image
                         src={iconSrc}

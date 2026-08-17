@@ -22,6 +22,7 @@ export const CATEGORY_FRAGMENT = gql`
     name
     slug
     iconUrl
+    visualKey
   }
 `;
 

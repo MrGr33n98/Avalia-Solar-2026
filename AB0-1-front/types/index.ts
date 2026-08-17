@@ -30,7 +30,7 @@ export interface CategoryTreeNode {
   average_rating?: number;
   reviews_count?: number;
   verified_companies_count?: number;
-  visual_key?: string;
+  visual_key?: string | null;
   children: CategoryTreeNode[];
 }
 

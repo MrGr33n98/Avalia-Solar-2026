@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Building2, Package, Layers, Star } from 'lucide-react';
 import Image from 'next/image';
 import { buildCategoryPath } from '@/lib/slug';
-import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryCardMinimalProps {
   category: {
@@ -29,7 +29,7 @@ export default function CategoryCardMinimal({
 }: CategoryCardMinimalProps) {
   const [imageError, setImageError] = useState(false);
 
-  const iconUrl = getPreferredCategoryIcon(category?.seo_url, category?.icon_url, category?.name);
+  const iconUrl = getCategoryVisualAsset(category?.seo_url, category?.name);
   const logoUrl = category?.logo?.url;
   const imageUrl =
     !imageError && (iconUrl || logoUrl || category?.banner_url)

@@ -11,7 +11,7 @@ import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
-import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 const AUTOPLAY_DELAY_MS = 2000;
 const AUTOPLAY_SCROLL_DISTANCE = 320;
@@ -114,11 +114,7 @@ export default function LandingCategoryChips({
             {items.map((category) => {
               const href = buildCategoryPath(category?.seo_url, category?.id);
               const titleId = `landing-category-chip-${category.id}-title`;
-              const iconSrc = getPreferredCategoryIcon(
-                category?.seo_url || category?.slug,
-                category?.icon_url,
-                category?.name
-              );
+              const iconSrc = getCategoryVisualAsset(category?.seo_url || category?.slug, category?.name);
               return (
                 <div key={category.id} role="listitem">
                   <Link
@@ -138,7 +134,7 @@ export default function LandingCategoryChips({
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-slate-200/70 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40">
+                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40">
                       {iconSrc ? (
                         <>
                           <Image

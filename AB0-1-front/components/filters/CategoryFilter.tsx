@@ -8,7 +8,7 @@ import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/
 import { Badge } from '@/components/ui/badge';
 import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryFilterProps {
   selectedIds: number[];
@@ -58,11 +58,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedIds, onC
         ) : (
           <div className="space-y-4">
             {categories.map((root) => {
-              const rootIconSrc = getPreferredCategoryIcon(
-                root.slug || root.seo_url,
-                root.icon_url,
-                root.name
-              );
+              const rootIconSrc = getCategoryVisualAsset(root.slug || root.seo_url, root.name);
 
               return (
                 <div key={root.id} className="space-y-2">

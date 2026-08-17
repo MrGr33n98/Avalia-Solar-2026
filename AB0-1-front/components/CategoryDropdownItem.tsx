@@ -7,7 +7,7 @@ import { Category } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCategoryPath } from '@/lib/slug';
 import { ChevronRight } from 'lucide-react';
-import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryDropdownItemProps {
   category: Category;
@@ -20,7 +20,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, o
   const hoverTimerRef = useRef<number | null>(null);
 
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-  const iconSrc = getPreferredCategoryIcon(category.seo_url, category.icon_url, category.name);
+  const iconSrc = getCategoryVisualAsset(category.seo_url, category.name);
   const categoryKey = String(category.seo_url ?? category.id ?? category.name)
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, '-');
@@ -200,7 +200,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, o
                 Ver {category.name}
               </Link>
               {category.subcategories?.map((sub: Category) => {
-                const subIconSrc = getPreferredCategoryIcon(sub.seo_url, sub.icon_url, sub.name);
+                const subIconSrc = getCategoryVisualAsset(sub.seo_url, sub.name);
 
                 return (
                   <Link

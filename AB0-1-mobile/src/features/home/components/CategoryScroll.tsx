@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, View, useColorScheme } from 'react-native';
-import { Sun, Cpu, Battery, Wrench, Car } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { getCategoryVisualAssetUri } from '@/constants/category-visual-assets';
 
 interface Category {
   id: string;
@@ -15,26 +16,6 @@ interface CategoryScrollProps {
   categories: Category[];
   onSelect: (id: string) => void;
 }
-
-const getCategoryIcon = (slug: string, color: string) => {
-  switch (slug) {
-    case 'energia-solar-residencial':
-    case 'energia-solar':
-    case 'paineis':
-      return <Sun color={color} size={26} strokeWidth={2.2} />;
-    case 'inversores':
-      return <Cpu color={color} size={26} strokeWidth={2.2} />;
-    case 'baterias':
-      return <Battery color={color} size={26} strokeWidth={2.2} />;
-    case 'instalacao':
-      return <Wrench color={color} size={26} strokeWidth={2.2} />;
-    case 'mobilidade-eletrica':
-    case 'carregadores-veiculares':
-      return <Car color={color} size={26} strokeWidth={2.2} />;
-    default:
-      return <Sun color={color} size={26} strokeWidth={2.2} />;
-  }
-};
 
 export const CategoryScroll = ({ categories, onSelect }: CategoryScrollProps) => {
   const scheme = useColorScheme();
@@ -55,7 +36,15 @@ export const CategoryScroll = ({ categories, onSelect }: CategoryScrollProps) =>
           onPress={() => onSelect(cat.id)}
         >
           <View style={[styles.categoryCircle, { backgroundColor: colors.surfaceSubtle }]}>
-            {getCategoryIcon(cat.slug, colors.brandActiveBlue)}
+            {getCategoryVisualAssetUri(cat.slug, cat.name) ? (
+              <Image
+                source={getCategoryVisualAssetUri(cat.slug, cat.name) as string}
+                contentFit="contain"
+                transition={150}
+                style={styles.categoryImage}
+                accessibilityLabel={`Imagem de ${cat.name}`}
+              />
+            ) : null}
           </View>
           <ThemedText style={styles.categoryName} numberOfLines={1}>
             {cat.name}
@@ -85,6 +74,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+  },
+  categoryImage: {
+    width: 54,
+    height: 54,
   },
   categoryName: {
     fontSize: 10,

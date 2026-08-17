@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import { cn } from '@/lib/utils';
-import { getPreferredCategoryIcon } from '@/lib/categoryIcons';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryColumnProps {
   category: CategoryTreeNode;
@@ -15,11 +15,7 @@ interface CategoryColumnProps {
 export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopular }) => {
   const children = category.children || [];
   const slug = category.slug || '';
-  const iconSrc = getPreferredCategoryIcon(
-    slug || category.seo_url,
-    category.icon_url,
-    category.name
-  );
+  const iconSrc = getCategoryVisualAsset(slug || category.seo_url, category.name);
 
   return (
     <div className="flex flex-col min-w-0">
@@ -55,11 +51,7 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
       {/* Subcategorias */}
       <ul className="flex flex-col gap-0.5">
         {children.slice(0, 12).map((child) => {
-          const childIconSrc = getPreferredCategoryIcon(
-            child.slug || child.seo_url,
-            child.icon_url,
-            child.name
-          );
+          const childIconSrc = getCategoryVisualAsset(child.slug || child.seo_url, child.name);
 
           return (
             <li key={child.id}>

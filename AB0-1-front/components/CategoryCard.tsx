@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
 import { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CategoryCardProps {
   category: Category;
@@ -21,9 +22,9 @@ interface CategoryCardProps {
 export default function CategoryCard({ category, className = '', index = 0 }: CategoryCardProps) {
   const title = category.short_description || category.name;
   const description = category.description;
-  const bannerUrl = getFullImageUrl(category.banner_url || category.icon_url);
+  const visualUrl = getCategoryVisualAsset(category.slug || category.seo_url, category.name);
+  const bannerUrl = getFullImageUrl(visualUrl || category.banner_url || category.icon_url);
   const path = buildCategoryPath(category.slug || category.seo_url || '');
-  const rating = category.average_rating || 0;
 
   return (
     <motion.article
@@ -38,13 +39,13 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
         aria-label={`Explorar ${category.name}`}
       >
         <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 group-hover:-translate-y-0.5 group-hover:border-blue-300 group-hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-          <div className="relative h-[92px] shrink-0 overflow-hidden sm:h-[96px]">
+          <div className="relative h-[112px] shrink-0 overflow-hidden bg-slate-50 sm:h-[120px]">
             <Image
               src={bannerUrl}
               alt={category.name}
               fill
               sizes="(max-width: 479px) 100vw, (max-width: 1023px) 50vw, 25vw"
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              className={cn('transition-transform duration-500 ease-out group-hover:scale-[1.03]', visualUrl ? 'object-contain p-2' : 'object-cover')}
               priority={index < 4}
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />

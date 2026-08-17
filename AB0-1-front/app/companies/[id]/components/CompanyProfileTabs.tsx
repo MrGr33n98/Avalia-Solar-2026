@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { cn } from '@/lib/utils';
 import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 import { trackCompanyProfileCategoryDropdownOpened, trackCompanyProfileCategorySelected } from '@/lib/analytics/company-category';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CompanyProfileTabsProps {
   activeTab: string;
@@ -288,6 +289,9 @@ export default function CompanyProfileTabs({
 const ICON_BASE = '/assets/avalia-solar-icon-pack';
 
 function getCategoryIcon(category: { name: string; seo_url?: string }) {
+  const visualAsset = getCategoryVisualAsset(category.seo_url, category.name);
+  if (visualAsset) return visualAsset;
+
   const value = `${category.seo_url || ''} ${category.name}`
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

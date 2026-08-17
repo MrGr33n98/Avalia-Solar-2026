@@ -28,6 +28,8 @@ export interface Category {
   slug: string;
   description?: string | null;
   image_url?: string | null;
+  icon_url?: string | null;
+  visual_key?: string | null;
   companies_count?: number;
   subcategories?: Category[];
 }
