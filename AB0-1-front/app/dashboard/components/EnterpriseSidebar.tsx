@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { useCompanyContext } from '@/context/CompanyContext';
+import { CompanyPlanBadge } from './CompanyPlanBadge';
 import {
   DASHBOARD_NAVIGATION,
   filterNavigationByContext,
@@ -236,6 +238,7 @@ export default function EnterpriseSidebar({
   pendingReviewsCount = 0,
   visibleTabIds,
 }: EnterpriseSidebarProps) {
+  const { activeCompany } = useCompanyContext();
   const [isCompactViewport, setIsCompactViewport] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([
@@ -297,13 +300,18 @@ export default function EnterpriseSidebar({
     return (
       <div className="flex h-full flex-col bg-[hsl(var(--dashboard-rail))] pb-[var(--safe-area-inset-bottom)] text-white">
         <div className="flex min-h-[72px] items-center justify-between gap-2 border-b border-white/10 px-3 py-3">
-          <div
-            className={cn(
-              'overflow-hidden rounded-md bg-white px-1 transition-[width] duration-200',
-              !isDrawer && (isSidebarCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
-            )}
-          >
-            <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
+          <div className="flex min-w-0 items-center gap-2">
+            <div
+              className={cn(
+                'overflow-hidden rounded-md bg-white px-1 transition-[width] duration-200',
+                !isDrawer && (isSidebarCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
+              )}
+            >
+              <BrandLogo className="h-9 max-w-none" sizes="156px" priority />
+            </div>
+            {(!isSidebarCompactRail || isDrawer) && activeCompany?.plan_tier ? (
+              <CompanyPlanBadge planTier={activeCompany.plan_tier} />
+            ) : null}
           </div>
 
         </div>

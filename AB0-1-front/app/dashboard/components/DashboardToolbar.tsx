@@ -6,6 +6,7 @@ import { CommandMenu } from './CommandMenu';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { CompanyPlanBadge } from './CompanyPlanBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface DashboardToolbarProps {
-  company: { name?: string } | null;
+  company: { name?: string; plan_tier?: string | null } | null;
   onTabChange: (tabId: string) => void;
   onToggleNavigation?: () => void;
   navigationOpen?: boolean;
@@ -52,7 +53,10 @@ export default function DashboardToolbar({
           >
             <PanelLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <BrandLogo className="h-7 w-auto max-w-[148px] min-[360px]:max-w-[176px] md:hidden" />
+          <div className="flex items-center gap-2 md:hidden">
+            <BrandLogo className="h-7 w-auto max-w-[148px] min-[360px]:max-w-[176px]" />
+            {company?.plan_tier ? <CompanyPlanBadge planTier={company.plan_tier} compact /> : null}
+          </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

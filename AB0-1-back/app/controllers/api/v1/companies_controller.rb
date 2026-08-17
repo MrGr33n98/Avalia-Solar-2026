@@ -60,7 +60,7 @@ module Api
       # GET /api/v1/companies/mine
       def mine
         # Use a relation directly to avoid loading everything into memory at once
-        companies_scope = current_user.active_member_companies.includes(:categories)
+        companies_scope = current_user.active_member_companies.includes(:categories, :plan)
 
         if params[:q].present?
           term = params[:q].to_s.strip
@@ -668,6 +668,7 @@ module Api
             city: company.city,
             state: company.state,
             logo_url: company.logo_url,
+            plan_tier: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free',
             category: company.categories.first&.name,
             status: company.status,
             verified: company.verified

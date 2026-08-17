@@ -112,6 +112,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           activeCompany.city !== activeMatch.city ||
           activeCompany.state !== activeMatch.state ||
           activeCompany.logo_url !== activeMatch.logo_url ||
+          activeCompany.plan_tier !== activeMatch.plan_tier ||
           activeCompany.category !== activeMatch.category ||
           activeCompany.status !== activeMatch.status ||
           activeCompany.verified !== activeMatch.verified

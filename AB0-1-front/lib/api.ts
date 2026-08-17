@@ -281,6 +281,7 @@ export interface Company {
   financing_tab_visible?: boolean;
   whatsapp_button_style_json?: Record<string, any> | null;
   plan_status?: 'active' | 'inactive' | 'trial' | 'expired';
+  plan_tier?: 'free' | 'essential' | 'pro' | 'enterprise' | string | null;
   category_info?: {
     id: number;
     name: string;
