@@ -1,7 +1,10 @@
 class CreateCategorySolutionTypes < ActiveRecord::Migration[7.0]
   def change
     create_table :category_solution_types do |t|
-      t.references :category, null: false, foreign_key: true
+      t.references :category,
+           null: false,
+           foreign_key: true,
+           index: { name: 'idx_cst_category' }
       t.string :name, null: false
       t.string :slug, null: false
       t.text :short_description
@@ -17,7 +20,12 @@ class CreateCategorySolutionTypes < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
-    add_index :category_solution_types, [:category_id, :slug], unique: true
-    add_index :category_solution_types, [:category_id, :active, :position], name: 'idx_solution_types_category_active_position'
+    add_index :category_solution_types,
+          %i[category_id slug],
+          unique: true,
+          name: 'idx_cst_category_slug'
+    add_index :category_solution_types,
+          %i[category_id active position],
+          name: 'idx_cst_category_active_pos'
   end
 end
