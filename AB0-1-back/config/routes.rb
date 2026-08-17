@@ -364,6 +364,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :review_uploads, param: :uuid, only: %i[create show] do
+        member do
+          post :media
+          delete 'media/:media_id', action: :destroy_media
+        end
+      end
+
       resources :faqs, only: %i[index create show update destroy] do
         member do
           post :vote

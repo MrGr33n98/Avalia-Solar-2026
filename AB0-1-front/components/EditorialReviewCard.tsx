@@ -1,8 +1,9 @@
 'use client';
 
-import { Check, Share2, Star, ThumbsUp, X } from 'lucide-react';
+import { Check, Share2, Star, ThumbsUp, X, Camera } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
 
 export interface ReviewV2 {
   id: number;
@@ -25,6 +26,7 @@ export interface ReviewV2 {
   }>;
   created_at: string;
   verified: boolean;
+  media?: Array<{ id: number; thumbnail_url: string; display_url: string; sort_order: number }>;
 }
 
 export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
@@ -178,6 +180,8 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
             </div>
           </div>
         )}
+
+        <ReviewMediaGallery media={review.media} companyName="empresa" />
       </div>
 
       {/* Footer */}

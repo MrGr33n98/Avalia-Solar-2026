@@ -36,6 +36,13 @@ session_cleanup_job:
   description: 'Remove expired sessions'
   enabled: true
 
+review_media_cleanup_job:
+  cron: '0 4 * * *'
+  class: CleanupOrphanedReviewMediaJob
+  queue: low
+  description: 'Remove sessões e mídias de avaliações abandonadas'
+  enabled: true
+
 # Remove pseudonymous source traces after the LGPD retention window
 review_source_trace_retention_job:
   cron: '30 3 * * *'

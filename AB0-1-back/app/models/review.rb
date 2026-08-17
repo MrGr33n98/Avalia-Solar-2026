@@ -12,6 +12,7 @@ class Review < ApplicationRecord
   accepts_nested_attributes_for :review_criterion_scores, allow_destroy: true
 
   has_many :review_votes, dependent: :destroy
+  has_many :review_media, dependent: :destroy
   has_many_attached :photos
 
   MAX_FEATURED_PER_COMPANY = 5

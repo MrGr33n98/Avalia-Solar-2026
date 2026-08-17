@@ -1,8 +1,9 @@
 'use client';
 
-import { Star } from 'lucide-react';
+import { Camera, Star } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
 
 export interface ReviewV1 {
   id: number;
@@ -13,6 +14,7 @@ export interface ReviewV1 {
     avatar_url: string | null;
   };
   created_at: string;
+  media?: Array<{ id: number; thumbnail_url: string; display_url: string; sort_order: number }>;
 }
 
 export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
@@ -63,6 +65,7 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
         <p className="text-sm text-slate-600 leading-relaxed italic">
           &ldquo;{review.comment}&rdquo;
         </p>
+        <ReviewMediaGallery media={review.media} companyName="empresa" />
       </div>
     </article>
   );

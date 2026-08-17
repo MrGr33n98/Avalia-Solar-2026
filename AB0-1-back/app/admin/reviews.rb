@@ -77,6 +77,30 @@ ActiveAdmin.register Review do
     redirect_to resource_path, alert: e.message
   end
 
+  member_action :approve_media, method: :patch do
+    media = resource.review_media.find(params[:media_id])
+    media.update!(status: :ready, moderation_status: :approved, moderated_by: current_admin_user,
+                  moderated_at: Time.current, rejected_reason: nil)
+    ReviewAuditEvent.create!(review: resource, actor: current_admin_user,
+                             event_type: 'media_moderation_changed',
+                             previous_value: { media_id: media.id, status: 'rejected' },
+                             new_value: { media_id: media.id, status: 'approved' })
+    redirect_to resource_path, notice: 'Foto aprovada.'
+  end
+
+  member_action :reject_media, method: :patch do
+    media = resource.review_media.find(params[:media_id])
+    reason = params[:reason].presence || 'outro'
+    previous_status = media.status
+    media.update!(status: :rejected, moderation_status: :rejected, moderated_by: current_admin_user,
+                  moderated_at: Time.current, rejected_reason: reason)
+    ReviewAuditEvent.create!(review: resource, actor: current_admin_user,
+                             event_type: 'media_moderation_changed',
+                             previous_value: { media_id: media.id, status: previous_status },
+                             new_value: { media_id: media.id, status: 'rejected', reason: reason })
+    redirect_to resource_path, notice: 'Foto rejeitada.'
+  end
+
   action_item :approve, only: :show, if: proc { !resource.approved? } do
     link_to 'Aprovar', approve_admin_review_path(resource), method: :patch,
                                                             data: { confirm: 'Confirma a aprovação desta avaliação?' }
@@ -194,6 +218,33 @@ ActiveAdmin.register Review do
       row('Respondida em') { |review| review.active_replied_at }
       row :created_at
       row :updated_at
+    end
+    panel 'Fotos da avaliação' do
+      if resource.review_media.any?
+        table_for resource.review_media.ordered do
+          column('Preview') do |media|
+            if media.file.attached?
+              image_tag url_for(media.file), height: 80, style: 'object-fit: cover; border-radius: 6px;'
+            else
+              'Sem arquivo'
+            end
+          end
+          column :status
+          column :moderation_status
+          column :sort_order
+          column :byte_size
+          column :created_at
+          column 'Ações' do |media|
+            if media.moderation_rejected?
+              item 'Aprovar foto', approve_media_admin_review_path(resource, media_id: media.id), method: :patch
+            else
+              item 'Rejeitar foto', reject_media_admin_review_path(resource, media_id: media.id, reason: 'outro'), method: :patch
+            end
+          end
+        end
+      else
+        para 'Nenhuma foto associada.'
+      end
     end
     panel 'Histórico de decisões' do
       table_for resource.review_decision_logs.order(created_at: :desc) do

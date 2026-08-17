@@ -91,6 +91,23 @@ FactoryBot.define do
     display_order { 0 }
   end
 
+  factory :review_media do
+    association :review
+    upload_session { association(:review_upload_session, user: review.user) }
+    user { review.user }
+    media_type { 'image' }
+    status { :pending }
+    moderation_status { :pending }
+    sort_order { 0 }
+    metadata { {} }
+  end
+
+  factory :review_upload_session do
+    association :user
+    status { :active }
+    expires_at { 24.hours.from_now }
+  end
+
   factory :rating_criterion do
     association :category
     sequence(:title) { |n| "Critério #{n}" }

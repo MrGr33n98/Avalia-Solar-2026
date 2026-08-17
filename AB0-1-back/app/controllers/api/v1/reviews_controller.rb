@@ -6,7 +6,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def index
     # Eager load associations to prevent N+1 queries
-    @reviews = Review.includes(:user, :company, review_criterion_scores: :rating_criterion)
+    @reviews = Review.includes(:user, :company, review_media: %i[file_attachment file_blob],
+                   review_criterion_scores: :rating_criterion)
                      .order(created_at: :desc)
 
     # Filtra por company_id se fornecido
@@ -44,7 +45,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def mine
-    @reviews = current_user.reviews.includes(:user, :company,
+    @reviews = current_user.reviews.includes(:user, :company, review_media: %i[file_attachment file_blob],
                                              review_criterion_scores: :rating_criterion).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
@@ -54,16 +55,21 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   def create
     # Persiste o e-mail no metadata para facilitar auditoria futura e buscas rápidas
     permitted_review_params = review_params
+    review_media_ids = permitted_review_params.delete(:review_media_ids).to_a.map(&:to_i).uniq
     metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
 
-    @review = Review.new(permitted_review_params.merge(
-                           user_id: current_user.id,
-                           is_legacy: false,
-                           capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
-                           metadata: metadata_with_email
-                         ))
+    Review.transaction do
+      @review = Review.new(permitted_review_params.merge(
+                             user_id: current_user.id,
+                             is_legacy: false,
+                             capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
+                             metadata: metadata_with_email
+                           ))
+      @review.save!
+      attach_review_media!(review_media_ids)
+    end
 
-    if @review.save
+    if @review.persisted?
       begin
         Reviews::ModerationService.new.evaluate(@review)
       rescue StandardError => e
@@ -91,6 +97,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     # Caso a validação de aplicação falhe por concorrência, os índices do banco idx_reviews_user_company_category_v2
     # e idx_reviews_legacy_global_uniqueness garantem a unicidade física no DB.
     render json: { errors: ['Você já avaliou esta empresa nesta categoria.'] }, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   def update
@@ -175,6 +183,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       useful_count: review.review_votes.where(vote_type: 'useful').count,
       unhelpful_count: review.review_votes.where(vote_type: 'unhelpful').count,
       photo_urls: review.photos.map { |photo| url_for(photo) },
+      media: serialize_review_media(review),
       user: serialize_user(review),
       company: serialize_company(review.company),
       granular_scores: serialize_granular_scores(review)
@@ -205,8 +214,45 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     []
   end
 
+  def serialize_review_media(review)
+    review.review_media.publicly_ready.ordered.map do |media|
+      {
+        id: media.id,
+        type: media.media_type,
+        display_url: url_for(media.file.variant(resize_to_limit: [1600, 1600])),
+        thumbnail_url: url_for(media.file.variant(resize_to_limit: [480, 480])),
+        width: media.width,
+        height: media.height,
+        sort_order: media.sort_order
+      }
+    end
+  end
+
+  def attach_review_media!(media_ids)
+    return if media_ids.empty?
+    invalid_review!('Você pode anexar no máximo 6 fotos.') if media_ids.size > ReviewMedia::MAX_PER_REVIEW
+
+    medias = current_user.review_media.where(id: media_ids).lock.to_a
+    valid_owner = medias.size == media_ids.size && medias.all? { |media| media.upload_session&.user_id == current_user.id }
+    invalid_review!('Mídia não pertence ao usuário atual.') unless valid_owner
+
+    ready = medias.all? { |media| media.ready? && media.review_id.blank? && media.moderation_status != 'rejected' }
+    invalid_review!('Todas as fotos devem estar prontas antes da publicação.') unless ready
+
+    medias.each { |media| media.update!(review: @review) }
+    medias.map(&:upload_session).compact.uniq.each do |session|
+      session.update!(status: :finalized, finalized_at: Time.current)
+    end
+  end
+
+  def invalid_review!(message)
+    @review.errors.add(:base, message)
+    raise ActiveRecord::RecordInvalid.new(@review)
+  end
+
   def set_review
-    @review = Review.includes(:user, :company, review_criterion_scores: :rating_criterion).find(params[:id])
+    @review = Review.includes(:user, :company, review_media: %i[file_attachment file_blob],
+                             review_criterion_scores: :rating_criterion).find(params[:id])
   end
 
   def review_params
@@ -215,7 +261,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       :rating, :comment, :company_id, :category_id, :headline, :buyer_tip,
       :project_type, :installation_status, :estimated_power, :capture_flow_source,
       { pros: [] }, { cons: [] }, { project_context: {} }, { metadata: {} },
-      review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy]
+      review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy],
+      review_media_ids: []
     )
   end
 

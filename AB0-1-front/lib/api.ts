@@ -606,6 +606,15 @@ export interface Review {
   useful_count?: number;
   unhelpful_count?: number;
   photo_urls?: string[];
+  media?: Array<{
+    id: number;
+    type: 'image';
+    thumbnail_url: string;
+    display_url: string;
+    width?: number | null;
+    height?: number | null;
+    sort_order: number;
+  }>;
   project_type?: 'residential' | 'commercial' | 'industrial' | 'rural';
   installation_status?: 'completed' | 'in_progress' | 'waiting';
   estimated_power?: number;
@@ -2152,6 +2161,33 @@ export const reviewsApi = {
       body: JSON.stringify({ review }),
     }),
   delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
+};
+
+export const reviewUploadsApi = {
+  createSession: () =>
+    fetchApi<{ id: string; status: string; expires_at: string; media: [] }>('/review_uploads', {
+      method: 'POST',
+    }),
+  upload: (sessionId: string, file: File, sortOrder: number) => {
+    const body = new FormData();
+    body.append('file', file);
+    body.append('sort_order', String(sortOrder));
+    return fetchApi(`/review_uploads/${encodeURIComponent(sessionId)}/media`, {
+      method: 'POST',
+      body,
+    });
+  },
+  getSession: (sessionId: string) =>
+    fetchApi<{
+      id: string;
+      status: string;
+      expires_at: string;
+      media: Array<{ id: number; status: string; moderation_status: string }>;
+    }>(`/review_uploads/${encodeURIComponent(sessionId)}`),
+  remove: (sessionId: string, mediaId: number) =>
+    fetchApi(`/review_uploads/${encodeURIComponent(sessionId)}/media/${mediaId}`, {
+      method: 'DELETE',
+    }),
 };
 
 export const campaignReviewsApi = {

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { Company, Review, reviewsApi } from '@/lib/api';
+import { Company, Review, reviewUploadsApi, reviewsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
@@ -26,6 +26,7 @@ import {
 import { ReviewCategoryStep } from './components/ReviewCategoryStep';
 import { ReviewGranularScoreStep } from './components/ReviewGranularScoreStep';
 import { ReviewEditorialStep } from './components/ReviewEditorialStep';
+import { ReviewPhotoUploader } from './components/ReviewPhotoUploader';
 
 interface ReviewFormProps {
   company: Company;
@@ -33,6 +34,7 @@ interface ReviewFormProps {
 }
 
 type ReviewCreatePayload = Partial<Review> & {
+  review_media_ids?: number[];
   review_criterion_scores_attributes?: Array<{
     rating_criterion_id: number;
     score: number;
@@ -70,6 +72,8 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [uploadSessionId, setUploadSessionId] = useState<string | null>(null);
+  const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
 
   const router = useRouter();
   const { user } = useAuth();
@@ -128,6 +132,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         estimated_power: parseFloat(projectMetadata.estimatedPower) || undefined,
         capture_flow_source: 'profile',
         review_criterion_scores_attributes,
+        review_media_ids: uploadedMediaIds,
       };
 
       await reviewsApi.create(reviewPayload);
@@ -352,6 +357,10 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
               </div>
 
               <ReviewEditorialStep data={editorialData} onChange={setEditorialData} />
+              <ReviewPhotoUploader onChange={(ids, uploading) => {
+                setUploadedMediaIds(ids);
+                setIsSubmitting(uploading);
+              }} />
 
               {submitError && (
                 <div
