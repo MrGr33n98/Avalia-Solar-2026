@@ -42,6 +42,7 @@ import { CategoryScroll } from '@/features/home/components/CategoryScroll';
 import { FeaturedCompanies } from '@/features/home/components/FeaturedCompanies';
 import { LatestArticles } from '@/features/home/components/LatestArticles';
 import { useAuthStore } from '@/store/auth';
+import { getCategoryVisualAssetUri } from '@/constants/category-visual-assets';
 
 const { width } = Dimensions.get('window');
 
@@ -52,9 +53,9 @@ const IconeInstalar = require('../../assets/icones/icone_instalar_avalia_solar_4
 const IconeProdutos = require('../../assets/icones/icone_produtos_avalia_solar_40x40.png');
 const IconeAvaliacoes = require('../../assets/icones/icone_avaliacoes_avalia_solar.png');
 
-const IconeResidencial = require('../../assets/images/icone-avalia-solar-residencial.png');
-const IconeComercial = require('../../assets/images/comercial-icone-avalia-solar.png');
-const IconeRural = require('../../assets/images/rural-icone-avalia-solar.png');
+const IconeResidencial = { uri: getCategoryVisualAssetUri('residencial', 'Residencial') };
+const IconeComercial = { uri: getCategoryVisualAssetUri('comercial-industrial', 'Comercial e Industrial') };
+const IconeRural = { uri: getCategoryVisualAssetUri('rural', 'Rural') };
 
 // Assets das Imagens de Produtos para o Grid OLX Style
 const ImgInversor = require('../../assets/images/icon-inversor-avalia-solar.jpeg');

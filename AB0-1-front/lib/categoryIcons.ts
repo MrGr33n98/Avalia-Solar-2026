@@ -11,6 +11,8 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'comercial-industrial': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-comercial-industrial.png`,
   industrial: `${CATEGORY_ICON_BASE_PATH}/avalia-solar-comercial-industrial.png`,
 
+  'mercado-livre-de-energia': '/assets/categories/3d/mercado-livre-de-energia.png',
+
   'energia-solar-rural-agronegocio': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
   'energia-solar-rural': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,
   'rural-agronegocio': `${CATEGORY_ICON_BASE_PATH}/avalia-solar-rural-agronegocio.png`,

@@ -1,6 +1,10 @@
 import { normalizeCategoryKey } from './categoryIcons';
 
 export type CategoryVisualKey =
+  | 'residential_solar'
+  | 'commercial_industrial_solar'
+  | 'rural_solar'
+  | 'free_energy_market'
   | 'battery_storage'
   | 'solar_carport'
   | 'commercial_ev_charger'
@@ -14,6 +18,10 @@ export type CategoryVisualKey =
   | 'electrical_maintenance';
 
 const CATEGORY_VISUAL_ASSETS: Record<CategoryVisualKey, string> = {
+  residential_solar: '/assets/categories/3d/residencial.png',
+  commercial_industrial_solar: '/assets/categories/3d/comericla-e-industrial.png',
+  rural_solar: '/assets/categories/3d/rural.png',
+  free_energy_market: '/assets/categories/3d/mercado-livre-de-energia.png',
   battery_storage: '/assets/categories/3d/bateria.png',
   solar_carport: '/assets/categories/3d/carport.png',
   commercial_ev_charger: '/assets/categories/3d/carregador.png',
@@ -28,6 +36,15 @@ const CATEGORY_VISUAL_ASSETS: Record<CategoryVisualKey, string> = {
 };
 
 const VISUAL_KEY_BY_CATEGORY: Array<[CategoryVisualKey, string[]]> = [
+  ['commercial_industrial_solar', [
+    'comercial e industrial',
+    'comercial industrial',
+    'comercial',
+    'industrial',
+  ]],
+  ['rural_solar', ['rural', 'agronegocio', 'agropecuaria', 'agrícola', 'agricola']],
+  ['residential_solar', ['residencial', 'condominio', 'casa']],
+  ['free_energy_market', ['mercado livre de energia', 'mercado-livre-de-energia', 'mercado livre']],
   ['battery_storage', ['bateria', 'baterias', 'armazenamento']],
   ['solar_carport', ['carport', 'cobertura solar', 'coberturas solares']],
   ['home_wallbox', ['carregador residencial', 'wallbox']],

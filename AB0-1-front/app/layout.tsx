@@ -15,6 +15,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import ComparisonDebugger from '@/components/ComparisonDebugger';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeferredClientRuntime from '@/components/performance/DeferredClientRuntime';
+import ChunkLoadRecovery from '@/components/performance/ChunkLoadRecovery';
 import { SITE } from '@/lib/site-core';
 
 export const metadata: Metadata = {
@@ -189,6 +190,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <ConditionalFooter />
               <MobileBottomNav />
               <DeferredClientRuntime />
+              <ChunkLoadRecovery />
             </Providers>
           </UtmProvider>
         </ThemeProvider>

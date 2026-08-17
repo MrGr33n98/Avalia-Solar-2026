@@ -814,6 +814,7 @@ export interface Category {
   featured: boolean;
   banner_url?: string | null;
   icon_url?: string | null;
+  visual_key?: string | null;
   home_carousel_banner_url?: string | null;
   average_rating?: number;
   average_price?: number;

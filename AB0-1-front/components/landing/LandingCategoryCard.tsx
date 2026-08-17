@@ -10,6 +10,7 @@ import type { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 const CATEGORY_IMAGE_PLACEHOLDER = '/images/avalia-solar-place-holder.PNG';
 
@@ -28,6 +29,13 @@ type LandingCategoryCardProps = {
 };
 
 function resolveCategoryImage(category: Category): string {
+  const visualAsset = getCategoryVisualAsset(
+    category?.seo_url,
+    category?.name,
+    category?.visual_key
+  );
+  if (visualAsset) return visualAsset;
+
   const remoteImage = getFullImageUrl(
     category?.home_carousel_banner_url || category?.banner_url || category?.logo?.url
   );

@@ -3,6 +3,10 @@ import { Platform } from 'react-native';
 const WEB_ASSET_ORIGIN = process.env.EXPO_PUBLIC_WEB_URL || 'https://www.avaliasolar.com.br';
 
 const ASSET_BY_KEY = {
+  residential_solar: 'residencial.png',
+  commercial_industrial_solar: 'comericla-e-industrial.png',
+  rural_solar: 'rural.png',
+  free_energy_market: 'mercado-livre-de-energia.png',
   battery_storage: 'bateria.png',
   solar_carport: 'carport.png',
   commercial_ev_charger: 'carregador.png',
@@ -17,6 +21,15 @@ const ASSET_BY_KEY = {
 } as const;
 
 const TERMS: Array<[keyof typeof ASSET_BY_KEY, string[]]> = [
+  ['commercial_industrial_solar', [
+    'comercial e industrial',
+    'comercial industrial',
+    'comercial',
+    'industrial',
+  ]],
+  ['rural_solar', ['rural', 'agronegocio', 'agropecuaria', 'agricola']],
+  ['residential_solar', ['residencial', 'condominio', 'casa']],
+  ['free_energy_market', ['mercado livre de energia', 'mercado-livre-de-energia', 'mercado livre']],
   ['battery_storage', ['bateria', 'armazenamento']],
   ['solar_carport', ['carport', 'cobertura']],
   ['home_wallbox', ['wallbox', 'carregador residencial']],

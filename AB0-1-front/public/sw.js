@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-08-14-v4';
+const SW_VERSION = '2026-08-17-v5';
 const APP_SHELL_CACHE = `avalia-app-shell-${SW_VERSION}`;
 const STATIC_CACHE = `avalia-static-${SW_VERSION}`;
 const API_CACHE = `avalia-api-${SW_VERSION}`;
@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
   '/icons/avalia-solar-512x512.png',
   '/icons/avalia-solar-maskable-192x192.png',
   '/icons/avalia-solar-maskable-512x512.png',
+  '/assets/categories/3d/mercado-livre-de-energia.png',
 ];
 
 const normalizePath = (value) => {
@@ -427,6 +428,28 @@ const handleCacheFirst = async (request) => {
   return networkResponse;
 };
 
+// Next.js chunks are immutable, but the HTML that references them can outlive
+// a deployment in a browser or intermediary cache. Prefer the current chunk
+// and use a previously cached copy only when the upstream is temporarily bad.
+const handleNextStaticRequest = async (request) => {
+  const cache = await caches.open(STATIC_CACHE);
+
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+
+    const cachedResponse = await cache.match(request);
+    return cachedResponse || networkResponse;
+  } catch {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) return cachedResponse;
+    throw new Error('Next static asset unavailable');
+  }
+};
+
 const handleStaleWhileRevalidate = async (request) => {
   const cache = await caches.open(API_CACHE);
   const cachedResponse = await cache.match(request);
@@ -497,7 +520,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin && isStaticAssetPath(url.pathname)) {
-    event.respondWith(handleCacheFirst(request));
+    event.respondWith(
+      url.pathname.startsWith('/_next/static/')
+        ? handleNextStaticRequest(request)
+        : handleCacheFirst(request)
+    );
     return;
   }
 
