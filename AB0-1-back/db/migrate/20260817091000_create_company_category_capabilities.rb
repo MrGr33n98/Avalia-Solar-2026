@@ -3,7 +3,10 @@ class CreateCompanyCategoryCapabilities < ActiveRecord::Migration[7.0]
     create_table :company_category_capabilities do |t|
       t.references :company, null: false, foreign_key: true
       t.references :category, null: false, foreign_key: true
-      t.references :category_solution_type, foreign_key: true
+      # O nome automático excede o limite de 63 caracteres do PostgreSQL.
+      t.references :category_solution_type,
+           foreign_key: { on_delete: :cascade },
+           index: { name: 'idx_ccc_solution_type_id' }
       t.string :capability_type, null: false
       t.string :coverage_scope
       t.jsonb :attributes_json, null: false, default: {}
