@@ -25,7 +25,7 @@ RSpec.describe 'Reviewer Tree blocks API', type: :request do
 
     get '/api/v1/reviewer/tree/blocks', headers: headers
     expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body).map { |item| item['id'] }).to include(block_id)
+    expect(JSON.parse(response.body).fetch('blocks').map { |item| item['id'] }).to include(block_id)
 
     patch "/api/v1/reviewer/tree/blocks/#{block_id}", params: { block: { title: 'Site atualizado' } }.to_json,
           headers: headers
@@ -43,5 +43,17 @@ RSpec.describe 'Reviewer Tree blocks API', type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(JSON.parse(response.body).dig('error', 'code')).to eq('validation_failed')
+  end
+
+  it 'returns active blocks from public creator tree and hides inactive blocks' do
+    profile.update!(public_slug: 'creator-tree-spec', creator_enabled: true)
+    create(:creator_tree_block, reviewer: profile, title: 'Visível', active: true, position: 0)
+    create(:creator_tree_block, reviewer: profile, title: 'Oculto', active: false, position: 1)
+
+    get '/api/v1/creator_tree/creator-tree-spec'
+
+    expect(response).to have_http_status(:ok)
+    titles = JSON.parse(response.body).fetch('blocks').map { |block| block.fetch('title') }
+    expect(titles).to eq(['Visível'])
   end
 end

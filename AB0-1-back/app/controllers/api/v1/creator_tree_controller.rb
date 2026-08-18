@@ -4,9 +4,9 @@ module Api
   module V1
     class CreatorTreeController < BaseController
       def show
-        profile = ReviewerProfile.includes(:user, creator_tree_blocks: %i[company publication])
-                                  .find_by!(public_slug: params[:slug], creator_enabled: true)
+        profile = ReviewerProfile.find_by!(public_slug: params[:slug], creator_enabled: true)
         profile.with_lock { profile.increment!(:tree_views_count) }
+        blocks = profile.creator_tree_blocks.where(active: true).includes(:company, :publication).order(:position, :id)
 
         render json: {
           creator: {
@@ -23,7 +23,7 @@ module Api
             youtube_url: profile.youtube_url,
             website_url: profile.website_url
           },
-          blocks: profile.creator_tree_blocks.active_ordered.map { |block| block_payload(block) }
+          blocks: blocks.map { |block| block_payload(block) }
         }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Creator não encontrado' }, status: :not_found
