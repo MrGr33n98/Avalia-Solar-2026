@@ -264,6 +264,10 @@ const nextConfig = {
           source: '/ingest/:path*',
           destination: `${posthogHost}/:path*`,
         },
+        {
+          source: '/@:slug',
+          destination: '/creators/:slug/tree',
+        },
       ],
       fallback: [
         {

@@ -42,6 +42,7 @@ import {
   MessageSquare,
   Search,
   LayoutGrid,
+  Link2,
   type LucideIcon,
 } from 'lucide-react';
 import { User } from '@/lib/api';
@@ -91,7 +92,10 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
   },
   {
     title: 'Conteúdo',
-    items: [{ label: 'Publicações', href: '/review-dashboard/publications', icon: FileText }],
+    items: [
+      { label: 'Publicações', href: '/review-dashboard/publications', icon: FileText },
+      { label: 'Meu Tree', href: '/review-dashboard/tree', icon: Link2 },
+    ],
   },
   {
     title: 'Oportunidades',

@@ -108,6 +108,17 @@ FactoryBot.define do
     expires_at { 24.hours.from_now }
   end
 
+  factory :creator_tree_block do
+    association :reviewer, factory: :reviewer_profile
+    block_type { 'external_link' }
+    title { 'Meu link' }
+    subtitle { 'Saiba mais' }
+    url { 'https://example.com' }
+    position { 0 }
+    active { true }
+    metadata { {} }
+  end
+
   factory :rating_criterion do
     association :category
     sequence(:title) { |n| "Critério #{n}" }

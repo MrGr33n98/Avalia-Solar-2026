@@ -259,6 +259,9 @@ Rails.application.routes.draw do
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
       resources :reviewer_solutions, only: %i[index create destroy]
       namespace :reviewer do
+        resources :tree_blocks, path: 'tree/blocks', controller: 'tree_blocks', only: %i[index create update destroy] do
+          collection { patch :reorder, path: 'reorder' }
+        end
         resources :creator_leads, only: %i[index update], controller: 'creator_leads'
         resources :publications, only: %i[index show create update destroy]
         post 'publications/:id/publish', to: 'publications#publish'
@@ -275,6 +278,8 @@ Rails.application.routes.draw do
       get 'creators/:slug', to: 'creators#show'
       get 'creators/:slug/publications', to: 'creators#publications'
       get 'creators/:slug/publications/:publication_slug', to: 'creators#publication'
+      get 'creator_tree/:slug', to: 'creator_tree#show'
+      post 'creator_tree/:slug/blocks/:block_id/click', to: 'creator_tree#click'
 
 
       namespace :reviewer do
