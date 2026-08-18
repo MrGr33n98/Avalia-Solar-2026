@@ -9,7 +9,8 @@ module Api
         before_action :set_block, only: %i[update destroy]
 
         def index
-          render json: current_profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) }
+          profile = current_profile
+          render json: { profile: profile_payload(profile), blocks: profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) } }
         end
 
         def create
@@ -42,7 +43,8 @@ module Api
           CreatorTreeBlock.transaction do
             ids.each_with_index { |id, index| blocks.fetch(id).update!(position: index) }
           end
-          render json: current_profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) }
+          profile = current_profile
+          render json: { profile: profile_payload(profile), blocks: profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) } }
         end
 
         private
@@ -81,6 +83,14 @@ module Api
           block.as_json(only: %i[id block_type title subtitle url position active metadata clicks_count company_id publication_id]).merge(
             type: block.block_type
           )
+        end
+
+        def profile_payload(profile)
+          {
+            public_slug: profile.public_slug,
+            creator_enabled: profile.creator_enabled,
+            tree_views_count: profile.tree_views_count
+          }
         end
       end
     end

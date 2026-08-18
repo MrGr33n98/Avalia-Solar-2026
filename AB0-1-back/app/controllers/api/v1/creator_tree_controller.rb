@@ -6,6 +6,7 @@ module Api
       def show
         profile = ReviewerProfile.includes(:user, creator_tree_blocks: %i[company publication])
                                   .find_by!(public_slug: params[:slug], creator_enabled: true)
+        profile.with_lock { profile.increment!(:tree_views_count) }
 
         render json: {
           creator: {

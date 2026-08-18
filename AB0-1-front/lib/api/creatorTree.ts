@@ -2,8 +2,8 @@ import { fetchApi } from '@/lib/api';
 
 export type CreatorTreeBlock = {
   id: number;
-  block_type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication';
-  type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication';
+  block_type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication' | 'download' | 'lead_form' | 'separator';
+  type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication' | 'download' | 'lead_form' | 'separator';
   title: string;
   subtitle?: string | null;
   url?: string | null;
@@ -15,8 +15,17 @@ export type CreatorTreeBlock = {
   clicks_count?: number;
 };
 
+export type CreatorTreeListResponse = {
+  profile: {
+    public_slug?: string | null;
+    creator_enabled?: boolean;
+    tree_views_count?: number;
+  };
+  blocks: CreatorTreeBlock[];
+};
+
 export const creatorTreeApi = {
-  list: () => fetchApi<CreatorTreeBlock[]>('/reviewer/tree/blocks'),
+  list: () => fetchApi<CreatorTreeListResponse>('/reviewer/tree/blocks'),
   create: (block: Partial<CreatorTreeBlock>) =>
     fetchApi<CreatorTreeBlock>('/reviewer/tree/blocks', {
       method: 'POST',

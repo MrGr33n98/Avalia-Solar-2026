@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Copy, ExternalLink, Link2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Copy, ExternalLink, Link2, Pencil, Plus, Trash2, X, Eye, MousePointerClick } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,21 +20,23 @@ export default function CreatorTreePage() {
   useAuth();
   const [blocks, setBlocks] = useState<CreatorTreeBlock[]>([]);
   const [slug, setSlug] = useState<string | null>(null);
+  const [treeViews, setTreeViews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<CreatorTreeBlock | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [publications, setPublications] = useState<ReviewerPublication[]>([]);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '' });
+  const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '', color: 'blue', icon: 'link' });
 
   const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/creators/${slug}/tree` : '';
 
   useEffect(() => {
     void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])
       .then(([items, profile, ownedCompanies, publicationResponse]) => {
-        setBlocks(Array.isArray(items) ? items : []);
-        setSlug(profile?.profile?.public_slug || null);
+        setBlocks(items?.blocks || []);
+        setSlug(items?.profile?.public_slug || profile?.profile?.public_slug || null);
+        setTreeViews(items?.profile?.tree_views_count || 0);
         setCompanies(Array.isArray(ownedCompanies) ? ownedCompanies : []);
         setPublications(publicationResponse?.items || []);
       })
@@ -78,6 +80,8 @@ export default function CreatorTreePage() {
       active: block?.active ?? true,
       companyId: block?.company_id ? String(block.company_id) : '',
       publicationId: block?.publication_id ? String(block.publication_id) : '',
+      color: String(block?.metadata?.color || 'blue'),
+      icon: String(block?.metadata?.icon || 'link'),
     });
     setEditorOpen(true);
   };
@@ -86,7 +90,7 @@ export default function CreatorTreePage() {
     if (saving) return;
     if (!form.title.trim()) return toast.error('Informe título.');
     const normalizedUrl = normalizeTreeUrl(form.url, form.type);
-    if (form.type !== 'whatsapp' && form.type !== 'company' && form.type !== 'publication' && !/^https?:\/\/[^\s]+$/i.test(normalizedUrl)) {
+    if (form.type !== 'whatsapp' && form.type !== 'company' && form.type !== 'publication' && form.type !== 'separator' && !/^https?:\/\/[^\s]+$/i.test(normalizedUrl)) {
       return toast.error('Informe um endereço válido.');
     }
     if (form.type === 'whatsapp' && form.url.replace(/\D/g, '').length < 10) {
@@ -104,6 +108,7 @@ export default function CreatorTreePage() {
         active: form.active,
         company_id: form.type === 'company' ? Number(form.companyId) : null,
         publication_id: form.type === 'publication' ? Number(form.publicationId) : null,
+        metadata: { color: form.color, icon: form.icon },
       };
       const saved = editing ? await creatorTreeApi.update(editing.id, payload) : await creatorTreeApi.create(payload);
       setBlocks((current) => editing ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
@@ -142,13 +147,18 @@ export default function CreatorTreePage() {
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h1 className="text-2xl font-black text-slate-950">Meu Tree</h1><p className="mt-1 text-sm text-slate-500">Reúna seus principais links e compartilhe uma única página com sua audiência.</p></div>
-          <div className="flex gap-2"><button type="button" className="hidden min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 sm:inline-flex" onClick={() => publicUrl && window.open(publicUrl, '_blank')} disabled={!publicUrl}><ExternalLink className="h-4 w-4" /> Ver página pública</button><button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white" onClick={() => openEditor()}><Plus className="h-4 w-4" /> Adicionar link</button></div>
+          <div className="flex w-full gap-2 sm:w-auto"><button type="button" className="hidden min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 sm:inline-flex" onClick={() => publicUrl && window.open(publicUrl, '_blank')} disabled={!publicUrl}><ExternalLink className="h-4 w-4" /> Ver página pública</button><button type="button" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white sm:flex-none" onClick={() => openEditor()}><Plus className="h-4 w-4" /> Adicionar link</button></div>
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-3">
           <div className="min-w-0 flex-1"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Sua página</p><span className="block truncate text-sm text-slate-700">{publicUrl || 'Ative seu perfil público para gerar link.'}</span><p className="mt-1 text-xs text-slate-500">Compartilhe este endereço no Instagram, LinkedIn ou outras redes.</p></div>
           <button type="button" onClick={() => void copyUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Copy className="h-4 w-4" /> Copiar link</button>
           {publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><ExternalLink className="h-4 w-4" /> Ver página</a>}
         </div>
+      </section>
+      <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4"><Eye className="h-4 w-4 text-blue-600" /><p className="mt-2 text-2xl font-black text-slate-900">{treeViews}</p><p className="text-xs text-slate-500">Visualizações</p></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4"><MousePointerClick className="h-4 w-4 text-emerald-600" /><p className="mt-2 text-2xl font-black text-slate-900">{blocks.reduce((sum, block) => sum + (block.clicks_count || 0), 0)}</p><p className="text-xs text-slate-500">Cliques</p></div>
+        <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 sm:block"><Link2 className="h-4 w-4 text-violet-600" /><p className="mt-2 text-2xl font-black text-slate-900">{blocks.filter((block) => block.active).length}</p><p className="text-xs text-slate-500">Links ativos</p></div>
       </section>
       <section className="mt-4 space-y-3">
         <div className="flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-wide text-slate-600">Seus links</h2><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div>
@@ -169,12 +179,13 @@ export default function CreatorTreePage() {
             <div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-black">{editing ? 'Editar bloco' : 'Adicionar bloco'}</h2><button type="button" onClick={() => setEditorOpen(false)} aria-label="Fechar editor" className="grid h-10 w-10 place-items-center rounded-full hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
             <div className="space-y-3">
               <p className="text-sm text-slate-500">Escolha o destino que deseja destacar no seu Tree.</p>
-              <label className="block text-xs font-bold text-slate-700">Tipo de bloco<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">Link externo</option><option value="whatsapp">WhatsApp</option><option value="social">Rede social</option><option value="company">Empresa</option><option value="publication">Publicação</option></select></label>
+              <label className="block text-xs font-bold text-slate-700">Tipo de bloco<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">🔗 Link externo</option><option value="whatsapp">💬 WhatsApp</option><option value="social">◎ Rede social</option><option value="company">🏢 Empresa</option><option value="publication">📄 Publicação</option><option value="download">⬇ Download</option><option value="lead_form">✦ Formulário</option><option value="separator">— Separador</option></select></label>
               {form.type === 'company' && <select value={form.companyId} onChange={(event) => setForm({ ...form, companyId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione empresa</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select>}
               {form.type === 'publication' && <select value={form.publicationId} onChange={(event) => setForm({ ...form, publicationId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione publicação</option>{publications.map((publication) => <option key={publication.id} value={publication.id}>{publication.title}</option>)}</select>}
               <label className="block text-xs font-bold text-slate-700">Título<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Meu site" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
               <label className="block text-xs font-bold text-slate-700">Descrição <span className="font-normal text-slate-400">(opcional)</span><input value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} placeholder="Conheça meu trabalho" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
-              {form.type !== 'company' && form.type !== 'publication' && <label className="block text-xs font-bold text-slate-700">URL<input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://meusite.com.br'} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />{form.url.trim() && <span className="mt-1 block truncate text-xs text-slate-500">Prévia: {normalizeTreeUrl(form.url, form.type)}</span>}</label>}
+              {form.type !== 'company' && form.type !== 'publication' && form.type !== 'separator' && <label className="block text-xs font-bold text-slate-700">URL<input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://meusite.com.br'} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />{form.url.trim() && <span className="mt-1 block truncate text-xs text-slate-500">Prévia: {normalizeTreeUrl(form.url, form.type)}</span>}</label>}
+              <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-bold text-slate-700">Ícone<select value={form.icon} onChange={(event) => setForm({ ...form, icon: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="link">Link</option><option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="youtube">YouTube</option></select></label><label className="block text-xs font-bold text-slate-700">Cor<select value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="blue">Azul</option><option value="green">Verde</option><option value="violet">Violeta</option><option value="amber">Âmbar</option><option value="dark">Escuro</option></select></label></div>
               <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.active} onChange={(event) => setForm({ ...form, active: event.target.checked })} /> Bloco ativo</label>
               <div className="flex gap-2 pt-2"><button type="button" onClick={() => setEditorOpen(false)} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700">Cancelar</button><button type="button" onClick={() => void saveBlock()} disabled={saving} className="min-h-11 flex-1 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:opacity-60">{saving ? 'Salvando...' : editing ? 'Salvar alterações' : 'Adicionar link'}</button></div>
             </div>

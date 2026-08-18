@@ -2,7 +2,7 @@
 
 class CreatorTreeBlock < ApplicationRecord
   require 'uri'
-  TYPES = %w[external_link whatsapp social company publication].freeze
+  TYPES = %w[external_link whatsapp social company publication download lead_form separator].freeze
   MAX_ACTIVE_BLOCKS = 8
 
   belongs_to :reviewer, class_name: 'ReviewerProfile'
@@ -68,7 +68,7 @@ class CreatorTreeBlock < ApplicationRecord
   end
 
   def destination_for_type
-    return if block_type.in?(%w[company publication])
+    return if block_type.in?(%w[company publication separator])
     return if url.present?
 
     errors.add(:url, 'é obrigatório para este tipo de bloco')
