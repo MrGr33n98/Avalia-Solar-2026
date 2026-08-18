@@ -30,7 +30,7 @@ module Api
       def click
         profile = ReviewerProfile.find_by!(public_slug: params[:slug], creator_enabled: true)
         block = profile.creator_tree_blocks.active.find(params[:block_id])
-        block.increment!(:clicks_count)
+        block.with_lock { block.increment!(:clicks_count) }
         render json: { ok: true }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Bloco não encontrado' }, status: :not_found
@@ -44,10 +44,18 @@ module Api
           type: block.block_type,
           title: block.title,
           subtitle: block.subtitle,
-          url: block.url,
+          url: block_destination(block),
           position: block.position,
           metadata: block.metadata
         }
+      end
+
+      def block_destination(block)
+        return block.url if block.url.present?
+        return "/companies/#{block.company.slug || block.company.id}" if block.company.present?
+        return "/creators/#{block.reviewer.public_slug}/posts/#{block.publication.slug}" if block.publication.present?
+
+        '#'
       end
     end
   end

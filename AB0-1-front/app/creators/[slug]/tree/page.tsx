@@ -33,7 +33,7 @@ export default async function PublicCreatorTreePage({ params }: Props) {
         </div>
         <div className="mt-6 space-y-3">
           {data.blocks.map((block: { id: number; title: string; subtitle?: string; url?: string }) => (
-            <a key={block.id} href={block.url || '#'} onClick={() => { void fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(params.slug)}/blocks/${block.id}/click`, { method: 'POST' }); }} className="block min-h-14 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300" rel="noreferrer">
+            <a key={block.id} href={block.url || '#'} onClick={() => { void fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(params.slug)}/blocks/${block.id}/click`, { method: 'POST', keepalive: true }); }} className="block min-h-14 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300" rel="noreferrer">
               <span className="block font-bold">{block.title}</span>
               {block.subtitle && <span className="mt-1 block text-xs text-slate-500">{block.subtitle}</span>}
             </a>

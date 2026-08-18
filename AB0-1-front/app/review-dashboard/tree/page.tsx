@@ -5,8 +5,10 @@ import { Copy, ExternalLink, Link2, Pencil, Plus, Trash2, X } from 'lucide-react
 import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { reviewerProfileApi } from '@/lib/api';
+import { companiesApi, reviewerProfileApi, type Company } from '@/lib/api';
 import { creatorTreeApi, type CreatorTreeBlock } from '@/lib/api/creatorTree';
+import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
+import type { ReviewerPublication } from '@/types/reviewer-publication';
 
 export default function CreatorTreePage() {
   useAuth();
@@ -15,15 +17,19 @@ export default function CreatorTreePage() {
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<CreatorTreeBlock | null>(null);
-  const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true });
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [publications, setPublications] = useState<ReviewerPublication[]>([]);
+  const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '' });
 
   const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/@${slug}` : '';
 
   useEffect(() => {
-    void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get()])
-      .then(([items, profile]) => {
+    void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])
+      .then(([items, profile, ownedCompanies, publicationResponse]) => {
         setBlocks(Array.isArray(items) ? items : []);
         setSlug(profile?.profile?.public_slug || null);
+        setCompanies(Array.isArray(ownedCompanies) ? ownedCompanies : []);
+        setPublications(publicationResponse?.items || []);
       })
       .catch(() => toast.error('Não foi possível carregar seu Tree.'))
       .finally(() => setLoading(false));
@@ -36,14 +42,23 @@ export default function CreatorTreePage() {
   };
 
   const toggle = async (block: CreatorTreeBlock) => {
-    const updated = await creatorTreeApi.update(block.id, { active: !block.active });
-    setBlocks((current) => current.map((item) => item.id === updated.id ? updated : item));
+    try {
+      const updated = await creatorTreeApi.update(block.id, { active: !block.active });
+      setBlocks((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch {
+      toast.error('Não foi possível alterar status do bloco.');
+    }
   };
 
   const remove = async (id: number) => {
-    await creatorTreeApi.remove(id);
-    setBlocks((current) => current.filter((item) => item.id !== id));
-    toast.success('Bloco removido.');
+    if (!window.confirm('Remover este bloco?')) return;
+    try {
+      await creatorTreeApi.remove(id);
+      setBlocks((current) => current.filter((item) => item.id !== id));
+      toast.success('Bloco removido.');
+    } catch {
+      toast.error('Não foi possível remover bloco.');
+    }
   };
 
   const openEditor = (block?: CreatorTreeBlock) => {
@@ -54,6 +69,8 @@ export default function CreatorTreePage() {
       subtitle: block?.subtitle || '',
       url: block?.url || '',
       active: block?.active ?? true,
+      companyId: block?.company_id ? String(block.company_id) : '',
+      publicationId: block?.publication_id ? String(block.publication_id) : '',
     });
     setEditorOpen(true);
   };
@@ -66,8 +83,18 @@ export default function CreatorTreePage() {
     if (form.type === 'whatsapp' && form.url.replace(/\D/g, '').length < 10) {
       return toast.error('Informe telefone WhatsApp válido.');
     }
+    if (form.type === 'company' && !form.companyId) return toast.error('Selecione empresa.');
+    if (form.type === 'publication' && !form.publicationId) return toast.error('Selecione publicação.');
     try {
-      const payload = { block_type: form.type, title: form.title, subtitle: form.subtitle, url: form.url, active: form.active };
+      const payload = {
+        block_type: form.type,
+        title: form.title,
+        subtitle: form.subtitle,
+        url: form.type === 'company' || form.type === 'publication' ? '' : form.url,
+        active: form.active,
+        company_id: form.type === 'company' ? Number(form.companyId) : null,
+        publication_id: form.type === 'publication' ? Number(form.publicationId) : null,
+      };
       const saved = editing ? await creatorTreeApi.update(editing.id, payload) : await creatorTreeApi.create(payload);
       setBlocks((current) => editing ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
       setEditorOpen(false);
@@ -83,7 +110,12 @@ export default function CreatorTreePage() {
     const next = [...blocks];
     [next[index], next[target]] = [next[target], next[index]];
     setBlocks(next);
-    await creatorTreeApi.reorder(next.map((item) => item.id));
+    try {
+      await creatorTreeApi.reorder(next.map((item) => item.id));
+    } catch {
+      setBlocks(blocks);
+      toast.error('Não foi possível reordenar blocos.');
+    }
   };
 
   return (
@@ -122,9 +154,11 @@ export default function CreatorTreePage() {
             <div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-black">{editing ? 'Editar bloco' : 'Adicionar bloco'}</h2><button type="button" onClick={() => setEditorOpen(false)} aria-label="Fechar editor" className="grid h-10 w-10 place-items-center rounded-full hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
             <div className="space-y-3">
               <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">Link externo</option><option value="whatsapp">WhatsApp</option><option value="social">Rede social</option><option value="company">Empresa</option><option value="publication">Publicação</option></select>
+              {form.type === 'company' && <select value={form.companyId} onChange={(event) => setForm({ ...form, companyId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione empresa</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select>}
+              {form.type === 'publication' && <select value={form.publicationId} onChange={(event) => setForm({ ...form, publicationId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione publicação</option>{publications.map((publication) => <option key={publication.id} value={publication.id}>{publication.title}</option>)}</select>}
               <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Título" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />
               <input value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} placeholder="Descrição opcional" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />
-              <input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder="https://..." className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />
+              {form.type !== 'company' && form.type !== 'publication' && <input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://...'} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />}
               <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.active} onChange={(event) => setForm({ ...form, active: event.target.checked })} /> Bloco ativo</label>
               <button type="button" onClick={() => void saveBlock()} className="min-h-11 w-full rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">Salvar bloco</button>
             </div>

@@ -18,6 +18,7 @@ class CreatorTreeBlock < ApplicationRecord
   validate :active_limit
   validate :company_for_type
   validate :publication_for_type
+  validate :destination_for_type
   validate :references_belong_to_reviewer
 
   scope :active_ordered, -> { where(active: true).order(position: :asc, id: :asc) }
@@ -64,6 +65,13 @@ class CreatorTreeBlock < ApplicationRecord
     if publication.present? && publication.user_id != reviewer.user_id
       errors.add(:publication, 'não pertence ao creator')
     end
+  end
+
+  def destination_for_type
+    return if block_type.in?(%w[company publication])
+    return if url.present?
+
+    errors.add(:url, 'é obrigatório para este tipo de bloco')
   end
 
   def normalize_whatsapp

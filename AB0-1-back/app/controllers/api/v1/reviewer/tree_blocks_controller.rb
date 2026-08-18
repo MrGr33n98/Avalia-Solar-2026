@@ -54,7 +54,9 @@ module Api
         end
 
         def block_params
-          params.require(:block).permit(:block_type, :title, :subtitle, :url, :position, :active, metadata: {})
+          params.require(:block).permit(
+            :block_type, :title, :subtitle, :url, :position, :active, :company_id, :publication_id, metadata: {}
+          )
         end
 
         def require_reviewer_role

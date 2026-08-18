@@ -6,6 +6,8 @@ export type CreatorTreeBlock = {
   title: string;
   subtitle?: string | null;
   url?: string | null;
+  company_id?: number | null;
+  publication_id?: number | null;
   position: number;
   active: boolean;
   metadata?: Record<string, unknown>;
