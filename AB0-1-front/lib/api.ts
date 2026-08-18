@@ -945,7 +945,11 @@ export interface User {
 }
 
 export interface ReviewerProfileResponse {
-  profile?: { creator_enabled?: boolean; public_slug?: string | null } | null;
+  profile?: {
+    creator_enabled?: boolean;
+    public_slug?: string | null;
+    public_profile?: boolean;
+  } | null;
   completion?: { percent?: number };
 }
 

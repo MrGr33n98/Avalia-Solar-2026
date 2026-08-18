@@ -9,22 +9,24 @@ module Api
         before_action :set_block, only: %i[update destroy]
 
         def index
-          render json: current_profile.creator_tree_blocks.order(:position, :id)
+          render json: current_profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) }
         end
 
         def create
           block = current_profile.creator_tree_blocks.new(block_params)
-          block.save!
-          render json: block, status: :created
+          return render_validation_error(block) unless block.save
+
+          render json: block_payload(block), status: :created
         rescue ActiveRecord::RecordInvalid => e
-          render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(e.record)
         end
 
         def update
-          @block.update!(block_params)
-          render json: @block
+          return render_validation_error(@block) unless @block.update(block_params)
+
+          render json: block_payload(@block)
         rescue ActiveRecord::RecordInvalid => e
-          render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+          render_validation_error(e.record)
         end
 
         def destroy
@@ -40,7 +42,7 @@ module Api
           CreatorTreeBlock.transaction do
             ids.each_with_index { |id, index| blocks.fetch(id).update!(position: index) }
           end
-          render json: current_profile.creator_tree_blocks.order(:position, :id)
+          render json: current_profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) }
         end
 
         private
@@ -63,6 +65,22 @@ module Api
           return if current_user&.review_user?
 
           render json: { error: 'Acesso restrito a creators.' }, status: :forbidden
+        end
+
+        def render_validation_error(record)
+          render json: {
+            error: {
+              code: 'validation_failed',
+              message: 'Não foi possível salvar o bloco.',
+              fields: record.errors.to_hash
+            }
+          }, status: :unprocessable_entity
+        end
+
+        def block_payload(block)
+          block.as_json(only: %i[id block_type title subtitle url position active metadata clicks_count company_id publication_id]).merge(
+            type: block.block_type
+          )
         end
       end
     end

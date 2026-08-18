@@ -10,6 +10,12 @@ import { creatorTreeApi, type CreatorTreeBlock } from '@/lib/api/creatorTree';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { ReviewerPublication } from '@/types/reviewer-publication';
 
+function normalizeTreeUrl(value: string, type: string) {
+  const trimmed = value.trim();
+  if (!trimmed || type === 'whatsapp') return trimmed;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export default function CreatorTreePage() {
   useAuth();
   const [blocks, setBlocks] = useState<CreatorTreeBlock[]>([]);
@@ -19,9 +25,10 @@ export default function CreatorTreePage() {
   const [editing, setEditing] = useState<CreatorTreeBlock | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [publications, setPublications] = useState<ReviewerPublication[]>([]);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '' });
 
-  const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/@${slug}` : '';
+  const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/creators/${slug}/tree` : '';
 
   useEffect(() => {
     void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])
@@ -64,7 +71,7 @@ export default function CreatorTreePage() {
   const openEditor = (block?: CreatorTreeBlock) => {
     setEditing(block || null);
     setForm({
-      type: block?.type || 'external_link',
+      type: block?.block_type || block?.type || 'external_link',
       title: block?.title || '',
       subtitle: block?.subtitle || '',
       url: block?.url || '',
@@ -76,9 +83,11 @@ export default function CreatorTreePage() {
   };
 
   const saveBlock = async () => {
+    if (saving) return;
     if (!form.title.trim()) return toast.error('Informe título.');
-    if (form.type !== 'whatsapp' && form.url && !/^https?:\/\/[^\s]+$/i.test(form.url)) {
-      return toast.error('URL deve começar com http:// ou https://.');
+    const normalizedUrl = normalizeTreeUrl(form.url, form.type);
+    if (form.type !== 'whatsapp' && form.type !== 'company' && form.type !== 'publication' && !/^https?:\/\/[^\s]+$/i.test(normalizedUrl)) {
+      return toast.error('Informe um endereço válido.');
     }
     if (form.type === 'whatsapp' && form.url.replace(/\D/g, '').length < 10) {
       return toast.error('Informe telefone WhatsApp válido.');
@@ -86,11 +95,12 @@ export default function CreatorTreePage() {
     if (form.type === 'company' && !form.companyId) return toast.error('Selecione empresa.');
     if (form.type === 'publication' && !form.publicationId) return toast.error('Selecione publicação.');
     try {
-      const payload = {
-        block_type: form.type,
+      setSaving(true);
+      const payload: Partial<CreatorTreeBlock> = {
+        block_type: form.type as CreatorTreeBlock['block_type'],
         title: form.title,
         subtitle: form.subtitle,
-        url: form.type === 'company' || form.type === 'publication' ? '' : form.url,
+        url: form.type === 'company' || form.type === 'publication' ? '' : normalizedUrl,
         active: form.active,
         company_id: form.type === 'company' ? Number(form.companyId) : null,
         publication_id: form.type === 'publication' ? Number(form.publicationId) : null,
@@ -100,7 +110,11 @@ export default function CreatorTreePage() {
       setEditorOpen(false);
       toast.success(editing ? 'Bloco atualizado.' : 'Bloco criado.');
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar bloco.');
+      const details = (error as { context?: { details?: { error?: { fields?: Record<string, string[]> } } } })?.context?.details?.error?.fields;
+      const urlError = details?.url?.[0];
+      toast.error(urlError || 'Não foi possível adicionar o link. Verifique os dados e tente novamente.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -122,25 +136,26 @@ export default function CreatorTreePage() {
     <main className="mx-auto min-h-screen max-w-4xl bg-slate-50 px-4 py-6 sm:px-6">
       <ReviewerPageHeader
         title="Meu Tree"
-        description="Organize seus links públicos."
+        description="Reúna seus principais links e compartilhe uma única página com sua audiência."
         breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu Tree' }]}
       />
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div><h1 className="text-2xl font-black text-slate-950">Meu Tree</h1><p className="mt-1 text-sm text-slate-500">Organize seus links públicos.</p></div>
-          <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white" onClick={() => openEditor()}><Plus className="h-4 w-4" /> Adicionar bloco</button>
+          <div><h1 className="text-2xl font-black text-slate-950">Meu Tree</h1><p className="mt-1 text-sm text-slate-500">Reúna seus principais links e compartilhe uma única página com sua audiência.</p></div>
+          <div className="flex gap-2"><button type="button" className="hidden min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 sm:inline-flex" onClick={() => publicUrl && window.open(publicUrl, '_blank')} disabled={!publicUrl}><ExternalLink className="h-4 w-4" /> Ver página pública</button><button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white" onClick={() => openEditor()}><Plus className="h-4 w-4" /> Adicionar link</button></div>
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-3">
-          <Link2 className="h-4 w-4 text-blue-600" /><span className="min-w-0 flex-1 truncate text-sm text-slate-600">{publicUrl || 'Ative seu perfil público para gerar link.'}</span>
+          <div className="min-w-0 flex-1"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Sua página</p><span className="block truncate text-sm text-slate-700">{publicUrl || 'Ative seu perfil público para gerar link.'}</span><p className="mt-1 text-xs text-slate-500">Compartilhe este endereço no Instagram, LinkedIn ou outras redes.</p></div>
           <button type="button" onClick={() => void copyUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Copy className="h-4 w-4" /> Copiar link</button>
           {publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><ExternalLink className="h-4 w-4" /> Ver página</a>}
         </div>
       </section>
       <section className="mt-4 space-y-3">
-        {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando blocos...</p> : blocks.map((block, index) => (
+        <div className="flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-wide text-slate-600">Seus links</h2><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div>
+        {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando links...</p> : blocks.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><Link2 className="mx-auto h-8 w-8 text-blue-600" /><h2 className="mt-3 font-bold text-slate-900">Seu Tree ainda está vazio</h2><p className="mt-1 text-sm text-slate-500">Adicione seu primeiro link para começar a montar sua página pública.</p><button type="button" onClick={() => openEditor()} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">+ Adicionar primeiro link</button></div> : blocks.map((block, index) => (
           <article key={block.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><Link2 className="h-5 w-5" /></div>
-            <div className="min-w-0 flex-1"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><p className="text-xs text-slate-500">{block.type} {block.clicks_count ? `• ${block.clicks_count} cliques` : ''}</p></div>
+            <div className="min-w-0 flex-1"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><p className="text-xs text-slate-500">{block.block_type || block.type} {block.clicks_count ? `• ${block.clicks_count} cliques` : ''}</p></div>
             <button type="button" onClick={() => void toggle(block)} className={`min-h-10 rounded-full px-3 text-xs font-bold ${block.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{block.active ? 'Ativo' : 'Inativo'}</button>
             <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-600"><Pencil className="h-4 w-4" /></button>
             <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-10 w-10 place-items-center rounded-lg border border-red-100 text-red-600"><Trash2 className="h-4 w-4" /></button>
@@ -153,14 +168,15 @@ export default function CreatorTreePage() {
           <div className="w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-2xl">
             <div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-black">{editing ? 'Editar bloco' : 'Adicionar bloco'}</h2><button type="button" onClick={() => setEditorOpen(false)} aria-label="Fechar editor" className="grid h-10 w-10 place-items-center rounded-full hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
             <div className="space-y-3">
-              <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">Link externo</option><option value="whatsapp">WhatsApp</option><option value="social">Rede social</option><option value="company">Empresa</option><option value="publication">Publicação</option></select>
+              <p className="text-sm text-slate-500">Escolha o destino que deseja destacar no seu Tree.</p>
+              <label className="block text-xs font-bold text-slate-700">Tipo de bloco<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">Link externo</option><option value="whatsapp">WhatsApp</option><option value="social">Rede social</option><option value="company">Empresa</option><option value="publication">Publicação</option></select></label>
               {form.type === 'company' && <select value={form.companyId} onChange={(event) => setForm({ ...form, companyId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione empresa</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select>}
               {form.type === 'publication' && <select value={form.publicationId} onChange={(event) => setForm({ ...form, publicationId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione publicação</option>{publications.map((publication) => <option key={publication.id} value={publication.id}>{publication.title}</option>)}</select>}
-              <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Título" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />
-              <input value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} placeholder="Descrição opcional" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />
-              {form.type !== 'company' && form.type !== 'publication' && <input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://...'} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />}
+              <label className="block text-xs font-bold text-slate-700">Título<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Meu site" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
+              <label className="block text-xs font-bold text-slate-700">Descrição <span className="font-normal text-slate-400">(opcional)</span><input value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} placeholder="Conheça meu trabalho" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
+              {form.type !== 'company' && form.type !== 'publication' && <label className="block text-xs font-bold text-slate-700">URL<input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://meusite.com.br'} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />{form.url.trim() && <span className="mt-1 block truncate text-xs text-slate-500">Prévia: {normalizeTreeUrl(form.url, form.type)}</span>}</label>}
               <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.active} onChange={(event) => setForm({ ...form, active: event.target.checked })} /> Bloco ativo</label>
-              <button type="button" onClick={() => void saveBlock()} className="min-h-11 w-full rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">Salvar bloco</button>
+              <div className="flex gap-2 pt-2"><button type="button" onClick={() => setEditorOpen(false)} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700">Cancelar</button><button type="button" onClick={() => void saveBlock()} disabled={saving} className="min-h-11 flex-1 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:opacity-60">{saving ? 'Salvando...' : editing ? 'Salvar alterações' : 'Adicionar link'}</button></div>
             </div>
           </div>
         </div>

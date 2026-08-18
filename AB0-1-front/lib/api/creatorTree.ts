@@ -2,7 +2,8 @@ import { fetchApi } from '@/lib/api';
 
 export type CreatorTreeBlock = {
   id: number;
-  type: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication';
+  block_type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication';
+  type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication';
   title: string;
   subtitle?: string | null;
   url?: string | null;

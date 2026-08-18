@@ -1,7 +1,7 @@
 require "uri"
 class ReviewerProfile < ApplicationRecord
   belongs_to :user
-  has_many :creator_tree_blocks, dependent: :destroy
+  has_many :creator_tree_blocks, foreign_key: :reviewer_id, inverse_of: :reviewer, dependent: :destroy
   has_one_attached :public_banner
   validates :bio, length: { maximum: 2000 }, allow_blank: true
   validates :linkedin_url, :instagram_url, :website_url, :whatsapp_url, length: { maximum: 500 }, allow_blank: true
