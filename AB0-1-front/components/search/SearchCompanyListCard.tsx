@@ -319,7 +319,9 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
         {canRequestQuote && (
           <QuoteCTA
             context="card"
+            shortLabel="Solicitar orçamento"
             source="search-list-card"
+            className="w-full"
             onRequest={() =>
               openLeadModal({
                 preferredCompanyId: company.id,

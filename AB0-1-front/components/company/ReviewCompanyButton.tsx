@@ -38,18 +38,18 @@ export default function ReviewCompanyButton({
         if (stopPropagation) event.stopPropagation();
       }}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 text-sm font-bold text-blue-700 shadow-none transition-all hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]',
+        'inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 overflow-hidden rounded-xl border border-blue-200 bg-white px-3 text-sm font-bold text-blue-700 shadow-none transition-all hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]',
         className
       )}
     >
       <Star className={cn('h-4 w-4 fill-blue-700 text-blue-700', iconClassName)} aria-hidden="true" />
       {compactLabel ? (
         <>
-          <span className="sm:hidden">{compactLabel}</span>
-          <span className="hidden sm:inline">{label}</span>
+          <span className="truncate sm:hidden">{compactLabel}</span>
+          <span className="truncate sm:inline">{label}</span>
         </>
       ) : (
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
       )}
     </Link>
   );

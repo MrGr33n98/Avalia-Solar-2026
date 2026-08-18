@@ -25,11 +25,18 @@ jest.mock('@/hooks/useFavorites', () => ({
 
 jest.mock('@/hooks/useComparison', () => ({
   useComparison: () => ({
-    isInComparison: jest.fn(),
+    isInComparison: comparisonState.isInComparison,
     addToComparison: jest.fn(),
     removeFromComparison: jest.fn(),
+    toggleComparison: comparisonState.toggleComparison,
+    canAddMore: true,
   }),
 }));
+
+const comparisonState = {
+  isInComparison: jest.fn().mockReturnValue(false),
+  toggleComparison: jest.fn(),
+};
 
 // Mock lucide-react icons - Passing props to allow class checking
 jest.mock('lucide-react', () => ({
@@ -42,6 +49,18 @@ jest.mock('lucide-react', () => ({
   Check: () => <svg data-testid="check-icon" />,
   ArrowLeftRight: () => <svg data-testid="scale-icon" />,
   MessageSquare: () => <svg data-testid="message-square-icon" />,
+  Info: () => <svg data-testid="info-icon" />,
+  Trophy: () => <svg data-testid="trophy-icon" />,
+  ShieldCheck: () => <svg data-testid="shield-check-icon" />,
+  Zap: () => <svg data-testid="zap-icon" />,
+  Shield: () => <svg data-testid="shield-icon" />,
+  HelpCircle: () => <svg data-testid="help-circle-icon" />,
+  Heart: () => <svg data-testid="heart-icon" />,
+  PhoneCall: () => <svg data-testid="phone-call-icon" />,
+  BadgeCheck: () => <svg data-testid="badge-check-icon" />,
+  CheckCircle: () => <svg data-testid="check-circle-icon" />,
+  ChevronRight: () => <svg data-testid="chevron-right-icon" />,
+  User: () => <svg data-testid="user-icon" />,
 }));
 
 describe('CompanyCard - Rating and Reviews', () => {
@@ -60,7 +79,6 @@ describe('CompanyCard - Rating and Reviews', () => {
     render(<CompanyCard company={company} />);
     
     const stars = screen.getAllByTestId('star-icon');
-    // Rating stars have fill-[#ff4d4d] or text-gray-200. Review button star has text-gray-400.
     const fullStars = stars.filter(s => s.getAttribute('class')?.includes('fill-[#ff4d4d]'));
     const emptyStars = stars.filter(s => s.getAttribute('class')?.includes('text-gray-200'));
     
@@ -89,7 +107,6 @@ describe('CompanyCard - Rating and Reviews', () => {
     render(<CompanyCard company={company} />);
     
     const stars = screen.getAllByTestId('star-icon');
-    // Now we expect 5 empty stars even for zero rating, plus the one in the button
     const ratingStars = stars.filter(s => s.getAttribute('class')?.includes('fill-[#ff4d4d]') || s.getAttribute('class')?.includes('text-gray-200'));
     const emptyRatingStars = stars.filter(s => s.getAttribute('class')?.includes('text-gray-200'));
     
@@ -109,4 +126,5 @@ describe('CompanyCard - Rating and Reviews', () => {
     expect(screen.queryByTestId('star-half-icon')).not.toBeInTheDocument();
     expect(screen.getByText('(100)')).toBeInTheDocument();
   });
+
 });

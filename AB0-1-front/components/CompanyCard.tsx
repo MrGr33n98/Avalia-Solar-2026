@@ -208,7 +208,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
     return {
       ...(comp as CompanyCardData),
       // Garante top_criteria mesmo no formato estruturado
-      top_criteria: comp.top_criteria ?? extractTopCriteria(comp),
+      top_criteria: comp.top_criteria ?? [],
       // Garante feature_access mesmo que venha como {} vazio
       feature_access: comp.feature_access ?? {},
     };
@@ -266,7 +266,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
         comp?.delivered_projects_count ??
         comp?.delivered_projects_score ??
         0,
-      sla_label: comp?.operations?.sla_label ?? comp?.response_time_sla ?? '24h',
+      sla_label: comp?.operations?.sla_label ?? comp?.response_time_sla,
       sla_minutes: comp?.operations?.sla_minutes ?? comp?.response_sla_minutes,
       warranty_years:
         comp?.operations?.warranty_years ??
@@ -347,12 +347,7 @@ export default function CompanyCard({
   const canRequestQuote = hasPaidPlan({ ...rawCompany, feature_access: featureAccessMap });
 
   // Critérios reais de avaliação
-  const topCriteria = company.top_criteria ?? [
-    'Equipe qualificada',
-    'Cumpre prazos',
-    'Ótimo atendimento',
-    'Produtos de qualidade',
-  ];
+  const topCriteria = company.top_criteria ?? [];
 
   const handleCardClick = () => {
     track('company_card_click', {
@@ -449,7 +444,7 @@ export default function CompanyCard({
           <div className="py-2.5 px-1 flex flex-col items-center justify-center">
             <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
               <Clock3Icon className="h-3 w-3 text-slate-400" />
-              <span className="truncate max-w-[50px]">{company.operations.sla_label || '24h'}</span>
+              <span className="truncate max-w-[50px]">{company.operations.sla_label || 'Sem dados'}</span>
             </div>
             <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
               Resposta
@@ -467,27 +462,27 @@ export default function CompanyCard({
         </div>
 
         {/* BOTTOM SECTION: Buttons */}
-        <div className="mt-4 px-4 flex items-center gap-2">
+        <div className="mt-4 px-4 grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={handleCompareClick}
             disabled={!selectedInComparison && !canAddMore}
             className={cn(
-              'h-9 flex-1 font-semibold text-[11px] rounded-lg shadow-none justify-center px-1',
+              'min-w-0 w-full h-10 font-semibold text-[11px] rounded-lg shadow-none justify-center px-1',
               selectedInComparison
                 ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
                 : 'border-slate-200 text-slate-600 hover:bg-slate-50'
             )}
           >
-            <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
-            {selectedInComparison ? 'Selecionada' : 'Comparar'}
+            <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1 shrink-0" />
+            <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
           </Button>
 
           <ReviewCompanyButton
             company={company}
             label="Avaliar essa empresa"
-            className="h-9 flex-[1.5] rounded-lg bg-blue-600 text-[11px] font-semibold text-white hover:bg-blue-700 px-1"
+            className="min-w-0 w-full h-10 rounded-lg bg-blue-600 px-1 text-[11px] font-semibold text-white hover:bg-blue-700"
             iconClassName="hidden"
             stopPropagation
           />
@@ -511,6 +506,7 @@ export default function CompanyCard({
 
     return (
       <Card
+        data-testid="company-card"
         className={cn(
           'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white transition-all duration-200 hover:border-blue-200 hover:shadow-lg cursor-pointer',
           className
@@ -618,33 +614,35 @@ export default function CompanyCard({
           </div>
 
           {/* Swiss Style: 3 botões horizontais — pagos com feature gate */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className={cn(
+            'grid grid-cols-2 gap-2 pt-1',
+            canRequestQuote && 'sm:grid-cols-[1fr_1.5fr_1fr]'
+          )}>
             <Button
               type="button"
               variant="outline"
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
               className={cn(
-                'flex-1 h-9 font-semibold rounded-xl shadow-none text-xs border transition-colors',
+                'col-span-1 min-w-0 w-full h-10 font-semibold rounded-xl shadow-none text-xs border transition-colors',
                 selectedInComparison
                   ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
                   : 'border-slate-300 text-slate-600 hover:bg-slate-50'
               )}
             >
-              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
-              {selectedInComparison ? 'Selecionada' : 'Comparar'}
+              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1 shrink-0" />
+              <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
             </Button>
 
             {canRequestQuote ? (
-              <QuoteCTA context="card" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-standard", type: "quick" })} />
+              <QuoteCTA context="card" shortLabel="Solicitar orçamento" className="order-3 col-span-2 h-11 w-full sm:order-none sm:col-span-1" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-standard", type: "quick" })} />
             ) : null}
 
             <ReviewCompanyButton
               company={company}
               label="Avaliar"
               className={cn(
-                'h-9 rounded-xl text-xs shadow-none',
-                canRequestQuote ? 'flex-1' : 'flex-[2]'
+                'order-2 col-span-1 min-w-0 w-full h-10 rounded-xl text-xs shadow-none sm:order-none',
               )}
               iconClassName="h-3.5 w-3.5"
               stopPropagation
@@ -652,25 +650,25 @@ export default function CompanyCard({
           </div>
 
           {/* Swiss Style: Footer links */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div className="grid min-w-0 grid-cols-3 items-center gap-2 pt-2 border-t border-slate-100">
             <Link
               href={companyPath}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+              className="min-w-0 truncate text-center text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
             >
               Ver perfil →
             </Link>
             <Link
               href={`${companyPath}?tab=contact`}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+              className="min-w-0 truncate text-center text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
             >
               Contato
             </Link>
             <Link
               href={companyReviewPath}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors"
+              className="min-w-0 truncate text-center text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors"
             >
               Ver avaliações ({company.reputation.rating_count})
             </Link>
@@ -761,7 +759,7 @@ export default function CompanyCard({
                 Respostas
               </span>
               <span className="text-[10px] font-black text-slate-900 block">
-                {company.operations.sla_label || '24h'}
+                {company.operations.sla_label || 'Sem dados'}
               </span>
             </div>
             <div className="py-1">
@@ -831,7 +829,7 @@ export default function CompanyCard({
           )}
           <div className="inline-flex items-center gap-1">
             <Clock3Icon className="h-3 w-3 text-slate-400" />
-            <span>Resp: {company.operations.sla_label || '24h'}</span>
+            <span>Resp: {company.operations.sla_label || 'Sem dados'}</span>
           </div>
         </div>
       </div>
