@@ -1,18 +1,21 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getApiBaseUrl } from '@/lib/api-config';
+import { publicCreatorTreeApi, type PublicCreatorTreeResponse } from '@/lib/api/creatorTree';
 import { Globe, Instagram, Linkedin, Youtube, Link2, MessageCircle, Download, FileText, Building2, type LucideIcon } from 'lucide-react';
 import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
+import { CreatorTreeLink } from '@/components/creator/tree/CreatorTreeLink';
+import { CreatorTreeViewTracker } from '@/components/creator/tree/CreatorTreeViewTracker';
 
 type Props = { params: { slug: string } };
 
-type TreeBlock = { id: number; type: string; title: string; subtitle?: string; url?: string; metadata?: Record<string, unknown> };
+type TreeBlock = PublicCreatorTreeResponse['blocks'][number];
 
-async function getTree(slug: string) {
-  const response = await fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(slug)}`, {
-    cache: 'no-store',
-  });
-  return response.ok ? response.json() : null;
+async function getTree(slug: string): Promise<PublicCreatorTreeResponse | null> {
+  try {
+    return await publicCreatorTreeApi.get(slug);
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -56,7 +59,12 @@ export default async function PublicCreatorTreePage({ params }: Props) {
     lead_form: FileText,
   };
 
-  const socialLinks: ReadonlyArray<readonly [string, string, SocialUrlKind, LucideIcon]> = [
+  const socialLinks: ReadonlyArray<readonly [
+    'linkedin_url' | 'instagram_url' | 'youtube_url' | 'website_url',
+    string,
+    SocialUrlKind,
+    LucideIcon,
+  ]> = [
     ['linkedin_url', 'LinkedIn', 'linkedin', Linkedin],
     ['instagram_url', 'Instagram', 'instagram', Instagram],
     ['youtube_url', 'YouTube', 'youtube', Youtube],
@@ -65,6 +73,7 @@ export default async function PublicCreatorTreePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-[#f6f8fc] px-4 py-8 text-[#0b1730] sm:py-12">
+      <CreatorTreeViewTracker slug={params.slug} />
       <div className="mx-auto w-full max-w-[600px] text-center">
         <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 to-blue-500 px-6 pb-7 pt-8 text-white shadow-lg">
         {data.creator.banner_url ? <Image src={data.creator.banner_url} alt="" fill sizes="600px" className="object-cover opacity-30" /> : <div className="absolute inset-0 bg-[url('/images/avalia-solar-banner-placeholder-v1.webp')] bg-cover bg-center opacity-20" />}
@@ -82,10 +91,10 @@ export default async function PublicCreatorTreePage({ params }: Props) {
           {data.blocks.map((block: TreeBlock) => block.type === 'separator' ? (
             <div key={block.id} className="py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-400">{block.title}</div>
           ) : (
-            <a key={block.id} href={block.url || '#'} onClick={() => { void fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(params.slug)}/blocks/${block.id}/click`, { method: 'POST', keepalive: true }); }} className={`block min-h-14 rounded-2xl border px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${blockColors[String(block.metadata?.color)] || blockStyles[block.type] || 'border-slate-200 bg-white'}`} rel="noreferrer">
+            <CreatorTreeLink key={block.id} slug={params.slug} blockId={block.id} href={block.url || '#'} className={`block min-h-14 rounded-2xl border px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${blockColors[String(block.metadata?.color)] || blockStyles[block.type] || 'border-slate-200 bg-white'}`}>
               {(() => { const Icon = blockIcons[String(block.metadata?.icon)] || blockIcons[block.type] || Link2; return <span className="flex items-center gap-3 font-bold"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70"><Icon className="h-5 w-5" /></span>{block.title}</span>; })()}
               {block.subtitle && <span className="mt-1 block text-xs opacity-75">{block.subtitle}</span>}
-            </a>
+            </CreatorTreeLink>
           ))}
         </div>
         <p className="mt-10 text-xs font-semibold text-slate-400">Powered by Avalia Solar</p>

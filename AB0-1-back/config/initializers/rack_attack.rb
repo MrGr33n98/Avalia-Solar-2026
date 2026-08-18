@@ -64,6 +64,10 @@ class Rack::Attack
     req.ip if req.path.match?(%r{\A/api/v1/creator_tree/[^/]+/blocks/\d+/click\z}) && req.post?
   end
 
+  throttle('creator_tree_views/ip', limit: 20, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/creator_tree/[^/]+/view\z}) && req.post?
+  end
+
 
   # === Existing Rules ===
 

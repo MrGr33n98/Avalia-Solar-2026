@@ -17,6 +17,29 @@ RSpec.describe CreatorTreeBlock, type: :model do
     expect(block).not_to be_valid
   end
 
+  it 'normalizes valid WhatsApp numbers' do
+    block = build(:creator_tree_block, reviewer: profile, block_type: 'whatsapp', url: '+55 (11) 99999-9999')
+
+    expect(block).to be_valid
+    expect(block.url).to eq('https://wa.me/5511999999999')
+  end
+
+  it 'rejects company owned by another user' do
+    other_company = create(:company)
+    block = build(:creator_tree_block, reviewer: profile, block_type: 'company', url: nil, company: other_company)
+
+    expect(block).not_to be_valid
+    expect(block.errors[:company]).to include('não pertence ao creator')
+  end
+
+  it 'rejects publication owned by another user' do
+    publication = create(:reviewer_publication, user: create(:user))
+    block = build(:creator_tree_block, reviewer: profile, block_type: 'publication', url: nil, publication: publication)
+
+    expect(block).not_to be_valid
+    expect(block.errors[:publication]).to include('não pertence ao creator')
+  end
+
   it 'allows only eight active blocks' do
     8.times { |index| create(:creator_tree_block, reviewer: profile, position: index) }
     extra = build(:creator_tree_block, reviewer: profile, position: 8)

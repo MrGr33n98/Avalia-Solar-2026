@@ -30,6 +30,16 @@ class CreatorTreeBlock < ApplicationRecord
   def safe_url
     return if url.blank?
 
+    if block_type == 'whatsapp'
+      uri = URI.parse(url)
+      valid_whatsapp = uri.is_a?(URI::HTTPS) && uri.host&.downcase == 'wa.me' && uri.path.match?(%r{\A/\d+\z})
+      valid_whatsapp ||= url.match?(/\A\+?[\d\s().-]{10,20}\z/)
+      return if valid_whatsapp
+
+      errors.add(:url, 'deve usar um número ou URL wa.me válida')
+      return
+    end
+
     uri = URI.parse(url)
     return if uri.is_a?(URI::HTTP) && uri.host.present?
 
@@ -77,7 +87,12 @@ class CreatorTreeBlock < ApplicationRecord
   def normalize_whatsapp
     return unless block_type == 'whatsapp' && url.present?
 
-    digits = url.to_s.gsub(/\D/, '')
-    self.url = digits.present? ? "https://wa.me/#{digits}" : url
+    raw_url = url.to_s.strip
+    if raw_url.match?(/\A\+?[\d\s().-]+\z/)
+      digits = raw_url.gsub(/\D/, '')
+      self.url = "https://wa.me/#{digits}" if digits.present?
+    elsif raw_url.match?(%r{\Ahttps://wa\.me/\d+\z}i)
+      self.url = "https://wa.me/#{raw_url.split('/').last}"
+    end
   end
 end

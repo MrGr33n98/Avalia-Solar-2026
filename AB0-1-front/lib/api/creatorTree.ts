@@ -1,9 +1,26 @@
 import { fetchApi } from '@/lib/api';
 
+const trackPublicEvent = async (path: string) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    await fetch(`/api/v1${path}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      keepalive: true,
+    });
+  } catch {
+    // Analytics failure must never affect public navigation.
+  }
+};
+
+export type CreatorTreeBlockType = 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication' | 'download' | 'lead_form' | 'separator';
+
 export type CreatorTreeBlock = {
   id: number;
-  block_type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication' | 'download' | 'lead_form' | 'separator';
-  type?: 'external_link' | 'whatsapp' | 'social' | 'company' | 'publication' | 'download' | 'lead_form' | 'separator';
+  block_type: CreatorTreeBlockType;
+  type?: CreatorTreeBlockType;
   title: string;
   subtitle?: string | null;
   url?: string | null;
@@ -13,6 +30,29 @@ export type CreatorTreeBlock = {
   active: boolean;
   metadata?: Record<string, unknown>;
   clicks_count?: number;
+};
+
+export type PublicCreatorTreeBlock = Pick<CreatorTreeBlock, 'id' | 'title' | 'subtitle' | 'position' | 'metadata'> & {
+  type: CreatorTreeBlockType;
+  url: string | null;
+};
+
+export type PublicCreatorTreeResponse = {
+  creator: {
+    name: string;
+    headline?: string | null;
+    bio?: string | null;
+    slug: string;
+    avatar_url?: string | null;
+    banner_url?: string | null;
+    city?: string | null;
+    state?: string | null;
+    linkedin_url?: string | null;
+    instagram_url?: string | null;
+    youtube_url?: string | null;
+    website_url?: string | null;
+  };
+  blocks: PublicCreatorTreeBlock[];
 };
 
 export type CreatorTreeListResponse = {
@@ -48,14 +88,12 @@ export const creatorTreeApi = {
 
 export const publicCreatorTreeApi = {
   get: (slug: string) =>
-    fetchApi<{ creator: Record<string, unknown>; blocks: CreatorTreeBlock[] }>(
+    fetchApi<PublicCreatorTreeResponse>(
       `/creator_tree/${encodeURIComponent(slug)}`,
       { skipAuthRefresh: true }
     ),
+  trackView: (slug: string) =>
+    trackPublicEvent(`/creator_tree/${encodeURIComponent(slug)}/view`),
   trackClick: (slug: string, blockId: number) =>
-    fetchApi(`/creator_tree/${encodeURIComponent(slug)}/blocks/${blockId}/click`, {
-      method: 'POST',
-      skipAuthRefresh: true,
-      silent: true,
-    }),
+    trackPublicEvent(`/creator_tree/${encodeURIComponent(slug)}/blocks/${blockId}/click`),
 };
