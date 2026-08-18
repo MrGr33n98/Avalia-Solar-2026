@@ -466,6 +466,13 @@ export const companiesApiSafe = {
     page?: number;
     per_page?: number;
     fields?: 'card';
+    financing_enabled?: boolean;
+    whatsapp_enabled?: boolean;
+    latitude?: number;
+    longitude?: number;
+    radius_km?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
@@ -523,6 +530,13 @@ export const companiesApiSafe = {
     min_rating?: number;
     verified?: boolean;
     fields?: 'card';
+    financing_enabled?: boolean;
+    whatsapp_enabled?: boolean;
+    latitude?: number;
+    longitude?: number;
+    radius_km?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<number | null> => {
     try {
       const response = await companiesApiSafe.getAllPaginated({

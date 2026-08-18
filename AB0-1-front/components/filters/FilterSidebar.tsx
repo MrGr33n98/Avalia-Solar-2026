@@ -254,8 +254,7 @@ function QualitySection({
   );
 }
 
-// ─── Componente principal ────────────────────────────────────────────────────
-export const FilterSidebar: React.FC = () => {
+export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideMobileTrigger = false }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -380,44 +379,46 @@ export const FilterSidebar: React.FC = () => {
       </aside>
 
       {/* Mobile Trigger & Sheet */}
-      <div className="lg:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
-        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              data-testid="mobile-filters-trigger"
-              className="h-12 gap-3 rounded-xl border border-blue-700 bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-            >
-              <SlidersHorizontal size={18} />
-              <span>Filtrar</span>
-              {activeCount > 0 && (
-                <span className="ml-1 flex h-5 w-5 items-center justify-center bg-white text-[10px] font-bold text-blue-700 rounded-full">
-                  {activeCount}
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="h-[92vh] rounded-t-2xl border-x-0 border-b-0 border-t border-slate-200 bg-white p-0 pb-[max(1.5rem,var(--safe-area-inset-bottom))] shadow-xl"
-          >
-            <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-slate-200 px-5 py-4">
-              <SheetTitle className="text-base font-bold">Filtros</SheetTitle>
+      {!hideMobileTrigger && (
+        <div className="lg:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
+          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <SheetTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Fechar filtros"
-                onClick={() => setIsMobileOpen(false)}
-                className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                data-testid="mobile-filters-trigger"
+                className="h-12 gap-3 rounded-xl border border-blue-700 bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
               >
-                <X size={18} />
+                <SlidersHorizontal size={18} />
+                <span>Filtrar</span>
+                {activeCount > 0 && (
+                  <span className="ml-1 flex h-5 w-5 items-center justify-center bg-white text-[10px] font-bold text-blue-700 rounded-full">
+                    {activeCount}
+                  </span>
+                )}
               </Button>
-            </SheetHeader>
-            <div className="h-full overflow-y-auto pb-32">
-              <FilterContent />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-[92vh] rounded-t-2xl border-x-0 border-b-0 border-t border-slate-200 bg-white p-0 pb-[max(1.5rem,var(--safe-area-inset-bottom))] shadow-xl"
+            >
+              <SheetHeader className="flex flex-row items-center justify-between space-y-0 border-b border-slate-200 px-5 py-4">
+                <SheetTitle className="text-base font-bold">Filtros</SheetTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Fechar filtros"
+                  onClick={() => setIsMobileOpen(false)}
+                  className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                >
+                  <X size={18} />
+                </Button>
+              </SheetHeader>
+              <div className="h-full overflow-y-auto pb-32">
+                <FilterContent />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
     </>
   );
 };

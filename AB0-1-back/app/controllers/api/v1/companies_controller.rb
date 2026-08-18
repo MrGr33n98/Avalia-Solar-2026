@@ -425,170 +425,16 @@ module Api
           related_categories: payload[:related_categories],
           similar_companies: payload[:similar_companies]
         }
-      end
-
       def fetch_companies_data
         retries = 0
         begin
-          @companies = ::Company.includes(
-            :categories,
-            :company_faqs,
-            :company_buttons,
-            :plan,
-            :company_financing_profile,
-            badges: { image_attachment: :blob },
-            review_aggregates: [:category],
-            company_financing_partners: { logo_attachment: :blob },
-            company_financing_offers: []
-          )
+          @companies = ::Companies::CompanySearchQuery.call(params)
 
-          # Ordenação (Classificação)
-          if params[:sort].present?
-            valid_sorts = %w[
-              rating
-              rating_avg
-              rating_desc
-              reviews_desc
-              name
-              name_asc
-              name_desc
-              created_at
-              newest
-              recommended
-            ]
-            if valid_sorts.include?(params[:sort])
-              case params[:sort]
-              when 'rating', 'rating_avg', 'rating_desc'
-                @companies = @companies.reorder(rating_avg: :desc, rating_count: :desc)
-              when 'reviews_desc'
-                @companies = @companies.reorder(rating_count: :desc, rating_avg: :desc)
-              when 'name', 'name_asc'
-                @companies = @companies.reorder(name: :asc)
-              when 'name_desc'
-                @companies = @companies.reorder(name: :desc)
-              when 'created_at', 'newest'
-                @companies = @companies.reorder(created_at: :desc)
-              when 'recommended'
-                @companies = @companies.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc,
-                                                created_at: :desc)
-              end
-            else
-              Rails.logger.warn "[Classification] Invalid sort parameter: #{params[:sort]}"
-              # Se o parâmetro for inválido, usamos o padrão (melhores primeiro)
-              @companies = @companies.reorder(rating_avg: :desc, rating_count: :desc, created_at: :desc)
-            end
-          else
-            # Padrão: Melhores avaliadas primeiro (Ranking)
-            @companies = @companies.order(rating_avg: :desc, rating_count: :desc, created_at: :desc)
-          end
-
-          # Filtra por empresas do usuário autenticado
           if ActiveModel::Type::Boolean.new.cast(params[:mine])
             return if authenticate_api_user == false
 
             @companies = @companies.joins(:company_members).where(company_members: { user_id: current_user.id })
           end
-
-          # Filtros
-          @companies = if params[:status].present?
-                         @companies.where(status: params[:status])
-                       else
-                         # Default: listar apenas empresas ativas
-                         @companies.where(status: ::Company.statuses[:active])
-                       end
-
-          if params[:q].present?
-            term = params[:q].to_s.strip
-            @companies = @companies.search_by_text(term) if term.present?
-          end
-
-          if params[:featured].present?
-            featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            @companies = @companies.where(featured: featured_value)
-          end
-
-          if params[:verified].present?
-            verified_value = ActiveModel::Type::Boolean.new.cast(params[:verified])
-            @companies = @companies.where(verified: verified_value)
-          end
-
-          if params[:state].present?
-            states = Array(params[:state]).flat_map do |v|
-              v.to_s.split(',')
-            end.map { |s| s.strip.upcase }.reject(&:blank?)
-            @companies = @companies.where(state: states) if states.any?
-          end
-
-          if params[:city].present?
-            cities = Array(params[:city]).flat_map { |v| v.to_s.split(',') }.map(&:strip).reject(&:blank?)
-            @companies = @companies.where(city: cities) if cities.any?
-          end
-
-          if params[:latitude].present? && params[:longitude].present? && params[:radius_km].present?
-            @companies = Geo::HaversineCalculator.scope_within_radius(
-              @companies,
-              lat: params[:latitude].to_f,
-              lng: params[:longitude].to_f,
-              radius_km: params[:radius_km].to_f
-            )
-          end
-
-          if params[:serves_state].present?
-            states = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
-                                                 .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
-                                                 .compact
-                                                 .uniq
-            if states.any?
-              state_scope = states.reduce(::Company.none) do |scope, state|
-                scope.or(::Company.serving_state(state))
-              end
-              @companies = @companies.where(id: state_scope.select(:id))
-            end
-          end
-
-          if params[:serves_city].present?
-            cities = Array(params[:serves_city]).flat_map { |v| v.to_s.split(',') }
-                                                .map(&:strip)
-                                                .reject(&:blank?)
-                                                .uniq
-            city_state = Array(params[:serves_state]).flat_map { |v| v.to_s.split(',') }
-                                                     .filter_map { |state| ::Locations::CoverageNormalizer.normalize_state(state) }
-                                                     .first
-            if cities.any?
-              city_scope = cities.reduce(::Company.none) do |scope, served_city|
-                scope.or(::Company.serving_city(served_city, city_state))
-              end
-              @companies = @companies.where(id: city_scope.select(:id))
-            end
-          end
-
-          @companies = @companies.where('rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
-
-          if params[:category_id].present?
-            cat_param = params[:category_id].to_s.strip
-            target_cat_id = if cat_param.match?(/^\d+$/)
-                              cat_param.to_i
-                            else
-                              ::Category.find_by(slug: cat_param)&.id || ::Category.find_by(seo_url: cat_param)&.id
-                            end
-            if target_cat_id.present?
-              cat_company_ids = ::Company.joins(:categories).where(categories: { id: target_cat_id }).pluck(:id).uniq
-              @companies = @companies.where(id: cat_company_ids)
-            end
-          end
-
-          if params[:category_ids].present?
-            category_ids = Array(params[:category_ids]).flat_map do |v|
-              v.to_s.split(',')
-            end.map(&:to_i).select(&:positive?)
-            if category_ids.any?
-              cats_company_ids = ::Company.joins(:categories).where(categories: { id: category_ids }).pluck(:id).uniq
-              @companies = @companies.where(id: cats_company_ids)
-            end
-          end
-
-          # Apply manual limit only if not using pagination
-          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present? && !params[:page].present?
 
           # Apply pagination if page parameter is present
           if params[:page].present?
@@ -609,8 +455,6 @@ module Api
             @companies.map do |company|
               company_json_attributes(company)
             end
-
-
           end
         rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotEstablished => e
           if (retries += 1) <= 3
@@ -623,6 +467,8 @@ module Api
       end
 
       def generate_cache_key(params)
+        lat = params[:latitude] || params[:lat]
+        lng = params[:longitude] || params[:lng]
         filters = {
           status: params[:status],
           featured: params[:featured],
@@ -634,18 +480,21 @@ module Api
           category_id: params[:category_id],
           category_ids: params[:category_ids],
           min_rating: params[:min_rating],
+          has_reviews: params[:has_reviews],
+          whatsapp_enabled: params[:whatsapp_enabled],
+          financing_enabled: params[:financing_enabled],
           q: params[:q],
           sort: params[:sort],
           limit: params[:limit],
           page: params[:page],
           mine: params[:mine],
-          latitude: params[:latitude]&.to_f&.round(3),
-          longitude: params[:longitude]&.to_f&.round(3),
+          latitude: lat.present? ? lat.to_f.round(3) : nil,
+          longitude: lng.present? ? lng.to_f.round(3) : nil,
           radius_km: params[:radius_km]
         }.compact
 
         filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
-        "companies:index:v4:#{filter_hash}"
+        "companies:index:v5:#{filter_hash}"
       end
 
       def cache_ttl_for_params(params)

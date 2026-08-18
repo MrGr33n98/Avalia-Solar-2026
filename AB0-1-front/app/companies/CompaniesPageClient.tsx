@@ -9,7 +9,6 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import SearchMapPanel from '@/components/search/SearchMapPanel';
 import type { MapCompany } from '@/components/search/MapProvider';
-import MobileLocationGate from '@/components/location/MobileLocationGate';
 import { companiesApiSafe, type Company } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,8 @@ import { FilterSidebar } from '@/components/filters/FilterSidebar';
 import { parseQueryParams, stringifyQueryParams } from '@/components/filters/query';
 import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary';
 import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
+import MobileCompanyFilterBar from '@/components/companies/filters/MobileCompanyFilterBar';
+import MobileCompanyFiltersSheet from '@/components/companies/filters/MobileCompanyFiltersSheet';
 import {
   buildCompaniesCategoriesPath,
   COMPANIES_PATH,
@@ -75,6 +76,17 @@ export function CompaniesContent({
   const [totalCount, setTotalCount] = useState(0);
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+  const handleToggleVerified = () => {
+    const updated = { ...filters, verified: !filters.verified, page: 1 };
+    router.replace(buildTargetUrl(updated), { scroll: false });
+  };
+
+  const handleApplyFilters = (nextFilters: CompanyFilters) => {
+    setIsFiltersOpen(false);
+    router.replace(buildTargetUrl(nextFilters), { scroll: false });
+  };
   const PAGE_SIZE = 12;
   const isMobile = useIsMobile();            // desktop = expanded, mobile = standard
   const cardVariant = isMobile ? 'standard' : 'expanded';
@@ -514,8 +526,8 @@ export function CompaniesContent({
 
         <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex w-full min-w-0 flex-col items-start gap-8 lg:flex-row">
-            <aside className="lg:w-[300px] shrink-0">
-              <FilterSidebar />
+            <aside className="hidden lg:block lg:w-[300px] shrink-0">
+              <FilterSidebar hideMobileTrigger={true} />
             </aside>
 
             <div className="w-full min-w-0 flex-1 space-y-6">
@@ -604,8 +616,20 @@ export function CompaniesContent({
                 </p>
               )}
 
+              {/* Mobile quick filters */}
+              <div className="md:hidden">
+                <MobileCompanyFilterBar
+                  filters={filters}
+                  onOpenFilters={() => setIsFiltersOpen(true)}
+                  onOpenLocation={() => setIsFiltersOpen(true)}
+                  onOpenCategory={() => setIsFiltersOpen(true)}
+                  onToggleVerified={handleToggleVerified}
+                />
+              </div>
+
+              {/* Desktop quick filters */}
               <section
-                className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-x-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
+                className="hidden md:flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-x-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {quickActions.map((action) => {
@@ -765,6 +789,12 @@ export function CompaniesContent({
           </div>
         </div>
       </div>
+      <MobileCompanyFiltersSheet
+        open={isFiltersOpen}
+        onClose={() => setIsFiltersOpen(false)}
+        filters={filters}
+        onApply={handleApplyFilters}
+      />
     </div>
   );
 }
