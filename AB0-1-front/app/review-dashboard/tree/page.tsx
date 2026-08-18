@@ -29,14 +29,15 @@ export default function CreatorTreePage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '', color: 'blue', icon: 'link' });
 
-  const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/creators/${slug}/tree` : '';
+  const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/@${slug}` : '';
 
   useEffect(() => {
     void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])
       .then(([items, profile, ownedCompanies, publicationResponse]) => {
-        setBlocks(items?.blocks || []);
-        setSlug(items?.profile?.public_slug || profile?.profile?.public_slug || null);
-        setTreeViews(items?.profile?.tree_views_count || 0);
+        const treeResponse = Array.isArray(items) ? { blocks: items, profile: {} } : items;
+        setBlocks(treeResponse?.blocks || []);
+        setSlug(treeResponse?.profile?.public_slug || profile?.profile?.public_slug || null);
+        setTreeViews(treeResponse?.profile?.tree_views_count || 0);
         setCompanies(Array.isArray(ownedCompanies) ? ownedCompanies : []);
         setPublications(publicationResponse?.items || []);
       })
@@ -180,8 +181,8 @@ export default function CreatorTreePage() {
             <div className="space-y-3">
               <p className="text-sm text-slate-500">Escolha o destino que deseja destacar no seu Tree.</p>
               <label className="block text-xs font-bold text-slate-700">Tipo de bloco<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="external_link">🔗 Link externo</option><option value="whatsapp">💬 WhatsApp</option><option value="social">◎ Rede social</option><option value="company">🏢 Empresa</option><option value="publication">📄 Publicação</option><option value="download">⬇ Download</option><option value="lead_form">✦ Formulário</option><option value="separator">— Separador</option></select></label>
-              {form.type === 'company' && <select value={form.companyId} onChange={(event) => setForm({ ...form, companyId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione empresa</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select>}
-              {form.type === 'publication' && <select value={form.publicationId} onChange={(event) => setForm({ ...form, publicationId: event.target.value })} className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione publicação</option>{publications.map((publication) => <option key={publication.id} value={publication.id}>{publication.title}</option>)}</select>}
+              {form.type === 'company' && <label className="block text-xs font-bold text-slate-700">Empresa<select value={form.companyId} onChange={(event) => setForm({ ...form, companyId: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione empresa</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label>}
+              {form.type === 'publication' && <label className="block text-xs font-bold text-slate-700">Publicação<select value={form.publicationId} onChange={(event) => setForm({ ...form, publicationId: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"><option value="">Selecione publicação</option>{publications.map((publication) => <option key={publication.id} value={publication.id}>{publication.title}</option>)}</select></label>}
               <label className="block text-xs font-bold text-slate-700">Título<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Meu site" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
               <label className="block text-xs font-bold text-slate-700">Descrição <span className="font-normal text-slate-400">(opcional)</span><input value={form.subtitle} onChange={(event) => setForm({ ...form, subtitle: event.target.value })} placeholder="Conheça meu trabalho" className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" /></label>
               {form.type !== 'company' && form.type !== 'publication' && form.type !== 'separator' && <label className="block text-xs font-bold text-slate-700">URL<input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder={form.type === 'whatsapp' ? '5511999999999' : 'https://meusite.com.br'} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm" />{form.url.trim() && <span className="mt-1 block truncate text-xs text-slate-500">Prévia: {normalizeTreeUrl(form.url, form.type)}</span>}</label>}

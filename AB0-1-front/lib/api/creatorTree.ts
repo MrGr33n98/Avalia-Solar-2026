@@ -24,8 +24,10 @@ export type CreatorTreeListResponse = {
   blocks: CreatorTreeBlock[];
 };
 
+export type CreatorTreeListResult = CreatorTreeListResponse | CreatorTreeBlock[];
+
 export const creatorTreeApi = {
-  list: () => fetchApi<CreatorTreeListResponse>('/reviewer/tree/blocks'),
+  list: () => fetchApi<CreatorTreeListResult>('/reviewer/tree/blocks'),
   create: (block: Partial<CreatorTreeBlock>) =>
     fetchApi<CreatorTreeBlock>('/reviewer/tree/blocks', {
       method: 'POST',
@@ -38,7 +40,7 @@ export const creatorTreeApi = {
     }),
   remove: (id: number) => fetchApi<void>(`/reviewer/tree/blocks/${id}`, { method: 'DELETE' }),
   reorder: (ids: number[]) =>
-    fetchApi<CreatorTreeBlock[]>('/reviewer/tree/blocks/reorder', {
+    fetchApi<CreatorTreeListResult>('/reviewer/tree/blocks/reorder', {
       method: 'PATCH',
       body: JSON.stringify({ ids }),
     }),

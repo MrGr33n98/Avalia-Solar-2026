@@ -68,7 +68,7 @@ class CreatorTreeBlock < ApplicationRecord
   end
 
   def destination_for_type
-    return if block_type.in?(%w[company publication separator])
+    return if block_type.in?(%w[company publication lead_form separator])
     return if url.present?
 
     errors.add(:url, 'é obrigatório para este tipo de bloco')

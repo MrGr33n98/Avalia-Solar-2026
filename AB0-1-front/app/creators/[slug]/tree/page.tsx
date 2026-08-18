@@ -6,7 +6,7 @@ import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
 
 type Props = { params: { slug: string } };
 
-type TreeBlock = { id: number; type: string; title: string; subtitle?: string; url?: string };
+type TreeBlock = { id: number; type: string; title: string; subtitle?: string; url?: string; metadata?: Record<string, unknown> };
 
 async function getTree(slug: string) {
   const response = await fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(slug)}`, {
@@ -36,6 +36,14 @@ export default async function PublicCreatorTreePage({ params }: Props) {
     download: 'border-violet-200 bg-violet-50 text-violet-950',
     lead_form: 'border-indigo-200 bg-indigo-50 text-indigo-950',
     separator: 'border-transparent bg-transparent px-0 py-2 text-slate-500 shadow-none',
+  };
+
+  const blockColors: Record<string, string> = {
+    blue: 'border-blue-200 bg-blue-50 text-blue-950',
+    green: 'border-emerald-200 bg-emerald-50 text-emerald-950',
+    violet: 'border-violet-200 bg-violet-50 text-violet-950',
+    amber: 'border-amber-200 bg-amber-50 text-amber-950',
+    dark: 'border-slate-700 bg-slate-800 text-white',
   };
 
   const blockIcons: Record<string, typeof Link2> = {
@@ -74,9 +82,9 @@ export default async function PublicCreatorTreePage({ params }: Props) {
           {data.blocks.map((block: TreeBlock) => block.type === 'separator' ? (
             <div key={block.id} className="py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-400">{block.title}</div>
           ) : (
-            <a key={block.id} href={block.url || '#'} onClick={() => { void fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(params.slug)}/blocks/${block.id}/click`, { method: 'POST', keepalive: true }); }} className={`block min-h-14 rounded-2xl border px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${blockStyles[block.type] || 'border-slate-200 bg-white'}`} rel="noreferrer">
-              {(() => { const Icon = blockIcons[block.type] || Link2; return <span className="flex items-center gap-3 font-bold"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70"><Icon className="h-5 w-5" /></span>{block.title}</span>; })()}
-              {block.subtitle && <span className="mt-1 block text-xs text-slate-500">{block.subtitle}</span>}
+            <a key={block.id} href={block.url || '#'} onClick={() => { void fetch(`${getApiBaseUrl()}/creator_tree/${encodeURIComponent(params.slug)}/blocks/${block.id}/click`, { method: 'POST', keepalive: true }); }} className={`block min-h-14 rounded-2xl border px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${blockColors[String(block.metadata?.color)] || blockStyles[block.type] || 'border-slate-200 bg-white'}`} rel="noreferrer">
+              {(() => { const Icon = blockIcons[String(block.metadata?.icon)] || blockIcons[block.type] || Link2; return <span className="flex items-center gap-3 font-bold"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70"><Icon className="h-5 w-5" /></span>{block.title}</span>; })()}
+              {block.subtitle && <span className="mt-1 block text-xs opacity-75">{block.subtitle}</span>}
             </a>
           ))}
         </div>

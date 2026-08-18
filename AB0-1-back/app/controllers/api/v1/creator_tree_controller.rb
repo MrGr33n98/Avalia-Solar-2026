@@ -56,6 +56,7 @@ module Api
         return block.url if block.url.present?
         return "/companies/#{block.company.slug || block.company.id}" if block.company.present?
         return "/creators/#{block.reviewer.public_slug}/posts/#{block.publication.slug}" if block.publication.present?
+        return "/creators/#{block.reviewer.public_slug}#contato" if block.block_type == 'lead_form'
 
         '#'
       end
