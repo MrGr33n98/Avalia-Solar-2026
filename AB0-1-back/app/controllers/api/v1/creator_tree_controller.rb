@@ -15,6 +15,7 @@ module Api
             bio: profile.public_bio,
             slug: profile.public_slug,
             avatar_url: profile.user.avatar_url,
+            banner_url: profile.public_banner.attached? ? Rails.application.routes.url_helpers.rails_blob_url(profile.public_banner, host: ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')) : nil,
             city: profile.user.city,
             state: profile.user.state,
             linkedin_url: profile.linkedin_url,
