@@ -2,8 +2,13 @@ require 'uri'
 
 module Creator
   class PublicProfileService
+    CACHE_VERSION = 'v3'
+
     def self.invalidate(profile)
-      Rails.cache.delete("creator/public-profile/#{profile.public_slug}/v2") if profile&.public_slug.present?
+      return unless profile&.public_slug.present?
+
+      Rails.cache.delete("creator/public-profile/#{profile.public_slug}/v2")
+      Rails.cache.delete("creator/public-profile/#{profile.public_slug}/#{CACHE_VERSION}")
     end
 
     def self.invalidate_for_user(user)
@@ -133,7 +138,7 @@ module Creator
     end
 
     def cache_key
-      "creator/public-profile/#{@profile.public_slug}/v2"
+      "creator/public-profile/#{@profile.public_slug}/#{CACHE_VERSION}"
     end
   end
 end

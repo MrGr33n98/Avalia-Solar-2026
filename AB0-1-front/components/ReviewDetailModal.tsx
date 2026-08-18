@@ -23,6 +23,7 @@ import type { Review } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
+import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 
 interface ReviewDetailModalProps {
   review: Review;
@@ -84,6 +85,8 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
   const projectTypeLabel = projectTypeMap[review.project_type || ''] || 'Projeto';
 
   const avatarSrc = review.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'A')}&background=random`;
+  const pros = normalizeReviewList(review.pros);
+  const cons = normalizeReviewList(review.cons);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -202,7 +205,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
                 O que foi bom
               </h4>
               <div className="space-y-2">
-                {review.pros?.length ? review.pros.map((pro, idx) => (
+                {pros.length > 0 ? pros.map((pro, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <div className="bg-green-100 rounded-full p-0.5"><Check className="w-3 h-3 text-green-600" /></div>
                     <span className="text-sm text-slate-700 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100 w-full">{pro}</span>
@@ -220,7 +223,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
                 <h4 className="font-bold text-slate-900 text-sm">O que melhorar</h4>
               </div>
               <div className="space-y-2">
-                {review.cons?.length ? review.cons.map((con, idx) => (
+                {cons.length > 0 ? cons.map((con, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <span className="text-sm text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 w-full">{con}</span>
                   </div>

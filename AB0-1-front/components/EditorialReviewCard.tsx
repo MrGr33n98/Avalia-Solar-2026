@@ -4,6 +4,7 @@ import { Check, Share2, Star, ThumbsUp, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
+import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 
 export interface ReviewV2 {
   id: number;
@@ -37,8 +38,10 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
       year: 'numeric',
     });
   };
-  const hasPros = review.pros?.length > 0;
-  const hasCons = review.cons?.length > 0;
+  const pros = normalizeReviewList(review.pros);
+  const cons = normalizeReviewList(review.cons);
+  const hasPros = pros.length > 0;
+  const hasCons = cons.length > 0;
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -110,7 +113,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
                 O que foi bom
               </h5>
               <ul className="space-y-1.5 pl-[3.25rem]">
-                {review.pros.map((pro, i) => (
+                {pros.map((pro, i) => (
                   <li key={i} className="text-sm font-normal leading-relaxed text-slate-700">
                     {pro}
                   </li>
@@ -132,7 +135,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
                 O que melhorar
               </h5>
               <ul className="space-y-1.5 pl-[3.25rem]">
-                {review.cons.map((con, i) => (
+                {cons.map((con, i) => (
                   <li key={i} className="text-sm font-normal leading-relaxed text-slate-700">
                     {con}
                   </li>

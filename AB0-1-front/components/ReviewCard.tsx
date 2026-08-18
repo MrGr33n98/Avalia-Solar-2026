@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 import { ReviewDetailModal } from '@/components/ReviewDetailModal';
+import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 
 interface ReviewCardProps {
   review: Review;
@@ -63,8 +64,8 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   }, [review.user, review.project_type, review.rating, user, variant]);
 
   // Safe access for pros/cons
-  const prosList = Array.isArray(review.pros) ? review.pros : [];
-  const consList = Array.isArray(review.cons) ? review.cons : [];
+  const prosList = normalizeReviewList(review.pros);
+  const consList = normalizeReviewList(review.cons);
 
   // Check session storage on mount
   useEffect(() => {

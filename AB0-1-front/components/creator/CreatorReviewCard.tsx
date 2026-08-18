@@ -3,6 +3,7 @@
 import { Check, Star, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewMediaGallery, type ReviewMediaItem } from '@/components/reviews/ReviewMediaGallery';
+import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 
 export type CreatorReview = {
   id: number;
@@ -10,7 +11,7 @@ export type CreatorReview = {
   excerpt?: string;
   headline?: string;
   comment?: string;
-  rating?: number;
+  rating?: number | string;
   created_at: string;
   verified?: boolean;
   is_legacy?: boolean;
@@ -59,6 +60,8 @@ export function CreatorReviewCard({ review }: { review: CreatorReview }) {
   const rating = Number(review.rating || 0);
   const projectType = formatLabel(review.project_type);
   const installationStatus = formatLabel(review.installation_status);
+  const pros = normalizeReviewList(review.pros);
+  const cons = normalizeReviewList(review.cons);
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -119,9 +122,9 @@ export function CreatorReviewCard({ review }: { review: CreatorReview }) {
           </div>
         )}
 
-        {(review.pros?.length || review.cons?.length) ? (
+        {(pros.length > 0 || cons.length > 0) ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            {!!review.pros?.length && (
+            {pros.length > 0 && (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-800">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -129,10 +132,10 @@ export function CreatorReviewCard({ review }: { review: CreatorReview }) {
                   </span>
                   O que foi bom
                 </h4>
-                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{review.pros.map((pro, index) => <li key={index}>{pro}</li>)}</ul>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{pros.map((pro, index) => <li key={index}>{pro}</li>)}</ul>
               </div>
             )}
-            {!!review.cons?.length && (
+            {cons.length > 0 && (
               <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
                 <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-rose-800">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
@@ -140,7 +143,7 @@ export function CreatorReviewCard({ review }: { review: CreatorReview }) {
                   </span>
                   O que melhorar
                 </h4>
-                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{review.cons.map((con, index) => <li key={index}>{con}</li>)}</ul>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{cons.map((con, index) => <li key={index}>{con}</li>)}</ul>
               </div>
             )}
           </div>

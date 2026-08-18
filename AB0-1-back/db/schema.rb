@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_18_080000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3181,8 +3181,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_080000) do
     t.jsonb "content_metadata", default: {}, null: false
     t.jsonb "metadata", default: {}, null: false
     t.bigint "category_id"
-    t.text "pros"
-    t.text "cons"
+    t.jsonb "pros", default: [], null: false
+    t.jsonb "cons", default: [], null: false
     t.text "buyer_tip"
     t.jsonb "project_context", default: {}, null: false
     t.jsonb "granular_scores_snapshot", default: {}, null: false

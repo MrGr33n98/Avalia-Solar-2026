@@ -65,6 +65,25 @@ RSpec.describe Creator::PublicProfileService, type: :service do
       expect(described_class.new(profile).call[:recent_reviews]).to be_empty
     end
 
+    it 'normaliza listas editoriais legadas no perfil público' do
+      review = create(
+        :review,
+        user: user,
+        company: company,
+        category: category,
+        status: :approved,
+        headline: 'Avaliação legada',
+        comment: 'Conteúdo legado',
+        pros: ['[]'],
+        cons: ['']
+      )
+
+      result = described_class.new(profile).call[:recent_reviews].find { |item| item[:id] == review.id }
+
+      expect(result[:pros]).to eq([])
+      expect(result[:cons]).to eq([])
+    end
+
     it 'funciona para creator sem avaliações' do
       expect { described_class.new(profile).call }.not_to raise_error
       expect(described_class.new(profile).call[:recent_reviews]).to eq([])

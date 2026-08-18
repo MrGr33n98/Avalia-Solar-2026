@@ -26,6 +26,7 @@ import { buildCategoryPath, buildCompanyPath, buildProductPath } from '@/lib/slu
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { cn } from '@/lib/utils';
+import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 import { useProductTracking } from './useProductTracking';
 import PremiumBadge from '@/components/PremiumBadge';
 import { ProductReviewModal } from './components/ProductReviewModal';
@@ -253,6 +254,8 @@ function ReviewDistribution({
 function ReviewCard({ review }: { review: Review }) {
   const reviewDate = formatDate(review.created_at);
   const reviewScores = (review.granular_scores || review.review_criterion_scores || []).slice(0, 4);
+  const pros = normalizeReviewList(review.pros);
+  const cons = normalizeReviewList(review.cons);
 
   return (
     <article className={cn(surfaceClass, 'p-4')}>
@@ -287,23 +290,23 @@ function ReviewCard({ review }: { review: Review }) {
         <p className="mt-3 text-[13px] leading-[1.7] text-[var(--color-text-secondary)]">{review.project_context}</p>
       ) : null}
 
-      {(Array.isArray(review.pros) && review.pros.length) || (Array.isArray(review.cons) && review.cons.length) || (typeof review.buyer_tip === 'string' && review.buyer_tip.trim()) ? (
+      {(pros.length > 0 || cons.length > 0 || (typeof review.buyer_tip === 'string' && review.buyer_tip.trim())) ? (
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {Array.isArray(review.pros) && review.pros.length ? (
+          {pros.length > 0 ? (
             <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
               <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Pontos fortes</p>
               <ul className="mt-2 space-y-1 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
-                {review.pros.map((item, idx) => (
+                {pros.map((item, idx) => (
                   <li key={`${item}-${idx}`}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>
                 ))}
               </ul>
             </div>
           ) : null}
-          {Array.isArray(review.cons) && review.cons.length ? (
+          {cons.length > 0 ? (
             <div className="rounded-[var(--border-radius-md)] bg-[var(--color-background-secondary)] p-3">
               <p className="text-[11px] font-medium text-[var(--color-text-primary)]">Pontos de atenção</p>
               <ul className="mt-2 space-y-1 text-[13px] leading-[1.6] text-[var(--color-text-secondary)]">
-                {review.cons.map((item, idx) => (
+                {cons.map((item, idx) => (
                   <li key={`${item}-${idx}`}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>
                 ))}
               </ul>

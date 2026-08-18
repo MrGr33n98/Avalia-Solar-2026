@@ -78,11 +78,11 @@ class Review < ApplicationRecord
   validate :validate_featured_requires_approved_status
 
   def pros
-    Array(super)
+    normalize_editorial_list(super)
   end
 
   def cons
-    Array(super)
+    normalize_editorial_list(super)
   end
 
   def self.ransackable_attributes(_auth_object = nil)
@@ -168,6 +168,33 @@ class Review < ApplicationRecord
   end
 
   private
+
+  def normalize_editorial_list(value)
+    items = case value
+            when Array
+              value
+            when String
+              stripped = value.strip
+              if stripped.blank? || stripped == '[]'
+                []
+              else
+                begin
+                  parsed = JSON.parse(stripped)
+                  parsed.is_a?(Array) ? parsed : [stripped]
+                rescue JSON::ParserError
+                  [stripped]
+                end
+              end
+            when nil
+              []
+            else
+              Array(value)
+            end
+
+    items.map { |item| item.to_s.strip }
+         .reject(&:blank?)
+         .reject { |item| %w[[] {} null nil].include?(item.downcase) }
+  end
 
   def set_default_reviewable
     return if company_id.blank?
