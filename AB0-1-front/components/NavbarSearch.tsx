@@ -32,7 +32,7 @@ export default function NavbarSearch({
 
   return (
     <form onSubmit={submit} className={cn('w-full', className)} role="search" aria-label="Buscar">
-      <div className="flex h-[40px] w-full items-center rounded-lg border border-brand-border bg-white px-1.5 transition-colors hover:border-slate-400 focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-brand-blue/20 dark:border-white/10 dark:bg-[#081a2e]/82 dark:hover:border-white/30">
+      <div className="flex h-[40px] w-full items-center rounded-lg border-[1.5px] border-[#2563EB] bg-white px-1.5 transition-colors hover:border-[#1D4ED8] focus-within:border-[#1D4ED8] focus-within:ring-2 focus-within:ring-blue-600/20 dark:border-blue-400/70 dark:bg-[#081a2e]/82 dark:hover:border-blue-300">
         <button
           type="submit"
           className="ml-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-brand-blue"
