@@ -383,6 +383,14 @@ export type SidebarCollapsibleGroup = {
 export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
   { label: 'Dashboard', href: '/review-dashboard', icon: Home },
   {
+    label: 'Conteúdo',
+    icon: FileText,
+    items: [
+      { label: 'Publicações', href: '/review-dashboard/publications' },
+      { label: 'Meu Tree', href: '/review-dashboard/tree' },
+    ],
+  },
+  {
     label: 'Avaliações',
     icon: Star,
     items: [
@@ -467,6 +475,7 @@ function SidebarContent({
   const { user, logout } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     'Meu perfil': true,
+    Conteúdo: true,
   });
 
   const toggleGroup = (label: string) => {
@@ -504,7 +513,8 @@ function SidebarContent({
           {sidebarMenuGroups.map((group) => {
             const Icon = group.icon;
             const hasSubitems = Array.isArray(group.items) && group.items.length > 0;
-            const isOpen = !!openGroups[group.label];
+            const hasActiveSubitem = group.items?.some((item) => pathname === item.href) ?? false;
+            const isOpen = !!openGroups[group.label] || hasActiveSubitem;
             const isDirectActive = group.href && pathname === group.href;
 
             if (!hasSubitems && group.href) {
@@ -552,7 +562,12 @@ function SidebarContent({
                         key={sub.label}
                         href={sub.href}
                         onClick={onNavigate}
-                        className="block rounded-lg py-1.5 px-2 text-xs font-normal text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors"
+                        className={cn(
+                          'block rounded-lg py-1.5 px-2 text-xs font-normal transition-colors',
+                          pathname === sub.href
+                            ? 'bg-blue-50 font-semibold text-blue-600'
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'
+                        )}
                       >
                         {sub.label}
                       </Link>
