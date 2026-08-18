@@ -6,14 +6,20 @@ import { FavoriteButton } from './FavoriteButton';
 import { buildProductPath } from '@/lib/slug';
 import type { Favorite, FavoriteProduct } from '@/lib/api/favorites';
 
-export function FavoriteProductCard({ favorite }: { favorite: Favorite & { item: FavoriteProduct } }) {
+export function FavoriteProductCard({
+  favorite,
+  onRemoved,
+}: {
+  favorite: Favorite & { item: FavoriteProduct };
+  onRemoved?: () => void;
+}) {
   const item = favorite.item;
   const href = buildProductPath(item.id, item.name);
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="relative aspect-[4/3] bg-slate-50">
         <Image src={item.image_url || '/images/product-placeholder.svg'} alt={item.name} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-contain p-6" />
-        <div className="absolute right-2 top-2 rounded-full bg-white shadow-sm"><FavoriteButton favoritableType="Product" favoritableId={item.id} initialFavorited source="favorites_page" /></div>
+        <div className="absolute right-2 top-2 rounded-full bg-white shadow-sm"><FavoriteButton favoritableType="Product" favoritableId={item.id} initialFavorited source="favorites_page" onChange={(next) => { if (!next) onRemoved?.(); }} /></div>
       </div>
       <div className="p-4">
         {item.category && <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.category.name}</p>}

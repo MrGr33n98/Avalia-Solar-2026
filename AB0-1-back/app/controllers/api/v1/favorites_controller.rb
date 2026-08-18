@@ -6,7 +6,7 @@ module Api
 
       def index
         authorize Favorite, :index?
-        scope = current_user.favorites.includes(:favoritable).order(created_at: :desc)
+        scope = current_user.favorites.order(created_at: :desc)
         type = params[:type].to_s
         if type.present?
           return unless validate_type!(type)
@@ -71,7 +71,8 @@ module Api
       end
 
       def find_favoritable(type, id)
-        validate_type!(type)
+        return unless validate_type!(type)
+
         case type
         when 'Company' then ::Company.find(id)
         when 'Product' then ::Product.find(id)
@@ -87,7 +88,10 @@ module Api
 
       def preload_favorite_items(favorites)
         products = favorites.select { |favorite| favorite.favoritable_type == 'Product' }.map(&:favoritable)
-        ActiveRecord::Associations::Preloader.new(records: products, associations: %i[company categories]).call if products.any?
+        ActiveRecord::Associations::Preloader.new(
+          records: products,
+          associations: %i[company categories]
+        ).call if products.any?
       end
     end
   end

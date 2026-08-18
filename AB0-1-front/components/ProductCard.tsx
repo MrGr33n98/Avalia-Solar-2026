@@ -2,26 +2,18 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowRight,
-  Building2,
-  Eye,
-  MessageSquare,
-  ShieldCheck,
-  Tag,
   Star,
-  Heart,
   Info,
 } from 'lucide-react';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
 import { resolveBrandContext } from '@/lib/analytics/brand';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 import { cn } from '@/lib/utils';
 import { canUsePaidConversion } from '@/lib/feature-access';
+import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 
 interface ProductCardProps {
   product: Product;
@@ -73,12 +65,6 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
         ? 'Indisponível'
         : 'Sob Consulta';
 
-  const statusVariant =
-    product.status === 'active'
-      ? 'default'
-      : product.status === 'inactive'
-        ? 'secondary'
-        : 'outline';
 
   const displayImage = !imageError && product.image_url ? product.image_url : '';
 
@@ -96,16 +82,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   }, [product.id, product.name]);
 
   const companyName = product.company?.name || 'Fornecedor não informado';
-  const companyLocation = [product.company?.city, product.company?.state]
-    .filter(Boolean)
-    .join(', ');
   const categoryName = product.categories?.[0]?.name || product.category?.name || 'Geral';
-  const applicationSpec = useMemo(() => {
-    const spec = product.specs?.find((item) =>
-      ['aplicacao', 'aplicação', 'application'].includes(item.key)
-    );
-    return spec?.value ? String(spec.value) : null;
-  }, [product.specs]);
 
   // Extract rating & reviews (no mock)
   const ratingAvgValue = Number(product.company?.rating_avg);
@@ -113,39 +90,6 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   const reviewsCount = product.company?.reviews_count;
 
   // Extract real specifications (no mock)
-  const realFeatures = useMemo(() => {
-    if (!product.specs || product.specs.length === 0) return [];
-    return product.specs.slice(0, 3).map((spec) => {
-      const valueStr =
-        typeof spec.value === 'boolean' ? (spec.value ? 'Sim' : 'Não') : String(spec.value);
-      return `${spec.label}: ${valueStr}${spec.unit ? ` ${spec.unit}` : ''}`;
-    });
-  }, [product.specs]);
-
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setQuickViewOpen(true);
-  };
-
-  const handleBudgetClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    track('product_cta_click', {
-      product_id: product.id,
-      product_name: product.name,
-      click_type: 'budget',
-      company_id: product.company?.id,
-      company_name: product.company?.name,
-      price_available: priceAvailable,
-      ...brandContext,
-    });
-    if (!canRequestQuote) return;
-    openQuoteWizard({
-      preferredCompanyId: product.company?.id,
-      source: 'products_catalog',
-    });
-  };
 
   const installments = useMemo(() => {
     if (!priceAvailable) return null;
@@ -193,8 +137,6 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
             </span>
           ))
         : null;
-
-    const rating = ratingAvg || 0;
 
     return (
       <>
@@ -332,13 +274,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
 
             {/* Favorite Icon (Coração) no topo direito do card */}
             <div className="absolute right-4 top-4 z-10">
-              <button
-                type="button"
-                aria-label="Adicionar aos favoritos"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 hover:text-red-500 hover:scale-105 transition-all border border-slate-100/60 shadow-sm"
-              >
-                <Heart className="w-4.5 h-4.5 fill-transparent transition-colors" />
-              </button>
+              <FavoriteButton favoritableType="Product" favoritableId={product.id} source="product_card" className="h-8 w-8 bg-white text-slate-400 shadow-sm hover:text-red-500" />
             </div>
           </Card>
 
@@ -406,13 +342,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
 
             {/* Favorite Icon (Coração) */}
             <div className="absolute right-3 top-3 z-10">
-              <button
-                type="button"
-                aria-label="Adicionar aos favoritos"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-slate-400 shadow-sm hover:text-red-500 hover:scale-105 transition-all border border-slate-100/60"
-              >
-                <Heart className="w-4.5 h-4.5 fill-transparent transition-colors" />
-              </button>
+              <FavoriteButton favoritableType="Product" favoritableId={product.id} source="product_card" className="h-8 w-8 bg-white/95 text-slate-400 shadow-sm hover:text-red-500" />
             </div>
           </div>
 

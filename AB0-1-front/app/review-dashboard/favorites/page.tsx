@@ -71,7 +71,7 @@ export default function FavoritesPage() {
         <p className="text-sm text-slate-500">{counts.all} itens salvos</p>
       </div>
 
-      {loading ? <div className="flex justify-center py-20"><Loader2 className="h-7 w-7 animate-spin text-blue-600" aria-label="Carregando favoritos" /></div> : error ? <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-center text-sm text-rose-700">Não foi possível carregar sua lista agora.</div> : filteredFavorites.length ? <FavoritesGrid favorites={filteredFavorites} /> : <FavoritesEmptyState />}
+      {loading ? <div className="flex justify-center py-20"><Loader2 className="h-7 w-7 animate-spin text-blue-600" aria-label="Carregando favoritos" /></div> : error ? <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-center text-sm text-rose-700">Não foi possível carregar sua lista agora.</div> : filteredFavorites.length ? <FavoritesGrid favorites={filteredFavorites} onRemoved={(id) => setFavorites((current) => current.filter((favorite) => favorite.id !== id))} /> : <FavoritesEmptyState />}
     </main>
   );
 }

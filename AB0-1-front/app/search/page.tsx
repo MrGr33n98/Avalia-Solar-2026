@@ -17,10 +17,11 @@ import {
   X,
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
-import CompanyCard from '@/components/CompanyCard';
 import { SearchCompanyListCard } from '@/components/search/SearchCompanyListCard';
 import ReviewCard from '@/components/ReviewCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
+import { favoritesApi } from '@/lib/api/favorites';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   defaultSearchFilters,
   SearchFilters,
@@ -47,7 +48,6 @@ import { companiesApiSafe } from '@/lib/api-client';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
 import { CONTACT } from '@/lib/site';
 import { buildCategoryPath } from '@/lib/slug';
-import { useIsMobile } from '@/hooks/useIsMobile';
 
 const normalize = (value: unknown) =>
   String(value ?? '')
@@ -138,10 +138,9 @@ function SearchPageContent() {
     city: urlCity,
     verifiedOnly: urlVerified,
   });
-  const isMobile = useIsMobile();
-  const companyCardVariant = isMobile ? 'standard' : 'expanded';
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     setSearchTerm(query);
@@ -158,14 +157,22 @@ function SearchPageContent() {
   }, [sortParam]);
 
   useEffect(() => {
+    if (!isAuthenticated || results.products.length === 0) return;
+    void favoritesApi.status('Product', results.products.map((product) => product.id)).then((response) => {
+      setProductFavorites(new Set(Object.entries(response.favorites).filter(([, saved]) => saved).map(([id]) => Number(id))));
+    }).catch(() => undefined);
+  }, [isAuthenticated, results.products]);
+
+  useEffect(() => {
     try {
+      if (isAuthenticated) return;
       setProductFavorites(
         new Set<number>(JSON.parse(localStorage.getItem('search-product-favorites') || '[]'))
       );
     } catch {
       // Storage indisponível ou valor antigo inválido: favoritos começam vazios.
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     trackPage('search', { search_term: query || undefined, city: urlCity || undefined });
