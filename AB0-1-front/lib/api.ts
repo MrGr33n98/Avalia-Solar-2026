@@ -589,7 +589,12 @@ export interface Review {
   company_id?: number;
   created_at: string;
   updated_at?: string;
-  user?: { id: number; name: string; avatar_url?: string | null };
+  user?: {
+    id: number;
+    name: string;
+    avatar_url?: string | null;
+    creator_slug?: string | null;
+  };
   product?: { id: number; name: string };
   company?: string | { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;

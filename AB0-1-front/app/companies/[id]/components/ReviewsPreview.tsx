@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { MessageSquare, Star, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,9 +108,15 @@ export default function ReviewsPreview({
           <div className="grid grid-cols-1 border-t border-slate-200 md:grid-cols-2">
             {recentReviews.map((review) => {
               const authorName = review.user?.name || 'Usuário';
+              const creatorSlug = review.user?.creator_slug;
               const avatarRaw = review.user?.avatar_url;
               const avatarUrl = avatarRaw ? getFullImageUrl(avatarRaw) : null;
               const content = String(review.comment ?? review.body ?? '').trim();
+              const criteria = ((review.granular_scores || review.review_criterion_scores || []) as Array<{
+                title?: string;
+                score?: number;
+                not_applicable?: boolean;
+              }>).filter((criterion) => !criterion.not_applicable && Number.isFinite(Number(criterion.score)));
               const initials = authorName
                 .split(' ')
                 .filter(Boolean)
@@ -141,9 +148,18 @@ export default function ReviewsPreview({
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-black text-slate-800 leading-tight">
-                            {authorName}
-                          </p>
+                          {creatorSlug ? (
+                            <Link
+                              href={`/creators/${encodeURIComponent(creatorSlug)}`}
+                              className="text-xs font-black leading-tight text-slate-800 hover:text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                            >
+                              {authorName}
+                            </Link>
+                          ) : (
+                            <p className="text-xs font-black leading-tight text-slate-800">
+                              {authorName}
+                            </p>
+                          )}
                           <p className="mt-0.5 text-[10px] text-slate-600">Cliente verificado</p>
                         </div>
                       </div>
@@ -158,6 +174,43 @@ export default function ReviewsPreview({
                       </div>
                     </div>
                     <p className="line-clamp-3 text-sm leading-relaxed text-slate-700">{content}</p>
+                    {criteria.length > 0 && (
+                      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                          Critérios avaliados
+                        </p>
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                          {criteria.map((criterion, index) => {
+                            const score = Math.max(0, Math.min(5, Number(criterion.score)));
+                            return (
+                              <div key={`${criterion.title || 'critério'}-${index}`}>
+                                <div className="mb-1 flex items-center justify-between gap-2">
+                                  <span className="truncate text-[11px] font-semibold text-slate-600">
+                                    {criterion.title || 'Critério'}
+                                  </span>
+                                  <span className="shrink-0 text-[11px] font-bold text-slate-800">
+                                    {score.toFixed(1)}
+                                  </span>
+                                </div>
+                                <div
+                                  className="h-1.5 overflow-hidden rounded-full bg-slate-200"
+                                  role="progressbar"
+                                  aria-label={`${criterion.title || 'Critério'}: ${score.toFixed(1)} de 5`}
+                                  aria-valuemin={0}
+                                  aria-valuemax={5}
+                                  aria-valuenow={score}
+                                >
+                                  <div
+                                    className="h-full rounded-full bg-[#0B1F4B] transition-all"
+                                    style={{ width: `${(score / 5) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

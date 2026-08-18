@@ -6,7 +6,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def index
     # Eager load associations to prevent N+1 queries
-    @reviews = Review.includes(:user, :company, review_media: %i[file_attachment file_blob],
+    @reviews = Review.includes({ user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
                    review_criterion_scores: :rating_criterion)
                      .order(created_at: :desc)
 
@@ -45,7 +45,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def mine
-    @reviews = current_user.reviews.includes(:user, :company, review_media: %i[file_attachment file_blob],
+    @reviews = current_user.reviews.includes({ user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
                                              review_criterion_scores: :rating_criterion).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
@@ -251,7 +251,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def set_review
-    @review = Review.includes(:user, :company, review_media: %i[file_attachment file_blob],
+    @review = Review.includes({ user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
                              review_criterion_scores: :rating_criterion).find(params[:id])
   end
 
@@ -297,7 +297,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     {
       id: user.id,
       name: user.name,
-      avatar_url: user.avatar_url
+      avatar_url: user.avatar_url,
+      creator_slug: user.reviewer_profile&.creator_enabled? ? user.reviewer_profile.public_slug : nil
     }
   end
 
