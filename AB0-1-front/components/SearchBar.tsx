@@ -322,34 +322,31 @@ export default function SearchBar({
                   : undefined
               }
               className={`
-                w-full pl-16 pr-14 h-14 rounded-2xl text-base font-medium
-                bg-white/98 backdrop-blur-xl 
-                border-2 border-gray-200/60 
-                shadow-xl shadow-gray-200/40
-                hover:border-blue-400/60 hover:shadow-2xl hover:shadow-blue-200/30
-                focus:border-blue-500/80 focus:shadow-2xl focus:shadow-blue-300/40
-                focus:bg-white focus:ring-4 focus:ring-blue-100/40
-                transition-all duration-300 ease-out
-                placeholder:text-gray-500 placeholder:font-normal
+                h-7 min-h-7 w-full rounded-xl border-[1.5px] border-[#2563EB]
+                bg-white px-3 py-1 pl-10 pr-10 text-xs font-medium text-slate-900
+                shadow-none transition-colors duration-150
+                hover:border-[#1D4ED8]
+                focus:border-[#1D4ED8] focus:bg-white focus:ring-2 focus:ring-blue-100/70
+                placeholder:text-[#6B7280] placeholder:font-normal
                 ${showResults && hasResults ? 'rounded-b-lg border-b-gray-200/40' : ''}
               `}
             />
 
             {/* Enhanced Search Icon with animation */}
-            <div className="absolute left-5 top-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
               <div className={`transition-all duration-300 ${
                 query || showResults 
                   ? 'text-blue-600 scale-110' 
                   : 'text-gray-500 group-hover:text-gray-700'
               }`}>
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4" />
               </div>
             </div>
 
             {/* Loading indicator with improved position */}
             {loading && (
-              <div className="absolute left-12 top-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
               </div>
             )}
 
@@ -358,9 +355,7 @@ export default function SearchBar({
               <button
                 type="button"
                 onClick={clearSearch}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 
-                         rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600
-                         transition-all duration-200 shadow-sm hover:shadow-md
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600
                          group/clear"
                 aria-label="Limpar busca"
               >
@@ -370,7 +365,7 @@ export default function SearchBar({
 
             {/* Quick Search Suggestions */}
             {!query && !showResults && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <div className="text-xs text-gray-400 hidden sm:block">
                   Tente: &quot;painéis solares&quot;
                 </div>

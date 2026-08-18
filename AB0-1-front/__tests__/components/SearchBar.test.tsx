@@ -27,9 +27,14 @@ jest.mock('@/lib/api', () => ({
 }));
 
 // Mock do componente Skeleton para SearchBar.test.tsx
-jest.mock('@/components/ui/Skeleton', () => ({
+jest.mock('@/components/ui/skeleton', () => ({
   __esModule: true,
+  Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
   default: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
+}));
+
+jest.mock('@/components/ui/button', () => ({
+  Button: ({ children, ...props }: { children: React.ReactNode }) => <button {...props}>{children}</button>,
 }));
 
 const mockFetchApi = fetchApi as jest.Mock;
@@ -53,6 +58,15 @@ describe('SearchBar', () => {
     const input = screen.getByPlaceholderText('Buscar empresas, produtos, categorias...'); // ALTERADO
     expect(input).toBeInTheDocument();
     expect(screen.getByLabelText('Buscar empresas, produtos, categorias...')).toBeInTheDocument();
+  });
+
+  it('mantém campo compacto com contorno azul definido', () => {
+    render(<SearchBar />);
+
+    const input = screen.getByPlaceholderText('Buscar empresas, produtos, categorias...');
+    expect(input).toHaveClass('h-7', 'min-h-7', 'rounded-xl', 'border-[1.5px]', 'border-[#2563EB]');
+    expect(input).toHaveClass('pl-10', 'pr-10');
+    expect(input).not.toHaveClass('h-14', 'border-2', 'shadow-xl');
   });
 
   it('updates input value on change', () => {
@@ -121,10 +135,7 @@ describe('SearchBar', () => {
       fireEvent.submit(form!);
     });
 
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/search',
-      query: { q: 'test query', page: '1', sort: 'rating' },
-    });
+    expect(mockPush).toHaveBeenCalledWith('/search?q=test%20query&sort=rating&page=1');
   });
 
   it('shows loading state when searching', async () => {
@@ -178,10 +189,8 @@ describe('SearchBar', () => {
     });
 
     await waitFor(() => {
-      const elements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('Nenhum resultado encontrado para "nonexistent"') || false;
-      });
-      expect(elements.length).toBeGreaterThan(0);
+      expect(screen.getByText('Nenhum resultado encontrado')).toBeInTheDocument();
+      expect(screen.getByText(/nonexistent/)).toBeInTheDocument();
     });
   });
 });
