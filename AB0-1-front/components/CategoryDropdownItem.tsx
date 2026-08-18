@@ -139,7 +139,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, o
         >
           <span className="flex min-w-0 items-center gap-2 pr-3 font-medium">
             {iconSrc ? (
-              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
                 <Image
                   src={iconSrc}
                   alt={`Ícone de ${category.name}`}
@@ -163,7 +163,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, o
         >
           <span className="flex min-w-0 items-center gap-2">
             {iconSrc ? (
-              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
                 <Image
                   src={iconSrc}
                   alt={`Ícone de ${category.name}`}
@@ -210,7 +210,7 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({ category, o
                     onClick={onSelect}
                   >
                     {subIconSrc ? (
-                      <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                      <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
                         <Image
                           src={subIconSrc}
                           alt=""

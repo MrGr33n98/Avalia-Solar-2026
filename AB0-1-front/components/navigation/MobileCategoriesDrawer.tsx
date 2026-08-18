@@ -448,7 +448,7 @@ function CategoryIcon({
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)]`}
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)] [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none`}
       aria-hidden="true"
     >
       {fallbackIcon ? (

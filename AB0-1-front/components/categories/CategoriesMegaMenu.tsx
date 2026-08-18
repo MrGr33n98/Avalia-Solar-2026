@@ -102,7 +102,7 @@ export const CategoriesMegaMenu: React.FC<CategoriesMegaMenuProps> = ({ isOpen, 
                 onClick={onClose}
                 className="group/parent flex min-w-0 items-start gap-3"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors group-hover/parent:from-white group-hover/parent:to-white">
+                  <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors group-hover/parent:from-white group-hover/parent:to-white">
                   {getCategoryVisualAsset(category.slug, category.name) ? (
                     <Image src={getCategoryVisualAsset(category.slug, category.name) as string} alt="" fill sizes="44px" className="object-contain p-1" />
                   ) : (

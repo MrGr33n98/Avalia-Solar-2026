@@ -29,7 +29,7 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
       >
         <span className="flex min-w-0 items-center gap-2">
           {iconSrc ? (
-            <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+            <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
               <Image
                 src={iconSrc}
                 alt={`Ícone de ${category.name}`}
@@ -61,7 +61,7 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
               >
                 <span className="flex min-w-0 items-center gap-1.5 pr-2">
                   {childIconSrc ? (
-                    <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm">
+                    <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
                       <Image
                         src={childIconSrc}
                         alt=""
