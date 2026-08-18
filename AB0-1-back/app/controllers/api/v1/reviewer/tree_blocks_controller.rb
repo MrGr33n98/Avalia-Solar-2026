@@ -10,11 +10,12 @@ module Api
 
         def index
           profile = current_profile
-          render json: { profile: profile_payload(profile), blocks: profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) } }
+          render json: { profile: profile_payload(profile), blocks: owned_blocks(profile).order(:position, :id).map { |block| block_payload(block) } }
         end
 
         def create
-          block = current_profile.creator_tree_blocks.new(block_params)
+          profile = current_profile
+          block = CreatorTreeBlock.new(block_params.merge(reviewer_id: profile.id))
           return render_validation_error(block) unless block.save
 
           render json: block_payload(block), status: :created
@@ -37,14 +38,14 @@ module Api
 
         def reorder
           ids = Array(params[:ids]).map(&:to_i)
-          blocks = current_profile.creator_tree_blocks.where(id: ids).index_by(&:id)
+          blocks = owned_blocks(current_profile).where(id: ids).index_by(&:id)
           return render json: { error: 'Blocos inválidos' }, status: :unprocessable_entity unless blocks.size == ids.size
 
           CreatorTreeBlock.transaction do
             ids.each_with_index { |id, index| blocks.fetch(id).update!(position: index) }
           end
           profile = current_profile
-          render json: { profile: profile_payload(profile), blocks: profile.creator_tree_blocks.order(:position, :id).map { |block| block_payload(block) } }
+          render json: { profile: profile_payload(profile), blocks: owned_blocks(profile).order(:position, :id).map { |block| block_payload(block) } }
         end
 
         private
@@ -54,7 +55,11 @@ module Api
         end
 
         def set_block
-          @block = current_profile.creator_tree_blocks.find(params[:id])
+          @block = owned_blocks(current_profile).find(params[:id])
+        end
+
+        def owned_blocks(profile)
+          CreatorTreeBlock.where(reviewer_id: profile.id)
         end
 
         def block_params

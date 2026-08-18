@@ -56,4 +56,13 @@ RSpec.describe 'Reviewer Tree blocks API', type: :request do
     titles = JSON.parse(response.body).fetch('blocks').map { |block| block.fetch('title') }
     expect(titles).to eq(['Visível'])
   end
+
+  it 'persists new blocks with public profile reviewer_id' do
+    post '/api/v1/reviewer/tree/blocks', params: {
+      block: { block_type: 'external_link', title: 'Owner check', url: 'https://example.com', active: true }
+    }.to_json, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(CreatorTreeBlock.order(:id).last.reviewer_id).to eq(profile.id)
+  end
 end
