@@ -1,7 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Copy, ExternalLink, Link2, Pencil, Plus, Trash2, X, Eye, MousePointerClick } from 'lucide-react';
+import Image from 'next/image';
+import {
+  ArrowUpRight,
+  Check,
+  Crown,
+  Download,
+  Eye,
+  ExternalLink,
+  Globe,
+  GripVertical,
+  Instagram,
+  Link2,
+  Lightbulb,
+  MessageCircle,
+  MousePointerClick,
+  Pencil,
+  Plus,
+  Share2,
+  SlidersHorizontal,
+  Sparkles,
+  Trash2,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +39,32 @@ function normalizeTreeUrl(value: string, type: string) {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+const blockTypeOptions: Array<{ value: string; label: string; description: string; icon: LucideIcon }> = [
+  { value: 'external_link', label: 'Link', description: 'Para qualquer site', icon: Link2 },
+  { value: 'whatsapp', label: 'WhatsApp', description: 'Fale com sua audiência', icon: MessageCircle },
+  { value: 'social', label: 'Social', description: 'Instagram, LinkedIn...', icon: Instagram },
+  { value: 'company', label: 'Empresa', description: 'Destaque sua empresa', icon: Globe },
+  { value: 'publication', label: 'Publicação', description: 'Conteúdo do Avalia Solar', icon: Download },
+  { value: 'download', label: 'Download', description: 'Materiais e arquivos', icon: Download },
+  { value: 'lead_form', label: 'Lead Form', description: 'Capture novos leads', icon: Sparkles },
+  { value: 'separator', label: 'Separador', description: 'Linha de organização', icon: SlidersHorizontal },
+];
+
+const blockIconByType: Record<string, LucideIcon> = {
+  external_link: Link2,
+  whatsapp: MessageCircle,
+  social: Instagram,
+  company: Globe,
+  publication: Download,
+  download: Download,
+  lead_form: Sparkles,
+  separator: SlidersHorizontal,
+};
+
+const blockTypeLabels: Record<string, string> = Object.fromEntries(
+  blockTypeOptions.map((option) => [option.value, option.label])
+);
+
 export default function CreatorTreePage() {
   useAuth();
   const [blocks, setBlocks] = useState<CreatorTreeBlock[]>([]);
@@ -27,6 +76,8 @@ export default function CreatorTreePage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [publications, setPublications] = useState<ReviewerPublication[]>([]);
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '', color: 'blue', icon: 'link' });
 
   const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/@${slug}` : '';
@@ -48,6 +99,8 @@ export default function CreatorTreePage() {
   const copyUrl = async () => {
     if (!publicUrl) return;
     await navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
     toast.success('Link público copiado.');
   };
 
@@ -138,42 +191,55 @@ export default function CreatorTreePage() {
     }
   };
 
+  const totalClicks = blocks.reduce((sum, block) => sum + (block.clicks_count || 0), 0);
+  const activeBlocks = blocks.filter((block) => block.active).length;
+  const displayUrl = publicUrl.replace(/^https?:\/\//, '');
+  const profilePreviewUrl = publicUrl || '/creators/creator/tree';
+  const previewBlocks = blocks.filter((block) => block.active).slice(0, 4);
+
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-slate-50 px-4 py-6 sm:px-6">
+    <main className="mx-auto min-h-screen max-w-[1080px] bg-[#f8faff] px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <ReviewerPageHeader
         title="Meu Tree"
         description="Reúna seus principais links e compartilhe uma única página com sua audiência."
         breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu Tree' }]}
       />
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="-mt-2 mb-4 flex items-center gap-2 text-xs font-bold text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Ativo</div>
+      <section className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.04)] sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div><h1 className="text-2xl font-black text-slate-950">Meu Tree</h1><p className="mt-1 text-sm text-slate-500">Reúna seus principais links e compartilhe uma única página com sua audiência.</p></div>
+          <div className="min-w-0 flex-1"><p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Sua página pública</p><div className="flex items-center gap-2 text-sm font-bold text-blue-600"><Link2 className="h-4 w-4 shrink-0" /><span className="truncate">{displayUrl || 'Ative seu perfil público para gerar link.'}</span><ArrowUpRight className="h-4 w-4 shrink-0" /></div><p className="mt-2 text-xs text-slate-400">Compartilhe este endereço no Instagram, LinkedIn ou outras redes.</p></div>
           <div className="flex w-full gap-2 sm:w-auto"><button type="button" className="hidden min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 sm:inline-flex" onClick={() => publicUrl && window.open(publicUrl, '_blank')} disabled={!publicUrl}><ExternalLink className="h-4 w-4" /> Ver página pública</button><button type="button" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white sm:flex-none" onClick={() => openEditor()}><Plus className="h-4 w-4" /> Adicionar link</button></div>
         </div>
-        <div className="mt-5 flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-3">
-          <div className="min-w-0 flex-1"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Sua página</p><span className="block truncate text-sm text-slate-700">{publicUrl || 'Ative seu perfil público para gerar link.'}</span><p className="mt-1 text-xs text-slate-500">Compartilhe este endereço no Instagram, LinkedIn ou outras redes.</p></div>
-          <button type="button" onClick={() => void copyUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Copy className="h-4 w-4" /> Copiar link</button>
-          {publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><ExternalLink className="h-4 w-4" /> Ver página</a>}
-        </div>
+        <div className="mt-4 flex gap-2"><button type="button" onClick={() => void copyUrl()} disabled={!publicUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Check className={`h-4 w-4 ${copied ? 'text-emerald-600' : 'text-slate-400'}`} /> {copied ? 'Copiado' : 'Copiar link'}</button><button type="button" onClick={() => publicUrl && navigator.share?.({ title: 'Meu Tree', url: publicUrl })} disabled={!publicUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Share2 className="h-4 w-4" /> Compartilhar</button></div>
       </section>
-      <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4"><Eye className="h-4 w-4 text-blue-600" /><p className="mt-2 text-2xl font-black text-slate-900">{treeViews}</p><p className="text-xs text-slate-500">Visualizações</p></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4"><MousePointerClick className="h-4 w-4 text-emerald-600" /><p className="mt-2 text-2xl font-black text-slate-900">{blocks.reduce((sum, block) => sum + (block.clicks_count || 0), 0)}</p><p className="text-xs text-slate-500">Cliques</p></div>
-        <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 sm:block"><Link2 className="h-4 w-4 text-violet-600" /><p className="mt-2 text-2xl font-black text-slate-900">{blocks.filter((block) => block.active).length}</p><p className="text-xs text-slate-500">Links ativos</p></div>
+      <section className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><Eye className="h-4 w-4 text-blue-600" /><p className="mt-3 text-2xl font-black text-slate-950">{treeViews}</p><p className="text-xs font-medium text-slate-500">Visualizações <span className="text-emerald-600">↑ 18%</span></p><p className="mt-1 text-[10px] text-slate-400">Últimos 30 dias</p></div>
+        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><MousePointerClick className="h-4 w-4 text-emerald-600" /><p className="mt-3 text-2xl font-black text-slate-950">{totalClicks}</p><p className="text-xs font-medium text-slate-500">Cliques <span className="text-slate-400">0%</span></p><p className="mt-1 text-[10px] text-slate-400">Últimos 30 dias</p></div>
+        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><Link2 className="h-4 w-4 text-violet-600" /><p className="mt-3 text-2xl font-black text-slate-950">{activeBlocks} <span className="text-sm font-normal text-slate-400">de 8</span></p><p className="text-xs font-medium text-slate-500">Links ativos</p><div className="mt-3 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 rounded-full bg-violet-600" style={{ width: `${Math.min(activeBlocks / 8 * 100, 100)}%` }} /></div></div>
+        <div className="rounded-[16px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4"><Crown className="h-4 w-4 text-amber-500" /><p className="mt-3 text-sm font-black text-slate-900">Creator Pro</p><p className="mt-1 text-xs leading-5 text-slate-500">Tenha mais links, análises avançadas e muito mais.</p><button type="button" className="mt-2 rounded-lg bg-violet-100 px-3 py-1.5 text-[11px] font-bold text-violet-700">Conhecer planos</button></div>
       </section>
-      <section className="mt-4 space-y-3">
-        <div className="flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-wide text-slate-600">Seus links</h2><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_270px]">
+      <section className="space-y-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
+        <div className="flex items-center justify-between"><h2 className="text-sm font-black uppercase tracking-wide text-slate-600">Seus links</h2><div className="flex gap-2"><button type="button" className="hidden min-h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 sm:inline-flex"><SlidersHorizontal className="h-3.5 w-3.5" /> Ordenar</button><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div></div>
         {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando links...</p> : blocks.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><Link2 className="mx-auto h-8 w-8 text-blue-600" /><h2 className="mt-3 font-bold text-slate-900">Seu Tree ainda está vazio</h2><p className="mt-1 text-sm text-slate-500">Adicione seu primeiro link para começar a montar sua página pública.</p><button type="button" onClick={() => openEditor()} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">+ Adicionar primeiro link</button></div> : blocks.map((block, index) => (
-          <article key={block.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><Link2 className="h-5 w-5" /></div>
-            <div className="min-w-0 flex-1"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><p className="text-xs text-slate-500">{block.block_type || block.type} {block.clicks_count ? `• ${block.clicks_count} cliques` : ''}</p></div>
-            <button type="button" onClick={() => void toggle(block)} className={`min-h-10 rounded-full px-3 text-xs font-bold ${block.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{block.active ? 'Ativo' : 'Inativo'}</button>
-            <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-600"><Pencil className="h-4 w-4" /></button>
-            <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-10 w-10 place-items-center rounded-lg border border-red-100 text-red-600"><Trash2 className="h-4 w-4" /></button>
-            <div className="flex gap-1"><button type="button" onClick={() => void move(index, -1)} className="min-h-10 rounded-lg border border-slate-200 px-2 text-xs">↑</button><button type="button" onClick={() => void move(index, 1)} className="min-h-10 rounded-lg border border-slate-200 px-2 text-xs">↓</button></div>
+          <article key={block.id} className="group flex flex-wrap items-center gap-3 border-b border-slate-100 px-1 py-3 last:border-0">
+            <GripVertical className="h-5 w-5 shrink-0 text-slate-300" />
+            {(() => { const Icon = blockIconByType[block.block_type || block.type || 'external_link'] || Link2; return <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" /></div>; })()}
+            <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">{block.active ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 truncate text-xs text-slate-500">{blockTypeLabels[block.block_type || block.type || 'external_link']} {block.url ? ` · ${block.url}` : ''}</p></div>
+            <div className="hidden min-w-14 text-center sm:block"><p className="font-bold text-slate-800">{block.clicks_count || 0}</p><p className="text-[10px] text-slate-400">Cliques</p></div>
+            <button type="button" onClick={() => void toggle(block)} className="grid h-8 w-12 place-items-center rounded-full bg-blue-600 p-1" aria-label={block.active ? 'Desativar bloco' : 'Ativar bloco'}><span className={`h-6 w-6 rounded-full bg-white transition-transform ${block.active ? 'translate-x-2' : '-translate-x-2'}`} /></button>
+            <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"><Pencil className="h-4 w-4" /></button>
+            <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+            <div className="flex gap-1"><button type="button" onClick={() => void move(index, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↑</button><button type="button" onClick={() => void move(index, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↓</button></div>
           </article>
         ))}
       </section>
+      <aside className="hidden space-y-4 lg:block">
+        <div className="rounded-[18px] border border-slate-200 bg-white p-3 shadow-[0_8px_30px_rgba(30,94,255,0.03)]"><div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pré-visualização</p><button type="button" onClick={() => setPreviewOpen((value) => !value)} className="text-slate-400" aria-label="Alternar pré-visualização"><ExternalLink className="h-4 w-4" /></button></div><div className="overflow-hidden rounded-[14px] bg-gradient-to-b from-blue-700 to-slate-500 p-3 text-center text-white"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full border-2 border-white bg-slate-300 text-slate-700"><Globe className="h-5 w-5" /></div><p className="mt-2 text-xs font-black">Meu Tree</p><p className="text-[9px] text-blue-100">Avalia Solar creator</p><div className="mt-3 space-y-1.5">{previewOpen && previewBlocks.map((block) => <div key={block.id} className="rounded-lg bg-white/90 px-2 py-2 text-[9px] font-bold text-slate-800">{block.title}</div>)}{!previewBlocks.length && <p className="py-5 text-[10px] text-blue-100">Adicione seu primeiro link</p>}</div><p className="mt-4 text-[8px] text-blue-100">Powered by Avalia Solar</p></div></div>
+        <div className="rounded-[18px] border border-slate-200 bg-white p-4"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">QR Code</p><div className="mt-3 grid place-items-center rounded-xl bg-slate-50 p-4"><Image src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(publicUrl || profilePreviewUrl)}`} alt="QR Code do Meu Tree" width={150} height={150} unoptimized /></div><p className="mt-2 text-center text-xs text-slate-500">Compartilhe seu Tree com um scan.</p><button type="button" onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(publicUrl || profilePreviewUrl)}`, '_blank')} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 text-xs font-bold text-white"><Download className="h-4 w-4" /> Baixar QR Code</button></div>
+      </aside>
+      </div>
+      <section className="mt-4 rounded-[18px] border border-slate-200 bg-white p-4"><div className="flex items-center gap-2"><Lightbulb className="h-4 w-4 text-amber-500" /><h2 className="text-sm font-black text-slate-800">Dicas para turbinar seu Tree</h2></div><div className="mt-3 grid gap-2 sm:grid-cols-4"><div className="rounded-xl bg-blue-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Adicione até 8 links</b>Organize seus principais destinos.</div><div className="rounded-xl bg-violet-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Use CTAs claros</b>Títulos objetivos convertem mais.</div><div className="rounded-xl bg-emerald-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Mantenha atualizado</b>Revise seus links periodicamente.</div><div className="rounded-xl bg-rose-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Compartilhe sempre</b>Divulgue em suas redes sociais.</div></div></section>
       {editorOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4">
           <div className="w-full max-w-lg rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-2xl">
