@@ -168,6 +168,7 @@ end
 
 
   has_many :reviews, as: :reviewable, dependent: :destroy
+  has_many :favorites, as: :favoritable, dependent: :destroy
   has_many :conversations, dependent: :destroy
   has_many :review_aggregates, dependent: :destroy
   has_many :pending_changes, dependent: :destroy

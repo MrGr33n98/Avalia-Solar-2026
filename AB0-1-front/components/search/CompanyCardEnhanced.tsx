@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { BadgeCheck, Heart, MapPin, Star } from 'lucide-react';
+import { BadgeCheck, MapPin, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
-import { cn } from '@/lib/utils';
+import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 
 interface CompanyCardEnhancedProps {
   company: Company;
@@ -39,20 +39,13 @@ export function CompanyCardEnhanced({
   const href = buildCompanyPath(company.slug, company.name, company.id);
   const p2pChatEnabled =
     company.p2p_chat_enabled === true ||
-    (company as any)?.actions?.p2p_chat_enabled === true;
+    (company.actions as { p2p_chat_enabled?: boolean } | undefined)?.p2p_chat_enabled === true;
 
   return (
     <article className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <CompanyLogo logoUrl={company.logo_url} name={company.name} size="lg" badges={company.badges} />
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          aria-label={`${favorite ? 'Remover' : 'Adicionar'} ${company.name} dos favoritos`}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500"
-        >
-          <Heart className={cn('h-4 w-4', favorite && 'fill-rose-500 text-rose-500')} />
-        </button>
+        <FavoriteButton favoritableType="Company" favoritableId={company.id} initialFavorited={favorite} source="search" onChange={onToggleFavorite} />
       </div>
 
       <Link href={href} className="mt-3 hover:text-blue-700">

@@ -2,10 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import type { Product } from '@/lib/api';
 import { buildProductPath } from '@/lib/slug';
-import { cn } from '@/lib/utils';
+import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 
 interface ProductCardEnhancedProps {
   product: Product;
@@ -42,14 +42,7 @@ export function ProductCardEnhanced({
             Verificado
           </span>
         ) : null}
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          aria-label={`${favorite ? 'Remover' : 'Adicionar'} ${product.name} dos favoritos`}
-          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-        >
-          <Heart className={cn('h-4 w-4', favorite && 'fill-rose-500 text-rose-500')} />
-        </button>
+        <FavoriteButton favoritableType="Product" favoritableId={product.id} initialFavorited={favorite} source="search" onChange={onToggleFavorite} className="absolute right-2 top-2 border border-slate-200 bg-white text-slate-600 shadow-sm" />
       </div>
 
       <div className="flex flex-1 flex-col p-4 pt-2">

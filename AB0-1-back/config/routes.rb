@@ -74,6 +74,13 @@ Rails.application.routes.draw do
 
       resources :recommendations, only: %i[index]
 
+      resources :favorites, only: %i[index create destroy] do
+        collection do
+          delete :by_item
+          get :status
+        end
+      end
+
       resources :financial_institutions, only: %i[index show]
 
       resources :companies do

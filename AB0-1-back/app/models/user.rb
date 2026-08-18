@@ -19,6 +19,7 @@ class User < ApplicationRecord
   has_many :subscription_plans, foreign_key: :member_id, inverse_of: :member, dependent: :nullify
   has_many :sponsored_plans, foreign_key: :member_id, inverse_of: :member, dependent: :nullify
   has_many :reviews, dependent: :destroy
+  has_many :favorites, dependent: :destroy
   has_many :review_upload_sessions, dependent: :destroy
   has_many :review_media, class_name: 'ReviewMedia', dependent: :destroy
   has_many :reviewer_solutions, dependent: :destroy

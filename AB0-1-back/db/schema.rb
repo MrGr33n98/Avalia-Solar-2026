@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_18_080000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -368,6 +368,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["event_key"], name: "index_banner_events_on_event_key", unique: true, where: "(event_key IS NOT NULL)"
     t.index ["event_type"], name: "index_banner_events_on_event_type"
     t.index ["impression_instance_id"], name: "idx_banner_events_impression_instance", unique: true, where: "(((event_type)::text = 'impression'::text) AND (impression_instance_id IS NOT NULL))"
+    t.index ["tracked_at", "banner_id", "event_type"], name: "idx_banner_events_reporting_window", where: "(valid_for_reporting = true)"
     t.index ["tracked_at"], name: "index_banner_events_on_tracked_at"
     t.index ["valid_for_reporting"], name: "index_banner_events_on_valid_for_reporting"
   end
@@ -616,7 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -700,6 +701,27 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["category_id"], name: "index_category_lead_wizards_on_category_id", unique: true
   end
 
+  create_table "category_solution_types", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "short_description"
+    t.text "description"
+    t.string "visual_key"
+    t.string "technology_family"
+    t.string "speed_class"
+    t.integer "position", default: 100, null: false
+    t.boolean "active", default: true, null: false
+    t.boolean "featured", default: false, null: false
+    t.jsonb "attributes_json", default: {}, null: false
+    t.jsonb "use_cases", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "active", "position"], name: "idx_cst_category_active_pos"
+    t.index ["category_id", "slug"], name: "idx_cst_category_slug", unique: true
+    t.index ["category_id"], name: "idx_cst_category"
+  end
+
   create_table "chat_insights", force: :cascade do |t|
     t.string "insight_type", null: false
     t.string "vertical"
@@ -778,6 +800,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.integer "intent_score", default: 0
     t.integer "fit_score", default: 0
     t.jsonb "score_explanation", default: {}
+    t.string "assignment_source"
+    t.index ["assignment_source"], name: "index_chat_leads_on_assignment_source"
     t.index ["chat_session_id"], name: "index_chat_leads_on_chat_session_id", unique: true, where: "(chat_session_id IS NOT NULL)"
     t.index ["city"], name: "index_chat_leads_on_city"
     t.index ["consent_given"], name: "index_chat_leads_on_consent_given"
@@ -794,8 +818,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["utm_source"], name: "index_chat_leads_on_utm_source"
     t.index ["vertical", "created_at"], name: "index_chat_leads_on_vertical_and_created_at"
     t.index ["vertical"], name: "index_chat_leads_on_vertical"
-    t.string "assignment_source"
-    t.index ["assignment_source"], name: "index_chat_leads_on_assignment_source"
   end
 
   create_table "chat_messages", force: :cascade do |t|
@@ -1058,7 +1080,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -1075,7 +1097,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1110,6 +1132,24 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_company_buttons_on_company_id"
+  end
+
+  create_table "company_category_capabilities", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "category_id", null: false
+    t.bigint "category_solution_type_id"
+    t.string "capability_type", null: false
+    t.string "coverage_scope"
+    t.jsonb "attributes_json", default: {}, null: false
+    t.boolean "verified", default: false, null: false
+    t.datetime "verified_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "capability_type"], name: "idx_ccc_category_capability"
+    t.index ["category_id"], name: "idx_ccc_category"
+    t.index ["category_solution_type_id"], name: "idx_ccc_solution"
+    t.index ["company_id", "category_id", "category_solution_type_id", "capability_type"], name: "idx_ccc_company_category_solution_cap", unique: true
+    t.index ["company_id"], name: "idx_ccc_company"
   end
 
   create_table "company_daily_stats", force: :cascade do |t|
@@ -1521,7 +1561,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -1685,6 +1725,57 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["user_id"], name: "index_conversations_on_user_id"
   end
 
+  create_table "creator_leads", force: :cascade do |t|
+    t.bigint "creator_user_id", null: false
+    t.bigint "publication_id"
+    t.bigint "visitor_id"
+    t.string "name", null: false
+    t.string "email", null: false
+    t.string "phone"
+    t.text "message"
+    t.string "intent", default: "contact_creator", null: false
+    t.string "source"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.datetime "consent_at", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "status", default: "new", null: false
+    t.text "admin_notes"
+    t.datetime "handled_at"
+    t.index ["creator_user_id", "created_at"], name: "index_creator_leads_on_creator_user_id_and_created_at"
+    t.index ["creator_user_id", "status", "created_at"], name: "idx_creator_leads_inbox"
+    t.index ["creator_user_id"], name: "index_creator_leads_on_creator_user_id"
+    t.index ["publication_id"], name: "index_creator_leads_on_publication_id"
+    t.index ["status"], name: "index_creator_leads_on_status"
+    t.index ["visitor_id"], name: "index_creator_leads_on_visitor_id"
+  end
+
+  create_table "creator_tree_blocks", force: :cascade do |t|
+    t.bigint "reviewer_id", null: false
+    t.bigint "company_id"
+    t.bigint "publication_id"
+    t.string "block_type", null: false
+    t.string "title", null: false
+    t.string "subtitle"
+    t.string "url"
+    t.integer "position", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "clicks_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["block_type"], name: "index_creator_tree_blocks_on_block_type"
+    t.index ["company_id"], name: "index_creator_tree_blocks_on_company_id"
+    t.index ["publication_id"], name: "index_creator_tree_blocks_on_publication_id"
+    t.index ["reviewer_id", "active"], name: "index_creator_tree_blocks_on_reviewer_id_and_active"
+    t.index ["reviewer_id", "position"], name: "index_creator_tree_blocks_on_reviewer_id_and_position"
+    t.index ["reviewer_id"], name: "index_creator_tree_blocks_on_reviewer_id"
+  end
+
   create_table "daily_growth_snapshots", force: :cascade do |t|
     t.date "snapshot_date", null: false
     t.integer "total_page_views", default: 0
@@ -1824,6 +1915,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["category"], name: "index_faqs_on_category"
   end
 
+  create_table "favorites", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "favoritable_type", null: false
+    t.bigint "favoritable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["favoritable_type", "favoritable_id"], name: "idx_favorites_favoritable"
+    t.index ["user_id", "created_at"], name: "idx_favorites_user_created_at"
+    t.index ["user_id", "favoritable_type", "favoritable_id"], name: "idx_favorites_unique_user_item", unique: true
+  end
+
   create_table "feature_groups", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -1918,7 +2020,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2197,7 +2299,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
-    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying::text, 'pending_otp'::character varying::text, 'verified'::character varying::text, 'distributed'::character varying::text, 'proposal_submitted'::character varying::text, 'proposal_processing'::character varying::text, 'proposal_sent'::character varying::text, 'proposal_failed'::character varying::text])", name: "ck_leads_valid_status"
+    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
   end
 
   create_table "material_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2718,7 +2820,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
   end
 
   create_table "push_subscriptions", force: :cascade do |t|
@@ -2879,6 +2981,47 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["token"], name: "index_review_forms_on_token", unique: true
   end
 
+  create_table "review_media", force: :cascade do |t|
+    t.bigint "review_id"
+    t.bigint "upload_session_id", null: false
+    t.bigint "user_id", null: false
+    t.string "media_type", default: "image", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.string "content_type"
+    t.bigint "byte_size"
+    t.integer "width"
+    t.integer "height"
+    t.string "moderation_status", default: "pending", null: false
+    t.text "rejected_reason"
+    t.string "moderated_by_type"
+    t.bigint "moderated_by_id"
+    t.datetime "moderated_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["moderated_by_type", "moderated_by_id"], name: "index_review_media_on_moderated_by_type_and_moderated_by_id"
+    t.index ["moderation_status"], name: "index_review_media_on_moderation_status"
+    t.index ["review_id", "sort_order"], name: "index_review_media_on_review_id_and_sort_order"
+    t.index ["review_id"], name: "index_review_media_on_review_id"
+    t.index ["status"], name: "index_review_media_on_status"
+    t.index ["upload_session_id"], name: "index_review_media_on_upload_session_id"
+    t.index ["user_id"], name: "index_review_media_on_user_id"
+  end
+
+  create_table "review_upload_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "finalized_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "status", "expires_at"], name: "idx_review_upload_sessions_availability"
+    t.index ["user_id"], name: "index_review_upload_sessions_on_user_id"
+    t.index ["uuid"], name: "index_review_upload_sessions_on_uuid", unique: true
+  end
+
   create_table "review_votes", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "review_id", null: false
@@ -2888,6 +3031,132 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
     t.index ["review_id"], name: "index_review_votes_on_review_id"
     t.index ["user_id", "review_id"], name: "index_review_votes_on_user_id_and_review_id", unique: true
     t.index ["user_id"], name: "index_review_votes_on_user_id"
+  end
+
+  create_table "reviewer_profiles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "profession"
+    t.string "company_name"
+    t.text "bio"
+    t.date "birth_date"
+    t.string "linkedin_url"
+    t.string "instagram_url"
+    t.string "website_url"
+    t.boolean "public_profile", default: false, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "public_slug"
+    t.boolean "creator_enabled", default: false, null: false
+    t.string "public_headline"
+    t.text "public_bio"
+    t.string "youtube_url"
+    t.boolean "public_email_enabled", default: false, null: false
+    t.boolean "lead_capture_enabled", default: true, null: false
+    t.string "whatsapp_url", limit: 500
+    t.integer "tree_views_count", default: 0, null: false
+    t.index ["public_slug"], name: "index_reviewer_profiles_on_public_slug", unique: true, where: "(public_slug IS NOT NULL)"
+    t.index ["user_id"], name: "index_reviewer_profiles_on_user_id", unique: true
+  end
+
+  create_table "reviewer_publication_comments", force: :cascade do |t|
+    t.bigint "reviewer_publication_id", null: false
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.string "email", null: false
+    t.text "body", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "ip_address"
+    t.index ["ip_address", "created_at"], name: "idx_publication_comments_ip_created"
+    t.index ["reviewer_publication_id", "status", "created_at"], name: "idx_creator_comments_feed"
+    t.index ["reviewer_publication_id"], name: "index_reviewer_publication_comments_on_reviewer_publication_id"
+    t.index ["user_id"], name: "index_reviewer_publication_comments_on_user_id"
+  end
+
+  create_table "reviewer_publication_events", force: :cascade do |t|
+    t.bigint "reviewer_publication_id", null: false
+    t.bigint "user_id"
+    t.string "event_name", null: false
+    t.string "session_id"
+    t.string "channel"
+    t.string "referrer"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "ip_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewer_publication_id", "event_name", "created_at"], name: "idx_publication_events_lookup"
+    t.index ["reviewer_publication_id"], name: "index_reviewer_publication_events_on_reviewer_publication_id"
+    t.index ["user_id"], name: "index_reviewer_publication_events_on_user_id"
+  end
+
+  create_table "reviewer_publication_likes", force: :cascade do |t|
+    t.bigint "reviewer_publication_id", null: false
+    t.bigint "user_id"
+    t.string "visitor_key"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewer_publication_id", "user_id"], name: "idx_publication_likes_user", unique: true
+    t.index ["reviewer_publication_id", "visitor_key"], name: "idx_publication_likes_visitor", unique: true, where: "(visitor_key IS NOT NULL)"
+    t.index ["reviewer_publication_id"], name: "index_reviewer_publication_likes_on_reviewer_publication_id"
+    t.index ["user_id"], name: "index_reviewer_publication_likes_on_user_id"
+  end
+
+  create_table "reviewer_publications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "slug", null: false
+    t.text "excerpt"
+    t.text "body", null: false
+    t.string "status", default: "draft", null: false
+    t.string "publication_type", default: "article", null: false
+    t.string "category"
+    t.datetime "published_at"
+    t.boolean "comments_enabled", default: true, null: false
+    t.boolean "lead_capture_enabled", default: false, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "approved", null: false
+    t.bigint "views_count", default: 0, null: false
+    t.integer "likes_count", default: 0, null: false
+    t.index ["status", "published_at"], name: "index_reviewer_publications_on_status_and_published_at"
+    t.index ["user_id", "published_at"], name: "idx_reviewer_publications_user_published", where: "((status)::text = 'published'::text)"
+    t.index ["user_id", "slug"], name: "index_reviewer_publications_on_user_id_and_slug", unique: true
+    t.index ["user_id", "status", "published_at"], name: "idx_reviewer_publications_public_feed"
+    t.index ["user_id", "status"], name: "index_reviewer_publications_on_user_id_and_status"
+    t.index ["user_id"], name: "index_reviewer_publications_on_user_id"
+  end
+
+  create_table "reviewer_solution_events", force: :cascade do |t|
+    t.bigint "reviewer_solution_id", null: false
+    t.bigint "actor_id"
+    t.string "action", null: false
+    t.string "old_status"
+    t.string "new_status"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_reviewer_solution_events_on_actor_id"
+    t.index ["reviewer_solution_id", "created_at"], name: "idx_reviewer_solution_events_timeline"
+    t.index ["reviewer_solution_id"], name: "index_reviewer_solution_events_on_reviewer_solution_id"
+  end
+
+  create_table "reviewer_solutions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.string "solution_type", null: false
+    t.string "category", null: false
+    t.boolean "verified", default: false, null: false
+    t.string "company_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "status", default: "active", null: false
+    t.index ["solution_type"], name: "index_reviewer_solutions_on_solution_type"
+    t.index ["status"], name: "index_reviewer_solutions_on_status"
+    t.index ["user_id", "name"], name: "index_reviewer_solutions_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_reviewer_solutions_on_user_id"
   end
 
   create_table "reviews", force: :cascade do |t|
@@ -3207,6 +3476,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
   add_foreign_key "categories_products", "products"
   add_foreign_key "category_faqs", "categories"
   add_foreign_key "category_lead_wizards", "categories"
+  add_foreign_key "category_solution_types", "categories"
   add_foreign_key "chat_lead_activities", "chat_leads"
   add_foreign_key "chat_leads", "chat_sessions"
   add_foreign_key "chat_messages", "chat_sessions"
@@ -3223,6 +3493,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
   add_foreign_key "company_badges", "badges"
   add_foreign_key "company_badges", "companies"
   add_foreign_key "company_buttons", "companies"
+  add_foreign_key "company_category_capabilities", "categories"
+  add_foreign_key "company_category_capabilities", "category_solution_types", on_delete: :cascade
+  add_foreign_key "company_category_capabilities", "companies"
   add_foreign_key "company_faqs", "companies"
   add_foreign_key "company_financing_offers", "companies"
   add_foreign_key "company_financing_partners", "companies"
@@ -3257,8 +3530,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
   add_foreign_key "conversation_reports", "users", column: "reporter_id"
   add_foreign_key "conversations", "companies"
   add_foreign_key "conversations", "users"
+  add_foreign_key "creator_leads", "reviewer_publications", column: "publication_id"
+  add_foreign_key "creator_leads", "users", column: "creator_user_id"
+  add_foreign_key "creator_leads", "users", column: "visitor_id"
+  add_foreign_key "creator_tree_blocks", "companies"
+  add_foreign_key "creator_tree_blocks", "reviewer_profiles", column: "reviewer_id"
+  add_foreign_key "creator_tree_blocks", "reviewer_publications", column: "publication_id"
   add_foreign_key "digital_assets", "companies"
   add_foreign_key "direct_messages", "conversations"
+  add_foreign_key "favorites", "users"
   add_foreign_key "financing_options", "companies"
   add_foreign_key "financing_options", "financial_institutions"
   add_foreign_key "forum_answers", "forum_questions"
@@ -3318,8 +3598,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_12_190000) do
   add_foreign_key "review_form_events", "companies"
   add_foreign_key "review_form_events", "review_forms"
   add_foreign_key "review_forms", "companies"
+  add_foreign_key "review_media", "review_upload_sessions", column: "upload_session_id"
+  add_foreign_key "review_media", "reviews"
+  add_foreign_key "review_media", "users"
+  add_foreign_key "review_upload_sessions", "users"
   add_foreign_key "review_votes", "reviews"
   add_foreign_key "review_votes", "users"
+  add_foreign_key "reviewer_profiles", "users"
+  add_foreign_key "reviewer_publication_comments", "reviewer_publications"
+  add_foreign_key "reviewer_publication_comments", "users"
+  add_foreign_key "reviewer_publication_events", "reviewer_publications"
+  add_foreign_key "reviewer_publication_events", "users"
+  add_foreign_key "reviewer_publication_likes", "reviewer_publications"
+  add_foreign_key "reviewer_publication_likes", "users"
+  add_foreign_key "reviewer_publications", "users"
+  add_foreign_key "reviewer_solution_events", "reviewer_solutions"
+  add_foreign_key "reviewer_solution_events", "users", column: "actor_id"
+  add_foreign_key "reviewer_solutions", "users"
   add_foreign_key "reviews", "categories"
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "review_forms"
