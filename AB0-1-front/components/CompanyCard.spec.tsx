@@ -20,8 +20,8 @@ jest.mock('@/lib/lead-engine', () => ({
 
 jest.mock('@/components/company/ReviewCompanyButton', () => ({
   __esModule: true,
-  default: ({ company, label = 'Avaliar' }: { company: { name?: string }; label?: string }) => (
-    <a href="#review" aria-label={`${label}: ${company.name}`}>
+  default: ({ company, label = 'Avaliar', className }: { company: { name?: string }; label?: string; className?: string }) => (
+    <a href="#review" aria-label={`${label}: ${company.name}`} className={className}>
       {label}
     </a>
   ),
@@ -36,7 +36,9 @@ jest.mock('@/components/quote/QuoteCTA', () => ({
 }));
 
 jest.mock('@/components/icons/AnimatedCompareIcon', () => ({
-  AnimatedCompareIcon: () => <span aria-hidden="true" />,
+  AnimatedCompareIcon: ({ size }: { size?: number }) => (
+    <span aria-hidden="true" data-testid="compare-icon" data-size={size} />
+  ),
 }));
 
 jest.mock('next/image', () => ({
@@ -60,7 +62,11 @@ describe('CompanyCard standard actions', () => {
   it('renders compare, review and quote for eligible company', () => {
     render(<CompanyCard company={company} variant="standard" />);
 
-    expect(screen.getByRole('button', { name: 'Comparar' })).toBeInTheDocument();
+    const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
+    expect(compare).toBeInTheDocument();
+    expect(compare).toHaveAttribute('aria-pressed', 'false');
+    expect(compare).toHaveClass('border-0', 'bg-transparent', 'min-h-11');
+    expect(compare).not.toHaveClass('border-slate-300');
     expect(screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
   });
@@ -68,7 +74,7 @@ describe('CompanyCard standard actions', () => {
   it('hides quote for company without paid plan', () => {
     render(<CompanyCard company={{ ...company, has_paid_plan: false }} variant="standard" />);
 
-    expect(screen.getByRole('button', { name: 'Comparar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
   });
@@ -77,12 +83,26 @@ describe('CompanyCard standard actions', () => {
     render(<CompanyCard company={company} variant="standard" />);
 
     const card = screen.getByTestId('company-card');
-    const compare = screen.getByRole('button', { name: 'Comparar' });
+    const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
     const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
 
     expect(card.querySelector('.grid-cols-2')).toBeInTheDocument();
     expect(compare).toHaveClass('min-w-0', 'w-full');
+    expect(compare).toHaveClass('border-0', 'bg-transparent');
     expect(quote).toHaveClass('col-span-2', 'w-full');
+  });
+
+  it('mantém Avaliar como botão secundário com borda', () => {
+    render(<CompanyCard company={company} variant="standard" />);
+
+    const review = screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' });
+    expect(review).toHaveClass('border-slate-300', 'bg-white', 'min-h-11', 'text-blue-700');
+  });
+
+  it('mantém círculo de comparação com tamanho visual adequado', () => {
+    render(<CompanyCard company={company} variant="standard" />);
+
+    expect(screen.getByTestId('compare-icon')).toHaveAttribute('data-size', '40');
   });
 
   it('does not render fabricated criteria or SLA', () => {

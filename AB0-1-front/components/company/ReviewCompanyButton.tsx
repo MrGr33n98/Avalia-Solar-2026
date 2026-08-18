@@ -38,7 +38,7 @@ export default function ReviewCompanyButton({
         if (stopPropagation) event.stopPropagation();
       }}
       className={cn(
-        'inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 overflow-hidden rounded-xl border border-blue-200 bg-white px-3 text-sm font-bold text-blue-700 shadow-none transition-all hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]',
+        'inline-flex min-h-11 min-w-0 max-w-full items-center justify-center gap-1.5 overflow-hidden rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none transition-all hover:border-blue-300 hover:bg-blue-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2 active:scale-[0.98]',
         className
       )}
     >

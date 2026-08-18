@@ -465,17 +465,19 @@ export default function CompanyCard({
         <div className="mt-4 px-4 grid grid-cols-2 gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={handleCompareClick}
             disabled={!selectedInComparison && !canAddMore}
+            aria-pressed={selectedInComparison}
+            aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
             className={cn(
-              'min-w-0 w-full h-10 font-semibold text-[11px] rounded-lg shadow-none justify-center px-1',
+              'min-w-0 w-full min-h-11 h-11 inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-[11px] font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
               selectedInComparison
-                ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'text-blue-700'
+                : 'text-slate-700'
             )}
           >
-            <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1 shrink-0" />
+            <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" className="shrink-0" />
             <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
           </Button>
 
@@ -620,17 +622,19 @@ export default function CompanyCard({
           )}>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
+              aria-pressed={selectedInComparison}
+              aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
               className={cn(
-                'col-span-1 min-w-0 w-full h-10 font-semibold rounded-xl shadow-none text-xs border transition-colors',
+                'col-span-1 min-w-0 w-full min-h-11 h-11 inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
                 selectedInComparison
-                  ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                  ? 'text-blue-700'
+                  : 'text-slate-700'
               )}
             >
-              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1 shrink-0" />
+              <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" className="shrink-0" />
               <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
             </Button>
 
@@ -642,7 +646,7 @@ export default function CompanyCard({
               company={company}
               label="Avaliar"
               className={cn(
-                'order-2 col-span-1 min-w-0 w-full h-10 rounded-xl text-xs shadow-none sm:order-none',
+                'order-2 col-span-1 min-w-0 w-full min-h-11 h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:border-blue-300 hover:bg-blue-50/40 focus-visible:ring-2 focus-visible:ring-blue-500/25 sm:order-none',
               )}
               iconClassName="h-3.5 w-3.5"
               stopPropagation
@@ -778,18 +782,20 @@ export default function CompanyCard({
           <div className="flex flex-col gap-1 w-full">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleCompareClick}
               disabled={!selectedInComparison && !canAddMore}
+              aria-pressed={selectedInComparison}
+              aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
               className={cn(
-                'h-7 font-bold text-[10px] rounded-lg shadow-none w-full justify-center',
+                'min-h-11 h-11 min-w-0 w-full inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
                 selectedInComparison
-                  ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'text-blue-700'
+                  : 'text-slate-700'
               )}
             >
-              <AnimatedCompareIcon size={14} active={selectedInComparison} selected={selectedInComparison} disabled={!selectedInComparison && !canAddMore} className="mr-1.5" />
-              {selectedInComparison ? 'Selecionada' : 'Comparar'}
+                <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" />
+                <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
             </Button>
 
             {canRequestQuote ? (
