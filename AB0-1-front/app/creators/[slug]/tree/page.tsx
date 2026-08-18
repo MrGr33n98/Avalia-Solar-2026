@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getApiBaseUrl } from '@/lib/api-config';
 import { ExternalLink } from 'lucide-react';
+import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
 
 type Props = { params: { slug: string } };
 
@@ -37,12 +38,12 @@ export default async function PublicCreatorTreePage({ params }: Props) {
     separator: 'border-transparent bg-transparent px-0 py-2 text-slate-500 shadow-none',
   };
 
-  const socialLinks = [
-    ['linkedin_url', 'LinkedIn'],
-    ['instagram_url', 'Instagram'],
-    ['youtube_url', 'YouTube'],
-    ['website_url', 'Site'],
-  ] as const;
+  const socialLinks: ReadonlyArray<readonly [string, string, SocialUrlKind]> = [
+    ['linkedin_url', 'LinkedIn', 'linkedin'],
+    ['instagram_url', 'Instagram', 'instagram'],
+    ['youtube_url', 'YouTube', 'youtube'],
+    ['website_url', 'Site', 'website'],
+  ];
 
   return (
     <main className="min-h-screen bg-[#f6f8fc] px-4 py-8 text-[#0b1730] sm:py-12">
@@ -53,7 +54,7 @@ export default async function PublicCreatorTreePage({ params }: Props) {
         <p className="mt-2 text-sm text-blue-100">{data.creator.headline || data.creator.bio}</p>
         {(data.creator.city || data.creator.state) && <p className="mt-2 text-xs text-blue-200">{[data.creator.city, data.creator.state].filter(Boolean).join(' · ')}</p>}
         <div className="mt-4 flex justify-center gap-2">
-          {socialLinks.map(([key, label]) => data.creator[key] ? <a key={key} href={String(data.creator[key])} target="_blank" rel="noreferrer" aria-label={label} className="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><ExternalLink className="h-4 w-4" /></a> : null)}
+          {socialLinks.map(([key, label, kind]) => data.creator[key] ? <a key={key} href={normalizeSocialUrl(String(data.creator[key]), kind)} target="_blank" rel="noreferrer" aria-label={label} className="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><ExternalLink className="h-4 w-4" /></a> : null)}
         </div>
         </div>
         <div className="mt-6 space-y-3">

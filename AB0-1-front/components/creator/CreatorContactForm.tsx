@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { buildApiUrl } from '@/lib/api-config';
 import { ExternalLink, Globe, Instagram, Linkedin } from 'lucide-react';
+import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
 
 export function CreatorContactForm({
   creatorSlug,
@@ -57,10 +58,11 @@ export function CreatorContactForm({
           </p>
           {socialLinks.map(({ label, value, icon }) => {
             const Icon = icon === 'linkedin' ? Linkedin : icon === 'instagram' ? Instagram : Globe;
+            const kind: SocialUrlKind = icon === 'linkedin' ? 'linkedin' : icon === 'instagram' ? 'instagram' : 'website';
             return (
               <a
                 key={label}
-                href={value}
+                href={normalizeSocialUrl(value, kind)}
                 target="_blank"
                 rel="noreferrer"
                 className="group flex items-center gap-2 border-b border-slate-100 px-1 py-2 text-xs font-semibold text-slate-700 last:border-0 hover:bg-slate-50"
