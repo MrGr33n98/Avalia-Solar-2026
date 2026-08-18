@@ -9,6 +9,7 @@ import {
   Gift,
   Trophy,
   Zap,
+  Link2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,6 +65,16 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     section: 'main',
     mobilePriority: 7,
     analyticsKey: 'reviewer_nav_publications',
+  },
+  {
+    id: 'tree',
+    label: 'Meu Tree',
+    href: '/review-dashboard/tree',
+    icon: Link2,
+    matchPath: '/review-dashboard/tree',
+    section: 'main',
+    mobilePriority: 8,
+    analyticsKey: 'reviewer_nav_tree',
   },
   {
     id: 'solutions',
