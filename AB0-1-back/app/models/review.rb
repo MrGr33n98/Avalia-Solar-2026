@@ -56,6 +56,7 @@ class Review < ApplicationRecord
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
   after_commit :invalidate_social_proof_cache
+  after_commit :invalidate_creator_profile_cache
   after_commit :enqueue_aggregation, on: %i[create update], if: :should_recalculate_aggregates?
   after_update_commit :notify_user_of_reply, if: :should_notify_reply_change?
   after_commit :create_notification_for_company, on: :create
@@ -215,6 +216,10 @@ class Review < ApplicationRecord
   def invalidate_social_proof_cache
     ids = [company_id, company_id_before_last_save].compact.uniq
     ids.each { |id| self.class.invalidate_social_proof_cache_for_company(id) }
+  end
+
+  def invalidate_creator_profile_cache
+    Creator::PublicProfileService.invalidate_for_user(user)
   end
 
   def should_recalculate_aggregates?

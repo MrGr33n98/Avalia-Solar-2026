@@ -42,7 +42,14 @@ const getCreator = cache(async (slug: string): Promise<CreatorData | null> => {
     headers: getApiRequestHeaders(),
     next: { revalidate: 300 },
   });
-  return response.ok ? response.json() : null;
+  if (response.status === 404) return null;
+
+  if (!response.ok) {
+    console.error('[CreatorPage] API error', { slug, status: response.status });
+    throw new Error(`Creator API failed with status ${response.status}`);
+  }
+
+  return response.json();
 });
 
 export async function generateMetadata({

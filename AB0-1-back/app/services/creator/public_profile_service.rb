@@ -40,7 +40,7 @@ module Creator
 
     def reviews
       @user.reviews.approved_only
-        .select(:id, :headline, :comment, :rating, :company_id, :category_id, :created_at, :verified,
+        .select(:id, :user_id, :headline, :comment, :rating, :company_id, :category_id, :created_at, :verified,
                 :project_type, :installation_status, :estimated_power, :is_legacy, :pros, :cons, :buyer_tip,
                 :project_context, :content_metadata, :granular_scores_snapshot, :metadata)
         .includes(:company, :category, :user, review_media: { file_attachment: :blob })
