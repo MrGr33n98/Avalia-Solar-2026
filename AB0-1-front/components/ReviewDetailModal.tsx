@@ -90,9 +90,9 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header Fixed */}
-        <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex justify-between items-center z-10">
+        <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center z-10 rounded-t-2xl">
           <h2 className="text-xl font-bold text-slate-900">Avaliação completa</h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -180,7 +180,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           {/* Pros / Cons / Recommendation Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Recommendation */}
-            <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 flex flex-col justify-center">
+            <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-center">
               <h4 className="font-bold text-slate-900 mb-4 text-sm">Você recomendaria este produto?</h4>
               <div className="flex items-center gap-3 mb-2">
                 <ThumbsUp className={`w-8 h-8 ${review.would_recommend !== false ? 'text-green-500' : 'text-slate-400'}`} />
@@ -194,8 +194,13 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
             </div>
 
             {/* Pros */}
-            <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm flex flex-col">
-              <h4 className="font-bold text-slate-900 mb-3 text-sm">Pontos fortes</h4>
+            <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col">
+              <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-3 text-sm">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <Check className="h-3 w-3" />
+                </span>
+                O que foi bom
+              </h4>
               <div className="space-y-2">
                 {review.pros?.length ? review.pros.map((pro, idx) => (
                   <div key={idx} className="flex items-center gap-2">
@@ -207,10 +212,12 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
             </div>
 
             {/* Cons */}
-            <div className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm flex flex-col">
+            <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col">
               <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-orange-500" />
-                <h4 className="font-bold text-slate-900 text-sm">Pontos de atenção</h4>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                  <X className="h-3 w-3" />
+                </span>
+                <h4 className="font-bold text-slate-900 text-sm">O que melhorar</h4>
               </div>
               <div className="space-y-2">
                 {review.cons?.length ? review.cons.map((con, idx) => (
@@ -225,7 +232,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           {/* Photos */}
           <ReviewMediaGallery media={review.media} companyName={review.company?.toString() || 'empresa'} />
           
-          <hr className="border-slate-100" />
+          <hr className="border-slate-200" />
 
           {/* Footer Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -256,7 +263,7 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           </div>
 
           {/* Disclaimer */}
-          <div className="flex items-center gap-2 bg-slate-50 p-4 rounded-xl border border-slate-100 mt-6">
+          <div className="flex items-center gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200 mt-6">
             <Lock className="w-4 h-4 text-slate-400" />
             <p className="text-sm text-slate-500">
               Esta avaliação passou por moderação e segue nossas <a href="#" className="text-blue-600 hover:underline">diretrizes de conteúdo</a>.

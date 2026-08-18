@@ -29,7 +29,7 @@ export function CompanyReputationSwitcher({
   if (!hasCategories && !aggregates.global) return null;
 
   return (
-    <div className="inline-block max-w-full border border-slate-300 bg-white">
+    <div className="inline-block max-w-full rounded-lg border border-slate-200 bg-white overflow-hidden">
       <ScrollArea className="w-full">
         <div
           className="flex items-center"

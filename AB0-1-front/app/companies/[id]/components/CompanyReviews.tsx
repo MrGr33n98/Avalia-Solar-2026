@@ -74,7 +74,7 @@ export default function CompanyReviews({
         </div>
         <Button
           asChild
-          className="h-12 rounded-[2px] bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
+          className="h-12 rounded-lg bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
         >
           <Link href={reviewPath}>Avaliar Agora</Link>
         </Button>
@@ -107,8 +107,8 @@ export default function CompanyReviews({
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center border border-slate-300 bg-white px-4 py-20 text-center">
-          <div className="mb-6 border border-slate-200 bg-slate-50 p-6">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-20 text-center shadow-sm">
+          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-6">
             <Filter className="h-12 w-12 text-slate-200" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-2">
@@ -125,7 +125,7 @@ export default function CompanyReviews({
           <Button
             asChild
             variant="outline"
-            className="min-h-11 rounded-[2px] border-slate-900 px-8 font-bold"
+            className="min-h-11 rounded-lg border-slate-900 px-8 font-bold"
           >
             <Link href={reviewPath}>Deixar Primeira Avaliação</Link>
           </Button>

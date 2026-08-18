@@ -122,14 +122,24 @@ export function CreatorReviewCard({ review }: { review: CreatorReview }) {
         {(review.pros?.length || review.cons?.length) ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {!!review.pros?.length && (
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
-                <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-800"><Check className="h-4 w-4" /> O que foi bom</h4>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-800">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  O que foi bom
+                </h4>
                 <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{review.pros.map((pro, index) => <li key={index}>{pro}</li>)}</ul>
               </div>
             )}
             {!!review.cons?.length && (
-              <div className="rounded-lg border border-rose-100 bg-rose-50/50 p-4">
-                <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-rose-800"><X className="h-4 w-4" /> O que melhorar</h4>
+              <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
+                <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-rose-800">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                    <X className="h-3 w-3" />
+                  </span>
+                  O que melhorar
+                </h4>
                 <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-slate-700">{review.cons.map((con, index) => <li key={index}>{con}</li>)}</ul>
               </div>
             )}

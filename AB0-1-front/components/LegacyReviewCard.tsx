@@ -27,8 +27,8 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
   };
 
   return (
-    <article className="flex gap-4 rounded-[2px] border border-slate-300 bg-white p-5 sm:p-6">
-      <Avatar className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-300 grayscale">
+    <article className="flex gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <Avatar className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white">
         <AvatarImage src={review.user.avatar_url || undefined} />
         <AvatarFallback className="rounded-full bg-slate-200 text-slate-500 font-bold">
           {review.user.name.substring(0, 2).toUpperCase()}
@@ -43,7 +43,7 @@ export function LegacyReviewCard({ review }: { review: ReviewV1 }) {
                 <span className="text-[10px] text-slate-400 uppercase tracking-widest">
                   {formatDate(review.created_at)}
                 </span>
-                <span className="border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   Avaliação Geral
                 </span>
               </div>

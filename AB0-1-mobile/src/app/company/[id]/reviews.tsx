@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Colors } from '@/constants/theme';
 import {
   StyleSheet,
   View,
@@ -205,10 +204,12 @@ export default function CompanyReviewsScreen() {
   );
 }
 
+const lightColors = Colors.light;
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: lightColors.background,
   },
   centerContainer: {
     flex: 1,
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.backgroundElement,
+    backgroundColor: lightColors.backgroundElement,
     borderBottomWidth: 1,
     elevation: 2,
     shadowColor: '#000000',
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: lightColors.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -244,11 +245,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.backgroundElement,
+    color: lightColors.backgroundElement,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: colors.textSecondary,
+    color: lightColors.textSecondary,
     marginTop: 1,
   },
   container: {
@@ -270,13 +271,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 0.45,
     borderRightWidth: 1,
-    borderRightColor: colors.border,
+    borderRightColor: lightColors.border,
     paddingRight: 16,
   },
   averageScoreText: {
     fontSize: 44,
     fontWeight: '900',
-    color: colors.brandDarkBlue,
+    color: lightColors.brandDarkBlue,
   },
   starsRow: {
     flexDirection: 'row',
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   reviewCard: {
-    backgroundColor: colors.backgroundElement,
+    backgroundColor: lightColors.backgroundElement,
     borderRadius: 16,
     padding: 16,
     borderBottomWidth: 1,
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
-    color: colors.backgroundElement,
+    color: lightColors.backgroundElement,
   },
   reviewComment: {
     fontSize: 13,

@@ -41,7 +41,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
   const hasCons = review.cons?.length > 0;
 
   return (
-    <article className="overflow-hidden rounded-[2px] border border-slate-300 bg-white">
+    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="space-y-6 p-5 sm:p-7 lg:p-8">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -58,7 +58,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
                   {review.user.name}
                 </span>
                 {review.verified && (
-                  <span className="border border-slate-300 bg-white px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-slate-600">
+                  <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-slate-600">
                     Verificado
                   </span>
                 )}
@@ -66,14 +66,14 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
               <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500">
                 <span>{formatDate(review.created_at)}</span>
                 <span className="text-slate-300">•</span>
-                <span className="border border-slate-300 bg-slate-50 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-slate-600">
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-slate-600">
                   {review.category_name || 'Serviço'}
                 </span>
               </div>
             </div>
           </div>
           <div
-            className="flex w-fit items-center gap-2.5 rounded-[2px] border border-slate-300 bg-white px-3.5 py-2.5 text-[#0B1F4B] sm:px-4"
+            className="flex w-fit items-center gap-2.5 rounded-lg border border-slate-200 bg-amber-50 px-3.5 py-2.5 text-[#0B1F4B] sm:px-4"
             role="img"
             aria-label={`Avaliação: ${Number(review.rating).toFixed(1)} de 5 estrelas`}
           >
@@ -97,14 +97,14 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
         {/* Pros & Cons */}
         <div
           className={cn(
-            'grid overflow-hidden rounded-[2px] border border-slate-300 bg-white',
+            'grid overflow-hidden rounded-xl border border-slate-200 bg-white',
             hasPros && hasCons ? 'sm:grid-cols-2' : 'sm:grid-cols-1'
           )}
         >
           {hasPros && (
             <div className="p-4 sm:p-5">
               <h5 className="mb-3 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-800">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-slate-300 bg-white text-[#0B1F4B]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
                   <Check className="h-4 w-4" aria-hidden="true" />
                 </span>
                 O que foi bom
@@ -126,7 +126,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
               )}
             >
               <h5 className="mb-3 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-800">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-slate-300 bg-white text-[#0B1F4B]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
                   <X className="h-4 w-4" aria-hidden="true" />
                 </span>
                 O que melhorar
@@ -144,7 +144,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
 
         {/* Buyer Tip */}
         {review.buyer_tip && (
-          <div className="border border-slate-300 bg-slate-50 p-4 sm:p-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
             <h5 className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-500">
               Dica do comprador
             </h5>
@@ -154,7 +154,7 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
 
         {/* Granular Scores Snapshot */}
         {review.granular_scores && review.granular_scores.length > 0 && (
-          <div className="rounded-[2px] border border-slate-300 bg-white p-4 sm:p-5">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {review.granular_scores.map((score, i) => (
                 <div
@@ -185,17 +185,17 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between gap-4 border-t border-slate-300 bg-white px-5 py-3.5 sm:px-7 lg:px-8">
+      <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-3.5 sm:px-7 lg:px-8">
         <button
           type="button"
-          className="flex h-11 items-center gap-2.5 rounded-[2px] border border-slate-300 bg-white px-3.5 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+          className="flex h-11 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
         >
           <ThumbsUp className="h-4 w-4" aria-hidden="true" />
           <span className="text-[10px] font-medium uppercase tracking-[0.14em]">Útil</span>
         </button>
         <button
           type="button"
-          className="flex h-11 items-center gap-2.5 rounded-[2px] border border-slate-300 bg-white px-3.5 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
+          className="flex h-11 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B1F4B]"
         >
           <Share2 className="h-4 w-4" aria-hidden="true" />
           <span className="hidden text-[10px] font-medium uppercase tracking-[0.14em] sm:inline">

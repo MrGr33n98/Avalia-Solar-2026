@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, ThumbsUp } from 'lucide-react';
+import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, ThumbsUp, Check, X, Share2 } from 'lucide-react';
 import { Review, fetchApi } from '@/lib/api';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -174,7 +174,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
     <motion.div
       ref={cardRef}
       onClick={() => setIsModalOpen(true)}
-      className={`bg-white rounded-xl shadow-md border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-shadow ${className}`}
+      className={`bg-white rounded-xl shadow-sm border border-slate-200 p-6 cursor-pointer hover:shadow-md transition-shadow ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -273,9 +273,14 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
         {(prosList.length > 0 || consList.length > 0) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {prosList.length > 0 && (
-              <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                <h5 className="text-xs font-bold text-green-700 uppercase mb-2">Pontos Positivos</h5>
-                <ul className="text-sm text-green-800 space-y-1">
+              <div className="bg-green-50/60 p-4 rounded-xl border border-green-100">
+                <h5 className="flex items-center gap-2 text-xs font-bold text-green-700 uppercase mb-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  O que foi bom
+                </h5>
+                <ul className="text-sm text-green-800 space-y-1.5 pl-8">
                   {prosList.map((pro, i) => (
                     <li key={i} className="flex items-start">
                       <span className="mr-2 text-green-500">•</span>
@@ -286,9 +291,14 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
               </div>
             )}
             {consList.length > 0 && (
-              <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                <h5 className="text-xs font-bold text-red-700 uppercase mb-2">Oportunidades de Melhoria</h5>
-                <ul className="text-sm text-red-800 space-y-1">
+              <div className="bg-red-50/60 p-4 rounded-xl border border-red-100">
+                <h5 className="flex items-center gap-2 text-xs font-bold text-red-700 uppercase mb-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                    <X className="h-3 w-3" />
+                  </span>
+                  O que melhorar
+                </h5>
+                <ul className="text-sm text-red-800 space-y-1.5 pl-8">
                   {consList.map((con, i) => (
                     <li key={i} className="flex items-start">
                       <span className="mr-2 text-red-500">•</span>
@@ -333,7 +343,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
 
       {/* Granular Scores */}
       {review.review_criterion_scores && review.review_criterion_scores.length > 0 && (
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
           {review.review_criterion_scores.map((score) => (
             <div key={score.id} className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{score.title}</span>
@@ -364,23 +374,23 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <button className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors">
+      <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+        <button className="flex items-center space-x-2 text-slate-500 hover:text-slate-700 transition-colors rounded-lg px-3 py-1.5 hover:bg-slate-50">
           <ThumbsUp className="w-4 h-4" />
           <span className="text-sm">Útil</span>
         </button>
         
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex items-center space-x-4 text-sm text-slate-500">
           {onReply && (
             <button
-              className="hover:text-gray-700 transition-colors"
+              className="hover:text-slate-700 transition-colors rounded-lg px-3 py-1.5 hover:bg-slate-50"
               type="button"
               onClick={() => onReply(review)}
             >
               Responder
             </button>
           )}
-          <button className="hover:text-gray-700 transition-colors" type="button">
+          <button className="hover:text-slate-700 transition-colors rounded-lg px-3 py-1.5 hover:bg-slate-50" type="button">
             Compartilhar
           </button>
         </div>
