@@ -66,7 +66,7 @@ export function FavoriteButton({
       aria-label={favorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
       aria-pressed={favorited}
       className={cn(
-        'flex h-11 w-11 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-wait disabled:opacity-60',
+        'flex h-[44px] w-[44px] items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-wait disabled:opacity-60',
         favorited ? 'text-rose-500 hover:bg-rose-50' : 'text-slate-400 hover:bg-rose-50 hover:text-rose-500',
         className
       )}

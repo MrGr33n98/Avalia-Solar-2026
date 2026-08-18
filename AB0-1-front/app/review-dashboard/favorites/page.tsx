@@ -56,7 +56,7 @@ export default function FavoritesPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full min-w-0 max-w-6xl p-0">
       <header className="mb-6 flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-500"><Heart className="h-5 w-5 fill-current" /></div>
         <div><h1 className="text-2xl font-bold tracking-tight text-slate-950">Favoritos</h1><p className="mt-1 text-sm text-slate-500">Salve empresas e produtos para consultar, comparar e decidir depois.</p></div>

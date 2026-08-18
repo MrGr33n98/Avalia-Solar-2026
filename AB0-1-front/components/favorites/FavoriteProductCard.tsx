@@ -16,16 +16,16 @@ export function FavoriteProductCard({
   const item = favorite.item;
   const href = buildProductPath(item.id, item.name);
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[4/3] bg-slate-50">
-        <Image src={item.image_url || '/images/product-placeholder.svg'} alt={item.name} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-contain p-6" />
+    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative aspect-[5/3] bg-slate-50">
+        <Image src={item.image_url || '/images/product-placeholder.svg'} alt={item.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" />
         <div className="absolute right-2 top-2 rounded-full bg-white shadow-sm"><FavoriteButton favoritableType="Product" favoritableId={item.id} initialFavorited source="favorites_page" onChange={(next) => { if (!next) onRemoved?.(); }} /></div>
       </div>
-      <div className="p-4">
-        {item.category && <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.category.name}</p>}
-        <Link href={href} className="mt-2 block"><h2 className="line-clamp-2 text-base font-semibold text-slate-950 hover:text-blue-700">{item.name}</h2></Link>
-        {item.company && <p className="mt-2 text-sm text-slate-500">{item.company.name}</p>}
-        <Link href={href} className="mt-5 flex h-10 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700">Ver produto</Link>
+      <div className="min-w-0 p-3">
+        {item.category && <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{item.category.name}</p>}
+        <Link href={href} className="mt-1 block min-w-0"><h2 className="line-clamp-2 break-words text-sm font-semibold leading-5 text-slate-950 hover:text-blue-700">{item.name}</h2></Link>
+        {item.company && <p className="mt-1 truncate text-xs text-slate-500">{item.company.name}</p>}
+        <Link href={href} className="mt-3 flex min-h-[36px] items-center justify-center rounded-lg border border-slate-300 px-2 text-xs font-semibold text-slate-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700">Ver produto</Link>
       </div>
     </article>
   );
