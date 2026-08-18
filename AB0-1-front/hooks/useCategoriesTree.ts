@@ -234,11 +234,18 @@ export function useCategoriesTree() {
   const filterCategories = useCallback((tree: CategoryTreeNode[], query: string): CategoryTreeNode[] => {
     if (!query) return tree;
     
-    const lowerQuery = query.toLowerCase();
+    const normalizedQuery = query
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
     
     return tree.map(node => {
       // Se a própria categoria bate na busca
-      const matches = node.name.toLowerCase().includes(lowerQuery);
+      const normalizedName = node.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+      const matches = normalizedName.includes(normalizedQuery);
       
       // Filtrar filhos recursivamente
       const filteredChildren = filterCategories(node.children || [], query);

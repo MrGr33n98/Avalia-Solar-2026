@@ -238,6 +238,7 @@ export interface Company {
   local_solar_path?: string | null;
   latitude?: number;
   longitude?: number;
+  distance_km?: number | null;
   minimum_ticket?: number;
   maximum_ticket?: number;
   financing_options?: string;

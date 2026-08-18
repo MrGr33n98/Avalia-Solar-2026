@@ -4,8 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import CategoryHero from '@/components/categories/CategoryHero';
-import BannerByLocation from '@/components/BannerByLocation';
-import { useBannersQuery } from '@/hooks/useBannersQuery';
+import CategoryAdsRail from '@/components/categories/CategoryAdsRail';
 import { cn } from '@/lib/utils';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
@@ -135,21 +134,7 @@ export default function CategoryPageClient({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const isLoading = false;
 
-  const { data: filterBanners } = useBannersQuery({
-    position: 'categories_filter_sidebar',
-    fallbackPositions: ['sidebar'],
-    category_id: categoryId,
-    limit: 1,
-  });
-
-  const { data: rightRailBanners } = useBannersQuery({
-    position: 'categories_right_rail',
-    fallbackPositions: ['sidebar'],
-    category_id: categoryId,
-    limit: 1,
-  });
-
-  const hasBanners = (filterBanners && filterBanners.length > 0) || (rightRailBanners && rightRailBanners.length > 0);
+  const [hasBanners, setHasBanners] = useState(false);
 
   // Helper: sync filter state to URL without full navigation
   const syncToUrl = useCallback(
@@ -321,15 +306,7 @@ export default function CategoryPageClient({
             onClose={() => setMobileFiltersOpen(false)}
           />
 
-          <div data-testid="category-filter-banner-mobile" className="lg:hidden">
-            <BannerByLocation
-              location="categories_filter_sidebar"
-              fallbackLocations={['sidebar']}
-              categoryId={categoryId}
-              limit={1}
-              className="mx-auto max-w-[300px]"
-            />
-          </div>
+
 
           {/* Main Layout Container */}
           <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-8">
@@ -437,28 +414,12 @@ export default function CategoryPageClient({
                 </div>
               </div>
 
-              {hasBanners && (
-                <aside
-                  data-testid="category-ads-rail"
-                  className="hidden space-y-6 lg:block"
-                  aria-label="Publicidade da categoria"
-                >
-                  <BannerByLocation
-                    location="categories_filter_sidebar"
-                    fallbackLocations={['sidebar']}
-                    categoryId={categoryId}
-                    limit={1}
-                    initialBanners={filterBanners}
-                  />
-                  <BannerByLocation
-                    location="categories_right_rail"
-                    fallbackLocations={['sidebar']}
-                    categoryId={categoryId}
-                    limit={1}
-                    initialBanners={rightRailBanners}
-                  />
-                </aside>
-              )}
+              <CategoryAdsRail
+                categoryId={categoryId}
+                initialFilterBanners={initialBanners.filter((b) => b.position === 'categories_filter_sidebar')}
+                initialRightRailBanners={initialBanners.filter((b) => b.position === 'categories_right_rail')}
+                onHasBannersChange={setHasBanners}
+              />
             </div>
           </div>
         </>

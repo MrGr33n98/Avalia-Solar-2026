@@ -21,6 +21,7 @@ import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary'
 import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
 import MobileCompanyFilterBar from '@/components/companies/filters/MobileCompanyFilterBar';
 import MobileCompanyFiltersSheet from '@/components/companies/filters/MobileCompanyFiltersSheet';
+import { CompanyCategoryPicker } from '@/components/companies/filters/CompanyCategoryPicker';
 import {
   buildCompaniesCategoriesPath,
   COMPANIES_PATH,
@@ -77,6 +78,7 @@ export function CompaniesContent({
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
 
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
@@ -95,6 +97,11 @@ export function CompaniesContent({
     () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
     [searchParamsKey, pathCategoryIds]
   );
+  const categoryLabel = useMemo(() => {
+    if (filters.category_ids.length === 0) return 'Categoria';
+    if (categoryNames.length > 0) return categoryNames.slice(0, 2).join(', ');
+    return `${filters.category_ids.length} categorias`;
+  }, [categoryNames, filters.category_ids]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const debouncedSearchInput = useDebounce(searchInput, 400);
   const requestParams = useMemo(
@@ -186,6 +193,10 @@ export function CompaniesContent({
         localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
         setShowMobileLocationGate(false);
         setDetectingLocation(false);
+        track('location_filter_applied', {
+          source: 'companies_location_gate',
+          radius_km: updated.radius_km,
+        });
         router.replace(buildTargetUrl(updated), { scroll: false });
       },
       () => {
@@ -310,7 +321,7 @@ export function CompaniesContent({
           latitude: Number(company.latitude),
           longitude: Number(company.longitude),
           ratingAvg: company.rating_avg,
-          isSponsored: Boolean(company.featured || (company as any).sponsored),
+          isSponsored: Boolean(company.featured || company.sponsored),
           city: company.city,
           state: company.state,
           logo_url: company.logo_url || undefined,
@@ -558,14 +569,17 @@ export function CompaniesContent({
                       value={filters.sort || ''}
                       onChange={(e) => {
                         const updated = { ...filters, sort: e.target.value || undefined, page: 1 };
-                        router.replace(buildTargetUrl(updated as any), { scroll: false });
+                        router.replace(buildTargetUrl(updated), { scroll: false });
                       }}
                       className="appearance-none h-9 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Ordenar: Recomendadas</option>
                       <option value="rating">Melhor avaliação</option>
-                      <option value="reviews">Mais avaliações</option>
+                      <option value="reviews_desc">Mais avaliações</option>
                       <option value="newest">Mais recentes</option>
+                      {filters.lat !== null && filters.lng !== null && (
+                        <option value="distance">Mais próximas</option>
+                      )}
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-2.5 h-4 w-4 text-slate-400" />
                   </div>
@@ -622,10 +636,32 @@ export function CompaniesContent({
                   filters={filters}
                   onOpenFilters={() => setIsFiltersOpen(true)}
                   onOpenLocation={() => setIsFiltersOpen(true)}
-                  onOpenCategory={() => setIsFiltersOpen(true)}
+                  onOpenCategory={() => setIsCategoryPickerOpen(true)}
                   onToggleVerified={handleToggleVerified}
+                  categoryLabel={categoryLabel}
                 />
               </div>
+
+              {isCategoryPickerOpen && (
+                <div
+                  className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:hidden"
+                  role="presentation"
+                  onMouseDown={(event) => {
+                    if (event.target === event.currentTarget) setIsCategoryPickerOpen(false);
+                  }}
+                >
+                  <div className="w-full max-w-lg" role="dialog" aria-modal="true" aria-label="Selecionar categorias">
+                    <CompanyCategoryPicker
+                      selectedIds={filters.category_ids}
+                      onChange={(category_ids) => {
+                        handleApplyFilters({ ...filters, category_ids, page: 1 });
+                        setIsCategoryPickerOpen(false);
+                      }}
+                      onClose={() => setIsCategoryPickerOpen(false)}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Desktop quick filters */}
               <section

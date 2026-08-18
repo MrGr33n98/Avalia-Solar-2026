@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import CategoryPageClient from '@/app/categories/[slug]/CategoryPageClientV2';
 
 // Mock do global fetch para evitar ReferenceError nos componentes filhos
@@ -87,9 +86,15 @@ jest.mock('@/components/categories/DecisionChips', () => {
 // Mock do BannerByLocation para evitar o uso de react-query e registrar props
 jest.mock('@/components/BannerByLocation', () => {
   return function MockBannerByLocation(props: any) {
+    const bannerId = props.initialBanners?.[0]?.id || '';
     return (
-      <div data-testid="banner-by-location" data-location={props.location} data-categoryid={props.categoryId}>
-        Mock Banner: {props.location}
+      <div
+        data-testid="banner-by-location"
+        data-location={props.location}
+        data-categoryid={props.categoryId}
+        data-bannerid={bannerId}
+      >
+        Mock Banner: {props.location} {bannerId ? `(id:${bannerId})` : ''}
       </div>
     );
   };
@@ -299,8 +304,9 @@ describe('CategoryPageClientV2 Filtros', () => {
 
   it('deve renderizar a coluna lateral de banners e solicitar as posicoes corretas quando houver campanhas ativas', () => {
     mockUseBannersQuery.mockImplementation((opts: any) => {
+      const id = opts.position === 'categories_filter_sidebar' ? 99 : 100;
       return {
-        data: [{ id: 99, title: 'Ad Banner', position: opts.position }],
+        data: [{ id, title: 'Ad Banner', position: opts.position }],
         isLoading: false,
       };
     });
@@ -347,5 +353,129 @@ describe('CategoryPageClientV2 Filtros', () => {
     // O container visual do aside com testid category-ads-rail não deve estar presente no DOM
     const adsRail = screen.queryByTestId('category-ads-rail');
     expect(adsRail).toBeNull();
+  });
+
+  it('teste 1: categories_filter_sidebar vazio e categories_right_rail vazio, sidebar retorna banner 99. Deve renderizar 99 apenas no right_rail', () => {
+    mockUseBannersQuery.mockImplementation((opts: any) => {
+      if (opts.position === 'categories_right_rail') {
+        return {
+          data: [{ id: 99, position: 'sidebar' }],
+          isLoading: false,
+        };
+      }
+      return { data: [], isLoading: false };
+    });
+
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    const banners = screen.getAllByTestId('banner-by-location');
+    expect(banners.length).toBe(1);
+    expect(banners[0].getAttribute('data-location')).toBe('categories_right_rail');
+    expect(banners[0].getAttribute('data-bannerid')).toBe('99');
+  });
+
+  it('teste 2: categories_filter_sidebar retorna banner 10, categories_right_rail vazio, sidebar retorna banner 99. Deve renderizar dois banners diferentes', () => {
+    mockUseBannersQuery.mockImplementation((opts: any) => {
+      if (opts.position === 'categories_filter_sidebar') {
+        return {
+          data: [{ id: 10, position: 'categories_filter_sidebar' }],
+          isLoading: false,
+        };
+      }
+      if (opts.position === 'categories_right_rail') {
+        return {
+          data: [{ id: 99, position: 'sidebar' }],
+          isLoading: false,
+        };
+      }
+      return { data: [], isLoading: false };
+    });
+
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    const adsRail = screen.getByTestId('category-ads-rail');
+    const banners = within(adsRail).getAllByTestId('banner-by-location');
+    expect(banners.length).toBe(2);
+
+    const bannerIds = banners.map(b => b.getAttribute('data-bannerid'));
+    expect(bannerIds).toContain('10');
+    expect(bannerIds).toContain('99');
+  });
+
+  it('teste 3: categories_right_rail retorna banner 20. Nao deve usar/consultar fallback sidebar', () => {
+    mockUseBannersQuery.mockImplementation((opts: any) => {
+      if (opts.position === 'categories_right_rail') {
+        expect(opts.fallbackPositions).toContain('sidebar');
+        return {
+          data: [{ id: 20, position: 'categories_right_rail' }],
+          isLoading: false,
+        };
+      }
+      if (opts.position === 'categories_filter_sidebar') {
+        expect(opts.fallbackPositions).toBeUndefined();
+        return { data: [], isLoading: false };
+      }
+      return { data: [], isLoading: false };
+    });
+
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    const banners = screen.getAllByTestId('banner-by-location');
+    expect(banners.length).toBe(1);
+    expect(banners[0].getAttribute('data-location')).toBe('categories_right_rail');
+    expect(banners[0].getAttribute('data-bannerid')).toBe('20');
+  });
+
+  it('teste 4: Ambos retornam acidentalmente o mesmo banner 99. Deve renderizar apenas no de maior prioridade (right_rail)', () => {
+    mockUseBannersQuery.mockImplementation((opts: any) => {
+      if (opts.position === 'categories_filter_sidebar') {
+        return {
+          data: [{ id: 99, position: 'categories_filter_sidebar' }],
+          isLoading: false,
+        };
+      }
+      if (opts.position === 'categories_right_rail') {
+        return {
+          data: [{ id: 99, position: 'categories_right_rail' }],
+          isLoading: false,
+        };
+      }
+      return { data: [], isLoading: false };
+    });
+
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    const banners = screen.getAllByTestId('banner-by-location');
+    expect(banners.length).toBe(1);
+    expect(banners[0].getAttribute('data-location')).toBe('categories_right_rail');
+    expect(banners[0].getAttribute('data-bannerid')).toBe('99');
   });
 });

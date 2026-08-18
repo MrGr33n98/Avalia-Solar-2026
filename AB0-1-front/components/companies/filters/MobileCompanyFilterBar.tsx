@@ -11,6 +11,7 @@ interface MobileCompanyFilterBarProps {
   onOpenLocation: () => void;
   onOpenCategory: () => void;
   onToggleVerified: () => void;
+  categoryLabel?: string;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export default function MobileCompanyFilterBar({
   onOpenLocation,
   onOpenCategory,
   onToggleVerified,
+  categoryLabel,
   className,
 }: MobileCompanyFilterBarProps) {
   // Contagem de grupos de filtros ativos de acordo com a regra de negócios
@@ -97,7 +99,7 @@ export default function MobileCompanyFilterBar({
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
-        <span>Categoria</span>
+        <span className="max-w-[130px] truncate">{categoryLabel || 'Categoria'}</span>
         <ChevronDown className="h-3 w-3 opacity-60" />
       </button>
 

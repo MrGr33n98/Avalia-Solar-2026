@@ -97,5 +97,34 @@ RSpec.describe Companies::CompanySearchQuery, type: :query do
       expect(result).to include(active_company_sp)
       expect(result).not_to include(active_company_rj)
     end
+
+    it 'ignora coordenadas geográficas inválidas' do
+      result = described_class.call({ lat: 91, lng: -46.6333, radius_km: 50 })
+
+      expect(result).to include(active_company_sp, active_company_rj)
+    end
+
+    it 'ignora raio inválido sem gerar filtro geográfico' do
+      result = described_class.call({ lat: -23.5505, lng: -46.6333, radius_km: 0 })
+
+      expect(result).to include(active_company_sp, active_company_rj)
+    end
+
+    it 'ordena por distância Haversine quando coordenadas são válidas' do
+      result = described_class.call(
+        { lat: -23.5505, lng: -46.6333, sort: 'distance' },
+        Company.where(id: [active_company_sp.id, active_company_rj.id])
+      ).to_a
+
+      expect(result.map(&:id)).to eq([active_company_sp.id, active_company_rj.id])
+      expect(result.first.distance_km).to be_a(Numeric)
+    end
+
+    it 'reverte para recomendadas quando sort distance não tem geo válida' do
+      result = described_class.call({ sort: 'distance', lat: 'invalid', lng: -46.6333 })
+
+      expect(result.to_sql).to include('ORDER BY')
+      expect(result).to include(active_company_sp, active_company_rj)
+    end
   end
 end

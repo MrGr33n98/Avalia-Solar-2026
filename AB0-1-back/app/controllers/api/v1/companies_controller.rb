@@ -487,6 +487,7 @@ module Api
           sort: params[:sort],
           limit: params[:limit],
           page: params[:page],
+          per_page: params[:per_page],
           mine: params[:mine],
           latitude: lat.present? ? lat.to_f.round(3) : nil,
           longitude: lng.present? ? lng.to_f.round(3) : nil,

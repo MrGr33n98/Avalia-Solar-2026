@@ -77,17 +77,18 @@ module Companies
     def apply_location(scope)
       # 1. Geolocation (latitude/longitude/radius_km)
       # Adaptação segura lat/lng para latitude/longitude
-      lat = @params[:latitude] || @params[:lat]
-      lng = @params[:longitude] || @params[:lng]
-      radius = @params[:radius_km]
+      coordinates = valid_coordinates
+      radius = valid_radius
 
-      if lat.present? && lng.present? && radius.present?
-        scope = Geo::HaversineCalculator.scope_within_radius(
-          scope,
-          lat: lat.to_f,
-          lng: lng.to_f,
-          radius_km: radius.to_f
-        )
+      if coordinates
+        if radius
+          scope = Geo::HaversineCalculator.scope_within_radius(
+            scope,
+            lat: coordinates[:lat],
+            lng: coordinates[:lng],
+            radius_km: radius
+          )
+        end
       end
 
       # 2. State & City filtering
@@ -198,6 +199,7 @@ module Companies
           created_at
           newest
           recommended
+          distance
         ]
         if valid_sorts.include?(@params[:sort])
           case @params[:sort]
@@ -211,6 +213,8 @@ module Companies
             scope = scope.reorder(name: :desc)
           when 'created_at', 'newest'
             scope = scope.reorder(created_at: :desc)
+          when 'distance'
+            scope = apply_distance_sort(scope)
           when 'recommended'
             scope = scope.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc,
                                   created_at: :desc)
@@ -230,6 +234,60 @@ module Companies
         scope = scope.limit(@params[:limit].to_i)
       end
       scope
+    end
+
+    def valid_coordinates
+      lat = parse_coordinate(@params[:latitude] || @params[:lat], -90.0, 90.0)
+      lng = parse_coordinate(@params[:longitude] || @params[:lng], -180.0, 180.0)
+      return unless lat && lng
+
+      { lat: lat, lng: lng }
+    end
+
+    def valid_radius
+      radius = parse_float(@params[:radius_km])
+      radius if radius&.positive?
+    end
+
+    def parse_coordinate(value, min, max)
+      coordinate = parse_float(value)
+      coordinate if coordinate && coordinate.between?(min, max)
+    end
+
+    def parse_float(value)
+      return if value.blank?
+
+      number = Float(value.to_s, exception: false)
+      number if number&.finite?
+    end
+
+    def apply_distance_sort(scope)
+      coordinates = valid_coordinates
+      return recommended_scope(scope) unless coordinates
+
+      haversine_sql = distance_sql(coordinates)
+      scope.where('latitude IS NOT NULL AND longitude IS NOT NULL')
+           .select("companies.*, (#{haversine_sql}) AS distance_km")
+           .reorder(Arel.sql("#{haversine_sql} ASC"))
+    end
+
+    def distance_sql(coordinates)
+      lat = coordinates[:lat]
+      lng = coordinates[:lng]
+
+      <<~SQL.squish
+        (6371 * acos(
+          LEAST(1.0, cos(radians(#{lat}))
+          * cos(radians(latitude))
+          * cos(radians(longitude) - radians(#{lng}))
+          + sin(radians(#{lat}))
+          * sin(radians(latitude)))
+        ))
+      SQL
+    end
+
+    def recommended_scope(scope)
+      scope.reorder(featured: :desc, rating_avg: :desc, rating_count: :desc, created_at: :desc)
     end
   end
 end

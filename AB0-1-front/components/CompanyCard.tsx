@@ -62,6 +62,7 @@ export interface CompanyCardData {
   logo_url?: string;
   featured: boolean;
   sponsored: boolean;
+  distance_km?: number | null;
   badges?: any[];
   /** Feature access map — controla features pagas liberadas via ActiveAdmin/planos */
   feature_access?: Record<string, { state: string; value?: any }>;
@@ -234,6 +235,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
     logo_url: comp?.logo_url,
     featured: comp?.featured === true,
     sponsored: comp?.sponsored === true,
+    distance_km: comp?.distance_km == null ? null : Number(comp.distance_km),
     feature_access: comp?.feature_access ?? {},
     badges: comp?.badges || [],
     top_criteria: extractTopCriteria(comp),
@@ -590,6 +592,12 @@ export default function CompanyCard({
                   </span>
                 )}
               </span>
+            </div>
+          )}
+          {company.distance_km != null && Number.isFinite(company.distance_km) && (
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
+              <MapPin className="h-3 w-3 shrink-0" />
+              {Number(company.distance_km).toFixed(1)} km de distância
             </div>
           )}
 

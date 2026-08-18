@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { X, MapPin, Loader2, Check, Star, MessageSquare } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, MapPin, Loader2, ChevronRight } from 'lucide-react';
 import { useLocationData } from '@/hooks/useLocationData';
 import { useCategories } from '@/hooks/useCategories';
 import { companiesApiSafe } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import type { CompanyFilters } from '@/components/filters/types';
+import { CompanyCategoryPicker } from './CompanyCategoryPicker';
+import { track } from '@/lib/analytics/consolidated';
 
 interface MobileCompanyFiltersSheetProps {
   open: boolean;
@@ -26,15 +28,52 @@ export default function MobileCompanyFiltersSheet({
   const [loadingCount, setLoadingCount] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [detectingGps, setDetectingGps] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [draftCategoryIds, setDraftCategoryIds] = useState<number[]>(filters.category_ids);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } = useLocationData();
-  const { categories, loading: loadingCategories } = useCategories(true);
+  const { categories } = useCategories(true);
+
+  // Keyboard Escape listener
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isCategoryPickerOpen) {
+          setIsCategoryPickerOpen(false);
+        } else {
+          onClose();
+        }
+      } else if (e.key === 'Tab' && sheetRef.current) {
+        const focusable = sheetRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose, isCategoryPickerOpen]);
 
   // Sync draft filters when modal opens
   useEffect(() => {
     if (open) {
       setDraftFilters(filters);
+      setDraftCategoryIds(filters.category_ids);
       fetchStates();
+      setIsCategoryPickerOpen(false);
+      closeButtonRef.current?.focus();
     }
   }, [open, filters, fetchStates]);
 
@@ -73,7 +112,7 @@ export default function MobileCompanyFiltersSheet({
       } finally {
         setLoadingCount(false);
       }
-    }, 350);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [draftFilters, open]);
@@ -94,17 +133,29 @@ export default function MobileCompanyFiltersSheet({
     setGpsError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        updateDraft({
+        const nextDraft = {
+          ...draftFilters,
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           radius_km: draftFilters.radius_km || 50,
           state: [],
           city: [], // Limpa busca manual para evitar conflitos
+        };
+        setDraftFilters(nextDraft);
+        // Coordenadas nunca seguem para analytics; somente origem e raio agregado.
+        track('location_filter_applied', {
+          source: 'companies_filter_sheet',
+          radius_km: nextDraft.radius_km,
         });
         setDetectingGps(false);
       },
       (err) => {
-        setGpsError('Não foi possível obter sua localização física.');
+        const messages: Record<number, string> = {
+          1: 'Permissão de localização negada. Permita o acesso nas configurações do navegador.',
+          2: 'Localização indisponível no momento. Tente novamente.',
+          3: 'A busca demorou demais. Tente novamente.',
+        };
+        setGpsError(messages[err.code] || 'Não foi possível obter sua localização.');
         setDetectingGps(false);
       },
       { enableHighAccuracy: false, timeout: 6000 }
@@ -133,19 +184,30 @@ export default function MobileCompanyFiltersSheet({
   const isGpsActive = draftFilters.lat !== null && draftFilters.lng !== null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div
+        ref={sheetRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby="mobile-company-filters-title"
+        tabIndex={-1}
         className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85vh] transition-transform duration-300 transform translate-y-0"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-          <h2 className="text-base font-bold text-slate-900">Filtrar empresas</h2>
+          <h2 id="mobile-company-filters-title" className="text-base font-bold text-slate-900">Filtrar empresas</h2>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
+            aria-label="Fechar filtros"
             className="p-1 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors"
           >
             <X className="h-5 w-5" />
@@ -276,39 +338,20 @@ export default function MobileCompanyFiltersSheet({
           {/* 2. Categoria */}
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">O que você procura?</h3>
-            {loadingCategories ? (
-              <div className="flex items-center gap-2 py-2">
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                <span className="text-xs text-slate-400">Carregando categorias...</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {categories.slice(0, 10).map((cat) => {
-                  const isSelected = draftFilters.category_ids.includes(cat.id);
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        const nextIds = isSelected
-                          ? draftFilters.category_ids.filter((id) => id !== cat.id)
-                          : [...draftFilters.category_ids, cat.id];
-                        updateDraft({ category_ids: nextIds });
-                      }}
-                      className={cn(
-                        'flex h-11 items-center justify-between px-3 rounded-xl border text-[11px] font-bold text-left transition-all',
-                        isSelected
-                          ? 'bg-blue-50 border-blue-300 text-blue-700'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      )}
-                    >
-                      <span className="truncate pr-1">{cat.name}</span>
-                      {isSelected && <Check className="h-3.5 w-3.5 text-blue-700 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsCategoryPickerOpen(true)}
+              className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all"
+            >
+              <span className="truncate">
+                {draftFilters.category_ids.length === 0
+                  ? 'Todas as categorias'
+                  : draftFilters.category_ids.length === 1
+                  ? categories.find((c) => c.id === draftFilters.category_ids[0])?.name || `Categoria #${draftFilters.category_ids[0]}`
+                  : `${draftFilters.category_ids.length} categorias selecionadas`}
+              </span>
+              <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
+            </button>
           </div>
 
           {/* 3. Confiança */}
@@ -378,6 +421,31 @@ export default function MobileCompanyFiltersSheet({
             </div>
           </div>
         </div>
+
+        {isCategoryPickerOpen && (
+          <div
+            className="absolute inset-0 z-10 flex items-end bg-black/20"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setIsCategoryPickerOpen(false);
+            }}
+          >
+            <div className="w-full max-h-[80vh]" role="dialog" aria-modal="true" aria-label="Selecionar categorias">
+              <CompanyCategoryPicker
+                selectedIds={draftCategoryIds}
+                onChange={setDraftCategoryIds}
+                onCancel={() => {
+                  setDraftCategoryIds(draftFilters.category_ids);
+                  setIsCategoryPickerOpen(false);
+                }}
+                onConfirm={() => {
+                  updateDraft({ category_ids: draftCategoryIds });
+                  setIsCategoryPickerOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
