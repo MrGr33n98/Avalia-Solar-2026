@@ -1,27 +1,15 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useBannersQuery, type Banner } from '@/hooks/useBannersQuery';
 import { BannerContainer, getBannerAspectRatio } from './BannerContainer';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
-
-type BannerLocation =
-  | 'navbar'
-  | 'sidebar'
-  | 'categories_top'
-  | 'home_top'
-  | 'companies_top'
-  | 'companies_footer'
-  | 'article_footer_cta'
-  | 'search_top'
-  | 'search_mid'
-  | 'categories_filter_sidebar'
-  | 'categories_right_rail'
-  | 'companies_right_rail';
+import { type BannerLocation } from '@/lib/banners/placements';
 
 interface BannerByLocationProps {
   location: BannerLocation;
+  fallbackLocations?: BannerLocation[];
   className?: string;
   limit?: number;
   slotKey?: string;
@@ -39,6 +27,7 @@ interface BannerByLocationProps {
  */
 export function BannerByLocation({
   location,
+  fallbackLocations,
   className,
   limit = 5,
   slotKey,
@@ -56,6 +45,7 @@ export function BannerByLocation({
     error,
   } = useBannersQuery({
     position: location,
+    fallbackPositions: fallbackLocations,
     limit,
     slot_key: slotKey,
     category_id: categoryId,
@@ -64,6 +54,19 @@ export function BannerByLocation({
     city,
     initialData: initialBanners,
   });
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[BannerByLocation Debug]', {
+        location,
+        categoryId,
+        companyId,
+        returnedCount: banners?.length ?? 0,
+        fallbackUsed: banners && banners.length > 0 && banners[0].position !== location,
+        status: error ? 'error' : isLoading ? 'loading' : 'success',
+      });
+    }
+  }, [location, categoryId, companyId, banners, error, isLoading]);
 
   // Se estamos carregando e não temos dados iniciais, mostra esqueleto
   if (isLoading && !banners) {

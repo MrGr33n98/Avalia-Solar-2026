@@ -1,6 +1,6 @@
 banner_position_options = [
   ['Navbar (Topo Global)', 'navbar'],
-  ['Sidebar (Lateral genérica)', 'sidebar'],
+  ['Sidebar legado/global', 'sidebar'],
   ['Topo Categorias', 'categories_top'],
   ['Topo Home', 'home_top'],
   ['Topo Empresas', 'companies_top'],
@@ -8,9 +8,9 @@ banner_position_options = [
   ['Rodapé Artigo (Blog)', 'article_footer_cta'],
   ['Busca - Topo', 'search_top'],
   ['Busca - Meio dos Resultados', 'search_mid'],
-  ['Categorias - Lateral dos Filtros', 'categories_filter_sidebar'],
-  ['Categorias - Coluna Direita', 'categories_right_rail'],
-  ['Empresas - Coluna Direita', 'companies_right_rail'],
+  ['Categoria — Filtro lateral 300×250', 'categories_filter_sidebar'],
+  ['Categoria — Coluna direita 300×600', 'categories_right_rail'],
+  ['Empresas — Coluna direita 300×600', 'companies_right_rail'],
   ['Perfil Empresa - Inline (Sobre)', 'company_profile_about_inline'],
   ['Perfil Empresa - Carrossel (Relacionadas)', 'company_profile_related_carousel'],
   ['Perfil Empresa - Sidebar Patrocinada', 'company_profile_sidebar_sponsored'],
@@ -110,7 +110,8 @@ ActiveAdmin.register Banner do
             ['Retangular Pequeno', 'rectangular_small']
           ], include_blank: false
 
-          f.input :position, as: :select, collection: banner_position_options, include_blank: false
+          f.input :position, as: :select, collection: banner_position_options, include_blank: false,
+                             hint: 'Selecione a posição de exibição. Cada posição tem dimensões específicas e destinos de rotas associados.'
 
           f.input :slot_key, label: 'Slot Key (Opcional)',
                              hint: 'Chave técnica para injeção em locais específicos (ex: home_hero, sponsored_v2)'

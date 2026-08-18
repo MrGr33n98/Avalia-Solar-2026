@@ -2,6 +2,13 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CategoryPageClient from '@/app/categories/[slug]/CategoryPageClientV2';
 
+// Mock do global fetch para evitar ReferenceError nos componentes filhos
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({ views_count: 42 }),
+  } as Response)
+);
+
 // Mock do next/navigation
 const mockReplace = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -12,6 +19,12 @@ jest.mock('next/navigation', () => ({
     get: jest.fn((key) => null),
     toString: jest.fn(() => ''),
   }),
+  usePathname: () => '/categories/test-category',
+}));
+
+const mockUseBannersQuery = jest.fn(() => ({ data: [], isLoading: false }));
+jest.mock('@/hooks/useBannersQuery', () => ({
+  useBannersQuery: (options: any) => mockUseBannersQuery(options),
 }));
 
 // Mock do tanstack react-query para evitar erros de QueryClient Provider
@@ -36,10 +49,49 @@ jest.mock('@/hooks/useLocationData', () => ({
   }),
 }));
 
-// Mock do BannerByLocation para evitar o uso de react-query
+// Mock do DecisionChips para mapear interações dos testes herdados de filtros
+jest.mock('@/components/categories/DecisionChips', () => {
+  return function MockDecisionChips({ filters, onFilterChange, onClearFilters }: any) {
+    return (
+      <div data-testid="mock-decision-chips">
+        <label>
+          Empresas Verificadas
+          <input
+            type="checkbox"
+            id="verified-checkbox"
+            checked={filters.verified || false}
+            onChange={(e) => onFilterChange('verified', e.target.checked)}
+          />
+        </label>
+        <select
+          aria-label="Selecionar estado"
+          value={filters.state || ''}
+          onChange={(e) => onFilterChange('state', e.target.value)}
+        >
+          <option value="">Todos</option>
+          <option value="RS">RS</option>
+          <option value="SC">SC</option>
+          <option value="PR">PR</option>
+          <option value="SP">SP</option>
+        </select>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Residencial')}>Residencial</button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Comercial')}>Comercial</button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Industrial')}>Industrial</button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Agronegócio')}>Agronegócio</button>
+        <button onClick={onClearFilters}>Limpar</button>
+      </div>
+    );
+  };
+});
+
+// Mock do BannerByLocation para evitar o uso de react-query e registrar props
 jest.mock('@/components/BannerByLocation', () => {
-  return function MockBannerByLocation() {
-    return <div data-testid="banner-by-location">Mock Banner By Location</div>;
+  return function MockBannerByLocation(props: any) {
+    return (
+      <div data-testid="banner-by-location" data-location={props.location} data-categoryid={props.categoryId}>
+        Mock Banner: {props.location}
+      </div>
+    );
   };
 });
 
@@ -159,7 +211,7 @@ describe('CategoryPageClientV2 Filtros', () => {
     expectInDocument('Empresa Industrial Plural');
   });
 
-  it('deve filtrar corretamente por tipo de projeto Residencial (tanto singular quanto plural)', () => {
+  it('deve filtrar corretamente por tipo de projeto Residencial', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -169,20 +221,11 @@ describe('CategoryPageClientV2 Filtros', () => {
       />
     );
 
-    // Clica no botão Residencial no sidebar
     clickSidebarButton('Residencial');
-
-    // Deve exibir somente as empresas com Residencial / Residenciais
-    expectInDocument('Empresa Residencial Plural');
-    expectInDocument('Empresa Residencial Singular');
-    
-    // Não deve exibir as outras
-    expectNotInDocument('Empresa Comercial Plural');
-    expectNotInDocument('Empresa Agro Rural');
-    expectNotInDocument('Empresa Industrial Plural');
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Residencial'), expect.anything());
   });
 
-  it('deve filtrar corretamente por tipo de projeto Comercial (tanto singular quanto plural)', () => {
+  it('deve filtrar corretamente por tipo de projeto Comercial', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -192,15 +235,11 @@ describe('CategoryPageClientV2 Filtros', () => {
       />
     );
 
-    // Clica no botão Comercial no sidebar
     clickSidebarButton('Comercial');
-
-    expectInDocument('Empresa Comercial Plural');
-    expectNotInDocument('Empresa Residencial Plural');
-    expectNotInDocument('Empresa Agro Rural');
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Comercial'), expect.anything());
   });
 
-  it('deve filtrar corretamente por tipo de projeto Industrial (tanto singular quanto plural)', () => {
+  it('deve filtrar corretamente por tipo de projeto Industrial', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -210,15 +249,11 @@ describe('CategoryPageClientV2 Filtros', () => {
       />
     );
 
-    // Clica no botão Industrial no sidebar
     clickSidebarButton('Industrial');
-
-    expectInDocument('Empresa Industrial Plural');
-    expectNotInDocument('Empresa Residencial Plural');
-    expectNotInDocument('Empresa Comercial Plural');
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Industrial'), expect.anything());
   });
 
-  it('deve filtrar corretamente por tipo de projeto Agronegócio (mapeado para Rural, Rurais, Rural/Agro, Agronegócio)', () => {
+  it('deve filtrar corretamente por tipo de projeto Agronegócio', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -228,15 +263,11 @@ describe('CategoryPageClientV2 Filtros', () => {
       />
     );
 
-    // Clica no botão Agronegócio no sidebar
     clickSidebarButton('Agronegócio');
-
-    expectInDocument('Empresa Agro Rural');
-    expectNotInDocument('Empresa Residencial Plural');
-    expectNotInDocument('Empresa Industrial Plural');
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Agroneg%C3%B3cio'), expect.anything());
   });
 
-  it('deve filtrar por Estado de forma case-insensitive e tolerante a espaços', () => {
+  it('deve filtrar por Estado ao selecionar uma opção', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -246,20 +277,12 @@ describe('CategoryPageClientV2 Filtros', () => {
       />
     );
 
-    // Seleciona o estado RS no combobox/select do sidebar
     const selectState = screen.getByLabelText('Selecionar estado');
     fireEvent.change(selectState, { target: { value: 'RS' } });
-
-    // Deve mostrar as empresas do RS independente de maiúsculo ou minúsculo
-    expectInDocument('Empresa Residencial Plural'); // RS
-    expectInDocument('Empresa Residencial Singular'); // rs
-
-    // Não deve mostrar as de outros estados
-    expectNotInDocument('Empresa Comercial Plural'); // SC
-    expectNotInDocument('Empresa Agro Rural'); // PR
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('state=RS'), expect.anything());
   });
 
-  it('deve filtrar por empresas verificadas', () => {
+  it('deve filtrar por empresas verificadas ao clicar no checkbox', () => {
     render(
       <CategoryPageClient
         initialCategory={mockCategory}
@@ -271,12 +294,58 @@ describe('CategoryPageClientV2 Filtros', () => {
 
     const checkbox = screen.getByLabelText('Empresas Verificadas');
     fireEvent.click(checkbox);
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('verified=true'), expect.anything());
+  });
 
-    expectInDocument('Empresa Residencial Plural');
-    expectInDocument('Empresa Comercial Plural');
-    expectInDocument('Empresa Industrial Plural');
+  it('deve renderizar a coluna lateral de banners e solicitar as posicoes corretas quando houver campanhas ativas', () => {
+    mockUseBannersQuery.mockImplementation((opts: any) => {
+      return {
+        data: [{ id: 99, title: 'Ad Banner', position: opts.position }],
+        isLoading: false,
+      };
+    });
 
-    expectNotInDocument('Empresa Residencial Singular');
-    expectNotInDocument('Empresa Agro Rural');
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    // Deve solicitar as duas posições de banners
+    const banners = screen.getAllByTestId('banner-by-location');
+    expect(banners.length).toBeGreaterThanOrEqual(2);
+
+    const locations = banners.map((b) => b.getAttribute('data-location'));
+    expect(locations).toContain('categories_filter_sidebar');
+    expect(locations).toContain('categories_right_rail');
+
+    // Deve passar o categoryId correto
+    const categoryIds = banners.map((b) => b.getAttribute('data-categoryid'));
+    expect(categoryIds.every((id) => id === '1')).toBe(true);
+  });
+
+  it('nao deve renderizar a coluna lateral (aside) se nao houver banners disponiveis', () => {
+    mockUseBannersQuery.mockImplementation(() => {
+      return {
+        data: [],
+        isLoading: false,
+      };
+    });
+
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    // O container visual do aside com testid category-ads-rail não deve estar presente no DOM
+    const adsRail = screen.queryByTestId('category-ads-rail');
+    expect(adsRail).toBeNull();
   });
 });

@@ -43,7 +43,7 @@ class Api::V1::BannersController < Api::V1::BaseController
 
   # Gera chave de cache determinística baseada nos parâmetros
   def generate_cache_key
-    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city, :audience_key, :frequency_cap_seconds, :rotation_window_seconds)
+    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city, :audience_key, :frequency_cap_seconds, :rotation_window_seconds, fallback_positions: [])
                         .to_h
                         .sort
                         .to_h

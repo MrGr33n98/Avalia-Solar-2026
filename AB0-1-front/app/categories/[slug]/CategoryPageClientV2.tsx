@@ -5,6 +5,8 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import CategoryHero from '@/components/categories/CategoryHero';
 import BannerByLocation from '@/components/BannerByLocation';
+import { useBannersQuery } from '@/hooks/useBannersQuery';
+import { cn } from '@/lib/utils';
 import DecisionChips from '@/components/categories/DecisionChips';
 import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
 import CategoryCompaniesTable from '@/components/categories/CategoryCompaniesTable';
@@ -132,6 +134,22 @@ export default function CategoryPageClient({
   const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'rating_desc');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const isLoading = false;
+
+  const { data: filterBanners } = useBannersQuery({
+    position: 'categories_filter_sidebar',
+    fallbackPositions: ['sidebar'],
+    category_id: categoryId,
+    limit: 1,
+  });
+
+  const { data: rightRailBanners } = useBannersQuery({
+    position: 'categories_right_rail',
+    fallbackPositions: ['sidebar'],
+    category_id: categoryId,
+    limit: 1,
+  });
+
+  const hasBanners = (filterBanners && filterBanners.length > 0) || (rightRailBanners && rightRailBanners.length > 0);
 
   // Helper: sync filter state to URL without full navigation
   const syncToUrl = useCallback(
@@ -306,6 +324,7 @@ export default function CategoryPageClient({
           <div data-testid="category-filter-banner-mobile" className="lg:hidden">
             <BannerByLocation
               location="categories_filter_sidebar"
+              fallbackLocations={['sidebar']}
               categoryId={categoryId}
               limit={1}
               className="mx-auto max-w-[300px]"
@@ -314,7 +333,10 @@ export default function CategoryPageClient({
 
           {/* Main Layout Container */}
           <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-8">
-            <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className={cn(
+              "grid items-start gap-8",
+              hasBanners ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "grid-cols-1"
+            )}>
               <div className="min-w-0 space-y-12">
                 {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) */}
                 <section className="space-y-4">
@@ -382,8 +404,8 @@ export default function CategoryPageClient({
                       <div className="flex gap-2 w-full sm:w-auto">
                         <Select value={sortBy} onValueChange={handleSortChange}>
                           <SelectTrigger
-                            aria-label="Ordenar empresas"
-                            className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
+                              aria-label="Ordenar empresas"
+                              className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
                           >
                             <SelectValue />
                           </SelectTrigger>
@@ -415,22 +437,28 @@ export default function CategoryPageClient({
                 </div>
               </div>
 
-              <aside
-                data-testid="category-ads-rail"
-                className="hidden space-y-6 lg:block"
-                aria-label="Publicidade da categoria"
-              >
-                <BannerByLocation
-                  location="categories_filter_sidebar"
-                  categoryId={categoryId}
-                  limit={1}
-                />
-                <BannerByLocation
-                  location="categories_right_rail"
-                  categoryId={categoryId}
-                  limit={1}
-                />
-              </aside>
+              {hasBanners && (
+                <aside
+                  data-testid="category-ads-rail"
+                  className="hidden space-y-6 lg:block"
+                  aria-label="Publicidade da categoria"
+                >
+                  <BannerByLocation
+                    location="categories_filter_sidebar"
+                    fallbackLocations={['sidebar']}
+                    categoryId={categoryId}
+                    limit={1}
+                    initialBanners={filterBanners}
+                  />
+                  <BannerByLocation
+                    location="categories_right_rail"
+                    fallbackLocations={['sidebar']}
+                    categoryId={categoryId}
+                    limit={1}
+                    initialBanners={rightRailBanners}
+                  />
+                </aside>
+              )}
             </div>
           </div>
         </>

@@ -9,10 +9,30 @@ module Banners
     end
 
     def call
+      primary_pos = @params[:position]
+      scope = build_scope_for_position(primary_pos)
+
+      if primary_pos.present? && scope.empty? && @params[:fallback_positions].present?
+        Array(@params[:fallback_positions]).each do |fallback_pos|
+          next if fallback_pos.blank?
+          fallback_scope = build_scope_for_position(fallback_pos)
+          unless fallback_scope.empty?
+            scope = fallback_scope
+            break
+          end
+        end
+      end
+
+      scope
+    end
+
+    private
+
+    def build_scope_for_position(position)
       scope = Banner.currently_active
       scope = apply_catalog_availability(scope)
       scope = apply_contract_eligibility(scope)
-      scope = scope.where(position: @params[:position]) if @params[:position].present?
+      scope = scope.where(position: position) if position.present?
       scope = scope.where(slot_key: @params[:slot_key]) if @params[:slot_key].present? && Banner.column_names.include?('slot_key')
       scope = apply_company(scope)
       scope = apply_category(scope)
@@ -20,7 +40,7 @@ module Banners
       scope = apply_frequency_cap(scope)
       scope = apply_fair_rotation(scope)
       scope = scope.limit(@params[:limit].to_i) if @params[:limit].to_i.positive?
-      scope.includes(:categories, :company, image_attachment: :blob)
+      scope.includes(:categories, :company, image_attachment: :blob).to_a
     end
 
     private

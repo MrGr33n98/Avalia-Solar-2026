@@ -21,6 +21,7 @@ export interface Banner {
 
 interface UseBannersQueryOptions {
   position?: string;
+  fallbackPositions?: string[];
   limit?: number;
   category_id?: number | string;
   company_id?: number | string;
@@ -56,6 +57,7 @@ function normalizeBanners(payload: unknown): Banner[] {
 export function useBannersQuery(options: UseBannersQueryOptions = {}) {
   const {
     position,
+    fallbackPositions,
     limit,
     category_id,
     company_id,
@@ -78,12 +80,15 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
   return useQuery<Banner[]>({
     queryKey: [
       'banners',
-      { position, limit, category_id, company_id, slot_key, state, city, audienceKey, testAdsBypass },
+      { position, fallbackPositions, limit, category_id, company_id, slot_key, state, city, audienceKey, testAdsBypass },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
 
       if (position) params.append('position', position);
+      if (fallbackPositions && fallbackPositions.length > 0) {
+        fallbackPositions.forEach((p) => params.append('fallback_positions[]', p));
+      }
       if (limit) params.append('limit', String(limit));
       if (category_id) params.append('category_id', String(category_id));
       if (company_id) params.append('company_id', String(company_id));
