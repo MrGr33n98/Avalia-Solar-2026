@@ -6,6 +6,7 @@ import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { CreatorHero } from '@/components/creator/CreatorHero';
 import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact';
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
+import { CreatorReviewCard, type CreatorReview } from '@/components/creator/CreatorReviewCard';
 
 type CreatorData = {
   creator: {
@@ -31,13 +32,7 @@ type CreatorData = {
     publication_type?: string;
     published_at?: string;
   }>;
-  recent_reviews: Array<{
-    id: number;
-    title?: string;
-    excerpt?: string;
-    rating?: number;
-    company?: string;
-  }>;
+  recent_reviews: CreatorReview[];
   solutions: Array<{ id: string; name: string; category?: string }>;
   achievements: Array<{ id: string; title: string }>;
 };
@@ -169,13 +164,13 @@ export default async function CreatorPage({ params }: { params: { slug: string }
                 Avaliações publicadas por {creator.name.split(' ')[0]}
               </h2>
               <div className="mt-4 space-y-3">
-                {data.recent_reviews.map((review) => (
-                  <article key={review.id} className="border-b border-slate-200/70 pb-3">
-                    <p className="text-amber-500">{'★'.repeat(review.rating || 0)}</p>
-                    <p className="font-medium">{review.title || 'Avaliação publicada'}</p>
-                    <p className="text-sm text-[#53627a]">{review.excerpt}</p>
-                  </article>
-                ))}
+                {data.recent_reviews.length ? (
+                  data.recent_reviews.map((review) => <CreatorReviewCard key={review.id} review={review} />)
+                ) : (
+                  <p className="rounded-lg bg-slate-50 p-4 text-sm text-[#53627a]">
+                    Este creator ainda não publicou avaliações.
+                  </p>
+                )}
               </div>
             </section>
           </div>

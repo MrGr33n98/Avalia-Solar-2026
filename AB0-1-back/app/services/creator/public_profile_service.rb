@@ -1,3 +1,5 @@
+require 'uri'
+
 module Creator
   class PublicProfileService
     def self.invalidate(profile)
@@ -37,9 +39,89 @@ module Creator
     end
 
     def reviews
-      @user.reviews.approved_only.select(:id, :headline, :comment, :rating, :company_id, :created_at).includes(:company).order(created_at: :desc).limit(3).map do |review|
-        { id: review.id, title: review.headline, excerpt: review.comment, rating: review.rating, company: review.company&.name, created_at: review.created_at }
+      @user.reviews.approved_only
+        .select(:id, :headline, :comment, :rating, :company_id, :category_id, :created_at, :verified,
+                :project_type, :installation_status, :estimated_power, :is_legacy, :pros, :cons, :buyer_tip,
+                :project_context, :content_metadata, :granular_scores_snapshot, :metadata)
+        .includes(:company, :category, :user, review_media: { file_attachment: :blob })
+        .order(created_at: :desc).limit(3).map do |review|
+        {
+          id: review.id,
+          title: review.headline,
+          excerpt: review.comment,
+          headline: review.headline,
+          comment: review.comment,
+          rating: review.rating,
+          created_at: review.created_at,
+          verified: review.verified,
+          is_legacy: review.is_legacy,
+          project_type: review.project_type,
+          installation_status: review.installation_status,
+          estimated_power: review.estimated_power&.to_f,
+          project_context: review.project_context,
+          pros: review.pros,
+          cons: review.cons,
+          buyer_tip: review.buyer_tip,
+          would_recommend: review.metadata&.[]('would_recommend'),
+          user: { id: review.user&.id, name: review.user&.name || @user.name, avatar_url: review.user&.avatar_url },
+          company: serialize_company(review.company),
+          category_id: review.category_id,
+          category_name: review.category&.name,
+          granular_scores: serialize_granular_scores(review),
+          media: serialize_media(review)
+        }
       end
+    end
+
+    def serialize_company(company)
+      return nil unless company
+
+      { id: company.id, name: company.name, slug: company.slug, logo_url: company.logo_url }
+    end
+
+    def serialize_granular_scores(review)
+      return review.granular_scores_snapshot if review.granular_scores_snapshot.present?
+
+      review.review_criterion_scores.map do |score|
+        {
+          id: score.id,
+          title: score.title_snapshot || score.rating_criterion&.title,
+          score: score.score.to_f,
+          weight: score.weight_snapshot || score.rating_criterion&.weight
+        }
+      end
+    end
+
+    def serialize_media(review)
+      review.review_media.publicly_ready.ordered.filter_map do |media|
+        next unless media.file.attached?
+
+        {
+          id: media.id,
+          type: media.media_type,
+          display_url: Rails.application.routes.url_helpers.rails_blob_url(
+            media.file.variant(resize_to_limit: [1600, 1600]), public_url_options
+          ),
+          thumbnail_url: Rails.application.routes.url_helpers.rails_blob_url(
+            media.file.variant(resize_to_limit: [480, 480]), public_url_options
+          ),
+          width: media.width,
+          height: media.height,
+          sort_order: media.sort_order
+        }
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[CreatorProfile] failed to serialize review media: #{e.message}")
+      []
+    end
+
+    def public_url_options
+      origin = ENV['ACTIVE_STORAGE_HOST'].presence || ENV['APP_HOST'].presence ||
+               (Rails.env.test? ? 'http://www.example.com' : 'https://api.avaliasolar.com.br')
+      uri = URI.parse(origin)
+      options = { host: uri.host || origin, protocol: uri.scheme || 'https' }
+      options[:port] = uri.port if uri.port && ![80, 443].include?(uri.port)
+      options
     end
 
     def solutions
