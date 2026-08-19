@@ -219,10 +219,14 @@ export function CompaniesContent({
   const handleNearMe = async () => {
     try {
       if (navigator.permissions && navigator.permissions.query) {
-        const permission = await navigator.permissions.query({ name: 'geolocation' });
-        if (permission.state === 'denied') {
-          setIsFiltersOpen(true);
-          return;
+        try {
+          const permission = await navigator.permissions.query({ name: 'geolocation' });
+          if (permission.state === 'denied') {
+            setIsFiltersOpen(true);
+            return;
+          }
+        } catch (e) {
+          // Ignore unsupported permission query in some browsers
         }
       }
 
@@ -242,9 +246,8 @@ export function CompaniesContent({
       });
       router.replace(buildTargetUrl(updated), { scroll: false });
     } catch (err) {
-      if (err === 'denied') {
-        setIsFiltersOpen(true);
-      }
+      // Fallback: se falhar por permissão negada, timeout ou unsupported, abre o modal
+      setIsFiltersOpen(true);
     }
   };
 

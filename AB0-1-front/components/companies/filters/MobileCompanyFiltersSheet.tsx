@@ -218,7 +218,7 @@ export default function MobileCompanyFiltersSheet({
         aria-modal="true"
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[100dvh] md:max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
+        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85vh] md:max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
