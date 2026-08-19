@@ -146,7 +146,7 @@ export function CompaniesContent({
     ]
   );
 
-  const buildTargetUrl = (nextFilters: CompanyFilters): string => {
+  const buildTargetUrl = useCallback((nextFilters: CompanyFilters): string => {
     const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
     const hasPathCategories = isCompaniesCategoriesPath(pathname);
 
@@ -158,7 +158,7 @@ export function CompaniesContent({
 
     const queryString = stringifyQueryParams(nextFilters);
     return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
-  };
+  }, [pathSlugById, pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -786,7 +786,7 @@ export function CompaniesContent({
                 ) : visibleCompanies.length > 0 ? (
                   <>
                     {viewMode === 'map' ? (
-                      <div className="h-[600px] w-full rounded-2xl shadow-sm border border-slate-200">
+                      <div className="h-[calc(100dvh-13rem)] min-h-[520px] w-full rounded-2xl shadow-sm border border-slate-200 md:h-[600px]">
                         <SearchMapPanel
                           companies={mapCompanies}
                           className="h-full"
