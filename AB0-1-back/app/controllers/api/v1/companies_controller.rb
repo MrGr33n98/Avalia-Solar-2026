@@ -425,6 +425,8 @@ module Api
           related_categories: payload[:related_categories],
           similar_companies: payload[:similar_companies]
         }
+      end
+
       def fetch_companies_data
         retries = 0
         begin
