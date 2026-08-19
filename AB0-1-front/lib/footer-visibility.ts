@@ -9,6 +9,7 @@ const OPERATIONAL_ROUTE_PREFIXES = [
   '/dashboard',
   '/debug-design',
   '/f',
+  '/feed',
   '/favorites',
   '/forgot-password',
   '/login',

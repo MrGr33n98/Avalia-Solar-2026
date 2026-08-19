@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client';
+
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -110,6 +112,22 @@ export function FeedRightRail() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Micro Footer */}
+      <div className="text-[11px] text-muted-foreground px-2 space-y-1" aria-label="Links institucionais">
+        <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
+          <Link href="/about" className="hover:underline">Sobre</Link>
+          <span>·</span>
+          <Link href="/help" className="hover:underline">Ajuda</Link>
+          <span>·</span>
+          <Link href="/privacy" className="hover:underline">Privacidade</Link>
+          <span>·</span>
+          <Link href="/terms" className="hover:underline">Termos</Link>
+          <span>·</span>
+          <Link href="/cookies" className="hover:underline">Cookies</Link>
+        </div>
+        <p className="text-muted-foreground/80">© 2026 Avalia Solar</p>
       </div>
     </aside>
   );

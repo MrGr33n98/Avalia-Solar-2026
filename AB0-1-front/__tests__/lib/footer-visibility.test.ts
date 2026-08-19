@@ -22,6 +22,7 @@ describe('strategic footer visibility', () => {
     '/review-dashboard/achievements',
     '/search',
     '/solucoes/energia-solar-residencial',
+    '/creators/test',
   ])('shows on public strategic route %s', (pathname) => {
     expect(shouldShowStrategicFooter(pathname)).toBe(true);
   });
@@ -40,6 +41,7 @@ describe('strategic footer visibility', () => {
     '/register',
     '/reset-password/token',
     '/select-company',
+    '/feed',
   ])('hides on operational route %s', (pathname) => {
     expect(shouldShowStrategicFooter(pathname)).toBe(false);
   });

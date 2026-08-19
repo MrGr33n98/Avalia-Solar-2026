@@ -11,7 +11,7 @@ export function FeedShell() {
   const [activeView, setActiveView] = useState('for_you');
 
   return (
-    <div className="max-w-[1240px] mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_300px] gap-6">
+    <div className="max-w-[1240px] mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_300px] gap-6 min-h-[calc(100vh-88px)]">
       {/* Left Rail (Tablet and Desktop) */}
       <div className="hidden md:block">
         <FeedLeftRail />
@@ -25,7 +25,7 @@ export function FeedShell() {
       </main>
 
       {/* Right Rail (Desktop only) */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block sticky top-[80px] h-fit">
         <FeedRightRail />
       </div>
     </div>
