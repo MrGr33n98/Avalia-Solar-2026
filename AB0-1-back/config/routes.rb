@@ -347,6 +347,7 @@ Rails.application.routes.draw do
           get :events
         end
         resources :direct_messages, only: %i[index create]
+      end
       resources :push_tokens, only: %i[create]
 
       # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
