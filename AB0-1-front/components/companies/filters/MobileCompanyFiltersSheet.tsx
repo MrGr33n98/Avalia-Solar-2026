@@ -42,6 +42,12 @@ export default function MobileCompanyFiltersSheet({
   const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
 
+  const handleCancel = () => {
+    setDraftFilters(filters);
+    setDraftCategoryIds(filters.category_ids);
+    onClose();
+  };
+
   // Keyboard Escape listener
   useEffect(() => {
     if (!open) return;
@@ -50,7 +56,7 @@ export default function MobileCompanyFiltersSheet({
         if (isCategoryPickerOpen) {
           setIsCategoryPickerOpen(false);
         } else {
-          onClose();
+          handleCancel();
         }
       } else if (e.key === 'Tab' && sheetRef.current) {
         const focusable = sheetRef.current.querySelectorAll<HTMLElement>(
@@ -69,12 +75,14 @@ export default function MobileCompanyFiltersSheet({
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose, isCategoryPickerOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isCategoryPickerOpen, filters]);
 
-  // Sync draft filters when modal opens
+  const wasOpenRef = useRef(false);
+
+  // Sync draft filters only when modal transitions to open
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       previouslyFocusedRef.current = document.activeElement as HTMLElement;
       setDraftFilters(filters);
       setDraftCategoryIds(filters.category_ids);
@@ -85,6 +93,7 @@ export default function MobileCompanyFiltersSheet({
         setGpsError(initialGpsError);
       }
     }
+    wasOpenRef.current = open;
   }, [open, filters, fetchStates, initialGpsError, setGpsError]);
 
   useEffect(() => {
@@ -197,10 +206,10 @@ export default function MobileCompanyFiltersSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+      className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
       role="presentation"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) handleCancel();
       }}
     >
       <div
@@ -209,8 +218,7 @@ export default function MobileCompanyFiltersSheet({
         aria-modal="true"
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[100dvh] md:max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
@@ -218,7 +226,7 @@ export default function MobileCompanyFiltersSheet({
           <button
             ref={closeButtonRef}
             type="button"
-            onClick={onClose}
+            onClick={handleCancel}
             aria-label="Fechar filtros"
             className="p-1 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors"
           >
@@ -312,6 +320,11 @@ export default function MobileCompanyFiltersSheet({
                     className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                   >
                     <option value="">Selecione...</option>
+                    {activeState && !states.includes(activeState) && (
+                      <option value={activeState}>
+                        {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === activeState)?.label || activeState}
+                      </option>
+                    )}
                     {states.map((st) => (
                       <option key={st} value={st}>
                         {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === st)?.label || st}
@@ -338,6 +351,11 @@ export default function MobileCompanyFiltersSheet({
                     className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50"
                   >
                     <option value="">Selecione...</option>
+                    {(draftFilters.city[0] || '') && !cities.includes(draftFilters.city[0] || '') && (
+                      <option value={draftFilters.city[0] || ''}>
+                        {draftFilters.city[0] || ''}
+                      </option>
+                    )}
                     {cities.map((ct) => (
                       <option key={ct} value={ct}>
                         {ct}
@@ -469,7 +487,10 @@ export default function MobileCompanyFiltersSheet({
         )}
 
         {/* Footer */}
-        <div className="sticky bottom-0 px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
+        <div 
+          className="sticky bottom-0 z-20 px-5 pt-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
           <button
             type="button"
             onClick={handleClear}
@@ -480,9 +501,10 @@ export default function MobileCompanyFiltersSheet({
 
           <button
             type="button"
-            onClick={() => onApply(draftFilters)}
-            disabled={loadingCount}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl h-11 flex items-center justify-center gap-1.5 transition-colors disabled:bg-blue-400"
+            onClick={() => {
+              onApply({ ...draftFilters, page: 1 });
+            }}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl h-11 flex items-center justify-center gap-1.5 transition-colors"
           >
             {loadingCount && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>

@@ -90,8 +90,13 @@ export function CompaniesContent({
   };
 
   const handleApplyFilters = (nextFilters: CompanyFilters) => {
+    const normalized = {
+      ...nextFilters,
+      page: 1
+    };
+    const targetUrl = buildTargetUrl(normalized);
+    router.replace(targetUrl, { scroll: false });
     setIsFiltersOpen(false);
-    router.replace(buildTargetUrl(nextFilters), { scroll: false });
   };
   const PAGE_SIZE = 12;
   const isMobile = useIsMobile();            // desktop = expanded, mobile = standard
@@ -640,7 +645,7 @@ export function CompaniesContent({
               placeholder="Buscar empresas..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 h-10 bg-slate-50 border-none rounded-full text-sm"
+              className="pl-9 h-10 bg-white border-2 border-slate-900 rounded-full text-sm placeholder:text-slate-500 shadow-sm focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1"
             />
           </form>
         </div>
