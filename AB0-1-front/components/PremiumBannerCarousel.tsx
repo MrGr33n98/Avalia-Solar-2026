@@ -21,6 +21,7 @@ interface PremiumBannerCarouselProps {
   aspectRatio?: string;
   onItemClick?: (index: number) => void;
   onActiveIndexChange?: (index: number) => void;
+  compactControls?: boolean;
 }
 
 export function PremiumBannerCarousel({
@@ -30,6 +31,7 @@ export function PremiumBannerCarousel({
   aspectRatio = "aspect-[3/1] md:aspect-[4/1]",
   onItemClick,
   onActiveIndexChange,
+  compactControls = false,
 }: PremiumBannerCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = React.useState(0);
@@ -169,7 +171,10 @@ export function PremiumBannerCarousel({
             </div>
 
             {/* On desktop the progress control stays inside the banner. */}
-            <div className="absolute bottom-4 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 backdrop-blur-sm md:flex">
+            <div className={cn(
+              "absolute left-1/2 z-10 hidden -translate-x-1/2 items-center rounded-full backdrop-blur-sm md:flex",
+              compactControls ? "bottom-2 gap-1 bg-black/15 px-1.5 py-0.5" : "bottom-4 gap-2 bg-black/20 px-3 py-1.5"
+            )}>
               {scrollSnaps.map((_, index) => {
                 const active = index === selectedIndex;
                 return (
@@ -177,20 +182,28 @@ export function PremiumBannerCarousel({
                     key={index}
                     type="button"
                     onClick={() => api?.scrollTo(index)}
-                    className="relative flex h-8 w-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+                    className={cn(
+                      "relative flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2",
+                      compactControls ? "h-5 w-5" : "h-8 w-8"
+                    )}
                     aria-label={`Ir para slide ${index + 1}`}
                     aria-current={active ? 'true' : undefined}
                   >
                     <span
                       className={cn(
-                        'block h-[7px] rounded-full transition-all duration-300 ease-out',
-                        active ? 'w-5 bg-white' : 'w-[7px] bg-white/40 hover:bg-white/60'
+                        'block rounded-full transition-all duration-300 ease-out',
+                        compactControls 
+                          ? (active ? 'h-1 w-3 bg-white' : 'h-1 w-1 bg-white/40 hover:bg-white/60')
+                          : (active ? 'h-[7px] w-5 bg-white' : 'h-[7px] w-[7px] bg-white/40 hover:bg-white/60')
                       )}
                     />
                     {active && (
                       <motion.div
                         animate={controls}
-                        className="absolute left-1.5 top-1/2 h-[7px] -translate-y-1/2 rounded-full bg-white/70"
+                        className={cn(
+                          "absolute top-1/2 -translate-y-1/2 rounded-full bg-white/70",
+                          compactControls ? "h-1 left-1" : "h-[7px] left-1.5"
+                        )}
                         style={{ width: "0%" }}
                       />
                     )}

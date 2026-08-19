@@ -249,6 +249,21 @@ export function BannerContainer({
   try {
     const aspectRatio = getBannerAspectRatio(position);
     const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
+    const isCompactControls = position ? [
+      'company_profile_about_inline',
+      'home_top',
+      'search_mid',
+      'companies_footer',
+      'article_footer_cta',
+      'compare_page_inline',
+      'compare_page_bottom',
+      'companies_top',
+      'categories_top',
+      'search_top',
+      'navbar',
+      'financing_simulator_micro_banner',
+      'compare_page_top'
+    ].includes(position) : false;
 
     const getSizes = (pos?: string) => {
       switch (pos) {
@@ -325,6 +340,7 @@ export function BannerContainer({
             trackActiveBannerView();
           }}
           className={hasSponsoredBanner ? '!rounded-none' : undefined}
+          compactControls={isCompactControls}
         />
       </div>
     );
