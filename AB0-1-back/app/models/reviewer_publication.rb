@@ -18,7 +18,16 @@ class ReviewerPublication < ApplicationRecord
   after_commit :invalidate_creator_cache
 
   def publish!
-    update!(status: 'published', published_at: Time.current)
+    transaction do
+      update!(status: 'published', published_at: Time.current)
+      DomainEvent.create!(
+        event_type: 'publication.published',
+        aggregate_type: self.class.name,
+        aggregate_id: id,
+        payload: { user_id: user_id, title: title, slug: slug },
+        occurred_at: Time.current
+      )
+    end
   end
 
   def archive!

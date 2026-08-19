@@ -1,0 +1,95 @@
+import { buildApiUrl, getApiRequestHeaders } from '../api-config';
+import { FeedResponse, CommentItem } from '@/types/feed';
+
+async function fetchWithAuth(urlPath: string, options: RequestInit = {}): Promise<Response> {
+  const fullUrl = buildApiUrl(urlPath.replace(/^\/api\/v1\//, ''));
+  const headers = {
+    ...getApiRequestHeaders(),
+    ...(options.headers || {}),
+  };
+  return fetch(fullUrl, { ...options, headers });
+}
+
+export async function getFeed(params?: { view?: string; cursor?: string; limit?: number }): Promise<FeedResponse> {
+  const query = new URLSearchParams();
+  if (params?.view) query.append('view', params.view);
+  if (params?.cursor) query.append('cursor', params.cursor);
+  if (params?.limit) query.append('limit', params.limit.toString());
+
+  const res = await fetchWithAuth(`/api/v1/feed?${query.toString()}`);
+  if (!res.ok) {
+    throw new Error('Falha ao carregar feed');
+  }
+  return res.json();
+}
+
+export async function toggleReaction(reactableType: string, reactableId: number, active: boolean): Promise<void> {
+  if (active) {
+    await fetchWithAuth('/api/v1/reactions', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId }),
+    });
+  } else {
+    await fetchWithAuth('/api/v1/reactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId, reaction_type: 'useful' }),
+    });
+  }
+}
+
+export async function toggleSave(saveableType: string, saveableId: number, saved: boolean): Promise<void> {
+  if (saved) {
+    await fetchWithAuth('/api/v1/saved_items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ saveable_type: saveableType, saveable_id: saveableId }),
+    });
+  } else {
+    await fetchWithAuth('/api/v1/saved_items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ saveable_type: saveableType, saveable_id: saveableId }),
+    });
+  }
+}
+
+export async function toggleFollow(followableType: string, followableId: number, following: boolean): Promise<void> {
+  if (following) {
+    await fetchWithAuth('/api/v1/follows', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followable_type: followableType, followable_id: followableId }),
+    });
+  } else {
+    await fetchWithAuth('/api/v1/follows', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followable_type: followableType, followable_id: followableId }),
+    });
+  }
+}
+
+export async function getComments(commentableType: string, commentableId: number): Promise<CommentItem[]> {
+  const res = await fetchWithAuth(`/api/v1/comments?commentable_type=${commentableType}&commentable_id=${commentableId}`);
+  if (!res.ok) throw new Error('Falha ao carregar comentários');
+  const json = await res.json();
+  return json.data;
+}
+
+export async function postComment(commentableType: string, commentableId: number, body: string, parentId?: number): Promise<CommentItem> {
+  const res = await fetchWithAuth('/api/v1/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      commentable_type: commentableType,
+      commentable_id: commentableId,
+      body,
+      parent_id: parentId,
+    }),
+  });
+  if (!res.ok) throw new Error('Falha ao publicar comentário');
+  const json = await res.json();
+  return json.data;
+}

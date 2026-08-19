@@ -54,6 +54,25 @@ Rails.application.routes.draw do
         end
       end
 
+      # Social Core API routes
+      get 'feed', to: 'feed#index'
+      resources :social_follows, path: 'follows', only: %i[index create] do
+        collection do
+          delete '/', to: 'social_follows#destroy'
+        end
+      end
+      resources :reactions, only: %i[create] do
+        collection do
+          delete '/', to: 'reactions#destroy'
+        end
+      end
+      resources :comments, only: %i[index create destroy]
+      resources :saved_items, only: %i[index create] do
+        collection do
+          delete '/', to: 'saved_items#destroy'
+        end
+      end
+
       # Growth analytics — PostHog webhook
       post 'posthog_webhook', to: 'posthog_webhooks#create'
       get 'posthog_webhook/health', to: 'posthog_webhooks#health'

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_19_153600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -918,11 +918,21 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   end
 
   create_table "comments", force: :cascade do |t|
-    t.bigint "post_id", null: false
+    t.bigint "post_id"
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "commentable_type"
+    t.bigint "commentable_id"
+    t.bigint "parent_id"
+    t.text "body"
+    t.string "status", default: "active", null: false
+    t.datetime "edited_at"
+    t.datetime "deleted_at"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["post_id"], name: "index_comments_on_post_id"
+    t.index ["status"], name: "index_comments_on_status"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -1858,6 +1868,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.index ["sender_id"], name: "index_direct_messages_on_sender_id"
   end
 
+  create_table "domain_events", force: :cascade do |t|
+    t.string "event_type", null: false
+    t.string "aggregate_type", null: false
+    t.bigint "aggregate_id", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "processed_at"
+    t.integer "attempts", default: 0, null: false
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["aggregate_type", "aggregate_id"], name: "index_domain_events_on_aggregate_type_and_aggregate_id"
+    t.index ["occurred_at"], name: "index_domain_events_on_occurred_at"
+    t.index ["status"], name: "index_domain_events_on_status"
+  end
+
   create_table "downloadables", force: :cascade do |t|
     t.string "title"
     t.text "description"
@@ -1930,6 +1957,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "feed_items", force: :cascade do |t|
+    t.string "actor_type", null: false
+    t.bigint "actor_id", null: false
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.string "verb", null: false
+    t.string "visibility", default: "public", null: false
+    t.datetime "published_at", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_type", "actor_id"], name: "index_feed_items_on_actor"
+    t.index ["actor_type", "actor_id"], name: "index_feed_items_on_actor_type_and_actor_id"
+    t.index ["published_at"], name: "index_feed_items_on_published_at"
+    t.index ["subject_type", "subject_id"], name: "index_feed_items_on_subject"
+    t.index ["subject_type", "subject_id"], name: "index_feed_items_on_subject_type_and_subject_id"
+    t.index ["verb"], name: "index_feed_items_on_verb"
+    t.index ["visibility"], name: "index_feed_items_on_visibility"
   end
 
   create_table "financial_institutions", force: :cascade do |t|
@@ -2133,7 +2180,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.json "payload"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "match_score"
+    t.jsonb "match_reasons", default: {}, null: false
+    t.datetime "sent_at"
+    t.datetime "viewed_at"
+    t.datetime "accepted_at"
+    t.datetime "rejected_at"
+    t.datetime "expired_at"
+    t.datetime "converted_at"
+    t.string "rejection_reason"
+    t.index ["company_id", "status", "sent_at"], name: "index_lead_distributions_on_company_status_sent"
     t.index ["company_id"], name: "index_lead_distributions_on_company_id"
+    t.index ["lead_id", "company_id"], name: "index_lead_distributions_on_lead_and_company", unique: true
     t.index ["lead_id"], name: "index_lead_distributions_on_lead_id"
   end
 
@@ -2282,6 +2340,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.string "lgpd_consent_version"
     t.datetime "lgpd_consent_at"
     t.text "lgpd_consent_text"
+    t.string "idempotency_key"
+    t.bigint "lead_wizard_version_id"
     t.index ["category_id"], name: "index_leads_on_category_id"
     t.index ["chat_lead_id"], name: "index_leads_on_chat_lead_id"
     t.index ["chat_session_id"], name: "index_leads_on_chat_session_id"
@@ -2292,6 +2352,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.index ["company_id"], name: "index_leads_on_company_id"
     t.index ["created_at"], name: "index_leads_on_created_at"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["idempotency_key"], name: "index_leads_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["lead_wizard_version_id"], name: "index_leads_on_lead_wizard_version_id"
     t.index ["quote_requested_company_id"], name: "index_leads_on_quote_requested_company_id"
     t.index ["recommended_company_ids"], name: "index_leads_on_recommended_company_ids", using: :gin
     t.index ["score_band"], name: "index_leads_on_score_band"
@@ -2299,7 +2361,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.index ["utm_campaign"], name: "index_leads_on_utm_campaign"
     t.index ["utm_medium"], name: "index_leads_on_utm_medium"
     t.index ["utm_source"], name: "index_leads_on_utm_source"
-    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::character varying, 'pending_otp'::character varying, 'verified'::character varying, 'distributed'::character varying, 'proposal_submitted'::character varying, 'proposal_processing'::character varying, 'proposal_sent'::character varying, 'proposal_failed'::character varying]::text[])", name: "ck_leads_valid_status"
+    t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::text, 'routing'::text, 'pending_otp'::text, 'verified'::text, 'matched'::text, 'open'::text, 'in_progress'::text, 'distributed'::text, 'unmatched'::text, 'converted'::text, 'closed'::text, 'proposal_submitted'::text, 'proposal_processing'::text, 'proposal_sent'::text, 'proposal_failed'::text])", name: "ck_leads_valid_status"
   end
 
   create_table "material_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2823,6 +2885,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
   end
 
+  create_table "publication_entities", force: :cascade do |t|
+    t.bigint "publication_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.string "relation_type", default: "mentioned", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_type", "entity_id"], name: "index_publication_entities_on_entity"
+    t.index ["publication_id", "entity_type", "entity_id"], name: "idx_pub_entities_unique", unique: true
+    t.index ["publication_id"], name: "index_publication_entities_on_publication_id"
+    t.index ["relation_type"], name: "index_publication_entities_on_relation_type"
+  end
+
   create_table "push_subscriptions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "endpoint", null: false
@@ -2863,6 +2938,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.index ["category_id", "slug"], name: "index_rating_criteria_on_category_id_and_slug", unique: true
     t.index ["category_id"], name: "index_rating_criteria_on_category_id"
     t.index ["slug"], name: "index_rating_criteria_on_slug"
+  end
+
+  create_table "reactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "reactable_type", null: false
+    t.bigint "reactable_id", null: false
+    t.string "reaction_type", default: "useful", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
+    t.index ["reaction_type"], name: "index_reactions_on_reaction_type"
+    t.index ["user_id", "reactable_type", "reactable_id"], name: "idx_reactions_unique_user_reactable", unique: true
+    t.index ["user_id"], name: "index_reactions_on_user_id"
   end
 
   create_table "recommendation_placements", force: :cascade do |t|
@@ -3235,6 +3323,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.check_constraint "rating >= 1::numeric AND rating <= 5::numeric", name: "ck_reviews_valid_rating"
   end
 
+  create_table "saved_items", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "saveable_type", null: false
+    t.bigint "saveable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["saveable_type", "saveable_id"], name: "index_saved_items_on_saveable"
+    t.index ["user_id", "saveable_type", "saveable_id"], name: "idx_saved_items_unique_user_saveable", unique: true
+    t.index ["user_id"], name: "index_saved_items_on_user_id"
+  end
+
   create_table "search_zero_results", force: :cascade do |t|
     t.string "query", null: false
     t.integer "category_id"
@@ -3276,6 +3375,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_seo_landing_pages_on_category_id"
     t.index ["slug"], name: "index_seo_landing_pages_on_slug", unique: true
+  end
+
+  create_table "social_follows", force: :cascade do |t|
+    t.bigint "follower_id", null: false
+    t.string "followable_type", null: false
+    t.bigint "followable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["followable_type", "followable_id"], name: "index_social_follows_on_followable"
+    t.index ["follower_id", "followable_type", "followable_id"], name: "idx_social_follows_unique", unique: true
+    t.index ["follower_id"], name: "index_social_follows_on_follower_id"
   end
 
   create_table "social_post_analytics", force: :cascade do |t|
@@ -3484,6 +3594,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   add_foreign_key "chat_sessions", "companies"
   add_foreign_key "chat_sessions", "users"
   add_foreign_key "chat_sessions", "users", column: "assigned_agent_id"
+  add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "companies", "plans"
@@ -3563,6 +3674,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   add_foreign_key "leads", "chat_leads"
   add_foreign_key "leads", "chat_sessions"
   add_foreign_key "leads", "companies"
+  add_foreign_key "leads", "lead_wizard_versions"
   add_foreign_key "material_downloads", "companies"
   add_foreign_key "material_downloads", "company_materials"
   add_foreign_key "material_downloads", "content_lead_forms"
@@ -3583,9 +3695,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   add_foreign_key "product_specifications", "spec_templates"
   add_foreign_key "products", "brands"
   add_foreign_key "products", "companies"
+  add_foreign_key "publication_entities", "reviewer_publications", column: "publication_id"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "push_tokens", "users"
   add_foreign_key "rating_criteria", "categories"
+  add_foreign_key "reactions", "users"
   add_foreign_key "recommendation_placements", "categories"
   add_foreign_key "recommendation_placements", "companies", on_delete: :cascade
   add_foreign_key "review_aggregates", "categories"
@@ -3619,9 +3733,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_18_100000) do
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "review_forms"
   add_foreign_key "reviews", "users"
+  add_foreign_key "saved_items", "users"
   add_foreign_key "sector_ratings", "companies"
   add_foreign_key "sector_ratings", "users"
   add_foreign_key "seo_landing_pages", "categories"
+  add_foreign_key "social_follows", "users", column: "follower_id"
   add_foreign_key "sponsored_plans", "categories"
   add_foreign_key "sponsored_plans", "plans"
   add_foreign_key "sponsored_plans", "products"

@@ -24,7 +24,7 @@ class Notification < ApplicationRecord
   scope :by_category, ->(cat) { where(category: cat) }
 
   # Categories
-  CATEGORIES = %w[quotes reviews messages companies system].freeze
+  CATEGORIES = %w[quotes reviews messages companies system community].freeze
 
   # Event Types
   TYPES = %w[
@@ -58,6 +58,13 @@ class Notification < ApplicationRecord
     review_response
     company_response
     account_update
+    publication_reacted
+    publication_commented
+    comment_replied
+    creator_followed
+    company_followed
+    user_mentioned
+  ].freeze
     system_message
   ].freeze
 

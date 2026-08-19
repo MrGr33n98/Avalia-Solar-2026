@@ -40,6 +40,14 @@ module ReviewCallbacks
     # Only trigger for approved reviews
     return unless approved? || (new_record? && approved?)
 
+    DomainEvent.create!(
+      event_type: 'review.approved',
+      aggregate_type: self.class.name,
+      aggregate_id: id,
+      payload: { company_id: company_id, user_id: user_id, rating: rating },
+      occurred_at: Time.current
+    )
+
     TrustScoreRecalculationWorker.perform_async(company_id, 'review')
   rescue StandardError => e
     Rails.logger.error("Failed to trigger trust score recalculation for company #{company_id}: #{e.message}")
