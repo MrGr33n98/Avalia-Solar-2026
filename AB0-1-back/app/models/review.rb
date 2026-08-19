@@ -16,8 +16,9 @@ class Review < ApplicationRecord
   has_many_attached :photos
 
   MAX_FEATURED_PER_COMPANY = 5
+  REVIEWER_DASHBOARD_STATUSES = %w[approved pending in_analysis rejected archived].freeze
 
-  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4, contested: 5 }
+  enum status: { pending: 0, approved: 1, rejected: 2, in_analysis: 3, flagged: 4, contested: 5, archived: 6 }
   enum project_type: { residential: 0, commercial: 1, industrial: 2, rural: 3 }
   enum installation_status: { completed: 0, in_progress: 1, waiting: 2 }
   enum capture_flow_source: {
@@ -42,6 +43,9 @@ class Review < ApplicationRecord
 
   # Scopes
   scope :approved_only, -> { where(status: statuses[:approved]) }
+  scope :for_reviewer_dashboard, -> {
+    where(status: REVIEWER_DASHBOARD_STATUSES.map { |status| statuses.fetch(status) })
+  }
   scope :published, -> { approved_only }
   scope :featured_only, -> { where(featured: true) }
   scope :for_company, ->(company_id) { where(company_id: company_id) if company_id.present? }

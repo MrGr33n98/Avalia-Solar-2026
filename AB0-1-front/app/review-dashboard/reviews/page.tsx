@@ -10,14 +10,14 @@ import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import { Star, Clock, Building2, ThumbsUp, ArrowRight, Plus } from 'lucide-react';
+import { Star, Clock, Building2, ThumbsUp, ArrowRight, Plus, AlertCircle, Loader2 } from 'lucide-react';
 
 const tabs = [{ id: 'all', label: 'Minhas avaliações', icon: Star }] as const;
 
 type TabId = (typeof tabs)[number]['id'];
 
 export default function AvaliacoesPage() {
-  const { reviews, loading, summary } = useDashboardContext();
+  const { reviews, reviewsLoading, reviewsError, summary, onRefresh } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [search, setSearch] = useState('');
   const [expandedReviewId, setExpandedReviewId] = useState<number | null>(null);
@@ -136,7 +136,24 @@ export default function AvaliacoesPage() {
           />
 
           {/* Reviews list */}
-          {searchedReviews.length === 0 ? (
+          {reviewsLoading ? (
+            <div className="flex min-h-48 items-center justify-center rounded-xl border border-slate-200 bg-slate-50/50" role="status">
+              <Loader2 className="h-7 w-7 animate-spin text-blue-600" aria-label="Carregando avaliações" />
+            </div>
+          ) : reviewsError ? (
+            <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50/50 px-6 text-center">
+              <AlertCircle className="h-8 w-8 text-red-500" aria-hidden="true" />
+              <h3 className="mt-3 text-base font-semibold text-slate-900">Não foi possível carregar suas avaliações.</h3>
+              <p className="mt-1 text-sm text-slate-600">{reviewsError}</p>
+              <button
+                type="button"
+                onClick={onRefresh}
+                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : searchedReviews.length === 0 ? (
             <EmptyStateCard
               icon={Star}
               title="Nenhuma avaliação ainda"

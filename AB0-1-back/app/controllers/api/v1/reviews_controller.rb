@@ -45,8 +45,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def mine
-    @reviews = current_user.reviews.includes({ user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
-                                             review_criterion_scores: :rating_criterion).order(created_at: :desc)
+    @reviews = current_user.reviews.for_reviewer_dashboard.includes(
+      { user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
+      review_criterion_scores: :rating_criterion
+    ).order(created_at: :desc)
     render json: {
       data: @reviews.map { |r| serialize_review(r) }
     }
@@ -290,13 +292,16 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       return {
         id: nil,
         name: review.public_reviewer_name,
-        avatar_url: nil
+        display_name: review.public_reviewer_name,
+        avatar_url: nil,
+        creator_slug: nil
       }
     end
 
     {
       id: user.id,
       name: user.name,
+      display_name: user.display_name,
       avatar_url: user.avatar_url,
       creator_slug: user.reviewer_profile&.creator_enabled? ? user.reviewer_profile.public_slug : nil
     }

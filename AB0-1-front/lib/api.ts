@@ -593,11 +593,12 @@ export interface Review {
   created_at: string;
   updated_at?: string;
   user?: {
-    id: number;
-    name: string;
+    id?: number;
+    name?: string | null;
+    display_name?: string | null;
     avatar_url?: string | null;
     creator_slug?: string | null;
-  };
+  } | null;
   product?: { id: number; name: string };
   company?: string | { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
@@ -2119,6 +2120,14 @@ export const leadsApi = {
 export const reviewsApi = {
   getAll: (params: any = {}) => fetchApi('/reviews', { params, timeout: 5000, retries: 0 }),
   listMine: async (params: any = {}): Promise<Review[]> => {
+    const normalizeReviews = (response: unknown): Review[] => {
+      if (Array.isArray(response)) return response as Review[];
+      if (response && typeof response === 'object' && Array.isArray((response as { data?: unknown }).data)) {
+        return (response as { data: Review[] }).data;
+      }
+      return [];
+    };
+
     try {
       if (apolloClient) {
         const { data } = await apolloClient.query({
@@ -2133,7 +2142,6 @@ export const reviewsApi = {
                   pros
                   cons
                   buyer_tip
-                  author_name
                   reply: company_reply
                   replied_at: replied_at
                   status
@@ -2141,6 +2149,9 @@ export const reviewsApi = {
                   installation_status
                   created_at: createdAt
                   updated_at: updatedAt
+                  authorDisplayName
+                  authorAvatarUrl
+                  creatorSlug
                   company {
                     id
                     name
@@ -2157,12 +2168,25 @@ export const reviewsApi = {
           },
           fetchPolicy: 'network-only',
         });
-        return data?.myReviews?.nodes || [];
+        return normalizeReviews(
+          (data?.myReviews?.nodes || []).map((review: Review & {
+            authorDisplayName?: string | null;
+            authorAvatarUrl?: string | null;
+            creatorSlug?: string | null;
+          }) => ({
+            ...review,
+            user: {
+              name: review.authorDisplayName,
+              avatar_url: review.authorAvatarUrl,
+              creator_slug: review.creatorSlug,
+            },
+          }))
+        );
       }
     } catch (err) {
       console.warn('[reviewsApi.listMine] GraphQL failed, falling back to REST:', err);
     }
-    return fetchApi<Review[]>('/reviews/mine', { params });
+    return normalizeReviews(await fetchApi<Review[] | { data?: Review[] }>('/reviews/mine', { params }));
   },
   getById: (id: number) => fetchApi(`/reviews/${id}`),
   create: (review: Partial<Review>) =>

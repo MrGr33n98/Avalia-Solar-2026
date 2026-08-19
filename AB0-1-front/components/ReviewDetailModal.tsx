@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import {
   X,
   MoreVertical,
   Star,
   CheckCircle2,
-  AlertTriangle,
   ThumbsUp,
   ThumbsDown,
   Flag,
@@ -16,7 +16,6 @@ import {
   BadgeDollarSign,
   Headphones,
   Lock,
-  Camera,
   Check
 } from 'lucide-react';
 import type { Review } from '@/lib/api';
@@ -24,12 +23,19 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ReviewMediaGallery } from '@/components/reviews/ReviewMediaGallery';
 import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
+import { getReviewAuthorHref } from '@/lib/reviews/getReviewAuthorHref';
+import Link from 'next/link';
 
 interface ReviewDetailModalProps {
   review: Review;
   isOpen: boolean;
   onClose: () => void;
 }
+
+type ReviewCriterion = {
+  title: string;
+  score: number;
+};
 
 export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModalProps) {
   const [isVoting, setIsVoting] = useState(false);
@@ -85,6 +91,8 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
   const projectTypeLabel = projectTypeMap[review.project_type || ''] || 'Projeto';
 
   const avatarSrc = review.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'A')}&background=random`;
+  const authorProfileHref = getReviewAuthorHref(review);
+  const authorName = review.user?.display_name || review.user?.name || 'Usuário';
   const pros = normalizeReviewList(review.pros);
   const cons = normalizeReviewList(review.cons);
 
@@ -105,10 +113,33 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           {/* User & Rating Info */}
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex items-start gap-4">
-              <img src={avatarSrc} alt={review.user?.name} className="w-16 h-16 rounded-full object-cover border-2 border-slate-100" />
+              {authorProfileHref ? (
+                <Link
+                  href={authorProfileHref}
+                  onClick={(event) => event.stopPropagation()}
+                  aria-label={`Ver perfil de ${authorName}`}
+                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <Image src={avatarSrc} alt="" width={64} height={64} className="h-16 w-16 rounded-full border-2 border-slate-100 object-cover" unoptimized />
+                </Link>
+              ) : (
+                <Image src={avatarSrc} alt={authorName} width={64} height={64} className="h-16 w-16 rounded-full border-2 border-slate-100 object-cover" unoptimized />
+              )}
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-bold text-lg text-slate-900">{review.user?.name || 'Usuário'}</h3>
+                  <h3 className="font-bold text-lg text-slate-900">
+                    {authorProfileHref ? (
+                      <Link
+                        href={authorProfileHref}
+                        onClick={(event) => event.stopPropagation()}
+                        className="hover:text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      >
+                        {authorName}
+                      </Link>
+                    ) : (
+                      authorName
+                    )}
+                  </h3>
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Integrador</span>
                 </div>
                 <div className="flex items-center gap-1 text-green-600 text-sm font-medium mb-1">
@@ -157,14 +188,14 @@ export function ReviewDetailModal({ review, isOpen, onClose }: ReviewDetailModal
           )}
 
           {/* Criteria Grid */}
-          {((review.granular_scores || review.review_criterion_scores || []) as any[]).length > 0 && (
+          {((review.granular_scores || review.review_criterion_scores || []) as ReviewCriterion[]).length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <h4 className="font-bold text-slate-900">Avaliação por critérios</h4>
                 <div className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 text-xs">i</div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                {((review.granular_scores || review.review_criterion_scores || []) as any[]).map((score: any, idx: number) => (
+                {((review.granular_scores || review.review_criterion_scores || []) as ReviewCriterion[]).map((score, idx) => (
                   <div key={idx} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
                     <span className="text-xs text-slate-500 font-medium mb-2 text-center h-8">{score.title}</span>
                     {getCriteriaIcon(score.title)}

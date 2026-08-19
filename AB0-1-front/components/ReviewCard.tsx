@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, User, Building2, Zap, MessageSquare, ArrowRight, CheckCircle2, ThumbsUp, Check, X, Share2 } from 'lucide-react';
+import { Star, User, Building2, ArrowRight, ThumbsUp, Check, X } from 'lucide-react';
 import { Review, fetchApi } from '@/lib/api';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,6 +10,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PublicUserBadges } from '@/components/badges/PublicUserBadges';
 import { ReviewDetailModal } from '@/components/ReviewDetailModal';
 import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
+import { getReviewAuthorHref } from '@/lib/reviews/getReviewAuthorHref';
+import { track } from '@/lib/analytics/lazy';
+import Link from 'next/link';
 
 interface ReviewCardProps {
   review: Review;
@@ -26,7 +29,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   const [hasTrackedRead, setHasTrackedRead] = useState(false);
   const [hasTrackedClick, setHasTrackedClick] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const dwellTimerRef = useRef<any>(null);
+  const dwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Derivação de badges públicas para exibição de reputação
   const unlockedBadgeIds = useMemo(() => {
@@ -41,9 +44,9 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
       if (cached) {
         try {
           const sols = JSON.parse(cached);
-          hasEVSolution = sols.some((s: any) => s.category.toLowerCase().includes('mobilidade') || s.category.toLowerCase().includes('bateria'));
-          hasSolarSolution = sols.some((s: any) => s.category.toLowerCase().includes('solar'));
-        } catch (e) {}
+          hasEVSolution = sols.some((s: { category?: string }) => s.category?.toLowerCase().includes('mobilidade') || s.category?.toLowerCase().includes('bateria'));
+          hasSolarSolution = sols.some((s: { category?: string }) => s.category?.toLowerCase().includes('solar'));
+        } catch {}
       }
       
       const list = ['verified_customer', 'solar_project_validated'];
@@ -69,7 +72,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
 
   // Check session storage on mount
   useEffect(() => {
-    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]');
+    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]') as number[];
     if (tracked.includes(review.id)) {
       setHasTrackedRead(true);
     }
@@ -111,7 +114,7 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
 
   const markAsTracked = (id: number) => {
     setHasTrackedRead(true);
-    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]');
+    const tracked = JSON.parse(sessionStorage.getItem(TRACKED_REVIEWS_KEY) || '[]') as number[];
     if (!tracked.includes(id)) {
       sessionStorage.setItem(TRACKED_REVIEWS_KEY, JSON.stringify([...tracked, id]));
     }
@@ -162,6 +165,10 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
   const displayName = isCompany
     ? companyObj?.name || (typeof review.company === 'string' ? review.company : `Empresa ${review.company_id}`)
     : (review.user?.name || `Usuário ${review.user_id}`);
+  const authorProfileHref = !isCompany ? getReviewAuthorHref(review) : null;
+  const publicDisplayName = !isCompany
+    ? review.user?.display_name || review.user?.name || `Usuário ${review.user_id}`
+    : displayName;
   let displayImage = isCompany
     ? companyObj?.logo_url
     : review.user?.avatar_url;
@@ -183,28 +190,69 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
       {/* Header */}
       <div className="flex items-start space-x-4 mb-4">
         {/* Avatar */}
-        <Avatar className="h-12 w-12 shrink-0 overflow-hidden">
-          <AvatarImage src={displayImage || undefined} />
-          <AvatarFallback className="bg-gray-200">
-            {isCompany ? (
-              <Building2 className="h-6 w-6 text-gray-600" />
-            ) : (
-              <User className="h-6 w-6 text-gray-600" />
-            )}
-          </AvatarFallback>
-        </Avatar>
+        {authorProfileHref ? (
+          <Link
+            href={authorProfileHref}
+            onClick={(event) => {
+              event.stopPropagation();
+              track('review_author_profile_clicked', {
+                review_id: review.id,
+                user_id: review.user?.id,
+                source: 'review_card',
+              });
+            }}
+            aria-label={`Ver perfil de ${publicDisplayName}`}
+            className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            <Avatar className="h-12 w-12 overflow-hidden transition-opacity hover:opacity-80">
+              <AvatarImage src={displayImage || undefined} alt="" />
+              <AvatarFallback className="bg-gray-200">
+                <User className="h-6 w-6 text-gray-600" />
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        ) : (
+          <Avatar className="h-12 w-12 shrink-0 overflow-hidden">
+            <AvatarImage src={displayImage || undefined} alt="" />
+            <AvatarFallback className="bg-gray-200">
+              {isCompany ? (
+                <Building2 className="h-6 w-6 text-gray-600" />
+              ) : (
+                <User className="h-6 w-6 text-gray-600" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+        )}
 
         {/* Info & Rating */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-1">
             <div className="flex items-center gap-2 min-w-0">
-              <h4 className="font-semibold text-gray-900 truncate">
+              <h4 className="max-w-[180px] truncate font-semibold text-gray-900">
                 {isCompany && review.company ? (
                   <span>
                     Avaliou <strong>{typeof review.company === 'string' ? review.company : review.company.name}</strong>
                   </span>
                 ) : (
-                  displayName
+                  authorProfileHref ? (
+                    <Link
+                      href={authorProfileHref}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        track('review_author_profile_clicked', {
+                          review_id: review.id,
+                          user_id: review.user?.id,
+                          source: 'review_card',
+                        });
+                      }}
+                      title={publicDisplayName}
+                      className="cursor-pointer hover:text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    >
+                      {publicDisplayName}
+                    </Link>
+                  ) : (
+                    publicDisplayName
+                  )
                 )}
               </h4>
               <div className="flex items-center gap-1.5">

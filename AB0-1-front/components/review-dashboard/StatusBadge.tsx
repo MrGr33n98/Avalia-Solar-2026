@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {
-  status: 'active' | 'pending' | 'draft' | 'approved' | 'rejected' | 'in_analysis' | string;
+  status: 'active' | 'pending' | 'draft' | 'approved' | 'rejected' | 'in_analysis' | 'archived' | string;
   label?: string;
   className?: string;
 }
@@ -15,6 +15,7 @@ const statusStyles: Record<string, { bg: string; text: string; defaultLabel: str
   in_analysis: { bg: 'bg-blue-50', text: 'text-blue-700', defaultLabel: 'Em análise' },
   draft: { bg: 'bg-slate-100', text: 'text-slate-600', defaultLabel: 'Rascunho' },
   rejected: { bg: 'bg-red-50', text: 'text-red-700', defaultLabel: 'Rejeitada' },
+  archived: { bg: 'bg-slate-100', text: 'text-slate-600', defaultLabel: 'Arquivada' },
 };
 
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {

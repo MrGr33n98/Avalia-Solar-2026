@@ -14,6 +14,9 @@ module Types
     field :cons, [String], null: true
     field :buyer_tip, String, null: true
     field :author_name, String, null: true
+    field :author_display_name, String, null: true
+    field :author_avatar_url, String, null: true
+    field :creator_slug, String, null: true
     field :company_reply, String, null: true, method: :active_reply
     field :replied_at, GraphQL::Types::ISO8601DateTime, null: true, method: :active_replied_at
     field :status, String, null: true
@@ -35,6 +38,21 @@ module Types
       return 'Anônimo' if user.nil?
 
       user.display_name
+    end
+
+    def author_display_name
+      author_name
+    end
+
+    def author_avatar_url
+      user = dataloader.with(::Loaders::AssociationLoader, :user).load(object)
+      user&.avatar_url
+    end
+
+    def creator_slug
+      user = dataloader.with(::Loaders::AssociationLoader, :user).load(object)
+      profile = user&.reviewer_profile
+      profile&.public_slug if profile&.creator_enabled?
     end
   end
 end

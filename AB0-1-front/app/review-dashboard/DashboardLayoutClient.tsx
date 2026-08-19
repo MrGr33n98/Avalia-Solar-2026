@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
 import { toast } from 'sonner';
+import { ApiError } from '@/lib/api-error';
 
 import {
   CommandDialog,
@@ -105,6 +106,7 @@ interface DashboardContextType {
   removingSolutionId: string | null;
   summaryLoading: boolean;
   reviewsLoading: boolean;
+  reviewsError: string | null;
   leadsLoading: boolean;
 }
 
@@ -138,6 +140,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [leadsLoading, setLeadsLoading] = useState(true);
 
   const [commandOpen, setCommandOpen] = useState(false);
@@ -165,15 +168,28 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
       };
       const loadReviews = async () => {
         setReviewsLoading(true);
+        setReviewsError(null);
         try {
-          const response = await reviewsApi.getAll({ mine: true, limit: 100 });
-          setReviews(
-            normalizeApiList(response as ApiListResponse<Review>).sort(
-              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )
-          );
+          const response = await reviewsApi.listMine({ per_page: 100 });
+          setReviews(response.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
         } catch (err) {
-          console.warn('[ReviewDashboard] Reviews unavailable', err);
+          const apiError = err instanceof ApiError ? err : (err as { status?: number });
+          const status = apiError.status;
+          setReviewsError(
+            status === 403
+              ? 'Você não tem autorização para carregar suas avaliações.'
+              : 'Não foi possível carregar suas avaliações.'
+          );
+          setReviews([]);
+          track('review_dashboard_reviews_load_failed', {
+            status: status ?? 'unknown',
+            endpoint: '/reviews/mine',
+            user_id: user.id,
+          });
+          if (status === 401) {
+            setIsRedirecting(true);
+            router.push(`/login?redirect=${encodeURIComponent('/review-dashboard/reviews')}&error=session_expired`);
+          }
         } finally {
           setReviewsLoading(false);
         }
@@ -223,6 +239,12 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     if (!canAccessReviewDashboard(user?.role)) return;
     fetchDashboardData();
   }, [user, authLoading, isRedirecting, fetchDashboardData]);
+
+  useEffect(() => {
+    if (pathname === '/review-dashboard' && window.location.hash === '#reviews') {
+      router.replace('/review-dashboard/reviews');
+    }
+  }, [pathname, router]);
 
   useEffect(() => {
     if (!user) {
@@ -343,6 +365,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         removingSolutionId,
         summaryLoading,
         reviewsLoading,
+        reviewsError,
         leadsLoading,
       }}
     >

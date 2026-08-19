@@ -185,4 +185,46 @@ RSpec.describe 'Reviews API', type: :request do
       )
     end
   end
+
+  describe 'GET /api/v1/reviews/mine' do
+    it 'returns only own reviews in allowed dashboard statuses' do
+      auth = auth_headers(review_user)
+      approved = create(:review, company: company, user: review_user, status: :approved)
+      pending = create(:review, company: create(:company), user: review_user, status: :pending)
+      create(:review, company: create(:company), user: create(:user), status: :approved)
+      create(:review, company: create(:company), user: review_user, status: :flagged)
+
+      get '/api/v1/reviews/mine', headers: auth
+
+      expect(response).to have_http_status(:ok)
+      ids = JSON.parse(response.body).fetch('data').pluck('id')
+      expect(ids).to contain_exactly(approved.id, pending.id)
+    end
+
+    it 'returns creator_slug only for an enabled creator profile' do
+      auth = auth_headers(review_user)
+      profile = create(:reviewer_profile, user: review_user, creator_enabled: true, public_slug: 'meu-perfil')
+      review = create(:review, company: company, user: review_user, status: :approved)
+
+      get '/api/v1/reviews/mine', headers: auth
+
+      expect(JSON.parse(response.body).fetch('data').find { |item| item['id'] == review.id })
+        .to include('user' => include('creator_slug' => profile.public_slug))
+    end
+
+    it 'returns an empty data array without reviews' do
+      auth = auth_headers(review_user)
+
+      get '/api/v1/reviews/mine', headers: auth
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)).to eq('data' => [])
+    end
+
+    it 'requires authentication' do
+      get '/api/v1/reviews/mine', headers: headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

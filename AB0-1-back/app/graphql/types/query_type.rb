@@ -370,6 +370,8 @@ module Types
       raise GraphQL::ExecutionError, 'Autenticação necessária' if context[:current_user].nil?
 
       scope = ::Review.where(user_id: context[:current_user].id)
+               .for_reviewer_dashboard
+               .includes({ user: :reviewer_profile }, :company)
 
       if status.present?
         status_value = ::Review.statuses[status] || status
