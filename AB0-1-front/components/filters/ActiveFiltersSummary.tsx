@@ -49,26 +49,26 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
   if (activeChips.length === 0) return null;
 
   return (
-    <div className="space-y-3 border-b border-slate-200 px-5 py-4">
+    <div className="space-y-2 px-4 py-3 md:space-y-3 md:px-5 md:py-4 border-b border-slate-200">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Filtros ativos ({activeChips.length})
         </span>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {activeChips.map((chip, idx) => (
           <Badge
             key={`${chip.key}-${idx}`}
             variant="secondary"
-            className="flex items-center gap-1 rounded-sm border border-blue-200 bg-blue-50 py-1 pl-2 pr-1 text-blue-700 hover:bg-blue-100"
+            className="inline-flex !h-[22px] items-center gap-1 rounded-[4px] border border-blue-200 bg-blue-50 !px-1.5 !py-0 text-blue-700 hover:bg-blue-100"
           >
-            <span className="text-[11px] font-semibold">{chip.label}</span>
+            <span className="text-[10px] font-semibold">{chip.label}</span>
             <button
               onClick={() => onRemove(chip.key, chip.value)}
               aria-label={`Remover filtro ${chip.label}`}
-              className="rounded-none p-0.5 hover:bg-blue-200"
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-sm hover:bg-blue-200"
             >
-              <X size={12} strokeWidth={2.5} />
+              <X size={10} strokeWidth={2.5} />
             </button>
           </Badge>
         ))}

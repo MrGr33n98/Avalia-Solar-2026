@@ -885,7 +885,7 @@ export default function CategoryClientComponent({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
                     >
-                      <CompanyCard company={company} rank={index + 1} variant="standard" />
+                      <CompanyCard company={company} rank={index + 1} />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -1066,7 +1066,7 @@ export default function CategoryClientComponent({
                           whileHover={{ y: -5 }}
                           className="transition-all duration-300 hover:shadow-xl rounded-xl h-full flex flex-col"
                         >
-                          <CompanyCard company={company} rank={index + 1} variant="expanded" />
+                          <CompanyCard company={company} rank={index + 1} />
                         </motion.div>
                       ))}
                     </motion.div>

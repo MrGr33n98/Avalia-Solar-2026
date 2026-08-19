@@ -502,208 +502,11 @@ export default function CompanyCard({
     );
   }
 
-  // ── Variante 2: Standard — Swiss Style (sem banner) ──
-  if (variant === 'standard') {
-    const initials = getInitials(name);
-    const hasRating = company.reputation.rating_avg > 0 && company.reputation.rating_count > 0;
-    const coverageLabel = company.coverage.states.includes('Todos') || company.coverage.states.length > 10
-      ? 'Todo o Brasil'
-      : company.coverage.cities.length > 0
-        ? `${company.coverage.cities.length} cidades`
-        : company.coverage.states.length > 0
-          ? company.coverage.states.slice(0, 3).join(', ')
-          : 'Consulte';
-    const isVerified = company.trust.verification_status === 'verified' || company.trust.verification_status === 'premium';
-
-    return (
-      <Card
-        data-testid="company-card"
-        className={cn(
-          'group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white transition-all duration-200 hover:border-blue-200 hover:shadow-lg cursor-pointer',
-          className
-        )}
-        onClick={handleCardClick}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <div className="flex flex-col flex-1 p-4 gap-3">
-
-          {/* Swiss Style: Cabeçalho — avatar + título + pill rating */}
-          <div className="flex items-start gap-3">
-            {/* Avatar com iniciais ou logo */}
-            <div className="shrink-0">
-              {company.logo_url ? (
-                <div className="relative h-11 w-11 rounded-lg overflow-hidden border border-slate-100 bg-white shadow-sm">
-                  <Image
-                    src={company.logo_url}
-                    alt={name}
-                    fill
-                    sizes="44px"
-                    className="object-contain p-0.5"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-sm">
-                  <span className="text-white text-sm font-black tracking-tight">{initials}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Título + verificação */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors leading-tight line-clamp-1">
-                  {name}
-                </h3>
-                {isVerified && (
-                  <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
-                )}
-              </div>
-              {company.identity.description && (
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
-                  {company.identity.description}
-                </p>
-              )}
-            </div>
-
-            {/* Swiss Style: Pill de rating no canto superior direito */}
-            <div className="shrink-0">
-              {hasRating ? (
-                <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  <span className="text-xs font-bold text-amber-700">
-                    {company.reputation.rating_avg.toFixed(1)}
-                  </span>
-                  <span className="text-[10px] text-amber-600 font-medium">
-                    ({company.reputation.rating_count})
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[10px] text-slate-400 font-medium bg-slate-50 border border-slate-200 rounded-full px-2.5 py-1 whitespace-nowrap">
-                  Sem avaliações
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Swiss Style: Localização + Cobertura */}
-          {(company.identity.city || coverageLabel) && (
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
-              <MapPin className="h-3 w-3 text-rose-400 shrink-0" />
-              <span>
-                {[company.identity.city, company.identity.state].filter(Boolean).join(', ')}
-                {coverageLabel && (
-                  <span className="text-slate-400">
-                    {company.identity.city ? ' · ' : ''}Cobertura: {coverageLabel}
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
-          {company.distance_km != null && Number.isFinite(company.distance_km) && (
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
-              <MapPin className="h-3 w-3 shrink-0" />
-              {Number(company.distance_km).toFixed(1)} km de distância
-            </div>
-          )}
-
-          {/* Swiss Style: Tags operacionais (pills) */}
-          <div className="flex flex-wrap gap-1.5">
-            {company.operations.sla_label && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5">
-                <Zap className="h-3 w-3" />
-                Resp: {company.operations.sla_label}
-              </span>
-            )}
-            {coverageLabel && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-0.5">
-                <Shield className="h-3 w-3" />
-                {coverageLabel}
-              </span>
-            )}
-            {isVerified && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2.5 py-0.5">
-                <ShieldCheck className="h-3 w-3 text-emerald-500" />
-                Verificada
-              </span>
-            )}
-          </div>
-
-          {/* Swiss Style: 3 botões horizontais — pagos com feature gate */}
-          <div className={cn(
-            'grid grid-cols-2 gap-2 pt-1',
-            canRequestQuote && 'sm:grid-cols-[1fr_1.5fr_1fr]'
-          )}>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleCompareClick}
-              disabled={!selectedInComparison && !canAddMore}
-              aria-pressed={selectedInComparison}
-              aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
-              className={cn(
-                'col-span-1 min-w-0 w-full min-h-11 h-11 inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
-                selectedInComparison
-                  ? 'text-blue-700'
-                  : 'text-slate-700'
-              )}
-            >
-              <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" className="shrink-0" />
-              <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
-            </Button>
-
-            {canRequestQuote ? (
-              <QuoteCTA context="card" shortLabel="Solicitar orçamento" className="order-3 col-span-2 h-11 w-full sm:order-none sm:col-span-1" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
-            ) : null}
-
-            <ReviewCompanyButton
-              company={company}
-              label="Avaliar"
-              className={cn(
-                'order-2 col-span-1 min-w-0 w-full min-h-11 h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-blue-700 shadow-none hover:border-blue-300 hover:bg-blue-50/40 focus-visible:ring-2 focus-visible:ring-blue-500/25 sm:order-none',
-              )}
-              iconClassName="h-3.5 w-3.5"
-              stopPropagation
-            />
-          </div>
-
-          {/* Swiss Style: Footer links */}
-          <div className="grid min-w-0 grid-cols-3 items-center gap-2 pt-2 border-t border-slate-100">
-            <Link
-              href={companyPath}
-              onClick={(e) => e.stopPropagation()}
-              className="min-w-0 truncate text-center text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
-            >
-              Ver perfil →
-            </Link>
-            <Link
-              href={`${companyPath}?tab=contact`}
-              onClick={(e) => e.stopPropagation()}
-              className="min-w-0 truncate text-center text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
-            >
-              Contato
-            </Link>
-            <Link
-              href={companyReviewPath}
-              onClick={(e) => e.stopPropagation()}
-              className="min-w-0 truncate text-center text-xs text-slate-400 hover:text-blue-600 font-medium transition-colors"
-            >
-              Ver avaliações ({company.reputation.rating_count})
-            </Link>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // ── Variante 3: Expanded (layout horizontal compacto — full-width) ──
-  // Sentiment: dados reais da API; mostra placeholder se sem reviews
+  // ── Variante Unificada (Responsiva via Container Queries) ──
   const sentiment =
     company.reputation?.sentiment ??
     (company.reputation?.rating_count > 0 ? { positive: 85, neutral: 10, negative: 5 } : null);
 
-  // Anel de recomendação (dados reais)
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation?.recommendation_rate ?? null;
@@ -713,14 +516,12 @@ export default function CompanyCard({
       ? circumference - (recommendationRate / 100) * circumference
       : circumference;
 
-  // Check if company has badges for layout adjustments
   const hasBadges = company.badges && company.badges.length > 0;
 
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-xl cursor-pointer',
-        // Add extra top padding when badges are present
+        '@container/card group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-xl cursor-pointer',
         hasBadges ? 'pt-6 px-4 pb-4' : 'p-4',
         className
       )}
@@ -728,18 +529,17 @@ export default function CompanyCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* 1. CABEÇALHO — sempre horizontal */}
-      <div className="flex justify-between items-start gap-4">
+      {/* 1. CABEÇALHO */}
+      <div className="flex flex-col @[500px]/card:flex-row justify-between items-start gap-4">
         {/* Esquerda: Logo + Identidade */}
-        <div className="flex items-start gap-3 min-w-0 flex-1">
+        <div className="flex items-start gap-3 min-w-0 w-full @[500px]/card:flex-1">
           <div data-testid="company-logo" className="shrink-0 relative">
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
-          <div className="min-w-0 space-y-0.5">
+          <div className="min-w-0 space-y-0.5 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <h3 className={cn(
                 "text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1",
-                // Adjust truncation to account for badge overflow
                 hasBadges ? "truncate pr-3" : "truncate"
               )}>
                 {name}
@@ -748,7 +548,7 @@ export default function CompanyCard({
                 )}
               </h3>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
               <div className="flex items-center gap-0.5 font-bold text-slate-800">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span>{company.reputation.rating_avg.toFixed(1)}</span>
@@ -766,13 +566,36 @@ export default function CompanyCard({
                 </div>
               )}
             </div>
+            {/* Em telas muito estreitas, exibimos os KPIs aqui, abaixo do nome */}
+            <div className="mt-2 block @[500px]/card:hidden w-full">
+              <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
+                <div className="border-r border-slate-100 py-1">
+                  <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
+                    Respostas
+                  </span>
+                  <span className="text-[10px] font-black text-slate-900 block">
+                    {company.operations.sla_label || 'Sem dados'}
+                  </span>
+                </div>
+                <div className="py-1">
+                  <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
+                    Cobertura
+                  </span>
+                  <span className="text-[10px] font-black text-slate-900 block truncate px-1">
+                    {company.coverage.cities.length > 0
+                      ? `${company.coverage.cities.length} reg.`
+                      : 'Consulte'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Direita: KPIs + CTAs agrupados verticalmente para evitar sobreposição horizontal */}
-        <div className="flex flex-col items-end gap-2 shrink-0 w-[140px] sm:w-[160px]">
-          {/* Box de KPIs mini */}
-          <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
+        {/* Direita: CTAs + KPIs (KPIs apenas no desktop) */}
+        <div className="flex flex-col items-end gap-2 shrink-0 w-full @[500px]/card:w-[160px]">
+          {/* Box de KPIs mini (escondido em mobile) */}
+          <div className="hidden @[500px]/card:grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
             <div className="border-r border-slate-100 py-1">
               <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
                 Respostas
@@ -793,8 +616,7 @@ export default function CompanyCard({
             </div>
           </div>
 
-          {/* CTAs empilhados verticalmente para economizar espaço e evitar quebras */}
-          <div className="flex flex-col gap-1 w-full">
+          <div className="flex flex-col @[500px]/card:flex-col sm:flex-row gap-2 @[500px]/card:gap-1 w-full">
             <Button
               type="button"
               variant="ghost"
@@ -803,9 +625,9 @@ export default function CompanyCard({
               aria-pressed={selectedInComparison}
               aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
               className={cn(
-                'min-h-11 h-11 min-w-0 w-full inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
+                'min-h-11 h-11 min-w-0 w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 @[500px]/card:border-0 bg-white @[500px]/card:bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-sm @[500px]/card:shadow-none hover:bg-slate-50 @[500px]/card:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
                 selectedInComparison
-                  ? 'text-blue-700'
+                  ? 'text-blue-700 border-blue-200 bg-blue-50/50'
                   : 'text-slate-700'
               )}
             >
@@ -814,21 +636,21 @@ export default function CompanyCard({
             </Button>
 
             {canRequestQuote ? (
-              <QuoteCTA context="compact" source="company-card-expanded" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
+              <QuoteCTA context="compact" source="company-card-expanded" className="w-full" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
             ) : null}
             <ReviewCompanyButton
               company={company}
               label="Avaliar"
-              className="h-7 w-full rounded-lg px-2 text-[10px]"
-              iconClassName="h-3 w-3"
+              className="h-11 @[500px]/card:h-7 w-full rounded-xl @[500px]/card:rounded-lg px-2 text-xs @[500px]/card:text-[10px]"
+              iconClassName="h-4 w-4 @[500px]/card:h-3 @[500px]/card:w-3"
               stopPropagation
             />
           </div>
         </div>
       </div>
 
-      {/* 2. DESCRIÇÃO + CHIPS OPERACIONAIS — em linha */}
-      <div className="mt-3 flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-6">
+      {/* 2. DESCRIÇÃO + CHIPS OPERACIONAIS */}
+      <div className="mt-4 @[500px]/card:mt-3 flex flex-col @[500px]/card:flex-row @[500px]/card:items-center gap-2 @[500px]/card:gap-6">
         <p className="text-[11px] text-slate-500 leading-relaxed font-medium flex-1 min-w-0">
           {(() => {
             const desc =
@@ -837,7 +659,7 @@ export default function CompanyCard({
             return desc.length > 110 ? desc.slice(0, 110) + '...' : desc;
           })()}
         </p>
-        <div className="flex items-center gap-3 shrink-0 text-[10px] font-bold text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 shrink-0 text-[10px] font-bold text-slate-500">
           <div className="inline-flex items-center gap-1">
             <Shield className="h-3 w-3 text-slate-400" />
             <span>Todo o Brasil</span>
@@ -855,11 +677,11 @@ export default function CompanyCard({
         </div>
       </div>
 
-      {/* 3. PAINEL DE REPUTAÇÃO — 3 colunas compactas (só renderiza se tiver avaliações) */}
+      {/* 3. PAINEL DE REPUTAÇÃO */}
       {company.reputation.rating_count > 0 && (
-        <div className="mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-hidden">
+        <div className="mt-4 @[500px]/card:mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 @[400px]/card:grid-cols-3 divide-y @[400px]/card:divide-y-0 @[400px]/card:divide-x divide-slate-100 overflow-hidden">
           {/* Col 1: Avaliação Geral */}
-          <div className="p-3 flex items-center gap-3 md:flex-col md:items-center md:text-center">
+          <div className="p-3 flex items-center gap-3 @[400px]/card:flex-col @[400px]/card:items-center @[400px]/card:text-center">
             <span className="text-2xl font-black text-slate-900 leading-none">
               {company.reputation.rating_avg.toFixed(1)}
             </span>
@@ -1009,8 +831,8 @@ export default function CompanyCard({
         </div>
       )}
 
-      {/* 4. CHIPS DE CRITÉRIOS — Uma única linha com scroll se necessário */}
-      <div className="mt-3 flex flex-row flex-nowrap items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+      {/* 4. CHIPS DE CRITÉRIOS */}
+      <div className="mt-4 @[500px]/card:mt-3 flex flex-row flex-nowrap items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
         {topCriteria.slice(0, 4).map((chip) => (
           <Badge
             key={chip}
@@ -1034,18 +856,18 @@ export default function CompanyCard({
         )}
       </div>
 
-      {/* 5. RODAPÉ — tudo em uma linha */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
+      {/* 5. RODAPÉ */}
+      <div className="mt-4 @[500px]/card:mt-3 pt-4 @[500px]/card:pt-3 border-t border-slate-100 flex flex-col @[400px]/card:flex-row items-stretch @[400px]/card:items-center justify-between gap-3 @[400px]/card:gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Button
             variant="outline"
-            className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
+            className="flex-1 @[400px]/card:flex-none rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
             onClick={(e) => {
               e.stopPropagation();
               router.push(companyPath);
             }}
           >
-            <Building className="h-3 w-3 mr-1 text-slate-400" />
+            <Building className="h-3.5 w-3.5 @[400px]/card:h-3 @[400px]/card:w-3 mr-1 text-slate-400" />
             Ver perfil
           </Button>
 
@@ -1055,7 +877,7 @@ export default function CompanyCard({
               companyId={id}
               label="WhatsApp"
               trackingSource="list"
-              className="rounded-lg border-[#E2E8F0] font-bold text-[10px] h-7 px-2.5"
+              className="flex-1 @[400px]/card:flex-none rounded-lg border-[#E2E8F0] font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
               preset="brandSolid"
             />
           )}
@@ -1065,7 +887,7 @@ export default function CompanyCard({
           {canRequestQuote ? (
             <Button
               variant="outline"
-              className="rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-7 px-2.5"
+              className="flex-1 @[400px]/card:flex-none rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
               onClick={(e) => {
                 e.stopPropagation();
                 openLeadModal({
@@ -1076,14 +898,14 @@ export default function CompanyCard({
                 });
               }}
             >
-              <PhoneCall className="h-3 w-3 mr-1 text-slate-400" />
+              <PhoneCall className="h-3.5 w-3.5 @[400px]/card:h-3 @[400px]/card:w-3 mr-1 text-slate-400" />
               Contato
             </Button>
           ) : (
             <ReviewCompanyButton
               company={company}
               label="Avaliar"
-              className="h-7 rounded-lg px-2.5 text-[10px]"
+              className="flex-1 @[400px]/card:flex-none h-9 @[400px]/card:h-7 rounded-lg px-2.5 text-[10px]"
               iconClassName="h-3 w-3"
               stopPropagation
             />
@@ -1091,17 +913,17 @@ export default function CompanyCard({
         </div>
 
         <Button
-          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 px-3 inline-flex items-center gap-1"
+          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs @[400px]/card:text-[10px] h-11 @[400px]/card:h-7 px-4 @[400px]/card:px-3 inline-flex items-center gap-1.5"
           onClick={(e) => {
             e.stopPropagation();
             router.push(`${companyPath}?tab=reviews`);
           }}
         >
           Ver avaliações
-          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[9px] font-bold rounded px-1 shadow-none border-none">
+          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[10px] @[400px]/card:text-[9px] font-bold rounded px-1.5 @[400px]/card:px-1 shadow-none border-none">
             {company.reputation.rating_count}
           </Badge>
-          <ChevronRight className="h-3 w-3" />
+          <ChevronRight className="h-4 w-4 @[400px]/card:h-3 @[400px]/card:w-3" />
         </Button>
       </div>
     </Card>
