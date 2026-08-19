@@ -333,7 +333,7 @@ export function CompaniesContent({
           verified: company.verified,
           ratingCount: company.rating_count,
           financingEnabled: company.financing_enabled,
-          whatsappEnabled: company.whatsapp_enabled ?? company.cta_whatsapp_enabled,
+          whatsappEnabled: company.cta_whatsapp_enabled,
         })),
     [visibleCompanies]
   );
