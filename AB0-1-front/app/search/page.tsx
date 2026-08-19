@@ -20,6 +20,7 @@ import { BannerSlot } from '@/components/banners/BannerSlot';
 import { SearchCompanyListCard } from '@/components/search/SearchCompanyListCard';
 import ReviewCard from '@/components/ReviewCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
+import { SearchHero } from '@/components/search/SearchHero';
 import { favoritesApi } from '@/lib/api/favorites';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -415,78 +416,13 @@ function SearchPageContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="overflow-hidden bg-[#071e4a] text-white">
-        <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-[minmax(0,1fr)_160px] md:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10 lg:px-8 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
-          <div className="min-w-0">
-            <h1 className="max-w-2xl text-[28px] font-black leading-tight tracking-tight sm:text-4xl">
-              Encontre a empresa certa para você.
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-              Busque empresas, produtos e avaliações verificadas de energia solar e mobilidade
-              elétrica.
-            </p>
-
-            <form
-              onSubmit={handleSubmit}
-              className="mt-6 grid w-full max-w-[760px] overflow-hidden rounded-xl bg-white shadow-2xl lg:mt-7 lg:grid-cols-[minmax(0,1fr)_minmax(170px,0.8fr)_auto]"
-            >
-            <label className="relative border-b border-slate-200 sm:border-b-0 sm:border-r">
-              <span className="sr-only">Buscar empresa, produto ou serviço</span>
-              <Search
-                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
-                aria-hidden="true"
-              />
-              <input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar empresa, produto ou serviço..."
-                className="h-14 w-full min-w-0 bg-transparent pl-12 pr-12 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
-              />
-              {searchTerm ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  aria-label="Limpar termo da busca"
-                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
-            </label>
-            <label className="relative border-b border-slate-200 sm:border-b-0">
-              <span className="sr-only">CEP ou cidade</span>
-              <MapPin
-                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
-                aria-hidden="true"
-              />
-              <input
-                value={locationTerm}
-                onChange={(event) => setLocationTerm(event.target.value)}
-                placeholder="CEP ou cidade..."
-                className="h-14 w-full min-w-0 bg-transparent pl-12 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
-              />
-            </label>
-            <Button
-              type="submit"
-              className="m-1.5 h-11 min-h-11 rounded-lg bg-blue-600 px-8 font-bold hover:bg-blue-700"
-            >
-              Buscar
-            </Button>
-            </form>
-          </div>
-
-          <div className="relative h-20 min-w-0 overflow-hidden rounded-lg md:h-36 lg:h-56 xl:h-64 2xl:h-72">
-            <Image
-              src="/assets/avalia_symbol_search_banner_avalia_solar.webp"
-              alt=""
-              aria-hidden="true"
-              fill
-              sizes="(min-width: 1536px) 500px, (min-width: 1280px) 440px, (min-width: 1024px) 360px, (min-width: 768px) 160px, 100vw"
-              className="object-cover object-right opacity-90 md:object-contain"
-            />
-          </div>
-        </div>
-      </section>
+      <SearchHero
+        searchTerm={searchTerm}
+        locationTerm={locationTerm}
+        onSearchTermChange={setSearchTerm}
+        onLocationTermChange={setLocationTerm}
+        onSubmit={handleSubmit}
+      />
 
       <BannerSlot placement="search_top" className="mx-auto my-4 max-w-[1240px]" limit={2} />
 
