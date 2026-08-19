@@ -93,13 +93,23 @@ module Companies
 
       # 2. State & City filtering
       if @params[:state].present?
-        states = Array(@params[:state]).flat_map { |v| v.to_s.split(',') }.map { |s| s.strip.upcase }.reject(&:blank?)
+        states = Array(@params[:state]).flat_map { |v| v.to_s.split(',') }
+                                       .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
+                                       .compact
+                                       .reject(&:blank?)
         scope = scope.where(state: states) if states.any?
       end
 
       if @params[:city].present?
-        cities = Array(@params[:city]).flat_map { |v| v.to_s.split(',') }.map(&:strip).reject(&:blank?)
-        scope = scope.where(city: cities) if cities.any?
+        cities = Array(@params[:city]).flat_map { |v| v.to_s.split(',') }.map { |c| c.to_s.strip.downcase }.reject(&:blank?)
+        if cities.any?
+          if ActiveRecord::Base.connection.extension_enabled?('unaccent')
+            normalized_cities = cities.map { |c| ActiveSupport::Inflector.transliterate(c).downcase }
+            scope = scope.where("unaccent(LOWER(companies.city)) IN (?)", normalized_cities)
+          else
+            scope = scope.where("LOWER(companies.city) IN (?)", cities)
+          end
+        end
       end
 
       # 3. Serving state & city

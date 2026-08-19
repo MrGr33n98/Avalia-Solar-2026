@@ -29,11 +29,20 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
     ? Array.from(new Set(categoryIdsStr.split(',').map(Number).filter(Number.isFinite))).sort((a, b) => a - b)
     : [];
 
+  const rawLat = latStr ? Number(latStr) : null;
+  const lat = (rawLat !== null && Number.isFinite(rawLat) && rawLat >= -90 && rawLat <= 90) ? rawLat : null;
+
+  const rawLng = lngStr ? Number(lngStr) : null;
+  const lng = (rawLng !== null && Number.isFinite(rawLng) && rawLng >= -180 && rawLng <= 180) ? rawLng : null;
+
+  const rawRadius = radiusKmStr ? Number(radiusKmStr) : null;
+  const radius_km = (rawRadius !== null && Number.isFinite(rawRadius) && rawRadius > 0) ? rawRadius : null;
+
   return {
     search: searchStr || '',
     category_ids: queryCategoryIds.length > 0 ? queryCategoryIds : [...pathCategoryIds].sort((a, b) => a - b),
-    state: stateStr ? stateStr.split(',').filter(Boolean).sort() : [],
-    city: cityStr ? cityStr.split(',').filter(Boolean).sort() : [],
+    state: stateStr ? stateStr.split(',').map((s) => s.trim()).filter(Boolean).sort() : [],
+    city: cityStr ? cityStr.split(',').map((s) => s.trim()).filter(Boolean).sort() : [],
     min_rating: minRatingStr ? Number(minRatingStr) : null,
     verified: verifiedStr === 'true',
     featured: featuredStr === 'true',
@@ -42,9 +51,9 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
     has_reviews: hasReviewsStr === 'true',
     sort: sortStr || DEFAULT_FILTERS.sort,
     page: pageStr ? Number(pageStr) : DEFAULT_FILTERS.page,
-    lat: latStr ? Number(latStr) : null,
-    lng: lngStr ? Number(lngStr) : null,
-    radius_km: radiusKmStr ? Number(radiusKmStr) : null,
+    lat,
+    lng,
+    radius_km,
   };
 }
 

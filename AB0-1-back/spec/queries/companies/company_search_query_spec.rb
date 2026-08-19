@@ -50,8 +50,20 @@ RSpec.describe Companies::CompanySearchQuery, type: :query do
       expect(result).not_to include(active_company_sp)
     end
 
+    it 'normaliza o nome do estado completo para UF' do
+      result = described_class.call({ state: 'Rio de Janeiro' })
+      expect(result).to include(active_company_rj)
+      expect(result).not_to include(active_company_sp)
+    end
+
     it 'filtra por cidade (city)' do
       result = described_class.call({ city: 'São Paulo' })
+      expect(result).to include(active_company_sp)
+      expect(result).not_to include(active_company_rj)
+    end
+
+    it 'filtra por cidade (city) case-insensitive e sem acentos' do
+      result = described_class.call({ city: 'sao paulo' })
       expect(result).to include(active_company_sp)
       expect(result).not_to include(active_company_rj)
     end

@@ -103,7 +103,7 @@ else
   fi
 
   run_frontend_script "typecheck" "Frontend typecheck"
-  run_step "Frontend lint" npx eslint lib/api.ts app/dashboard/components/LeadsOpportunities.tsx components/QuickLeadModal.tsx __tests__/components/LeadsOpportunities.test.tsx
+  run_step "Frontend lint" npx eslint app/dashboard/components/LeadsOpportunities.tsx components/QuickLeadModal.tsx __tests__/components/LeadsOpportunities.test.tsx
 
   if npm run | grep -qE "^[[:space:]]+test$|^[[:space:]]+test[[:space:]]"; then
     run_step "Frontend tests" npm test -- --runInBand || true

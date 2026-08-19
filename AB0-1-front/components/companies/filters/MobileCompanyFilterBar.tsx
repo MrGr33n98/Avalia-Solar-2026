@@ -12,6 +12,7 @@ interface MobileCompanyFilterBarProps {
   onOpenCategory: () => void;
   onToggleVerified: () => void;
   categoryLabel?: string;
+  locationLabel?: string;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export default function MobileCompanyFilterBar({
   onOpenCategory,
   onToggleVerified,
   categoryLabel,
+  locationLabel,
   className,
 }: MobileCompanyFilterBarProps) {
   // Contagem de grupos de filtros ativos de acordo com a regra de negócios
@@ -85,7 +87,7 @@ export default function MobileCompanyFilterBar({
         )}
       >
         <MapPin className="h-3.5 w-3.5 text-blue-600" />
-        <span>Perto de mim</span>
+        <span>{locationLabel || 'Perto de mim'}</span>
         <ChevronDown className="h-3 w-3 opacity-60" />
       </button>
 

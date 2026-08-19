@@ -2,7 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { X, MapPin, Loader2, ChevronRight } from 'lucide-react';
-import { useLocationData } from '@/hooks/useLocationData';
+import { useCompanyLocationData } from '@/hooks/useCompanyLocationData';
+import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
+import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
 import { useCategories } from '@/hooks/useCategories';
 import { companiesApiSafe } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,7 @@ interface MobileCompanyFiltersSheetProps {
   onClose: () => void;
   filters: CompanyFilters;
   onApply: (nextFilters: CompanyFilters) => void;
+  initialGpsError?: string | null;
 }
 
 export default function MobileCompanyFiltersSheet({
@@ -22,12 +25,11 @@ export default function MobileCompanyFiltersSheet({
   onClose,
   filters,
   onApply,
+  initialGpsError,
 }: MobileCompanyFiltersSheetProps) {
   const [draftFilters, setDraftFilters] = useState<CompanyFilters>(filters);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
-  const [gpsError, setGpsError] = useState<string | null>(null);
-  const [detectingGps, setDetectingGps] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [draftCategoryIds, setDraftCategoryIds] = useState<number[]>(filters.category_ids);
   const requestVersionRef = useRef(0);
@@ -36,7 +38,8 @@ export default function MobileCompanyFiltersSheet({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } = useLocationData();
+  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } = useCompanyLocationData();
+  const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
 
   // Keyboard Escape listener
@@ -78,8 +81,11 @@ export default function MobileCompanyFiltersSheet({
       fetchStates();
       setIsCategoryPickerOpen(false);
       closeButtonRef.current?.focus();
+      if (initialGpsError) {
+        setGpsError(initialGpsError);
+      }
     }
-  }, [open, filters, fetchStates]);
+  }, [open, filters, fetchStates, initialGpsError, setGpsError]);
 
   useEffect(() => {
     if (open) return;
@@ -144,42 +150,25 @@ export default function MobileCompanyFiltersSheet({
   };
 
   // GPS Location Trigger
-  const handleGPSLocation = () => {
-    if (!navigator.geolocation) {
-      setGpsError('Geolocalização não suportada no seu navegador.');
-      return;
+  const handleGPSLocation = async () => {
+    try {
+      const coords = await getCoordinates();
+      const nextDraft = {
+        ...draftFilters,
+        lat: coords.lat,
+        lng: coords.lng,
+        radius_km: draftFilters.radius_km || 50,
+        state: [],
+        city: [], // Limpa busca manual para evitar conflitos
+      };
+      setDraftFilters(nextDraft);
+      track('location_filter_applied', {
+        source: 'companies_filter_sheet',
+        radius_km: nextDraft.radius_km,
+      });
+    } catch {
+      // O hook useCompanyGeolocation já atualiza gpsError
     }
-    setDetectingGps(true);
-    setGpsError(null);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextDraft = {
-          ...draftFilters,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          radius_km: draftFilters.radius_km || 50,
-          state: [],
-          city: [], // Limpa busca manual para evitar conflitos
-        };
-        setDraftFilters(nextDraft);
-        // Coordenadas nunca seguem para analytics; somente origem e raio agregado.
-        track('location_filter_applied', {
-          source: 'companies_filter_sheet',
-          radius_km: nextDraft.radius_km,
-        });
-        setDetectingGps(false);
-      },
-      (err) => {
-        const messages: Record<number, string> = {
-          1: 'Permissão de localização negada. Permita o acesso nas configurações do navegador.',
-          2: 'Localização indisponível no momento. Tente novamente.',
-          3: 'A busca demorou demais. Tente novamente.',
-        };
-        setGpsError(messages[err.code] || 'Não foi possível obter sua localização.');
-        setDetectingGps(false);
-      },
-      { enableHighAccuracy: false, timeout: 6000 }
-    );
   };
 
   const handleClear = () => {
@@ -287,7 +276,7 @@ export default function MobileCompanyFiltersSheet({
                   ))}
                   <button
                     type="button"
-                    onClick={() => updateDraft({ radius_km: null })}
+                    onClick={() => updateDraft({ lat: null, lng: null, radius_km: null })}
                     className={cn(
                       'h-9 rounded-lg text-xs font-semibold border transition-all col-span-1',
                       draftFilters.radius_km === null
@@ -305,8 +294,9 @@ export default function MobileCompanyFiltersSheet({
             {!isGpsActive && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
+                  <label htmlFor="company-filter-state" className="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
                   <select
+                    id="company-filter-state"
                     value={activeState}
                     onChange={(e) => {
                       const stateVal = e.target.value;
@@ -324,15 +314,16 @@ export default function MobileCompanyFiltersSheet({
                     <option value="">Selecione...</option>
                     {states.map((st) => (
                       <option key={st} value={st}>
-                        {st}
+                        {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === st)?.label || st}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Cidade</label>
+                  <label htmlFor="company-filter-city" className="text-[10px] font-bold text-slate-500 uppercase">Cidade</label>
                   <select
+                    id="company-filter-city"
                     value={draftFilters.city[0] || ''}
                     onChange={(e) => {
                       const cityVal = e.target.value;

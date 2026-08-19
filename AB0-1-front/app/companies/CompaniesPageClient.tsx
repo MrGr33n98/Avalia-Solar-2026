@@ -21,6 +21,7 @@ import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary'
 import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
 import MobileCompanyFilterBar from '@/components/companies/filters/MobileCompanyFilterBar';
 import MobileCompanyFiltersSheet from '@/components/companies/filters/MobileCompanyFiltersSheet';
+import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
 import { CompanyCategoryPicker } from '@/components/companies/filters/CompanyCategoryPicker';
 import {
   buildCompaniesCategoriesPath,
@@ -78,8 +79,8 @@ export function CompaniesContent({
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [totalCount, setTotalCount] = useState(0);
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
-  const [detectingLocation, setDetectingLocation] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const { detectingGps: detectingLocation, gpsError, getCoordinates } = useCompanyGeolocation();
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const { comparisonList, toggleComparison, canAddMore, isInComparison } = useComparison();
 
@@ -180,44 +181,82 @@ export function CompaniesContent({
     setShowMobileLocationGate(!dismissedRecently);
   }, [filters.city.length, filters.lat, filters.lng, filters.state.length]);
 
-  const handleAllowLocation = () => {
-    if (!navigator.geolocation) {
+  const handleAllowLocation = async () => {
+    try {
+      const coords = await getCoordinates();
+      const updated = {
+        ...filters,
+        lat: coords.lat,
+        lng: coords.lng,
+        radius_km: filters.radius_km || 50,
+        state: [],
+        city: [],
+        page: 1,
+      };
+      localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
       setShowMobileLocationGate(false);
-      return;
+      track('location_filter_applied', {
+        source: 'companies_location_gate',
+        radius_km: updated.radius_km,
+      });
+      router.replace(buildTargetUrl(updated), { scroll: false });
+    } catch {
+      localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
+      setShowMobileLocationGate(false);
     }
-
-    setDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const updated = {
-          ...filters,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          radius_km: filters.radius_km || 50,
-          page: 1,
-        };
-        localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
-        setShowMobileLocationGate(false);
-        setDetectingLocation(false);
-        track('location_filter_applied', {
-          source: 'companies_location_gate',
-          radius_km: updated.radius_km,
-        });
-        router.replace(buildTargetUrl(updated), { scroll: false });
-      },
-      () => {
-        localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
-        setShowMobileLocationGate(false);
-        setDetectingLocation(false);
-      },
-      { enableHighAccuracy: false, maximumAge: 1000 * 60 * 15, timeout: 8000 }
-    );
   };
 
   const handleSkipLocationGate = () => {
     localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
     setShowMobileLocationGate(false);
   };
+
+  const handleNearMe = async () => {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const permission = await navigator.permissions.query({ name: 'geolocation' });
+        if (permission.state === 'denied') {
+          setIsFiltersOpen(true);
+          return;
+        }
+      }
+
+      const coords = await getCoordinates();
+      const updated = {
+        ...filters,
+        lat: coords.lat,
+        lng: coords.lng,
+        radius_km: filters.radius_km || 50,
+        state: [],
+        city: [],
+        page: 1,
+      };
+      track('location_filter_applied', {
+        source: 'companies_near_me',
+        radius_km: updated.radius_km,
+      });
+      router.replace(buildTargetUrl(updated), { scroll: false });
+    } catch (err) {
+      if (err === 'denied') {
+        setIsFiltersOpen(true);
+      }
+    }
+  };
+
+  const locationLabel = useMemo(() => {
+    if (filters.lat !== null && filters.lng !== null) {
+      return 'Perto de mim';
+    }
+    const stateVal = filters.state[0];
+    const cityVal = filters.city[0];
+    if (stateVal && cityVal) {
+      return `${cityVal}, ${stateVal}`;
+    }
+    if (stateVal) {
+      return stateVal;
+    }
+    return 'Perto de mim';
+  }, [filters]);
 
   const removeFilter = (key: keyof CompanyFilters, value?: unknown) => {
     let updated: CompanyFilters;
@@ -706,10 +745,11 @@ export function CompaniesContent({
                 <MobileCompanyFilterBar
                   filters={filters}
                   onOpenFilters={() => setIsFiltersOpen(true)}
-                  onOpenLocation={() => setIsFiltersOpen(true)}
+                  onOpenLocation={handleNearMe}
                   onOpenCategory={() => setIsCategoryPickerOpen(true)}
                   onToggleVerified={handleToggleVerified}
                   categoryLabel={categoryLabel}
+                  locationLabel={locationLabel}
                 />
               </div>
 
@@ -912,6 +952,7 @@ export function CompaniesContent({
         onClose={() => setIsFiltersOpen(false)}
         filters={filters}
         onApply={handleApplyFilters}
+        initialGpsError={gpsError}
       />
     </div>
   );
