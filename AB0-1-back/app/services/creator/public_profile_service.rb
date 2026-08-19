@@ -30,8 +30,7 @@ module Creator
     private
 
     def creator
-      @profile.attributes.slice('public_slug', 'public_headline', 'public_bio', 'website_url', 'linkedin_url', 'instagram_url', 'youtube_url', 'whatsapp_url')
-        .merge(name: @user.name, city: @user.city, state: @user.state, avatar_url: @user.respond_to?(:avatar_url) ? @user.avatar_url : nil, public_banner_url: @profile.public_banner.attached? ? Rails.application.routes.url_helpers.rails_blob_url(@profile.public_banner, host: ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')) : nil)
+      Creator::IdentityProjection.resolve(@profile)
     end
 
     def stats

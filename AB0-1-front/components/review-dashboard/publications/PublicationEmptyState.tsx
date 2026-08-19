@@ -13,7 +13,7 @@ export function PublicationEmptyState({ status }: { status: string }) {
         Compartilhe experiência real, aprendizados e soluções úteis para comunidade.
       </p>
       <Link
-        href="/review-dashboard/publications/new"
+        href="/creator-studio/publications/new"
         className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
       >
         Nova publicação

@@ -28,7 +28,9 @@ export default function MobileBottomNav() {
   const isInternalProfile =
     pathname === '/profile' ||
     pathname === '/review-dashboard' ||
-    pathname.startsWith('/review-dashboard/');
+    pathname.startsWith('/review-dashboard/') ||
+    pathname === '/creator-studio' ||
+    pathname.startsWith('/creator-studio/');
   if (isInternalProfile) return null;
   if (pathname?.startsWith('/dashboard')) return null;
 

@@ -125,7 +125,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define protected routes
-  const protectedPaths = ['/dashboard', '/profile', '/company-dashboard', '/review-dashboard'];
+  const protectedPaths = ['/dashboard', '/profile', '/company-dashboard', '/review-dashboard', '/creator-studio'];
 
   // Check if the current path is protected
   const isProtectedRoute = protectedPaths.some((path) =>

@@ -105,29 +105,12 @@ export default function MeuPainelPage() {
           iconBgColor="bg-amber-50"
         />
         <MetricCard
-          label="Publicações"
-          value="Em breve"
-          unavailable
-          caption="Domínio ainda em construção"
-          icon={PenLine}
-          iconColor="text-blue-600"
-          iconBgColor="bg-blue-50"
-        />
-        <MetricCard
           label="Em análise"
           value={inAnalysisCount}
           caption="Aguardando aprovação"
           icon={Clock}
           iconColor="text-purple-600"
           iconBgColor="bg-purple-50"
-        />
-        <MetricCard
-          label="Propostas"
-          value={leadsLoading ? null : proposalsCount}
-          caption="Recebidas"
-          icon={FileText}
-          iconColor="text-blue-600"
-          iconBgColor="bg-blue-50"
         />
       </div>
 
@@ -150,14 +133,6 @@ export default function MeuPainelPage() {
             iconColor="text-green-600"
             iconBgColor="bg-green-50"
             href="/review-dashboard/solutions"
-          />
-          <ActionCard
-            title="Nova publicação"
-            description="Compartilhe sua experiência"
-            icon={PenLine}
-            iconColor="text-blue-600"
-            iconBgColor="bg-blue-50"
-            href="/review-dashboard/publications"
           />
           <ActionCard
             title="Ver conquistas"

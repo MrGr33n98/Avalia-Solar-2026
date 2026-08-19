@@ -43,7 +43,7 @@ export function PublicationCard({
       </div>
       <div className="flex shrink-0 items-start gap-1">
         <Link
-          href={`/review-dashboard/publications/${publication.id}/edit`}
+          href={`/creator-studio/publications/${publication.id}/edit`}
           aria-label="Editar publicação"
           className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
         >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { ChangeEvent, ChangeEventHandler } from 'react';
 import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
@@ -29,6 +29,8 @@ import {
 
 export default function MeuPerfilPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const isCreatorStudio = pathname?.startsWith('/creator-studio');
   const { user } = useAuth();
   const { loading, summary, reviews, solutions, onRefresh } = useDashboardContext();
   const [saving, setSaving] = useState(false);
@@ -174,7 +176,11 @@ export default function MeuPerfilPage() {
       <ReviewerPageHeader
         title="Meu perfil"
         description="Gerencie suas informações pessoais e profissionais."
-        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu perfil' }]}
+        breadcrumbs={
+          isCreatorStudio
+            ? [{ label: 'Creator Studio', href: '/creator-studio' }, { label: 'Meu perfil' }]
+            : [{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Meu perfil' }]
+        }
       />
       <p aria-live="polite" className="text-sm text-slate-500">
         {saveStatus === 'dirty' && 'Alterações não salvas'}

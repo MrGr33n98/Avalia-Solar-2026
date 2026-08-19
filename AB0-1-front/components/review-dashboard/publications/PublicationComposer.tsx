@@ -35,7 +35,7 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
       if (publish) {
         await reviewerPublicationsApi.publish(saved.id);
       }
-      router.push('/review-dashboard/publications');
+      router.push('/creator-studio/publications');
     } catch {
       setError('Não foi possível salvar publicação.');
     } finally {

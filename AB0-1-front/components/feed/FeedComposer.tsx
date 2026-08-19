@@ -16,7 +16,7 @@ export function FeedComposer() {
         <UserAvatar src={user?.avatar_url} name={user?.name} size="md" />
         <Link
           id="feed-composer-textarea"
-          href="/review-dashboard/publications"
+          href="/creator-studio/publications"
           className="flex-1 bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground text-sm font-medium px-4 py-2.5 rounded-full text-left transition-colors border border-border/40"
         >
           Compartilhe um artigo, análise ou novidade com a rede...
@@ -24,7 +24,7 @@ export function FeedComposer() {
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs font-medium text-muted-foreground">
-        <Link href="/review-dashboard/publications" className="flex items-center gap-2 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-muted/50">
+        <Link href="/creator-studio/publications" className="flex items-center gap-2 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-muted/50">
           <PenSquare className="h-4 w-4 text-emerald-500" />
           <span>Escrever Artigo</span>
         </Link>
@@ -32,7 +32,7 @@ export function FeedComposer() {
           <Star className="h-4 w-4 text-amber-500" />
           <span>Avaliar Empresa</span>
         </Link>
-        <Link href="/review-dashboard/publications" className="flex items-center gap-2 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-muted/50">
+        <Link href="/creator-studio/publications" className="flex items-center gap-2 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-muted/50">
           <FileText className="h-4 w-4 text-blue-500" />
           <span>Publicação Rápida</span>
         </Link>

@@ -62,7 +62,7 @@ export function FeedLeftRail() {
           <FileText className="h-4 w-4" />
           <span>Feed Principal</span>
         </Link>
-        <Link href="/review-dashboard/publications" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/creator-studio/publications" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
           <Building2 className="h-4 w-4" />
           <span>Minhas Publicações</span>
         </Link>

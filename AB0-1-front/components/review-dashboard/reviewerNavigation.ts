@@ -3,14 +3,12 @@ import {
   User,
   Star,
   Heart,
-  PenLine,
   Settings as SettingsIcon,
   HelpCircle,
   Bell,
   Gift,
   Trophy,
   Zap,
-  Link2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -67,26 +65,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     mobilePriority: 5,
     analyticsKey: 'reviewer_nav_favorites',
   },
-  {
-    id: 'publications',
-    label: 'Publicações',
-    href: '/review-dashboard/publications',
-    icon: PenLine,
-    matchPath: '/review-dashboard/publications',
-    section: 'main',
-    mobilePriority: 7,
-    analyticsKey: 'reviewer_nav_publications',
-  },
-  {
-    id: 'tree',
-    label: 'Meu Tree',
-    href: '/review-dashboard/tree',
-    icon: Link2,
-    matchPath: '/review-dashboard/tree',
-    section: 'main',
-    mobilePriority: 8,
-    analyticsKey: 'reviewer_nav_tree',
-  },
+
   {
     id: 'solutions',
     label: 'Soluções que uso',

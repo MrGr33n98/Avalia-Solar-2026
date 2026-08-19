@@ -12,20 +12,7 @@ module Api
                .order(:position, :id)
 
         render json: {
-          creator: {
-            name: profile.user.name,
-            headline: profile.public_headline,
-            bio: profile.public_bio,
-            slug: profile.public_slug,
-            avatar_url: profile.user.avatar_url,
-            banner_url: profile.public_banner.attached? ? Rails.application.routes.url_helpers.rails_blob_url(profile.public_banner, host: ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')) : nil,
-            city: profile.user.city,
-            state: profile.user.state,
-            linkedin_url: profile.linkedin_url,
-            instagram_url: profile.instagram_url,
-            youtube_url: profile.youtube_url,
-            website_url: profile.website_url
-          },
+          creator: Creator::IdentityProjection.resolve(profile),
           blocks: blocks.select { |block| block.block_type == 'separator' || block_destination(block).present? }
                        .map { |block| block_payload(block) }
         }
