@@ -8,7 +8,9 @@ jest.mock('@/lib/api-client', () => ({
 describe('billingApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (fetchApiSafe as jest.Mock).mockResolvedValue({ checkout_url: 'https://checkout.stripe.com/pay/cs_test' });
+    (fetchApiSafe as jest.Mock).mockResolvedValue({
+      checkout_url: 'https://checkout.stripe.com/pay/cs_test',
+    });
   });
 
   it('sends an Idempotency-Key when creating a checkout session', async () => {

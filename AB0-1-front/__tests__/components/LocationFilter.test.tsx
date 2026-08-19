@@ -24,7 +24,7 @@ jest.mock('../../hooks/useLocationData', () => {
     useLocationData: () => {
       const [states, setStates] = React.useState<string[]>([]);
       const [cities, setCities] = React.useState<string[]>([]);
-      
+
       // Simulate fetch effect
       React.useEffect(() => {
         setStates(['SP', 'RJ']);
@@ -44,7 +44,7 @@ jest.mock('../../hooks/useLocationData', () => {
         fetchCities: fetchCities,
         refreshStates: jest.fn(),
       };
-    }
+    },
   };
 });
 
@@ -70,7 +70,7 @@ describe('LocationFilter', () => {
 
   // Note: Radix UI Select is hard to test with simple fireEvent because of portals.
   // We focus on basic rendering and structure here.
-  
+
   it('displays clear button when filter is active', () => {
     render(
       <LocationFilter
@@ -92,7 +92,7 @@ describe('LocationFilter', () => {
         initialState="SP"
       />
     );
-    
+
     fireEvent.click(screen.getByText('Limpar filtros'));
     expect(mockOnClear).toHaveBeenCalled();
   });

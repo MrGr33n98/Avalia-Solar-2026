@@ -1,4 +1,3 @@
-
 import mixpanel from 'mixpanel-browser';
 import * as analytics from '../../lib/analytics';
 import * as consent from '../../lib/analytics/consent';
@@ -47,7 +46,7 @@ describe('Analytics Core Logic', () => {
       NEXT_PUBLIC_GA_MEASUREMENT_ID: 'test-ga-id',
       NODE_ENV: 'test',
     };
-    
+
     // Default mock values
     (consent.hasAnalyticsConsent as jest.Mock).mockReturnValue(true);
     (utm.getCurrentUTMs as jest.Mock).mockReturnValue({});
@@ -64,25 +63,31 @@ describe('Analytics Core Logic', () => {
       // Note: Since we can't easily reset the internal 'initialized' flag without resetModules,
       // we just ensure initializeAnalytics is called at least once.
       analytics.initializeAnalytics();
-      
+
       analytics.track('test_event', { prop1: 'val1' });
-      
+
       // Check Mixpanel
-      expect(mixpanel.track).toHaveBeenCalledWith('Test Event', expect.objectContaining({
-        prop1: 'val1',
-      }));
-      
+      expect(mixpanel.track).toHaveBeenCalledWith(
+        'Test Event',
+        expect.objectContaining({
+          prop1: 'val1',
+        })
+      );
+
       // Check GA4
-      expect(gtag.gtagEvent).toHaveBeenCalledWith('test_event', expect.objectContaining({
-        prop1: 'val1',
-      }));
+      expect(gtag.gtagEvent).toHaveBeenCalledWith(
+        'test_event',
+        expect.objectContaining({
+          prop1: 'val1',
+        })
+      );
     });
 
     it('should block events if no consent', () => {
       (consent.hasAnalyticsConsent as jest.Mock).mockReturnValue(false);
-      
+
       analytics.track('blocked_event');
-      
+
       expect(mixpanel.track).not.toHaveBeenCalledWith('Blocked Event', expect.anything());
     });
   });
@@ -90,7 +95,7 @@ describe('Analytics Core Logic', () => {
   describe('getAnalyticsContext', () => {
     it('should return basic context', () => {
       const context = analytics.getAnalyticsContext();
-      
+
       expect(context).toHaveProperty('platform', 'web');
       expect(context).toHaveProperty('pathname');
     });

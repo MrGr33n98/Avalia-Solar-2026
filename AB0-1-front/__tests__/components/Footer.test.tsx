@@ -12,13 +12,13 @@ jest.mock('next/link', () => ({
 describe('Footer', () => {
   it('renders the company name', () => {
     render(<Footer />);
-    
+
     expect(screen.getByText('Avalia Solar')).toBeInTheDocument();
   });
 
   it('renders company contact information', () => {
     render(<Footer />);
-    
+
     expect(screen.getByRole('link', { name: 'Fale com Felipe' })).toHaveAttribute(
       'href',
       'mailto:felipe@avaliasolar.com.br'
@@ -35,7 +35,7 @@ describe('Footer', () => {
 
   it('renders company links', () => {
     render(<Footer />);
-    
+
     expect(screen.getByRole('link', { name: 'Sobre a Avalia Solar' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Carreiras' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('Footer', () => {
 
   it('renders support links', () => {
     render(<Footer />);
-    
+
     expect(screen.getByRole('link', { name: 'Contato oficial' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Central de ajuda' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sala de imprensa' })).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('Footer', () => {
 
   it('renders legal links', () => {
     render(<Footer />);
-    
+
     expect(screen.getByRole('link', { name: 'Termos de uso' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Privacidade' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cookies' })).toBeInTheDocument();
@@ -69,13 +69,15 @@ describe('Footer', () => {
 
   it('renders copyright information', () => {
     render(<Footer />);
-    
-    expect(screen.getByText(/© 2026 Avalia Solar. Todos os direitos reservados./)).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/© 2026 Avalia Solar. Todos os direitos reservados./)
+    ).toBeInTheDocument();
   });
 
   it('renders the home link', () => {
     render(<Footer />);
-    
+
     expect(screen.getByRole('link', { name: 'Avalia Solar' })).toHaveAttribute('href', '/');
   });
 });

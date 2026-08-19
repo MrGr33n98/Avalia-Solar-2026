@@ -19,13 +19,7 @@ jest.mock('@/lib/analytics/lazy', () => ({
 
 jest.mock('@/components/ui/optimized-image', () => ({
   OptimizedImage: ({ src, alt, className, width, height }: any) => (
-    <img
-      src={src}
-      alt={alt || 'img'}
-      className={className}
-      width={width}
-      height={height}
-    />
+    <img src={src} alt={alt || 'img'} className={className} width={width} height={height} />
   ),
 }));
 
@@ -58,10 +52,7 @@ const baseProps = {
 describe('CompanyHero', () => {
   it('mostra apenas Avaliar quando active_admin esta false', () => {
     render(
-      <CompanyHero
-        {...baseProps}
-        company={{ ...(baseCompany as any), active_admin: false }}
-      />
+      <CompanyHero {...baseProps} company={{ ...(baseCompany as any), active_admin: false }} />
     );
 
     expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
@@ -70,10 +61,7 @@ describe('CompanyHero', () => {
 
   it('mostra Orcamento quando active_admin esta true', () => {
     render(
-      <CompanyHero
-        {...baseProps}
-        company={{ ...(baseCompany as any), active_admin: true }}
-      />
+      <CompanyHero {...baseProps} company={{ ...(baseCompany as any), active_admin: true }} />
     );
 
     expect(screen.getByRole('button', { name: /solicitar orçamento/i })).toBeInTheDocument();

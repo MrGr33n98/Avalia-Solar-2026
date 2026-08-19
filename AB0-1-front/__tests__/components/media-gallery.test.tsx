@@ -8,7 +8,10 @@ const mockTrackGalleryDwell = jest.fn();
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ fill: _fill, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => <img {...props} />,
+  default: ({
+    fill: _fill,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => <img {...props} />,
 }));
 
 jest.mock('@/lib/api', () => ({
@@ -74,7 +77,8 @@ describe('MediaGallery', () => {
     };
 
     fetchApi.mockImplementation(async (endpoint: string) => {
-      if (endpoint.startsWith('/companies/')) return { company: { media_urls: ['/uploads/photo-1.jpg'], videos: [] } };
+      if (endpoint.startsWith('/companies/'))
+        return { company: { media_urls: ['/uploads/photo-1.jpg'], videos: [] } };
       return {};
     });
 

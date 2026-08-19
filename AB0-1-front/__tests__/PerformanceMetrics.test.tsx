@@ -17,13 +17,13 @@ const mockRequest = api.request as jest.MockedFunction<typeof api.request>;
 describe('PerformanceMetrics - Real Data Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock API calls
     mockRequest.mockResolvedValue({
       data: [
         { date: '2024-01-01', value: 100 },
         { date: '2024-01-02', value: 150 },
-      ]
+      ],
     });
   });
 

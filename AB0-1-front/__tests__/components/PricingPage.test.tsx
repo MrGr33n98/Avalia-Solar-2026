@@ -29,12 +29,36 @@ jest.mock('@/lib/api/billing', () => ({
 // Mock framer-motion para evitar erros de animação em ambiente de teste
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, ...props }: any) => <div className={className} {...props}>{children}</div>,
-    h1: ({ children, className, ...props }: any) => <h1 className={className} {...props}>{children}</h1>,
-    h2: ({ children, className, ...props }: any) => <h2 className={className} {...props}>{children}</h2>,
-    p: ({ children, className, ...props }: any) => <p className={className} {...props}>{children}</p>,
-    span: ({ children, className, ...props }: any) => <span className={className} {...props}>{children}</span>,
-    tr: ({ children, className, ...props }: any) => <tr className={className} {...props}>{children}</tr>,
+    div: ({ children, className, ...props }: any) => (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    ),
+    h1: ({ children, className, ...props }: any) => (
+      <h1 className={className} {...props}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children, className, ...props }: any) => (
+      <h2 className={className} {...props}>
+        {children}
+      </h2>
+    ),
+    p: ({ children, className, ...props }: any) => (
+      <p className={className} {...props}>
+        {children}
+      </p>
+    ),
+    span: ({ children, className, ...props }: any) => (
+      <span className={className} {...props}>
+        {children}
+      </span>
+    ),
+    tr: ({ children, className, ...props }: any) => (
+      <tr className={className} {...props}>
+        {children}
+      </tr>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -111,7 +135,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
     const ctaButtons = screen.getAllByRole('button');
     // Encontra o botão do Pro: como o Pro é o segundo plano, podemos buscar por "Quero o Pro" ou similar
     const proBtn = screen.getByText('Quero o Pro').closest('button')!;
-    
+
     await act(async () => {
       fireEvent.click(proBtn);
     });
@@ -139,12 +163,17 @@ describe('PricingPage Component Integration & Behaviors', () => {
     });
 
     const proBtn = screen.getByText('Quero o Pro').closest('button')!;
-    
+
     await act(async () => {
       fireEvent.click(proBtn);
     });
 
-    expect(billingApi.createCheckoutSession).toHaveBeenCalledWith(10, 2, expect.any(String), expect.any(String));
+    expect(billingApi.createCheckoutSession).toHaveBeenCalledWith(
+      10,
+      2,
+      expect.any(String),
+      expect.any(String)
+    );
     expect(window.location.href).toBe('https://stripe.com/checkout_session_url');
 
     // Restore location
@@ -180,7 +209,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
       isAuthenticated: true,
       refreshAuth: mockRefreshAuth,
     });
-    
+
     const mockSubscription = {
       id: 100,
       company_id: 10,
@@ -204,7 +233,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
 
     // Para um usuário com plano ativo Pro, o botão muda para "Gerenciar Assinatura" ou similar
     const manageBtn = screen.getByText('Gerenciar Assinatura').closest('button')!;
-    
+
     await act(async () => {
       fireEvent.click(manageBtn);
     });
@@ -232,7 +261,7 @@ describe('PricingPage Component Integration & Behaviors', () => {
     });
 
     const entBtn = screen.getByText('Solicitar Enterprise').closest('button')!;
-    
+
     // Abre o modal
     await act(async () => {
       fireEvent.click(entBtn);
@@ -247,7 +276,9 @@ describe('PricingPage Component Integration & Behaviors', () => {
 
     await act(async () => {
       fireEvent.change(phoneInput, { target: { value: '11999999999' } });
-      fireEvent.change(justificationInput, { target: { value: 'Precisamos de webhook para o CRM Hubspot.' } });
+      fireEvent.change(justificationInput, {
+        target: { value: 'Precisamos de webhook para o CRM Hubspot.' },
+      });
       fireEvent.click(submitBtn);
     });
 

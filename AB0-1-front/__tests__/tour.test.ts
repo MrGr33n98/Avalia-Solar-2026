@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { 
-  dashboardTourSteps, 
-  isTourCompleted, 
-  markTourAsCompleted, 
-  resetTour 
-} from '../lib/tour';
+import { dashboardTourSteps, isTourCompleted, markTourAsCompleted, resetTour } from '../lib/tour';
 
 describe('Tour Configuration', () => {
   beforeEach(() => {
@@ -26,7 +21,7 @@ describe('Tour Configuration', () => {
     });
 
     it('covers all required tour points', () => {
-      const elements = dashboardTourSteps.map(s => s.element);
+      const elements = dashboardTourSteps.map((s) => s.element);
       expect(elements).toContain('[data-tour="overview"]');
       expect(elements).toContain('[data-tour="metrics"]');
       expect(elements).toContain('[data-tour="reviews"]');
@@ -51,7 +46,7 @@ describe('Tour Configuration', () => {
     it('resets tour completion', () => {
       markTourAsCompleted();
       expect(isTourCompleted()).toBe(true);
-      
+
       resetTour();
       expect(isTourCompleted()).toBe(false);
     });

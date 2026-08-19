@@ -1,9 +1,8 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 
 interface ReviewerPageHeaderProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
   action?: React.ReactNode;

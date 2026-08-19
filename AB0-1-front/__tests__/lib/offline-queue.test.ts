@@ -35,18 +35,14 @@ describe('offline mutation queue', () => {
       where: jest.fn((index: keyof QueuedMutationRecord) => ({
         equals: (value: unknown) => ({
           toArray: async () =>
-            records
-              .filter((record) => record[index] === value)
-              .map((record) => ({ ...record })),
+            records.filter((record) => record[index] === value).map((record) => ({ ...record })),
         }),
       })),
       bulkDelete: jest.fn(async (ids: number[]) => {
         records = records.filter((record) => !ids.includes(record.id as number));
       }),
       update: jest.fn(async (id: number, patch: Partial<QueuedMutationRecord>) => {
-        records = records.map((record) =>
-          record.id === id ? { ...record, ...patch } : record
-        );
+        records = records.map((record) => (record.id === id ? { ...record, ...patch } : record));
       }),
       delete: jest.fn(async (id: number) => {
         records = records.filter((record) => record.id !== id);

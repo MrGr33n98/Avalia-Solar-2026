@@ -23,8 +23,6 @@ describe('JsonLd', () => {
     expect(JSON.stringify(organization)).not.toContain('twitter.com');
 
     expect(website['@type']).toBe('WebSite');
-    expect(website.potentialAction.target.urlTemplate).toContain(
-      '/search?q={search_term_string}'
-    );
+    expect(website.potentialAction.target.urlTemplate).toContain('/search?q={search_term_string}');
   });
 });

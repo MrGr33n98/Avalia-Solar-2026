@@ -30,21 +30,25 @@ jest.mock('framer-motion', () => ({
 describe('Hero', () => {
   it('renders the main heading and subheading', () => {
     render(<Hero />);
-    
+
     expect(screen.getByText(/Compare e Encontre a/)).toBeInTheDocument();
     expect(screen.getByText(/Melhor Empresa Solar/)).toBeInTheDocument();
-    expect(screen.getByText(/Conecte-se com as melhores empresas de energia solar do Brasil/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Conecte-se com as melhores empresas de energia solar do Brasil/)
+    ).toBeInTheDocument();
   });
 
   it('renders the search bar with correct placeholder', () => {
     render(<Hero />);
-    
-    expect(screen.getByPlaceholderText(/Busque empresas, produtos ou serviços/)).toBeInTheDocument();
+
+    expect(
+      screen.getByPlaceholderText(/Busque empresas, produtos ou serviços/)
+    ).toBeInTheDocument();
   });
 
   it('renders the search tags', () => {
     render(<Hero />);
-    
+
     expect(screen.getByText('Painel Solar')).toBeInTheDocument();
     expect(screen.getByText('Inversor')).toBeInTheDocument();
     expect(screen.getByText('Bateria')).toBeInTheDocument();
@@ -53,14 +57,14 @@ describe('Hero', () => {
 
   it('renders CTA buttons for unauthenticated users', () => {
     render(<Hero />);
-    
+
     expect(screen.getByText('Começar Agora')).toBeInTheDocument();
     expect(screen.getByText('Já tenho conta')).toBeInTheDocument();
   });
 
   it('renders stats with correct values', () => {
     render(<Hero />);
-    
+
     expect(screen.getByText('500+')).toBeInTheDocument();
     expect(screen.getByText('4.8/5')).toBeInTheDocument();
     // The component shows projects_count as is followed by 'k+', so with value 10 it would be '10k+'

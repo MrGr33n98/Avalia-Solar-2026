@@ -17,7 +17,7 @@ describe('useCategories', () => {
 
   it('fetches categories on mount', async () => {
     const mockCategories = [
-      { id: 1, name: 'Cat 1', status: 'active', featured: true, seo_url: 'cat-1' }
+      { id: 1, name: 'Cat 1', status: 'active', featured: true, seo_url: 'cat-1' },
     ];
     (api.fetchApi as jest.Mock).mockResolvedValue({ categories: mockCategories });
     (api.categoriesApi.getAll as jest.Mock).mockResolvedValue([]);
@@ -38,7 +38,7 @@ describe('useCategories', () => {
 
   it('handles fetch error', async () => {
     (api.fetchApi as jest.Mock).mockRejectedValue(new Error('Fetch error'));
-    
+
     const { result } = renderHook(() => useCategories(companyId));
 
     await act(async () => {
@@ -53,7 +53,7 @@ describe('useCategories', () => {
     (api.fetchApi as jest.Mock)
       .mockResolvedValueOnce({ categories: [{ id: '1', name: 'Cat 1' }] }) // initial fetch
       .mockResolvedValueOnce({}); // remove call
-    
+
     const { result } = renderHook(() => useCategories(companyId));
 
     await act(async () => {
@@ -62,7 +62,7 @@ describe('useCategories', () => {
 
     expect(api.fetchApi).toHaveBeenCalledWith('/company_dashboard/remove_category', {
       method: 'POST',
-      body: JSON.stringify({ category_id: '1' })
+      body: JSON.stringify({ category_id: '1' }),
     });
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sucesso' }));
   });

@@ -19,7 +19,7 @@ jest.mock('next/link', () => ({
 describe('Header', () => {
   it('renders the logo image with correct alt text', () => {
     render(<Header />);
-    
+
     const logo = screen.getByRole('img', { name: /Logo/ });
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveAttribute('src', '/images/logo.png');
@@ -27,7 +27,7 @@ describe('Header', () => {
 
   it('renders the link to the home page', () => {
     render(<Header />);
-    
+
     const homeLink = screen.getByRole('link');
     expect(homeLink).toBeInTheDocument();
     expect(homeLink).toHaveAttribute('href', '/');
@@ -35,7 +35,7 @@ describe('Header', () => {
 
   it('has correct logo styling', () => {
     render(<Header />);
-    
+
     const logo = screen.getByRole('img', { name: /Logo/ });
     expect(logo).toHaveClass('h-10');
     expect(logo).toHaveClass('w-[75px]');

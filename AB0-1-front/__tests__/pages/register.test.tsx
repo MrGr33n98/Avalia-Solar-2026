@@ -24,26 +24,16 @@ jest.mock('@/components/ui/button', () => ({
 
 jest.mock('@/components/ui/input', () => ({
   Input: ({ value, onChange, type, ...props }: any) => (
-    <input
-      value={value}
-      onChange={onChange}
-      type={type}
-      {...props}
-      data-testid={`input-${type}`}
-    />
+    <input value={value} onChange={onChange} type={type} {...props} data-testid={`input-${type}`} />
   ),
 }));
 
 jest.mock('@/components/ui/label', () => ({
-  Label: ({ children, ...props }: any) => (
-    <label {...props}>{children}</label>
-  ),
+  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
 }));
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
+  Card: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card-content">{children}</div>
   ),
@@ -87,10 +77,10 @@ describe('RegisterPage', () => {
 
   it('renders the register form with all required inputs', () => {
     render(<RegisterPage />);
-    
+
     expect(screen.getByTestId('input-text')).toBeInTheDocument(); // name input
     expect(screen.getByTestId('input-email')).toBeInTheDocument(); // email input
-    
+
     // Para múltiplos elementos com mesmo testid, usar getAllByTestId
     const passwordInputs = screen.getAllByTestId('input-password');
     expect(passwordInputs).toHaveLength(2); // password and confirm password
@@ -98,26 +88,28 @@ describe('RegisterPage', () => {
 
   it('renders the register title and description', () => {
     render(<RegisterPage />);
-    
+
     expect(screen.getByTestId('card-title')).toHaveTextContent('Registro');
-    expect(screen.getByTestId('card-description')).toHaveTextContent('Crie uma nova conta para acessar o sistema');
+    expect(screen.getByTestId('card-description')).toHaveTextContent(
+      'Crie uma nova conta para acessar o sistema'
+    );
   });
 
   it('updates form fields when typing', async () => {
     render(<RegisterPage />);
-    
+
     const nameInput = screen.getByTestId('input-text');
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
-    
+
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
       fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
     });
-    
+
     expect(nameInput).toHaveValue('John Doe');
     expect(emailInput).toHaveValue('john@example.com');
     expect(passwordInput).toHaveValue('password123');
@@ -126,20 +118,20 @@ describe('RegisterPage', () => {
 
   it('shows error when passwords do not match', async () => {
     render(<RegisterPage />);
-    
+
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
-    
+
     await act(async () => {
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'differentpassword' } });
     });
-    
+
     const form = passwordInput.closest('form');
     await act(async () => {
       fireEvent.submit(form!);
     });
-    
+
     await waitFor(() => {
       expect(screen.getByText('As senhas não coincidem')).toBeInTheDocument();
     });
@@ -147,20 +139,20 @@ describe('RegisterPage', () => {
 
   it('shows error when password is too short', async () => {
     render(<RegisterPage />);
-    
+
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
-    
+
     await act(async () => {
       fireEvent.change(passwordInput, { target: { value: '123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: '123' } });
     });
-    
+
     const form = passwordInput.closest('form');
     await act(async () => {
       fireEvent.submit(form!);
     });
-    
+
     await waitFor(() => {
       expect(screen.getByText('A senha deve ter pelo menos 6 caracteres')).toBeInTheDocument();
     });
@@ -170,13 +162,13 @@ describe('RegisterPage', () => {
     mockRegister.mockResolvedValue({});
 
     render(<RegisterPage />);
-    
+
     const nameInput = screen.getByTestId('input-text');
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
     const submitButton = screen.getByRole('button', { name: /Registrar/ });
-    
+
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
       fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
@@ -184,12 +176,12 @@ describe('RegisterPage', () => {
       fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
       fireEvent.click(submitButton);
     });
-    
+
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith({
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'password123'
+        password: 'password123',
       });
     });
   });
@@ -198,13 +190,13 @@ describe('RegisterPage', () => {
     mockRegister.mockResolvedValue({});
 
     render(<RegisterPage />);
-    
+
     const nameInput = screen.getByTestId('input-text');
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
     const submitButton = screen.getByRole('button', { name: /Registrar/ });
-    
+
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
       fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
@@ -212,7 +204,7 @@ describe('RegisterPage', () => {
       fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
       fireEvent.click(submitButton);
     });
-    
+
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/dashboard');
     });
@@ -220,16 +212,16 @@ describe('RegisterPage', () => {
 
   it('shows loading state when submitting', async () => {
     // Mock register to resolve after a delay to capture loading state
-    mockRegister.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+    mockRegister.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
     render(<RegisterPage />);
-    
+
     const nameInput = screen.getByTestId('input-text');
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
     const submitButton = screen.getByRole('button', { name: /Registrar/ });
-    
+
     // Fill out the form
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
@@ -237,12 +229,12 @@ describe('RegisterPage', () => {
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
     });
-    
+
     // Submit the form
     await act(async () => {
       fireEvent.click(submitButton);
     });
-    
+
     // Should show loading state
     expect(submitButton).toBeDisabled();
     expect(submitButton).toHaveTextContent('Registrando...');
@@ -253,13 +245,13 @@ describe('RegisterPage', () => {
     mockRegister.mockRejectedValue(new Error(errorMessage));
 
     render(<RegisterPage />);
-    
+
     const nameInput = screen.getByTestId('input-text');
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getAllByTestId('input-password')[0];
     const confirmPasswordInput = screen.getAllByTestId('input-password')[1];
     const submitButton = screen.getByRole('button', { name: /Registrar/ });
-    
+
     // Fill out the form
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
@@ -267,12 +259,12 @@ describe('RegisterPage', () => {
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
     });
-    
+
     // Submit the form
     await act(async () => {
       fireEvent.click(submitButton);
     });
-    
+
     // Wait for the error message to appear
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
@@ -281,7 +273,7 @@ describe('RegisterPage', () => {
 
   it('has a link to the login page', () => {
     render(<RegisterPage />);
-    
+
     expect(screen.getByRole('link', { name: 'Faça login' })).toHaveAttribute('href', '/login');
   });
 });

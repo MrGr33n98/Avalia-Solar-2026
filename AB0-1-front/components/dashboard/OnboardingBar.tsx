@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Sparkles, X } from 'lucide-react';
 
 interface OnboardingBarProps {
   profileCompletion?: number;
@@ -15,8 +15,16 @@ export function OnboardingBar({
   reviewsCount = 0,
 }: OnboardingBarProps) {
   const { user } = useAuth();
+  const [dismissed, setDismissed] = useState(true);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isDismissed = localStorage.getItem('as-onboarding-dismissed') === 'true';
+      setDismissed(isDismissed);
+    }
+  }, []);
+
+  if (!user || dismissed) return null;
 
   const firstName = user.name.split(' ')[0];
 
@@ -42,56 +50,51 @@ export function OnboardingBar({
   const currentStepIndex = steps.findIndex((step) => !step.done);
   const nextAction = currentStepIndex !== -1 ? steps[currentStepIndex] : null;
 
+  const handleDismiss = () => {
+    localStorage.setItem('as-onboarding-dismissed', 'true');
+    setDismissed(true);
+  };
+
   return (
-    <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white p-5 text-slate-950 shadow-none">
-
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between relative z-10">
-        <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-slate-950">
-              Bem-vindo, {firstName}! Vamos completar o seu onboarding?
-            </h2>
+    <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/20 px-4 py-3 text-slate-900 shadow-none transition-all">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100/80 text-blue-600">
+            <Sparkles className="h-4.5 w-4.5" />
           </div>
-          <p className="mt-1 text-sm text-slate-650 max-w-2xl">
-            Complete os passos abaixo para aumentar sua visibilidade, validar suas contribuições de energia solar e subir no ranking regional!
-          </p>
-
-          {/* Passos de Onboarding */}
-          <div className="mt-4 flex flex-wrap gap-3">
-            {steps.map((step, idx) => (
-              <div
-                key={step.label}
-                className={`flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs ${
-                  step.done
-                    ? 'border-emerald-200 bg-emerald-50/40 text-slate-700 line-through'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 font-medium'
-                }`}
-              >
-                {step.done ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                ) : (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-600 text-[10px] font-semibold text-white">
-                    {idx + 1}
-                  </span>
-                )}
-                <span>
-                  {step.label}
-                </span>
-              </div>
-            ))}
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-slate-900 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span>Bem-vindo, {firstName}!</span>
+              <span className="text-xs font-normal text-slate-500">
+                Complete seu onboarding para subir no ranking regional
+              </span>
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Passos concluídos: {steps.filter((s) => s.done).length} de {steps.length}
+            </p>
           </div>
         </div>
 
-        {nextAction && (
-          <Link
-            href={nextAction.href}
-            className="flex items-center justify-center gap-1.5 self-start rounded-none bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 md:self-center"
+        <div className="flex items-center gap-3 shrink-0">
+          {nextAction && (
+            <Link
+              href={nextAction.href}
+              className="inline-flex h-8 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              <span>Próximo: {nextAction.label}</span>
+              <ChevronRight className="h-3 w-3" />
+            </Link>
+          )}
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Dispensar aviso"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
-            Próximo passo: {nextAction.label}
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        )}
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

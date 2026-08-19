@@ -18,10 +18,9 @@ describe('useDebounce', () => {
   });
 
   it('does not update debounced value before delay elapses', () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'first', delay: 300 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'first', delay: 300 },
+    });
 
     rerender({ value: 'second', delay: 300 });
 
@@ -30,10 +29,9 @@ describe('useDebounce', () => {
   });
 
   it('updates debounced value after delay elapses', () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'first', delay: 300 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'first', delay: 300 },
+    });
 
     rerender({ value: 'second', delay: 300 });
 
@@ -45,10 +43,9 @@ describe('useDebounce', () => {
   });
 
   it('resets timer when value changes rapidly (debounce behaviour)', () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'a', delay: 400 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'a', delay: 400 },
+    });
 
     rerender({ value: 'ab', delay: 400 });
     act(() => jest.advanceTimersByTime(200)); // 200ms in — hasn't fired yet
@@ -66,10 +63,9 @@ describe('useDebounce', () => {
   });
 
   it('works with number values', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 200),
-      { initialProps: { value: 0 } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 200), {
+      initialProps: { value: 0 },
+    });
 
     rerender({ value: 100 });
     expect(result.current).toBe(0);
@@ -80,10 +76,9 @@ describe('useDebounce', () => {
 
   it('works with array values', () => {
     const initial: [number, number] = [0, 50000];
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: initial } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: initial },
+    });
 
     const updated: [number, number] = [1000, 40000];
     rerender({ value: updated });
@@ -95,10 +90,9 @@ describe('useDebounce', () => {
 
   it('cleans up timer on unmount', () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    const { unmount, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: 'hello' } }
-    );
+    const { unmount, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: 'hello' },
+    });
 
     rerender({ value: 'world' }); // Start a timer
     unmount(); // Should clear it

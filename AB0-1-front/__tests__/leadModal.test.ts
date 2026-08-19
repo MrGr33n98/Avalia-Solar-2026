@@ -10,7 +10,9 @@ import { JSDOM } from 'jsdom';
 
 describe('Lead Confirmation Modal', () => {
   beforeEach(() => {
-    const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>', { url: 'http://localhost/' });
+    const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>', {
+      url: 'http://localhost/',
+    });
     (global as any).window = dom.window as any;
     (global as any).document = dom.window.document as any;
     jest.useFakeTimers();
@@ -24,7 +26,8 @@ describe('Lead Confirmation Modal', () => {
     // Carrega o módulo do formulário para registrar as funções no escopo
     require('../components/QuoteForm.tsx');
     // Executa a função injetada no arquivo
-    const fn = (global as any).showLeadConfirmationModal || (global as any).window.showLeadConfirmationModal;
+    const fn =
+      (global as any).showLeadConfirmationModal || (global as any).window.showLeadConfirmationModal;
     if (typeof fn === 'function') fn();
   }
 
@@ -40,7 +43,9 @@ describe('Lead Confirmation Modal', () => {
     callShow();
     const text = document.querySelector('.lead-modal-text') as HTMLElement;
     const icon = document.querySelector('.lead-modal-icon');
-    expect(text?.textContent).toBe('Obrigado! Passaremos seus contatos para as melhores empresas verificadas.');
+    expect(text?.textContent).toBe(
+      'Obrigado! Passaremos seus contatos para as melhores empresas verificadas.'
+    );
     expect(icon?.nodeName).toBe('svg'.toUpperCase());
   });
 
@@ -58,4 +63,3 @@ describe('Lead Confirmation Modal', () => {
     expect(overlay).toBeNull();
   });
 });
-

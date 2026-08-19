@@ -12,8 +12,14 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/components/LocationSearch', () => ({
   __esModule: true,
-  default: ({ onLocationSelect }: { onLocationSelect: (value: { state: string; city?: string }) => void }) => (
-    <button onClick={() => onLocationSelect({ state: 'SP', city: 'Sao Paulo' })}>select-location</button>
+  default: ({
+    onLocationSelect,
+  }: {
+    onLocationSelect: (value: { state: string; city?: string }) => void;
+  }) => (
+    <button onClick={() => onLocationSelect({ state: 'SP', city: 'Sao Paulo' })}>
+      select-location
+    </button>
   ),
 }));
 
@@ -40,6 +46,8 @@ describe('LandingHeroSearch', () => {
     fireEvent.click(screen.getByText('select-location'));
     fireEvent.click(screen.getByRole('button', { name: /buscar empresas/i }));
 
-    expect(pushMock).toHaveBeenCalledWith('/categories/energia-solar-residencial?state=SP&city=Sao+Paulo');
+    expect(pushMock).toHaveBeenCalledWith(
+      '/categories/energia-solar-residencial?state=SP&city=Sao+Paulo'
+    );
   });
 });

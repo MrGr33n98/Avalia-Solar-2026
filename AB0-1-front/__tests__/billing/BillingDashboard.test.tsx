@@ -24,15 +24,51 @@ jest.mock('next/navigation', () => ({
 // Mock framer-motion para evitar erros de animação em ambiente de teste
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, ...props }: any) => <div className={className} {...props}>{children}</div>,
-    h1: ({ children, className, ...props }: any) => <h1 className={className} {...props}>{children}</h1>,
-    h2: ({ children, className, ...props }: any) => <h2 className={className} {...props}>{children}</h2>,
-    h3: ({ children, className, ...props }: any) => <h3 className={className} {...props}>{children}</h3>,
-    h4: ({ children, className, ...props }: any) => <h4 className={className} {...props}>{children}</h4>,
-    h5: ({ children, className, ...props }: any) => <h5 className={className} {...props}>{children}</h5>,
-    h6: ({ children, className, ...props }: any) => <h6 className={className} {...props}>{children}</h6>,
-    p: ({ children, className, ...props }: any) => <p className={className} {...props}>{children}</p>,
-    span: ({ children, className, ...props }: any) => <span className={className} {...props}>{children}</span>,
+    div: ({ children, className, ...props }: any) => (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    ),
+    h1: ({ children, className, ...props }: any) => (
+      <h1 className={className} {...props}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children, className, ...props }: any) => (
+      <h2 className={className} {...props}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children, className, ...props }: any) => (
+      <h3 className={className} {...props}>
+        {children}
+      </h3>
+    ),
+    h4: ({ children, className, ...props }: any) => (
+      <h4 className={className} {...props}>
+        {children}
+      </h4>
+    ),
+    h5: ({ children, className, ...props }: any) => (
+      <h5 className={className} {...props}>
+        {children}
+      </h5>
+    ),
+    h6: ({ children, className, ...props }: any) => (
+      <h6 className={className} {...props}>
+        {children}
+      </h6>
+    ),
+    p: ({ children, className, ...props }: any) => (
+      <p className={className} {...props}>
+        {children}
+      </p>
+    ),
+    span: ({ children, className, ...props }: any) => (
+      <span className={className} {...props}>
+        {children}
+      </span>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -81,7 +117,7 @@ describe('BillingDashboardPage Component Integration', () => {
     render(<BillingDashboardPage />);
 
     const upgradeBtn = screen.getByText('Fazer Upgrade para Pro');
-    
+
     await act(async () => {
       fireEvent.click(upgradeBtn);
     });
@@ -183,7 +219,7 @@ describe('BillingDashboardPage Component Integration', () => {
     render(<BillingDashboardPage />);
 
     const enterpriseBtn = screen.getByText('Solicitar Apresentação Enterprise');
-    
+
     // Abre o modal
     await act(async () => {
       fireEvent.click(enterpriseBtn);

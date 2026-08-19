@@ -69,9 +69,7 @@ describe('sitemap', () => {
 
     expect(indexEntries).toHaveLength(SITEMAP_SECTIONS.length);
     SITEMAP_SECTIONS.forEach((section) => {
-      expect(indexXml).toContain(
-        `https://www.avaliasolar.com.br/sitemaps/${section}/sitemap.xml`
-      );
+      expect(indexXml).toContain(`https://www.avaliasolar.com.br/sitemaps/${section}/sitemap.xml`);
     });
   });
 
@@ -131,7 +129,9 @@ describe('sitemap', () => {
     const entries = await getSitemapEntriesBySection('local-solar');
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain('https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis');
+    expect(urls).toContain(
+      'https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis'
+    );
     expect(urls).not.toContain('https://www.avaliasolar.com.br/companies/energia-solar/ac');
   });
 });

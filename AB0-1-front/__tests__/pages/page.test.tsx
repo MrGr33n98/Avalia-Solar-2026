@@ -11,15 +11,58 @@ const Home = HomeModule.default;
 jest.mock('@/lib/api-client', () => ({
   categoriesApiSafe: {
     getAll: jest.fn().mockResolvedValue([
-      { id: 1, name: 'Featured Category', slug: 'featured-category', banner_url: '/banner1.jpg', featured: true, active: true },
-      { id: 2, name: 'Category 1', slug: 'category-1', banner_url: '/banner2.jpg', featured: false, active: true },
-      { id: 3, name: 'Inactive Category', slug: 'inactive-category', banner_url: '/banner3.jpg', featured: true, active: false },
+      {
+        id: 1,
+        name: 'Featured Category',
+        slug: 'featured-category',
+        banner_url: '/banner1.jpg',
+        featured: true,
+        active: true,
+      },
+      {
+        id: 2,
+        name: 'Category 1',
+        slug: 'category-1',
+        banner_url: '/banner2.jpg',
+        featured: false,
+        active: true,
+      },
+      {
+        id: 3,
+        name: 'Inactive Category',
+        slug: 'inactive-category',
+        banner_url: '/banner3.jpg',
+        featured: true,
+        active: false,
+      },
     ]),
   },
   companiesApiSafe: {
     getAll: jest.fn().mockResolvedValue([
-      { id: 1, name: 'Company 1', slug: 'company-1', logo_url: '/logo1.png', banner_url: '/banner1.jpg', description: 'Desc 1', average_rating: 4.5, rating_count: 10, city: 'City A', state: 'ST' },
-      { id: 2, name: 'Company 2', slug: 'company-2', logo_url: '/logo2.png', banner_url: '/banner2.jpg', description: 'Desc 2', average_rating: 3.8, rating_count: 5, city: 'City B', state: 'ST' },
+      {
+        id: 1,
+        name: 'Company 1',
+        slug: 'company-1',
+        logo_url: '/logo1.png',
+        banner_url: '/banner1.jpg',
+        description: 'Desc 1',
+        average_rating: 4.5,
+        rating_count: 10,
+        city: 'City A',
+        state: 'ST',
+      },
+      {
+        id: 2,
+        name: 'Company 2',
+        slug: 'company-2',
+        logo_url: '/logo2.png',
+        banner_url: '/banner2.jpg',
+        description: 'Desc 2',
+        average_rating: 3.8,
+        rating_count: 5,
+        city: 'City B',
+        state: 'ST',
+      },
     ]),
   },
   reviewsApiSafe: {
@@ -38,7 +81,15 @@ jest.mock('next/image', () => ({
 
 // Mock next/link
 jest.mock('next/link', () => {
-  return ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: any }) => (
+  return ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: any;
+  }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -79,7 +130,9 @@ jest.mock('@/components/Navbar', () => {
 jest.mock('@/components/CategoryCard', () => {
   return {
     __esModule: true,
-    default: ({ category }: { category: any }) => <div data-testid={`mock-category-card-${category.id}`}>{category.name}</div>,
+    default: ({ category }: { category: any }) => (
+      <div data-testid={`mock-category-card-${category.id}`}>{category.name}</div>
+    ),
   };
 });
 
@@ -87,7 +140,9 @@ jest.mock('@/components/CategoryCard', () => {
 jest.mock('@/components/CompanyCard', () => {
   return {
     __esModule: true,
-    default: ({ company }: { company: any }) => <div data-testid={`mock-company-card-${company.id}`}>{company.name}</div>,
+    default: ({ company }: { company: any }) => (
+      <div data-testid={`mock-company-card-${company.id}`}>{company.name}</div>
+    ),
   };
 });
 
@@ -115,24 +170,45 @@ jest.mock('@/components/ui/button', () => ({
       // This assumes children is a single React element
       return React.cloneElement(children, props);
     }
-    return <button {...props} data-testid="mock-button">{children}</button>;
+    return (
+      <button {...props} data-testid="mock-button">
+        {children}
+      </button>
+    );
   },
 }));
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, ...props }: any) => <div {...props} data-testid="mock-card">{children}</div>,
-  CardContent: ({ children, ...props }: any) => <div {...props} data-testid="mock-card-content">{children}</div>,
+  Card: ({ children, ...props }: any) => (
+    <div {...props} data-testid="mock-card">
+      {children}
+    </div>
+  ),
+  CardContent: ({ children, ...props }: any) => (
+    <div {...props} data-testid="mock-card-content">
+      {children}
+    </div>
+  ),
 }));
 
 jest.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, ...props }: any) => <span {...props} data-testid="mock-badge">{children}</span>,
+  Badge: ({ children, ...props }: any) => (
+    <span {...props} data-testid="mock-badge">
+      {children}
+    </span>
+  ),
 }));
 
 jest.mock('@/components/ui/Skeleton', () => ({
   __esModule: true,
-  default: ({ className, 'data-testid': dataTestId }: { className?: string; 'data-testid'?: string }) => <div data-testid={dataTestId || "mock-skeleton"} className={className} />,
+  default: ({
+    className,
+    'data-testid': dataTestId,
+  }: {
+    className?: string;
+    'data-testid'?: string;
+  }) => <div data-testid={dataTestId || 'mock-skeleton'} className={className} />,
 }));
-
 
 describe('Home Page', () => {
   beforeEach(() => {
@@ -175,7 +251,9 @@ describe('Home Page', () => {
   });
 
   it('displays error message if categories fail to load', async () => {
-    (categoriesApiSafe.getAll as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch categories'));
+    (categoriesApiSafe.getAll as jest.Mock).mockRejectedValueOnce(
+      new Error('Failed to fetch categories')
+    );
     render(<Home />);
     await waitFor(() => {
       expect(screen.getByText('Erro ao carregar categorias.')).toBeInTheDocument();
@@ -183,7 +261,9 @@ describe('Home Page', () => {
   });
 
   it('displays error message if companies fail to load', async () => {
-    (companiesApiSafe.getAll as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch companies'));
+    (companiesApiSafe.getAll as jest.Mock).mockRejectedValueOnce(
+      new Error('Failed to fetch companies')
+    );
     render(<Home />);
     await waitFor(() => {
       expect(screen.getByText('Erro ao carregar empresas.')).toBeInTheDocument();

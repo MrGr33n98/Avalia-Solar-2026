@@ -3,7 +3,7 @@ import path from 'path';
 
 const ROOTS_TO_SCAN = ['app', 'components', 'hooks'];
 const DEPRECATED_PATTERNS = [
-  "@/lib/dataLayer",
+  '@/lib/dataLayer',
   '@/lib/dataLayer',
   '@/lib/posthog',
   '../lib/posthog',
@@ -46,8 +46,7 @@ function relativeSourcePath(file: string): string {
 
 describe('analytics deprecated imports', () => {
   it('does not allow app/components code to import deprecated analytics libraries', () => {
-    const offendingFiles = ROOTS_TO_SCAN
-      .flatMap((root) => collectSourceFiles(root))
+    const offendingFiles = ROOTS_TO_SCAN.flatMap((root) => collectSourceFiles(root))
       .filter((file) => !ALLOWED_FILES.has(relativeSourcePath(file)))
       .filter((file) => {
         const content = fs.readFileSync(file, 'utf8');

@@ -1,4 +1,3 @@
-
 import { api, fetchApi } from '../../lib/api';
 
 // Mock fetch
@@ -8,7 +7,7 @@ describe('API Logic', () => {
   beforeEach(() => {
     jest.useRealTimers();
     (global.fetch as jest.Mock).mockClear();
-    
+
     // Default mock implementation that handles signal
     (global.fetch as jest.Mock).mockImplementation((url, options) => {
       const signal = options.signal;
@@ -29,11 +28,11 @@ describe('API Logic', () => {
     it('should timeout if request takes too long', async () => {
       // Config with short timeout and no retries
       // We expect it to fail with 'Request timeout'
-      const requestPromise = api.request({ 
-        url: '/test', 
+      const requestPromise = api.request({
+        url: '/test',
         method: 'GET',
         timeout: 50, // 50ms timeout
-        retries: 1
+        retries: 1,
       });
 
       await expect(requestPromise).rejects.toThrow('Request timeout');
@@ -43,12 +42,12 @@ describe('API Logic', () => {
       // Mock fetch to throw AbortError immediately
       (global.fetch as jest.Mock).mockRejectedValue({ name: 'AbortError' });
 
-      const requestPromise = api.request({ 
-        url: '/test', 
+      const requestPromise = api.request({
+        url: '/test',
         method: 'GET',
-        retries: 1 
+        retries: 1,
       });
-      
+
       await expect(requestPromise).rejects.toThrow('Request timeout');
     });
 
@@ -57,15 +56,15 @@ describe('API Logic', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-        json: () => Promise.resolve({ error: 'Resource not found' })
+        json: () => Promise.resolve({ error: 'Resource not found' }),
       });
 
-      const requestPromise = api.request({ 
-        url: '/not-found', 
+      const requestPromise = api.request({
+        url: '/not-found',
         method: 'GET',
-        retries: 1 
+        retries: 1,
       });
-      
+
       await expect(requestPromise).rejects.toThrow('[404] Resource not found');
     });
   });
@@ -76,10 +75,12 @@ describe('API Logic', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-        json: () => Promise.resolve({ error: 'Resource not found' })
+        json: () => Promise.resolve({ error: 'Resource not found' }),
       });
 
-      await expect(fetchApi('/test-404')).rejects.toThrow(/\[404\] O recurso solicitado não foi encontrado/);
+      await expect(fetchApi('/test-404')).rejects.toThrow(
+        /\[404\] O recurso solicitado não foi encontrado/
+      );
     });
   });
 });

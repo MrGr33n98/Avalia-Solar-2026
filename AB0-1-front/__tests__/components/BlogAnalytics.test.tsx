@@ -81,26 +81,32 @@ describe('Blog Analytics Integration', () => {
   describe('ShareButtons', () => {
     it('should track blog_share_click when a platform is clicked', () => {
       render(<ShareButtons title="Test Post" slug="test-post" />);
-      
+
       const linkedinButton = screen.getByText('LinkedIn').closest('button');
       fireEvent.click(linkedinButton!);
-      
-      expect(track).toHaveBeenCalledWith('blog_share_click', expect.objectContaining({
-        post_id: 'test-post',
-        post_title: 'Test Post',
-        platform: 'linkedin'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_share_click',
+        expect.objectContaining({
+          post_id: 'test-post',
+          post_title: 'Test Post',
+          platform: 'linkedin',
+        })
+      );
     });
 
     it('should track blog_share_click when copy link is clicked', () => {
       render(<ShareButtons title="Test Post" slug="test-post" />);
-      
+
       const copyButton = screen.getByText('Copiar Link').closest('button');
       fireEvent.click(copyButton!);
-      
-      expect(track).toHaveBeenCalledWith('blog_share_click', expect.objectContaining({
-        platform: 'copy'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_share_click',
+        expect.objectContaining({
+          platform: 'copy',
+        })
+      );
       expect(navigator.clipboard.writeText).toHaveBeenCalled();
     });
   });
@@ -110,24 +116,32 @@ describe('Blog Analytics Integration', () => {
       // Mock scroll behavior
       const originalInnerHeight = window.innerHeight;
       const originalScrollHeight = document.documentElement.scrollHeight;
-      
+
       Object.defineProperty(window, 'innerHeight', { writable: true, value: 500 });
-      Object.defineProperty(document.documentElement, 'scrollHeight', { writable: true, value: 1500 });
-      
+      Object.defineProperty(document.documentElement, 'scrollHeight', {
+        writable: true,
+        value: 1500,
+      });
+
       render(<ReadingProgress />);
-      
+
       // Simulate scroll to 50% (500px / (1500px - 500px) = 0.5)
       (window as any).scrollY = 500;
       fireEvent.scroll(window);
-      
-      expect(track).toHaveBeenCalledWith('blog_scroll_depth', expect.objectContaining({
-        post_slug: 'test-post',
-        scroll_percentage: 50
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_scroll_depth',
+        expect.objectContaining({
+          post_slug: 'test-post',
+          scroll_percentage: 50,
+        })
+      );
 
       // Cleanup
       Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight });
-      Object.defineProperty(document.documentElement, 'scrollHeight', { value: originalScrollHeight });
+      Object.defineProperty(document.documentElement, 'scrollHeight', {
+        value: originalScrollHeight,
+      });
     });
   });
 
@@ -136,41 +150,50 @@ describe('Blog Analytics Integration', () => {
       id: 1,
       title: 'Test Article',
       slug: 'test-article',
-      category: { name: 'Energy', slug: 'energy' }
+      category: { name: 'Energy', slug: 'energy' },
     };
 
     it('should track blog_cta_click when CTA buttons are clicked', () => {
       render(<ArticleConversionSection article={mockArticle} />);
-      
+
       const budgetButton = screen.getByText('Pedir orçamento').closest('a');
       fireEvent.click(budgetButton!);
-      
-      expect(track).toHaveBeenCalledWith('blog_cta_click', expect.objectContaining({
-        cta_text: 'Pedir orçamento',
-        cta_target: 'categories'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_cta_click',
+        expect.objectContaining({
+          cta_text: 'Pedir orçamento',
+          cta_target: 'categories',
+        })
+      );
 
       const simulatorButton = screen.getByText('Simular economia').closest('a');
       fireEvent.click(simulatorButton!);
-      
-      expect(track).toHaveBeenCalledWith('blog_cta_click', expect.objectContaining({
-        cta_text: 'Simular economia',
-        cta_target: 'simulador'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_cta_click',
+        expect.objectContaining({
+          cta_text: 'Simular economia',
+          cta_target: 'simulador',
+        })
+      );
     });
   });
 
   describe('CategoryHighlights', () => {
     it('should track blog_category_click when a category highlight is clicked', () => {
       render(<CategoryHighlights />);
-      
+
       const economyCard = screen.getByText('Economia').closest('a');
       fireEvent.click(economyCard!);
-      
-      expect(track).toHaveBeenCalledWith('blog_category_click', expect.objectContaining({
-        category_name: 'Economia',
-        element_type: 'highlight_card'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_category_click',
+        expect.objectContaining({
+          category_name: 'Economia',
+          element_type: 'highlight_card',
+        })
+      );
     });
   });
 
@@ -185,15 +208,18 @@ describe('Blog Analytics Integration', () => {
 
     it('should track blog_time_milestone after 30 seconds', () => {
       render(<BlogTimeTracker />);
-      
+
       act(() => {
         jest.advanceTimersByTime(31000);
       });
-      
-      expect(track).toHaveBeenCalledWith('blog_time_milestone', expect.objectContaining({
-        time_seconds: 30,
-        milestone: '30s'
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'blog_time_milestone',
+        expect.objectContaining({
+          time_seconds: 30,
+          milestone: '30s',
+        })
+      );
     });
   });
 });

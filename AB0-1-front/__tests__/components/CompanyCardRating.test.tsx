@@ -77,12 +77,12 @@ describe('CompanyCard - Rating and Reviews', () => {
   it('calculates full and empty stars correctly for integer rating', () => {
     const company = { ...baseCompany, average_rating: 4, rating_count: 10 };
     render(<CompanyCard company={company} variant="standard" />);
-    
+
     const container = screen.getByTestId('rating-stars-container');
     const stars = within(container).getAllByTestId('star-icon');
-    const fullStars = stars.filter(s => s.getAttribute('class')?.includes('fill-amber-400'));
-    const emptyStars = stars.filter(s => s.getAttribute('class')?.includes('text-slate-200'));
-    
+    const fullStars = stars.filter((s) => s.getAttribute('class')?.includes('fill-amber-400'));
+    const emptyStars = stars.filter((s) => s.getAttribute('class')?.includes('text-slate-200'));
+
     expect(fullStars).toHaveLength(4);
     expect(emptyStars).toHaveLength(1);
     expect(screen.queryByTestId('star-half-icon')).not.toBeInTheDocument();
@@ -92,12 +92,12 @@ describe('CompanyCard - Rating and Reviews', () => {
   it('calculates half stars correctly for fractional rating', () => {
     const company = { ...baseCompany, average_rating: 3.5, rating_count: 5 };
     render(<CompanyCard company={company} variant="standard" />);
-    
+
     const container = screen.getByTestId('rating-stars-container');
     const stars = within(container).getAllByTestId('star-icon');
-    const fullStars = stars.filter(s => s.getAttribute('class')?.includes('fill-amber-400'));
-    const emptyStars = stars.filter(s => s.getAttribute('class')?.includes('text-slate-200'));
-    
+    const fullStars = stars.filter((s) => s.getAttribute('class')?.includes('fill-amber-400'));
+    const emptyStars = stars.filter((s) => s.getAttribute('class')?.includes('text-slate-200'));
+
     // As it uses Math.floor, 3.5 gives 3 full stars and 2 empty stars
     expect(fullStars).toHaveLength(3);
     expect(emptyStars).toHaveLength(2);
@@ -106,15 +106,18 @@ describe('CompanyCard - Rating and Reviews', () => {
 
   it('handles zero rating correctly', () => {
     render(<CompanyCard company={baseCompany} variant="standard" />);
-    
+
     // The reputation panel (which contains 5 stars) shouldn't be rendered if rating_count is 0
     expect(screen.queryByTestId('rating-stars-container')).not.toBeInTheDocument();
-    
+
     // It should render the single star in the header
     const stars = screen.getAllByTestId('star-icon');
-    const headerStars = stars.filter(s => s.getAttribute('class')?.includes('amber') || s.getAttribute('class')?.includes('slate'));
+    const headerStars = stars.filter(
+      (s) =>
+        s.getAttribute('class')?.includes('amber') || s.getAttribute('class')?.includes('slate')
+    );
     expect(headerStars).toHaveLength(1);
-    
+
     // Header should say 0 aval.
     expect(screen.getByText(/0\s*aval\./)).toBeInTheDocument();
     expect(screen.getByText('0.0')).toBeInTheDocument();
@@ -123,14 +126,13 @@ describe('CompanyCard - Rating and Reviews', () => {
   it('handles high rating correctly (5 stars)', () => {
     const company = { ...baseCompany, average_rating: 5, rating_count: 100 };
     render(<CompanyCard company={company} variant="standard" />);
-    
+
     const container = screen.getByTestId('rating-stars-container');
     const stars = within(container).getAllByTestId('star-icon');
-    const fullStars = stars.filter(s => s.getAttribute('class')?.includes('fill-amber-400'));
-    
+    const fullStars = stars.filter((s) => s.getAttribute('class')?.includes('fill-amber-400'));
+
     expect(fullStars).toHaveLength(5);
     expect(screen.queryByTestId('star-half-icon')).not.toBeInTheDocument();
     expect(screen.getByText(/100\s*avaliações/)).toBeInTheDocument();
   });
-
 });

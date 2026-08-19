@@ -27,14 +27,7 @@ jest.mock('next/image', () => ({
 
 describe('OptimizedImage', () => {
   it('renders image with correct props', () => {
-    render(
-      <OptimizedImage
-        src="/test-image.jpg"
-        alt="Test image"
-        width={800}
-        height={600}
-      />
-    );
+    render(<OptimizedImage src="/test-image.jpg" alt="Test image" width={800} height={600} />);
 
     const image = screen.getByAltText('Test image');
     expect(image).toBeInTheDocument();
@@ -57,14 +50,7 @@ describe('OptimizedImage', () => {
   });
 
   it('handles loading state', () => {
-    render(
-      <OptimizedImage
-        src="/test-image.jpg"
-        alt="Test image"
-        width={800}
-        height={600}
-      />
-    );
+    render(<OptimizedImage src="/test-image.jpg" alt="Test image" width={800} height={600} />);
 
     const image = screen.getByAltText('Test image');
     expect(image).toHaveClass('opacity-0'); // Initial loading state
@@ -72,13 +58,7 @@ describe('OptimizedImage', () => {
 
   it('sets priority for above-the-fold images', () => {
     render(
-      <OptimizedImage
-        src="/test-image.jpg"
-        alt="Test image"
-        width={800}
-        height={600}
-        priority
-      />
+      <OptimizedImage src="/test-image.jpg" alt="Test image" width={800} height={600} priority />
     );
 
     const image = screen.getByAltText('Test image');
@@ -87,13 +67,7 @@ describe('OptimizedImage', () => {
 
   it('uses fill mode when fill prop is true', () => {
     render(
-      <OptimizedImage
-        src="/test-image.jpg"
-        alt="Test image"
-        fill
-        width={1200}
-        height={600}
-      />
+      <OptimizedImage src="/test-image.jpg" alt="Test image" fill width={1200} height={600} />
     );
 
     const image = screen.getByAltText('Test image');
@@ -121,13 +95,7 @@ describe('OptimizedImage', () => {
 
 describe('OptimizedAvatar', () => {
   it('renders avatar with correct size', () => {
-    render(
-      <OptimizedAvatar
-        src="/avatar.jpg"
-        alt="User avatar"
-        size={48}
-      />
-    );
+    render(<OptimizedAvatar src="/avatar.jpg" alt="User avatar" size={48} />);
 
     const avatar = screen.getByAltText('User avatar');
     expect(avatar).toBeInTheDocument();
@@ -135,12 +103,7 @@ describe('OptimizedAvatar', () => {
   });
 
   it('uses default size when not provided', () => {
-    render(
-      <OptimizedAvatar
-        src="/avatar.jpg"
-        alt="User avatar"
-      />
-    );
+    render(<OptimizedAvatar src="/avatar.jpg" alt="User avatar" />);
 
     const avatar = screen.getByAltText('User avatar');
     expect(avatar).toBeInTheDocument();
@@ -149,38 +112,21 @@ describe('OptimizedAvatar', () => {
 
 describe('OptimizedLogo', () => {
   it('renders logo with priority by default', () => {
-    render(
-      <OptimizedLogo
-        src="/logo.png"
-        alt="Company logo"
-      />
-    );
+    render(<OptimizedLogo src="/logo.png" alt="Company logo" />);
 
     const logo = screen.getByAltText('Company logo');
     expect(logo).toBeInTheDocument();
   });
 
   it('uses contain object fit', () => {
-    render(
-      <OptimizedLogo
-        src="/logo.png"
-        alt="Company logo"
-      />
-    );
+    render(<OptimizedLogo src="/logo.png" alt="Company logo" />);
 
     const logo = screen.getByAltText('Company logo');
     expect(logo).toHaveStyle({ objectFit: 'contain' });
   });
 
   it('accepts custom dimensions', () => {
-    render(
-      <OptimizedLogo
-        src="/logo.png"
-        alt="Company logo"
-        width={200}
-        height={80}
-      />
-    );
+    render(<OptimizedLogo src="/logo.png" alt="Company logo" width={200} height={80} />);
 
     const logo = screen.getByAltText('Company logo');
     expect(logo).toBeInTheDocument();

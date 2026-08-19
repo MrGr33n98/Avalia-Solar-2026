@@ -6,8 +6,8 @@ import { api } from '../../lib/api';
 // Mock API module
 jest.mock('../../lib/api', () => ({
   api: {
-    request: jest.fn()
-  }
+    request: jest.fn(),
+  },
 }));
 
 const createWrapper = () => {
@@ -31,20 +31,22 @@ describe('useCategoriesQuery', () => {
   it('fetches categories with default parameters', async () => {
     const apiBody = {
       data: [{ id: 1, name: 'Solar', short_description: 'Desc' }],
-      meta: { total_pages: 1, current_page: 1 }
+      meta: { total_pages: 1, current_page: 1 },
     };
     (api.request as jest.Mock).mockResolvedValue({ data: apiBody });
 
     const { result } = renderHook(() => useCategoriesQuery(), {
-      wrapper: createWrapper()
+      wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringMatching(/\/categories\?.*view=cards/),
-      method: 'GET'
-    }));
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/categories\?.*view=cards/),
+        method: 'GET',
+      })
+    );
 
     // Check data transformation
     expect(result.current.data).toEqual({
@@ -52,10 +54,10 @@ describe('useCategoriesQuery', () => {
         expect.objectContaining({
           id: 1,
           name: 'Solar',
-          kind: 'standard' // Check adaptation
-        })
+          kind: 'standard', // Check adaptation
+        }),
       ]),
-      meta: apiBody.meta
+      meta: apiBody.meta,
     });
   });
 
@@ -65,33 +67,43 @@ describe('useCategoriesQuery', () => {
       max_price: 500,
       min_rating: 4,
       sort_by: 'price_desc',
-      search: 'panels'
+      search: 'panels',
     };
 
     (api.request as jest.Mock).mockResolvedValue({ data: { data: [] } });
 
     const { result } = renderHook(() => useCategoriesQuery(filters), {
-      wrapper: createWrapper()
+      wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('page=2'),
-      method: 'GET'
-    }));
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('max_price=500'),
-    }));
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('min_rating=4'),
-    }));
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('sort_by=price_desc'),
-    }));
-    expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: expect.stringContaining('search=panels'),
-    }));
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('page=2'),
+        method: 'GET',
+      })
+    );
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('max_price=500'),
+      })
+    );
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('min_rating=4'),
+      })
+    );
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('sort_by=price_desc'),
+      })
+    );
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringContaining('search=panels'),
+      })
+    );
   });
 
   it('handles pagination metadata in response', async () => {
@@ -101,14 +113,14 @@ describe('useCategoriesQuery', () => {
         current_page: 2,
         per_page: 12,
         total_items: 50,
-        total_pages: 5
-      }
+        total_pages: 5,
+      },
     };
 
     (api.request as jest.Mock).mockResolvedValue({ data: apiBody });
 
     const { result } = renderHook(() => useCategoriesQuery({ page: 2 }), {
-      wrapper: createWrapper()
+      wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

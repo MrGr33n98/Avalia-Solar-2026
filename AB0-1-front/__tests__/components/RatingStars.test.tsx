@@ -11,7 +11,9 @@ describe('RatingStars', () => {
     render(<RatingStars rating={Number.NaN as unknown as number} showRatingValue />);
 
     const stars = screen.getAllByTestId('star-icon');
-    const emptyStars = stars.filter((star) => star.getAttribute('class')?.includes('text-gray-200'));
+    const emptyStars = stars.filter((star) =>
+      star.getAttribute('class')?.includes('text-gray-200')
+    );
 
     expect(stars).toHaveLength(5);
     expect(emptyStars).toHaveLength(5);
@@ -20,10 +22,14 @@ describe('RatingStars', () => {
   });
 
   it('clamps rating and count to safe bounds', () => {
-    render(<RatingStars rating={8 as unknown as number} count={12.8 as unknown as number} showCount />);
+    render(
+      <RatingStars rating={8 as unknown as number} count={12.8 as unknown as number} showCount />
+    );
 
     const stars = screen.getAllByTestId('star-icon');
-    const fullStars = stars.filter((star) => star.getAttribute('class')?.includes('fill-yellow-400'));
+    const fullStars = stars.filter((star) =>
+      star.getAttribute('class')?.includes('fill-yellow-400')
+    );
 
     expect(stars).toHaveLength(5);
     expect(fullStars).toHaveLength(5);

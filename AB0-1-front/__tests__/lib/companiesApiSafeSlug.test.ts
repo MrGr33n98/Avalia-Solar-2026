@@ -20,14 +20,14 @@ describe('companiesApiSafe.getById slug fallback', () => {
       .mockResolvedValueOnce({
         ok: false,
         status: 404,
-        json: async () => ({})
+        json: async () => ({}),
       })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
-          company: { id: 10, slug: 'ezvolt-brasil', name: 'Ezvolt Brasil' }
-        })
+          company: { id: 10, slug: 'ezvolt-brasil', name: 'Ezvolt Brasil' },
+        }),
       });
 
     const company = await companiesApiSafe.getById('ezvolt-brasil');

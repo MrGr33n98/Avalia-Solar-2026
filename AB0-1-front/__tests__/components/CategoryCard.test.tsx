@@ -5,7 +5,20 @@ import { Category } from '@/types';
 // Mock the next/image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ src, alt, width, height, fill, ...props }: { src: string; alt: string; width?: number; height?: number; fill?: boolean }) => (
+  default: ({
+    src,
+    alt,
+    width,
+    height,
+    fill,
+    ...props
+  }: {
+    src: string;
+    alt: string;
+    width?: number;
+    height?: number;
+    fill?: boolean;
+  }) => (
     <img src={src} alt={alt} width={width} height={height} {...props} data-testid="mock-image" />
   ),
 }));

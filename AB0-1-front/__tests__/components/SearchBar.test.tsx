@@ -29,12 +29,18 @@ jest.mock('@/lib/api', () => ({
 // Mock do componente Skeleton para SearchBar.test.tsx
 jest.mock('@/components/ui/skeleton', () => ({
   __esModule: true,
-  Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
-  default: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} />,
+  Skeleton: ({ className }: { className?: string }) => (
+    <div data-testid="skeleton" className={className} />
+  ),
+  default: ({ className }: { className?: string }) => (
+    <div data-testid="skeleton" className={className} />
+  ),
 }));
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: { children: React.ReactNode }) => <button {...props}>{children}</button>,
+  Button: ({ children, ...props }: { children: React.ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
 }));
 
 const mockFetchApi = fetchApi as jest.Mock;
@@ -110,7 +116,7 @@ describe('SearchBar', () => {
     await waitFor(() => {
       expect(mockSearchApiSuggest).toHaveBeenCalledWith('test');
     });
-    
+
     expect(await screen.findByText('Test Company')).toBeInTheDocument();
   });
 
@@ -140,15 +146,20 @@ describe('SearchBar', () => {
 
   it('shows loading state when searching', async () => {
     // Usar um mock que retorna dados após aguardar
-    mockSearchApiSuggest.mockImplementation(() => 
-      new Promise(resolve => 
-        setTimeout(() => resolve({
-          companies: [],
-          categories: [],
-          products: [],
-          articles: [],
-        }), 100)
-      )
+    mockSearchApiSuggest.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                companies: [],
+                categories: [],
+                products: [],
+                articles: [],
+              }),
+            100
+          )
+        )
     );
 
     render(<SearchBar />);
@@ -156,12 +167,15 @@ describe('SearchBar', () => {
 
     // Mudança no input deve disparar busca
     fireEvent.change(input, { target: { value: 'test' } });
-    
+
     // Aguardar que o loading apareça
     try {
-      await waitFor(() => {
-        expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
-      }, { timeout: 200 });
+      await waitFor(
+        () => {
+          expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+        },
+        { timeout: 200 }
+      );
     } catch {
       // Se não encontrar skeleton, pode ser que o loading seja muito rápido
       // Vamos verificar se pelo menos a função foi chamada

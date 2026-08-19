@@ -54,9 +54,7 @@ jest.mock('@/lib/api-client', () => ({
     }),
   },
   categoriesApiSafe: {
-    getAll: jest.fn().mockResolvedValue([
-      { id: 1, name: 'Categoria', seo_url: 'categoria' },
-    ]),
+    getAll: jest.fn().mockResolvedValue([{ id: 1, name: 'Categoria', seo_url: 'categoria' }]),
   },
 }));
 

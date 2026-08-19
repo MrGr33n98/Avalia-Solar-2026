@@ -73,10 +73,18 @@ jest.mock('@/components/categories/DecisionChips', () => {
           <option value="PR">PR</option>
           <option value="SP">SP</option>
         </select>
-        <button className="w-full" onClick={() => onFilterChange('projectType', 'Residencial')}>Residencial</button>
-        <button className="w-full" onClick={() => onFilterChange('projectType', 'Comercial')}>Comercial</button>
-        <button className="w-full" onClick={() => onFilterChange('projectType', 'Industrial')}>Industrial</button>
-        <button className="w-full" onClick={() => onFilterChange('projectType', 'Agronegócio')}>Agronegócio</button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Residencial')}>
+          Residencial
+        </button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Comercial')}>
+          Comercial
+        </button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Industrial')}>
+          Industrial
+        </button>
+        <button className="w-full" onClick={() => onFilterChange('projectType', 'Agronegócio')}>
+          Agronegócio
+        </button>
         <button onClick={onClearFilters}>Limpar</button>
       </div>
     );
@@ -227,7 +235,10 @@ describe('CategoryPageClientV2 Filtros', () => {
     );
 
     clickSidebarButton('Residencial');
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Residencial'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('project_type=Residencial'),
+      expect.anything()
+    );
   });
 
   it('deve filtrar corretamente por tipo de projeto Comercial', () => {
@@ -241,7 +252,10 @@ describe('CategoryPageClientV2 Filtros', () => {
     );
 
     clickSidebarButton('Comercial');
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Comercial'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('project_type=Comercial'),
+      expect.anything()
+    );
   });
 
   it('deve filtrar corretamente por tipo de projeto Industrial', () => {
@@ -255,7 +269,10 @@ describe('CategoryPageClientV2 Filtros', () => {
     );
 
     clickSidebarButton('Industrial');
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Industrial'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('project_type=Industrial'),
+      expect.anything()
+    );
   });
 
   it('deve filtrar corretamente por tipo de projeto Agronegócio', () => {
@@ -269,7 +286,10 @@ describe('CategoryPageClientV2 Filtros', () => {
     );
 
     clickSidebarButton('Agronegócio');
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('project_type=Agroneg%C3%B3cio'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('project_type=Agroneg%C3%B3cio'),
+      expect.anything()
+    );
   });
 
   it('deve filtrar por Estado ao selecionar uma opção', () => {
@@ -284,7 +304,10 @@ describe('CategoryPageClientV2 Filtros', () => {
 
     const selectState = screen.getByLabelText('Selecionar estado');
     fireEvent.change(selectState, { target: { value: 'RS' } });
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('state=RS'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('state=RS'),
+      expect.anything()
+    );
   });
 
   it('deve filtrar por empresas verificadas ao clicar no checkbox', () => {
@@ -299,7 +322,10 @@ describe('CategoryPageClientV2 Filtros', () => {
 
     const checkbox = screen.getByLabelText('Empresas Verificadas');
     fireEvent.click(checkbox);
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('verified=true'), expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('verified=true'),
+      expect.anything()
+    );
   });
 
   it('deve renderizar a coluna lateral de banners e solicitar as posicoes corretas quando houver campanhas ativas', () => {
@@ -411,7 +437,7 @@ describe('CategoryPageClientV2 Filtros', () => {
     const banners = within(adsRail).getAllByTestId('banner-by-location');
     expect(banners.length).toBe(2);
 
-    const bannerIds = banners.map(b => b.getAttribute('data-bannerid'));
+    const bannerIds = banners.map((b) => b.getAttribute('data-bannerid'));
     expect(bannerIds).toContain('10');
     expect(bannerIds).toContain('99');
   });

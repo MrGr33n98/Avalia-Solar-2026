@@ -101,7 +101,9 @@ describe('GatedContentDownload', () => {
         },
       })
     );
-    expect(JSON.stringify((sendIntentSignal as jest.Mock).mock.calls[0][0])).not.toContain('maria@empresa.com');
+    expect(JSON.stringify((sendIntentSignal as jest.Mock).mock.calls[0][0])).not.toContain(
+      'maria@empresa.com'
+    );
 
     expect(windowOpenMock).toHaveBeenCalledWith(
       '/materiais/guia-tecnico.pdf',

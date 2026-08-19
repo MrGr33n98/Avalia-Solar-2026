@@ -9,9 +9,9 @@ describe('leadsWizardApi.verifyEmailCode', () => {
   });
 
   it('validates code format before calling backend', async () => {
-    await expect(leadsWizardApi.verifyEmailCode(10, 'abc'))
-      .rejects
-      .toThrow('Codigo de verificacao invalido');
+    await expect(leadsWizardApi.verifyEmailCode(10, 'abc')).rejects.toThrow(
+      'Codigo de verificacao invalido'
+    );
 
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -24,9 +24,7 @@ describe('leadsWizardApi.verifyEmailCode', () => {
       json: async () => ({ error: 'Lead not found' }),
     });
 
-    await expect(leadsWizardApi.verifyEmailCode(999, '123456'))
-      .rejects
-      .toThrow('[404]');
+    await expect(leadsWizardApi.verifyEmailCode(999, '123456')).rejects.toThrow('[404]');
   });
 
   it('returns data when backend returns 200', async () => {
@@ -42,4 +40,3 @@ describe('leadsWizardApi.verifyEmailCode', () => {
     expect(result).toEqual(mockData);
   });
 });
-

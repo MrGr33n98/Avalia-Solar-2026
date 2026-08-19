@@ -1,4 +1,9 @@
-import { clearUTMs, getAttribution, getCurrentUTMs, updateAttribution } from '../../lib/analytics/utm';
+import {
+  clearUTMs,
+  getAttribution,
+  getCurrentUTMs,
+  updateAttribution,
+} from '../../lib/analytics/utm';
 
 describe('UTM attribution persistence', () => {
   beforeEach(() => {
@@ -6,9 +11,17 @@ describe('UTM attribution persistence', () => {
   });
 
   it('preserves last touch values on internal navigation without new utms', () => {
-    updateAttribution('/landing', new URLSearchParams('utm_source=google&utm_medium=cpc&utm_campaign=launch'), 'https://google.com');
+    updateAttribution(
+      '/landing',
+      new URLSearchParams('utm_source=google&utm_medium=cpc&utm_campaign=launch'),
+      'https://google.com'
+    );
 
-    updateAttribution('/companies/lin-energia-solar', new URLSearchParams(''), 'https://localhost/landing');
+    updateAttribution(
+      '/companies/lin-energia-solar',
+      new URLSearchParams(''),
+      'https://localhost/landing'
+    );
 
     const attribution = getAttribution();
     expect(attribution?.last_touch?.values?.utm_source).toBe('google');
@@ -18,7 +31,11 @@ describe('UTM attribution persistence', () => {
   });
 
   it('updates referrer metadata for a new external referrer but keeps attribution values', () => {
-    updateAttribution('/landing', new URLSearchParams('utm_source=meta&utm_medium=paid_social'), 'https://facebook.com');
+    updateAttribution(
+      '/landing',
+      new URLSearchParams('utm_source=meta&utm_medium=paid_social'),
+      'https://facebook.com'
+    );
 
     updateAttribution('/companies/genial-solar', new URLSearchParams(''), 'https://instagram.com');
 

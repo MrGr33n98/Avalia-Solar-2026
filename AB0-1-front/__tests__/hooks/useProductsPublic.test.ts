@@ -11,7 +11,9 @@ jest.mock('@/lib/api-client', () => ({
   },
 }));
 
-const mockProductsApiSafe = apiClient.productsApiSafe as jest.Mocked<typeof apiClient.productsApiSafe>;
+const mockProductsApiSafe = apiClient.productsApiSafe as jest.Mocked<
+  typeof apiClient.productsApiSafe
+>;
 
 const mockProduct = (overrides: Partial<Product> = {}): Product => ({
   id: 1,
@@ -98,9 +100,7 @@ describe('useProducts (public hook)', () => {
   it('strips null and undefined params before calling API', async () => {
     mockProductsApiSafe.getAllPaginated.mockResolvedValue(mockPaginatedResponse([]));
 
-    renderHook(() =>
-      useProducts({ q: undefined, category_id: null, sort: 'name_asc' })
-    );
+    renderHook(() => useProducts({ q: undefined, category_id: null, sort: 'name_asc' }));
 
     await waitFor(() =>
       expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledWith(
@@ -143,20 +143,15 @@ describe('useProducts (public hook)', () => {
   it('refetches when params change', async () => {
     mockProductsApiSafe.getAllPaginated.mockResolvedValue(mockPaginatedResponse([]));
 
-    const { rerender } = renderHook(
-      ({ params }) => useProducts(params),
-      { initialProps: { params: { q: 'painel' } } }
-    );
+    const { rerender } = renderHook(({ params }) => useProducts(params), {
+      initialProps: { params: { q: 'painel' } },
+    });
 
-    await waitFor(() =>
-      expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(1)
-    );
+    await waitFor(() => expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(1));
 
     rerender({ params: { q: 'inversor' } });
 
-    await waitFor(() =>
-      expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(2)
-    );
+    await waitFor(() => expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(2));
 
     expect(mockProductsApiSafe.getAllPaginated).toHaveBeenLastCalledWith(
       expect.objectContaining({ q: 'inversor' })
@@ -173,20 +168,15 @@ describe('useProducts (public hook)', () => {
       price_range: { min: 100, max: 9000 },
     });
 
-    const { rerender } = renderHook(
-      ({ params }) => useProducts(params),
-      { initialProps: { params: { q: 'painel' } } }
-    );
+    const { rerender } = renderHook(({ params }) => useProducts(params), {
+      initialProps: { params: { q: 'painel' } },
+    });
 
-    await waitFor(() =>
-      expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(1)
-    );
+    await waitFor(() => expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(1));
 
     rerender({ params: { q: 'inversor' } });
 
-    await waitFor(() =>
-      expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(2)
-    );
+    await waitFor(() => expect(mockProductsApiSafe.getAllPaginated).toHaveBeenCalledTimes(2));
 
     // getFilters should only have been called once
     expect(mockProductsApiSafe.getFilters).toHaveBeenCalledTimes(1);

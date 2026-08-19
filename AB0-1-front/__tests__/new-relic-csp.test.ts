@@ -5,7 +5,7 @@ describe('New Relic Browser CSP', () => {
     const headerRules = await nextConfig.headers();
     const catchAllRule = headerRules.find((rule) => rule.source === '/:path*');
     const cspHeader = catchAllRule?.headers.find(
-      (header) => header.key === 'Content-Security-Policy',
+      (header) => header.key === 'Content-Security-Policy'
     );
 
     if (!cspHeader) throw new Error('Content-Security-Policy header not found');
@@ -22,7 +22,7 @@ describe('New Relic Browser CSP', () => {
         .map((directive) => {
           const [name, ...sources] = directive.split(/\s+/);
           return [name, sources];
-        }),
+        })
     );
 
     expect(directives['script-src']).toContain('https://js-agent.newrelic.com');

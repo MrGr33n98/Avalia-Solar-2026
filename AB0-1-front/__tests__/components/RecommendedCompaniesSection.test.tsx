@@ -109,7 +109,9 @@ describe('RecommendedCompaniesSection', () => {
   it('renders section title and tab filters', async () => {
     render(<RecommendedCompaniesSection />);
 
-    expect(screen.getByRole('heading', { name: /Empresas recomendadas para você/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Empresas recomendadas para você/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Todas' })).toBeInTheDocument();
 
     await waitFor(() => {

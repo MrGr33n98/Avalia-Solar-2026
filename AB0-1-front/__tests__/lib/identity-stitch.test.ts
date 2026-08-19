@@ -1,8 +1,4 @@
-import {
-  getAnonymousId,
-  stitchIdentity,
-  trackSession,
-} from '@/lib/analytics/identity-stitch';
+import { getAnonymousId, stitchIdentity, trackSession } from '@/lib/analytics/identity-stitch';
 
 const identifyMock = jest.fn();
 const aliasMock = jest.fn();
@@ -55,7 +51,11 @@ describe('identity stitching analytics', () => {
   it('persists the anonymous id returned by session tracking', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ anonymous_id: 'anon-456', session_id: 'session-1', status: 'anonymous' }),
+      json: async () => ({
+        anonymous_id: 'anon-456',
+        session_id: 'session-1',
+        status: 'anonymous',
+      }),
     } as Response);
 
     await trackSession({ company_id: '1', page_url: '/companies/test' });

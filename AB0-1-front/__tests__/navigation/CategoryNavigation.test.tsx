@@ -139,4 +139,3 @@ describe('Category navigation flows', () => {
     expect(secondToggle).toHaveAttribute('aria-expanded', 'true');
   });
 });
-

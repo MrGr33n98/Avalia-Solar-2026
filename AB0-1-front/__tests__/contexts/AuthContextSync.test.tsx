@@ -18,27 +18,27 @@ jest.mock('@/lib/api', () => ({
   setAuthSessionHint: jest.fn(),
   companyAccessApi: {
     context: jest.fn(),
-  }
+  },
 }));
 
 jest.mock('@/lib/authClient', () => ({
   authClient: {
     signIn: {
-      social: jest.fn()
-    }
-  }
+      social: jest.fn(),
+    },
+  },
 }));
 
 jest.mock('@/lib/analytics/lazy', () => ({
   identify: jest.fn(),
-  track: jest.fn()
+  track: jest.fn(),
 }));
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
-    replace: jest.fn()
-  })
+    replace: jest.fn(),
+  }),
 }));
 
 const createDeferred = <T,>() => {

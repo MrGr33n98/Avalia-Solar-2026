@@ -57,11 +57,14 @@ describe('BlogFiltersBar', () => {
     render(<BlogFiltersBar categories={mockCategories} />);
     const input = screen.getByPlaceholderText('Buscar artigos...');
     await userEvent.type(input, 'Tesla');
-    
+
     expect(input).toHaveValue('Tesla');
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('q=Tesla'));
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('q=Tesla'));
+      },
+      { timeout: 1000 }
+    );
   });
 
   // Note: Testing scroll behavior in JSDOM is tricky as layout is not fully simulated.

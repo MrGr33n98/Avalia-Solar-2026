@@ -64,10 +64,12 @@ describe('useCompanyAnalytics', () => {
 
     (api.companyDashboardApi.getAnalyticsOverview as jest.Mock).mockResolvedValue(mockData);
 
-    const { result } = renderHook(() => useCompanyAnalytics({ 
-      companyId: '123',
-      autoRefresh: false 
-    }));
+    const { result } = renderHook(() =>
+      useCompanyAnalytics({
+        companyId: '123',
+        autoRefresh: false,
+      })
+    );
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -96,11 +98,13 @@ describe('useCompanyAnalytics', () => {
 
     (api.companyDashboardApi.getAnalyticsOverview as jest.Mock).mockResolvedValue(mockData);
 
-    renderHook(() => useCompanyAnalytics({ 
-      companyId: '123',
-      autoRefresh: true,
-      refreshInterval: 30000
-    }));
+    renderHook(() =>
+      useCompanyAnalytics({
+        companyId: '123',
+        autoRefresh: true,
+        refreshInterval: 30000,
+      })
+    );
 
     await waitFor(() => {
       expect(api.companyDashboardApi.getAnalyticsOverview).toHaveBeenCalledTimes(1);

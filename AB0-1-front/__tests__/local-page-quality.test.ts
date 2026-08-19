@@ -9,7 +9,8 @@ const strongLocalPage = {
   },
   seo: {
     title: 'Empresas de energia solar em Florianópolis | Avalia Solar',
-    description: 'Compare empresas de energia solar em Florianópolis com avaliações e dados locais.',
+    description:
+      'Compare empresas de energia solar em Florianópolis com avaliações e dados locais.',
     indexable: true,
   },
   stats: {

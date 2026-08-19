@@ -32,10 +32,15 @@ jest.mock('@/components/ui/popover', () => ({
   Popover: ({ children, open, onOpenChange }: any) => (
     <div data-testid="popover">
       {/* Simulate trigger click to open content */}
-      <div onClick={() => onOpenChange && onOpenChange(!open)} data-testid="popover-trigger-wrapper">
+      <div
+        onClick={() => onOpenChange && onOpenChange(!open)}
+        data-testid="popover-trigger-wrapper"
+      >
         {Array.isArray(children) ? children[0] : children}
       </div>
-      {open && <div data-testid="popover-content">{Array.isArray(children) ? children[1] : null}</div>}
+      {open && (
+        <div data-testid="popover-content">{Array.isArray(children) ? children[1] : null}</div>
+      )}
     </div>
   ),
   PopoverTrigger: ({ children }: any) => <>{children}</>,
@@ -88,7 +93,7 @@ describe('LocationSearch', () => {
   it('opens popover on click and shows states', () => {
     render(<LocationSearch />);
     fireEvent.click(screen.getByTestId('location-trigger'));
-    
+
     expect(screen.getByTestId('popover-content')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar estado...')).toBeInTheDocument();
     expect(screen.getByText('SC')).toBeInTheDocument();
@@ -114,31 +119,31 @@ describe('LocationSearch', () => {
   it('calls onLocationSelect when state and city are selected', () => {
     const onSelect = jest.fn();
     render(<LocationSearch onLocationSelect={onSelect} />);
-    
+
     // Open
     fireEvent.click(screen.getByTestId('location-trigger'));
-    
+
     // Select State 'SC'
     // In our mock, CommandItem calls onSelect when clicked
     // We need to find the specific item.
     // The items render the text.
     const scItem = screen.getByText('SC').closest('div[data-testid="command-item"]');
     fireEvent.click(scItem!);
-    
+
     // Should call fetchCities
     expect(mockFetchCities).toHaveBeenCalledWith('SC');
-    
+
     // Should switch to cities view
     // Since we mocked useLocationData to return static cities, they should be visible now if the component re-renders or updates view state.
     // The component uses internal state for view.
-    
+
     // Expect city input placeholder
     expect(screen.getByPlaceholderText('Buscar cidade...')).toBeInTheDocument();
-    
+
     // Select City 'São Paulo'
     const cityItem = screen.getByText('Florianópolis').closest('div[data-testid="command-item"]');
     fireEvent.click(cityItem!);
-    
+
     expect(onSelect).toHaveBeenCalledWith({ state: 'SC', city: 'Florianópolis' });
   });
 });

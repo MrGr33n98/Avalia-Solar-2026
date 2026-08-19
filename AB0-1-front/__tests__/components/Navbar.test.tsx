@@ -7,7 +7,18 @@ import { Category } from '@/lib/api';
 jest.mock('next/image', () => ({
   __esModule: true,
   default: Object.assign(
-    ({ src, alt, width, height, ...props }: { src: string; alt: string; width?: number; height?: number }) => (
+    ({
+      src,
+      alt,
+      width,
+      height,
+      ...props
+    }: {
+      src: string;
+      alt: string;
+      width?: number;
+      height?: number;
+    }) => (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={src} alt={alt} width={width} height={height} {...props} data-testid="mock-image" />
     ),
@@ -20,7 +31,9 @@ jest.mock('next/link', () => ({
   __esModule: true,
   default: Object.assign(
     ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
-      <a href={href} onClick={(e) => e.preventDefault()} {...props}>{children}</a>
+      <a href={href} onClick={(e) => e.preventDefault()} {...props}>
+        {children}
+      </a>
     ),
     { displayName: 'MockNextLink' }
   ),
@@ -59,20 +72,23 @@ jest.mock('@/hooks/useCategories', () => ({
 
 // Mock CategoriesMegaMenu
 jest.mock('@/components/categories/CategoriesMegaMenu', () => ({
-  CategoriesMegaMenu: ({ isOpen }: { isOpen: boolean }) => 
+  CategoriesMegaMenu: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="categories-mega-menu">Mega Menu</div> : null,
 }));
 
 // Mock MobileCategoriesDrawer
 jest.mock('@/components/navigation/MobileCategoriesDrawer', () => ({
-  MobileCategoriesDrawer: ({ isOpen }: { isOpen: boolean }) => 
+  MobileCategoriesDrawer: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="mobile-categories-drawer">Mobile Drawer</div> : null,
 }));
 
 // Mock LocationSearch
 jest.mock('@/components/LocationSearch', () =>
   Object.assign(
-    (props: { className?: string; onLocationSelect?: (location: { state: string; city: string }) => void }) => (
+    (props: {
+      className?: string;
+      onLocationSelect?: (location: { state: string; city: string }) => void;
+    }) => (
       <div data-testid="location-search" className={props.className}>
         <button onClick={() => props.onLocationSelect?.({ state: 'SP', city: 'São Paulo' })}>
           Select Location
@@ -107,10 +123,9 @@ jest.mock('framer-motion', () => ({
       { displayName: 'MockMotionDiv' }
     ),
   },
-  AnimatePresence: Object.assign(
-    ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    { displayName: 'MockAnimatePresence' }
-  ),
+  AnimatePresence: Object.assign(({ children }: { children: React.ReactNode }) => <>{children}</>, {
+    displayName: 'MockAnimatePresence',
+  }),
 }));
 
 // Mock useAuth
@@ -156,11 +171,11 @@ describe('Navbar', () => {
 
   it('renders the logo and home link', () => {
     render(<Navbar />);
-    
+
     const logo = screen.getByRole('img', { name: /Avalia Solar/ });
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveAttribute('src', '/images/avalia-solar-logo-horizontal.svg');
-    
+
     const homeLink = screen.getByRole('link', { name: 'Home Avalia Solar' });
     expect(homeLink).toBeInTheDocument();
     expect(homeLink).toHaveAttribute('href', '/');
@@ -168,11 +183,11 @@ describe('Navbar', () => {
 
   it('renders navigation links and new components', () => {
     render(<Navbar />);
-    
+
     expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Como funciona' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Conteúdo' })).toBeInTheDocument();
-    
+
     // Check for new components
     expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
     expect(screen.getAllByTestId('location-search')).toHaveLength(2);

@@ -1,7 +1,8 @@
 import { fetchApiPublic, publicCompaniesApi } from '@/lib/api-public';
 
 jest.mock('@/lib/api-config', () => ({
-  buildApiUrl: (endpoint: string) => `https://api.example.test/api/v1/${endpoint.replace(/^\/+/, '')}`,
+  buildApiUrl: (endpoint: string) =>
+    `https://api.example.test/api/v1/${endpoint.replace(/^\/+/, '')}`,
   getApiRequestHeaders: () => ({ Accept: 'application/json' }),
 }));
 
@@ -42,7 +43,9 @@ describe('api-public', () => {
   });
 
   it('normalizes company arrays from paginated public payloads', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: 1, name: 'WEG' }], meta: { total: 1 } }));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ data: [{ id: 1, name: 'WEG' }], meta: { total: 1 } })
+    );
 
     await expect(publicCompaniesApi.getAll({ status: 'active' })).resolves.toEqual([
       { id: 1, name: 'WEG' },

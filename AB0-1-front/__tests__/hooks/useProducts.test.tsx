@@ -63,10 +63,12 @@ describe('useProducts hook', () => {
 
     expect(result.current.loading).toBe(false);
     expect(result.current.products).toHaveLength(0);
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-      variant: 'destructive',
-      title: 'Erro'
-    }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: 'destructive',
+        title: 'Erro',
+      })
+    );
   });
 
   it('adds a product successfully', async () => {
@@ -82,9 +84,11 @@ describe('useProducts hook', () => {
     });
 
     expect(result.current.products).toHaveLength(1);
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Produto adicionado!'
-    }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Produto adicionado!',
+      })
+    );
   });
 
   it('deletes a product successfully', async () => {
@@ -104,8 +108,10 @@ describe('useProducts hook', () => {
 
     expect(result.current.products).toHaveLength(0);
     expect(api.productsApi.delete).toHaveBeenCalledWith(1);
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Produto removido!'
-    }));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Produto removido!',
+      })
+    );
   });
 });

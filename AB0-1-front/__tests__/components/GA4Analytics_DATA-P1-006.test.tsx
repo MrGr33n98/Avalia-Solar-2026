@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent, renderHook, act } from '@testing-library/react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
@@ -55,16 +54,22 @@ describe('GA4 Analytics DATA-P1-006 - CompanyCard', () => {
 
   it('should track company_card_impression on mount', () => {
     render(<CompanyCard company={mockCompany} />);
-    expect(trackLazy).toHaveBeenCalledWith('company_card_impression', expect.objectContaining({
-      company_id: 123
-    }));
+    expect(trackLazy).toHaveBeenCalledWith(
+      'company_card_impression',
+      expect.objectContaining({
+        company_id: 123,
+      })
+    );
   });
 
   it('should track company_cta_impression when CTA section is visible', () => {
     render(<CompanyCard company={mockCompany} />);
-    expect(trackLazy).toHaveBeenCalledWith('company_cta_impression', expect.objectContaining({
-      company_id: 123
-    }));
+    expect(trackLazy).toHaveBeenCalledWith(
+      'company_cta_impression',
+      expect.objectContaining({
+        company_id: 123,
+      })
+    );
   });
 });
 
@@ -74,7 +79,7 @@ describe('GA4 Analytics DATA-P1-006 - ProductCard', () => {
     name: 'Painel 550W',
     company: { id: 123, name: 'Solar Tech' },
     price: 1000,
-    status: 'active'
+    status: 'active',
   } as any;
 
   beforeEach(() => {
@@ -83,19 +88,25 @@ describe('GA4 Analytics DATA-P1-006 - ProductCard', () => {
 
   it('should track product_impression when visible', () => {
     render(<ProductCard product={mockProduct} />);
-    expect(trackLazy).toHaveBeenCalledWith('product_impression', expect.objectContaining({
-      product_id: 456
-    }));
+    expect(trackLazy).toHaveBeenCalledWith(
+      'product_impression',
+      expect.objectContaining({
+        product_id: 456,
+      })
+    );
   });
 
   it('should track product_click when details button is clicked', () => {
     render(<ProductCard product={mockProduct} />);
     const detailsLink = screen.getByText('Detalhes');
     fireEvent.click(detailsLink);
-    expect(trackLazy).toHaveBeenCalledWith('product_click', expect.objectContaining({
-      product_id: 456,
-      click_type: 'details'
-    }));
+    expect(trackLazy).toHaveBeenCalledWith(
+      'product_click',
+      expect.objectContaining({
+        product_id: 456,
+        click_type: 'details',
+      })
+    );
   });
 });
 
@@ -105,9 +116,9 @@ describe('GA4 Analytics DATA-P1-006 - useLeadWizard', () => {
     schema: {
       steps: [
         { title: 'Step 1', fields: [] },
-        { title: 'Step 2', fields: [] }
-      ]
-    }
+        { title: 'Step 2', fields: [] },
+      ],
+    },
   };
 
   beforeEach(() => {
@@ -117,26 +128,32 @@ describe('GA4 Analytics DATA-P1-006 - useLeadWizard', () => {
 
   it('should track wizard_started and wizard_step_viewed on load', async () => {
     const { result } = renderHook(() => useLeadWizard(1));
-    
+
     // Wait for effect
     await act(async () => {
       await Promise.resolve();
     });
 
-    expect(trackMain).toHaveBeenCalledWith('wizard_started', expect.objectContaining({
-      category_id: 1,
-      template_key: 'test_template'
-    }));
+    expect(trackMain).toHaveBeenCalledWith(
+      'wizard_started',
+      expect.objectContaining({
+        category_id: 1,
+        template_key: 'test_template',
+      })
+    );
 
-    expect(trackMain).toHaveBeenCalledWith('wizard_step_viewed', expect.objectContaining({
-      step_index: 0,
-      step_name: 'Step 1'
-    }));
+    expect(trackMain).toHaveBeenCalledWith(
+      'wizard_step_viewed',
+      expect.objectContaining({
+        step_index: 0,
+        step_name: 'Step 1',
+      })
+    );
   });
 
   it('should track wizard_step_completed when nextStep is called', async () => {
     const { result } = renderHook(() => useLeadWizard(1));
-    
+
     await act(async () => {
       await Promise.resolve();
     });
@@ -145,13 +162,19 @@ describe('GA4 Analytics DATA-P1-006 - useLeadWizard', () => {
       result.current.nextStep();
     });
 
-    expect(trackMain).toHaveBeenCalledWith('wizard_step_completed', expect.objectContaining({
-      step_index: 0
-    }));
+    expect(trackMain).toHaveBeenCalledWith(
+      'wizard_step_completed',
+      expect.objectContaining({
+        step_index: 0,
+      })
+    );
 
-    expect(trackMain).toHaveBeenCalledWith('wizard_step_viewed', expect.objectContaining({
-      step_index: 1,
-      step_name: 'Step 2'
-    }));
+    expect(trackMain).toHaveBeenCalledWith(
+      'wizard_step_viewed',
+      expect.objectContaining({
+        step_index: 1,
+        step_name: 'Step 2',
+      })
+    );
   });
 });

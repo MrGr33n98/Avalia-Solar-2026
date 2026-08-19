@@ -26,26 +26,16 @@ jest.mock('@/components/ui/button', () => ({
 
 jest.mock('@/components/ui/input', () => ({
   Input: ({ value, onChange, type, ...props }: any) => (
-    <input
-      value={value}
-      onChange={onChange}
-      type={type}
-      {...props}
-      data-testid={`input-${type}`}
-    />
+    <input value={value} onChange={onChange} type={type} {...props} data-testid={`input-${type}`} />
   ),
 }));
 
 jest.mock('@/components/ui/label', () => ({
-  Label: ({ children, ...props }: any) => (
-    <label {...props}>{children}</label>
-  ),
+  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
 }));
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
+  Card: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card-content">{children}</div>
   ),
@@ -95,33 +85,35 @@ describe('LoginPage', () => {
 
   it('renders the login form with email and password inputs', () => {
     render(<LoginPage />);
-    
+
     expect(screen.getByTestId('input-email')).toBeInTheDocument();
     expect(screen.getByTestId('input-password')).toBeInTheDocument();
   });
 
   it('renders the login title and description', () => {
     render(<LoginPage />);
-    
+
     expect(screen.getByTestId('card-title')).toHaveTextContent('Login');
-    expect(screen.getByTestId('card-description')).toHaveTextContent('Entre com sua conta para acessar o sistema');
+    expect(screen.getByTestId('card-description')).toHaveTextContent(
+      'Entre com sua conta para acessar o sistema'
+    );
   });
 
   it('updates email state when typing in email input', () => {
     render(<LoginPage />);
-    
+
     const emailInput = screen.getByTestId('input-email');
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    
+
     expect(emailInput).toHaveValue('test@example.com');
   });
 
   it('updates password state when typing in password input', () => {
     render(<LoginPage />);
-    
+
     const passwordInput = screen.getByTestId('input-password');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
+
     expect(passwordInput).toHaveValue('password123');
   });
 
@@ -129,18 +121,18 @@ describe('LoginPage', () => {
     mockLogin.mockResolvedValue({});
 
     render(<LoginPage />);
-    
+
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getByTestId('input-password');
     const submitButton = screen.getByRole('button', { name: /Entrar/ });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
+
     await act(async () => {
       fireEvent.click(submitButton);
     });
-    
+
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123');
     });
@@ -150,18 +142,18 @@ describe('LoginPage', () => {
     mockLogin.mockResolvedValue({});
 
     render(<LoginPage />);
-    
+
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getByTestId('input-password');
     const submitButton = screen.getByRole('button', { name: /Entrar/ });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
+
     await act(async () => {
       fireEvent.click(submitButton);
     });
-    
+
     await waitFor(() => {
       expect(window.location.href).toBe('/dashboard');
     });
@@ -171,23 +163,23 @@ describe('LoginPage', () => {
     // Temporarily mock login to return a pending promise to keep the loading state
     const pendingPromise = new Promise(() => {});
     const mockLogin = jest.fn(() => pendingPromise);
-    
+
     (useAuth as jest.Mock).mockReturnValue({
       login: mockLogin,
     });
 
     render(<LoginPage />);
-    
+
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getByTestId('input-password');
     const submitButton = screen.getByRole('button', { name: /Entrar/ });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
+
     // Click the submit button (this will trigger form submission)
     fireEvent.click(submitButton);
-    
+
     // The button should be disabled during the async login
     expect(submitButton).toBeDisabled();
     expect(submitButton).toHaveTextContent('Entrando...');
@@ -198,18 +190,18 @@ describe('LoginPage', () => {
     mockLogin.mockRejectedValue(new Error(errorMessage));
 
     render(<LoginPage />);
-    
+
     const emailInput = screen.getByTestId('input-email');
     const passwordInput = screen.getByTestId('input-password');
     const submitButton = screen.getByRole('button', { name: /Entrar/ });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-    
+
     await act(async () => {
       fireEvent.click(submitButton);
     });
-    
+
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
@@ -217,9 +209,15 @@ describe('LoginPage', () => {
 
   it('has links to register and forgot password pages', () => {
     render(<LoginPage />);
-    
+
     expect(screen.getByRole('link', { name: 'Crie sua conta' })).toHaveAttribute('href', '/signup');
-    expect(screen.getByRole('link', { name: 'Cadastre sua empresa' })).toHaveAttribute('href', '/register');
-    expect(screen.getByRole('link', { name: 'Esqueceu sua senha?' })).toHaveAttribute('href', '/forgot-password');
+    expect(screen.getByRole('link', { name: 'Cadastre sua empresa' })).toHaveAttribute(
+      'href',
+      '/register'
+    );
+    expect(screen.getByRole('link', { name: 'Esqueceu sua senha?' })).toHaveAttribute(
+      'href',
+      '/forgot-password'
+    );
   });
 });

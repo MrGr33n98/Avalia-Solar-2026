@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import CategoryCard from '@/components/CategoryCard';
@@ -28,20 +27,14 @@ jest.mock('framer-motion', () => ({
 
 jest.mock('@/components/ui/optimized-image', () => ({
   OptimizedImage: ({ src, alt, className, width, height }: any) => (
-    <img
-      src={src}
-      alt={alt || 'img'}
-      className={className}
-      width={width}
-      height={height}
-    />
+    <img src={src} alt={alt || 'img'} className={className} width={width} height={height} />
   ),
 }));
 
 describe('Analytics Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock navigator APIs
     Object.defineProperty(window, 'navigator', {
       value: {
@@ -66,20 +59,23 @@ describe('Analytics Integration Tests', () => {
 
     it('should track category_card_click when clicked', () => {
       render(<CategoryCard category={mockCategory} />);
-      
+
       const link = screen.getByRole('link');
       fireEvent.click(link);
-      
-      expect(track).toHaveBeenCalledWith('category_card_click', expect.objectContaining({
-        category_id: 1,
-        category_name: 'Painéis Solares',
-        element_type: 'card',
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'category_card_click',
+        expect.objectContaining({
+          category_id: 1,
+          category_name: 'Painéis Solares',
+          element_type: 'card',
+        })
+      );
     });
 
     it('should not emit hover analytics when the card is only hovered', () => {
       render(<CategoryCard category={mockCategory} />);
-      
+
       const card = screen.getByText('Painéis Solares').closest('.rounded-2xl');
       if (card) {
         fireEvent.mouseEnter(card);
@@ -104,8 +100,8 @@ describe('Analytics Integration Tests', () => {
 
     it('should track company_share_click when share button is clicked', async () => {
       render(
-        <CompanyHero 
-          company={mockCompany} 
+        <CompanyHero
+          company={mockCompany}
           companyStats={mockStats}
           bannerUrl={null}
           bannerError={false}
@@ -117,24 +113,27 @@ describe('Analytics Integration Tests', () => {
           ctaUrl={null}
         />
       );
-      
+
       const shareButton = screen.getByTitle('Compartilhar perfil');
       await act(async () => {
         fireEvent.click(shareButton);
       });
-      
-      expect(track).toHaveBeenCalledWith('company_share_click', expect.objectContaining({
-        company_id: 123,
-        company_name: 'Solar Tech',
-        element_type: 'button',
-        action_type: 'click',
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'company_share_click',
+        expect.objectContaining({
+          company_id: 123,
+          company_name: 'Solar Tech',
+          element_type: 'button',
+          action_type: 'click',
+        })
+      );
     });
 
     it('should track company_back_click when back button is clicked', () => {
       render(
-        <CompanyHero 
-          company={mockCompany} 
+        <CompanyHero
+          company={mockCompany}
           companyStats={mockStats}
           bannerUrl={null}
           bannerError={false}
@@ -146,16 +145,19 @@ describe('Analytics Integration Tests', () => {
           ctaUrl={null}
         />
       );
-      
+
       const backButton = screen.getByText('Voltar');
       fireEvent.click(backButton);
-      
-      expect(track).toHaveBeenCalledWith('company_back_click', expect.objectContaining({
-        company_id: 123,
-        company_name: 'Solar Tech',
-        element_type: 'button',
-        action_type: 'click',
-      }));
+
+      expect(track).toHaveBeenCalledWith(
+        'company_back_click',
+        expect.objectContaining({
+          company_id: 123,
+          company_name: 'Solar Tech',
+          element_type: 'button',
+          action_type: 'click',
+        })
+      );
     });
   });
 });
