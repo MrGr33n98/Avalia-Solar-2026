@@ -1,11 +1,12 @@
 export interface FeedActor {
   id: number;
-  type: 'user' | 'company' | string;
+  type: 'user' | 'company' | 'creator' | string;
   name: string;
-  avatar_url?: string;
-  logo_url?: string;
-  headline?: string;
-  slug?: string;
+  display_name?: string;
+  avatar_url?: string | null;
+  logo_url?: string | null;
+  headline?: string | null;
+  slug?: string | null;
   verified?: boolean;
 }
 
@@ -23,6 +24,9 @@ export interface FeedSubject {
     id: number;
     name: string;
     slug?: string;
+    logo_url?: string;
+    rating?: number;
+    category_name?: string;
   };
 }
 
@@ -49,6 +53,7 @@ export interface FeedItem {
   verb: string;
   published_at: string;
   actor: FeedActor;
+  author?: FeedActor;
   subject: FeedSubject;
   entities: PublicationEntityItem[];
   engagement: FeedEngagement;
@@ -59,6 +64,7 @@ export interface FeedResponse {
   meta: {
     next_cursor: string | null;
     has_more: boolean;
+    trending_topics?: string[];
   };
 }
 

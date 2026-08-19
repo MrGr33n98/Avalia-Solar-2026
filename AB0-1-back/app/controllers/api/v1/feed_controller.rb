@@ -17,11 +17,13 @@ module Api
 
         serialized_data = Feed::Serializer.new(result[:items], current_user: current_user).serialize
 
+        trending_topics = ENV.fetch('TRENDING_TOPICS', '#InversoresHibridos,#MercadoLivreEnergia,#BateriasLithium,#RegulacaoANEEL').split(',')
         render json: {
           data: serialized_data,
           meta: {
             next_cursor: result[:next_cursor],
-            has_more: result[:has_more]
+            has_more: result[:has_more],
+            trending_topics: trending_topics
           }
         }
       end

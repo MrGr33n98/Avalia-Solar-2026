@@ -51,7 +51,7 @@ export function resolvePostAuthDestination({
   if (isSafeReturnTo(returnTo) && isReturnToCompatibleWithRole(returnTo, user.role))
     return returnTo;
   if (user.role === 'review' && creatorEnabled && creatorSlug)
-    return '/creators/' + encodeURIComponent(creatorSlug);
+    return '/feed';
   if (user.role === 'review') return '/review-dashboard';
   if (user.role === 'company')
     return activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company';

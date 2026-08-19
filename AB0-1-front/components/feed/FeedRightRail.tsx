@@ -1,10 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Award, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { Building2, ArrowUpRight, TrendingUp, Star, Loader2 } from 'lucide-react';
+import { publicCompaniesApi } from '@/lib/api-public';
+import { useFeedStore } from '@/store/feedStore';
 
 export function FeedRightRail() {
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const trendingTopics = useFeedStore((state) => state.trendingTopics);
+
+  useEffect(() => {
+    let active = true;
+    publicCompaniesApi.getFeatured()
+      .then((res) => {
+        if (active) {
+          setCompanies(res || []);
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar empresas em destaque:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <aside className="space-y-4">
       {/* Featured Companies */}
@@ -13,22 +39,55 @@ export function FeedRightRail() {
           <Building2 className="h-4 w-4 text-primary" />
           <span>Empresas em Destaque</span>
         </div>
-        <div className="space-y-3 text-xs">
-          <Link href="/companies" className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/60 transition-colors">
-            <div>
-              <p className="font-medium text-foreground">GoodWe Brasil</p>
-              <p className="text-muted-foreground">Inversores & Baterias • ★ 4.9</p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-          <Link href="/companies" className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/60 transition-colors">
-            <div>
-              <p className="font-medium text-foreground">Sungrow Power</p>
-              <p className="text-muted-foreground">Tecnologia Solar • ★ 4.8</p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </div>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-6 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
+            <span className="text-xs">Carregando destaques...</span>
+          </div>
+        ) : companies.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Nenhuma empresa em destaque no momento.</p>
+        ) : (
+          <div className="space-y-2 text-xs">
+            {companies.slice(0, 5).map((company) => (
+              <Link
+                key={company.id}
+                href={`/companies/${company.slug || ''}`}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/60 transition-colors border border-transparent hover:border-border/40"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-9 w-9 rounded bg-white flex items-center justify-center border border-border flex-shrink-0 overflow-hidden">
+                    {company.logo_url ? (
+                      <img
+                        src={company.logo_url}
+                        alt={company.name}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground truncate">{company.name}</p>
+                    <p className="text-muted-foreground truncate flex items-center gap-1">
+                      <span>{company.category_name || company.categories?.[0]?.name || 'Tecnologia Solar'}</span>
+                      {company.rating_avg && (
+                        <>
+                          <span>•</span>
+                          <span className="flex items-center text-amber-500 font-semibold gap-0.5">
+                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                            {Number(company.rating_avg).toFixed(1)}
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-1" />
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Trending Topics */}
@@ -37,12 +96,20 @@ export function FeedRightRail() {
           <TrendingUp className="h-4 w-4 text-amber-500" />
           <span>Assuntos em Alta</span>
         </div>
-        <div className="flex flex-wrap gap-1.5 text-xs">
-          <span className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors">#InversoresHibridos</span>
-          <span className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors">#MercadoLivreEnergia</span>
-          <span className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors">#BateriasLithium</span>
-          <span className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors">#RegulacaoANEEL</span>
-        </div>
+        {trendingTopics.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Nenhum assunto em alta no momento.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            {trendingTopics.map((topic, i) => (
+              <span
+                key={i}
+                className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+              >
+                {topic}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </aside>
   );

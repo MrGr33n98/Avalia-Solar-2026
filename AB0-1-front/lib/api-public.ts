@@ -258,6 +258,18 @@ export const publicCompaniesApi = {
     return unwrapArray<Company>(payload, 'companies');
   },
 
+  getFeatured: async (
+    options?: PublicFetchOptions<Company[]>
+  ): Promise<Company[]> => {
+    const payload = await fetchApiPublic<unknown, Company[]>('companies/featured', {
+      revalidate: options?.revalidate,
+      tags: options?.tags || ['companies', 'featured-companies'],
+      fallback: options?.fallback || [],
+      silent: options?.silent,
+    });
+    return unwrapArray<Company>(payload, 'companies');
+  },
+
   getAllPaginated: async (
     params?: PublicCompanyListParams,
     options?: PublicFetchOptions<{ data: Company[]; meta?: { pagination?: unknown } }>

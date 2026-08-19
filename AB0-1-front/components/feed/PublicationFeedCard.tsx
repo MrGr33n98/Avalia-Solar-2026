@@ -6,6 +6,8 @@ import { ThumbsUp, MessageSquare, Bookmark, Share2, Building2, CheckCircle2, Use
 import { FeedItem } from '@/types/feed';
 import { toggleReaction, toggleSave, toggleFollow } from '@/lib/api/feed';
 
+import { UserAvatar } from '@/components/ui/UserAvatar';
+
 interface PublicationFeedCardProps {
   item: FeedItem;
 }
@@ -59,9 +61,7 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary border border-primary/20 flex-shrink-0">
-            {actor.name?.[0]?.toUpperCase() || 'U'}
-          </div>
+          <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
           <div>
             <div className="flex items-center gap-1.5 font-semibold text-sm">
               <span>{actor.name}</span>

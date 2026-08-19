@@ -25,6 +25,7 @@ import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
 interface AuthContextType {
   user: User | null;
+  reviewerProfile: any | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -44,6 +45,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [reviewerProfile, setReviewerProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = !!user;
@@ -120,6 +122,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('is_internal_team');
       }
     }
+  }, [user]);
+
+  useEffect(() => {
+    let active = true;
+    if (user && user.role === 'review') {
+      reviewerProfileApi.get()
+        .then((res) => {
+          if (active) setReviewerProfile(res?.profile || null);
+        })
+        .catch(() => {
+          if (active) setReviewerProfile(null);
+        });
+    } else {
+      setReviewerProfile(null);
+    }
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   const checkAuth = useCallback(async (): Promise<User | null> => {
@@ -276,6 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        reviewerProfile,
         loading,
         error,
         isAuthenticated,

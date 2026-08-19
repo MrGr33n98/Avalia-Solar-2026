@@ -5,7 +5,7 @@ FactoryBot.define do
     association :user
     notification_type { 'new_review' }
     title { 'Nova notificação' }
-    body { 'Você tem uma nova notificação' }
+    message { 'Você tem uma nova notificação' }
     delivery_channels { ['in_app'] }
     read_at { nil }
     sent_at { nil }
@@ -21,25 +21,25 @@ FactoryBot.define do
     trait :new_review do
       notification_type { 'new_review' }
       title { 'Nova avaliação recebida' }
-      body { '5 estrelas - Excelente atendimento' }
+      message { '5 estrelas - Excelente atendimento' }
     end
 
     trait :new_lead do
       notification_type { 'new_lead' }
       title { 'Nova oportunidade recebida' }
-      body { 'Energia Solar - Residencial' }
+      message { 'Energia Solar - Residencial' }
     end
 
     trait :reply_received do
       notification_type { 'reply_received' }
       title { 'Empresa respondeu sua avaliação' }
-      body { 'Solar Inc respondeu sua avaliação' }
+      message { 'Solar Inc respondeu sua avaliação' }
     end
 
     trait :status_update do
       notification_type { 'status_update' }
       title { 'Atualização de status' }
-      body { 'Seu perfil foi aprovado' }
+      message { 'Seu perfil foi aprovado' }
     end
   end
 end

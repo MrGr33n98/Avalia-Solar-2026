@@ -5,16 +5,17 @@ import Link from 'next/link';
 import { PenSquare, Image, FileText, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { UserAvatar } from '@/components/ui/UserAvatar';
+
 export function FeedComposer() {
   const { user } = useAuth();
 
   return (
     <div className="bg-card text-card-foreground rounded-xl border border-border p-4 shadow-sm space-y-3">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary border border-primary/20 flex-shrink-0">
-          {user?.name?.[0]?.toUpperCase() || 'U'}
-        </div>
+        <UserAvatar src={user?.avatar_url} name={user?.name} size="md" />
         <Link
+          id="feed-composer-textarea"
           href="/review-dashboard/publications"
           className="flex-1 bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground text-sm font-medium px-4 py-2.5 rounded-full text-left transition-colors border border-border/40"
         >

@@ -15,14 +15,14 @@ describe('resolvePostAuthDestination', () => {
     expect(resolvePostAuthDestination({ user: user('review') })).toBe('/review-dashboard');
   });
 
-  it('direciona creator habilitado para perfil público', () => {
+  it('direciona creator habilitado para o feed', () => {
     expect(
       resolvePostAuthDestination({
         user: user('review'),
         creatorEnabled: true,
         creatorSlug: 'felipe-henrique-morais-almeida',
       })
-    ).toBe('/creators/felipe-henrique-morais-almeida');
+    ).toBe('/feed');
   });
 
   it('usa dashboard quando creator não está habilitado ou slug ausente', () => {

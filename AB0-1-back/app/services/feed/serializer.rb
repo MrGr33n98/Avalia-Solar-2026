@@ -5,6 +5,7 @@ module Feed
     def initialize(feed_items, current_user: nil)
       @feed_items = Array(feed_items)
       @current_user = current_user
+      preload_associations
     end
 
     def serialize
@@ -13,16 +14,53 @@ module Feed
 
     private
 
+    def preload_associations
+      return if @feed_items.empty?
+
+      if defined?(ActiveRecord::Associations::Preloader)
+        ActiveRecord::Associations::Preloader.new(
+          records: @feed_items,
+          associations: [:actor, :subject]
+        ).call
+
+        users = @feed_items.map(&:actor).compact.select { |a| a.is_a?(User) }
+        if users.any?
+          ActiveRecord::Associations::Preloader.new(
+            records: users,
+            associations: [:reviewer_profile, avatar_attachment: :blob]
+          ).call
+        end
+
+        reviews = @feed_items.map(&:subject).compact.select { |s| s.is_a?(Review) }
+        if reviews.any?
+          ActiveRecord::Associations::Preloader.new(
+            records: reviews,
+            associations: { company: [:categories, logo_attachment: :blob] }
+          ).call
+        end
+
+        publications = @feed_items.map(&:subject).compact.select { |s| s.is_a?(ReviewerPublication) }
+        if publications.any?
+          ActiveRecord::Associations::Preloader.new(
+            records: publications,
+            associations: [cover_image_attachment: :blob]
+          ).call
+        end
+      end
+    end
+
     def serialize_item(item)
       subject = item.subject
       actor = item.actor
+      normalized_author = serialize_actor(actor)
 
       {
         id: "feed_#{item.id}",
         type: item.subject_type.underscore,
         verb: item.verb,
         published_at: item.published_at.iso8601,
-        actor: serialize_actor(actor),
+        actor: normalized_author,
+        author: normalized_author,
         subject: serialize_subject(subject),
         entities: serialize_entities(subject),
         engagement: serialize_engagement(subject)
@@ -33,22 +71,28 @@ module Feed
       return {} unless actor
 
       if actor.is_a?(User)
-        profile = ReviewerProfile.find_by(user_id: actor.id)
+        profile = actor.reviewer_profile
+        avatar_url = actor.avatar_url
         {
           id: actor.id,
-          type: 'user',
+          type: profile&.creator_enabled ? 'creator' : 'user',
           name: actor.name,
-          avatar_url: profile&.avatar_url,
-          headline: profile&.bio,
-          verified: profile&.verified? || false
+          display_name: actor.name,
+          slug: profile&.public_slug,
+          avatar_url: avatar_url,
+          headline: profile&.public_headline || profile&.profession || profile&.bio,
+          verified: profile&.try(:verified?) || false
         }
       elsif actor.is_a?(Company)
         {
           id: actor.id,
           type: 'company',
           name: actor.name,
+          display_name: actor.name,
           logo_url: actor.logo_url,
+          avatar_url: actor.logo_url,
           slug: actor.slug,
+          headline: actor.description || actor.categories.first&.name,
           verified: actor.verified?
         }
       else
@@ -77,7 +121,10 @@ module Feed
           company: {
             id: subject.company_id,
             name: subject.company&.name,
-            slug: subject.company&.slug
+            slug: subject.company&.slug,
+            logo_url: subject.company&.logo_url,
+            rating: subject.company&.rating_avg,
+            category_name: subject.company&.categories&.first&.name
           }
         }
       else

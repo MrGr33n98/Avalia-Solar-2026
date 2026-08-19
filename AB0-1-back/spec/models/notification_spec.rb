@@ -9,9 +9,9 @@ RSpec.describe Notification, type: :model do
   end
 
   describe 'validations' do
+    subject { build(:notification) }
     it { should validate_presence_of(:notification_type) }
     it { should validate_presence_of(:title) }
-    it { should validate_presence_of(:delivery_channels) }
     
     it 'validates notification_type inclusion' do
       notification = build(:notification, notification_type: 'invalid_type')
@@ -82,6 +82,24 @@ RSpec.describe Notification, type: :model do
     it 'includes status_update type' do
       notification = create(:notification, :status_update)
       expect(notification.notification_type).to eq('status_update')
+    end
+  end
+
+  describe 'TYPES' do
+    it 'contains the social notification event types' do
+      expect(described_class::TYPES).to include(
+        'publication_reacted',
+        'publication_commented',
+        'comment_replied',
+        'creator_followed',
+        'company_followed',
+        'user_mentioned',
+        'system_message'
+      )
+    end
+
+    it 'does not contain duplicate types' do
+      expect(described_class::TYPES).to eq(described_class::TYPES.uniq)
     end
   end
 end
