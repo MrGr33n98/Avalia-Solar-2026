@@ -394,7 +394,7 @@ export function CompaniesContent({
         west: Number(bounds.west.toFixed(2)),
       },
     });
-  });
+  }, [buildTargetUrl, filters, router]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.max(1, filters.page || 1);
