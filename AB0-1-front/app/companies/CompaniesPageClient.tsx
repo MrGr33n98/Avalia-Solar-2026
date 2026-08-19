@@ -111,7 +111,7 @@ export function CompaniesContent({
     () => ({
       status: 'active' as const,
       page: filters.page || 1,
-      per_page: PAGE_SIZE,
+      per_page: viewMode === 'map' ? 100 : PAGE_SIZE,
       q: filters.search || undefined,
       state: filters.state.length > 0 ? filters.state : undefined,
       city: filters.city.length > 0 ? filters.city : undefined,
@@ -343,6 +343,16 @@ export function CompaniesContent({
     [comparisonList]
   );
 
+  useEffect(() => {
+    if (viewMode !== 'map') return;
+
+    track('company_map_opened', {
+      source: 'list',
+      view_mode: 'map',
+      result_count: mapCompanies.length,
+    });
+  }, [mapCompanies.length, viewMode]);
+
   const handleMapCompare = useCallback(
     (mapCompany: MapCompany) => {
       const company = visibleCompanies.find((item) => String(item.id) === mapCompany.id);
@@ -361,6 +371,19 @@ export function CompaniesContent({
   );
 
   const handleMapBoundsSearch = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    const centerLat = (bounds.north + bounds.south) / 2;
+    const centerLng = (bounds.east + bounds.west) / 2;
+    const latDistance = Math.abs(bounds.north - bounds.south) * 111.32 / 2;
+    const lngDistance = Math.abs(bounds.east - bounds.west) * 111.32 * Math.cos((centerLat * Math.PI) / 180) / 2;
+    const radiusKm = Math.max(25, Math.ceil(Math.sqrt(latDistance ** 2 + lngDistance ** 2)));
+
+    router.replace(buildTargetUrl({
+      ...filters,
+      lat: Number(centerLat.toFixed(5)),
+      lng: Number(centerLng.toFixed(5)),
+      radius_km: radiusKm,
+      page: 1,
+    }), { scroll: false });
     track('company_map_area_search', {
       source: 'map',
       view_mode: 'map',
@@ -371,7 +394,7 @@ export function CompaniesContent({
         west: Number(bounds.west.toFixed(2)),
       },
     });
-  }, []);
+  });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.max(1, filters.page || 1);
@@ -774,13 +797,6 @@ export function CompaniesContent({
                               company_id: company.id,
                               source: 'map',
                               view_mode: 'map',
-                            });
-                          }}
-                          onMapOpened={() => {
-                            track('company_map_opened', {
-                              source: 'list',
-                              view_mode: 'map',
-                              result_count: mapCompanies.length,
                             });
                           }}
                           onSearchInArea={handleMapBoundsSearch}
