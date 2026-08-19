@@ -65,8 +65,7 @@ describe('CompanyCard standard actions', () => {
     const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
     expect(compare).toBeInTheDocument();
     expect(compare).toHaveAttribute('aria-pressed', 'false');
-    expect(compare).toHaveClass('border-0', 'bg-transparent', 'min-h-11');
-    expect(compare).not.toHaveClass('border-slate-300');
+    expect(compare).toHaveClass('bg-white');
     expect(screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
   });
@@ -79,30 +78,22 @@ describe('CompanyCard standard actions', () => {
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
   });
 
-  it('uses mobile two-row grid contract for quote action', () => {
+  it('uses unified primary action row for compare and review', () => {
     render(<CompanyCard company={company} variant="standard" />);
 
-    const card = screen.getByTestId('company-card');
     const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
+    const review = screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' });
     const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
 
-    expect(card.querySelector('.grid-cols-2')).toBeInTheDocument();
-    expect(compare).toHaveClass('min-w-0', 'w-full');
-    expect(compare).toHaveClass('border-0', 'bg-transparent');
-    expect(quote).toHaveClass('col-span-2', 'w-full');
-  });
-
-  it('mantém Avaliar como botão secundário com borda', () => {
-    render(<CompanyCard company={company} variant="standard" />);
-
-    const review = screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' });
-    expect(review).toHaveClass('border-slate-300', 'bg-white', 'min-h-11', 'text-blue-700');
+    expect(compare).toHaveClass('w-full');
+    expect(review).toHaveClass('w-full', 'bg-blue-600', 'text-white');
+    expect(quote).toHaveClass('w-full');
   });
 
   it('mantém círculo de comparação com tamanho visual adequado', () => {
     render(<CompanyCard company={company} variant="standard" />);
 
-    expect(screen.getByTestId('compare-icon')).toHaveAttribute('data-size', '40');
+    expect(screen.getByTestId('compare-icon')).toHaveAttribute('data-size', '28');
   });
 
   it('does not render fabricated criteria or SLA', () => {

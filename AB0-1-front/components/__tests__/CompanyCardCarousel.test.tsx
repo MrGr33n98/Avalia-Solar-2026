@@ -1,6 +1,18 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import CompanyCardCarousel from '../CompanyCardCarousel';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useComparison', () => ({
+  useComparison: () => ({
+    isInComparison: () => false,
+    toggleComparison: jest.fn(),
+    canAddMore: true,
+  }),
+}));
+
 const items = [
   { id: 1, name: 'A', city: 'São Paulo', state: 'SP' } as any,
   { id: 2, name: 'B', city: 'Rio', state: 'RJ' } as any,

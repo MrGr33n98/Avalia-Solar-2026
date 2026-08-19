@@ -1,9 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import Link from 'next/link';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import {
   Star,
   MapPin,
@@ -378,6 +376,48 @@ export default function CompanyCard({
     });
   };
 
+  const renderPrimaryActions = (wrapperClass?: string) => (
+    <div className={cn("flex flex-col gap-2 w-full", wrapperClass)}>
+      <div className="grid grid-cols-2 gap-2 w-full">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={handleCompareClick}
+          disabled={!selectedInComparison && !canAddMore}
+          aria-pressed={selectedInComparison}
+          aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
+          className={cn(
+            'min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 inline-flex items-center justify-center gap-1.5 rounded-xl @[500px]/card:rounded-lg border bg-white px-2 text-[11px] @[500px]/card:text-[10px] font-semibold transition-colors',
+            selectedInComparison
+              ? 'text-white border-blue-600 bg-blue-600 hover:bg-blue-700 hover:border-blue-700 shadow-sm'
+              : 'text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-700'
+          )}
+        >
+          {selectedInComparison ? (
+            <Check className="h-[14px] w-[14px] @[500px]/card:h-3 @[500px]/card:w-3 shrink-0" />
+          ) : (
+            <div className="flex items-center justify-center @[500px]/card:scale-[0.85] shrink-0">
+              <AnimatedCompareIcon size={28} active={false} selected={false} disabled={!canAddMore} aria-hidden="true" />
+            </div>
+          )}
+          <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
+        </Button>
+
+        <ReviewCompanyButton
+          company={company}
+          label="Avaliar"
+          className="min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 rounded-xl @[500px]/card:rounded-lg px-2 text-[11px] @[500px]/card:text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+          iconClassName="h-[14px] w-[14px] @[500px]/card:h-3 @[500px]/card:w-3"
+          stopPropagation
+        />
+      </div>
+      
+      {canRequestQuote ? (
+        <QuoteCTA context="compact" source="company-card-expanded" className="w-full" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
+      ) : null}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <Card className={cn('animate-pulse border-brand-border bg-white p-4 shadow-sm', className)}>
@@ -471,32 +511,8 @@ export default function CompanyCard({
         </div>
 
         {/* BOTTOM SECTION: Buttons */}
-        <div className="mt-4 px-4 grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleCompareClick}
-            disabled={!selectedInComparison && !canAddMore}
-            aria-pressed={selectedInComparison}
-            aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
-            className={cn(
-              'min-w-0 w-full min-h-11 h-11 inline-flex items-center justify-center gap-2 rounded-xl border-0 bg-transparent px-2 text-[11px] font-semibold text-slate-700 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
-              selectedInComparison
-                ? 'text-blue-700'
-                : 'text-slate-700'
-            )}
-          >
-            <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" className="shrink-0" />
-            <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
-          </Button>
-
-          <ReviewCompanyButton
-            company={company}
-            label="Avaliar essa empresa"
-            className="min-w-0 w-full h-10 rounded-lg bg-blue-600 px-1 text-[11px] font-semibold text-white hover:bg-blue-700"
-            iconClassName="hidden"
-            stopPropagation
-          />
+        <div className="px-4 pb-4">
+          {renderPrimaryActions("mt-4")}
         </div>
       </Card>
     );
@@ -616,36 +632,7 @@ export default function CompanyCard({
             </div>
           </div>
 
-          <div className="flex flex-col @[500px]/card:flex-col sm:flex-row gap-2 @[500px]/card:gap-1 w-full">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleCompareClick}
-              disabled={!selectedInComparison && !canAddMore}
-              aria-pressed={selectedInComparison}
-              aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
-              className={cn(
-                'min-h-11 h-11 min-w-0 w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 @[500px]/card:border-0 bg-white @[500px]/card:bg-transparent px-2 text-xs font-semibold text-slate-700 shadow-sm @[500px]/card:shadow-none hover:bg-slate-50 @[500px]/card:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500/25 focus-visible:ring-offset-2',
-                selectedInComparison
-                  ? 'text-blue-700 border-blue-200 bg-blue-50/50'
-                  : 'text-slate-700'
-              )}
-            >
-                <AnimatedCompareIcon size={40} active={selectedInComparison} selected={false} disabled={!selectedInComparison && !canAddMore} aria-hidden="true" />
-                <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
-            </Button>
-
-            {canRequestQuote ? (
-              <QuoteCTA context="compact" source="company-card-expanded" className="w-full" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
-            ) : null}
-            <ReviewCompanyButton
-              company={company}
-              label="Avaliar"
-              className="h-11 @[500px]/card:h-7 w-full rounded-xl @[500px]/card:rounded-lg px-2 text-xs @[500px]/card:text-[10px]"
-              iconClassName="h-4 w-4 @[500px]/card:h-3 @[500px]/card:w-3"
-              stopPropagation
-            />
-          </div>
+          {renderPrimaryActions("mt-2 @[500px]/card:mt-0")}
         </div>
       </div>
 
@@ -686,7 +673,7 @@ export default function CompanyCard({
               {company.reputation.rating_avg.toFixed(1)}
             </span>
             <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-0.5">
+              <div data-testid="rating-stars-container" className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
@@ -884,7 +871,7 @@ export default function CompanyCard({
 
           {p2pChatEnabled && <CompanyChatButton companyId={id} companyName={name} variant="compact" />}
 
-          {canRequestQuote ? (
+          {canRequestQuote && (
             <Button
               variant="outline"
               className="flex-1 @[400px]/card:flex-none rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
@@ -901,14 +888,6 @@ export default function CompanyCard({
               <PhoneCall className="h-3.5 w-3.5 @[400px]/card:h-3 @[400px]/card:w-3 mr-1 text-slate-400" />
               Contato
             </Button>
-          ) : (
-            <ReviewCompanyButton
-              company={company}
-              label="Avaliar"
-              className="flex-1 @[400px]/card:flex-none h-9 @[400px]/card:h-7 rounded-lg px-2.5 text-[10px]"
-              iconClassName="h-3 w-3"
-              stopPropagation
-            />
           )}
         </div>
 

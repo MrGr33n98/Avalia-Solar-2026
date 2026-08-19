@@ -223,7 +223,7 @@ export function CompaniesContent({
             setIsFiltersOpen(true);
             return;
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore unsupported permission query in some browsers
         }
       }
@@ -243,7 +243,7 @@ export function CompaniesContent({
         radius_km: updated.radius_km,
       });
       router.replace(buildTargetUrl(updated), { scroll: false });
-    } catch (err) {
+    } catch (_err) {
       // Fallback: se falhar por permissão negada, timeout ou unsupported, abre o modal
       setIsFiltersOpen(true);
     }
@@ -653,7 +653,7 @@ export function CompaniesContent({
 
         <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex w-full min-w-0 flex-col items-start gap-8 lg:flex-row">
-            <aside className="hidden lg:block lg:w-[300px] shrink-0">
+            <aside className="hidden lg:block lg:w-[260px] xl:w-[280px] 2xl:w-[300px] shrink-0">
               <FilterSidebar hideMobileTrigger={true} />
             </aside>
 
@@ -823,11 +823,10 @@ export function CompaniesContent({
                 {loading ? (
                   <div
                     className={cn(
-                      'grid gap-4',
-                      viewMode === 'grid'
-                        ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-                        : 'grid-cols-1'
+                      'grid w-full min-w-0 gap-4',
+                      viewMode !== 'grid' && 'grid-cols-1'
                     )}
+                    style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' } : undefined}
                   >
                     {[...Array(6)].map((_, i) => (
                       <Skeleton key={i} className="h-64 rounded-xl bg-white" />
@@ -862,10 +861,9 @@ export function CompaniesContent({
                         data-testid="companies-grid"
                         className={cn(
                           'grid w-full min-w-0 gap-4',
-                          viewMode === 'grid'
-                            ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2'
-                            : 'grid-cols-1'
+                          viewMode !== 'grid' && 'grid-cols-1'
                         )}
+                        style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' } : undefined}
                       >
                         {visibleCompanies.map((company, index) => (
                           <CompanyCard
@@ -934,7 +932,7 @@ export function CompaniesContent({
               </section>
             </div>
 
-            <div className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
+            <div className="hidden 2xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
               <BannerByLocation
                 location="sidebar"
                 limit={1}
