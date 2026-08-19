@@ -197,6 +197,7 @@ export default function ComparisonFloatingBar() {
     track('comparison_dock_compare_click', {
       comparison_count: count,
       placement: 'comparison_dock',
+      source: 'compare',
     });
 
     router.push('/compare');

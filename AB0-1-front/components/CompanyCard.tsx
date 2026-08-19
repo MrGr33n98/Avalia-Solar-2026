@@ -363,6 +363,7 @@ export default function CompanyCard({
   const decisionContext = {
     source: 'list' as const,
     view_mode: 'list' as const,
+    result_position: _index + 1,
     filter_context: {},
   };
 

@@ -360,6 +360,19 @@ export function CompaniesContent({
     [canAddMore, isInComparison, toggleComparison, visibleCompanies]
   );
 
+  const handleMapBoundsSearch = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    track('company_map_area_search', {
+      source: 'map',
+      view_mode: 'map',
+      bounds: {
+        north: Number(bounds.north.toFixed(2)),
+        south: Number(bounds.south.toFixed(2)),
+        east: Number(bounds.east.toFixed(2)),
+        west: Number(bounds.west.toFixed(2)),
+      },
+    });
+  }, []);
+
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.max(1, filters.page || 1);
 
@@ -770,6 +783,7 @@ export function CompaniesContent({
                               result_count: mapCompanies.length,
                             });
                           }}
+                          onSearchInArea={handleMapBoundsSearch}
                           center={
                             filters.lat && filters.lng
                               ? { lat: filters.lat, lng: filters.lng }
@@ -787,12 +801,13 @@ export function CompaniesContent({
                             : 'grid-cols-1'
                         )}
                       >
-                        {visibleCompanies.map((company) => (
+                        {visibleCompanies.map((company, index) => (
                           <CompanyCard
                             key={company.id}
                             company={company}
                             variant={cardVariant}
                             compact={false}
+                            index={index + ((filters.page || 1) - 1) * PAGE_SIZE}
                           />
                         ))}
                       </div>

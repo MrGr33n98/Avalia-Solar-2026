@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, useMap } from 'react-leaflet';
@@ -101,6 +102,24 @@ export default function MapProvider({
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mapZoom, setMapZoom] = useState(zoom);
+  const mapClusters = useMemo<MapCluster[]>(() => {
+    const precision = mapZoom >= 12 ? 3 : mapZoom >= 9 ? 2 : 1;
+    const grouped = new Map<string, MapCompany[]>();
+
+    companies.forEach((company) => {
+      const key = `${company.latitude.toFixed(precision)}:${company.longitude.toFixed(precision)}`;
+      const group = grouped.get(key) || [];
+      group.push(company);
+      grouped.set(key, group);
+    });
+
+    return Array.from(grouped.entries()).map(([key, groupedCompanies]) => ({
+      key,
+      latitude: groupedCompanies.reduce((sum, company) => sum + company.latitude, 0) / groupedCompanies.length,
+      longitude: groupedCompanies.reduce((sum, company) => sum + company.longitude, 0) / groupedCompanies.length,
+      companies: groupedCompanies,
+    }));
+  }, [companies, mapZoom]);
 
   // Garante a montagem do lado do cliente para evitar bugs de hidratação com useTheme
   useEffect(() => {
@@ -142,7 +161,6 @@ export default function MapProvider({
   // Criação dos marcadores circulares de luxo estilizados
   const getCompanyIcon = (company: MapCompany) => {
     const logoUrl = getFullImageUrl(company.logo_url || undefined);
-    const borderColor = company.isSponsored ? '#3b82f6' : (isDark ? '#475569' : '#cbd5e1');
     const bgColor = company.isSponsored ? '#eff6ff' : (isDark ? '#1e293b' : '#f8fafc');
     const textColor = company.isSponsored ? '#3b82f6' : (isDark ? '#94a3b8' : '#64748b');
     const initial = company.name ? company.name.charAt(0).toUpperCase() : 'E';
@@ -186,25 +204,6 @@ export default function MapProvider({
     });
   };
 
-  const clusters = useMemo<MapCluster[]>(() => {
-    const precision = mapZoom >= 12 ? 3 : mapZoom >= 9 ? 2 : 1;
-    const grouped = new Map<string, MapCompany[]>();
-
-    companies.forEach((company) => {
-      const key = `${company.latitude.toFixed(precision)}:${company.longitude.toFixed(precision)}`;
-      const group = grouped.get(key) || [];
-      group.push(company);
-      grouped.set(key, group);
-    });
-
-    return Array.from(grouped.entries()).map(([key, groupedCompanies]) => ({
-      key,
-      latitude: groupedCompanies.reduce((sum, company) => sum + company.latitude, 0) / groupedCompanies.length,
-      longitude: groupedCompanies.reduce((sum, company) => sum + company.longitude, 0) / groupedCompanies.length,
-      companies: groupedCompanies,
-    }));
-  }, [companies, mapZoom]);
-
   const getClusterIcon = (count: number) =>
     L.divIcon({
       className: 'company-map-cluster',
@@ -243,7 +242,7 @@ export default function MapProvider({
         />
       )}
 
-      {clusters.map((cluster) => cluster.companies.length > 1 ? (
+      {mapClusters.map((cluster) => cluster.companies.length > 1 ? (
         <Marker
           key={cluster.key}
           position={[cluster.latitude, cluster.longitude]}

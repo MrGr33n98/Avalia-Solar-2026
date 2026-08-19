@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics/lazy';
 import { trackCTAClick, addUTMToUrl } from '@/lib/analytics/track-cta';
-import { appendUtm } from '@/lib/analytics/utm';
 import { openSignupGate, type SignupGateSource } from '@/lib/signup-gate';
 
 type Styles = {
@@ -189,7 +188,7 @@ export default function WhatsappButton({
   return (
     <Button
       size={size}
-      variant={variant === 'outline' ? 'outline' : undefined as any}
+      variant={variant === 'outline' ? 'outline' : 'default'}
       className={`${btnClasses} ${isNeutralOutline ? 'border-border hover:bg-muted text-foreground rounded-lg' : ''}`}
       style={baseStyle}
       aria-label={label || 'Conversar no WhatsApp'}

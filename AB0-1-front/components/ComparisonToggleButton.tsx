@@ -69,6 +69,7 @@ export default function ComparisonToggleButton({
           company_id: company.id,
           company_name: company.name,
           position: position,
+          source: 'list',
         });
         trackComparisonUsage('remove', {
           company_name: company.name,
@@ -87,6 +88,7 @@ export default function ComparisonToggleButton({
           company_name: company.name,
           total_companies: count + 1,
           is_premium: isPremium,
+          source: 'list',
         });
         trackComparisonUsage('add', {
           company_name: company.name,
