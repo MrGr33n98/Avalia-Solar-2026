@@ -112,8 +112,10 @@ export interface Conversation {
   company_avatar?: string | null;
   user_avatar?: string | null;
   user_avatar_url?: string | null;
+  user?: { id?: number; name?: string | null; avatar_url?: string | null; email?: string | null } | null;
+  company?: { id?: number; name?: string | null; logo_url?: string | null; avatar_url?: string | null; p2p_chat_enabled?: boolean } | null;
   status?: 'open' | 'pending_user' | 'pending_company' | 'resolved' | 'blocked';
-  last_message?: string | null;
+  last_message?: string | { body?: string; created_at?: string } | null;
   last_message_at?: string | null;
   unread_count?: number;
   user_unread_count?: number;
@@ -944,6 +946,7 @@ export interface User {
   state?: string | null;
   role: 'review' | 'company' | 'admin';
   company_id?: number | null;
+  company?: { id: number; name?: string; logo_url?: string } | null;
   approved_by_admin?: boolean;
   status?: 'pending' | 'active' | 'rejected' | 'blocked';
   created_at: string;

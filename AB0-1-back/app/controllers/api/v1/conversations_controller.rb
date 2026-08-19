@@ -7,24 +7,50 @@ module Api
       before_action :set_conversation, only: %i[read resolve reopen block report events]
 
       def index
-        @conversations = if current_user.company_user?
-                           company_conversations_scope
-                         else
-                           current_user.conversations.includes(:company, :direct_messages)
-                         end
-
-        render json: @conversations.ordered_for_inbox.map { |conv| conversation_json(conv) }
-      end
-
-      def unread_count
         scope = if current_user.company_user?
                   company_conversations_scope
                 else
-                  current_user.conversations.includes(:direct_messages)
+                  current_user.conversations.includes(:company, :direct_messages)
                 end
 
-        total = scope.sum { |conv| conv.unread_count_for(current_user) }
-        render json: { unread_count: total }
+        scope = scope.ordered_for_inbox
+
+        if params[:cursor].present?
+          cursor_time = Time.zone.parse(params[:cursor]) rescue nil
+          scope = scope.where('COALESCE(conversations.last_message_at, conversations.created_at) < ?', cursor_time) if cursor_time
+        end
+
+        limit = params[:limit].present? ? [params[:limit].to_i, 100].min : nil
+        scope = scope.limit(limit) if limit
+
+        conversations = scope.to_a
+        items = conversations.map { |conv| conversation_json(conv) }
+
+        if params[:paginated] == 'true' || params[:cursor].present?
+          has_next_page = limit ? conversations.size == limit : false
+          next_cursor = conversations.last ? (conversations.last.last_message_at || conversations.last.created_at)&.iso8601(6) : nil
+
+          render json: {
+            conversations: items,
+            pagination: {
+              limit: limit || items.size,
+              has_next_page: has_next_page,
+              next_cursor: next_cursor
+            }
+          }
+        else
+          render json: items
+        end
+      end
+
+      def unread_count
+        unread = if current_user.company_user?
+                   company_conversations_scope.sum(:company_unread_count)
+                 else
+                   current_user.conversations.sum(:user_unread_count)
+                 end
+
+        render json: { unread_count: unread.to_i }
       end
 
       def create

@@ -9,11 +9,17 @@ import { openComparisonModal } from '@/lib/floating-widget-events';
 import { useNotificationStore } from '@/store/notificationStore';
 import { cn } from '@/lib/utils';
 
+import { useEffect } from 'react';
+
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { count, maxComparison } = useComparison();
-  const { unreadMessagesCount, toggleChat } = useNotificationStore();
+  const { unreadMessagesCount, fetchUnreadMessagesCount, toggleChat } = useNotificationStore();
+
+  useEffect(() => {
+    fetchUnreadMessagesCount();
+  }, [fetchUnreadMessagesCount]);
 
   const handleComparisonClick = () => {
     if (count > 0) openComparisonModal();

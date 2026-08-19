@@ -347,8 +347,18 @@ Rails.application.routes.draw do
           get :events
         end
         resources :direct_messages, only: %i[index create]
-      end
       resources :push_tokens, only: %i[create]
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Messaging Platform 1.0 Unified Inbox
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      namespace :messaging do
+        resources :inbox, only: %i[index] do
+          collection do
+            get :unread_count
+          end
+        end
+      end
 
       resources :banners, only: [:index]
       get 'publicidade_campanhas', to: 'publicidade_campanhas#index'

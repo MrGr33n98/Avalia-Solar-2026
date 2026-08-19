@@ -1,22 +1,15 @@
 'use client';
 
-import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createConsumer } from '@rails/actioncable';
 import {
   ArrowLeft,
-  Ban,
   Building2,
-  CheckCheck,
-  Flag,
-  MessageCircle,
   MoreVertical,
-  Paperclip,
-  RefreshCw,
-  Send,
   ShieldAlert,
   X,
+  MessageCircle,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,1065 +18,445 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { conversationsApi, type Conversation, type DirectMessage } from '@/lib/api';
 import { isRealtimeEnabled, resolveCableUrl } from '@/lib/cable';
 import { cn } from '@/lib/utils';
-import { useRealtimeConnection } from '@/hooks/useRealtimeConnection';
 import { getFullImageUrl } from '@/utils/image';
-import { RichLinkPreview } from '@/components/chat/RichLinkPreview';
 import { RightChatSidebar } from './components/RightChatSidebar';
+import { ConversationList } from './components/ConversationList';
+import { MessageTimeline, type OptimisticMessage } from './components/MessageTimeline';
+import { MessageComposer, type PendingAttachment } from './components/MessageComposer';
+import { SLABadge } from './components/SLABadge';
 
-type Message = DirectMessage;
 type RealtimeStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'rejected';
-type PendingAttachment = {
-  data: string;
-  filename: string;
-  content_type: string;
-};
-
-type ChatCablePayload = Partial<Message> & {
-  event?: string;
-  conversation_id?: number;
-  message?: Message;
-  conversation?: Conversation;
-  reader_type?: 'User' | 'Company';
-  read_at?: string;
-  message_ids?: number[];
-  actor_type?: 'User' | 'Company';
-};
-
-type ChatApiErrorShape = {
-  status?: number;
-  code?: string;
-  message?: string;
-  details?: {
-    code?: string;
-    error?: string;
-    message?: string;
-    reason?: string;
-  };
-  context?: {
-    status?: number;
-    details?: {
-      code?: string;
-      error?: string;
-      message?: string;
-      reason?: string;
-    };
-  };
-};
 
 type CableSubscription = {
   unsubscribe: () => void;
   perform?: (action: string, data?: Record<string, unknown>) => void;
 };
 
-function getChatErrorMessage(error: unknown) {
-  const apiError = error as ChatApiErrorShape;
-  const details = apiError.context?.details || apiError.details || {};
-  const status = apiError.status || apiError.context?.status;
-  const code = details.code || apiError.code;
-  const reason = details?.reason;
-  const message = details.error || details.message || apiError.message;
-
-  if (status === 401) {
-    return 'Faça login para iniciar uma conversa com esta empresa.';
-  }
-
-  if (status === 403 && code === 'P2P_CHAT_NOT_AVAILABLE') {
-    return reason === 'upgrade_required'
-      ? 'O chat direto não está disponível no plano atual desta empresa.'
-      : 'O chat direto está bloqueado para esta empresa.';
-  }
-
-  if (status === 403 || message?.includes('Chat is disabled')) {
-    return 'O chat direto está desativado para esta empresa.';
-  }
-
-  return 'Não foi possível carregar o chat agora. Tente novamente em instantes.';
-}
-
-function getRealtimeLabel(status: RealtimeStatus) {
-  if (status === 'connected') return 'ao vivo';
-  if (status === 'connecting') return 'conectando';
-  if (status === 'disconnected') return 'reconectando';
-  if (status === 'rejected') return 'offline';
-  return 'aguardando';
-}
-
-function getConversationTime(conversation: Conversation) {
-  const value = conversation.last_message_at || conversation.updated_at || conversation.created_at;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
-}
-
-function dedupeConversations(conversations: Conversation[]) {
-  const byCompany = new Map<string, Conversation>();
-
-  conversations.forEach((conversation) => {
-    const key = conversation.company_id
-      ? `company-${conversation.company_id}`
-      : `conversation-${conversation.id}`;
-    const current = byCompany.get(key);
-
-    if (!current || getConversationTime(conversation) >= getConversationTime(current)) {
-      byCompany.set(key, conversation);
-    }
-  });
-
-  return Array.from(byCompany.values()).sort(
-    (a, b) => getConversationTime(b) - getConversationTime(a)
-  );
-}
-
-function formatConversationTime(value?: string | null) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-
-  const now = new Date();
-  const sameDay =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
-  if (sameDay) {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-}
-
-function getConversationPreview(conversation: Conversation) {
-  if (conversation.status === 'blocked') return 'Conversa bloqueada';
-  if (conversation.status === 'resolved') return 'Conversa resolvida';
-  return conversation.last_message || 'Iniciar conversa';
-}
-
-function getInitials(name?: string | null) {
-  return (name || 'Empresa')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
-
 export default function ChatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const canUseP2PChat = isAuthenticated && user?.role === 'review';
+
+  const viewerRole: 'User' | 'Company' | 'Unknown' = useMemo(() => {
+    if (user?.role === 'company') return 'Company';
+    if (user?.role === 'review') return 'User';
+    return 'Unknown';
+  }, [user]);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<OptimisticMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [inputMessage, setInputMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>('idle');
-  const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
-  const [typingByCompany, setTypingByCompany] = useState(false);
-  const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const cableRef = useRef<ReturnType<typeof createConsumer> | null>(null);
   const channelRef = useRef<CableSubscription | null>(null);
   const listChannelRef = useRef<CableSubscription | null>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [filterChip, setFilterChip] = useState<'all' | 'budgets' | 'unread' | 'resolved'>('all');
-
-  const visibleConversations = useMemo(() => {
-    const list = dedupeConversations(conversations);
-    if (filterChip === 'unread') {
-      return list.filter((c) => (c.unread_count ?? c.user_unread_count ?? 0) > 0);
-    }
-    if (filterChip === 'budgets') {
-      return list.filter((c) => c.status === 'pending_user' || c.status === 'pending_company');
-    }
-    if (filterChip === 'resolved') {
-      return list.filter((c) => c.status === 'resolved' || c.status === 'blocked');
-    }
-    return list;
-  }, [conversations, filterChip]);
-
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    window.setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-    }, 80);
-  }, []);
-
-  const appendMessage = useCallback((message: Message) => {
-    setMessages((prev) => {
-      if (
-        prev.some(
-          (item) =>
-            item.id === message.id ||
-            (message.client_message_id && item.client_message_id === message.client_message_id)
-        )
-      ) {
-        return prev;
-      }
-
-      return [...prev, message];
-    });
-  }, []);
-
-  const upsertConversation = useCallback((conversation: Conversation) => {
-    setConversations((prev) => dedupeConversations([conversation, ...prev]));
-    setActiveConversation((current) =>
-      current?.id === conversation.id ? { ...current, ...conversation } : current
-    );
-  }, []);
-
-  const applyReadReceipt = useCallback((payload: ChatCablePayload) => {
-    if (!payload.read_at) return;
-
-    setMessages((prev) =>
-      prev.map((message) => {
-        const matchesExplicitId = payload.message_ids?.includes(message.id);
-        const matchesReaderSide =
-          payload.reader_type === 'Company' && message.sender_type === 'User';
-
-        return matchesExplicitId || matchesReaderSide
-          ? { ...message, read_at: message.read_at || payload.read_at || null }
-          : message;
-      })
-    );
-  }, []);
-
-  const handleConversationPayload = useCallback(
-    (payload: ChatCablePayload) => {
-      if (payload.conversation) {
-        upsertConversation(payload.conversation);
-      }
-
-      if (payload.event === 'message.created' && payload.message) {
-        appendMessage(payload.message);
-        setTypingByCompany(false);
-        scrollToBottom();
-        return;
-      }
-
-      if (payload.event === 'message.read') {
-        applyReadReceipt(payload);
-        return;
-      }
-
-      if (payload.event === 'typing.started' && payload.actor_type === 'Company') {
-        setTypingByCompany(true);
-        return;
-      }
-
-      if (payload.event === 'typing.stopped' && payload.actor_type === 'Company') {
-        setTypingByCompany(false);
-        return;
-      }
-
-      if (!payload.event && payload.id) {
-        appendMessage(payload as Message);
-        scrollToBottom();
-      }
-    },
-    [appendMessage, applyReadReceipt, scrollToBottom, upsertConversation]
-  );
-
-  const loadMessagesForConversation = useCallback(
-    async (conversationId: number) => {
-      const msgs = await conversationsApi.getMessages(conversationId);
-      setMessages(msgs || []);
-      scrollToBottom('auto');
-    },
-    [scrollToBottom]
-  );
-
-  const setupActionCable = useCallback(
-    (conversationId: number) => {
-      if (!isRealtimeEnabled()) {
-        setRealtimeStatus('disconnected');
-        return;
-      }
-
-      channelRef.current?.unsubscribe();
-      setRealtimeStatus('connecting');
-
-      if (!cableRef.current) {
-        cableRef.current = createConsumer(resolveCableUrl());
-      }
-
-      channelRef.current = cableRef.current.subscriptions.create(
-        { channel: 'ConversationChannel', conversation_id: conversationId },
-        {
-          connected: () => {
-            setRealtimeStatus('connected');
-            void loadMessagesForConversation(conversationId).catch((error) => {
-              console.warn('[P2PChat] Could not reconcile messages after reconnect', error);
-            });
-          },
-          disconnected: () => {
-            setRealtimeStatus('disconnected');
-          },
-          rejected: () => {
-            setRealtimeStatus('rejected');
-            console.warn('[P2PChat] ActionCable rejected', { conversationId });
-            setErrorMessage(
-              'A conexão em tempo real caiu. Atualize a conversa se as mensagens demorarem.'
-            );
-          },
-          received: (data: ChatCablePayload) => {
-            handleConversationPayload(data);
-          },
-        }
-      );
-    },
-    [handleConversationPayload, loadMessagesForConversation]
-  );
-
-
-
-  const selectConversation = useCallback(
-    async (conversation: Conversation, options?: { openOnMobile?: boolean }) => {
-      if (!canUseP2PChat) return;
-
-      setActiveConversation(conversation);
-      setIsMobileConversationOpen(options?.openOnMobile ?? true);
-      setLoadingMessages(true);
-
-      try {
-        setErrorMessage(null);
-        await loadMessagesForConversation(conversation.id);
-        setupActionCable(conversation.id);
-      } catch (error) {
-        console.error('Error loading messages', error);
-        setErrorMessage(getChatErrorMessage(error));
-      } finally {
-        setLoadingMessages(false);
-      }
-    },
-    [canUseP2PChat, loadMessagesForConversation, setupActionCable]
-  );
-
-  const loadConversations = useCallback(async () => {
-    if (!canUseP2PChat) {
-      setLoading(false);
-      return;
-    }
-
+  // Fetch conversations
+  const fetchConversations = useCallback(async (preferredCompanyId?: number, preferredConvId?: number) => {
     try {
+      setLoading(true);
       setErrorMessage(null);
-      const data = await conversationsApi.getAll({ silent: true, silentStatusCodes: [401] });
-      const dedupedData = dedupeConversations(data || []);
-      setConversations(dedupedData);
+      const list = await conversationsApi.getAll();
+      setConversations(list || []);
 
-      const companyId = searchParams.get('company_id');
-      if (companyId) {
-        let conversation = dedupedData.find((item) => item.company_id === Number(companyId));
-
-        if (!conversation) {
-          try {
-            conversation = await conversationsApi.create(Number(companyId));
-            setConversations((prev) =>
-              conversation ? dedupeConversations([conversation, ...prev]) : prev
-            );
-          } catch (createError) {
-            console.warn('Could not create conversation:', createError);
-            setErrorMessage(getChatErrorMessage(createError));
-          }
+      if (preferredConvId) {
+        const found = list.find((c) => c.id === preferredConvId);
+        if (found) {
+          setActiveConversation(found);
+          setIsMobileOpen(true);
+          return;
         }
+      }
 
-        if (conversation) {
-          await selectConversation(conversation, { openOnMobile: true });
+      if (preferredCompanyId) {
+        const existing = list.find((c) => c.company_id === preferredCompanyId);
+        if (existing) {
+          setActiveConversation(existing);
+          setIsMobileOpen(true);
+        } else {
+          const created = await conversationsApi.create(preferredCompanyId);
+          setConversations((prev) => [created, ...prev]);
+          setActiveConversation(created);
+          setIsMobileOpen(true);
         }
-      } else if (dedupedData.length > 0) {
-        await selectConversation(dedupedData[0], { openOnMobile: false });
+      } else if (list.length > 0 && !activeConversation) {
+        setActiveConversation(list[0]);
       }
-    } catch (error) {
-      const status =
-        (error as ChatApiErrorShape).status || (error as ChatApiErrorShape).context?.status;
-      if (status !== 401) {
-        console.error('Error loading conversations', error);
-      }
-      setErrorMessage(getChatErrorMessage(error));
+    } catch (err: any) {
+      setErrorMessage('Não foi possível carregar suas conversas no momento.');
     } finally {
       setLoading(false);
     }
-  }, [canUseP2PChat, searchParams, selectConversation]);
+  }, [activeConversation]);
 
-  const { isOnline } = useRealtimeConnection(() => {
-    // When reconnecting, fetch conversations again and reload current conversation
-    void loadConversations();
-    if (activeConversation) {
-      setupActionCable(activeConversation.id);
-    }
-  });
-
+  // Initial load
   useEffect(() => {
     if (authLoading) return;
-
     if (!isAuthenticated) {
-      setErrorMessage('Faça login para iniciar uma conversa.');
-      setConversations([]);
-      setActiveConversation(null);
-      setMessages([]);
-      setLoading(false);
+      router.push('/login?redirect=/chat');
       return;
     }
 
-    if (!canUseP2PChat) {
-      setErrorMessage(
-        'O chat direto fica disponível apenas para usuários compradores cadastrados.'
-      );
-      setConversations([]);
-      setActiveConversation(null);
-      setMessages([]);
-      setLoading(false);
-      return;
-    }
+    const companyIdParam = searchParams.get('company_id');
+    const convIdParam = searchParams.get('conversation_id');
 
-    void loadConversations();
-  }, [authLoading, canUseP2PChat, isAuthenticated, loadConversations]);
+    fetchConversations(
+      companyIdParam ? Number(companyIdParam) : undefined,
+      convIdParam ? Number(convIdParam) : undefined
+    );
+  }, [authLoading, isAuthenticated, searchParams, router, fetchConversations]);
+
+  // Load messages for active conversation
+  const loadMessages = useCallback(async (convId: number) => {
+    try {
+      setLoadingMessages(true);
+      const data = await conversationsApi.getMessages(convId);
+      setMessages(data || []);
+      conversationsApi.markRead(convId).catch(() => {});
+    } catch (err) {
+      console.error('Erro ao carregar mensagens:', err);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!canUseP2PChat || !isRealtimeEnabled()) {
-      listChannelRef.current?.unsubscribe();
-      listChannelRef.current = null;
-      return;
+    if (activeConversation?.id) {
+      loadMessages(activeConversation.id);
+    } else {
+      setMessages([]);
     }
+  }, [activeConversation?.id, loadMessages]);
 
-    if (!cableRef.current) {
-      cableRef.current = createConsumer(resolveCableUrl());
-    }
+  // ActionCable realtime
+  useEffect(() => {
+    if (!isRealtimeEnabled() || typeof window === 'undefined') return;
 
-    listChannelRef.current?.unsubscribe();
-    listChannelRef.current = cableRef.current.subscriptions.create(
-      { channel: 'ConversationListChannel' },
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const cableUrl = resolveCableUrl();
+    const consumer = createConsumer(cableUrl);
+    cableRef.current = consumer;
+    setRealtimeStatus('connecting');
+
+    // Subscribe to user/company list stream
+    const listStreamName =
+      viewerRole === 'Company'
+        ? `conversation_list:company:${user?.company_id || user?.company?.id || user?.id}`
+        : `conversation_list:user:${user?.id}`;
+
+    listChannelRef.current = consumer.subscriptions.create(
+      { channel: 'ConversationChannel', stream_name: listStreamName },
       {
-        received: (payload: ChatCablePayload) => {
-          if (payload.conversation) {
-            upsertConversation(payload.conversation);
+        connected: () => setRealtimeStatus('connected'),
+        disconnected: () => setRealtimeStatus('disconnected'),
+        rejected: () => setRealtimeStatus('rejected'),
+        received: (data: any) => {
+          if (data.conversation) {
+            setConversations((prev) => {
+              const idx = prev.findIndex((c) => c.id === data.conversation.id);
+              if (idx >= 0) {
+                const updated = [...prev];
+                updated[idx] = { ...updated[idx], ...data.conversation };
+                return updated;
+              }
+              return [data.conversation, ...prev];
+            });
           }
         },
       }
-    );
+    ) as CableSubscription;
 
     return () => {
       listChannelRef.current?.unsubscribe();
-      listChannelRef.current = null;
+      consumer.disconnect();
     };
-  }, [canUseP2PChat, upsertConversation]);
+  }, [user, viewerRole]);
 
+  // ActionCable for active conversation stream
   useEffect(() => {
-    scrollToBottom('auto');
-  }, [messages.length, scrollToBottom]);
+    if (!cableRef.current || !activeConversation?.id) return;
 
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      channelRef.current?.unsubscribe();
-      listChannelRef.current?.unsubscribe();
-      cableRef.current?.disconnect();
-    };
-  }, []);
+    channelRef.current?.unsubscribe();
 
-  const createClientMessageId = () => {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-      return crypto.randomUUID();
-    }
-
-    return `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  };
-
-  const handleInputChange = (value: string) => {
-    setInputMessage(value);
-
-    if (!activeConversation || realtimeStatus !== 'connected') return;
-
-    channelRef.current?.perform?.('typing', { typing: true });
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      channelRef.current?.perform?.('typing', { typing: false });
-    }, 1200);
-  };
-
-  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
-      setErrorMessage('Anexe apenas imagem ou PDF.');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage('O anexo deve ter no máximo 10MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setPendingAttachment({
-          data: reader.result,
-          filename: file.name,
-          content_type: file.type,
-        });
+    channelRef.current = cableRef.current.subscriptions.create(
+      { channel: 'ConversationChannel', conversation_id: activeConversation.id },
+      {
+        received: (data: any) => {
+          if (data.event === 'message.created' && data.message) {
+            setMessages((prev) => {
+              if (
+                prev.some(
+                  (m) =>
+                    m.id === data.message.id ||
+                    (data.message.client_message_id &&
+                      m.client_message_id === data.message.client_message_id)
+                )
+              ) {
+                return prev.map((m) =>
+                  m.client_message_id === data.message.client_message_id || m.id === data.message.id
+                    ? { ...m, ...data.message, sendStatus: 'delivered' }
+                    : m
+                );
+              }
+              return [...prev, { ...data.message, sendStatus: 'delivered' }];
+            });
+          } else if (data.event === 'message.read') {
+            setMessages((prev) =>
+              prev.map((m) => (m.sender_type === viewerRole ? { ...m, sendStatus: 'read' } : m))
+            );
+          }
+        },
       }
+    ) as CableSubscription;
+
+    return () => {
+      channelRef.current?.unsubscribe();
     };
-    reader.readAsDataURL(file);
-  };
+  }, [activeConversation?.id, viewerRole]);
 
-  const blockConversation = async () => {
+  // Optimistic Send Message Handler
+  const handleSendMessage = async (body: string, attachmentsPayload?: PendingAttachment[]) => {
     if (!activeConversation) return;
-    const reason = window.prompt('Motivo do bloqueio');
-    if (reason === null) return;
+
+    const clientMsgId = `client-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    const optimisticMsg: OptimisticMessage = {
+      id: 0,
+      conversation_id: activeConversation.id,
+      body,
+      sender_type: viewerRole === 'Company' ? 'Company' : 'User',
+      client_message_id: clientMsgId,
+      created_at: new Date().toISOString(),
+      read_at: null,
+      delivered_at: null,
+      sendStatus: 'sending',
+      attachments: attachmentsPayload?.map((att) => ({
+        id: 0,
+        filename: att.filename,
+        content_type: att.content_type,
+        byte_size: 0,
+        url: att.data,
+      })) || [],
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
 
     try {
-      const updated = await conversationsApi.block(activeConversation.id, reason);
-      upsertConversation(updated);
-    } catch (error) {
-      setErrorMessage(getChatErrorMessage(error));
-    }
-  };
-
-  const reportConversation = async () => {
-    if (!activeConversation) return;
-    const details = window.prompt('Descreva o problema');
-    if (details === null) return;
-
-    try {
-      const result = await conversationsApi.report(activeConversation.id, 'other', details);
-      upsertConversation(result.conversation);
-      setErrorMessage('Denúncia registrada para auditoria.');
-    } catch (error) {
-      setErrorMessage(getChatErrorMessage(error));
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!canUseP2PChat || (!inputMessage.trim() && !pendingAttachment) || !activeConversation) {
-      return;
-    }
-
-    if (activeConversation.status === 'blocked') {
-      setErrorMessage('Esta conversa está bloqueada.');
-      return;
-    }
-
-    try {
-      setErrorMessage(null);
-      const msgText = inputMessage;
-      const attachment = pendingAttachment;
-      const clientMsgId = createClientMessageId();
-
-      const optimisticMsg: DirectMessage = {
-        id: -Date.now(),
-        conversation_id: activeConversation.id,
-        body: msgText,
-        sender_type: 'User',
+      const created = await conversationsApi.sendMessage(activeConversation.id, body, {
         client_message_id: clientMsgId,
-        created_at: new Date().toISOString(),
-        delivered_at: new Date().toISOString(),
-      };
-
-      appendMessage(optimisticMsg);
-      scrollToBottom();
-      setInputMessage('');
-      setPendingAttachment(null);
-      channelRef.current?.perform?.('typing', { typing: false });
-
-      const newMessage = await conversationsApi.sendMessage(activeConversation.id, msgText, {
-        client_message_id: clientMsgId,
-        attachments: attachment ? [attachment] : undefined,
-        client: 'web',
+        attachments: attachmentsPayload,
+        client: 'pwa',
       });
-      setMessages((current) => current.map((m) => (m.client_message_id === clientMsgId || m.id === optimisticMsg.id ? newMessage : m)));
-      scrollToBottom();
-    } catch (error) {
-      console.error('Error sending message', error);
-      setErrorMessage(getChatErrorMessage(error));
+
+      setMessages((prev) =>
+        prev.map((m) => (m.client_message_id === clientMsgId ? { ...created, sendStatus: 'sent' } : m))
+      );
+
+      // Update conversation last message in list
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === activeConversation.id) {
+            return {
+              ...c,
+              last_message_at: created.created_at,
+              last_message: created.body,
+            };
+          }
+          return c;
+        })
+      );
+    } catch (err) {
+      setMessages((prev) =>
+        prev.map((m) => (m.client_message_id === clientMsgId ? { ...m, sendStatus: 'failed' } : m))
+      );
     }
   };
 
-  const openLogin = () => {
-    const returnTo =
-      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/chat';
-    router.push(`/login?return_to=${encodeURIComponent(returnTo)}`);
-  };
-
-  const openRegister = () => {
-    const returnTo =
-      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/chat';
-    router.push(`/register?return_to=${encodeURIComponent(returnTo)}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="mx-auto flex h-[calc(100dvh-4rem-4.75rem-var(--safe-area-inset-bottom))] w-full max-w-7xl items-center justify-center bg-[#F8FAFC] p-4 md:my-4 md:h-[calc(100vh-7rem)] md:rounded-2xl md:border md:border-slate-200 md:bg-white">
-        <Skeleton className="h-full min-h-[420px] w-full max-w-4xl rounded-2xl" />
-      </div>
+  const handleRetryMessage = async (msg: OptimisticMessage) => {
+    if (!msg.body || !activeConversation) return;
+    setMessages((prev) =>
+      prev.map((m) => (m.client_message_id === msg.client_message_id ? { ...m, sendStatus: 'sending' } : m))
     );
-  }
+
+    try {
+      const created = await conversationsApi.sendMessage(activeConversation.id, msg.body, {
+        client_message_id: msg.client_message_id || undefined,
+        client: 'pwa',
+      });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_message_id === msg.client_message_id ? { ...created, sendStatus: 'sent' } : m
+        )
+      );
+    } catch (err) {
+      setMessages((prev) =>
+        prev.map((m) => (m.client_message_id === msg.client_message_id ? { ...m, sendStatus: 'failed' } : m))
+      );
+    }
+  };
+
+  const partnerName =
+    viewerRole === 'Company'
+      ? activeConversation?.user?.name || activeConversation?.user_name || 'Cliente'
+      : activeConversation?.company?.name || activeConversation?.company_name || 'Empresa';
+
+  const partnerAvatar =
+    viewerRole === 'Company'
+      ? activeConversation?.user?.avatar_url || activeConversation?.user_avatar_url || undefined
+      : activeConversation?.company?.logo_url || activeConversation?.company_logo_url || undefined;
 
   return (
-    <main className="mx-auto flex h-[calc(100dvh-4rem-4.75rem-var(--safe-area-inset-bottom))] w-full max-w-7xl overflow-hidden bg-[#F8FAFC] text-[#111827] md:my-4 md:h-[calc(100vh-7rem)] md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-sm">
-      <section
+    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-white">
+      {/* Sidebar: Conversation List */}
+      <div
         className={cn(
-          'h-full w-full flex-col bg-white md:flex md:w-[340px] md:shrink-0 md:border-r md:border-slate-200',
-          isMobileConversationOpen ? 'hidden md:flex' : 'flex'
+          'w-full md:w-80 lg:w-96 shrink-0 h-full',
+          isMobileOpen ? 'hidden md:block' : 'block'
         )}
-        aria-label="Lista de conversas"
       >
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-normal text-[#111827]">Mensagens</h1>
-            <p className="text-xs font-normal text-[#64748B]">
-              {visibleConversations.length} conversa{visibleConversations.length === 1 ? '' : 's'}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-[#64748B]"
-            onClick={() => void loadConversations()}
-            aria-label="Atualizar conversas"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </header>
+        <ConversationList
+          conversations={conversations}
+          selectedId={activeConversation?.id || null}
+          viewerRole={viewerRole}
+          isLoading={loading}
+          onSelect={(conv) => {
+            setActiveConversation(conv);
+            setIsMobileOpen(true);
+          }}
+          onRefresh={() => fetchConversations()}
+        />
+      </div>
 
-        {/* Chips de Filtro Horizontais estilo LinkedIn */}
-        <div className="flex gap-1.5 overflow-x-auto px-3 py-2 bg-slate-50/70 border-b border-slate-200 text-xs no-scrollbar shrink-0">
-          {[
-            { id: 'all', label: 'Todas' },
-            { id: 'budgets', label: 'Orçamentos 📑' },
-            { id: 'unread', label: 'Não lidas 🔴' },
-            { id: 'resolved', label: 'Resolvidas ✅' },
-          ].map((chip) => (
-            <button
-              key={chip.id}
-              onClick={() => setFilterChip(chip.id as any)}
-              className={cn(
-                'rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
-                filterChip === chip.id
-                  ? 'bg-[#1646A0] text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-              )}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white">
-          {errorMessage && (
-            <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
-              {errorMessage}
-              {!isAuthenticated && (
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    size="sm"
-                    className="h-9 rounded-full bg-[#0F3D8E] px-4 text-white hover:bg-[#1646A0]"
-                    onClick={openLogin}
-                  >
-                    Entrar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-9 rounded-full"
-                    onClick={openRegister}
-                  >
-                    Criar conta
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {visibleConversations.length === 0 ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center px-6 text-center text-[#64748B]">
-              <MessageCircle className="mb-3 h-9 w-9 text-slate-300" />
-              <p className="text-sm font-medium text-[#111827]">Nenhuma conversa encontrada</p>
-              <p className="mt-1 text-xs leading-relaxed">
-                Quando você iniciar um chat com uma empresa, ele aparecerá aqui.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-[#E5E7EB]">
-              {visibleConversations.map((conversation) => {
-                const active = activeConversation?.id === conversation.id;
-                const unreadCount =
-                  conversation.unread_count ?? conversation.user_unread_count ?? 0;
-                const timeLabel = formatConversationTime(
-                  conversation.last_message_at || conversation.updated_at || conversation.created_at
-                );
-
-                return (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    onClick={() => void selectConversation(conversation, { openOnMobile: true })}
-                    className={cn(
-                      'flex h-[72px] w-full items-center gap-3 bg-white px-4 text-left transition-colors hover:bg-slate-50',
-                      active && 'md:bg-slate-50'
-                    )}
-                  >
-                    <Avatar className="h-11 w-11 shrink-0 border border-[#E5E7EB] bg-slate-50">
-                      <AvatarImage
-                        src={conversation.company_logo || conversation.company_avatar || ''}
-                      />
-                      <AvatarFallback className="bg-slate-100 text-sm font-medium text-[#0F3D8E]">
-                        {getInitials(conversation.company_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="truncate text-sm font-medium text-[#111827]">
-                          {conversation.company_name || 'Empresa'}
-                        </p>
-                        {timeLabel && (
-                          <span className="ml-auto shrink-0 text-[11px] font-normal text-[#64748B]">
-                            {timeLabel}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1 flex min-w-0 items-center gap-2">
-                        <p className="truncate text-xs font-normal leading-tight text-[#64748B]">
-                          {getConversationPreview(conversation)}
-                        </p>
-                        {unreadCount > 0 && (
-                          <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#2563EB] px-1.5 text-[10px] font-semibold leading-none text-white">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section
+      {/* Main Chat Area */}
+      <div
         className={cn(
-          'h-full min-w-0 flex-1 flex-col bg-[#F8FAFC] md:flex',
-          isMobileConversationOpen ? 'flex' : 'hidden md:flex'
+          'flex-1 flex flex-col h-full min-w-0 bg-white',
+          !isMobileOpen ? 'hidden md:flex' : 'flex'
         )}
-        aria-label="Conversa"
       >
         {activeConversation ? (
           <>
-            <header className="flex h-16 shrink-0 items-center gap-3 border-b border-[#E5E7EB] bg-white px-3 md:h-[72px] md:px-4">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 shrink-0 rounded-full text-[#64748B] md:hidden"
-                onClick={() => setIsMobileConversationOpen(false)}
-                aria-label="Voltar para mensagens"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-white shrink-0 shadow-2xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileOpen(false)}
+                  className="md:hidden p-1 text-slate-500 hover:text-slate-900"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
 
-              <Avatar className="h-10 w-10 shrink-0 border border-[#E5E7EB] bg-slate-50">
-                <AvatarImage
-                  src={activeConversation.company_logo || activeConversation.company_avatar || ''}
-                />
-                <AvatarFallback className="bg-slate-100 text-sm font-medium text-[#0F3D8E]">
-                  {getInitials(activeConversation.company_name)}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="h-9 w-9 border border-slate-200 shrink-0">
+                  <AvatarImage src={getFullImageUrl(partnerAvatar)} alt={partnerName} />
+                  <AvatarFallback className="text-xs font-bold bg-slate-100 text-slate-700">
+                    {partnerName.slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate text-sm font-semibold leading-tight text-[#111827] md:text-base">
-                  {activeConversation.company_name || 'Empresa'}
-                </h2>
-                <p className="mt-0.5 flex items-center gap-1.5 text-xs font-normal text-[#64748B]">
-                  <span
-                    className={cn(
-                      'h-2 w-2 rounded-full',
-                      realtimeStatus === 'connected'
-                        ? 'bg-emerald-500'
-                        : realtimeStatus === 'connecting'
-                          ? 'bg-amber-500'
-                          : 'bg-slate-300'
-                    )}
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-slate-900 truncate">{partnerName}</h3>
+                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                    <span className="capitalize">{activeConversation.status || 'aberta'}</span>
+                    <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                    <span className="text-emerald-600 font-bold">{realtimeStatus}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeConversation.sla_due_at && (
+                  <SLABadge
+                    slaDueAt={activeConversation.sla_due_at}
+                    status={activeConversation.status}
                   />
-                  <span>{getRealtimeLabel(realtimeStatus)}</span>
-                  {typingByCompany && <span className="text-[#2563EB]">digitando</span>}
-                </p>
-              </div>
+                )}
 
-              <div className="hidden items-center gap-2 md:flex">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 rounded-full border-[#E5E7EB] text-[#64748B]"
-                  onClick={reportConversation}
-                  aria-label="Denunciar conversa"
-                >
-                  <ShieldAlert className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-9 rounded-full border-[#E5E7EB] px-3 text-sm font-medium text-[#64748B]"
-                  onClick={blockConversation}
-                  disabled={activeConversation.status === 'blocked'}
-                >
-                  Bloquear
-                </Button>
-              </div>
-
-              <div className="md:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-full text-[#64748B]"
-                      aria-label="Abrir ações da conversa"
-                    >
-                      <MoreVertical className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 rounded-lg">
+                      <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 rounded-xl border-[#E5E7EB]">
-                    <DropdownMenuLabel className="text-xs font-medium text-[#64748B]">
-                      Ações
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
-                      <Link href={`/companies/${activeConversation.company_id}`}>
-                        <Building2 className="h-4 w-4" />
-                        Ver empresa
-                      </Link>
-                    </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="w-44 text-xs font-medium">
+                    {viewerRole === 'Company' && activeConversation.status !== 'resolved' && (
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          await conversationsApi.resolve(activeConversation.id);
+                          setActiveConversation((prev) => (prev ? { ...prev, status: 'resolved' } : null));
+                        }}
+                      >
+                        Marcar como Resolvida
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
-                      className="gap-2 rounded-lg text-sm"
-                      onClick={reportConversation}
+                      className="text-red-600 focus:text-red-700"
+                      onClick={async () => {
+                        const reason = prompt('Motivo do bloqueio:');
+                        if (reason) {
+                          await conversationsApi.block(activeConversation.id, reason);
+                          setActiveConversation((prev) => (prev ? { ...prev, status: 'blocked' } : null));
+                        }
+                      }}
                     >
-                      <Flag className="h-4 w-4" />
-                      Denunciar
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="gap-2 rounded-lg text-sm text-red-600 focus:text-red-600"
-                      disabled={activeConversation.status === 'blocked'}
-                      onClick={blockConversation}
-                    >
-                      <Ban className="h-4 w-4" />
-                      Bloquear
+                      Bloquear Conversa
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </header>
-
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F8FAFC] px-4 py-3">
-              {errorMessage && (
-                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-                  {errorMessage}
-                </div>
-              )}
-
-              {loadingMessages ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Skeleton
-                      key={index}
-                      className={cn(
-                        'h-11 rounded-2xl',
-                        index % 2 === 0 ? 'mr-auto w-7/12' : 'ml-auto w-8/12'
-                      )}
-                    />
-                  ))}
-                </div>
-              ) : messages.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {messages.map((message, index) => {
-                    const isMine = message.sender_type === 'User';
-                    const attachmentList: Array<{ id?: number | string; filename?: string; url?: string; content_type?: string }> =
-                      (message.attachments || []).length > 0
-                        ? (message.attachments as any[])
-                        : message.attachment_url
-                          ? [{ id: 0, filename: 'Anexo', url: message.attachment_url, content_type: '' }]
-                          : [];
-
-                    return (
-                      <div
-                        key={message.id || message.client_message_id || index}
-                        className={cn('flex', isMine ? 'justify-end' : 'justify-start')}
-                      >
-                        <div
-                          className={cn(
-                            'max-w-[82%] break-words rounded-2xl px-3.5 py-2 text-sm font-normal leading-relaxed md:max-w-[68%]',
-                            isMine
-                              ? 'rounded-br-md bg-[#1646A0] text-white'
-                              : 'rounded-bl-md border border-[#E5E7EB] bg-white text-[#111827]'
-                          )}
-                        >
-                          {message.body && (
-                            <>
-                              <p className="whitespace-pre-wrap break-words">{message.body}</p>
-                              <RichLinkPreview text={message.body} isSelf={isMine} />
-                            </>
-                          )}
-                          {attachmentList.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {attachmentList.map((attachment, attIdx) => {
-                                const targetUrl = attachment.url ? getFullImageUrl(attachment.url) : '#';
-                                const fileName = attachment.filename || 'Anexo do Orçamento';
-                                return (
-                                  <a
-                                    key={attachment.id || attIdx}
-                                    href={targetUrl}
-                                    download={fileName}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className={cn(
-                                      'flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium',
-                                      isMine
-                                        ? 'bg-white/15 text-white hover:bg-white/25'
-                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                    )}
-                                  >
-                                    <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="truncate">{fileName}</span>
-                                  </a>
-                                );
-                              })}
-                            </div>
-                          )}
-                          {isMine && (
-                            <p className="mt-1 flex items-center justify-end gap-1 text-[11px] font-normal leading-none text-white/75">
-                              <CheckCheck className="h-3 w-3" />
-                              {message.read_at
-                                ? 'Lida'
-                                : message.delivered_at
-                                  ? 'Entregue'
-                                  : 'Enviando'}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {activeConversation.status === 'blocked' && (
-                    <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-center text-sm font-medium text-red-700">
-                      Esta conversa está bloqueada. Novas mensagens estão desativadas.
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              ) : (
-                <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center">
-                  <MessageCircle className="mb-3 h-10 w-10 text-slate-300" />
-                  <p className="text-sm font-medium text-[#111827]">Sem mensagens ainda</p>
-                  <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#64748B]">
-                    Envie uma primeira mensagem para iniciar o atendimento.
-                  </p>
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
             </div>
 
-            <footer className="shrink-0 border-t border-[#E5E7EB] bg-white px-3 py-2">
-              {pendingAttachment && (
-                <div className="mx-auto mb-2 flex max-w-4xl items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-[#0F3D8E]">
-                  <span className="truncate">{pendingAttachment.filename}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPendingAttachment(null)}
-                    aria-label="Remover anexo"
-                    className="rounded-full p-1 text-[#64748B] hover:bg-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
+            {/* Timeline */}
+            <MessageTimeline
+              messages={messages}
+              viewerRole={viewerRole}
+              partnerName={partnerName}
+              partnerAvatar={partnerAvatar}
+              onRetryMessage={handleRetryMessage}
+            />
 
-              <div className="mx-auto flex max-w-4xl items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  className="hidden"
-                  onChange={handleAttachmentChange}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0 rounded-full border-[#E5E7EB] text-[#64748B]"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={activeConversation.status === 'blocked'}
-                  aria-label="Anexar arquivo"
-                >
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-                <Input
-                  value={inputMessage}
-                  onChange={(event) => handleInputChange(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      void sendMessage();
-                    }
-                  }}
-                  placeholder="Digite sua mensagem..."
-                  className="h-10 flex-1 rounded-full border-[#E5E7EB] bg-[#F8FAFC] px-4 text-sm font-normal focus-visible:ring-[#2563EB]/20"
-                  disabled={activeConversation.status === 'blocked'}
-                />
-                <Button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  size="icon"
-                  className="h-10 w-10 shrink-0 rounded-full bg-[#0F3D8E] text-white hover:bg-[#1646A0]"
-                  disabled={
-                    activeConversation.status === 'blocked' ||
-                    (!inputMessage.trim() && !pendingAttachment)
-                  }
-                  aria-label="Enviar mensagem"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </footer>
+            {/* Composer */}
+            <MessageComposer
+              onSendMessage={handleSendMessage}
+              disabled={activeConversation.status === 'blocked'}
+              allowSavedReplies={viewerRole === 'Company'}
+            />
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center text-[#64748B]">
-            <MessageCircle className="mb-4 h-12 w-12 text-slate-300" />
-            <p className="text-sm font-medium text-[#111827]">Selecione uma conversa</p>
-            <p className="mt-1 max-w-sm text-xs leading-relaxed">
-              No desktop, escolha uma conversa na lista para visualizar o histórico.
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/40">
+            <MessageCircle className="h-12 w-12 text-slate-300 mb-3" />
+            <h3 className="text-sm font-bold text-slate-800">Selecione uma conversa</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+              Escolha um atendimento na lista lateral para visualizar o histórico de mensagens e responder.
             </p>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* Sidebar Direita de Contexto & Monetização (LinkedIn Level) */}
-      <RightChatSidebar
-        activeConversation={activeConversation}
-        messages={messages}
-        isUser={user?.role === 'review'}
-      />
-    </main>
+      {/* Right Sidebar Details */}
+      {activeConversation && (
+        <RightChatSidebar
+          activeConversation={activeConversation}
+          messages={messages}
+          isUser={viewerRole === 'User'}
+          className="hidden lg:block w-72 shrink-0 border-l border-slate-200 bg-white"
+        />
+      )}
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 
 export interface Notification {
   id: number;
@@ -124,14 +125,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) return;
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
-      const response = await fetch(`${baseUrl}/api/v1/notifications/unread_count`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        },
+      const url = buildApiUrl('/notifications/unread_count');
+      const headers = getApiRequestHeaders({
+        'Authorization': `Bearer ${token}`
       });
 
+      const response = await fetch(url, { headers });
       if (!response.ok) return;
 
       const data = await response.json();
@@ -146,14 +145,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) return;
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br';
-      const response = await fetch(`${baseUrl}/api/v1/conversations/unread_count`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        },
+      const url = buildApiUrl('/conversations/unread_count');
+      const headers = getApiRequestHeaders({
+        'Authorization': `Bearer ${token}`
       });
 
+      const response = await fetch(url, { headers });
       if (!response.ok) return;
 
       const data = await response.json();

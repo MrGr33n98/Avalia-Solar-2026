@@ -133,7 +133,9 @@ export function FloatingConversationList({
                 'text-xs truncate line-clamp-1',
                 unreadCount > 0 ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'
               )}>
-                {conversation.last_message || 'Nova conversa iniciada'}
+                {typeof conversation.last_message === 'string'
+                  ? conversation.last_message
+                  : conversation.last_message?.body || 'Nova conversa iniciada'}
               </p>
 
               {isBudget && (
