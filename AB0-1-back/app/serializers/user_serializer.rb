@@ -1,7 +1,6 @@
 class UserSerializer < ActiveModel::Serializer
   attributes :id,
              :email,
-             :name,
              :role,
              :status,
              :company_id,
@@ -11,6 +10,10 @@ class UserSerializer < ActiveModel::Serializer
              :state,
              :phone,
              :avatar_url
+
+  attribute :name do
+    object.display_name
+  end
 
   attribute :company_name do
     object.company&.name

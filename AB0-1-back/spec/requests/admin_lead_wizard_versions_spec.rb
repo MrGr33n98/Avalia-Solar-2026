@@ -13,6 +13,7 @@ RSpec.describe 'Admin Lead Wizard Versions', type: :request do
   let!(:category) { Category.create!(name: 'Solar', description: 'Categoria solar') }
 
   before do
+    LeadWizardVersion.destroy_all
     sign_in admin_user
   end
 
@@ -28,6 +29,7 @@ RSpec.describe 'Admin Lead Wizard Versions', type: :request do
       category: category,
       template_key: 'solar_category',
       template_version: 2,
+      version_number: nil,
       status: 'draft',
       ui_theme: 'auto',
       thank_you_title: 'Obrigado'
@@ -126,20 +128,20 @@ RSpec.describe 'Admin Lead Wizard Versions', type: :request do
     end
   end
 
-  describe 'POST /admin/lead_wizard_versions/:id/clone' do
+  describe 'POST /admin/lead_wizard_versions/:id/clone_draft' do
     it 'creates a draft clone' do
       version = create_published_version
 
       expect do
-        post clone_admin_lead_wizard_version_path(version)
+        post clone_draft_admin_lead_wizard_version_path(version)
       end.to change(LeadWizardVersion, :count).by(1)
 
-      clone = LeadWizardVersion.order(:id).last
-      expect(response).to redirect_to(edit_admin_lead_wizard_version_path(clone))
-      expect(clone.status).to eq('draft')
-      expect(clone.version_number).to eq(version.version_number + 1)
-      expect(clone.category).to eq(version.category)
-      expect(clone.lead_wizard_sections.first.lead_wizard_fields.first.key).to eq('email')
+      cloned_version = LeadWizardVersion.order(:id).last
+      expect(response).to redirect_to(edit_admin_lead_wizard_version_path(cloned_version))
+      expect(cloned_version.status).to eq('draft')
+      expect(cloned_version.version_number).to eq(version.version_number + 1)
+      expect(cloned_version.category).to eq(version.category)
+      expect(cloned_version.lead_wizard_sections.first.lead_wizard_fields.first.key).to eq('email')
     end
   end
 end

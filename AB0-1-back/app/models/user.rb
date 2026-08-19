@@ -300,6 +300,13 @@ class User < ApplicationRecord
     user
   end
 
+  def display_name
+    parts = name.to_s.strip.split(/\s+/)
+    return name if parts.size <= 2
+
+    "#{parts.first} #{parts.last}"
+  end
+
   protected
 
   def after_confirmation

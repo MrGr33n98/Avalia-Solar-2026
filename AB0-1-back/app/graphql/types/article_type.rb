@@ -48,7 +48,7 @@ module Types
 
     def author_name
       author = dataloader.with(::Loaders::AssociationLoader, :author).load(object)
-      author&.name || author&.email || 'Autor'
+      author&.display_name || author&.email || 'Autor'
     end
 
     def related_articles

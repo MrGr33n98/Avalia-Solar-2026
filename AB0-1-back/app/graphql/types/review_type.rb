@@ -29,16 +29,12 @@ module Types
       dataloader.with(::Loaders::AssociationLoader, :company).load(object)
     end
 
-    # Retorna apenas o primeiro nome do autor por privacidade
+    # Retorna o display_name (primeiro e ultimo nome)
     def author_name
       user = dataloader.with(::Loaders::AssociationLoader, :user).load(object)
       return 'Anônimo' if user.nil?
 
-      full_name = user.name.to_s.strip
-      return 'Usuário' if full_name.blank?
-
-      # Retorna apenas primeiro nome por privacidade
-      full_name.split.first
+      user.display_name
     end
   end
 end

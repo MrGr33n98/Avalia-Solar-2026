@@ -20,7 +20,7 @@ RSpec.describe Feed::Serializer, type: :service do
 
       expect(result[:actor][:id]).to eq(user.id)
       expect(result[:actor][:type]).to eq('creator')
-      expect(result[:actor][:display_name]).to eq(user.name)
+      expect(result[:actor][:display_name]).to eq(user.display_name)
       expect(result[:actor][:slug]).to eq('felipe-creator')
       expect(result[:actor][:headline]).to eq('Expert Solar')
       expect(result[:author]).to eq(result[:actor])

@@ -64,7 +64,7 @@ ActiveAdmin.register BannerAddonSubscription do
 
   action_item :extend, only: :show do
     if resource.status == 'active'
-      link_to 'Estender (+7 dias)', extend_admin_banner_addon_subscription_path(resource), method: :put, data: { confirm: 'Adicionar 7 dias à validade?' }
+      link_to 'Estender (+7 dias)', extend_period_admin_banner_addon_subscription_path(resource), method: :put, data: { confirm: 'Adicionar 7 dias à validade?' }
     end
   end
 
@@ -85,7 +85,7 @@ ActiveAdmin.register BannerAddonSubscription do
     redirect_to resource_path(resource), notice: 'Contratação ativada com sucesso.'
   end
 
-  member_action :extend, method: :put do
+  member_action :extend_period, method: :put do
     BannerAddons::LifecycleService.extend_subscription(resource, 7)
     redirect_to resource_path(resource), notice: 'Contratação estendida por 7 dias.'
   end

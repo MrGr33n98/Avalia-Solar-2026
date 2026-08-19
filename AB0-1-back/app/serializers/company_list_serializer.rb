@@ -128,7 +128,7 @@ class CompanyListSerializer < ActiveModel::Serializer
 
       if reviews_scope.any?
         recent_reviewer_avatars = reviews_scope.map do |review|
-          name = review.user&.name || review.author_name || 'Cliente'
+          name = review.user&.display_name || review.author_name || 'Cliente'
           avatar_url = review.user&.avatar_url
           avatar_url = "https://ui-avatars.com/api/?name=#{CGI.escape(name)}&background=0D8ABC&color=fff&size=128" if avatar_url.blank?
           {

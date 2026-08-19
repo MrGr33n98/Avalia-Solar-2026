@@ -25,7 +25,7 @@ ActiveAdmin.register LeadWizardVersion do
   end
 
   action_item :clone_version, only: :show do
-    link_to 'Clone as Draft', clone_admin_lead_wizard_version_path(resource), method: :post, class: 'member_link'
+    link_to 'Clone as Draft', clone_draft_admin_lead_wizard_version_path(resource), method: :post, class: 'member_link'
   end
 
   action_item :new_section, only: :show do
@@ -45,9 +45,9 @@ ActiveAdmin.register LeadWizardVersion do
     redirect_to resource_path(resource), notice: 'Wizard version archived.'
   end
 
-  member_action :clone, method: :post do
-    clone = LeadWizard::VersionCloner.call(resource)
-    redirect_to edit_admin_lead_wizard_version_path(clone), notice: 'Draft clone created.'
+  member_action :clone_draft, method: :post do
+    cloned_version = LeadWizard::VersionCloner.call(resource)
+    redirect_to edit_admin_lead_wizard_version_path(cloned_version), notice: 'Draft clone created.'
   end
 
   controller do

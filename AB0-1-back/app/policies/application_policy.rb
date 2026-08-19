@@ -40,6 +40,22 @@ class ApplicationPolicy
     admin?
   end
 
+  def publish?
+    admin?
+  end
+
+  def archive?
+    admin?
+  end
+
+  def clone_draft?
+    admin?
+  end
+
+  def extend_period?
+    admin?
+  end
+
   # ActiveAdmin authorizes custom member actions by their exact name.  Keep
   # moderation decisions admin-only; otherwise a visible “Aprovar” button can
   # still be denied because Pundit looks for `approve?`, not `update?`.

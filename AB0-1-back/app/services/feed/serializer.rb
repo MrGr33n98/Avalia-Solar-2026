@@ -76,8 +76,8 @@ module Feed
         {
           id: actor.id,
           type: profile&.creator_enabled ? 'creator' : 'user',
-          name: actor.name,
-          display_name: actor.name,
+          name: actor.display_name,
+          display_name: actor.display_name,
           slug: profile&.public_slug,
           avatar_url: avatar_url,
           headline: profile&.public_headline || profile&.profession || profile&.bio,

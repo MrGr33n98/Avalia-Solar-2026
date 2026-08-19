@@ -9,7 +9,7 @@ class PublicCreatorPublicationSerializer
       published_at: @publication.published_at&.iso8601, updated_at: @publication.updated_at&.iso8601,
       likes_count: @publication.likes_count, reading_time_minutes: [(@publication.body.to_s.split.size / 200.0).ceil, 1].max,
       cover_image: cover_image, attachments: attachments,
-      author: { id: @publication.user_id, name: @publication.user.name },
+      author: { id: @publication.user_id, name: @publication.user.display_name },
       canonical_path: canonical_path }
   end
 
