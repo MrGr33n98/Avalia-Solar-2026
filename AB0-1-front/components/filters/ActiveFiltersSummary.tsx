@@ -8,7 +8,7 @@ import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 
 interface ActiveFiltersSummaryProps {
   filters: CompanyFilters;
-  onRemove: (key: keyof CompanyFilters, value?: any) => void;
+  onRemove: (key: keyof CompanyFilters, value?: unknown) => void;
 }
 
 export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
@@ -23,10 +23,10 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
       const child = root.children.find(c => c.id === id);
       if (child) return child.name;
     }
-    return `Cat: ${id}`;
+    return 'Categoria selecionada';
   };
 
-  const activeChips: { key: keyof CompanyFilters; value: any; label: string }[] = [];
+  const activeChips: { key: keyof CompanyFilters; value: unknown; label: string }[] = [];
 
   if (filters.search) {
     activeChips.push({ key: 'search', value: filters.search, label: `Busca: "${filters.search}"` });
@@ -44,6 +44,7 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
   if (filters.featured) activeChips.push({ key: 'featured', value: true, label: 'Destaque' });
   if (filters.financing_enabled) activeChips.push({ key: 'financing_enabled', value: true, label: 'Crédito' });
   if (filters.whatsapp_enabled) activeChips.push({ key: 'whatsapp_enabled', value: true, label: 'WhatsApp' });
+  if (filters.has_reviews) activeChips.push({ key: 'has_reviews', value: true, label: 'Com avaliações' });
 
   if (activeChips.length === 0) return null;
 

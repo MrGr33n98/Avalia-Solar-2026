@@ -490,14 +490,34 @@ module Api
           limit: params[:limit],
           page: params[:page],
           per_page: params[:per_page],
+          fields: params[:fields],
           mine: params[:mine],
-          latitude: lat.present? ? lat.to_f.round(3) : nil,
-          longitude: lng.present? ? lng.to_f.round(3) : nil,
-          radius_km: params[:radius_km]
+          latitude: normalized_cache_float(lat),
+          longitude: normalized_cache_float(lng),
+          radius_km: normalized_cache_float(params[:radius_km])
         }.compact
 
+        filters[:category_ids] = normalized_cache_list(params[:category_ids], numeric: true)
+        filters[:state] = normalized_cache_list(params[:state])
+        filters[:city] = normalized_cache_list(params[:city])
+        filters[:serves_state] = normalized_cache_list(params[:serves_state])
+        filters[:serves_city] = normalized_cache_list(params[:serves_city])
+
         filter_hash = Digest::MD5.hexdigest(filters.sort.to_h.to_json)
-        "companies:index:v5:#{filter_hash}"
+        "companies:index:v6:#{filter_hash}"
+      end
+
+      def normalized_cache_float(value)
+        return if value.blank?
+
+        number = Float(value.to_s, exception: false)
+        number&.finite? ? number.round(5) : nil
+      end
+
+      def normalized_cache_list(value, numeric: false)
+        values = Array(value).flat_map { |entry| entry.to_s.split(',') }
+        values = values.map { |entry| numeric ? Integer(entry, exception: false) : entry.strip }
+        values.compact.reject { |entry| entry.respond_to?(:empty?) && entry.empty? }.uniq.sort
       end
 
       def cache_ttl_for_params(params)

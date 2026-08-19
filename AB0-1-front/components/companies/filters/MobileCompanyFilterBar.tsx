@@ -32,6 +32,7 @@ export default function MobileCompanyFilterBar({
     if (filters.category_ids.length > 0) count += 1;
     if (filters.verified) count += 1;
     if (filters.min_rating !== null) count += 1;
+    if (filters.has_reviews) count += 1;
     if (filters.whatsapp_enabled || filters.financing_enabled) count += 1;
     return count;
   }, [filters]);

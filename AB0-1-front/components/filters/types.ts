@@ -1,5 +1,3 @@
-import { CategoryTreeNode } from '@/types';
-
 export interface StateOption {
   state: string;
   count: number;
@@ -21,6 +19,7 @@ export interface CompanyFilters {
   featured: boolean;
   financing_enabled: boolean;
   whatsapp_enabled: boolean;
+  has_reviews: boolean;
   sort: string;
   page: number;
   lat: number | null;
@@ -38,6 +37,7 @@ export const DEFAULT_FILTERS: CompanyFilters = {
   featured: false,
   financing_enabled: false,
   whatsapp_enabled: false,
+  has_reviews: false,
   sort: 'recommended',
   page: 1,
   lat: null,

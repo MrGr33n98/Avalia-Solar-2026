@@ -117,6 +117,7 @@ export function CompaniesContent({
       city: filters.city.length > 0 ? filters.city : undefined,
       category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
       min_rating: filters.min_rating || undefined,
+      has_reviews: filters.has_reviews || undefined,
       verified: filters.verified || undefined,
       featured: filters.featured || undefined,
       financing_enabled: filters.financing_enabled || undefined,
@@ -142,6 +143,7 @@ export function CompaniesContent({
       filters.lat,
       filters.lng,
       filters.radius_km,
+      filters.has_reviews,
       viewMode,
     ]
   );
@@ -304,6 +306,8 @@ export function CompaniesContent({
       activeFilters.push({ filter_key: 'featured', filter_value: requestParams.featured });
     if (requestParams.sort)
       activeFilters.push({ filter_key: 'sort', filter_value: requestParams.sort });
+    if (requestParams.has_reviews)
+      activeFilters.push({ filter_key: 'has_reviews', filter_value: requestParams.has_reviews });
 
     if (activeFilters.length > 0) {
       activeFilters.forEach(({ filter_key, filter_value }) => {

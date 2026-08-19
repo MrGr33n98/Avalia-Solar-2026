@@ -426,9 +426,11 @@ export const companiesApiSafe = {
     serves_city?: string[] | string;
     min_rating?: number;
     verified?: boolean;
+    has_reviews?: boolean;
     page?: number;
     per_page?: number;
     fields?: 'card' | 'map';
+    signal?: AbortSignal;
   }): Promise<Company[]> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
@@ -463,6 +465,7 @@ export const companiesApiSafe = {
     serves_city?: string[] | string;
     min_rating?: number;
     verified?: boolean;
+    has_reviews?: boolean;
     page?: number;
     per_page?: number;
     fields?: 'card' | 'map';
@@ -473,12 +476,14 @@ export const companiesApiSafe = {
     radius_km?: number;
     lat?: number;
     lng?: number;
+    signal?: AbortSignal;
   }): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
     try {
-      const url = `companies${buildQueryParams(params || {})}`;
+      const { signal, ...queryParams } = params || {};
+      const url = `companies${buildQueryParams(queryParams)}`;
       console.log('[companiesApiSafe.getAllPaginated] Fetching:', url);
 
-      const response = await fetchApiSafe<any>(url);
+      const response = await fetchApiSafe<any>(url, { signal });
 
       console.log('[companiesApiSafe.getAllPaginated] Response structure:', {
         isArray: Array.isArray(response),
@@ -529,7 +534,8 @@ export const companiesApiSafe = {
     serves_city?: string[] | string;
     min_rating?: number;
     verified?: boolean;
-    fields?: 'card';
+    has_reviews?: boolean;
+    fields?: 'card' | 'map';
     financing_enabled?: boolean;
     whatsapp_enabled?: boolean;
     latitude?: number;
@@ -537,12 +543,15 @@ export const companiesApiSafe = {
     radius_km?: number;
     lat?: number;
     lng?: number;
+    signal?: AbortSignal;
   }): Promise<number | null> => {
     try {
+      const { signal, ...countParams } = params || {};
       const response = await companiesApiSafe.getAllPaginated({
-        ...(params || {}),
+        ...countParams,
         page: 1,
         per_page: 1,
+        signal,
       });
 
       const total = Number(response?.meta?.pagination?.total);

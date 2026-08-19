@@ -213,19 +213,22 @@ function QualitySection({
   featured,
   financing,
   whatsapp,
+  hasReviews,
   onChange,
 }: {
   verified: boolean;
   featured: boolean;
   financing: boolean;
   whatsapp: boolean;
-  onChange: (key: 'verified' | 'featured' | 'financing_enabled' | 'whatsapp_enabled', val: boolean) => void;
+  hasReviews: boolean;
+  onChange: (key: 'verified' | 'featured' | 'financing_enabled' | 'whatsapp_enabled' | 'has_reviews', val: boolean) => void;
 }) {
   const items = [
     { key: 'verified' as const, label: 'Apenas verificadas', description: 'Empresas com selo de confiança', value: verified },
     { key: 'featured' as const, label: 'Destaques', description: 'Empresas em evidência', value: featured },
     { key: 'financing_enabled' as const, label: 'Financiamento', description: 'Oferecem opções de crédito', value: financing },
     { key: 'whatsapp_enabled' as const, label: 'WhatsApp', description: 'Atendimento via chat', value: whatsapp },
+    { key: 'has_reviews' as const, label: 'Com avaliações', description: 'Possuem avaliações publicadas', value: hasReviews },
   ];
 
   return (
@@ -306,13 +309,15 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
 
   const hasActiveFilters = isFilterActive(filters);
   const activeCount =
-    filters.state.length +
-    filters.city.length +
-    filters.category_ids.length +
+    (filters.state.length > 0 || filters.city.length > 0 ? 1 : 0) +
+    (filters.category_ids.length > 0 ? 1 : 0) +
     (filters.verified ? 1 : 0) +
     (filters.featured ? 1 : 0) +
     (filters.financing_enabled ? 1 : 0) +
-    (filters.whatsapp_enabled ? 1 : 0);
+    (filters.whatsapp_enabled ? 1 : 0) +
+    (filters.has_reviews ? 1 : 0) +
+    (filters.min_rating !== null ? 1 : 0) +
+    (filters.lat !== null && filters.lng !== null ? 1 : 0);
 
   const FilterContent = () => (
     <div className="flex flex-col h-full bg-white">
@@ -347,6 +352,7 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
           featured={filters.featured}
           financing={filters.financing_enabled}
           whatsapp={filters.whatsapp_enabled}
+          hasReviews={filters.has_reviews}
           onChange={(key, val) => updateFilters({ [key]: val })}
         />
       </div>

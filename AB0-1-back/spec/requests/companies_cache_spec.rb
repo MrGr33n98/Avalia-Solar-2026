@@ -16,7 +16,7 @@ RSpec.describe 'Companies Cache Strategy' do
       expect(response).to have_http_status(:ok)
 
       # Check cache was written
-      cache_keys = Rails.cache.redis.keys('companies:index:v2:*')
+      cache_keys = Rails.cache.redis.keys('companies:index:v6:*')
       expect(cache_keys).not_to be_empty
     end
 
@@ -24,28 +24,28 @@ RSpec.describe 'Companies Cache Strategy' do
       get '/api/v1/companies', params: { featured: true }
       get '/api/v1/companies', params: { verified: true }
 
-      cache_keys = Rails.cache.redis.keys('companies:index:v2:*')
+      cache_keys = Rails.cache.redis.keys('companies:index:v6:*')
       expect(cache_keys.length).to be >= 2
     end
 
     it 'invalidates cache when company is updated' do
       get '/api/v1/companies'
-      cache_keys_before = Rails.cache.redis.keys('companies:index:v2:*')
+      cache_keys_before = Rails.cache.redis.keys('companies:index:v6:*')
       expect(cache_keys_before).not_to be_empty
 
       company1.update!(name: 'Solar Co Updated')
 
-      cache_keys_after = Rails.cache.redis.keys('companies:index:v2:*')
+      cache_keys_after = Rails.cache.redis.keys('companies:index:v6:*')
       expect(cache_keys_after).to be_empty
     end
 
     it 'invalidates cache when company is destroyed' do
       get '/api/v1/companies'
-      expect(Rails.cache.redis.keys('companies:index:v2:*')).not_to be_empty
+      expect(Rails.cache.redis.keys('companies:index:v6:*')).not_to be_empty
 
       company1.destroy
 
-      expect(Rails.cache.redis.keys('companies:index:v2:*')).to be_empty
+      expect(Rails.cache.redis.keys('companies:index:v6:*')).to be_empty
     end
 
     it 'uses shorter TTL for search queries' do
@@ -86,7 +86,7 @@ RSpec.describe 'Companies Cache Strategy' do
       controller = Api::V1::CompaniesController.new
       key = controller.send(:generate_cache_key, {})
       
-      expect(key).to include('companies:index:v2:')
+      expect(key).to include('companies:index:v6:')
     end
   end
 end

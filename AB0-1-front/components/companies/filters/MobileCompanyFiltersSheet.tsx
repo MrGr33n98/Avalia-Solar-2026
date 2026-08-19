@@ -30,8 +30,11 @@ export default function MobileCompanyFiltersSheet({
   const [detectingGps, setDetectingGps] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [draftCategoryIds, setDraftCategoryIds] = useState<number[]>(filters.category_ids);
+  const requestVersionRef = useRef(0);
+  const countAbortRef = useRef<AbortController | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } = useLocationData();
   const { categories } = useCategories(true);
@@ -69,6 +72,7 @@ export default function MobileCompanyFiltersSheet({
   // Sync draft filters when modal opens
   useEffect(() => {
     if (open) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement;
       setDraftFilters(filters);
       setDraftCategoryIds(filters.category_ids);
       fetchStates();
@@ -76,6 +80,12 @@ export default function MobileCompanyFiltersSheet({
       closeButtonRef.current?.focus();
     }
   }, [open, filters, fetchStates]);
+
+  useEffect(() => {
+    if (open) return;
+
+    previouslyFocusedRef.current?.focus();
+  }, [open]);
 
   // Fetch cities when draft state changes
   const activeState = draftFilters.state[0] || '';
@@ -89,6 +99,10 @@ export default function MobileCompanyFiltersSheet({
   useEffect(() => {
     if (!open) return;
     setLoadingCount(true);
+    countAbortRef.current?.abort();
+    const controller = new AbortController();
+    countAbortRef.current = controller;
+    const requestVersion = ++requestVersionRef.current;
     const timer = setTimeout(async () => {
       try {
         const count = await companiesApiSafe.getTotalCount({
@@ -102,19 +116,25 @@ export default function MobileCompanyFiltersSheet({
           featured: draftFilters.featured || undefined,
           financing_enabled: draftFilters.financing_enabled || undefined,
           whatsapp_enabled: draftFilters.whatsapp_enabled || undefined,
+          has_reviews: draftFilters.has_reviews || undefined,
+          signal: controller.signal,
           latitude: draftFilters.lat || undefined,
           longitude: draftFilters.lng || undefined,
           radius_km: draftFilters.radius_km || undefined,
         });
-        setTotalCount(count);
+        if (requestVersion === requestVersionRef.current) setTotalCount(count);
       } catch (err) {
         console.error(err);
+        setTotalCount(null);
       } finally {
-        setLoadingCount(false);
+        if (requestVersion === requestVersionRef.current) setLoadingCount(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [draftFilters, open]);
 
   if (!open) return null;
@@ -163,7 +183,7 @@ export default function MobileCompanyFiltersSheet({
   };
 
   const handleClear = () => {
-    setDraftFilters({
+    const clearedFilters: CompanyFilters = {
       search: '',
       state: [],
       city: [],
@@ -173,12 +193,15 @@ export default function MobileCompanyFiltersSheet({
       featured: false,
       financing_enabled: false,
       whatsapp_enabled: false,
+      has_reviews: false,
       sort: 'recommended',
       page: 1,
       lat: null,
       lng: null,
       radius_km: null,
-    });
+    };
+    setDraftFilters(clearedFilters);
+    setDraftCategoryIds([]);
   };
 
   const isGpsActive = draftFilters.lat !== null && draftFilters.lng !== null;
@@ -197,7 +220,7 @@ export default function MobileCompanyFiltersSheet({
         aria-modal="true"
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85vh] transition-transform duration-300 transform translate-y-0"
+        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Header */}
@@ -264,15 +287,15 @@ export default function MobileCompanyFiltersSheet({
                   ))}
                   <button
                     type="button"
-                    onClick={() => updateDraft({ radius_km: 1000 })}
+                    onClick={() => updateDraft({ radius_km: null })}
                     className={cn(
                       'h-9 rounded-lg text-xs font-semibold border transition-all col-span-1',
-                      draftFilters.radius_km === 1000
+                      draftFilters.radius_km === null
                         ? 'bg-blue-600 border-blue-600 text-white font-bold'
                         : 'bg-white border-slate-200 text-slate-600'
                     )}
                   >
-                    Brasil
+                    Todo Brasil
                   </button>
                 </div>
               </div>
@@ -347,7 +370,7 @@ export default function MobileCompanyFiltersSheet({
                 {draftFilters.category_ids.length === 0
                   ? 'Todas as categorias'
                   : draftFilters.category_ids.length === 1
-                  ? categories.find((c) => c.id === draftFilters.category_ids[0])?.name || `Categoria #${draftFilters.category_ids[0]}`
+                  ? categories.find((c) => c.id === draftFilters.category_ids[0])?.name || 'Categoria selecionada'
                   : `${draftFilters.category_ids.length} categorias selecionadas`}
               </span>
               <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
@@ -371,20 +394,27 @@ export default function MobileCompanyFiltersSheet({
           {/* 4. Avaliação */}
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Avaliação</h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {([
                 { label: 'Qualquer', value: null },
                 { label: '4.0+', value: 4.0 },
                 { label: '4.5+', value: 4.5 },
                 { label: 'Excelente (5.0)', value: 5.0 },
+                { label: 'Com avaliações', value: 'has_reviews' as const },
               ] as const).map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={() => updateDraft({ min_rating: opt.value })}
+                  onClick={() => updateDraft(
+                    opt.value === 'has_reviews'
+                      ? { has_reviews: !draftFilters.has_reviews }
+                      : { min_rating: opt.value }
+                  )}
                   className={cn(
                     'flex flex-col items-center justify-center h-12 rounded-xl border text-[10px] font-bold transition-all px-1.5 text-center',
-                    draftFilters.min_rating === opt.value
+                    opt.value === 'has_reviews'
+                      ? draftFilters.has_reviews
+                      : draftFilters.min_rating === opt.value
                       ? 'bg-blue-600 border-blue-600 text-white font-extrabold'
                       : 'bg-white border-slate-200 text-slate-600'
                   )}
@@ -448,7 +478,7 @@ export default function MobileCompanyFiltersSheet({
         )}
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
+        <div className="sticky bottom-0 px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={handleClear}

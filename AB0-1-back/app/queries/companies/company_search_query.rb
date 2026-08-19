@@ -274,13 +274,15 @@ module Companies
     def distance_sql(coordinates)
       lat = coordinates[:lat]
       lng = coordinates[:lng]
+      quoted_lat = ::Company.connection.quote(lat)
+      quoted_lng = ::Company.connection.quote(lng)
 
       <<~SQL.squish
         (6371 * acos(
-          LEAST(1.0, cos(radians(#{lat}))
+          LEAST(1.0, cos(radians(#{quoted_lat}))
           * cos(radians(latitude))
-          * cos(radians(longitude) - radians(#{lng}))
-          + sin(radians(#{lat}))
+          * cos(radians(longitude) - radians(#{quoted_lng}))
+          + sin(radians(#{quoted_lat}))
           * sin(radians(latitude)))
         ))
       SQL

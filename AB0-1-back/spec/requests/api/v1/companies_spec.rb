@@ -108,6 +108,40 @@ RSpec.describe 'GET /api/v1/companies', type: :request do
     expect(JSON.parse(response.body).fetch('data').map { |company| company['id'] }).to contain_exactly(nearby_company.id)
   end
 
+  it 'aplica interseção entre categoria, verificada, nota e atendimento' do
+    get '/api/v1/companies', params: {
+      page: 1, per_page: 10, category_ids: residential.id, verified: true,
+      min_rating: 4.5, has_reviews: true, whatsapp_enabled: true
+    }
+
+    expect(JSON.parse(response.body).fetch('data').map { |company| company['id'] }).to contain_exactly(nearby_company.id)
+  end
+
+  it 'mantém categorias equivalentes na mesma chave de cache' do
+    controller = Api::V1::CompaniesController.new
+    base = { category_ids: '1,2,3', page: 1, per_page: 10 }
+
+    expect(controller.send(:generate_cache_key, base)).to eq(
+      controller.send(:generate_cache_key, base.merge(category_ids: '3,1,2,2'))
+    )
+  end
+
+  it 'separa chaves por geo, raio, nota, paginação e projeção' do
+    controller = Api::V1::CompaniesController.new
+    base = { category_ids: '1,2', min_rating: 4, verified: true, latitude: -15.6,
+             longitude: -56.1, radius_km: 25, page: 1, per_page: 10, fields: 'map' }
+
+    expect(controller.send(:generate_cache_key, base)).not_to eq(
+      controller.send(:generate_cache_key, base.merge(radius_km: 50))
+    )
+    expect(controller.send(:generate_cache_key, base)).not_to eq(
+      controller.send(:generate_cache_key, base.merge(latitude: -15.7))
+    )
+    expect(controller.send(:generate_cache_key, base)).not_to eq(
+      controller.send(:generate_cache_key, base.merge(min_rating: 4.5, page: 2, fields: 'card'))
+    )
+  end
+
   it 'ignora geo inválida e mantém resposta paginada independente de per_page' do
     get '/api/v1/companies', params: { page: 1, per_page: 1, sort: 'distance', lat: 91, lng: -200 }
 
@@ -126,5 +160,20 @@ RSpec.describe 'GET /api/v1/companies', type: :request do
     get '/api/v1/companies/cities', params: { state: 'SP' }
     expect(response).to have_http_status(:ok)
     expect(JSON.parse(response.body).fetch('cities')).to be_an(Array)
+  end
+
+  it 'retorna projeção mínima para mapa' do
+    get '/api/v1/companies', params: { page: 1, per_page: 10, fields: 'map' }
+
+    payload = JSON.parse(response.body).fetch('data')
+    company = payload.find { |item| item['id'] == nearby_company.id }
+
+    expect(company).to include(
+      'id' => nearby_company.id,
+      'name' => nearby_company.name,
+      'latitude' => nearby_company.latitude.to_f,
+      'longitude' => nearby_company.longitude.to_f
+    )
+    expect(company).not_to have_key('description')
   end
 end

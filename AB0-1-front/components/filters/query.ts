@@ -18,13 +18,16 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
   const featuredStr = searchParams.get('featured');
   const financingStr = searchParams.get('financing_enabled');
   const whatsappStr = searchParams.get('whatsapp_enabled');
+  const hasReviewsStr = searchParams.get('has_reviews');
   const sortStr = searchParams.get('sort');
   const pageStr = searchParams.get('page');
   const latStr = searchParams.get('lat');
   const lngStr = searchParams.get('lng');
   const radiusKmStr = searchParams.get('radius_km');
   const pathCategoryIds = options.pathCategoryIds || [];
-  const queryCategoryIds = categoryIdsStr ? categoryIdsStr.split(',').map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b) : [];
+  const queryCategoryIds = categoryIdsStr
+    ? Array.from(new Set(categoryIdsStr.split(',').map(Number).filter(Number.isFinite))).sort((a, b) => a - b)
+    : [];
 
   return {
     search: searchStr || '',
@@ -36,6 +39,7 @@ export function parseQueryParams(searchParams: URLSearchParams, options: ParseQu
     featured: featuredStr === 'true',
     financing_enabled: financingStr === 'true',
     whatsapp_enabled: whatsappStr === 'true',
+    has_reviews: hasReviewsStr === 'true',
     sort: sortStr || DEFAULT_FILTERS.sort,
     page: pageStr ? Number(pageStr) : DEFAULT_FILTERS.page,
     lat: latStr ? Number(latStr) : null,
@@ -71,6 +75,7 @@ export function stringifyQueryParams(filters: CompanyFilters, options: Stringify
   if (filters.featured) params.set('featured', 'true');
   if (filters.financing_enabled) params.set('financing_enabled', 'true');
   if (filters.whatsapp_enabled) params.set('whatsapp_enabled', 'true');
+  if (filters.has_reviews) params.set('has_reviews', 'true');
   
   if (filters.sort && filters.sort !== DEFAULT_FILTERS.sort) {
     params.set('sort', filters.sort);
@@ -80,10 +85,12 @@ export function stringifyQueryParams(filters: CompanyFilters, options: Stringify
     params.set('page', filters.page.toString());
   }
 
-  if (filters.lat !== null && filters.lng !== null && filters.radius_km !== null) {
+  if (filters.lat !== null && filters.lng !== null) {
     params.set('lat', filters.lat.toString());
     params.set('lng', filters.lng.toString());
-    params.set('radius_km', filters.radius_km.toString());
+    if (filters.radius_km !== null) {
+      params.set('radius_km', filters.radius_km.toString());
+    }
   }
 
   return params.toString();
@@ -100,6 +107,7 @@ export function isFilterActive(filters: CompanyFilters): boolean {
     filters.featured ||
     filters.financing_enabled ||
     filters.whatsapp_enabled ||
+    filters.has_reviews ||
     (filters.lat !== null && filters.lng !== null)
   );
 }
@@ -131,6 +139,7 @@ export function areFiltersEqual(a: CompanyFilters, b: CompanyFilters): boolean {
     a.featured === b.featured &&
     a.financing_enabled === b.financing_enabled &&
     a.whatsapp_enabled === b.whatsapp_enabled &&
+    a.has_reviews === b.has_reviews &&
     a.sort === b.sort &&
     a.page === b.page &&
     a.lat === b.lat &&

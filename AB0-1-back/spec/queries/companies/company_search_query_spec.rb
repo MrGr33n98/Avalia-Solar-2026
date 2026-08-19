@@ -126,5 +126,37 @@ RSpec.describe Companies::CompanySearchQuery, type: :query do
       expect(result.to_sql).to include('ORDER BY')
       expect(result).to include(active_company_sp, active_company_rj)
     end
+
+    it 'ignora cada formato geo inválido sem aplicar raio' do
+      invalid_params = [
+        { lat: -91, lng: -46.6333, radius_km: 50 },
+        { lat: -23.5505, lng: 181, radius_km: 50 },
+        { lat: -23.5505, lng: -46.6333, radius_km: 0 },
+        { lat: -23.5505, lng: -46.6333, radius_km: -10 },
+        { lat: 'invalid', lng: -46.6333, radius_km: 50 },
+        { lat: nil, lng: nil, radius_km: 50 }
+      ]
+
+      invalid_params.each do |params|
+        result = described_class.call(params)
+        expect(result).to include(active_company_sp, active_company_rj)
+      end
+    end
+
+    it 'aplica interseção entre geo, categoria, verificada e nota' do
+      result = described_class.call(
+        {
+          lat: -23.5505,
+          lng: -46.6333,
+          radius_km: 50,
+          category_ids: category_residencial.id,
+          verified: true,
+          min_rating: 4.5,
+          has_reviews: true
+        }
+      )
+
+      expect(result).to contain_exactly(active_company_sp)
+    end
   end
 end
