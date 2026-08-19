@@ -176,7 +176,7 @@ export default function QuickLeadModal() {
         }
 
         setTimeout(poll, intervalTime);
-      } catch (err) {
+      } catch {
         attempts += 1;
         if (attempts >= maxAttempts) {
           setMatchingStatus('unmatched');
