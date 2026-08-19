@@ -130,6 +130,7 @@ export default function QuickLeadModal() {
         },
         preferred_company_id: preferredCompanyId,
         decision_context: decisionContext,
+        source: decisionContext.source || 'organic',
       };
 
       const response = await leadsWizardApi.create(payload, idempotencyKey);

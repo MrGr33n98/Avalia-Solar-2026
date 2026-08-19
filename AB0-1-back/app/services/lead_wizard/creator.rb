@@ -221,7 +221,8 @@ module LeadWizard
 
       identity_fields = extract_identity_fields(core_params)
       attribution.merge!(identity_fields) if identity_fields.present?
-      decision_context = normalize_hash(@params['decision_context']).slice(*DECISION_CONTEXT_KEYS)
+      raw_context = normalize_hash(@params['decision_context']).slice(*DECISION_CONTEXT_KEYS)
+      decision_context = sanitize_decision_context(raw_context)
       decision_context['company_id'] = @lead.company_id if @lead.company_id.present?
       decision_context['category_id'] = @lead.category_id if @lead.category_id.present?
       attribution['decision_context'] = decision_context if decision_context.present?
@@ -242,6 +243,21 @@ module LeadWizard
     def source_value
       source = value_for(@params, 'source') || value_for(@core_params || {}, 'source')
       source.to_s.strip.presence || 'organic'
+    end
+
+    def sanitize_decision_context(context)
+      allowed_sources = %w[companies_list company_profile category_page compare map search creator chat banner organic sponsored direct]
+      allowed_views = %w[list map compare profile]
+      context = context.deep_dup
+      context['source'] = context['source'].to_s if context['source'].present?
+      context['source'] = 'organic' unless allowed_sources.include?(context['source'])
+      context['view_mode'] = context['view_mode'].to_s if context['view_mode'].present?
+      context.delete('view_mode') unless allowed_views.include?(context['view_mode'])
+      context['result_position'] = context['result_position'].to_i if context['result_position'].present?
+      context['result_position'] = context['result_position'].clamp(1, 10_000) if context['result_position'].is_a?(Integer)
+      context['approximate_location'] = context['approximate_location'].to_s.first(100) if context['approximate_location'].present?
+      context['filter_context'] = normalize_hash(context['filter_context']).slice('category_id', 'state', 'city', 'sort') if context['filter_context'].present?
+      context.compact
     end
 
     def merge_identity_into_wizard_answers!(wizard_answers, core_params)
