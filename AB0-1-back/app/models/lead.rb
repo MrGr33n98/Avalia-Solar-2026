@@ -41,6 +41,7 @@ class Lead < ApplicationRecord
   before_validation :ensure_otp_attempts_default
   before_save :update_score_cache
   before_validation :set_marketplace_score, if: :wizard_validation_required?
+  validates :source, presence: true, length: { maximum: 100 }, if: -> { respond_to?(:source) }
 
   def update_score_cache
     return unless respond_to?(:cached_score=)

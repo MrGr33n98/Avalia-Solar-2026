@@ -20,6 +20,9 @@ completed: 2026-08-19
 - Algoritmo legado de `LeadDistributionService` removido; matching único é `Leads::LeadMatchingService`.
 - Inbox preserva mercado/inteligência existente, mas lista leads por `LeadDistribution`.
 - Contador de matches no wizard usa resposta real de `wizard_result`.
+- Submit de lead wizard usa `Idempotency-Key` e routing usa `LEAD_MARKETPLACE_V1`.
+- Expiração é agendada por distribuição via `LeadDistributionExpirationJob`.
+- Rerouting respeita máximo global de distribuições ativas.
 
 ## Auditoria de domínio
 
@@ -50,6 +53,7 @@ completed: 2026-08-19
 - Matching inicial depende de `quote_feature_enabled?`; quota/fairness histórico ainda precisam integração real.
 - Acceptance SLA e rerouting job básicos, sem operação real validada.
 - Frontend full lint ainda possui débitos preexistentes em `lib/api.ts`; typecheck passa.
+- Backend completo permanece bloqueado sem Ruby/Bundler; não declarar production-ready.
 
 ## Última ação
 TypeScript passou após integração da inbox canônica.

@@ -21,6 +21,7 @@ class LeadRoutingJob < ApplicationJob
           sent_at: distribution.sent_at || Time.current
         )
         distribution.save!
+        LeadDistributionExpirationJob.perform_later(distribution.id)
         notify_company!(distribution)
       end
       lead.update!(wizard_status: matches.any? ? 'distributed' : 'unmatched')

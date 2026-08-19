@@ -29,6 +29,7 @@ export default function QuickLeadModal() {
   const [verificationHint, setVerificationHint] = useState('');
   const [decisionContext, setDecisionContext] = useState<Record<string, unknown>>({});
   const [matchedCompanies, setMatchedCompanies] = useState<Array<{ id: number; name: string }>>([]);
+  const [idempotencyKey, setIdempotencyKey] = useState('');
 
   const [form, setForm] = useState({
     fullName: '',
@@ -52,6 +53,7 @@ export default function QuickLeadModal() {
     setVerificationHint('');
     setDecisionContext({});
     setMatchedCompanies([]);
+    setIdempotencyKey(crypto.randomUUID());
     setForm({
       fullName: '',
       email: '',
@@ -130,7 +132,7 @@ export default function QuickLeadModal() {
         decision_context: decisionContext,
       };
 
-      const response = await leadsWizardApi.create(payload);
+      const response = await leadsWizardApi.create(payload, idempotencyKey);
       setLeadId(response.lead_id);
       setVerificationHint(response.email_hint || form.email);
       setResendCooldown(60);

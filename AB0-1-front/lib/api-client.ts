@@ -1052,9 +1052,10 @@ export const leadsWizardApi = {
     lead: Record<string, any>;
     preferred_company_id?: number;
     decision_context?: Record<string, unknown>;
-  }): Promise<any> => {
+  }, idempotencyKey?: string): Promise<any> => {
     return await fetchApiSafe<any>('leads/wizard_create', {
       method: 'POST',
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
       body: JSON.stringify(payload),
     });
   },

@@ -98,7 +98,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def create
+    idempotency_key = request.headers['Idempotency-Key'].to_s.strip.presence
+    if idempotency_key && (existing = Lead.find_by(idempotency_key: idempotency_key))
+      return render json: existing, status: :ok
+    end
+
     @lead = ::Lead.new(lead_params)
+    @lead.idempotency_key = idempotency_key if idempotency_key && @lead.respond_to?(:idempotency_key=)
     if @edge_location.present?
       @lead.city = @edge_location[:city] if @lead.respond_to?(:city) && @lead.city.blank?
       @lead.state = @edge_location[:state] if @lead.respond_to?(:state) && @lead.state.blank?
@@ -125,6 +131,11 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   # Resilient wizard creation using LeadWizard::Creator
   def wizard_create
+    idempotency_key = request.headers['Idempotency-Key'].to_s.strip.presence
+    if idempotency_key && (existing = Lead.find_by(idempotency_key: idempotency_key))
+      return render json: { lead_id: existing.id, status: existing.wizard_status, email_hint: mask_email(existing.email) }, status: :ok
+    end
+
     result = LeadWizard::Creator.new(
       params.to_unsafe_h,
       preferred_company_id: params[:preferred_company_id],
@@ -134,6 +145,8 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
     if result[:success]
       lead = result[:lead]
+      lead.idempotency_key = idempotency_key if idempotency_key && lead.respond_to?(:idempotency_key=)
+      lead.save! if lead.changed?
       persist_identity_on_lead!(lead)
       identity_metadata = identity_tracking_metadata(lead)
       otp_code = lead.generate_otp!
@@ -243,6 +256,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     identity_metadata = identity_tracking_metadata(@lead)
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
+      @lead.update!(wizard_status: 'routing') if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
 
       distinct_id = current_user&.id || "anon_lead_#{@lead.id}"
 
