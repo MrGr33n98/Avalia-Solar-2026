@@ -64,7 +64,6 @@ class Notification < ApplicationRecord
     creator_followed
     company_followed
     user_mentioned
-  ].freeze
     system_message
   ].freeze
 
