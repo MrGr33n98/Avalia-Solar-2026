@@ -428,7 +428,7 @@ export const companiesApiSafe = {
     verified?: boolean;
     page?: number;
     per_page?: number;
-    fields?: 'card';
+    fields?: 'card' | 'map';
   }): Promise<Company[]> => {
     try {
       const url = `companies${buildQueryParams(params || {})}`;
@@ -465,7 +465,7 @@ export const companiesApiSafe = {
     verified?: boolean;
     page?: number;
     per_page?: number;
-    fields?: 'card';
+    fields?: 'card' | 'map';
     financing_enabled?: boolean;
     whatsapp_enabled?: boolean;
     latitude?: number;
@@ -1042,6 +1042,7 @@ export const leadsWizardApi = {
   create: async (payload: {
     lead: Record<string, any>;
     preferred_company_id?: number;
+    decision_context?: Record<string, unknown>;
   }): Promise<any> => {
     return await fetchApiSafe<any>('leads/wizard_create', {
       method: 'POST',

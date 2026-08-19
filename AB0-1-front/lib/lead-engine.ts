@@ -3,6 +3,13 @@ export type LeadEnginePayload = {
   categoryId?: number;
   source?: string;
   type?: 'wizard' | 'quick';
+  decisionContext?: {
+    source?: 'list' | 'map' | 'compare' | 'profile';
+    view_mode?: 'list' | 'map' | 'compare' | 'profile';
+    result_position?: number;
+    approximate_location?: string;
+    filter_context?: Record<string, string | number | boolean | string[]>;
+  };
 };
 
 export const openLeadModal = (payload: LeadEnginePayload = { type: 'quick' }) => {

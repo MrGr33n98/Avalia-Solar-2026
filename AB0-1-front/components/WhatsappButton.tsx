@@ -36,6 +36,7 @@ interface Props {
   signupGateTitle?: string;
   signupGateDescription?: string;
   signupGateReturnTo?: string;
+  trackingSource?: 'list' | 'map' | 'compare' | 'profile';
 }
 
 export default function WhatsappButton({
@@ -57,6 +58,7 @@ export default function WhatsappButton({
   signupGateTitle = 'Crie sua conta para ver os contatos',
   signupGateDescription = 'Libere telefone, e-mail e outros canais de contato desta empresa.',
   signupGateReturnTo,
+  trackingSource = 'profile',
 }: Props) {
   const { isAuthenticated, loading: authLoading } = useAuth();
   if (!enabled) return null;
@@ -154,7 +156,9 @@ export default function WhatsappButton({
       company_id: companyId,
       category_id: categoryId,
       banner_id: bannerId,
-      page_path: path
+      page_path: path,
+      source: trackingSource,
+      view_mode: trackingSource,
     }, {
       sendTo: { backend: false }
     });

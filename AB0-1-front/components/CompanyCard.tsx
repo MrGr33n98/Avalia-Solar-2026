@@ -360,6 +360,12 @@ export default function CompanyCard({
     router.push(companyPath);
   };
 
+  const decisionContext = {
+    source: 'list' as const,
+    view_mode: 'list' as const,
+    filter_context: {},
+  };
+
   const handleCompareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!selectedInComparison && !canAddMore) return;
@@ -647,7 +653,7 @@ export default function CompanyCard({
             </Button>
 
             {canRequestQuote ? (
-              <QuoteCTA context="card" shortLabel="Solicitar orçamento" className="order-3 col-span-2 h-11 w-full sm:order-none sm:col-span-1" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-standard", type: "quick" })} />
+              <QuoteCTA context="card" shortLabel="Solicitar orçamento" className="order-3 col-span-2 h-11 w-full sm:order-none sm:col-span-1" source="company-card-standard" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
             ) : null}
 
             <ReviewCompanyButton
@@ -807,7 +813,7 @@ export default function CompanyCard({
             </Button>
 
             {canRequestQuote ? (
-              <QuoteCTA context="compact" source="company-card-expanded" onRequest={() => openLeadModal({ preferredCompanyId: id, source: "company-card-expanded", type: "quick" })} />
+              <QuoteCTA context="compact" source="company-card-expanded" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
             ) : null}
             <ReviewCompanyButton
               company={company}
@@ -1047,6 +1053,7 @@ export default function CompanyCard({
               href={company.actions.whatsapp_url}
               companyId={id}
               label="WhatsApp"
+              trackingSource="list"
               className="rounded-lg border-[#E2E8F0] font-bold text-[10px] h-7 px-2.5"
               preset="brandSolid"
             />
@@ -1062,7 +1069,8 @@ export default function CompanyCard({
                 e.stopPropagation();
                 openLeadModal({
                   preferredCompanyId: id,
-                  source: 'company-card-contact',
+                  source: 'list',
+                  decisionContext,
                   type: 'quick',
                 });
               }}

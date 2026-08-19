@@ -14,6 +14,7 @@ import { Zap, ShieldCheck, Clock, CheckCircle2, Lock, ArrowRight } from 'lucide-
 type QuickLeadOpenDetail = {
   preferredCompanyId?: number;
   source?: string;
+  decisionContext?: Record<string, unknown>;
 };
 
 export default function QuickLeadModal() {
@@ -26,6 +27,7 @@ export default function QuickLeadModal() {
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verificationHint, setVerificationHint] = useState('');
+  const [decisionContext, setDecisionContext] = useState<Record<string, unknown>>({});
 
   const [form, setForm] = useState({
     fullName: '',
@@ -47,6 +49,7 @@ export default function QuickLeadModal() {
     setOtpCode('');
     setResendCooldown(0);
     setVerificationHint('');
+    setDecisionContext({});
     setForm({
       fullName: '',
       email: '',
@@ -62,6 +65,7 @@ export default function QuickLeadModal() {
   const handleOpenRequest = useCallback((detail: QuickLeadOpenDetail) => {
     resetQuickLead();
     setPreferredCompanyId(detail.preferredCompanyId);
+    setDecisionContext(detail.decisionContext || {});
     setOpen(true);
     track('Quick Lead Opened', { source: detail.source });
   }, [resetQuickLead]);
@@ -120,7 +124,8 @@ export default function QuickLeadModal() {
           decision_timeline: 'Agora',
           address_full: form.zipcode ? `CEP: ${form.zipcode}` : 'Não informado'
         },
-        preferred_company_id: preferredCompanyId
+        preferred_company_id: preferredCompanyId,
+        decision_context: decisionContext,
       };
 
       const response = await leadsWizardApi.create(payload);

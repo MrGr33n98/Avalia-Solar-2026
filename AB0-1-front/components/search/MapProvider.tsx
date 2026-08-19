@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, useMap } from 'react-leaflet';
 import type { LatLngBounds } from 'leaflet';
 import { useTheme } from 'next-themes';
@@ -20,7 +20,19 @@ export interface MapCompany {
   city?: string;
   state?: string;
   logo_url?: string;
+  distanceKm?: number | null;
+  verified?: boolean;
+  ratingCount?: number;
+  financingEnabled?: boolean;
+  whatsappEnabled?: boolean;
 }
+
+type MapCluster = {
+  key: string;
+  latitude: number;
+  longitude: number;
+  companies: MapCompany[];
+};
 
 export interface MapBounds {
   north: number;
@@ -35,7 +47,9 @@ interface MapProviderProps {
   zoom?: number;
   onBoundsChanged?: (bounds: MapBounds) => void;
   onMarkerClick?: (company: MapCompany) => void;
+  onCompare?: (company: MapCompany) => void;
   selectedCompanyId?: string;
+  compareIds?: string[];
   className?: string;
   radiusKm?: number;
 }
@@ -66,6 +80,11 @@ function ChangeMapView({ center, zoom }: { center: { lat: number; lng: number };
   return null;
 }
 
+function ClusterWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  useMapEvents({ zoomend: (event) => onZoomChange(event.target.getZoom()) });
+  return null;
+}
+
 export default function MapProvider({
   companies,
   center = { lat: -15.7801, lng: -47.9292 }, // Brasília como padrão
@@ -75,10 +94,13 @@ export default function MapProvider({
   selectedCompanyId,
   className = 'w-full h-full',
   radiusKm,
+  onCompare,
+  compareIds = [],
 }: MapProviderProps) {
   const [L, setL] = useState<typeof import('leaflet') | null>(null);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [mapZoom, setMapZoom] = useState(zoom);
 
   // Garante a montagem do lado do cliente para evitar bugs de hidratação com useTheme
   useEffect(() => {
@@ -164,6 +186,33 @@ export default function MapProvider({
     });
   };
 
+  const clusters = useMemo<MapCluster[]>(() => {
+    const precision = mapZoom >= 12 ? 3 : mapZoom >= 9 ? 2 : 1;
+    const grouped = new Map<string, MapCompany[]>();
+
+    companies.forEach((company) => {
+      const key = `${company.latitude.toFixed(precision)}:${company.longitude.toFixed(precision)}`;
+      const group = grouped.get(key) || [];
+      group.push(company);
+      grouped.set(key, group);
+    });
+
+    return Array.from(grouped.entries()).map(([key, groupedCompanies]) => ({
+      key,
+      latitude: groupedCompanies.reduce((sum, company) => sum + company.latitude, 0) / groupedCompanies.length,
+      longitude: groupedCompanies.reduce((sum, company) => sum + company.longitude, 0) / groupedCompanies.length,
+      companies: groupedCompanies,
+    }));
+  }, [companies, mapZoom]);
+
+  const getClusterIcon = (count: number) =>
+    L.divIcon({
+      className: 'company-map-cluster',
+      html: `<div style="width:42px;height:42px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:#2563eb;color:white;font-weight:800;border:3px solid white;box-shadow:0 4px 14px rgba(15,23,42,.28)">${count}</div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21],
+    });
+
   return (
     <MapContainer
       center={[center.lat, center.lng]}
@@ -177,6 +226,7 @@ export default function MapProvider({
         url={tileUrl}
       />
       <BoundsWatcher onBoundsChanged={onBoundsChanged} />
+      <ClusterWatcher onZoomChange={setMapZoom} />
       <ChangeMapView center={center} zoom={zoom} />
       
       {center && radiusKm && (
@@ -193,15 +243,29 @@ export default function MapProvider({
         />
       )}
 
-      {companies.map((company) => (
+      {clusters.map((cluster) => cluster.companies.length > 1 ? (
         <Marker
-          key={company.id}
-          position={[company.latitude, company.longitude]}
-          icon={getCompanyIcon(company)}
+          key={cluster.key}
+          position={[cluster.latitude, cluster.longitude]}
+          icon={getClusterIcon(cluster.companies.length)}
           eventHandlers={{
-            click: () => onMarkerClick?.(company),
+            click: (event) => {
+              event.target._map.setView([cluster.latitude, cluster.longitude], Math.min(mapZoom + 2, 17), { animate: true });
+            },
+          }}
+        />
+      ) : (
+        <Marker
+          key={cluster.companies[0].id}
+          position={[cluster.companies[0].latitude, cluster.companies[0].longitude]}
+          icon={getCompanyIcon(cluster.companies[0])}
+          eventHandlers={{
+            click: () => onMarkerClick?.(cluster.companies[0]),
           }}
         >
+          {(() => {
+            const company = cluster.companies[0];
+            return (
           <Popup className="premium-popup" closeButton={false}>
             <div className="w-[260px] flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 p-4 relative">
               
@@ -241,21 +305,45 @@ export default function MapProvider({
                     <div className="flex items-center gap-1">
                       <span className="text-amber-500 text-[13px]">★</span>
                       <span className="text-[13px] font-extrabold text-slate-800 dark:text-slate-200">{Number(company.ratingAvg).toFixed(1)}</span>
+                      {company.ratingCount ? <span className="text-[10px] text-slate-500">({company.ratingCount})</span> : null}
                     </div>
                   ) : (
                     <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Novo</span>
                   )}
                 </div>
                 
-                <a
-                  href={`/companies/${company.slug}`}
-                  className="inline-flex items-center justify-center gap-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-1.5 rounded-full shadow-sm shadow-blue-600/20 w-auto"
-                >
-                  Ver Perfil
-                </a>
+                <div className="flex items-center gap-1.5">
+                  {company.distanceKm != null && Number.isFinite(company.distanceKm) && (
+                    <span className="text-[10px] font-semibold text-blue-700">
+                      {Number(company.distanceKm).toFixed(1)} km
+                    </span>
+                  )}
+                  <a
+                    href={`/companies/${company.slug}`}
+                    className="inline-flex items-center justify-center gap-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors px-3 py-1.5 rounded-full shadow-sm shadow-blue-600/20 w-auto"
+                  >
+                    Ver empresa
+                  </a>
+                  {onCompare && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onCompare(company);
+                      }}
+                      className="inline-flex items-center justify-center rounded-full border border-blue-200 px-2.5 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-50"
+                      aria-pressed={compareIds.includes(company.id)}
+                    >
+                      {compareIds.includes(company.id) ? 'Selecionada' : 'Comparar'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </Popup>
+            );
+          })()}
         </Marker>
       ))}
     </MapContainer>

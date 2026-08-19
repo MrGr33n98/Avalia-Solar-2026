@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight, MapPin, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
@@ -32,6 +32,8 @@ import {
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { track } from '@/lib/analytics/consolidated';
+import { useComparison } from '@/hooks/useComparison';
+import { openComparisonDock } from '@/lib/floating-widget-events';
 
 interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
@@ -79,6 +81,7 @@ export function CompaniesContent({
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const { comparisonList, toggleComparison, canAddMore, isInComparison } = useComparison();
 
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
@@ -122,7 +125,7 @@ export function CompaniesContent({
       latitude: filters.lat || undefined,
       longitude: filters.lng || undefined,
       radius_km: filters.radius_km || undefined,
-      fields: 'card' as const,
+      fields: viewMode === 'map' ? ('map' as const) : ('card' as const),
     }),
     [
       filters.page,
@@ -139,6 +142,7 @@ export function CompaniesContent({
       filters.lat,
       filters.lng,
       filters.radius_km,
+      viewMode,
     ]
   );
 
@@ -325,8 +329,35 @@ export function CompaniesContent({
           city: company.city,
           state: company.state,
           logo_url: company.logo_url || undefined,
+          distanceKm: company.distance_km,
+          verified: company.verified,
+          ratingCount: company.rating_count,
+          financingEnabled: company.financing_enabled,
+          whatsappEnabled: company.whatsapp_enabled ?? company.cta_whatsapp_enabled,
         })),
     [visibleCompanies]
+  );
+
+  const mapCompareIds = useMemo(
+    () => comparisonList.map((company) => String(company.id)),
+    [comparisonList]
+  );
+
+  const handleMapCompare = useCallback(
+    (mapCompany: MapCompany) => {
+      const company = visibleCompanies.find((item) => String(item.id) === mapCompany.id);
+      if (!company) return;
+      if (!isInComparison(company.id) && !canAddMore) return;
+      const wasSelected = isInComparison(company.id);
+      toggleComparison(company);
+      track(wasSelected ? 'company_compare_removed' : 'company_compare_added', {
+        company_id: company.id,
+        source: 'map',
+        view_mode: 'map',
+      });
+      if (!wasSelected) openComparisonDock();
+    },
+    [canAddMore, isInComparison, toggleComparison, visibleCompanies]
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -568,7 +599,7 @@ export function CompaniesContent({
                       id="sort-companies"
                       value={filters.sort || ''}
                       onChange={(e) => {
-                        const updated = { ...filters, sort: e.target.value || undefined, page: 1 };
+                        const updated = { ...filters, sort: e.target.value || 'recommended', page: 1 };
                         router.replace(buildTargetUrl(updated), { scroll: false });
                       }}
                       className="appearance-none h-9 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -723,6 +754,22 @@ export function CompaniesContent({
                         <SearchMapPanel
                           companies={mapCompanies}
                           className="h-full"
+                          compareIds={mapCompareIds}
+                          onCompare={handleMapCompare}
+                          onCompanySelect={(company) => {
+                            track('company_map_marker_clicked', {
+                              company_id: company.id,
+                              source: 'map',
+                              view_mode: 'map',
+                            });
+                          }}
+                          onMapOpened={() => {
+                            track('company_map_opened', {
+                              source: 'list',
+                              view_mode: 'map',
+                              result_count: mapCompanies.length,
+                            });
+                          }}
                           center={
                             filters.lat && filters.lng
                               ? { lat: filters.lat, lng: filters.lng }

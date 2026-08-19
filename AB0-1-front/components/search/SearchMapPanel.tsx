@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { X, Map as MapIcon, RefreshCw } from 'lucide-react';
 import type { MapCompany, MapBounds } from './MapProvider';
 
@@ -23,6 +23,9 @@ interface SearchMapPanelProps {
   center?: { lat: number; lng: number };
   selectedCompanyId?: string;
   onCompanySelect?: (company: MapCompany) => void;
+  onCompare?: (company: MapCompany) => void;
+  compareIds?: string[];
+  onMapOpened?: () => void;
   onSearchInArea?: (bounds: MapBounds) => void;
   onClose?: () => void;
   isVisible?: boolean;
@@ -40,10 +43,17 @@ export default function SearchMapPanel({
   isVisible = true,
   className = '',
   radiusKm,
+  onCompare,
+  compareIds,
+  onMapOpened,
 }: SearchMapPanelProps) {
   const [currentBounds, setCurrentBounds] = useState<MapBounds | null>(null);
   const [searchOnMove, setSearchOnMove] = useState(false);
   const [boundsChanged, setBoundsChanged] = useState(false);
+
+  useEffect(() => {
+    onMapOpened?.();
+  }, [onMapOpened]);
 
   const handleBoundsChanged = useCallback((bounds: MapBounds) => {
     setCurrentBounds(bounds);
@@ -133,6 +143,8 @@ export default function SearchMapPanel({
             onBoundsChanged={handleBoundsChanged}
             onMarkerClick={handleMarkerClick}
             selectedCompanyId={selectedCompanyId}
+            onCompare={onCompare}
+            compareIds={compareIds}
             className="w-full h-full"
             radiusKm={radiusKm}
           />

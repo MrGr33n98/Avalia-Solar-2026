@@ -368,7 +368,8 @@ export default function CompanyHero({
                     openLeadModal({
                       preferredCompanyId: company.id,
                       categoryId: wizardCategoryId,
-                      source: 'company-hero',
+                      source: 'profile',
+                      decisionContext: { source: 'profile', view_mode: 'profile' },
                       type: 'wizard',
                     });
                   }}

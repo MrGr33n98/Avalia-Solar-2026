@@ -562,7 +562,9 @@ module Api
 
       # Serializer usado pelos endpoints de busca, listagem e destaques (index/featured)
       def company_json_attributes(company)
-        if params[:fields].to_s == 'detail'
+        if params[:fields].to_s == 'map'
+          company_map_attributes(company)
+        elsif params[:fields].to_s == 'detail'
           company_detail_payload(company)
         else
           # Usa o CompanyListSerializer (payload reduzido e sem N+1 de FAQs/Financiamento)
@@ -581,6 +583,28 @@ module Api
           )
           serialized
         end
+      end
+
+      def company_map_attributes(company)
+        {
+          id: company.id,
+          slug: company.slug,
+          name: company.name,
+          latitude: company.latitude,
+          longitude: company.longitude,
+          rating_avg: company.rating_avg,
+          rating_count: company.rating_count,
+          verified: company.verified,
+          logo_url: company.logo_url,
+          city: company.city,
+          state: company.state,
+          sponsored: company.respond_to?(:sponsored) && company.sponsored,
+          distance_km: company.has_attribute?(:distance_km) ? company.distance_km : nil,
+          whatsapp_enabled: company.respond_to?(:whatsapp_enabled) && company.whatsapp_enabled,
+          whatsapp_url: company.respond_to?(:whatsapp_url) ? company.whatsapp_url : nil,
+          financing_enabled: company.respond_to?(:financing_enabled) && company.financing_enabled,
+          category_id: company.respond_to?(:category_id) ? company.category_id : nil
+        }
       end
 
       def company_detail_payload(company)

@@ -14,6 +14,7 @@ module LeadWizard
       landing_path
       referrer_host
     ].freeze
+    DECISION_CONTEXT_KEYS = %w[source view_mode result_position approximate_location filter_context].freeze
     IDENTITY_FIELD_KEYS = %w[anonymous_id session_id].freeze
 
     CORE_WIZARD_KEYS = %w[
@@ -218,6 +219,10 @@ module LeadWizard
 
       identity_fields = extract_identity_fields(core_params)
       attribution.merge!(identity_fields) if identity_fields.present?
+      decision_context = normalize_hash(@params['decision_context']).slice(*DECISION_CONTEXT_KEYS)
+      decision_context['company_id'] = @lead.company_id if @lead.company_id.present?
+      decision_context['category_id'] = @lead.category_id if @lead.category_id.present?
+      attribution['decision_context'] = decision_context if decision_context.present?
 
       assign_if_present(lead, :utm_source, utm['utm_source'])
       assign_if_present(lead, :utm_medium, utm['utm_medium'])

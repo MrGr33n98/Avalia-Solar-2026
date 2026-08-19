@@ -242,7 +242,12 @@ function ComparePageContent() {
 
   const handleQuote = useCallback((company: CompareCompany) => {
     if (!canUsePaidConversion(company, 'quote')) return;
-    openLeadModal({ preferredCompanyId: company.id, source: 'comparison-page', type: 'quick' });
+    openLeadModal({
+      preferredCompanyId: company.id,
+      source: 'compare',
+      decisionContext: { source: 'compare', view_mode: 'compare' },
+      type: 'quick',
+    });
   }, []);
 
   const handleShare = useCallback(async () => {
