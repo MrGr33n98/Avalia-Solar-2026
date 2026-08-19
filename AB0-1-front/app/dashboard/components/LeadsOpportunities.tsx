@@ -55,7 +55,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
     try {
       setLoading(true);
       const [response, insightsData] = await Promise.all([
-        companyDashboardApi.getLeads(companyId),
+        companyDashboardApi.getLeads(),
         fetchApi<MarketInsights>('/company_dashboard/market_insights', { params: { company_id: companyId } }),
       ]);
       setLeads(response.data || []);
@@ -396,7 +396,7 @@ function EmptyState({ message }: { message: string }) {
 
 function LeadsSkeleton() {
   return (
-    <div className="space-y-10">
+    <div data-testid="leads-skeleton" className="space-y-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-900/50" />)}
       </div>

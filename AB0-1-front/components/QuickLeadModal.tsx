@@ -29,6 +29,7 @@ export default function QuickLeadModal() {
   const [verificationHint, setVerificationHint] = useState('');
   const [decisionContext, setDecisionContext] = useState<Record<string, unknown>>({});
   const [matchedCompanies, setMatchedCompanies] = useState<Array<{ id: number; name: string }>>([]);
+  const [matchingStatus, setMatchingStatus] = useState<'idle' | 'processing' | 'matched' | 'unmatched'>('idle');
   const [idempotencyKey, setIdempotencyKey] = useState('');
 
   const [form, setForm] = useState({
@@ -53,6 +54,7 @@ export default function QuickLeadModal() {
     setVerificationHint('');
     setDecisionContext({});
     setMatchedCompanies([]);
+    setMatchingStatus('idle');
     setIdempotencyKey(crypto.randomUUID());
     setForm({
       fullName: '',
@@ -146,6 +148,47 @@ export default function QuickLeadModal() {
     }
   };
 
+  const startPolling = useCallback((id: number) => {
+    setMatchingStatus('processing');
+    let attempts = 0;
+    const maxAttempts = 10;
+    const intervalTime = 2000;
+
+    const poll = async () => {
+      try {
+        const result = await leadsWizardApi.result(id);
+        const mStatus = result?.matching?.status || 'processing';
+        const companies = Array.isArray(result?.companies) ? result.companies : [];
+        setMatchedCompanies(companies);
+
+        if (mStatus === 'matched') {
+          setMatchingStatus('matched');
+          return;
+        } else if (mStatus === 'unmatched') {
+          setMatchingStatus('unmatched');
+          return;
+        }
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          setMatchingStatus('unmatched');
+          return;
+        }
+
+        setTimeout(poll, intervalTime);
+      } catch (err) {
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          setMatchingStatus('unmatched');
+          return;
+        }
+        setTimeout(poll, intervalTime);
+      }
+    };
+
+    poll();
+  }, []);
+
   const handleVerifyOtp = async () => {
     setError(null);
     if (!leadId) return;
@@ -157,14 +200,9 @@ export default function QuickLeadModal() {
     setSubmitting(true);
     try {
       await leadsWizardApi.verifyEmailCode(leadId, otpCode);
-      try {
-        const result = await leadsWizardApi.result(leadId);
-        setMatchedCompanies(Array.isArray(result?.companies) ? result.companies : []);
-      } catch {
-        setMatchedCompanies([]);
-      }
       setStep(3);
       track('Quick Lead Verified', { lead_id: leadId });
+      startPolling(leadId);
     } catch (err: unknown) {
       setError(getWizardErrorMessage(err, 'Código inválido.'));
     } finally {
@@ -293,18 +331,34 @@ export default function QuickLeadModal() {
 
           {step === 3 && (
             <div className="py-8 text-center space-y-6">
-              <div className="mx-auto h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black text-slate-950 tracking-tight">Solicitação Enviada!</h3>
-                <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                  {matchedCompanies.length > 0
-                    ? `Encontramos ${matchedCompanies.length} empresa${matchedCompanies.length === 1 ? '' : 's'} compatível${matchedCompanies.length === 1 ? '' : 'eis'} para seu projeto.`
-                    : 'Recebemos sua solicitação e estamos buscando empresas compatíveis com seu projeto.'}
-                </p>
-              </div>
-              <Button onClick={() => setOpen(false)} className="w-full h-12 rounded-xl bg-slate-900 font-bold hover:scale-105 transition-all">
+              {matchingStatus === 'processing' ? (
+                <>
+                  <div className="mx-auto h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                    <Clock className="h-10 w-10 text-blue-600 animate-spin" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-950 tracking-tight">Buscando empresas...</h3>
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      Estamos buscando empresas compatíveis com seu projeto. Por favor, aguarde alguns instantes.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mx-auto h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-950 tracking-tight">Solicitação Enviada!</h3>
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      {matchingStatus === 'matched' && matchedCompanies.length > 0
+                        ? `Encontramos ${matchedCompanies.length} empresa${matchedCompanies.length === 1 ? '' : 's'} compatível${matchedCompanies.length === 1 ? '' : 'eis'} para seu projeto.`
+                        : 'Recebemos sua solicitação e estamos buscando empresas compatíveis com seu projeto.'}
+                    </p>
+                  </div>
+                </>
+              )}
+              <Button onClick={() => setOpen(false)} disabled={matchingStatus === 'processing'} className="w-full h-12 rounded-xl bg-slate-900 font-bold hover:scale-105 transition-all disabled:opacity-50">
                 FECHAR E CONTINUAR
               </Button>
             </div>

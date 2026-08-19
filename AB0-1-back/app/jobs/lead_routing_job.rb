@@ -6,12 +6,22 @@ class LeadRoutingJob < ApplicationJob
     active_distributions = lead.lead_distributions.where(status: %w[sent viewed accepted]).count
     return if active_distributions >= Leads::LeadMatchingService::MAX_DISTRIBUTIONS
 
+    # Track lead_routing_started
+    if lead.company_id.present?
+      Analytics::TrackEventService.call(
+        company_id: lead.company_id,
+        event_type: 'lead_routing_started',
+        metadata: { lead_id: lead.id }
+      )
+    end
+
     matches = Leads::LeadMatchingService.call(lead, preferred_company_id: preferred_company_id)
     matches = matches.first([Leads::LeadMatchingService::MAX_DISTRIBUTIONS - active_distributions, 0].max)
+    
     LeadDistribution.transaction do
       matches.each do |match|
         distribution = LeadDistribution.find_or_initialize_by(lead: lead, company: match[:company])
-        next if distribution.persisted? && !distribution.failed? && !distribution.expired? && !distribution.rejected?
+        next if distribution.persisted? && !distribution.failed_status? && !distribution.expired_status? && !distribution.rejected_status?
 
         distribution.assign_attributes(
           status: 'sent',
@@ -21,7 +31,17 @@ class LeadRoutingJob < ApplicationJob
           sent_at: distribution.sent_at || Time.current
         )
         distribution.save!
-        LeadDistributionExpirationJob.perform_later(distribution.id)
+
+        # Schedule SLA expiration in the future
+        LeadDistributionExpirationJob.set(wait: LeadDistribution.acceptance_sla_minutes.minutes).perform_later(distribution.id)
+        
+        # Track lead_distributed
+        Analytics::TrackEventService.call(
+          company_id: distribution.company_id,
+          event_type: 'lead_distributed',
+          metadata: { lead_id: distribution.lead_id, distribution_id: distribution.id }
+        )
+
         notify_company!(distribution)
       end
       lead.update!(wizard_status: matches.any? ? 'distributed' : 'unmatched')

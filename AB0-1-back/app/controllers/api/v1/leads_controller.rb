@@ -118,6 +118,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.save
       persist_identity_on_lead!(@lead)
       LeadRoutingJob.perform_later(@lead.id) if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
+      if @lead.company_id.present?
+        Analytics::TrackEventService.call(
+          company_id: @lead.company_id,
+          event_type: 'lead_created',
+          metadata: { lead_id: @lead.id }
+        )
+      end
       render json: @lead, status: :created
     else
       render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity
@@ -284,6 +291,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
         metadata: request_metadata.merge(identity_metadata).merge(lead_id: @lead.id)
       )
 
+      if @lead.company_id.present?
+        Analytics::TrackEventService.call(
+          company_id: @lead.company_id,
+          event_type: 'lead_created',
+          metadata: { lead_id: @lead.id }
+        )
+      end
+
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
       if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
         LeadRoutingJob.perform_later(@lead.id, preferred_company_id)
@@ -318,8 +333,26 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def wizard_result
+    matching_status = case @lead.wizard_status
+                      when 'distributed'
+                        'matched'
+                      when 'unmatched'
+                        'unmatched'
+                      else
+                        'processing'
+                      end
+
     companies = distributed_companies(@lead)
-    render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok
+
+    render json: {
+      lead_id: @lead.id,
+      status: @lead.wizard_status,
+      matching: {
+        status: matching_status,
+        matched_company_count: companies.count
+      },
+      companies: serialize_companies(companies)
+    }, status: :ok
   rescue StandardError => e
     Rails.logger.error("Leads wizard_result error: #{e.message}")
     render json: { error: 'Erro interno no servidor' }, status: :internal_server_error

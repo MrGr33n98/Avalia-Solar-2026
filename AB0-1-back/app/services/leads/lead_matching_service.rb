@@ -23,7 +23,7 @@ module Leads
 
     def eligible_companies
       scope = Company.where(status: 'active', active_admin: true)
-      scope = scope.where.not(id: @lead.lead_distributions.where.not(status: %w[rejected expired failed]).select(:company_id)) if @lead.persisted?
+      scope = scope.where.not(id: @lead.lead_distributions.select(:company_id)) if @lead.persisted?
       scope.includes(:categories, :company_category_capabilities, :company_service_areas, :plan).to_a.select do |company|
         category_eligible?(company) && location_eligible?(company) && lead_feature_enabled?(company)
       end

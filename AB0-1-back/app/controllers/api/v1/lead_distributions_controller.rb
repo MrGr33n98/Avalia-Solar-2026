@@ -6,7 +6,7 @@ module Api
       before_action :authorize_distribution_company
 
       def show
-        @distribution.mark_viewed! if @distribution.sent?
+        @distribution.mark_viewed! if @distribution.sent_status?
         render json: distribution_payload
       end
 
