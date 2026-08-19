@@ -79,7 +79,7 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
   {
     title: 'Avaliações',
     items: [
-      { label: 'Minhas Avaliações', href: '/review-dashboard#reviews', icon: ClipboardList },
+      { label: 'Minhas Avaliações', href: '/review-dashboard/reviews', icon: ClipboardList },
       { label: 'Empresas Avaliadas', href: '/review-dashboard#companies', icon: Building2 },
       { label: 'Rascunhos', href: '/review-dashboard#drafts', icon: FileText },
       {
@@ -142,7 +142,7 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
 
 const bottomNav: DashboardNavItem[] = [
   { label: 'Dashboard', href: '/review-dashboard', icon: Home },
-  { label: 'Avaliações', href: '/review-dashboard#reviews', icon: ClipboardList },
+  { label: 'Avaliações', href: '/review-dashboard/reviews', icon: ClipboardList },
   { label: 'Propostas', href: '/review-dashboard#opportunities', icon: MessageCircle },
   { label: 'Reputação', href: '/review-dashboard#reputation', icon: Award },
   { label: 'Perfil', href: '/review-dashboard/profile', icon: UserRound },
@@ -394,8 +394,8 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
     label: 'Avaliações',
     icon: Star,
     items: [
-      { label: 'Todas as avaliações', href: '/review-dashboard#reviews' },
-      { label: 'Minhas avaliações', href: '/review-dashboard#reviews' },
+      { label: 'Todas as avaliações', href: '/review-dashboard/reviews' },
+      { label: 'Minhas avaliações', href: '/review-dashboard/reviews' },
       { label: 'Rascunhos', href: '/review-dashboard#drafts' },
       { label: 'Respostas recebidas', href: '/review-dashboard#company-replies' },
     ],

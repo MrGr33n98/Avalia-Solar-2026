@@ -532,7 +532,7 @@ export function ReputationDashboard({
                 </Link>
 
                 <Link
-                  href="#reviews"
+                  href="/review-dashboard/reviews"
                   className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center hover:border-blue-500 hover:shadow-md transition-all group"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
