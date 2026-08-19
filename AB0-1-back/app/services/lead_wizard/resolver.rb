@@ -105,7 +105,7 @@ module LeadWizard
         template_version: version.template_version,
         schema: version.compiled_schema,
         thank_you_config: version.compiled_thank_you_config
-      }.merge(availability: availability)
+      }.merge(availability: availability, wizard_version: version)
     end
 
     def compile_legacy_payload(config, availability:)

@@ -111,6 +111,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     apply_utm_to_lead(@lead, utm_data, attribution)
     if @lead.save
       persist_identity_on_lead!(@lead)
+      LeadRoutingJob.perform_later(@lead.id) if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
       render json: @lead, status: :created
     else
       render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity
@@ -162,6 +163,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
       render json: {
         lead_id: lead.id,
+        status: lead.wizard_status,
         otp_sent_at: lead.otp_sent_at,
         verification_channel: 'email',
         email_hint: mask_email(lead.email)
@@ -269,8 +271,12 @@ class Api::V1::LeadsController < Api::V1::BaseController
       )
 
       preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
-      companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
-      @lead.update!(wizard_status: 'distributed')
+      if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
+        LeadRoutingJob.perform_later(@lead.id, preferred_company_id)
+      else
+        companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
+        @lead.update!(wizard_status: 'distributed') if companies.any?
+      end
 
       # 3. Lead Dispatched (One event per recipient as per V2)
       companies.each do |comp|

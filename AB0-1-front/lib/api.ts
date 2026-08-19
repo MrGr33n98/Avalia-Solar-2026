@@ -1783,6 +1783,10 @@ export interface RankingData {
 }
 
 export const companyDashboardApi = {
+  getLeads: (companyId?: string | number) =>
+    fetchApi<{ data: Array<Record<string, unknown>>; meta?: unknown }>('/dashboard/leads', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
   getAnalyticsOverview: (companyId?: string | number) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
       params: companyId ? { company_id: companyId } : undefined,

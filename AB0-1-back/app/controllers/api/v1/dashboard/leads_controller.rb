@@ -3,7 +3,7 @@ module Api
     module Dashboard
       class LeadsController < BaseController
         def index
-          leads = current_company.leads.order(created_at: :desc)
+          leads = Lead.joins(:lead_distributions).where(lead_distributions: { company_id: current_company.id }).distinct.order(created_at: :desc)
           paginated = paginate(leads)
           set_pagination_headers(paginated)
 
@@ -25,6 +25,12 @@ module Api
             project_type: lead.project_type,
             estimated_budget: lead.estimated_budget,
             location: lead.location,
+            source: lead.source,
+            score: lead.cached_score,
+            score_band: lead.score_band,
+            distributions: lead.lead_distributions.where(company_id: current_company.id).map do |distribution|
+              { id: distribution.id, status: distribution.status, sent_at: distribution.sent_at, viewed_at: distribution.viewed_at, accepted_at: distribution.accepted_at }
+            end,
             created_at: lead.created_at
           }
         end

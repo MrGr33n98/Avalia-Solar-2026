@@ -28,6 +28,7 @@ export default function QuickLeadModal() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verificationHint, setVerificationHint] = useState('');
   const [decisionContext, setDecisionContext] = useState<Record<string, unknown>>({});
+  const [matchedCompanies, setMatchedCompanies] = useState<Array<{ id: number; name: string }>>([]);
 
   const [form, setForm] = useState({
     fullName: '',
@@ -50,6 +51,7 @@ export default function QuickLeadModal() {
     setResendCooldown(0);
     setVerificationHint('');
     setDecisionContext({});
+    setMatchedCompanies([]);
     setForm({
       fullName: '',
       email: '',
@@ -152,6 +154,12 @@ export default function QuickLeadModal() {
     setSubmitting(true);
     try {
       await leadsWizardApi.verifyEmailCode(leadId, otpCode);
+      try {
+        const result = await leadsWizardApi.result(leadId);
+        setMatchedCompanies(Array.isArray(result?.companies) ? result.companies : []);
+      } catch {
+        setMatchedCompanies([]);
+      }
       setStep(3);
       track('Quick Lead Verified', { lead_id: leadId });
     } catch (err: unknown) {
@@ -288,8 +296,9 @@ export default function QuickLeadModal() {
               <div className="space-y-2">
                 <h3 className="text-2xl font-black text-slate-950 tracking-tight">Solicitação Enviada!</h3>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                  As melhores empresas verificadas entrarão em contato com você em breve. 
-                  Prepare-se para economizar!
+                  {matchedCompanies.length > 0
+                    ? `Encontramos ${matchedCompanies.length} empresa${matchedCompanies.length === 1 ? '' : 's'} compatível${matchedCompanies.length === 1 ? '' : 'eis'} para seu projeto.`
+                    : 'Recebemos sua solicitação e estamos buscando empresas compatíveis com seu projeto.'}
                 </p>
               </div>
               <Button onClick={() => setOpen(false)} className="w-full h-12 rounded-xl bg-slate-900 font-bold hover:scale-105 transition-all">

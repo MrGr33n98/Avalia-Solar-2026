@@ -3,14 +3,22 @@ class Lead < ApplicationRecord
   # Make company association optional since the database might not have company_id column
   belongs_to :company, optional: true, counter_cache: true
   belongs_to :category, optional: true
+  belongs_to :lead_wizard_version, optional: true
   has_many :lead_distributions, dependent: :destroy
   has_many :distributed_companies, through: :lead_distributions, source: :company
 
   enum wizard_status: {
     draft: 'draft',
+    routing: 'routing',
     pending_otp: 'pending_otp',
     verified: 'verified',
+    matched: 'matched',
+    open: 'open',
+    in_progress: 'in_progress',
     distributed: 'distributed',
+    unmatched: 'unmatched',
+    converted: 'converted',
+    closed: 'closed',
     proposal_submitted: 'proposal_submitted',
     proposal_processing: 'proposal_processing',
     proposal_sent: 'proposal_sent',
@@ -32,6 +40,7 @@ class Lead < ApplicationRecord
   before_validation :apply_address_fallbacks
   before_validation :ensure_otp_attempts_default
   before_save :update_score_cache
+  before_validation :set_marketplace_score, if: :wizard_validation_required?
 
   def update_score_cache
     return unless respond_to?(:cached_score=)
@@ -49,6 +58,10 @@ class Lead < ApplicationRecord
 
   def track_banner_attribution
     Analytics::BannerAttributionService.call(self)
+  end
+
+  def marketplace_score
+    Leads::LeadScoringService.call(self)
   end
 
   validates :product_vertical, :project_profile, :quote_type, :system_size_band,
@@ -168,6 +181,12 @@ class Lead < ApplicationRecord
   end
 
   private
+
+  def set_marketplace_score
+    result = marketplace_score
+    self.cached_score = result[:total_score] if respond_to?(:cached_score=)
+    self.score_band = result[:score_band] if respond_to?(:score_band=)
+  end
 
   def normalize_contact_fields
     self.name = name.to_s.strip if name.present?

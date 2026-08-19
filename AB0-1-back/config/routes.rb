@@ -434,6 +434,15 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :lead_distributions, only: [:show] do
+        member do
+          post :viewed
+          post :accept
+          post :reject
+          post :convert
+        end
+      end
+
       resources :users, only: %i[show update create] do
         collection do
           get :me_companies

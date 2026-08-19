@@ -127,6 +127,8 @@ module LeadWizard
       # Resolve and assign template info
       lead.template_key = schema_info[:template_key]
       lead.template_version = schema_info[:template_version]
+      lead.lead_wizard_version = schema_info[:wizard_version] if schema_info[:wizard_version] && lead.respond_to?(:lead_wizard_version=)
+      lead.source = source_value if lead.respond_to?(:source=)
 
       apply_metadata(lead, core_params)
 
@@ -235,6 +237,11 @@ module LeadWizard
       assign_if_present(lead, :landing_path, utm['landing_path'])
       assign_if_present(lead, :referrer_host, utm['referrer_host'])
       assign_if_present(lead, :attribution_json, attribution) if attribution.present?
+    end
+
+    def source_value
+      source = value_for(@params, 'source') || value_for(@core_params || {}, 'source')
+      source.to_s.strip.presence || 'organic'
     end
 
     def merge_identity_into_wizard_answers!(wizard_answers, core_params)

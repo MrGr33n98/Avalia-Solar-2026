@@ -20,7 +20,7 @@ import {
   MapPin,
   AlertTriangle
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,12 +28,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import MetricCard from './MetricCard';
-import LeadIntelligenceSheet from './LeadIntelligenceSheet';
-import { Info } from 'lucide-react';
 
 interface LeadsOpportunitiesProps {
   companyId: string;
-  companyName?: string;
 }
 
 interface MarketInsights {
@@ -44,59 +41,27 @@ interface MarketInsights {
     opportunities_count: number;
     market_share_percent: number;
   };
-  opportunities: any[];
+  opportunities: Array<Record<string, unknown>>;
   is_premium: boolean;
 }
 
-export default function LeadsOpportunities({ companyId, companyName }: LeadsOpportunitiesProps) {
-  const [activeTab, setActiveTab] = useState('my-leads');
-  const [leads, setLeads] = useState<any[]>([]);
+export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProps) {
+  const [leads, setLeads] = useState<Array<Record<string, unknown>>>([]);
   const [marketData, setMarketData] = useState<MarketInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Intelligence Dossier State
-  const [selectedLead, setSelectedLead] = useState<any | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-
   const loadData = async () => {
     try {
       setLoading(true);
-      const [intentData, insightsData] = await Promise.all([
-        companyDashboardApi.getIntentSummary(companyId),
-        fetchApi<MarketInsights>('/company_dashboard/market_insights', { params: { company_id: companyId } })
+      const [response, insightsData] = await Promise.all([
+        companyDashboardApi.getLeads(companyId),
+        fetchApi<MarketInsights>('/company_dashboard/market_insights', { params: { company_id: companyId } }),
       ]);
-
-      // Map IntentSummary top_leads to our leads format
-      if (intentData && intentData.top_leads) {
-        setLeads(intentData.top_leads.map((lead: any, index: number) => ({
-          id: lead.id || lead.lead_id || lead.anonymous_id || `intent-${index}`,
-          name: lead.name || (lead.lead_id ? `Lead #${lead.lead_id}` : 'Prospecto anônimo'),
-          email: lead.email || null,
-          phone: lead.phone || null,
-          city: lead.city || null,
-          state: lead.state || null,
-          message: lead.message || null,
-          product_vertical: lead.product_vertical || lead.technical_profile?.product_vertical || null,
-          created_at: lead.last_interaction_at || null,
-          status: lead.intent_level?.toLowerCase?.() || 'unknown',
-          total_score: lead.total_score,
-          // Mapping Dossier Data
-          technical_profile: lead.technical_profile || lead.dossie?.technical_profile,
-          marketing_data: lead.marketing_data || lead.dossie?.marketing_data,
-          top_signals: lead.top_signals || lead.dossie?.top_signals,
-          signals_count: lead.signals_count || 0,
-          intent_level: lead.intent_level,
-          sla_window: lead.sla_window,
-          recommended_action: lead.recommended_action
-        })));
-      } else {
-        setLeads([]);
-      }
-      
+      setLeads(response.data || []);
       setMarketData(insightsData);
-    } catch (e: any) {
-      setError(e?.message || 'Falha ao carregar dados');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Falha ao carregar dados');
     } finally {
       setLoading(false);
     }
@@ -169,7 +134,7 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
         ))}
       </div>
 
-      <Tabs defaultValue="my-leads" className="w-full" onValueChange={setActiveTab}>
+      <Tabs defaultValue="my-leads" className="w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase text-foreground dark:text-white">
@@ -209,13 +174,9 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
               ) : (
                 leads.map((lead, idx) => (
                   <LeadCard 
-                    key={lead.id} 
+                    key={String(lead.id)}
                     lead={lead} 
                     delay={idx * 0.05} 
-                    onViewIntel={(l) => {
-                      setSelectedLead(l);
-                      setIsSheetOpen(true);
-                    }}
                   />
                 ))
               )}
@@ -278,14 +239,10 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
               )}>
                 {marketData?.opportunities.map((opp, idx) => (
                   <LeadCard 
-                    key={opp.id} 
+                    key={String(opp.id)}
                     lead={opp} 
                     isOpportunity 
                     delay={idx * 0.05} 
-                    onViewIntel={(l) => {
-                      setSelectedLead(l);
-                      setIsSheetOpen(true);
-                    }}
                   />
                 ))}
               </div>
@@ -295,13 +252,6 @@ export default function LeadsOpportunities({ companyId, companyName }: LeadsOppo
       </Tabs>
 
       {/* Leads Intelligence Dossier Sheet */}
-      {selectedLead && (
-        <LeadIntelligenceSheet 
-          isOpen={isSheetOpen}
-          onClose={() => setIsSheetOpen(false)}
-          lead={selectedLead}
-        />
-      )}
     </div>
   );
 }
@@ -310,13 +260,18 @@ function LeadCard({
   lead, 
   isOpportunity, 
   delay = 0,
-  onViewIntel
 }: { 
-  lead: any, 
+  lead: Record<string, unknown>,
   isOpportunity?: boolean, 
-  delay?: number,
-  onViewIntel?: (lead: any) => void
+  delay?: number
 }) {
+  const textValue = (key: string, fallback = '') => {
+    const value = lead[key];
+    return value === null || value === undefined ? fallback : String(value);
+  };
+  const city = textValue('city', 'local não informado');
+  const createdAt = textValue('created_at');
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -337,26 +292,16 @@ function LeadCard({
                   {isOpportunity ? 'Oportunidade Blind' : 'Lead Direto'}
                 </div>
                 <h3 className="font-black text-xl tracking-tight uppercase text-foreground dark:text-white">
-                  {isOpportunity ? `Potencial Cliente em ${lead.city || 'local não informado'}` : lead.name}
+                  {isOpportunity ? `Potencial Cliente em ${city}` : textValue('name', 'Lead')}
                 </h3>
                 
-                {lead.created_at && (
+                {createdAt && (
                   <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/60 dark:text-white/30 ml-auto lg:ml-0">
                     <Clock className="h-3.5 w-3.5" />
-                    <span className="font-mono">{new Date(lead.created_at).toLocaleDateString('pt-BR')}</span>
+                    <span className="font-mono">{new Date(createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
                 )}
 
-                {!isOpportunity && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => onViewIntel?.(lead)}
-                    className="ml-2 w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 text-brand-blue hover:bg-brand-blue hover:text-white transition-all border border-brand-blue/10"
-                  >
-                    <Info className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -364,7 +309,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Localização</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <MapPin className="h-4 w-4 text-brand-blue/50" />
-                    <span>{[lead.city, lead.state].filter(Boolean).join(' - ') || 'Não informado'}</span>
+                    <span>{[textValue('city'), textValue('state')].filter(Boolean).join(' - ') || 'Não informado'}</span>
                   </div>
                 </div>
 
@@ -372,7 +317,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">E-mail</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <Mail className="h-4 w-4 text-brand-blue/50" />
-                    <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : (lead.email || 'Não informado')}</span>
+                    <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : textValue('email', 'Não informado')}</span>
                   </div>
                 </div>
 
@@ -380,7 +325,7 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Telefone</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
                     <Phone className="h-4 w-4 text-brand-blue/50" />
-                    <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : (lead.phone || 'Não informado')}</span>
+                    <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : textValue('phone', 'Não informado')}</span>
                   </div>
                 </div>
 
@@ -388,14 +333,14 @@ function LeadCard({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Segmento</p>
                   <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70 text-brand-blue">
                     <Globe className="h-4 w-4 opacity-50" />
-                    <span className="truncate">{lead.product_vertical || 'Não informado'}</span>
+                    <span className="truncate">{textValue('product_vertical', 'Não informado')}</span>
                   </div>
                 </div>
               </div>
               
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 relative group-hover:border-slate-200 transition-colors">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic pr-10">
-                  &quot;{lead.message || 'Mensagem não informada pelo lead.'}&quot;
+                  &quot;{textValue('message', 'Mensagem não informada pelo lead.')}&quot;
                 </p>
                 <MessageSquare className="absolute right-4 top-4 h-4 w-4 text-slate-300 dark:text-white/10" />
               </div>

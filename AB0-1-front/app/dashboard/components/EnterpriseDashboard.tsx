@@ -742,7 +742,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                         Gerencie seus leads e oportunidades de negócio
                       </p>
                     </div>
-                    <LeadsOpportunities companyId={companyId} companyName={company?.name} />
+                    <LeadsOpportunities companyId={companyId} />
                   </div>
                 )}
               </TabsContent>

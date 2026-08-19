@@ -30,5 +30,11 @@
 ### Bloqueadores
 - Nenhum bloqueador técnico identificado no momento. A aprovação do roadmap é o próximo passo.
 
+## Quick Tasks Completed
+
+| Task | Status | Completion Date | Commit |
+| :--- | :--- | :--- | :--- |
+| TASK 5 — Lead Marketplace + Roteamento + SLA | [ ] | 2026-08-19 | `incomplete` |
+
 ## Continuidade da Sessão
 O roadmap foi gerado com base nos requisitos inferidos e nos arquivos `PROJECT.md` e `REQUIREMENTS.md` fornecidos. O próximo passo é obter feedback sobre a estrutura proposta.
