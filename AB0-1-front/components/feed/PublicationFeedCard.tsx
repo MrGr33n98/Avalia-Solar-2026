@@ -2,7 +2,15 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ThumbsUp, MessageSquare, Bookmark, Share2, Building2, CheckCircle2, UserPlus, UserCheck } from 'lucide-react';
+import {
+  ThumbsUp,
+  MessageSquare,
+  Bookmark,
+  Building2,
+  CheckCircle2,
+  UserPlus,
+  UserCheck,
+} from 'lucide-react';
 import { FeedItem } from '@/types/feed';
 import { toggleReaction, toggleSave, toggleFollow } from '@/lib/api/feed';
 
@@ -50,7 +58,11 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
     setIsFollowing(nextFollow);
 
     try {
-      await toggleFollow(actor.type === 'user' ? 'ReviewerProfile' : 'Company', actor.id, isFollowing);
+      await toggleFollow(
+        actor.type === 'user' ? 'ReviewerProfile' : 'Company',
+        actor.id,
+        isFollowing
+      );
     } catch {
       setIsFollowing(isFollowing);
     }
@@ -61,13 +73,37 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
+          {actor.type === 'user' && actor.slug ? (
+            <Link href={`/creators/${actor.slug}`}>
+              <UserAvatar
+                src={actor.avatar_url}
+                name={actor.name}
+                size="md"
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+              />
+            </Link>
+          ) : (
+            <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
+          )}
           <div>
-            <div className="flex items-center gap-1.5 font-semibold text-sm">
-              <span>{actor.name}</span>
-              {actor.verified && <CheckCircle2 className="h-4 w-4 text-emerald-500 fill-emerald-500/20" />}
+            <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+              {actor.type === 'user' && actor.slug ? (
+                <Link
+                  href={`/creators/${actor.slug}`}
+                  className="hover:underline hover:text-primary transition-colors"
+                >
+                  {actor.name}
+                </Link>
+              ) : (
+                <span>{actor.name}</span>
+              )}
+              {actor.verified && (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 fill-emerald-500/20" />
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">{actor.headline || 'Creator Especialista'}</p>
+            <p className="text-xs text-muted-foreground">
+              {actor.headline || 'Creator Especialista'}
+            </p>
           </div>
         </div>
 
@@ -79,7 +115,11 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
               : 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
           }`}
         >
-          {isFollowing ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+          {isFollowing ? (
+            <UserCheck className="h-3.5 w-3.5" />
+          ) : (
+            <UserPlus className="h-3.5 w-3.5" />
+          )}
           <span>{isFollowing ? 'Seguindo' : 'Seguir'}</span>
         </button>
       </div>
@@ -110,7 +150,9 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
         <button
           onClick={handleUseful}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-            isUseful ? 'text-primary bg-primary/10 font-bold' : 'hover:bg-muted hover:text-foreground'
+            isUseful
+              ? 'text-primary bg-primary/10 font-bold'
+              : 'hover:bg-muted hover:text-foreground'
           }`}
         >
           <ThumbsUp className="h-4 w-4" />
@@ -128,7 +170,9 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
         <button
           onClick={handleSave}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-            isSaved ? 'text-amber-600 bg-amber-500/10 font-bold' : 'hover:bg-muted hover:text-foreground'
+            isSaved
+              ? 'text-amber-600 bg-amber-500/10 font-bold'
+              : 'hover:bg-muted hover:text-foreground'
           }`}
         >
           <Bookmark className="h-4 w-4" />

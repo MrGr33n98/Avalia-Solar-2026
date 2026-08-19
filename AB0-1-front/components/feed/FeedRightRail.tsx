@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client';
 
-
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Building2, ArrowUpRight, TrendingUp, Star, Loader2 } from 'lucide-react';
@@ -15,7 +14,8 @@ export function FeedRightRail() {
 
   useEffect(() => {
     let active = true;
-    publicCompaniesApi.getFeatured()
+    publicCompaniesApi
+      .getFeatured()
       .then((res) => {
         if (active) {
           setCompanies(res || []);
@@ -41,14 +41,16 @@ export function FeedRightRail() {
           <Building2 className="h-4 w-4 text-primary" />
           <span>Empresas em Destaque</span>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
             <span className="text-xs">Carregando destaques...</span>
           </div>
         ) : companies.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">Nenhuma empresa em destaque no momento.</p>
+          <p className="text-xs text-muted-foreground text-center py-4">
+            Nenhuma empresa em destaque no momento.
+          </p>
         ) : (
           <div className="space-y-2 text-xs">
             {companies.slice(0, 5).map((company) => (
@@ -72,14 +74,23 @@ export function FeedRightRail() {
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground truncate">{company.name}</p>
                     <p className="text-muted-foreground truncate flex items-center gap-1">
-                      <span>{company.category_name || company.categories?.[0]?.name || 'Tecnologia Solar'}</span>
-                      {company.rating_avg && (
+                      <span>
+                        {company.category_name ||
+                          company.categories?.[0]?.name ||
+                          'Tecnologia Solar'}
+                      </span>
+                      {company.rating_avg && Number(company.rating_avg) > 0 ? (
                         <>
                           <span>•</span>
                           <span className="flex items-center text-amber-500 font-semibold gap-0.5">
                             <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                             {Number(company.rating_avg).toFixed(1)}
                           </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>•</span>
+                          <span className="text-muted-foreground">Sem avaliações</span>
                         </>
                       )}
                     </p>
@@ -99,13 +110,15 @@ export function FeedRightRail() {
           <span>Assuntos em Alta</span>
         </div>
         {trendingTopics.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">Nenhum assunto em alta no momento.</p>
+          <p className="text-xs text-muted-foreground text-center py-4">
+            Nenhum assunto em alta no momento.
+          </p>
         ) : (
           <div className="flex flex-wrap gap-1.5 text-xs">
             {trendingTopics.map((topic, i) => (
               <span
                 key={i}
-                className="px-2.5 py-1 rounded-full bg-muted font-medium hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-full bg-muted font-medium text-slate-600 border border-slate-200/50"
               >
                 {topic}
               </span>
@@ -115,17 +128,30 @@ export function FeedRightRail() {
       </div>
 
       {/* Micro Footer */}
-      <div className="text-[11px] text-muted-foreground px-2 space-y-1" aria-label="Links institucionais">
+      <div
+        className="text-[11px] text-muted-foreground px-2 space-y-1"
+        aria-label="Links institucionais"
+      >
         <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
-          <Link href="/about" className="hover:underline">Sobre</Link>
+          <Link href="/about" className="hover:underline">
+            Sobre
+          </Link>
           <span>·</span>
-          <Link href="/help" className="hover:underline">Ajuda</Link>
+          <Link href="/help" className="hover:underline">
+            Ajuda
+          </Link>
           <span>·</span>
-          <Link href="/privacy" className="hover:underline">Privacidade</Link>
+          <Link href="/privacy" className="hover:underline">
+            Privacidade
+          </Link>
           <span>·</span>
-          <Link href="/terms" className="hover:underline">Termos</Link>
+          <Link href="/terms" className="hover:underline">
+            Termos
+          </Link>
           <span>·</span>
-          <Link href="/cookies" className="hover:underline">Cookies</Link>
+          <Link href="/cookies" className="hover:underline">
+            Cookies
+          </Link>
         </div>
         <p className="text-muted-foreground/80">© 2026 Avalia Solar</p>
       </div>

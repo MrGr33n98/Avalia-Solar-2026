@@ -219,8 +219,7 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
 
   // Sentiment: prioriza dados reais da API, nunca fabrica se não há avaliações
   const apiSentiment = comp?.reputation?.sentiment ?? comp?.sentiment ?? null;
-  const sentimentData =
-    apiSentiment ?? (reviews > 0 ? undefined : null);
+  const sentimentData = apiSentiment ?? (reviews > 0 ? undefined : null);
 
   // recommendation_rate: prioriza real da API
   const apiRecommendation =
@@ -258,7 +257,8 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       nps_responses: comp?.nps_responses || 0,
       recommendation_rate: apiRecommendation,
       sentiment: sentimentData,
-      recent_reviewer_avatars: comp?.reputation?.recent_reviewer_avatars || comp?.recent_reviewer_avatars || [],
+      recent_reviewer_avatars:
+        comp?.reputation?.recent_reviewer_avatars || comp?.recent_reviewer_avatars || [],
     },
     operations: {
       delivered_projects:
@@ -281,7 +281,10 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       states:
         comp?.coverage?.states ??
         (Array.isArray(comp?.coverage_states)
-          ? comp.coverage_states.map(String).map((s: string) => s.trim()).filter(Boolean)
+          ? comp.coverage_states
+              .map(String)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
           : String(comp?.coverage_states || '')
               .split(',')
               .map((s: string) => s.trim())
@@ -289,7 +292,10 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
       cities:
         comp?.coverage?.cities ??
         (Array.isArray(comp?.coverage_cities)
-          ? comp.coverage_cities.map(String).map((s: string) => s.trim()).filter(Boolean)
+          ? comp.coverage_cities
+              .map(String)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
           : String(comp?.coverage_cities || '')
               .split(',')
               .map((s: string) => s.trim())
@@ -338,7 +344,8 @@ export default function CompanyCard({
   );
 
   const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
-  const p2pChatEnabled = company.actions.p2p_chat_enabled === true || (company as any)?.p2p_chat_enabled === true;
+  const p2pChatEnabled =
+    company.actions.p2p_chat_enabled === true || (company as any)?.p2p_chat_enabled === true;
   const selectedInComparison = isInComparison(id);
 
   // ── Feature gates controlados via planos pagos ──
@@ -377,7 +384,7 @@ export default function CompanyCard({
   };
 
   const renderPrimaryActions = (wrapperClass?: string) => (
-    <div className={cn("flex flex-col gap-2 w-full", wrapperClass)}>
+    <div className={cn('flex flex-col gap-2 w-full', wrapperClass)}>
       <div className="grid grid-cols-2 gap-2 w-full">
         <Button
           type="button"
@@ -385,21 +392,44 @@ export default function CompanyCard({
           onClick={handleCompareClick}
           disabled={!selectedInComparison && !canAddMore}
           aria-pressed={selectedInComparison}
-          aria-label={selectedInComparison ? `Remover ${name} da comparação` : `Adicionar ${name} à comparação`}
-          className={cn(
-            'min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 inline-flex items-center justify-center gap-1.5 rounded-xl @[500px]/card:rounded-lg border bg-white px-2 text-[11px] @[500px]/card:text-[10px] font-semibold transition-colors',
+          aria-label={
             selectedInComparison
-              ? 'text-white border-blue-600 bg-blue-600 hover:bg-blue-700 hover:border-blue-700 shadow-sm'
-              : 'text-slate-700 border-slate-200 hover:border-blue-300 hover:text-blue-700'
+              ? `Remover ${name} da comparação`
+              : `Adicionar ${name} à comparação`
+          }
+          className={cn(
+            'min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 inline-flex items-center justify-start @[500px]/card:justify-center gap-2.5 px-0 @[500px]/card:px-2 text-sm @[500px]/card:text-[10px] font-semibold transition-colors focus-visible:ring-0',
+            'border-0 bg-transparent shadow-none hover:bg-transparent text-slate-800 active:scale-[0.98]',
+            selectedInComparison
+              ? '@[500px]/card:text-white @[500px]/card:border-blue-600 @[500px]/card:bg-blue-600 hover:@[500px]/card:bg-blue-700 hover:@[500px]/card:border-blue-700 @[500px]/card:shadow-sm @[500px]/card:border'
+              : '@[500px]/card:text-slate-700 @[500px]/card:border-slate-200 hover:@[500px]/card:border-blue-300 hover:@[500px]/card:text-blue-700 hover:@[500px]/card:bg-slate-50/50 @[500px]/card:border'
           )}
         >
-          {selectedInComparison ? (
-            <Check className="h-[14px] w-[14px] @[500px]/card:h-3 @[500px]/card:w-3 shrink-0" />
-          ) : (
-            <div className="flex items-center justify-center @[500px]/card:scale-[0.85] shrink-0">
-              <AnimatedCompareIcon size={28} active={false} selected={false} disabled={!canAddMore} aria-hidden="true" />
-            </div>
-          )}
+          <div
+            className={cn(
+              'w-10 h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors duration-200',
+              selectedInComparison
+                ? 'bg-blue-50 border-blue-500 text-blue-600'
+                : 'bg-white border-blue-200 text-blue-600',
+              '@[500px]/card:w-auto @[500px]/card:h-auto @[500px]/card:border-0 @[500px]/card:bg-transparent @[500px]/card:p-0 @[500px]/card:rounded-none',
+              selectedInComparison ? '@[500px]/card:text-white' : '@[500px]/card:text-slate-700'
+            )}
+          >
+            {selectedInComparison ? (
+              <Check className="h-4 w-4 @[500px]/card:h-3 @[500px]/card:w-3 shrink-0" />
+            ) : (
+              <div className="flex items-center justify-center @[500px]/card:scale-[0.85] shrink-0">
+                <AnimatedCompareIcon
+                  size={20}
+                  active={false}
+                  selected={false}
+                  disabled={!canAddMore}
+                  className="text-blue-600 @[500px]/card:text-slate-750"
+                  aria-hidden="true"
+                />
+              </div>
+            )}
+          </div>
           <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
         </Button>
 
@@ -411,9 +441,21 @@ export default function CompanyCard({
           stopPropagation
         />
       </div>
-      
+
       {canRequestQuote ? (
-        <QuoteCTA context="compact" source="company-card-expanded" className="w-full" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'list', decisionContext, type: 'quick' })} />
+        <QuoteCTA
+          context="compact"
+          source="company-card-expanded"
+          className="w-full"
+          onRequest={() =>
+            openLeadModal({
+              preferredCompanyId: id,
+              source: 'list',
+              decisionContext,
+              type: 'quick',
+            })
+          }
+        />
       ) : null}
     </div>
   );
@@ -436,7 +478,7 @@ export default function CompanyCard({
   if (variant === 'compact') {
     // Check if company has badges for layout adjustments
     const hasBadges = company.badges && company.badges.length > 0;
-    
+
     return (
       <Card
         itemScope
@@ -457,12 +499,12 @@ export default function CompanyCard({
             <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
           </div>
           <div className="min-w-0 flex-1 flex items-center gap-1.5">
-            <h3 
-              itemProp="name" 
+            <h3
+              itemProp="name"
               className={cn(
-                "text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors",
+                'text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors',
                 // Adjust truncation to account for badge overflow on the right side
-                hasBadges ? "truncate pr-3" : "truncate"
+                hasBadges ? 'truncate pr-3' : 'truncate'
               )}
             >
               {name}
@@ -486,14 +528,18 @@ export default function CompanyCard({
               </span>
             </div>
             <span className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-2 leading-tight">
-              {company.reputation.rating_count > 0 ? `${company.reputation.rating_count} avaliações` : 'Sem avaliações'}
+              {company.reputation.rating_count > 0
+                ? `${company.reputation.rating_count} avaliações`
+                : 'Sem avaliações'}
             </span>
           </div>
           {/* Response Time */}
           <div className="py-2.5 px-1 flex flex-col items-center justify-center">
             <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
               <Clock3Icon className="h-3 w-3 text-slate-400" />
-              <span className="truncate max-w-[50px]">{company.operations.sla_label || 'Sem dados'}</span>
+              <span className="truncate max-w-[50px]">
+                {company.operations.sla_label || 'Sem dados'}
+              </span>
             </div>
             <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
               Resposta
@@ -502,7 +548,9 @@ export default function CompanyCard({
           {/* Projects */}
           <div className="py-2.5 px-1 flex flex-col items-center justify-center">
             <div className="font-bold text-slate-800 text-xs">
-              {company.operations.delivered_projects > 0 ? company.operations.delivered_projects : 'S/N'}
+              {company.operations.delivered_projects > 0
+                ? company.operations.delivered_projects
+                : 'S/N'}
             </div>
             <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
               Projetos
@@ -511,9 +559,7 @@ export default function CompanyCard({
         </div>
 
         {/* BOTTOM SECTION: Buttons */}
-        <div className="px-4 pb-4">
-          {renderPrimaryActions("mt-4")}
-        </div>
+        <div className="px-4 pb-4">{renderPrimaryActions('mt-4')}</div>
       </Card>
     );
   }
@@ -526,7 +572,8 @@ export default function CompanyCard({
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const recommendationRate = company.reputation?.recommendation_rate ?? null;
-  const recentReviewers = company.reputation?.recent_reviewer_avatars || (company as any).recent_reviewer_avatars || [];
+  const recentReviewers =
+    company.reputation?.recent_reviewer_avatars || (company as any).recent_reviewer_avatars || [];
   const strokeDashoffset =
     recommendationRate !== null
       ? circumference - (recommendationRate / 100) * circumference
@@ -554,10 +601,12 @@ export default function CompanyCard({
           </div>
           <div className="min-w-0 space-y-0.5 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <h3 className={cn(
-                "text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1",
-                hasBadges ? "truncate pr-3" : "truncate"
-              )}>
+              <h3
+                className={cn(
+                  'text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1',
+                  hasBadges ? 'truncate pr-3' : 'truncate'
+                )}
+              >
                 {name}
                 {company.trust.verification_status === 'verified' && (
                   <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
@@ -632,7 +681,7 @@ export default function CompanyCard({
             </div>
           </div>
 
-          {renderPrimaryActions("mt-2 @[500px]/card:mt-0")}
+          {renderPrimaryActions('mt-2 @[500px]/card:mt-0')}
         </div>
       </div>
 
@@ -869,7 +918,9 @@ export default function CompanyCard({
             />
           )}
 
-          {p2pChatEnabled && <CompanyChatButton companyId={id} companyName={name} variant="compact" />}
+          {p2pChatEnabled && (
+            <CompanyChatButton companyId={id} companyName={name} variant="compact" />
+          )}
 
           {canRequestQuote && (
             <Button

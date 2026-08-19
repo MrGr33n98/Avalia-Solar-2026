@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { getFeed } from '@/lib/api/feed';
-import { FeedItem } from '@/types/feed';
 import { FeedItemRenderer } from './FeedItemRenderer';
 import { Loader2, Sparkles } from 'lucide-react';
 
@@ -16,7 +15,9 @@ interface InfiniteFeedProps {
 }
 
 export function InfiniteFeed({ view }: InfiniteFeedProps) {
-  const [items, setItems] = useState<FeedItem[]>([]);
+  const items = useFeedStore((state) => state.items);
+  const setItems = useFeedStore((state) => state.setItems);
+  const openComposer = useFeedStore((state) => state.openComposer);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { reviewerProfile } = useAuth();
@@ -33,12 +34,12 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
       if (res.meta?.trending_topics) {
         setTrendingTopics(res.meta.trending_topics);
       }
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar o feed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar o feed');
     } finally {
       setLoading(false);
     }
-  }, [view, setTrendingTopics]);
+  }, [view, setTrendingTopics, setItems]);
 
   useEffect(() => {
     fetchInitial();
@@ -62,14 +63,6 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
   }
 
   if (items.length === 0) {
-    const handleFocusComposer = () => {
-      const el = document.getElementById('feed-composer-textarea');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.focus();
-      }
-    };
-
     return (
       <div className="bg-card text-card-foreground rounded-xl border border-border p-8 text-center space-y-4 shadow-sm">
         <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto font-bold">
@@ -86,7 +79,7 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
         <div className="pt-2">
           {isCreator ? (
             <button
-              onClick={handleFocusComposer}
+              onClick={openComposer}
               className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/95 rounded-lg transition-colors shadow-sm"
             >
               Criar minha primeira publicação

@@ -21,7 +21,11 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
     setIsFollowing(nextFollow);
 
     try {
-      await toggleFollow(actor.type === 'user' ? 'ReviewerProfile' : 'Company', actor.id, isFollowing);
+      await toggleFollow(
+        actor.type === 'user' ? 'ReviewerProfile' : 'Company',
+        actor.id,
+        isFollowing
+      );
     } catch {
       setIsFollowing(isFollowing);
     }
@@ -32,10 +36,30 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
+          {actor.type === 'user' && actor.slug ? (
+            <Link href={`/creators/${actor.slug}`}>
+              <UserAvatar
+                src={actor.avatar_url}
+                name={actor.name}
+                size="md"
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+              />
+            </Link>
+          ) : (
+            <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
+          )}
           <div>
-            <div className="flex items-center gap-1.5 font-semibold text-sm">
-              <span>{actor.name}</span>
+            <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+              {actor.type === 'user' && actor.slug ? (
+                <Link
+                  href={`/creators/${actor.slug}`}
+                  className="hover:underline hover:text-primary transition-colors"
+                >
+                  {actor.name}
+                </Link>
+              ) : (
+                <span>{actor.name}</span>
+              )}
               {actor.verified && (
                 <CheckCircle2 className="h-4 w-4 text-primary fill-primary/10 flex-shrink-0" />
               )}
@@ -75,20 +99,16 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
             <Star
               key={i}
               className={`h-4 w-4 ${
-                i < Math.floor(subject.rating || 0)
-                  ? 'fill-amber-500'
-                  : 'text-border'
+                i < Math.floor(subject.rating || 0) ? 'fill-amber-500' : 'text-border'
               }`}
             />
           ))}
-          <span className="text-xs text-muted-foreground ml-1">
-            {subject.rating} de 5
-          </span>
+          <span className="text-xs text-muted-foreground ml-1">{subject.rating} de 5</span>
         </div>
 
         {subject.headline && (
           <h3 className="font-semibold text-base text-foreground leading-snug">
-            "{subject.headline}"
+            &ldquo;{subject.headline}&rdquo;
           </h3>
         )}
 
@@ -106,6 +126,7 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded bg-white flex items-center justify-center border border-border flex-shrink-0 overflow-hidden">
               {subject.company.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={subject.company.logo_url}
                   alt={subject.company.name}
