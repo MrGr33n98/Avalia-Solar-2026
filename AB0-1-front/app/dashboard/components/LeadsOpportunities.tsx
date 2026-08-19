@@ -69,6 +69,8 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
 
   useEffect(() => {
     loadData();
+    // loadData intentionally follows companyId; request function is local and stateful.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
   if (loading) return <LeadsSkeleton />;

@@ -3,9 +3,11 @@ class LeadRoutingJob < ApplicationJob
 
   def perform(lead_id, preferred_company_id = nil)
     lead = Lead.find(lead_id)
-    return if lead.lead_distributions.exists?(status: %w[sent viewed accepted]) && lead.lead_distributions.count >= Leads::LeadMatchingService::MAX_DISTRIBUTIONS
+    active_distributions = lead.lead_distributions.where(status: %w[sent viewed accepted]).count
+    return if active_distributions >= Leads::LeadMatchingService::MAX_DISTRIBUTIONS
 
     matches = Leads::LeadMatchingService.call(lead, preferred_company_id: preferred_company_id)
+    matches = matches.first([Leads::LeadMatchingService::MAX_DISTRIBUTIONS - active_distributions, 0].max)
     LeadDistribution.transaction do
       matches.each do |match|
         distribution = LeadDistribution.find_or_initialize_by(lead: lead, company: match[:company])

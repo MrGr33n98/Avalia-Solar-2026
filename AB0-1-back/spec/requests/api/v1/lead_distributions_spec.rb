@@ -33,4 +33,12 @@ RSpec.describe 'Lead distributions API', type: :request do
     expect(response).to have_http_status(:ok)
     expect(JSON.parse(response.body).dig('distribution', 'rejection_reason')).to eq('outside_area')
   end
+
+  it 'marca viewed ao abrir distribuição enviada' do
+    get "/api/v1/lead_distributions/#{distribution.id}", headers: auth_headers_for(user)
+
+    expect(response).to have_http_status(:ok)
+    expect(distribution.reload).to be_viewed_status
+    expect(distribution.viewed_at).to be_present
+  end
 end
