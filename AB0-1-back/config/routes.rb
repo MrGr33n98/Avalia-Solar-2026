@@ -305,6 +305,8 @@ Rails.application.routes.draw do
       get 'creators/:slug', to: 'creators#show'
       get 'creators/:slug/publications', to: 'creators#publications'
       get 'creators/:slug/publications/:publication_slug', to: 'creators#publication'
+      get 'creators/:slug/followers', to: 'creators#followers'
+      get 'creators/:slug/following', to: 'creators#following'
       get 'creator_tree/:slug', to: 'creator_tree#show'
       post 'creator_tree/:slug/view', to: 'creator_tree#view'
       post 'creator_tree/:slug/blocks/:block_id/click', to: 'creator_tree#click'

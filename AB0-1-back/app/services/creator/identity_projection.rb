@@ -35,7 +35,8 @@ module Creator
         linkedin_url: profile.linkedin_url,
         instagram_url: profile.instagram_url,
         youtube_url: profile.youtube_url,
-        whatsapp_url: profile.whatsapp_url
+        whatsapp_url: profile.whatsapp_url,
+        gamification_level: user.gamification_level
       }
     end
   end

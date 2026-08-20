@@ -12,6 +12,9 @@ type Creator = {
   website_url?: string;
   linkedin_url?: string;
   instagram_url?: string;
+  gamification_level?: {
+    name: string;
+  } | null;
 };
 
 type Props = { creator: Creator; publicationCount: number; reviewCount: number };
@@ -59,6 +62,11 @@ export function CreatorHero({ creator, publicationCount, reviewCount }: Props) {
               role="img"
               className="h-5 w-5 shrink-0 fill-[#1e5eff] text-white lg:h-6 lg:w-6"
             />
+            {creator.gamification_level?.name && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-600 border border-blue-100">
+                Nível {creator.gamification_level.name}
+              </span>
+            )}
           </h1>
           <p className="mt-1 text-base text-[#53627a] lg:text-lg">
             {creator.public_headline || 'Especialista em Energia Solar'}

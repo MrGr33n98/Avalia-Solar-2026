@@ -27,6 +27,96 @@ module Api
         render json: PublicCreatorPublicationSerializer.new(publication).as_json
       end
 
+      def followers
+        profile = public_profile
+        return render json: { error: 'Creator não encontrado' }, status: :not_found unless profile
+
+        limit = params[:limit].present? ? [params[:limit].to_i, 50].min : 10
+        cursor_id = params[:cursor].present? ? params[:cursor].to_i : nil
+
+        query = SocialFollow.where(followable: profile)
+        query = query.where('id < ?', cursor_id) if cursor_id
+        follows = query.order(id: :desc).limit(limit + 1).to_a
+
+        has_more = follows.size > limit
+        follows = follows.first(limit)
+        next_cursor = has_more && follows.last ? follows.last.id.to_s : nil
+
+        followers_data = follows.map do |follow|
+          user = follow.follower
+          prof = user.reviewer_profile
+          {
+            id: user.id,
+            name: user.name,
+            avatar_url: user.avatar_url,
+            headline: prof&.public_headline || 'Avaliador Solar',
+            public_slug: prof&.public_slug,
+            following: current_user ? SocialFollow.exists?(follower: current_user, followable: prof) : false
+          }
+        end
+
+        render json: {
+          data: followers_data,
+          meta: {
+            next_cursor: next_cursor,
+            has_more: has_more
+          }
+        }
+      end
+
+      def following
+        profile = public_profile
+        return render json: { error: 'Creator não encontrado' }, status: :not_found unless profile
+
+        limit = params[:limit].present? ? [params[:limit].to_i, 50].min : 10
+        cursor_id = params[:cursor].present? ? params[:cursor].to_i : nil
+
+        query = SocialFollow.where(follower: profile.user)
+        query = query.where('id < ?', cursor_id) if cursor_id
+        follows = query.order(id: :desc).limit(limit + 1).to_a
+
+        has_more = follows.size > limit
+        follows = follows.first(limit)
+        next_cursor = has_more && follows.last ? follows.last.id.to_s : nil
+
+        following_data = follows.map do |follow|
+          entity = follow.followable
+          next nil unless entity
+
+          if entity.is_a?(ReviewerProfile)
+            {
+              id: entity.id,
+              type: 'ReviewerProfile',
+              name: entity.user.name,
+              avatar_url: entity.user.avatar_url,
+              headline: entity.public_headline || 'Avaliador Solar',
+              public_slug: entity.public_slug,
+              following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
+            }
+          elsif entity.is_a?(Company)
+            {
+              id: entity.id,
+              type: 'Company',
+              name: entity.name,
+              avatar_url: entity.logo_url,
+              headline: 'Empresa do setor solar',
+              public_slug: entity.slug,
+              following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
+            }
+          else
+            nil
+          end
+        end.compact
+
+        render json: {
+          data: following_data,
+          meta: {
+            next_cursor: next_cursor,
+            has_more: has_more
+          }
+        }
+      end
+
       private
 
       def log_creator_request
