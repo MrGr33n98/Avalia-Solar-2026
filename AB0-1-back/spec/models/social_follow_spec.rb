@@ -25,4 +25,22 @@ RSpec.describe SocialFollow, type: :model do
     duplicate = SocialFollow.new(follower: follower, followable: category)
     expect(duplicate).not_to be_valid
   end
+
+  it 'bloqueia self-follow de perfil reviewer' do
+    profile = create(:reviewer_profile, user: follower)
+
+    follow = SocialFollow.new(follower: follower, followable: profile)
+
+    expect(follow).not_to be_valid
+    expect(follow.errors[:follower_id]).to include('não pode seguir a si próprio')
+  end
+
+  it 'possui índice único real para suportar concorrência' do
+    index = ActiveRecord::Base.connection.indexes(:social_follows).find do |candidate|
+      candidate.columns == %w[follower_id followable_type followable_id]
+    end
+
+    expect(index).to be_present
+    expect(index.unique).to be(true)
+  end
 end

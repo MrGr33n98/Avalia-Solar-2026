@@ -55,7 +55,32 @@ RSpec.describe 'Creators API', type: :request do
       payload = JSON.parse(response.body)
       expect(payload['data'].first['name']).to eq('Follower User')
       expect(payload['data'].first['public_slug']).to eq('follower-slug')
+      expect(payload['data'].first['followable_id']).to eq(reviewer_profile_follower.id)
+      expect(payload['data'].first['type']).to eq('ReviewerProfile')
       expect(payload['meta']).to include('next_cursor', 'has_more')
+    end
+
+    it 'resolve estado following em lote, sem exists por item' do
+      viewer = create(:user, role: 'review', status: :active)
+      viewer_token = JWT.encode(
+        { user_id: viewer.id, typ: 'access' },
+        Rails.application.secret_key_base,
+        'HS256'
+      )
+      viewer_headers = { 'Authorization' => "Bearer #{viewer_token}" }
+
+      3.times do |index|
+        follower = create(:user, name: "Follower #{index}", role: 'review', status: :active)
+        create(:reviewer_profile, user: follower, public_slug: "follower-#{index}")
+        SocialFollow.create!(follower: follower, followable: profile)
+      end
+
+      sql_queries = capture_sql do
+        get '/api/v1/creators/creator-api-spec/followers', headers: viewer_headers
+      end
+
+      expect(response).to have_http_status(:ok)
+      expect(sql_queries.grep(/SELECT 1 AS one FROM "social_follows"/)).to be_empty
     end
   end
 
@@ -75,5 +100,17 @@ RSpec.describe 'Creators API', type: :request do
       expect(payload['data'].first['type']).to eq('Company')
       expect(payload['meta']).to include('next_cursor', 'has_more')
     end
+  end
+
+  def capture_sql
+    queries = []
+    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+      queries << payload[:sql]
+    end
+
+    yield
+    queries
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 end

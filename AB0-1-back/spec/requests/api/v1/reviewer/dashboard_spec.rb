@@ -34,13 +34,23 @@ RSpec.describe 'Reviewer dashboard API', type: :request do
       { 'Authorization' => "Bearer #{jwt}" }
     end
 
-    it 'returns views, followers, clicks, and daily_views' do
+    it 'returns views, followers, clicks, and daily_views preserving the JSON contract' do
+      publication = create(:reviewer_publication, user: reviewer)
+      ReviewerPublicationEvent.create!(
+        reviewer_publication: publication,
+        event_name: 'publication_view',
+        created_at: Time.current,
+        updated_at: Time.current
+      )
+
       get '/api/v1/reviewer/analytics', headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       payload = JSON.parse(response.body)
       expect(payload).to include('views', 'followers', 'clicks', 'daily_views')
-      expect(payload['views']).to eq(42) # 42 tree views + 0 publication views
+      expect(payload['views']).to eq(43)
+      expect(payload['daily_views'].size).to eq(7)
+      expect(payload['daily_views'].last).to eq('date' => Time.zone.today.strftime('%d/%m'), 'views' => 1)
     end
   end
 end

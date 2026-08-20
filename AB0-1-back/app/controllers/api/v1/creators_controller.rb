@@ -6,24 +6,30 @@ module Api
         render json: ReviewerProfile.where(creator_enabled: true).select(:public_slug, :creator_enabled)
       end
 
-
       def show
         profile = public_profile
         return render json: { error: 'Creator não encontrado' }, status: :not_found unless profile
+
         render json: Creator::PublicProfileService.new(profile).call
       end
 
       def publications
         profile = public_profile
         return head :not_found unless profile
-        render json: profile.user.reviewer_publications.published.order(published_at: :desc).map { |publication| PublicCreatorPublicationSerializer.new(publication).as_json }
+
+        render json: profile.user.reviewer_publications.published.order(published_at: :desc).map { |publication|
+          PublicCreatorPublicationSerializer.new(publication).as_json
+        }
       end
 
       def publication
         profile = public_profile
-        publication = profile&.user&.reviewer_publications&.published&.find_by(slug: params[:publication_slug])
+        publications = profile&.user&.reviewer_publications
+        publication = publications&.published&.find_by(slug: params[:publication_slug])
         return head :not_found unless publication
-        ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_view', ip_address: request.remote_ip)
+
+        ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_view',
+                                         ip_address: request.remote_ip)
         render json: PublicCreatorPublicationSerializer.new(publication).as_json
       end
 
@@ -31,90 +37,33 @@ module Api
         profile = public_profile
         return render json: { error: 'Creator não encontrado' }, status: :not_found unless profile
 
-        limit = params[:limit].present? ? [params[:limit].to_i, 50].min : 10
-        cursor_id = params[:cursor].present? ? params[:cursor].to_i : nil
+        query = SocialFollow
+                .where(followable: profile)
+                .includes(follower: [:reviewer_profile, { avatar_attachment: :blob }])
+        page = paginated_follows(query)
+        follows = page[:records]
+        profiles = follows.filter_map { |follow| follow.follower.reviewer_profile }
+        following_ids = following_ids_for('ReviewerProfile', profiles.map(&:id))
+        followers_data = follows.map { |follow| serialize_follower(follow, following_ids) }
 
-        query = SocialFollow.where(followable: profile)
-        query = query.where('id < ?', cursor_id) if cursor_id
-        follows = query.order(id: :desc).limit(limit + 1).to_a
-
-        has_more = follows.size > limit
-        follows = follows.first(limit)
-        next_cursor = has_more && follows.last ? follows.last.id.to_s : nil
-
-        followers_data = follows.map do |follow|
-          user = follow.follower
-          prof = user.reviewer_profile
-          {
-            id: user.id,
-            name: user.name,
-            avatar_url: user.avatar_url,
-            headline: prof&.public_headline || 'Avaliador Solar',
-            public_slug: prof&.public_slug,
-            following: current_user ? SocialFollow.exists?(follower: current_user, followable: prof) : false
-          }
-        end
-
-        render json: {
-          data: followers_data,
-          meta: {
-            next_cursor: next_cursor,
-            has_more: has_more
-          }
-        }
+        render json: { data: followers_data, meta: page[:meta] }
       end
 
       def following
         profile = public_profile
         return render json: { error: 'Creator não encontrado' }, status: :not_found unless profile
 
-        limit = params[:limit].present? ? [params[:limit].to_i, 50].min : 10
-        cursor_id = params[:cursor].present? ? params[:cursor].to_i : nil
+        page = paginated_follows(SocialFollow.where(follower: profile.user))
+        follows = page[:records]
+        entities = followable_entities(follows)
+        following_keys = following_keys_for(follows)
 
-        query = SocialFollow.where(follower: profile.user)
-        query = query.where('id < ?', cursor_id) if cursor_id
-        follows = query.order(id: :desc).limit(limit + 1).to_a
+        following_data = follows.filter_map do |follow|
+          key = [follow.followable_type, follow.followable_id]
+          serialize_followable(entities[key], following_keys.key?(key))
+        end
 
-        has_more = follows.size > limit
-        follows = follows.first(limit)
-        next_cursor = has_more && follows.last ? follows.last.id.to_s : nil
-
-        following_data = follows.map do |follow|
-          entity = follow.followable
-          next nil unless entity
-
-          if entity.class.name == 'ReviewerProfile'
-            {
-              id: entity.id,
-              type: 'ReviewerProfile',
-              name: entity.user.name,
-              avatar_url: entity.user.avatar_url,
-              headline: entity.public_headline || 'Avaliador Solar',
-              public_slug: entity.public_slug,
-              following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
-            }
-          elsif entity.class.name == 'Company'
-            {
-              id: entity.id,
-              type: 'Company',
-              name: entity.name,
-              avatar_url: entity.respond_to?(:logo_url) ? entity.logo_url : nil,
-              headline: 'Empresa do setor solar',
-              public_slug: entity.slug,
-              following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
-            }
-          else
-            nil
-          end
-        end.compact
-
-        render json: {
-          data: following_data,
-          meta: {
-            next_cursor: next_cursor,
-            has_more: has_more
-          }
-        }
+        render json: { data: following_data, meta: page[:meta] }
       end
 
       private
@@ -124,11 +73,113 @@ module Api
         yield
       ensure
         duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
-        Rails.logger.info("[CreatorAPI] action=#{action_name} slug=#{params[:slug]} status=#{response.status} duration_ms=#{duration_ms}")
+        message = "[CreatorAPI] action=#{action_name} slug=#{params[:slug]} " \
+                  "status=#{response.status} duration_ms=#{duration_ms}"
+        Rails.logger.info(message)
+      end
+
+      def paginated_follows(query)
+        limit = params[:limit].present? ? [params[:limit].to_i, 50].min : 10
+        cursor_id = params[:cursor].present? ? params[:cursor].to_i : nil
+        query = query.where('id < ?', cursor_id) if cursor_id
+        records = query.order(id: :desc).limit(limit + 1).to_a
+        has_more = records.size > limit
+        records = records.first(limit)
+
+        {
+          records: records,
+          meta: {
+            next_cursor: has_more && records.last ? records.last.id.to_s : nil,
+            has_more: has_more
+          }
+        }
+      end
+
+      def serialize_follower(follow, following_ids)
+        user = follow.follower
+        profile = user.reviewer_profile
+        {
+          id: user.id,
+          followable_id: profile&.id,
+          type: 'ReviewerProfile',
+          name: user.name,
+          avatar_url: user.avatar_url,
+          headline: profile&.public_headline || 'Avaliador Solar',
+          public_slug: profile&.public_slug,
+          following: profile.present? && following_ids.key?(profile.id)
+        }
+      end
+
+      def following_ids_for(type, ids)
+        return {} if current_user.blank? || ids.empty?
+
+        SocialFollow
+          .where(follower: current_user, followable_type: type, followable_id: ids)
+          .pluck(:followable_id)
+          .index_with(true)
+      end
+
+      def following_keys_for(follows)
+        return {} if current_user.blank?
+
+        follows.group_by(&:followable_type).each_with_object({}) do |(type, typed_follows), keys|
+          ids = typed_follows.map(&:followable_id)
+          following_ids_for(type, ids).each_key { |id| keys[[type, id]] = true }
+        end
+      end
+
+      def followable_entities(follows)
+        ids_by_type = follows.group_by(&:followable_type).transform_values do |typed_follows|
+          typed_follows.map(&:followable_id)
+        end
+
+        entities = {}
+        ::ReviewerProfile
+          .includes(user: { avatar_attachment: :blob })
+          .where(id: ids_by_type.fetch('ReviewerProfile', []))
+          .find_each { |profile| entities[['ReviewerProfile', profile.id]] = profile }
+        ::Company
+          .with_attached_logo
+          .where(id: ids_by_type.fetch('Company', []))
+          .find_each { |company| entities[['Company', company.id]] = company }
+        entities
+      end
+
+      def serialize_followable(entity, is_following)
+        case entity
+        when ::ReviewerProfile
+          serialize_reviewer_profile(entity, is_following)
+        when ::Company
+          serialize_company(entity, is_following)
+        end
+      end
+
+      def serialize_reviewer_profile(profile, is_following)
+        {
+          id: profile.id,
+          type: 'ReviewerProfile',
+          name: profile.user.name,
+          avatar_url: profile.user.avatar_url,
+          headline: profile.public_headline || 'Avaliador Solar',
+          public_slug: profile.public_slug,
+          following: is_following
+        }
+      end
+
+      def serialize_company(company, is_following)
+        {
+          id: company.id,
+          type: 'Company',
+          name: company.name,
+          avatar_url: company.logo_url,
+          headline: 'Empresa do setor solar',
+          public_slug: company.slug,
+          following: is_following
+        }
       end
 
       def public_profile
-        ReviewerProfile.includes(:user).find_by(public_slug: params[:slug], creator_enabled: true)
+        ::ReviewerProfile.includes(:user).find_by(public_slug: params[:slug], creator_enabled: true)
       end
     end
   end

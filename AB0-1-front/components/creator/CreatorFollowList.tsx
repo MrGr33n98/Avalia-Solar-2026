@@ -9,6 +9,7 @@ import { Loader2, UserPlus, UserMinus, Users } from 'lucide-react';
 
 type FollowEntity = {
   id: number;
+  followable_id?: number | null;
   name: string;
   avatar_url?: string | null;
   headline?: string;
@@ -89,11 +90,12 @@ export function CreatorFollowList({ creatorSlug, type }: Props) {
 
     const isFollowing = entity.following;
     const followableType = entity.type || 'ReviewerProfile';
+    const followableId = entity.followable_id ?? entity.id;
 
     try {
       const url = new URL(buildApiUrl('follows'));
       url.searchParams.set('followable_type', followableType);
-      url.searchParams.set('followable_id', entity.id.toString());
+      url.searchParams.set('followable_id', followableId.toString());
 
       const res = await fetch(url.toString(), {
         method: isFollowing ? 'DELETE' : 'POST',
@@ -108,9 +110,7 @@ export function CreatorFollowList({ creatorSlug, type }: Props) {
 
       // Update local state
       setItems((prev) =>
-        prev.map((item) =>
-          item.id === entity.id ? { ...item, following: !isFollowing } : item
-        )
+        prev.map((item) => (item.id === entity.id ? { ...item, following: !isFollowing } : item))
       );
     } catch (err) {
       console.error('[CreatorFollowList] Toggle follow error:', err);
@@ -133,9 +133,7 @@ export function CreatorFollowList({ creatorSlug, type }: Props) {
         <div className="rounded-full bg-slate-50 p-4 text-[#718096]">
           <Users className="h-8 w-8 text-slate-400" />
         </div>
-        <h3 className="mt-4 text-lg font-bold text-[#0b1730]">
-          Ninguém por aqui ainda
-        </h3>
+        <h3 className="mt-4 text-lg font-bold text-[#0b1730]">Ninguém por aqui ainda</h3>
         <p className="mt-1 max-w-sm text-sm text-[#53627a]">
           {type === 'followers'
             ? 'Este criador de conteúdo ainda não possui seguidores. Seja o primeiro a seguir!'
@@ -165,7 +163,10 @@ export function CreatorFollowList({ creatorSlug, type }: Props) {
               className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
             >
               <div className="flex items-center gap-3">
-                <Link href={profileLink} className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#f4b63f]">
+                <Link
+                  href={profileLink}
+                  className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#f4b63f]"
+                >
                   {item.avatar_url ? (
                     <Image
                       fill
@@ -189,7 +190,8 @@ export function CreatorFollowList({ creatorSlug, type }: Props) {
                     {item.name}
                   </Link>
                   <p className="text-xs text-[#53627a] line-clamp-1">
-                    {item.headline || (item.type === 'Company' ? 'Empresa Solar' : 'Avaliador Solar')}
+                    {item.headline ||
+                      (item.type === 'Company' ? 'Empresa Solar' : 'Avaliador Solar')}
                   </p>
                 </div>
               </div>

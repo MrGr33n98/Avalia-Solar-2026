@@ -10,8 +10,8 @@ class SocialFollow < ApplicationRecord
   private
 
   def cannot_follow_self
-    if followable_type == 'ReviewerProfile' && followable.present? && followable.user_id == follower_id
-      errors.add(:follower_id, 'não pode seguir a si próprio')
-    end
+    return unless followable_type == 'ReviewerProfile' && followable&.user_id == follower_id
+
+    errors.add(:follower_id, 'não pode seguir a si próprio')
   end
 end

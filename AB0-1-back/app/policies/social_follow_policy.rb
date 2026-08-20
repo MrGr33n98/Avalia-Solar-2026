@@ -2,14 +2,20 @@
 
 class SocialFollowPolicy < ApplicationPolicy
   def index?
-    true
+    user.present?
   end
 
   def create?
-    user.present?
+    owner?
   end
 
   def destroy?
-    user.present?
+    owner?
+  end
+
+  private
+
+  def owner?
+    user.present? && record.is_a?(SocialFollow) && record.follower_id == user.id
   end
 end
