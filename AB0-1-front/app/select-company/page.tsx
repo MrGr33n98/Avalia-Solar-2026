@@ -34,6 +34,19 @@ const SEARCH_MIN_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
 type FlowState = 'initial' | 'searching' | 'results' | 'empty';
 
+/**
+ * Estado canônico da state machine de acesso empresarial.
+ * Determina qual UI é exibida ao usuário nesta tela.
+ */
+type CompanyEntryState =
+  | 'loading'          // auth ou companies ainda carregando
+  | 'guest'            // não autenticado
+  | 'no-membership'    // autenticado, 0 memberships → busca/solicitar
+  | 'single-membership'// 1 membership → auto-select e redirecionar
+  | 'multiple-memberships' // 2+ memberships → chooser
+  | 'pending-only'     // 0 memberships ativas, somente pending requests
+  | 'error';
+
 const normalizeText = (value: string) =>
   value
     .toLowerCase()
@@ -73,8 +86,12 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
 
 export default function SelectCompanyPage() {
   const router = useRouter();
-  const { loading: authLoading, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const { companies, selectCompany, isLoading } = useCompanyContext();
+
+  // State machine para determinar qual UI exibir
+  const [entryState, setEntryState] = useState<CompanyEntryState>('loading');
+  const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
   const [search, setSearch] = useState('');
   const [selectingId, setSelectingId] = useState<number | null>(null);
@@ -96,6 +113,49 @@ export default function SelectCompanyPage() {
   const normalizedQuery = useMemo(() => normalizeText(search.trim()), [search]);
 
   const hasPendingRequest = (companyId: number) => pendingRequestIds.includes(companyId);
+
+  // ── State machine resolution ────────────────────────────────────────────────
+  useEffect(() => {
+    if (authLoading || isLoading || contextLoading) {
+      setEntryState('loading');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setEntryState('guest');
+      return;
+    }
+
+    // Reviewer puro (sem companies) → vai para review-dashboard, não fica nesta tela
+    if (user?.role === 'review' && companies.length === 0 && !autoSelectAttempted) {
+      router.replace('/review-dashboard');
+      return;
+    }
+
+    if (companies.length === 1 && !autoSelectAttempted) {
+      setAutoSelectAttempted(true);
+      setEntryState('single-membership');
+      void selectCompany(companies[0]).then(() => {
+        router.replace(`/dashboard?company_id=${companies[0].id}`);
+      }).catch(() => {
+        setEntryState('no-membership');
+      });
+      return;
+    }
+
+    if (companies.length > 1) {
+      setEntryState('multiple-memberships');
+      return;
+    }
+
+    // 0 memberships ativas — verificar se tem pending requests
+    if (pendingRequestIds.length > 0) {
+      setEntryState('pending-only');
+      return;
+    }
+
+    setEntryState('no-membership');
+  }, [authLoading, isLoading, contextLoading, isAuthenticated, companies, pendingRequestIds, user, autoSelectAttempted, selectCompany, router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -267,7 +327,7 @@ export default function SelectCompanyPage() {
     }
   };
 
-  if (authLoading || isLoading || contextLoading) {
+  if (entryState === 'loading' || authLoading || isLoading || contextLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">

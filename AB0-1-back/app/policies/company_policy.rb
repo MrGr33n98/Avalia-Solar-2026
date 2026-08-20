@@ -1,12 +1,12 @@
 class CompanyPolicy < ApplicationPolicy
   def index?
-    admin? || (user.respond_to?(:company_user?) && user.company_user?)
+    admin? || has_company_access?
   end
 
   def show?
     return true if admin?
 
-    company_user? && (owns_record? || active_membership.present?)
+    has_company_access? && (owns_record? || active_membership.present?)
   end
 
   def feature_access?
@@ -15,7 +15,7 @@ class CompanyPolicy < ApplicationPolicy
 
   def update?
     return true if admin?
-    return false unless company_user?
+    return false unless has_company_access?
 
     return true if owns_record?
 
@@ -92,7 +92,7 @@ class CompanyPolicy < ApplicationPolicy
     def resolve
       if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
         scope.all
-      elsif user.respond_to?(:company_user?) && user.company_user?
+      elsif has_company_access_for_scope?
         company_ids = [user.company_id]
         company_ids.concat(user.active_company_members.pluck(:company_id)) if user.respond_to?(:active_company_members)
         scope.where(id: company_ids.compact.uniq)
@@ -100,11 +100,18 @@ class CompanyPolicy < ApplicationPolicy
         scope.none
       end
     end
+
+    private
+
+    def has_company_access_for_scope?
+      return false unless user.respond_to?(:role)
+
+      user.role == 'company' ||
+        (user.role == 'review' && user.respond_to?(:active_company_members) && user.active_company_members.exists?)
+    end
   end
 
   private
-
-
 
   def company_owner?
     user.owner_of?(record)
@@ -114,6 +121,17 @@ class CompanyPolicy < ApplicationPolicy
     user.active_membership_for?(record.id) || company_owner?
   end
 
+  # Verifica se o usuário tem acesso ao workspace empresarial.
+  # Suporta identidade multi-contexto: role=company OU role=review com CompanyMember ativo.
+  # Isso alinha o backend com a política do frontend (hasCompanyWorkspaceAccess).
+  def has_company_access?
+    return false unless user.respond_to?(:role)
+
+    user.role == 'company' ||
+      (user.role == 'review' && user.respond_to?(:active_company_members) && user.active_company_members.exists?)
+  end
+
+  # Mantido por compatibilidade, mas prefira has_company_access? para novos métodos.
   def company_user?
     user.respond_to?(:company_user?) && user.company_user?
   end

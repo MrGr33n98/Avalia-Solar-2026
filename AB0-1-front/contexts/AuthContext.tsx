@@ -179,35 +179,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAuth]);
 
   const getPostLoginDestination = async (nextUser: User, returnTo?: string | null) => {
-    if (nextUser.role === 'company') {
+    // Para role=company E role=review, primeiro verificar memberships empresariais.
+    // Isso suporta identidade multi-contexto: review + CompanyMember ativo deve ir
+    // para o workspace empresarial (não review-dashboard).
+    if (nextUser.role === 'company' || nextUser.role === 'review') {
+      let activeMemberships: Array<{ company_id: number }> = [];
       try {
         const context = await companyAccessApi.context(undefined, {
           retries: 5,
           timeout: 25000,
           useClientCache: true,
         });
-        const active = context?.active_memberships || [];
-        if (active.length > 0) {
-          const companyId = active[0].company_id;
-          try {
-            await companyAccessApi.selectActiveCompany(companyId);
-          } catch {
-            // noop
-          }
-          setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
-          return resolvePostAuthDestination({
-            user: nextUser,
-            returnTo,
-            activeCompanyId: companyId,
-          });
-        }
+        activeMemberships = context?.active_memberships || [];
       } catch (routeError) {
         logError(routeError instanceof Error ? routeError : new Error(String(routeError)), {
           action: 'company_context_route_after_login_failed',
-          metadata: { user_id: nextUser.id },
+          metadata: { user_id: nextUser.id, role: nextUser.role },
+        });
+      }
+
+      if (activeMemberships.length > 0) {
+        const companyId = activeMemberships[0].company_id;
+        try {
+          await companyAccessApi.selectActiveCompany(companyId);
+        } catch {
+          // noop
+        }
+        setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
+        return resolvePostAuthDestination({
+          user: nextUser,
+          returnTo,
+          activeCompanyId: companyId,
+          activeMembershipsCount: activeMemberships.length,
+        });
+      }
+
+      // role=company sem memberships → onboarding
+      if (nextUser.role === 'company') {
+        return resolvePostAuthDestination({
+          user: nextUser,
+          returnTo,
+          activeMembershipsCount: 0,
         });
       }
     }
+
+    // role=review sem memberships empresariais → verificar perfil reviewer/creator
     if (nextUser.role === 'review') {
       try {
         const profileResponse = await reviewerProfileApi.get();
@@ -215,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return resolvePostAuthDestination({
           user: nextUser,
           returnTo,
+          activeMembershipsCount: 0,
           creatorEnabled: profile?.creator_enabled,
           creatorSlug: profile?.public_slug,
         });

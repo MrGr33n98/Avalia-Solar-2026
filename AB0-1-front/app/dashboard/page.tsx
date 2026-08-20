@@ -85,17 +85,23 @@ export default function DashboardPage() {
       return;
     }
 
+    // ✅ Identidade multi-contexto: role=review com CompanyMember ativo deve
+    // permanecer no workspace empresarial — não ir para review-dashboard.
+    // Só redireciona para review-dashboard se não tiver empresas associadas.
     if (user.role === 'review') {
-      router.replace('/review-dashboard');
-      setViewMode('redirecting');
-      return;
+      if (!companyLoading && companies.length === 0 && !activeCompany) {
+        router.replace('/review-dashboard');
+        setViewMode('redirecting');
+        return;
+      }
+      // Continua o fluxo abaixo se tiver companies (review + membership)
     }
 
-    // Role-based view determination
+    // Admin view
     if (user.role === 'admin' || (user.role as string) === 'super_admin') {
       setViewMode('system_admin');
     } else {
-      // It's a company user (member/owner)
+      // Workspace empresarial: company user OU review com CompanyMember ativo
       if (activeCompany) {
         setViewMode('company_admin');
       } else if (companies.length === 1) {
@@ -103,14 +109,15 @@ export default function DashboardPage() {
         void selectCompany(companies[0]);
         setViewMode('company_admin');
       } else if (companies.length > 1) {
-        // Multiple companies, none selected -> Redirect to selection page for Enterprise experience
+        // Multiple companies, none selected → chooser
         router.replace('/select-company');
         setViewMode('redirecting');
-      } else {
-        // No companies associated
+      } else if (user.role !== 'review') {
+        // company role sem empresas → onboarding
         router.replace('/select-company');
         setViewMode('redirecting');
       }
+      // review sem empresas já foi tratado acima (redirect para review-dashboard)
     }
   }, [activeCompany, authLoading, companyLoading, companies, router, user, selectCompany]);
 
