@@ -35,19 +35,19 @@ export default function MobileBottomNav() {
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,var(--sab,env(safe-area-inset-bottom)))] pt-2 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-0.5 items-center">
+    <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.125rem,var(--sab,env(safe-area-inset-bottom)))] pt-0.5 shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-5 items-center">
         {/* 1. Início */}
         <Link
           href="/"
           className={cn(
-            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            'relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl px-1 text-[10px] font-extrabold leading-none transition-all',
             pathname === '/'
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <Home className="h-5 w-5" strokeWidth={pathname === '/' ? 2.5 : 2} />
+          <Home className="h-[19px] w-[19px]" strokeWidth={pathname === '/' ? 2.5 : 2} />
           <span className="truncate">Início</span>
         </Link>
 
@@ -55,13 +55,16 @@ export default function MobileBottomNav() {
         <Link
           href="/companies"
           className={cn(
-            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            'relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl px-1 text-[10px] font-extrabold leading-none transition-all',
             pathname.startsWith('/companies')
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <Building2 className="h-5 w-5" strokeWidth={pathname.startsWith('/companies') ? 2.5 : 2} />
+          <Building2
+            className="h-[19px] w-[19px]"
+            strokeWidth={pathname.startsWith('/companies') ? 2.5 : 2}
+          />
           <span className="truncate">Empresas</span>
         </Link>
 
@@ -71,11 +74,11 @@ export default function MobileBottomNav() {
             type="button"
             onClick={() => router.push('/companies?focus=search')}
             aria-label="Buscar empresas e categorias"
-            className="absolute -top-6 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white active:scale-95 transition-transform"
+            className="absolute -top-3 flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-[3px] ring-white transition-transform active:scale-95"
           >
-            <Search className="h-6 w-6" strokeWidth={2.5} />
+            <Search className="h-5 w-5" strokeWidth={2.5} />
           </button>
-          <span className="mt-7 text-[10px] font-black text-blue-700">Buscar</span>
+          <span className="mt-6 text-[10px] font-black leading-none text-blue-700">Buscar</span>
         </div>
 
         {/* 4. Comparar */}
@@ -85,16 +88,23 @@ export default function MobileBottomNav() {
           aria-label={`Comparar: ${count} de ${maxComparison} empresas selecionadas`}
           aria-disabled={count === 0}
           className={cn(
-            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            'relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl px-1 text-[10px] font-extrabold leading-none transition-all',
             pathname.startsWith('/products/compare')
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <AnimatedCompareIcon size={18} active={pathname.startsWith('/products/compare')} aria-hidden="true" />
+          <AnimatedCompareIcon
+            size={18}
+            active={pathname.startsWith('/products/compare')}
+            aria-hidden="true"
+          />
           <span className="truncate">Comparar</span>
           {count > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">
+            <span
+              className="absolute right-1 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-black leading-none text-white ring-2 ring-white"
+              aria-live="polite"
+            >
               {count}
             </span>
           )}
@@ -106,16 +116,22 @@ export default function MobileBottomNav() {
           onClick={() => toggleChat('expanded')}
           aria-label="Abrir mensagens"
           className={cn(
-            'relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-extrabold transition-all',
+            'relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl px-1 text-[10px] font-extrabold leading-none transition-all',
             pathname.startsWith('/messages')
               ? 'text-blue-700 bg-blue-50/70 ring-1 ring-blue-500/10'
               : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
           )}
         >
-          <MessageCircle className="h-5 w-5" strokeWidth={pathname.startsWith('/messages') ? 2.5 : 2} />
+          <MessageCircle
+            className="h-[19px] w-[19px]"
+            strokeWidth={pathname.startsWith('/messages') ? 2.5 : 2}
+          />
           <span className="truncate">Mensagens</span>
           {unreadMessagesCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white ring-2 ring-white" aria-live="polite">
+            <span
+              className="absolute right-1 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-black leading-none text-white ring-2 ring-white"
+              aria-live="polite"
+            >
               {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
             </span>
           )}
@@ -124,4 +140,3 @@ export default function MobileBottomNav() {
     </nav>
   );
 }
-
