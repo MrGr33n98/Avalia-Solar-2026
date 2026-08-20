@@ -2,6 +2,7 @@
 
 import { useReducedMotion, motion } from 'framer-motion';
 import { resolveCategoryVisual } from '@/lib/categories/category-visual-registry';
+import { cn } from '@/lib/utils';
 import { PRESET_BEHAVIORS, MOTION_TOKENS } from '@/lib/categories/category-motion';
 import { CategoryIcon, CategoryIconProps } from './CategoryIcon';
 
@@ -11,6 +12,7 @@ export interface CategoryMotionIconProps extends CategoryIconProps {
 
 export function CategoryMotionIcon({
   motionMode = 'interactive',
+  className,
   ...props
 }: CategoryMotionIconProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -20,7 +22,7 @@ export function CategoryMotionIcon({
 
   // Se reduced-motion estiver ativo ou modo for 'none', renderiza o ícone estático direto
   if (shouldReduceMotion || motionMode === 'none') {
-    return <CategoryIcon {...props} />;
+    return <CategoryIcon {...props} className={className} />;
   }
 
   // Definição dos estados de animação (variants) baseados no preset semântico
@@ -75,6 +77,7 @@ export function CategoryMotionIcon({
   const isInteractive = motionMode === 'interactive';
   const isSelected = motionMode === 'selected';
   const isEntrance = motionMode === 'entrance';
+  const fillsAvailableSpace = props.fill || props.size === 'fill';
 
   // Highlight radial sutil para a categoria de recarga (charging)
   const isCharging = preset === 'charging';
@@ -86,7 +89,11 @@ export function CategoryMotionIcon({
       animate={isSelected ? 'selected' : 'idle'}
       whileHover={isInteractive ? 'hover' : undefined}
       whileTap={isInteractive ? 'pressed' : undefined}
-      className="relative flex items-center justify-center"
+      className={cn(
+        'relative flex items-center justify-center',
+        fillsAvailableSpace && 'h-full w-full',
+        className
+      )}
     >
       {/* Glow radial extremamente discreto atrás de carregadores */}
       {isCharging && isInteractive && (
