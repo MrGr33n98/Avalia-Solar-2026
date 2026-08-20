@@ -19,11 +19,6 @@ function groupLabel(index: number) {
   return String.fromCharCode(65 + index); // A=65
 }
 
-/** Índice dentro do grupo: A.01, A.02... */
-function rowIndex(groupLetter: string, i: number) {
-  return `${groupLetter}.${String(i + 1).padStart(2, '0')}`;
-}
-
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -96,7 +91,8 @@ function FeaturedCard({ category }: FeaturedCardProps) {
 
         {/* Description */}
         <p className="text-[12.5px] text-[#6b6b6b] leading-relaxed line-clamp-2 mb-4">
-          Compare as melhores empresas de {category.name.toLowerCase()} e veja avaliações do mercado.
+          Compare as melhores empresas de {category.name.toLowerCase()} e veja avaliações do
+          mercado.
         </p>
 
         {/* Stars evaluation info */}
@@ -106,7 +102,9 @@ function FeaturedCard({ category }: FeaturedCardProps) {
               <Star className="w-4 h-4 fill-amber-400 stroke-amber-400" />
               <span>{averageRating.toFixed(1)}</span>
               <span className="text-slate-300">•</span>
-              <span className="text-slate-500">{reviewsCount} {reviewsCount === 1 ? 'avaliação' : 'avaliações'}</span>
+              <span className="text-slate-500">
+                {reviewsCount} {reviewsCount === 1 ? 'avaliação' : 'avaliações'}
+              </span>
             </>
           ) : (
             <span className="text-slate-500">Sem avaliações ainda</span>
@@ -121,7 +119,8 @@ function FeaturedCard({ category }: FeaturedCardProps) {
           {category.companies_count ?? 0} {category.companies_count === 1 ? 'empresa' : 'empresas'}
         </span>
         <span className="text-[12px] font-bold text-slate-900 group-hover:text-[#1668e8] transition-colors flex items-center gap-1">
-          EXPLORAR <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          EXPLORAR{' '}
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </span>
       </div>
     </Link>
@@ -130,45 +129,31 @@ function FeaturedCard({ category }: FeaturedCardProps) {
 
 // ─── Row item ──────────────────────────────────────────────────────────────
 
-function CategoryRow({
-  category,
-  idx,
-}: {
-  category: CategoryTreeNode;
-  idx: string;
-}) {
+function CategoryRow({ category }: { category: CategoryTreeNode }) {
   const href = getCategoryHref(category.seo_url, category.slug);
 
   return (
     <Link
       href={href}
-      className="flex items-center justify-between py-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors duration-150 px-2 rounded-lg group"
+      className="group flex items-center justify-between border-b border-slate-100 px-4 py-3 transition-colors duration-150 hover:bg-slate-50/50 md:py-3.5"
     >
-      <div className="flex items-center gap-4 flex-1 min-w-0">
-        {/* Index code */}
-        <span className="text-[12px] font-bold text-slate-400 shrink-0 w-8">
-          {idx}
-        </span>
-        
-        <div className="relative w-12 h-12 shrink-0 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden">
+      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+        <div className="relative h-11 w-11 shrink-0 sm:h-12 sm:w-12 lg:h-[52px] lg:w-[52px] [&_img]:!p-1">
           <CategoryVisualAsset category={category} />
         </div>
 
         {/* Text info */}
         <div className="min-w-0">
-          <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-[#1668e8] transition-colors duration-150 leading-tight">
+          <h3 className="text-[14px] font-semibold leading-tight text-slate-900 transition-colors duration-150 group-hover:text-[#1668e8] sm:text-[15px]">
             {category.name}
           </h3>
-          <p className="text-[12.5px] text-[#6b6b6b] mt-0.5 line-clamp-1">
+          <p className="mt-0.5 line-clamp-1 text-[12px] text-[#6b6b6b] sm:text-[12.5px]">
             Compare as melhores empresas de {category.name.toLowerCase()} no Brasil.
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 shrink-0 pl-4">
-        <span className="text-[13px] font-medium text-slate-600">
-          {category.companies_count ?? 0} {category.companies_count === 1 ? 'empresa' : 'empresas'}
-        </span>
+      <div className="shrink-0 pl-3 sm:pl-4">
         <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors group-hover:translate-x-0.5 transition-transform" />
       </div>
     </Link>
@@ -220,12 +205,15 @@ export default function CategoriesIndexWithSidebar() {
     if (kindFilter) {
       groups = groups
         .map((g) => {
-          const matchesKind = (kindFilter === 'solar' && !g.slug.includes('mobilidade')) ||
-                              (kindFilter === 'mobility' && g.slug.includes('mobilidade'));
-          
+          const matchesKind =
+            (kindFilter === 'solar' && !g.slug.includes('mobilidade')) ||
+            (kindFilter === 'mobility' && g.slug.includes('mobilidade'));
+
           const filteredChildren = (g.children ?? []).filter((c) => {
-            return (kindFilter === 'solar' && !c.slug.includes('mobilidade')) ||
-                   (kindFilter === 'mobility' && c.slug.includes('mobilidade'));
+            return (
+              (kindFilter === 'solar' && !c.slug.includes('mobilidade')) ||
+              (kindFilter === 'mobility' && c.slug.includes('mobilidade'))
+            );
           });
 
           if (matchesKind) return { ...g };
@@ -241,7 +229,7 @@ export default function CategoriesIndexWithSidebar() {
         .map((g) => {
           const gHasReview = hasEvaluations(g);
           const filteredChildren = (g.children ?? []).filter(hasEvaluations);
-          
+
           if (filteredChildren.length > 0) return { ...g, children: filteredChildren };
           if (gHasReview) return { ...g, children: [] };
           return null;
@@ -253,9 +241,7 @@ export default function CategoriesIndexWithSidebar() {
     if (sortBy === 'name_asc') {
       groups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     } else {
-      groups = [...groups].sort(
-        (a, b) => (b.companies_count ?? 0) - (a.companies_count ?? 0)
-      );
+      groups = [...groups].sort((a, b) => (b.companies_count ?? 0) - (a.companies_count ?? 0));
     }
 
     return groups;
@@ -267,8 +253,7 @@ export default function CategoriesIndexWithSidebar() {
 
   // Total de resultados (todas as sub-categorias filtradas)
   const totalResults = useMemo(
-    () =>
-      filteredGroups.reduce((acc, g) => acc + 1 + (g.children?.length ?? 0), 0),
+    () => filteredGroups.reduce((acc, g) => acc + 1 + (g.children?.length ?? 0), 0),
     [filteredGroups]
   );
 
@@ -278,7 +263,6 @@ export default function CategoriesIndexWithSidebar() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-800">
-
       {/* ===== HERO ===== */}
       <section className="border-b border-slate-200 bg-slate-50/50 py-12 md:py-16">
         <div className="max-w-[1240px] mx-auto px-5">
@@ -289,9 +273,10 @@ export default function CategoriesIndexWithSidebar() {
                 ÍNDICE — AVALIA SOLAR
               </span>
               <h1 className="font-bold text-[36px] md:text-[54px] lg:text-[64px] text-slate-900 leading-[1.05] tracking-tight">
-                Energia solar e<br />mobilidade elétrica.
+                Energia solar e<br />
+                mobilidade elétrica.
               </h1>
-              
+
               {/* Search Bar container inside Left Column */}
               <div className="flex bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-[#1668e8]/20 focus-within:border-[#1668e8] transition-all">
                 <div className="flex items-center pl-4 text-slate-400">
@@ -319,8 +304,8 @@ export default function CategoriesIndexWithSidebar() {
             {/* Right Column */}
             <div className="lg:border-l lg:border-slate-200 lg:pl-10 h-full flex flex-col justify-center space-y-4 py-2 lg:mt-8">
               <p className="text-[15px] text-[#6b6b6b] leading-relaxed max-w-[420px]">
-                De painéis e inversores a wallbox, eletropostos e frotas elétricas. Compare
-                empresas verificadas e avaliações reais em cada segmento.
+                De painéis e inversores a wallbox, eletropostos e frotas elétricas. Compare empresas
+                verificadas e avaliações reais em cada segmento.
               </p>
               <div className="flex items-center gap-2 text-[13px] font-medium text-slate-700 bg-emerald-50/50 border border-emerald-100/50 rounded-lg p-3 max-w-[420px]">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -398,14 +383,17 @@ export default function CategoriesIndexWithSidebar() {
       </div>
 
       {dataSource === 'static' && (
-        <div role="status" className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-center text-xs text-amber-900">
-          Não foi possível atualizar o catálogo agora. Exibindo a última estrutura disponível; tente novamente em instantes.
+        <div
+          role="status"
+          className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-center text-xs text-amber-900"
+        >
+          Não foi possível atualizar o catálogo agora. Exibindo a última estrutura disponível; tente
+          novamente em instantes.
         </div>
       )}
 
       {/* ===== CONTENT ===== */}
       <div className="max-w-[1240px] mx-auto px-5">
-
         <div className="pt-6">
           <BannerByLocation location="categories_top" limit={1} />
         </div>
@@ -466,7 +454,10 @@ export default function CategoriesIndexWithSidebar() {
               </p>
               <button
                 type="button"
-                onClick={() => { setSearchTerm(''); setPage(1); }}
+                onClick={() => {
+                  setSearchTerm('');
+                  setPage(1);
+                }}
                 className="mt-4 text-[13px] font-black underline text-[#1668e8]"
               >
                 Limpar busca
@@ -487,19 +478,14 @@ export default function CategoriesIndexWithSidebar() {
                       {letter} — {group.name}
                     </span>
                     <span className="ml-auto text-[12px] text-[#6b6b6b]">
-                      {children.length}{' '}
-                      {children.length === 1 ? 'categoria' : 'categorias'}
+                      {children.length} {children.length === 1 ? 'categoria' : 'categorias'}
                     </span>
                   </div>
 
                   {/* Rows List */}
                   <div className="space-y-1">
-                    {children.map((child, ci) => (
-                      <CategoryRow
-                        key={child.id}
-                        category={child}
-                        idx={rowIndex(letter, ci)}
-                      />
+                    {children.map((child) => (
+                      <CategoryRow key={child.id} category={child} />
                     ))}
                   </div>
                 </div>
@@ -537,11 +523,10 @@ export default function CategoriesIndexWithSidebar() {
         <section className="my-16">
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
-              <h3 className="text-[18px] font-bold text-slate-900">
-                Não encontrou o que procura?
-              </h3>
+              <h3 className="text-[18px] font-bold text-slate-900">Não encontrou o que procura?</h3>
               <p className="text-[14px] text-[#6b6b6b] leading-relaxed max-w-[500px]">
-                Conte com a nossa equipe para te ajudar a encontrar a solução ideal para o seu projeto de energia solar ou mobilidade.
+                Conte com a nossa equipe para te ajudar a encontrar a solução ideal para o seu
+                projeto de energia solar ou mobilidade.
               </p>
             </div>
             <Link
@@ -552,7 +537,6 @@ export default function CategoriesIndexWithSidebar() {
             </Link>
           </div>
         </section>
-
       </div>
     </div>
   );

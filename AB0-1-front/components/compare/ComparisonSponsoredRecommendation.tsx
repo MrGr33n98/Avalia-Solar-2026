@@ -18,7 +18,11 @@ export function ComparisonSponsoredRecommendation({
 }: ComparisonSponsoredRecommendationProps) {
   const containerRef = useRef<HTMLAnchorElement>(null);
   const impressionTrackedRef = useRef<string | null>(null);
-  const { data: banners } = useBannersQuery({ position: PLACEMENT, limit: 6 });
+  const { data: banners } = useBannersQuery({
+    position: PLACEMENT,
+    limit: 6,
+    enabled: excludedCompanyIds.length > 0,
+  });
 
   const recommendation = useMemo(() => {
     const excluded = new Set(excludedCompanyIds.map(Number));

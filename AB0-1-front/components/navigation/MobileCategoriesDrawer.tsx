@@ -148,7 +148,9 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
               placeholder={
                 selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
               }
-              aria-label={selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'}
+              aria-label={
+                selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
+              }
               className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
             />
           </label>
@@ -272,7 +274,10 @@ function MainCategoriesView({
   const { isAuthenticated } = useAuth();
   return (
     <div className="border-t border-slate-200">
-      <nav aria-label="Navegação principal" className="grid grid-cols-2 gap-2 border-b border-slate-200 py-3">
+      <nav
+        aria-label="Navegação principal"
+        className="grid grid-cols-2 gap-2 border-b border-slate-200 py-3"
+      >
         {[
           { href: '/companies', label: 'Empresas' },
           { href: '/categories', label: 'Categorias' },
@@ -296,20 +301,25 @@ function MainCategoriesView({
 
         const content = (
           <>
-            <CategoryIcon iconSrc={iconSrc} name={category.name} slug={category.slug || category.seo_url} />
+            <CategoryIcon
+              iconSrc={iconSrc}
+              name={category.name}
+              slug={category.slug || category.seo_url}
+            />
             <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 text-[15px] font-medium leading-tight text-slate-950">
+              <p className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
                 {category.name}
               </p>
               <p className="mt-0.5 text-xs font-normal text-slate-500">
                 {formatCount(category.companies_count || 0)}
               </p>
             </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-neutral-700" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
           </>
         );
 
-        const cardClassName = "flex min-h-[68px] w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500";
+        const cardClassName =
+          'flex min-h-[58px] w-full items-center gap-2.5 border-b border-slate-100 bg-white px-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500';
 
         if (hasChildren) {
           return (
@@ -351,7 +361,7 @@ function MainCategoriesView({
               Explore todas as opções disponíveis
             </p>
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
         </Link>
       ) : (
         <Link
@@ -368,7 +378,7 @@ function MainCategoriesView({
               Acesse sua conta para ver mais
             </p>
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
         </Link>
       )}
     </div>
@@ -401,16 +411,24 @@ function SubcategoryView({
       </Link>
 
       {subcategories.map((subcategory) => {
-        const iconSrc = getCategoryVisualAsset(subcategory.slug || subcategory.seo_url, subcategory.name);
+        const iconSrc = getCategoryVisualAsset(
+          subcategory.slug || subcategory.seo_url,
+          subcategory.name
+        );
         return (
           <Link
             key={subcategory.id}
             href={getCategoryHref(subcategory)}
             onClick={onClose}
-            className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
+            className="flex min-h-[56px] items-center gap-2.5 border-b border-slate-100 bg-white px-2.5 transition-colors hover:bg-slate-50"
           >
-            <CategoryIcon iconSrc={iconSrc} name={subcategory.name} slug={subcategory.slug || subcategory.seo_url} size="sm" />
-            <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-slate-950">
+            <CategoryIcon
+              iconSrc={iconSrc}
+              name={subcategory.name}
+              slug={subcategory.slug || subcategory.seo_url}
+              size="sm"
+            />
+            <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-snug text-slate-950">
               {subcategory.name}
             </p>
             {subcategory.companies_count > 0 && (
@@ -418,7 +436,7 @@ function SubcategoryView({
                 {subcategory.companies_count}
               </span>
             )}
-            <ChevronRight className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
           </Link>
         );
       })}
@@ -437,18 +455,18 @@ function CategoryIcon({
   slug?: string | null;
   size?: 'sm' | 'md';
 }) {
-  const dimensions = size === 'sm' ? 'h-10 w-10' : 'h-12 w-12';
+  const dimensions = size === 'sm' ? 'h-8 w-8' : 'h-9 w-9';
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)] [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none`}
+      className={`relative flex ${dimensions} shrink-0 items-center justify-center [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none`}
       aria-hidden="true"
     >
       <CategoryMotionIcon
         slug={slug}
         name={name}
         iconUrl={iconSrc}
-        size={size === 'sm' ? 24 : 32}
+        size={size === 'sm' ? 28 : 32}
         motionMode="interactive"
       />
     </span>

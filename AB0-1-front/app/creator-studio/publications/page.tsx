@@ -4,14 +4,12 @@ import Link from 'next/link';
 import { FileText, PenLine, Plus, Search } from 'lucide-react';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
-import { useDashboardContext } from '@/app/review-dashboard/DashboardLayoutClient';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { PublicationStatus, ReviewerPublication } from '@/types/reviewer-publication';
 import { PublicationCard } from '@/components/review-dashboard/publications/PublicationCard';
 import { PublicationEmptyState } from '@/components/review-dashboard/publications/PublicationEmptyState';
 
 export default function PublicacoesPage() {
-  const { loading } = useDashboardContext();
   const [items, setItems] = useState<ReviewerPublication[]>([]);
   const [tab, setTab] = useState<PublicationStatus>('published');
   const [query, setQuery] = useState('');
@@ -120,7 +118,7 @@ export default function PublicacoesPage() {
             className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-500"
           />
         </label>
-        {loading || busy ? (
+        {busy ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
             Carregando publicações...
           </div>

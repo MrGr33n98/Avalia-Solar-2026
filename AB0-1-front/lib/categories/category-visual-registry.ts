@@ -1,4 +1,11 @@
-export type CategoryMotionPreset = 'solar' | 'mobility' | 'energyMarket' | 'charging' | 'hub' | 'neutral';
+import { normalizeCategoryKey } from '../categoryIcons';
+export type CategoryMotionPreset =
+  | 'solar'
+  | 'mobility'
+  | 'energyMarket'
+  | 'charging'
+  | 'hub'
+  | 'neutral';
 
 export interface CategoryVisualDefinition {
   code: string;
@@ -221,7 +228,7 @@ export const CATEGORY_SLUG_TO_VISUAL_CODE: Record<string, string> = {
 
   // Frotas e Mobilidade (Hub E01 e subcategorias B01-B05)
   'mobilidade-eletrica': 'E01',
-  'fleet_electric': 'B01',
+  fleet_electric: 'B01',
   'frotas-corporativas': 'B01',
   'frotas-logistica': 'B02',
   'mobilidade-urbana': 'B03',
@@ -231,7 +238,7 @@ export const CATEGORY_SLUG_TO_VISUAL_CODE: Record<string, string> = {
   // Mercado Livre
   'mercado-livre-de-energia': 'C01',
   'mercado-livre': 'C01',
-  'free_energy_market': 'C01',
+  free_energy_market: 'C01',
 
   // Carregadores
   'carregadores-comerciais': 'D01',
@@ -252,29 +259,53 @@ export const CATEGORY_SLUG_TO_VISUAL_CODE: Record<string, string> = {
   'hubs-eletromobilidade': 'E01',
 };
 
-// Função para buscar a definição de um asset 3D correspondente a uma categoria
+const NORMALIZED_VISUAL_CODE_BY_KEY = Object.fromEntries(
+  Object.entries(CATEGORY_SLUG_TO_VISUAL_CODE).map(([key, code]) => [
+    normalizeCategoryKey(key),
+    code,
+  ])
+);
+
+const FUZZY_VISUAL_KEYS = Object.keys(NORMALIZED_VISUAL_CODE_BY_KEY).sort(
+  (a, b) => b.length - a.length
+);
+
+function findVisualByKey(value?: string | null, fuzzy = false) {
+  if (!value) return null;
+
+  const directCode = CATEGORY_VISUAL_REGISTRY[value] ? value : undefined;
+  const normalizedValue = normalizeCategoryKey(value);
+  const exactCode =
+    directCode ||
+    CATEGORY_SLUG_TO_VISUAL_CODE[value.toLowerCase().trim()] ||
+    NORMALIZED_VISUAL_CODE_BY_KEY[normalizedValue];
+
+  if (exactCode && CATEGORY_VISUAL_REGISTRY[exactCode]) {
+    return CATEGORY_VISUAL_REGISTRY[exactCode];
+  }
+
+  if (!fuzzy || !normalizedValue) return null;
+
+  const matchedKey = FUZZY_VISUAL_KEYS.find(
+    (key) => normalizedValue.includes(key) || key.includes(normalizedValue)
+  );
+  const fuzzyCode = matchedKey ? NORMALIZED_VISUAL_CODE_BY_KEY[matchedKey] : undefined;
+
+  return fuzzyCode ? CATEGORY_VISUAL_REGISTRY[fuzzyCode] || null : null;
+}
+
+// Ordem: visualKey, slug exato, nome exato, slug fuzzy, nome fuzzy e fallback neutro.
 export function resolveCategoryVisual(
   slug?: string | null,
   name?: string | null,
   visualKey?: string | null
 ): CategoryVisualDefinition | null {
-  if (visualKey && CATEGORY_VISUAL_REGISTRY[visualKey]) {
-    return CATEGORY_VISUAL_REGISTRY[visualKey];
-  }
-
-  const lookupKey = (slug || name || '').toLowerCase().trim();
-  if (CATEGORY_SLUG_TO_VISUAL_CODE[lookupKey]) {
-    return CATEGORY_VISUAL_REGISTRY[CATEGORY_SLUG_TO_VISUAL_CODE[lookupKey]];
-  }
-
-  // Busca fuzzy/parcial
-  const match = Object.keys(CATEGORY_SLUG_TO_VISUAL_CODE).find(
-    (key) => lookupKey.includes(key) || key.includes(lookupKey)
+  return (
+    findVisualByKey(visualKey) ||
+    findVisualByKey(slug) ||
+    findVisualByKey(name) ||
+    findVisualByKey(slug, true) ||
+    findVisualByKey(name, true) ||
+    null
   );
-
-  if (match) {
-    return CATEGORY_VISUAL_REGISTRY[CATEGORY_SLUG_TO_VISUAL_CODE[match]];
-  }
-
-  return null;
 }
