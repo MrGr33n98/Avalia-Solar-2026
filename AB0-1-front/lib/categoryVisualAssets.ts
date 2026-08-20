@@ -79,8 +79,19 @@ const VISUAL_KEY_BY_CATEGORY: Array<[CategoryVisualKey, string[]]> = [
   ['solar_inverter', ['inversor', 'inversores', 'solar_inverter']],
   ['monitoring_software', ['monitoramento', 'o&m', 'operacao-manutencao', 'monitoring_software']],
   ['solar_panel', ['painel', 'paineis', 'painéis', 'placas solares', 'fotovolta', 'solar_panel']],
-  ['corporate_fleet', ['frotas corporativas', 'frotas-corporativas', 'frota corporativa']],
-  ['logistics_fleet', ['frotas logistica', 'frotas-logistica', 'frota de logistica']],
+  [
+    'corporate_fleet',
+    [
+      'frotas corporativas',
+      'frotas-corporativas',
+      'frotas-eletricas-empresas',
+      'frota corporativa',
+    ],
+  ],
+  [
+    'logistics_fleet',
+    ['frotas logistica', 'frotas-logistica', 'frotas-eletricas-logistica', 'frota de logistica'],
+  ],
   ['urban_mobility', ['mobilidade urbana', 'mobilidade-urbana']],
   ['fleet_management', ['gestao frotas', 'gestao-frotas', 'gestão de frotas']],
   ['fleet_charging', ['recarga frotas', 'recarga-frotas', 'recarga de frotas']],
