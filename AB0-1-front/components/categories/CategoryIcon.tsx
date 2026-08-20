@@ -66,19 +66,27 @@ export function CategoryIcon({
         )}
         style={isFill ? undefined : { width: dim, height: dim }}
       >
-        <Grid2X2 style={isFill ? { width: '40%', height: '40%' } : { width: dim! * 0.5, height: dim! * 0.5 }} aria-hidden="true" />
+        <Grid2X2
+          style={
+            isFill ? { width: '40%', height: '40%' } : { width: dim! * 0.5, height: dim! * 0.5 }
+          }
+          aria-hidden="true"
+        />
       </div>
     );
   }
 
   if (isFill) {
     return (
-      <div className={cn('absolute inset-0 w-full h-full flex items-center justify-center', className)}>
+      <div
+        className={cn('absolute inset-0 w-full h-full flex items-center justify-center', className)}
+      >
         <Image
           src={src}
           alt={alt}
           fill
           priority={priority}
+          unoptimized
           sizes="(max-width: 640px) 50vw, 180px"
           className="object-contain p-2"
         />
@@ -97,6 +105,7 @@ export function CategoryIcon({
         width={dim}
         height={dim}
         priority={priority}
+        unoptimized
         className="object-contain max-w-full max-h-full"
       />
     </div>
