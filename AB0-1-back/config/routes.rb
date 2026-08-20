@@ -290,6 +290,7 @@ Rails.application.routes.draw do
           collection { patch :reorder, path: 'reorder' }
         end
         resources :creator_leads, only: %i[index update], controller: 'creator_leads'
+        get 'analytics', to: 'dashboard#analytics'
         resources :publications, only: %i[index show create update destroy]
         post 'publications/:id/publish', to: 'publications#publish'
         post 'publications/:id/archive', to: 'publications#archive'

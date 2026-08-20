@@ -32,7 +32,7 @@ module Api
         end
 
         def update
-          return render json: { error: 'Somente rascunhos podem ser editados.' }, status: :unprocessable_entity unless @publication.draft?
+          return render json: { error: 'Publicações arquivadas não podem ser editadas.' }, status: :unprocessable_entity if @publication.archived?
           if @publication.update(publication_params)
             attach_files(@publication)
             render json: ReviewerPublicationSerializer.new(@publication).as_json

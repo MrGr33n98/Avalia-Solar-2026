@@ -7,6 +7,7 @@ import { CreatorHero } from '@/components/creator/CreatorHero';
 import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact';
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
 import { CreatorReviewCard, type CreatorReview } from '@/components/creator/CreatorReviewCard';
+import { CreatorFollowList } from '@/components/creator/CreatorFollowList';
 
 type CreatorData = {
   creator: {
@@ -179,6 +180,12 @@ export default async function CreatorPage({ params }: { params: { slug: string }
                   </p>
                 )}
               </div>
+            </section>
+            <section id="seguidores" className="scroll-mt-6">
+              <CreatorFollowList creatorSlug={params.slug} type="followers" />
+            </section>
+            <section id="seguindo" className="scroll-mt-6">
+              <CreatorFollowList creatorSlug={params.slug} type="following" />
             </section>
           </div>
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">

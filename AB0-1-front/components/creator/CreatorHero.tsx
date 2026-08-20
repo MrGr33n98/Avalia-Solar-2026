@@ -95,6 +95,12 @@ export function CreatorHero({ creator, publicationCount, reviewCount }: Props) {
           <a className="whitespace-nowrap pb-3" href="#conquistas">
             Conquistas
           </a>
+          <a className="whitespace-nowrap pb-3" href="#seguidores">
+            Seguidores
+          </a>
+          <a className="whitespace-nowrap pb-3" href="#seguindo">
+            Seguindo
+          </a>
         </nav>
       </div>
     </section>

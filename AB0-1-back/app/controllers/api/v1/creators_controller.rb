@@ -83,7 +83,7 @@ module Api
           entity = follow.followable
           next nil unless entity
 
-          if entity.is_a?(ReviewerProfile)
+          if entity.class.name == 'ReviewerProfile'
             {
               id: entity.id,
               type: 'ReviewerProfile',
@@ -93,12 +93,12 @@ module Api
               public_slug: entity.public_slug,
               following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
             }
-          elsif entity.is_a?(Company)
+          elsif entity.class.name == 'Company'
             {
               id: entity.id,
               type: 'Company',
               name: entity.name,
-              avatar_url: entity.logo_url,
+              avatar_url: entity.respond_to?(:logo_url) ? entity.logo_url : nil,
               headline: 'Empresa do setor solar',
               public_slug: entity.slug,
               following: current_user ? SocialFollow.exists?(follower: current_user, followable: entity) : false
