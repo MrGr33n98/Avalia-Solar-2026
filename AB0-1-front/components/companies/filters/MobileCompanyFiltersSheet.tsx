@@ -38,7 +38,8 @@ export default function MobileCompanyFiltersSheet({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } = useCompanyLocationData();
+  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } =
+    useCompanyLocationData();
   const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
 
@@ -125,7 +126,8 @@ export default function MobileCompanyFiltersSheet({
           q: draftFilters.search || undefined,
           state: draftFilters.state.length > 0 ? draftFilters.state : undefined,
           city: draftFilters.city.length > 0 ? draftFilters.city : undefined,
-          category_ids: draftFilters.category_ids.length > 0 ? draftFilters.category_ids : undefined,
+          category_ids:
+            draftFilters.category_ids.length > 0 ? draftFilters.category_ids : undefined,
           min_rating: draftFilters.min_rating || undefined,
           verified: draftFilters.verified || undefined,
           featured: draftFilters.featured || undefined,
@@ -218,11 +220,13 @@ export default function MobileCompanyFiltersSheet({
         aria-modal="true"
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col overflow-hidden max-h-[85vh] md:max-h-[85dvh] transition-transform duration-300 transform translate-y-0"
+        className="relative flex max-h-[85dvh] w-full max-w-lg translate-y-0 transform flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform duration-300"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-          <h2 id="mobile-company-filters-title" className="text-base font-bold text-slate-900">Filtrar empresas</h2>
+          <h2 id="mobile-company-filters-title" className="text-base font-bold text-slate-900">
+            Filtrar empresas
+          </h2>
           <button
             ref={closeButtonRef}
             type="button"
@@ -238,7 +242,9 @@ export default function MobileCompanyFiltersSheet({
         <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
           {/* 1. Localização */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Localização</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Localização
+            </h3>
 
             {/* GPS Button */}
             <div className="flex flex-col gap-2">
@@ -265,7 +271,9 @@ export default function MobileCompanyFiltersSheet({
             {/* Radius Selector if GPS Active */}
             {isGpsActive && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500">Distância (Raio máximo)</label>
+                <label className="text-xs font-semibold text-slate-500">
+                  Distância (Raio máximo)
+                </label>
                 <div className="grid grid-cols-5 gap-1.5">
                   {([25, 50, 100, 200] as const).map((r) => (
                     <button
@@ -302,7 +310,12 @@ export default function MobileCompanyFiltersSheet({
             {!isGpsActive && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label htmlFor="company-filter-state" className="text-[10px] font-bold text-slate-500 uppercase">Estado</label>
+                  <label
+                    htmlFor="company-filter-state"
+                    className="text-[10px] font-bold text-slate-500 uppercase"
+                  >
+                    Estado
+                  </label>
                   <select
                     id="company-filter-state"
                     value={activeState}
@@ -322,7 +335,8 @@ export default function MobileCompanyFiltersSheet({
                     <option value="">Selecione...</option>
                     {activeState && !states.includes(activeState) && (
                       <option value={activeState}>
-                        {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === activeState)?.label || activeState}
+                        {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === activeState)?.label ||
+                          activeState}
                       </option>
                     )}
                     {states.map((st) => (
@@ -334,7 +348,12 @@ export default function MobileCompanyFiltersSheet({
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="company-filter-city" className="text-[10px] font-bold text-slate-500 uppercase">Cidade</label>
+                  <label
+                    htmlFor="company-filter-city"
+                    className="text-[10px] font-bold text-slate-500 uppercase"
+                  >
+                    Cidade
+                  </label>
                   <select
                     id="company-filter-city"
                     value={draftFilters.city[0] || ''}
@@ -351,11 +370,12 @@ export default function MobileCompanyFiltersSheet({
                     className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50"
                   >
                     <option value="">Selecione...</option>
-                    {(draftFilters.city[0] || '') && !cities.includes(draftFilters.city[0] || '') && (
-                      <option value={draftFilters.city[0] || ''}>
-                        {draftFilters.city[0] || ''}
-                      </option>
-                    )}
+                    {(draftFilters.city[0] || '') &&
+                      !cities.includes(draftFilters.city[0] || '') && (
+                        <option value={draftFilters.city[0] || ''}>
+                          {draftFilters.city[0] || ''}
+                        </option>
+                      )}
                     {cities.map((ct) => (
                       <option key={ct} value={ct}>
                         {ct}
@@ -369,7 +389,9 @@ export default function MobileCompanyFiltersSheet({
 
           {/* 2. Categoria */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">O que você procura?</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              O que você procura?
+            </h3>
             <button
               type="button"
               onClick={() => setIsCategoryPickerOpen(true)}
@@ -379,8 +401,9 @@ export default function MobileCompanyFiltersSheet({
                 {draftFilters.category_ids.length === 0
                   ? 'Todas as categorias'
                   : draftFilters.category_ids.length === 1
-                  ? categories.find((c) => c.id === draftFilters.category_ids[0])?.name || 'Categoria selecionada'
-                  : `${draftFilters.category_ids.length} categorias selecionadas`}
+                    ? categories.find((c) => c.id === draftFilters.category_ids[0])?.name ||
+                      'Categoria selecionada'
+                    : `${draftFilters.category_ids.length} categorias selecionadas`}
               </span>
               <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
             </button>
@@ -396,7 +419,9 @@ export default function MobileCompanyFiltersSheet({
                 onChange={(e) => updateDraft({ verified: e.target.checked })}
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-xs font-semibold text-slate-700">Somente empresas verificadas</span>
+              <span className="text-xs font-semibold text-slate-700">
+                Somente empresas verificadas
+              </span>
             </label>
           </div>
 
@@ -404,28 +429,32 @@ export default function MobileCompanyFiltersSheet({
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Avaliação</h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {([
-                { label: 'Qualquer', value: null },
-                { label: '4.0+', value: 4.0 },
-                { label: '4.5+', value: 4.5 },
-                { label: 'Excelente (5.0)', value: 5.0 },
-                { label: 'Com avaliações', value: 'has_reviews' as const },
-              ] as const).map((opt) => (
+              {(
+                [
+                  { label: 'Qualquer', value: null },
+                  { label: '4.0+', value: 4.0 },
+                  { label: '4.5+', value: 4.5 },
+                  { label: 'Excelente (5.0)', value: 5.0 },
+                  { label: 'Com avaliações', value: 'has_reviews' as const },
+                ] as const
+              ).map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={() => updateDraft(
-                    opt.value === 'has_reviews'
-                      ? { has_reviews: !draftFilters.has_reviews }
-                      : { min_rating: opt.value }
-                  )}
+                  onClick={() =>
+                    updateDraft(
+                      opt.value === 'has_reviews'
+                        ? { has_reviews: !draftFilters.has_reviews }
+                        : { min_rating: opt.value }
+                    )
+                  }
                   className={cn(
                     'flex flex-col items-center justify-center h-12 rounded-xl border text-[10px] font-bold transition-all px-1.5 text-center',
                     opt.value === 'has_reviews'
                       ? draftFilters.has_reviews
                       : draftFilters.min_rating === opt.value
-                      ? 'bg-blue-600 border-blue-600 text-white font-extrabold'
-                      : 'bg-white border-slate-200 text-slate-600'
+                        ? 'bg-blue-600 border-blue-600 text-white font-extrabold'
+                        : 'bg-white border-slate-200 text-slate-600'
                   )}
                 >
                   <span className="truncate">{opt.label}</span>
@@ -436,7 +465,9 @@ export default function MobileCompanyFiltersSheet({
 
           {/* 5. Atendimento */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Atendimento e Recursos</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Atendimento e Recursos
+            </h3>
             <div className="grid grid-cols-2 gap-2">
               <label className="flex items-center gap-2.5 h-11 border border-slate-200 rounded-xl px-3.5 cursor-pointer">
                 <input
@@ -469,7 +500,12 @@ export default function MobileCompanyFiltersSheet({
               if (event.target === event.currentTarget) setIsCategoryPickerOpen(false);
             }}
           >
-            <div className="w-full max-h-[80vh]" role="dialog" aria-modal="true" aria-label="Selecionar categorias">
+            <div
+              className="w-full max-h-[80dvh]"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Selecionar categorias"
+            >
               <CompanyCategoryPicker
                 selectedIds={draftCategoryIds}
                 onChange={setDraftCategoryIds}
@@ -487,7 +523,7 @@ export default function MobileCompanyFiltersSheet({
         )}
 
         {/* Footer */}
-        <div 
+        <div
           className="sticky bottom-0 z-20 px-5 pt-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0"
           style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
         >
@@ -511,8 +547,8 @@ export default function MobileCompanyFiltersSheet({
               {loadingCount
                 ? 'Contando...'
                 : totalCount !== null
-                ? `Ver ${totalCount} ${totalCount === 1 ? 'empresa' : 'empresas'}`
-                : 'Aplicar filtros'}
+                  ? `Ver ${totalCount} ${totalCount === 1 ? 'empresa' : 'empresas'}`
+                  : 'Aplicar filtros'}
             </span>
           </button>
         </div>

@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState, useRef, Suspense, useCallback } from 'react';
 
-import { Search, Grid, List, Map as MapIcon, ChevronLeft, ChevronRight, MapPin, ChevronDown } from 'lucide-react';
+import {
+  Search,
+  Grid,
+  List,
+  Map as MapIcon,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  ChevronDown,
+} from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -92,7 +101,7 @@ export function CompaniesContent({
   const handleApplyFilters = (nextFilters: CompanyFilters) => {
     const normalized = {
       ...nextFilters,
-      page: 1
+      page: 1,
     };
     const targetUrl = buildTargetUrl(normalized);
     router.replace(targetUrl, { scroll: false });
@@ -152,19 +161,22 @@ export function CompaniesContent({
     ]
   );
 
-  const buildTargetUrl = useCallback((nextFilters: CompanyFilters): string => {
-    const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
-    const hasPathCategories = isCompaniesCategoriesPath(pathname);
+  const buildTargetUrl = useCallback(
+    (nextFilters: CompanyFilters): string => {
+      const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
+      const hasPathCategories = isCompaniesCategoriesPath(pathname);
 
-    if (sortedCategoryIds.length > 0 && hasPathCategories) {
-      const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, {}, pathSlugById);
-      const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
-      return `${nextPath}${queryString ? `?${queryString}` : ''}`;
-    }
+      if (sortedCategoryIds.length > 0 && hasPathCategories) {
+        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, {}, pathSlugById);
+        const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
+        return `${nextPath}${queryString ? `?${queryString}` : ''}`;
+      }
 
-    const queryString = stringifyQueryParams(nextFilters);
-    return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
-  }, [pathSlugById, pathname]);
+      const queryString = stringifyQueryParams(nextFilters);
+      return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
+    },
+    [pathSlugById, pathname]
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +235,7 @@ export function CompaniesContent({
             setIsFiltersOpen(true);
             return;
           }
-        } catch (_e) {
+        } catch {
           // Ignore unsupported permission query in some browsers
         }
       }
@@ -243,7 +255,7 @@ export function CompaniesContent({
         radius_km: updated.radius_km,
       });
       router.replace(buildTargetUrl(updated), { scroll: false });
-    } catch (_err) {
+    } catch {
       // Fallback: se falhar por permissão negada, timeout ou unsupported, abre o modal
       setIsFiltersOpen(true);
     }
@@ -419,31 +431,38 @@ export function CompaniesContent({
     [canAddMore, isInComparison, toggleComparison, visibleCompanies]
   );
 
-  const handleMapBoundsSearch = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
-    const centerLat = (bounds.north + bounds.south) / 2;
-    const centerLng = (bounds.east + bounds.west) / 2;
-    const latDistance = Math.abs(bounds.north - bounds.south) * 111.32 / 2;
-    const lngDistance = Math.abs(bounds.east - bounds.west) * 111.32 * Math.cos((centerLat * Math.PI) / 180) / 2;
-    const radiusKm = Math.max(25, Math.ceil(Math.sqrt(latDistance ** 2 + lngDistance ** 2)));
+  const handleMapBoundsSearch = useCallback(
+    (bounds: { north: number; south: number; east: number; west: number }) => {
+      const centerLat = (bounds.north + bounds.south) / 2;
+      const centerLng = (bounds.east + bounds.west) / 2;
+      const latDistance = (Math.abs(bounds.north - bounds.south) * 111.32) / 2;
+      const lngDistance =
+        (Math.abs(bounds.east - bounds.west) * 111.32 * Math.cos((centerLat * Math.PI) / 180)) / 2;
+      const radiusKm = Math.max(25, Math.ceil(Math.sqrt(latDistance ** 2 + lngDistance ** 2)));
 
-    router.replace(buildTargetUrl({
-      ...filters,
-      lat: Number(centerLat.toFixed(5)),
-      lng: Number(centerLng.toFixed(5)),
-      radius_km: radiusKm,
-      page: 1,
-    }), { scroll: false });
-    track('company_map_area_search', {
-      source: 'map',
-      view_mode: 'map',
-      bounds: {
-        north: Number(bounds.north.toFixed(2)),
-        south: Number(bounds.south.toFixed(2)),
-        east: Number(bounds.east.toFixed(2)),
-        west: Number(bounds.west.toFixed(2)),
-      },
-    });
-  }, [buildTargetUrl, filters, router]);
+      router.replace(
+        buildTargetUrl({
+          ...filters,
+          lat: Number(centerLat.toFixed(5)),
+          lng: Number(centerLng.toFixed(5)),
+          radius_km: radiusKm,
+          page: 1,
+        }),
+        { scroll: false }
+      );
+      track('company_map_area_search', {
+        source: 'map',
+        view_mode: 'map',
+        bounds: {
+          north: Number(bounds.north.toFixed(2)),
+          south: Number(bounds.south.toFixed(2)),
+          east: Number(bounds.east.toFixed(2)),
+          west: Number(bounds.west.toFixed(2)),
+        },
+      });
+    },
+    [buildTargetUrl, filters, router]
+  );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.max(1, filters.page || 1);
@@ -659,10 +678,7 @@ export function CompaniesContent({
 
             <div className="w-full min-w-0 flex-1 space-y-6">
               <div className="w-full min-w-0 max-w-full">
-                <BannerByLocation
-                  location="companies_top"
-                  className="max-w-full"
-                />
+                <BannerByLocation location="companies_top" className="max-w-full" />
               </div>
 
               <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
@@ -684,7 +700,11 @@ export function CompaniesContent({
                       id="sort-companies"
                       value={filters.sort || ''}
                       onChange={(e) => {
-                        const updated = { ...filters, sort: e.target.value || 'recommended', page: 1 };
+                        const updated = {
+                          ...filters,
+                          sort: e.target.value || 'recommended',
+                          page: 1,
+                        };
                         router.replace(buildTargetUrl(updated), { scroll: false });
                       }}
                       className="appearance-none h-9 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -707,7 +727,9 @@ export function CompaniesContent({
                       size="icon"
                       className={cn(
                         'h-8 w-8 transition-colors',
-                        viewMode === 'grid' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
+                        viewMode === 'grid'
+                          ? 'bg-slate-900 text-white hover:bg-slate-800'
+                          : 'text-slate-500 hover:bg-slate-50'
                       )}
                       onClick={() => setViewMode('grid')}
                     >
@@ -718,7 +740,9 @@ export function CompaniesContent({
                       size="icon"
                       className={cn(
                         'h-8 w-8 transition-colors',
-                        viewMode === 'list' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
+                        viewMode === 'list'
+                          ? 'bg-slate-900 text-white hover:bg-slate-800'
+                          : 'text-slate-500 hover:bg-slate-50'
                       )}
                       onClick={() => setViewMode('list')}
                     >
@@ -729,7 +753,9 @@ export function CompaniesContent({
                       size="icon"
                       className={cn(
                         'h-8 w-8 transition-colors',
-                        viewMode === 'map' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-50'
+                        viewMode === 'map'
+                          ? 'bg-slate-900 text-white hover:bg-slate-800'
+                          : 'text-slate-500 hover:bg-slate-50'
                       )}
                       onClick={() => setViewMode('map')}
                     >
@@ -761,13 +787,18 @@ export function CompaniesContent({
 
               {isCategoryPickerOpen && (
                 <div
-                  className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:hidden"
+                  className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 p-0 md:hidden"
                   role="presentation"
                   onMouseDown={(event) => {
                     if (event.target === event.currentTarget) setIsCategoryPickerOpen(false);
                   }}
                 >
-                  <div className="w-full max-w-lg" role="dialog" aria-modal="true" aria-label="Selecionar categorias">
+                  <div
+                    className="w-full max-w-lg max-h-[80dvh]"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Selecionar categorias"
+                  >
                     <CompanyCategoryPicker
                       selectedIds={filters.category_ids}
                       onChange={(category_ids) => {
@@ -808,10 +839,12 @@ export function CompaniesContent({
                           unoptimized
                         />
                       </div>
-                      <span className={cn(
-                        'text-[13px] font-semibold transition-colors',
-                        isDestaques ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-[13px] font-semibold transition-colors',
+                          isDestaques ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'
+                        )}
+                      >
                         {action.label}
                       </span>
                     </Link>
@@ -826,7 +859,11 @@ export function CompaniesContent({
                       'grid w-full min-w-0 gap-4',
                       viewMode !== 'grid' && 'grid-cols-1'
                     )}
-                    style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' } : undefined}
+                    style={
+                      viewMode === 'grid'
+                        ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' }
+                        : undefined
+                    }
                   >
                     {[...Array(6)].map((_, i) => (
                       <Skeleton key={i} className="h-64 rounded-xl bg-white" />
@@ -863,7 +900,14 @@ export function CompaniesContent({
                           'grid w-full min-w-0 gap-4',
                           viewMode !== 'grid' && 'grid-cols-1'
                         )}
-                        style={viewMode === 'grid' ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' } : undefined}
+                        style={
+                          viewMode === 'grid'
+                            ? {
+                                gridTemplateColumns:
+                                  'repeat(auto-fit, minmax(min(100%, 380px), 1fr))',
+                              }
+                            : undefined
+                        }
                       >
                         {visibleCompanies.map((company, index) => (
                           <CompanyCard
@@ -874,7 +918,6 @@ export function CompaniesContent({
                         ))}
                       </div>
                     )}
-
 
                     {totalPages > 1 && viewMode !== 'map' && (
                       <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
