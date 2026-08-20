@@ -42,47 +42,41 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-200 bg-white p-4 transition-all min-w-0 overflow-hidden shadow-none hover:border-slate-350',
-        highlight && 'border-blue-200 bg-blue-50/20',
+        'rounded-xl border border-slate-200 bg-white p-3.5 transition-all min-w-0 flex items-center gap-3.5 shadow-none hover:border-slate-350 min-h-[72px] md:h-[80px]',
+        highlight && 'border-blue-100 bg-blue-50/20',
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2.5 min-w-0">
-        <div className="min-w-0 flex-1">
-          {/* Label do Card */}
-          <p className="text-[11px] sm:text-[12px] font-medium text-slate-500 leading-4 line-clamp-2 break-words">
-            {label}
-          </p>
+      {/* Icon on the left */}
+      {Icon && (
+        <div className={cn('rounded-lg p-2.5 shrink-0 flex items-center justify-center w-9 h-9', iconBgColor)}>
+          <Icon className={cn('h-5 w-5', iconColor)} />
+        </div>
+      )}
 
-          {/* Valor Principal (KPI) */}
+      <div className="min-w-0 flex-1 flex flex-col justify-center">
+        {/* Label */}
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">
+          {label}
+        </p>
+
+        {/* Value and caption */}
+        <div className="flex items-baseline gap-2 mt-1 flex-wrap md:flex-nowrap">
           <p
             className={cn(
-              'mt-1 font-semibold tracking-[-0.02em] break-words min-w-0 max-w-full overflow-hidden',
+              'font-bold tracking-tight leading-none',
               highlight ? 'text-blue-600' : 'text-slate-900',
-              isUnavailable
-                ? 'text-[15px] sm:text-[16px] lg:text-[18px] leading-5 text-slate-400 font-semibold'
-                : typeof displayValue === 'string' && displayValue.length > 8
-                ? 'text-[16px] sm:text-[18px] lg:text-[20px] leading-6 font-bold'
-                : 'text-[22px] sm:text-[24px] lg:text-[26px] leading-8 font-bold'
+              isUnavailable ? 'text-xs text-slate-400 font-semibold' : 'text-lg md:text-xl'
             )}
           >
             {displayValue}
           </p>
-
-          {/* Legenda/Caption */}
           {caption && (
-            <p className="mt-1 text-[11px] sm:text-[12px] text-slate-400 leading-4 line-clamp-2 break-words">
+            <span className="text-[10px] text-slate-400 font-normal truncate leading-none">
               {caption}
-            </p>
+            </span>
           )}
         </div>
-
-        {/* Ícone */}
-        {Icon && (
-          <div className={cn('rounded-lg p-2 shrink-0', iconBgColor)}>
-            <Icon className={cn('h-4.5 w-4.5 sm:h-5 sm:w-5', iconColor)} />
-          </div>
-        )}
       </div>
     </div>
   );

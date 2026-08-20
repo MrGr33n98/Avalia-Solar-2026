@@ -132,11 +132,6 @@ function SidebarItem({
         collapsed && 'justify-center px-0'
       )}
     >
-      {/* Active indicator */}
-      {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-blue-600" />
-      )}
-
       <Icon
         className={cn(
           'h-5 w-5 shrink-0',
