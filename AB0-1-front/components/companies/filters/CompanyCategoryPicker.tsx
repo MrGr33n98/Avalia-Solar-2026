@@ -65,7 +65,7 @@ export function CompanyCategoryPicker({
             checked={isSelected}
             onCheckedChange={() => handleToggle(node.id)}
             aria-label={`Selecionar categoria ${node.name}`}
-            className="relative -mx-4 h-12 w-12 border-0 bg-transparent text-white shadow-none before:pointer-events-none before:absolute before:left-1/2 before:top-1/2 before:h-4 before:w-4 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded before:border before:border-slate-300 before:bg-white before:content-[''] focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 data-[state=checked]:bg-transparent data-[state=checked]:before:border-blue-600 data-[state=checked]:before:bg-blue-600 [&_span]:relative [&_span]:z-10 [&_svg]:h-3 [&_svg]:w-3"
+            className="relative -mx-4 h-12 w-12 border-0 bg-transparent text-white shadow-none before:pointer-events-none before:absolute before:left-1/2 before:top-1/2 before:h-[16px] before:w-[16px] before:-translate-x-1/2 before:-translate-y-1/2 before:rounded before:border before:border-slate-300 before:bg-white before:content-[''] focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 data-[state=checked]:bg-transparent data-[state=checked]:before:border-blue-600 data-[state=checked]:before:bg-blue-600 [&_span]:relative [&_span]:z-10 [&_svg]:h-3 [&_svg]:w-3"
           />
           <span
             className={cn(
