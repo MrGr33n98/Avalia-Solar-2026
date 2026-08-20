@@ -609,6 +609,7 @@ export interface Review {
   featured?: boolean;
   display_order?: number;
   helpful_count?: number;
+  views?: number;
   headline?: string;
   display_headline?: string;
   would_recommend?: boolean;

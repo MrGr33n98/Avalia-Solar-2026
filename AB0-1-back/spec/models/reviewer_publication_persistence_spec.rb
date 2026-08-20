@@ -12,10 +12,21 @@ RSpec.describe ReviewerPublication, type: :model do
 
   it 'publishes and archives through lifecycle methods' do
     publication = create(:reviewer_publication, status: 'draft')
+    expect(publication.draft?).to be true
+    expect(publication.published?).to be false
+    expect(publication.archived?).to be false
+
     publication.publish!
     expect(publication.reload).to have_attributes(status: 'published')
+    expect(publication.draft?).to be false
+    expect(publication.published?).to be true
+    expect(publication.archived?).to be false
     expect(publication.published_at).to be_present
+
     publication.archive!
     expect(publication.reload.status).to eq('archived')
+    expect(publication.draft?).to be false
+    expect(publication.published?).to be false
+    expect(publication.archived?).to be true
   end
 end

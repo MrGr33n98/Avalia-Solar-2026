@@ -3,7 +3,7 @@ class ReviewSerializer < ActiveModel::Serializer
              :reply, :replied_at, :status, :featured, :display_order, :verified,
              :headline, :project_type, :installation_status, :estimated_power,
              :is_legacy, :content_metadata, :metadata, :display_headline,
-             :pros, :cons, :buyer_tip, :editorial_complete
+             :pros, :cons, :buyer_tip, :editorial_complete, :helpful_count, :read_count
 
   belongs_to :user
   belongs_to :company

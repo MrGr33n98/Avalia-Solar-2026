@@ -184,6 +184,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       would_recommend: review.metadata&.[]('would_recommend'),
       useful_count: review.review_votes.where(vote_type: 'useful').count,
       unhelpful_count: review.review_votes.where(vote_type: 'unhelpful').count,
+      helpful_count: review.helpful_count.to_i,
+      views: review.read_count.to_i,
       photo_urls: review.photos.map { |photo| url_for(photo) },
       media: serialize_review_media(review),
       user: serialize_user(review),

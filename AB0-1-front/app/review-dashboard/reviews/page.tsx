@@ -19,117 +19,10 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
+  FileText,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
-
-// Icons 3D SVG
-const Document3DIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="docGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#60a5fa" />
-        <stop offset="100%" stopColor="#2563eb" />
-      </linearGradient>
-      <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#2563eb" floodOpacity="0.2" />
-      </filter>
-    </defs>
-    <rect x="4" y="3" width="16" height="18" rx="3" fill="url(#docGrad)" filter="url(#shadow)" />
-    <line
-      x1="8"
-      y1="8"
-      x2="16"
-      y2="8"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeOpacity="0.8"
-    />
-    <line
-      x1="8"
-      y1="12"
-      x2="16"
-      y2="12"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeOpacity="0.8"
-    />
-    <line
-      x1="8"
-      y1="16"
-      x2="13"
-      y2="16"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeOpacity="0.8"
-    />
-  </svg>
-);
-
-const Check3DIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="checkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#34d399" />
-        <stop offset="100%" stopColor="#059669" />
-      </linearGradient>
-      <filter id="greenShadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1" floodColor="#059669" floodOpacity="0.25" />
-      </filter>
-    </defs>
-    <circle cx="12" cy="12" r="10" fill="url(#checkGrad)" filter="url(#greenShadow)" />
-    <path
-      d="M8 12.5L11 15.5L16.5 9"
-      stroke="white"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const Clock3DIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="clockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#fb923c" />
-        <stop offset="100%" stopColor="#ea580c" />
-      </linearGradient>
-      <filter id="orangeShadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1" floodColor="#ea580c" floodOpacity="0.25" />
-      </filter>
-    </defs>
-    <circle cx="12" cy="12" r="10" fill="url(#clockGrad)" filter="url(#orangeShadow)" />
-    <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="1.5" strokeOpacity="0.4" />
-    <path
-      d="M12 7V12.5H16"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const ThumbsUp3DIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="thumbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#60a5fa" />
-        <stop offset="100%" stopColor="#2563eb" />
-      </linearGradient>
-      <filter id="blueShadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1" floodColor="#2563eb" floodOpacity="0.25" />
-      </filter>
-    </defs>
-    <path
-      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3z"
-      fill="url(#thumbGrad)"
-      filter="url(#blueShadow)"
-    />
-  </svg>
-);
 
 // Local Mini KPI Card
 interface MiniKpiCardProps {
@@ -271,25 +164,25 @@ export default function AvaliacoesPage() {
           label="Total"
           value={totalReviews}
           caption="Avaliações realizadas"
-          icon={<Document3DIcon />}
+          icon={<FileText className="h-5 w-5 text-blue-600" />}
         />
         <MiniKpiCard
           label="Publicadas"
           value={approvedCount}
           caption="Aprovadas e visíveis"
-          icon={<Check3DIcon />}
+          icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
         />
         <MiniKpiCard
           label="Em análise"
           value={inAnalysis}
           caption="Aguardando revisão"
-          icon={<Clock3DIcon />}
+          icon={<Clock className="h-5 w-5 text-orange-500" />}
         />
         <MiniKpiCard
           label="Votos úteis"
           value={helpfulVotes === null ? 'Indisponível' : helpfulVotes}
           caption="Feedback positivo"
-          icon={<ThumbsUp3DIcon />}
+          icon={<ThumbsUp className="h-5 w-5 text-blue-600" />}
           infoTooltip="Quantidade total de votos marcados como úteis por outros usuários em suas avaliações."
           highlight
         />
@@ -404,18 +297,8 @@ export default function AvaliacoesPage() {
                   typeof review.company === 'string' ? null : review.company?.logo_url;
                 const companyInitials = companyName.substring(0, 2).toUpperCase();
 
-                // Compute dummy views and helpful votes based on ID for visual completeness if not returned by serializer
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const reviewAny = review as any;
-                const views =
-                  reviewAny.views ||
-                  reviewAny.metadata?.views ||
-                  Math.floor(((review.id * 17) % 400) + 12);
-                const helpfulCount =
-                  reviewAny.helpful_count ||
-                  reviewAny.helpful_votes ||
-                  reviewAny.metadata?.helpful_votes ||
-                  Math.floor(((review.id * 7) % 25) + 1);
+                const views = review.views ?? '—';
+                const helpfulCount = review.helpful_count ?? '—';
 
                 return (
                   <div
