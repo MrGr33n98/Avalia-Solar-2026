@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 import {
   reviewerNavItems,
   isNavItemActive,
@@ -71,7 +72,7 @@ export function ReviewerSidebar() {
           </ul>
 
           {/* Separator */}
-          <div className="my-3 border-t border-slate-100" />
+          <Separator className="my-3 bg-slate-100" />
 
           {/* System nav */}
           <ul className="space-y-0.5">
@@ -125,9 +126,9 @@ function SidebarItem({
     <Link
       href={item.href}
       className={cn(
-        'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+        'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
         active
-          ? 'bg-blue-50 text-blue-600'
+          ? 'bg-[#1e5eff]/10 text-[#1e5eff] font-bold'
           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
         collapsed && 'justify-center px-0'
       )}
@@ -135,7 +136,7 @@ function SidebarItem({
       <Icon
         className={cn(
           'h-5 w-5 shrink-0',
-          active ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'
+          active ? 'text-[#1e5eff]' : 'text-slate-400 group-hover:text-slate-600'
         )}
       />
 

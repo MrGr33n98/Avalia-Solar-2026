@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { Building2, Package, Layers, Star } from 'lucide-react';
-import Image from 'next/image';
+import { Building2, Package, Star } from 'lucide-react';
 import { buildCategoryPath } from '@/lib/slug';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from './categories/CategoryMotionIcon';
 
 interface CategoryCardMinimalProps {
   category: {
@@ -27,15 +25,6 @@ export default function CategoryCardMinimal({
   category,
   className = '',
 }: CategoryCardMinimalProps) {
-  const [imageError, setImageError] = useState(false);
-
-  const iconUrl = getCategoryVisualAsset(category?.seo_url, category?.name);
-  const logoUrl = category?.logo?.url;
-  const imageUrl =
-    !imageError && (iconUrl || logoUrl || category?.banner_url)
-      ? iconUrl || logoUrl || category.banner_url
-      : null;
-
   const displayData = {
     name: category?.name || 'Categoria',
     description: category?.short_description || '',
@@ -80,24 +69,17 @@ export default function CategoryCardMinimal({
       </div>
 
       {/* Logo/Ícone Centralizado */}
-      {/* Área central da imagem: altura fixa com preenchimento sem distorcer em mobile */}
       <div className="mb-4 flex h-32 items-center justify-center">
-        {imageUrl ? (
-          <div className="relative h-24 w-24 overflow-hidden rounded-full border border-gray-200 bg-white p-2 shadow-sm">
-            <Image
-              src={imageUrl}
-              alt={displayData.name}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain p-1"
-              onError={() => setImageError(true)}
-            />
-          </div>
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
-            <Layers className="h-10 w-10 text-blue-600" />
-          </div>
-        )}
+        <div className="relative h-24 w-24 overflow-hidden rounded-full border border-gray-200 bg-white p-2 shadow-sm flex items-center justify-center">
+          <CategoryMotionIcon
+            slug={category?.seo_url}
+            name={category?.name}
+            iconUrl={category?.logo?.url || category?.banner_url}
+            size="fill"
+            motionMode="none"
+            className="transition-all duration-300 ease-out group-hover:scale-[1.03] group-hover:-translate-y-0.5"
+          />
+        </div>
       </div>
 
       {/* Descrição (se houver) */}

@@ -60,10 +60,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const data = await getCreator(params.slug);
   if (!data) return { title: 'Creator não encontrado | Avalia Solar', robots: { index: false } };
+  const desc = data.creator.public_headline || data.creator.public_bio || 'Avaliador de energia solar no Avalia Solar.';
   return {
     title: `${data.creator.name} | Avalia Solar`,
-    description: data.creator.public_headline || data.creator.public_bio,
+    description: desc,
     alternates: { canonical: `/creators/${params.slug}` },
+    openGraph: {
+      type: 'profile',
+      title: `${data.creator.name} | Avalia Solar`,
+      description: desc,
+      username: params.slug,
+      images: data.creator.avatar_url ? [data.creator.avatar_url] : undefined,
+    },
   };
 }
 
@@ -86,8 +94,32 @@ export default async function CreatorPage({ params }: { params: { slug: string }
     value: string;
     icon: 'linkedin' | 'instagram' | 'website';
   }>;
+  const canonical = `https://www.avaliasolar.com.br/creators/${params.slug}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    'mainEntity': {
+      '@type': 'Person',
+      'name': creator.name,
+      'description': creator.public_bio || creator.public_headline,
+      'image': creator.avatar_url,
+      'jobTitle': creator.public_headline || 'Especialista Solar',
+      'address': {
+        '@type': 'PostalAddress',
+        'addressLocality': creator.city,
+        'addressRegion': creator.state,
+        'addressCountry': 'BR'
+      },
+      'url': canonical
+    }
+  };
+  const safeJsonLd = JSON.stringify(jsonLd)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
   return (
     <main className="min-h-screen bg-[#f8fafc] pb-20 text-[#0b1730]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd }} />
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <nav className="mb-4 text-sm text-[#718096]">
           Início <span className="mx-2">›</span> Reviews <span className="mx-2">›</span> Criadores{' '}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw, LogIn } from 'lucide-react';
@@ -10,12 +9,9 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
-import { getCategoryIcon, normalizeCategoryKey } from '@/lib/categoryIcons';
-import {
-  CategoryMonochromeIcon,
-  getMonochromeIconKey,
-} from '@/components/categories/CategoryMonochromeIcon';
+import { normalizeCategoryKey } from '@/lib/categoryIcons';
 import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from '../categories/CategoryMotionIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
 
@@ -441,29 +437,20 @@ function CategoryIcon({
   slug?: string | null;
   size?: 'sm' | 'md';
 }) {
-  const monochromeKey = getMonochromeIconKey(name, slug);
-  const fallbackIcon = iconSrc || getCategoryIcon(null, name);
   const dimensions = size === 'sm' ? 'h-10 w-10' : 'h-12 w-12';
-  const imageSize = size === 'sm' ? '40px' : '48px';
 
   return (
     <span
       className={`relative flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-black/[0.04] bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] p-2 shadow-[0_4px_12px_rgba(0,0,0,0.08)] [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none`}
       aria-hidden="true"
     >
-      {fallbackIcon ? (
-        <Image
-          src={fallbackIcon}
-          alt=""
-          fill
-          className="object-contain p-1"
-          sizes={imageSize}
-        />
-      ) : monochromeKey ? (
-        <CategoryMonochromeIcon icon={monochromeKey} className="h-full w-full" />
-      ) : (
-        <Grid2X2 className="h-5 w-5 text-neutral-700" aria-hidden="true" />
-      )}
+      <CategoryMotionIcon
+        slug={slug}
+        name={name}
+        iconUrl={iconSrc}
+        size={size === 'sm' ? 24 : 32}
+        motionMode="interactive"
+      />
     </span>
   );
 }

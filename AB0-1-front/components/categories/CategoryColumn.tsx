@@ -2,10 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import { cn } from '@/lib/utils';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from './CategoryMotionIcon';
 
 interface CategoryColumnProps {
   category: CategoryTreeNode;
@@ -15,7 +14,6 @@ interface CategoryColumnProps {
 export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopular }) => {
   const children = category.children || [];
   const slug = category.slug || '';
-  const iconSrc = getCategoryVisualAsset(slug || category.seo_url, category.name);
 
   return (
     <div className="flex flex-col min-w-0">
@@ -28,17 +26,14 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
-          {iconSrc ? (
-            <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
-              <Image
-                src={iconSrc}
-                alt={`Ícone de ${category.name}`}
-                fill
-                sizes="32px"
-                className="object-contain p-1"
-              />
-            </span>
-          ) : null}
+          <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+            <CategoryMotionIcon
+              slug={slug || category.seo_url}
+              name={category.name}
+              size="fill"
+              motionMode="interactive"
+            />
+          </span>
           <span className="truncate group-hover:whitespace-normal">{category.name}</span>
         </span>
         {category.companies_count > 0 && (
@@ -51,8 +46,6 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
       {/* Subcategorias */}
       <ul className="flex flex-col gap-0.5">
         {children.slice(0, 12).map((child) => {
-          const childIconSrc = getCategoryVisualAsset(child.slug || child.seo_url, child.name);
-
           return (
             <li key={child.id}>
               <Link
@@ -60,17 +53,14 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
                 className="flex items-center justify-between group py-1 text-xs text-slate-500 hover:text-blue-600 transition-colors leading-tight"
               >
                 <span className="flex min-w-0 items-center gap-1.5 pr-2">
-                  {childIconSrc ? (
-                    <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none">
-                      <Image
-                        src={childIconSrc}
-                        alt=""
-                        fill
-                        sizes="20px"
-                        className="object-contain p-0.5"
-                      />
-                    </span>
-                  ) : null}
+                  <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm flex items-center justify-center">
+                    <CategoryMotionIcon
+                      slug={child.slug || child.seo_url}
+                      name={child.name}
+                      size="fill"
+                      motionMode="interactive"
+                    />
+                  </span>
                   <span className="truncate">{child.name}</span>
                 </span>
                 {child.companies_count > 0 && (

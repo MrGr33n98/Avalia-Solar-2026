@@ -2,8 +2,12 @@
 
 import { cn } from '@/lib/utils';
 import { MapPin, Award } from 'lucide-react';
-import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 
 interface ProfileSummaryProps {
   levelName?: string | null;
@@ -38,9 +42,9 @@ export function ProfileSummary({
     : '';
 
   return (
-    <div
+    <Card
       className={cn(
-        'flex flex-col md:flex-row md:items-center gap-5 rounded-xl border border-slate-200 bg-white p-5',
+        'flex flex-col md:flex-row md:items-center gap-5 rounded-xl border border-slate-200 bg-white p-5 shadow-none',
         className
       )}
     >
@@ -48,19 +52,12 @@ export function ProfileSummary({
       <div className="flex items-center gap-4 flex-1 min-w-0">
         {/* Avatar */}
         <div className="relative shrink-0">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={name}
-              width={64}
-              height={64}
-              className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-sm"
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-lg font-bold">
+          <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={name} className="object-cover" />}
+            <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-lg">
               {initials}
-            </div>
-          )}
+            </AvatarFallback>
+          </Avatar>
           {/* Level badge on avatar */}
           <div className="absolute -bottom-1 -right-1 rounded-full bg-amber-400 p-1">
             <Award className="h-3 w-3 text-white" />
@@ -81,10 +78,13 @@ export function ProfileSummary({
             </span>
           </p>
           {/* Level badge */}
-          <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+          <Badge
+            variant="outline"
+            className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-600 bg-white"
+          >
             <Award className="h-3 w-3 text-slate-400" />
             Nível {level}
-          </div>
+          </Badge>
           {memberSince && <p className="mt-1 text-xs text-slate-400">Membro desde {memberSince}</p>}
         </div>
       </div>
@@ -95,22 +95,18 @@ export function ProfileSummary({
           <span className="text-sm font-medium text-slate-700">Progresso do perfil</span>
           <span className="text-sm font-bold text-slate-900">{profileCompletion}%</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-all duration-500"
-            style={{ width: `${Math.min(profileCompletion, 100)}%` }}
-          />
-        </div>
+        <Progress value={profileCompletion} className="h-2 w-full bg-slate-100" />
         <p className="mt-1.5 text-xs text-slate-400">
           Complete seu perfil e ganhe mais visibilidade.
         </p>
-        <a
-          href="/review-dashboard/profile"
-          className="mt-1 inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700"
+        <Button
+          asChild
+          variant="link"
+          className="mt-1 h-auto p-0 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:no-underline"
         >
-          Completar agora →
-        </a>
+          <a href="/review-dashboard/profile">Completar agora →</a>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

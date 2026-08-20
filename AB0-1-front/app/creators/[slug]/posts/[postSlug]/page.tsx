@@ -36,15 +36,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await getPost(params.slug, params.postSlug);
   if (!post) return { title: 'Publicação não encontrada | Avalia Solar', robots: { index: false } };
+  const desc = post.excerpt || 'Publicação de energia solar no Avalia Solar.';
   return {
     title: `${post.title} | Avalia Solar`,
-    description: post.excerpt,
+    description: desc,
     alternates: { canonical: `/creators/${params.slug}/posts/${params.postSlug}` },
     openGraph: {
       type: 'article',
       title: post.title,
-      description: post.excerpt,
+      description: desc,
       images: post.cover_image ? [post.cover_image] : undefined,
+      publishedTime: post.published_at,
+      modifiedTime: post.updated_at || post.published_at,
+      authors: post.author?.name ? [post.author.name] : undefined,
     },
   };
 }

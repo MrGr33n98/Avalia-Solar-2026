@@ -69,9 +69,9 @@ export default function MeuPainelPage() {
         action={
           <a
             href="/review-dashboard/achievements"
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-none"
           >
-            <Trophy className="h-4 w-4" />
+            <Trophy className="h-4 w-4 text-amber-500" />
             Avance de nível
           </a>
         }
@@ -113,7 +113,7 @@ export default function MeuPainelPage() {
       {/* Ações rápidas */}
       <div>
         <SectionHeader title="Ações rápidas" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ActionCard
             title="Fazer avaliação"
             description="Avalie empresas e soluções"
@@ -255,7 +255,7 @@ export default function MeuPainelPage() {
 
         {/* Dica da comunidade */}
         <TipCard title="Dica da Comunidade">
-          Perfis completos recebem até 2x mais visualizações e até 3x mais propostas.
+          Perfis completos passam mais confiança para a comunidade e facilitam o contato de parceiros.
         </TipCard>
       </div>
     </div>

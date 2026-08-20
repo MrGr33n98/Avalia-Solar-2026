@@ -1,33 +1,29 @@
 'use client';
 
-import Image from 'next/image';
 import type { CategoryTreeNode } from '@/types';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from './CategoryMotionIcon';
 
 type CategoryVisualAssetProps = {
   category: Pick<CategoryTreeNode, 'name' | 'slug' | 'seo_url'> & { icon_url?: string | null; visual_key?: string | null };
   priority?: boolean;
+  motionMode?: 'none' | 'interactive' | 'entrance' | 'selected';
 };
 
-function resolveAsset(category: CategoryVisualAssetProps['category']) {
-  return getCategoryVisualAsset(category.slug, category.name, category.visual_key) || category.icon_url || null;
-}
-
-export default function CategoryVisualAsset({ category, priority = false }: CategoryVisualAssetProps) {
-  const src = resolveAsset(category);
-
-  if (!src) {
-    return <span className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">Categoria</span>;
-  }
-
+export default function CategoryVisualAsset({
+  category,
+  priority = false,
+  motionMode = 'interactive',
+}: CategoryVisualAssetProps) {
   return (
-    <Image
-      src={src}
-      alt=""
-      fill
+    <CategoryMotionIcon
+      slug={category.slug || category.seo_url}
+      name={category.name}
+      visualKey={category.visual_key}
+      iconUrl={category.icon_url}
       priority={priority}
-      sizes="(max-width: 640px) 50vw, 180px"
-      className="!h-full !w-full object-contain p-2 transition-none"
+      size="fill"
+      motionMode={motionMode}
+      className="w-full h-full"
     />
   );
 }

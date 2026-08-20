@@ -251,6 +251,7 @@ export default function CategoryPageClient({
           {/* Hero - Full width header (Agora Integrado com Banners e Carrossel Unificado) */}
           <CategoryHero
             name={categoryName}
+            slug={initialCategory?.slug || initialCategory?.seo_url}
             description={
               initialCategory?.short_description || initialCategory?.description || undefined
             }

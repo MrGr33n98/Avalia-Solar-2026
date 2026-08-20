@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn } from '@/lib/utils';
 import { leadsWizardApi } from '@/lib/api-client';
+import { CategoryMotionIcon } from './categories/CategoryMotionIcon';
 import { trackWizardStart, trackWizardContactSubmitted, trackLeadSuccess } from '@/lib/analytics/consolidated';
 import {
   useBillValueIntent,
@@ -280,11 +281,25 @@ export default function QuoteWizardModal() {
             <div className="space-y-5 md:space-y-6">
               <WizardHeading kicker={STEP_KICKERS[1]} title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
               <div className="grid grid-cols-1 gap-2 md:gap-3">
-                {['Energia Solar e/ou Baterias', 'Bombas de Calor', 'Carregadores Veiculares (EV)'].map(v => (
-                  <OptionButton key={v} selected={form.productVertical === v} onClick={() => { updateForm({ productVertical: v }); handleNext(); }}>
-                    {v}
-                  </OptionButton>
-                ))}
+                {['Energia Solar e/ou Baterias', 'Bombas de Calor', 'Carregadores Veiculares (EV)'].map(v => {
+                  let slug = '';
+                  if (v.includes('Solar')) slug = 'solar-residencial';
+                  if (v.includes('Bombas')) slug = 'solar-rural';
+                  if (v.includes('Carregadores')) slug = 'wallbox-residencial';
+                  return (
+                    <OptionButton key={v} selected={form.productVertical === v} onClick={() => { updateForm({ productVertical: v }); handleNext(); }}>
+                      <div className="flex items-center gap-3">
+                        <CategoryMotionIcon
+                          slug={slug}
+                          size={32}
+                          motionMode="interactive"
+                          className="shrink-0 rounded-lg border border-slate-100 bg-slate-50 p-0.5"
+                        />
+                        <span>{v}</span>
+                      </div>
+                    </OptionButton>
+                  );
+                })}
               </div>
             </div>
           )}

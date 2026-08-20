@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle2, ChevronRight, Sparkles, X } from 'lucide-react';
+import { ChevronRight, Sparkles, X } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface OnboardingBarProps {
   profileCompletion?: number;
@@ -56,46 +58,46 @@ export function OnboardingBar({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/20 px-4 py-3 text-slate-900 shadow-none transition-all">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100/80 text-blue-600">
-            <Sparkles className="h-4.5 w-4.5" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-slate-900 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span>Bem-vindo, {firstName}!</span>
-              <span className="text-xs font-normal text-slate-500">
-                Complete seu onboarding para subir no ranking regional
-              </span>
-            </h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Passos concluídos: {steps.filter((s) => s.done).length} de {steps.length}
-            </p>
-          </div>
+    <Alert className="relative overflow-hidden border-blue-100 bg-blue-50/30 p-4 shadow-none rounded-xl pr-12">
+      <div className="flex items-start gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100/80 text-blue-600">
+          <Sparkles className="h-4.5 w-4.5" />
         </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          {nextAction && (
-            <Link
-              href={nextAction.href}
-              className="inline-flex h-8 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <span>Próximo: {nextAction.label}</span>
-              <ChevronRight className="h-3 w-3" />
-            </Link>
-          )}
-
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Dispensar aviso"
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        <div className="flex-1 min-w-0">
+          <AlertTitle className="text-sm font-semibold text-slate-900 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
+            <span>Bem-vindo, {firstName}!</span>
+            <span className="text-xs font-normal text-slate-500">
+              Complete seu onboarding para subir no ranking regional
+            </span>
+          </AlertTitle>
+          <AlertDescription className="text-[11px] text-slate-500 mt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span>
+                Passos concluídos: {steps.filter((s) => s.done).length} de {steps.length}
+              </span>
+              {nextAction && (
+                <Button
+                  asChild
+                  className="h-8 shrink-0 items-center gap-1 rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white hover:bg-blue-750 transition-colors shadow-none self-start sm:self-auto"
+                >
+                  <Link href={nextAction.href}>
+                    <span>Próximo: {nextAction.label}</span>
+                    <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </AlertDescription>
         </div>
       </div>
-    </div>
+      <button
+        type="button"
+        onClick={handleDismiss}
+        aria-label="Dispensar aviso"
+        className="absolute top-3 right-3 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </Alert>
   );
 }

@@ -1,16 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
 import { Category } from '@/lib/api';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
-import { getFullImageUrl } from '@/utils/image';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from './categories/CategoryMotionIcon';
 
 interface CategoryCardProps {
   category: Category;
@@ -22,8 +20,6 @@ interface CategoryCardProps {
 export default function CategoryCard({ category, className = '', index = 0 }: CategoryCardProps) {
   const title = category.short_description || category.name;
   const description = category.description;
-  const visualUrl = getCategoryVisualAsset(category.slug || category.seo_url, category.name);
-  const bannerUrl = getFullImageUrl(visualUrl || category.banner_url || category.icon_url);
   const path = buildCategoryPath(category.slug || category.seo_url || '');
 
   return (
@@ -35,22 +31,22 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
     >
       <Link
         href={path}
-        className="group block h-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2"
+        className="group block h-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded-2xl"
         aria-label={`Explorar ${category.name}`}
       >
-        <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 group-hover:-translate-y-0.5 group-hover:border-blue-300 group-hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-          <div className="relative h-[112px] shrink-0 overflow-hidden bg-slate-50 sm:h-[120px]">
-            <Image
-              src={bannerUrl}
-              alt={category.name}
-              fill
-              sizes="(max-width: 479px) 100vw, (max-width: 1023px) 50vw, 25vw"
-              className={cn('transition-transform duration-500 ease-out group-hover:scale-[1.03]', visualUrl ? 'object-contain p-2' : 'object-cover')}
+        <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 group-hover:border-blue-300/60 group-hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+          <div className="relative h-[112px] shrink-0 overflow-hidden bg-slate-50 sm:h-[120px] flex items-center justify-center">
+            <CategoryMotionIcon
+              slug={category.slug || category.seo_url}
+              name={category.name}
+              visualKey={category.visual_key}
+              iconUrl={category.icon_url}
+              size="fill"
               priority={index < 4}
+              motionMode="none"
+              className="transition-all duration-300 ease-out group-hover:scale-[1.03] group-hover:-translate-y-0.5"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
-
-
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/5 via-transparent to-transparent" />
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col px-3.5 py-3 sm:px-4">
@@ -62,9 +58,9 @@ export default function CategoryCard({ category, className = '', index = 0 }: Ca
             </p>
 
             <div className="mt-auto flex items-center justify-end border-t border-slate-100 pt-2 dark:border-slate-800">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition-colors group-hover:text-blue-700 dark:text-blue-400">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors group-hover:text-blue-700 dark:text-blue-400">
                 Explorar
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </span>
             </div>
           </div>

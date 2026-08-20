@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
@@ -9,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { cn } from '@/lib/utils';
 import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 import { trackCompanyProfileCategoryDropdownOpened, trackCompanyProfileCategorySelected } from '@/lib/analytics/company-category';
+import { CategoryMotionIcon } from '@/components/categories/CategoryMotionIcon';
 import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CompanyProfileTabsProps {
@@ -160,12 +160,12 @@ export default function CompanyProfileTabs({
                       }}
                       className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#0B1F4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
                     >
-                      <Image
-                        src={getCategoryIcon(category)}
-                        alt=""
-                        width={20}
-                        height={20}
-                        aria-hidden="true"
+                      <CategoryMotionIcon
+                        slug={category.seo_url}
+                        name={category.name}
+                        size={20}
+                        iconUrl={getCategoryIcon(category)}
+                        motionMode="interactive"
                         className="h-5 w-5 shrink-0"
                       />
                       <span>{category.name}</span>
@@ -259,12 +259,12 @@ export default function CompanyProfileTabs({
                                   onClick={() => handleCategoryClick(category)}
                                   className="flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left text-sm font-medium text-slate-700 outline-none hover:bg-slate-50 hover:text-[#0B1F4B] focus-visible:bg-slate-50 focus-visible:text-[#0B1F4B]"
                                 >
-                                  <Image
-                                    src={getCategoryIcon(category)}
-                                    alt=""
-                                    width={20}
-                                    height={20}
-                                    aria-hidden="true"
+                                  <CategoryMotionIcon
+                                    slug={category.seo_url}
+                                    name={category.name}
+                                    size={20}
+                                    iconUrl={getCategoryIcon(category)}
+                                    motionMode="interactive"
                                     className="h-5 w-5 shrink-0"
                                   />
                                   <span>{category.name}</span>

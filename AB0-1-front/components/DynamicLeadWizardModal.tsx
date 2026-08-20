@@ -8,6 +8,8 @@ import { LeadWizardEngine } from '@/src/modules/leadWizard/components/LeadWizard
 import { companiesApiSafe } from '@/lib/api-client';
 import { resolveWizardCategoryId } from '@/lib/lead-engine';
 
+import { CategoryMotionIcon } from './categories/CategoryMotionIcon';
+
 type LeadWizardEventDetail = {
   categoryId?: number;
   preferredCompanyId?: number;
@@ -198,10 +200,18 @@ export default function DynamicLeadWizardModal() {
                     key={category.id}
                     type="button"
                     variant="outline"
-                    className="justify-start rounded-xl px-4 py-6 text-left"
+                    className="group justify-start rounded-xl px-4 py-8 text-left flex items-center gap-3 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/20"
                     onClick={() => setCategoryId(category.id)}
                   >
-                    {category.name || category.seo_url || `Categoria ${category.id}`}
+                    <CategoryMotionIcon
+                      slug={category.seo_url}
+                      name={category.name}
+                      size={32}
+                      motionMode="interactive"
+                    />
+                    <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+                      {category.name || category.seo_url || `Categoria ${category.id}`}
+                    </span>
                   </Button>
                 ))}
               </div>

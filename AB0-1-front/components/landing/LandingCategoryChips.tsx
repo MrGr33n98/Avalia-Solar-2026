@@ -1,8 +1,7 @@
 'use client';
 
-import { type FocusEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronRight, LayoutGrid } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { CategoryMotionIcon } from '../categories/CategoryMotionIcon';
 
 const AUTOPLAY_DELAY_MS = 2000;
 const AUTOPLAY_SCROLL_DISTANCE = 320;
@@ -42,12 +41,6 @@ export default function LandingCategoryChips({
     return safe.slice(0, Math.max(0, limit));
   }, [categories, fallbackCategories, limit]);
 
-  const scrollBy = useCallback((delta: number) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: delta, behavior: 'smooth' });
-  }, []);
-
   const advanceCarousel = useCallback(() => {
     const el = scrollerRef.current;
     if (!el || el.scrollWidth <= el.clientWidth) return;
@@ -58,21 +51,18 @@ export default function LandingCategoryChips({
       return;
     }
 
-    scrollBy(AUTOPLAY_SCROLL_DISTANCE);
-  }, [scrollBy]);
-
-  const handleBlur = useCallback((event: FocusEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-      setIsPaused(false);
-    }
+    el.scrollBy({ left: AUTOPLAY_SCROLL_DISTANCE, behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion || isPaused || items.length <= 1) return;
+    if (prefersReducedMotion || isPaused) return;
 
-    const intervalId = window.setInterval(advanceCarousel, AUTOPLAY_DELAY_MS);
-    return () => window.clearInterval(intervalId);
-  }, [advanceCarousel, isPaused, items.length, prefersReducedMotion]);
+    const timer = setInterval(() => {
+      advanceCarousel();
+    }, AUTOPLAY_DELAY_MS);
+
+    return () => clearInterval(timer);
+  }, [advanceCarousel, prefersReducedMotion, isPaused]);
 
   return (
     <section className={cn('px-4 md:px-6', className)}>
@@ -85,7 +75,9 @@ export default function LandingCategoryChips({
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onFocusCapture={() => setIsPaused(true)}
-          onBlurCapture={handleBlur}
+          onBlurCapture={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setIsPaused(false);
+          }}
           onPointerDown={() => setIsPaused(true)}
           onPointerUp={() => setIsPaused(false)}
           onPointerCancel={() => setIsPaused(false)}
@@ -114,7 +106,6 @@ export default function LandingCategoryChips({
             {items.map((category) => {
               const href = buildCategoryPath(category?.seo_url, category?.id);
               const titleId = `landing-category-chip-${category.id}-title`;
-              const iconSrc = getCategoryVisualAsset(category?.seo_url || category?.slug, category?.name);
               return (
                 <div key={category.id} role="listitem">
                   <Link
@@ -134,24 +125,15 @@ export default function LandingCategoryChips({
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40">
-                      {iconSrc ? (
-                        <>
-                          <Image
-                            src={iconSrc}
-                            alt=""
-                            width={44}
-                            height={44}
-                            className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover/chip:scale-105"
-                          />
-                          {/* Glossy overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-white/5 pointer-events-none" aria-hidden="true" />
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800">
-                          <LayoutGrid className="h-5 w-5 text-slate-500 dark:text-slate-400 group-hover/chip:text-blue-600 dark:group-hover/chip:text-blue-400 transition-colors duration-200" aria-hidden="true" />
-                        </div>
-                      )}
+                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.10)] dark:border-slate-600/40 flex items-center justify-center">
+                      <CategoryMotionIcon
+                        slug={category?.seo_url || category?.slug}
+                        name={category?.name}
+                        iconUrl={category?.icon_url}
+                        size="fill"
+                        motionMode="none"
+                        className="transition-transform duration-300 group-hover/chip:scale-105 group-hover/chip:-translate-y-0.5"
+                      />
                     </div>
 
                     {/* Labels */}

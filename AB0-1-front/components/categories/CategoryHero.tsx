@@ -6,6 +6,7 @@ import { ChevronRight } from 'lucide-react';
 import { BannerMedia } from '@/components/banners/BannerMedia';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { getFullImageUrl } from '@/utils/image';
+import { CategoryMotionIcon } from './CategoryMotionIcon';
 
 interface Subcategory {
   id: number;
@@ -32,6 +33,7 @@ interface CategoryHeroProps {
   banners?: BannerData[];
   onLeadClick?: () => void;
   onMethodologyClick?: () => void;
+  slug?: string | null;
 }
 
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
@@ -43,6 +45,7 @@ export default function CategoryHero({
   bannerUrl,
   parentCategory,
   banners = [],
+  slug,
 }: CategoryHeroProps) {
   const resolvedCategoryBanner = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
   const displayTitle = name;
@@ -148,8 +151,15 @@ export default function CategoryHero({
             />
           </div>
 
-          <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4">
-            <div className="max-w-[46rem]">
+          <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <CategoryMotionIcon
+              slug={slug}
+              name={name}
+              size="fill"
+              motionMode="entrance"
+              className="h-16 w-16 sm:h-24 sm:w-24 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm p-1"
+            />
+            <div className="max-w-[46rem] min-w-0">
               <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
                 {displayTitle}
               </h1>
