@@ -4,7 +4,6 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { ActionCard } from '@/components/review-dashboard/cards/ActionCard';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
-import { useDashboardContext } from '../DashboardLayoutClient';
 import {
   HelpCircle,
   BookOpen,
@@ -19,7 +18,6 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function AjudaPage() {
-  const { loading } = useDashboardContext();
   const [search, setSearch] = useState('');
 
   const faqs = [
@@ -128,22 +126,22 @@ export default function AjudaPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <SectionHeader title="Precisa de suporte?" />
             <p className="text-xs text-slate-500 mb-4 leading-4">
-              Nossa equipe está disponível de Seg a Sex (08h às 18h) e Sab (08h às 12h).
+              Canais de atendimento direto e suporte por chamados estarão disponíveis em breve.
             </p>
             <div className="space-y-2">
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-amber-400 py-2.5 text-xs font-bold text-slate-900 hover:bg-amber-500 transition-colors">
+              <button disabled className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-100 py-2.5 text-xs font-semibold text-slate-400 cursor-not-allowed">
                 <MessageSquare className="h-4 w-4" />
-                Falar no WhatsApp
+                Falar no WhatsApp (Em breve)
               </button>
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+              <button disabled className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-100 py-2.5 text-xs font-semibold text-slate-400 cursor-not-allowed">
                 <Mail className="h-4 w-4" />
-                Abrir chamado
+                Abrir chamado (Em breve)
               </button>
             </div>
           </div>
-
-          <TipCard title="Dica de atendimento">
-            Nosso tempo médio de resposta no chat/WhatsApp é de apenas 15 minutos.
+ 
+          <TipCard title="Suporte ao Usuário">
+            Seu feedback nos ajuda a melhorar a plataforma. Envie suas dúvidas ou sugestões para nossa equipe.
           </TipCard>
         </div>
       </div>

@@ -19,12 +19,12 @@ export default function CreatorStudioPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold text-violet-600">Gestão Creator</p>
+        <p className="text-sm font-semibold text-blue-600">Gestão Creator</p>
         <h2 className="mt-1 text-3xl font-bold text-slate-950">Visão geral</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-600">Gerencie publicações, perfil público, Tree, leads e analytics em espaço separado do seu painel de avaliações.</p>
       </div>
       {slug && (
-        <Link href={`/creators/${encodeURIComponent(slug)}`} className="inline-flex min-h-11 items-center rounded-lg border border-violet-200 bg-violet-50 px-4 text-sm font-semibold text-violet-700 hover:bg-violet-100">
+        <Link href={`/creators/${encodeURIComponent(slug)}`} className="inline-flex min-h-11 items-center rounded-lg border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-100">
           Ver meu perfil público
         </Link>
       )}
@@ -32,8 +32,8 @@ export default function CreatorStudioPage() {
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <Link key={card.href} href={card.href} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md">
-              <Icon className="h-6 w-6 text-violet-600" />
+            <Link key={card.href} href={card.href} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+              <Icon className="h-6 w-6 text-blue-600" />
               <h3 className="mt-4 font-bold text-slate-900">{card.label}</h3>
               <p className="mt-1 text-sm text-slate-500">{card.description}</p>
             </Link>

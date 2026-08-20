@@ -184,6 +184,21 @@ class User < ApplicationRecord
     nil
   end
 
+  def gamification_level
+    score = calculate_green_score || 0
+    if score >= 5000
+      { key: 'platinum', name: 'Platina', next: nil, progress: 100, threshold: 5000 }
+    elsif score >= 1500
+      { key: 'gold', name: 'Ouro', next: 'Platina', progress: [((score - 1500).to_f / 3500 * 100).round, 0].max, threshold: 5000 }
+    elsif score >= 500
+      { key: 'silver', name: 'Prata', next: 'Ouro', progress: [((score - 500).to_f / 1000 * 100).round, 0].max, threshold: 1500 }
+    elsif score >= 100
+      { key: 'bronze', name: 'Bronze', next: 'Prata', progress: [((score - 100).to_f / 400 * 100).round, 0].max, threshold: 500 }
+    else
+      { key: 'beginner', name: 'Iniciante', next: 'Bronze', progress: [(score.to_f / 100 * 100).round, 0].max, threshold: 100 }
+    end
+  end
+
   def regional_ranking(score: nil)
     return nil if city.blank? || state.blank?
 

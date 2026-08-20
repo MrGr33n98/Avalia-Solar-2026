@@ -11,9 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   Leaf,
   Star,
-  PenLine,
   Clock,
-  FileText,
   Zap,
   Trophy,
   Activity,
@@ -26,7 +24,6 @@ export default function MeuPainelPage() {
   const {
     summary,
     reviews,
-    leads,
     error,
     onRefresh,
     solutions,
@@ -61,7 +58,6 @@ export default function MeuPainelPage() {
   const inAnalysisCount = reviews.filter(
     (r) => r.status === 'in_analysis' || r.status === 'pending'
   ).length;
-  const proposalsCount = summary?.kpis?.quotes_total ?? leads.length;
   const profileCompletion = summary?.profile?.completion_percent ?? 0;
 
   return (
@@ -82,7 +78,7 @@ export default function MeuPainelPage() {
       />
 
       {/* Profile Summary */}
-      <ProfileSummary greenScore={greenScore} profileCompletion={profileCompletion} />
+      <ProfileSummary levelName={summary?.gamification?.level?.name} profileCompletion={profileCompletion} />
 
       {/* KPIs */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
@@ -155,7 +151,12 @@ export default function MeuPainelPage() {
             linkHref="/review-dashboard/achievements"
           />
           <div className="space-y-3">
-            {(summary?.gamification?.achievements ?? []).length > 0 ? (
+            {summaryLoading ? (
+              <div className="space-y-2">
+                <div className="h-10 bg-slate-100 animate-pulse rounded-lg" />
+                <div className="h-10 bg-slate-100 animate-pulse rounded-lg" />
+              </div>
+            ) : (summary?.gamification?.achievements ?? []).length > 0 ? (
               (summary?.gamification?.achievements ?? [])
                 .slice(0, 2)
                 .map(
@@ -172,18 +173,7 @@ export default function MeuPainelPage() {
                   )
                 )
             ) : (
-              <>
-                <AchievementItem
-                  title="Primeira avaliação"
-                  description="Publique sua primeira avaliação."
-                  unlocked={reviewsCount > 0}
-                />
-                <AchievementItem
-                  title="Avaliador consciente"
-                  description="Publique 3 avaliações."
-                  unlocked={reviewsCount >= 3}
-                />
-              </>
+              <p className="text-xs text-slate-400 text-center py-4">Nenhuma conquista disponível.</p>
             )}
           </div>
         </div>

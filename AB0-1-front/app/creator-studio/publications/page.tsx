@@ -36,6 +36,7 @@ export default function PublicacoesPage() {
   };
   useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
   const filtered = useMemo(
     () => items.filter((item) => item.title.toLowerCase().includes(query.toLowerCase())),

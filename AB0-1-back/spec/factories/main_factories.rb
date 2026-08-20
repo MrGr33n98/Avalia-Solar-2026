@@ -46,6 +46,8 @@ FactoryBot.define do
     association :company
     status { :active }
     role { :company }
+    city { 'São Paulo' }
+    state { 'SP' }
     terms_accepted { true }
     terms_accepted_at { Time.current }
   end

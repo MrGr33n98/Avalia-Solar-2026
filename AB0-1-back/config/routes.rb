@@ -283,6 +283,7 @@ Rails.application.routes.draw do
       resources :banner_addons, only: %i[index]
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
+      get 'gamification/summary', to: 'gamification#summary'
       resources :reviewer_solutions, only: %i[index create destroy]
       namespace :reviewer do
         resources :tree_blocks, path: 'tree/blocks', controller: 'tree_blocks', only: %i[index create update destroy] do

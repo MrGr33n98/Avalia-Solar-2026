@@ -10,9 +10,11 @@ import {
   CheckCircle2,
   UserPlus,
   UserCheck,
+  Loader2,
 } from 'lucide-react';
-import { FeedItem } from '@/types/feed';
-import { toggleReaction, toggleSave, toggleFollow } from '@/lib/api/feed';
+import { FeedItem, CommentItem } from '@/types/feed';
+import { toggleReaction, toggleSave, toggleFollow, getComments, postComment } from '@/lib/api/feed';
+import { toast } from 'sonner';
 
 import { UserAvatar } from '@/components/ui/UserAvatar';
 
@@ -27,6 +29,14 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
   const [isUseful, setIsUseful] = useState(engagement.viewer_reaction === 'useful');
   const [isSaved, setIsSaved] = useState(engagement.saved);
   const [isFollowing, setIsFollowing] = useState(false);
+
+  // Comments states
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newCommentBody, setNewCommentBody] = useState('');
+  const [commentsCount, setCommentsCount] = useState(engagement.comments_count || 0);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   const handleUseful = async () => {
     const nextUseful = !isUseful;
@@ -65,6 +75,39 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
       );
     } catch {
       setIsFollowing(isFollowing);
+    }
+  };
+
+  const toggleComments = async () => {
+    const nextShow = !showComments;
+    setShowComments(nextShow);
+    if (nextShow && comments.length === 0) {
+      setCommentsLoading(true);
+      try {
+        const data = await getComments('ReviewerPublication', subject.id);
+        setComments(data || []);
+      } catch {
+        toast.error('Erro ao carregar comentários');
+      } finally {
+        setCommentsLoading(false);
+      }
+    }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentBody.trim() || submittingComment) return;
+    setSubmittingComment(true);
+    try {
+      const created = await postComment('ReviewerPublication', subject.id, newCommentBody.trim());
+      setComments((prev) => [created, ...prev]);
+      setCommentsCount((prev) => prev + 1);
+      setNewCommentBody('');
+      toast.success('Comentário publicado com sucesso!');
+    } catch {
+      toast.error('Erro ao publicar comentário');
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -159,13 +202,17 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
           <span>Útil ({usefulCount})</span>
         </button>
 
-        <Link
-          href={`/posts/${subject.slug || subject.id}`}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+        <button
+          onClick={toggleComments}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
+            showComments
+              ? 'text-primary bg-primary/10 font-bold'
+              : 'hover:bg-muted hover:text-foreground'
+          }`}
         >
           <MessageSquare className="h-4 w-4" />
-          <span>Comentários ({engagement.comments_count || 0})</span>
-        </Link>
+          <span>Comentários ({commentsCount})</span>
+        </button>
 
         <button
           onClick={handleSave}
@@ -179,6 +226,65 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
           <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
         </button>
       </div>
+
+      {/* Inline Comments Section */}
+      {showComments && (
+        <div className="pt-3 border-t border-border/60 space-y-4">
+          {/* New Comment Input Form */}
+          <form onSubmit={handleSubmitComment} className="flex gap-2 items-start">
+            <div className="flex-1">
+              <textarea
+                value={newCommentBody}
+                onChange={(e) => setNewCommentBody(e.target.value)}
+                placeholder="Escreva um comentário ou análise..."
+                disabled={submittingComment}
+                rows={2}
+                className="w-full text-xs p-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none placeholder:text-muted-foreground/75"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submittingComment || !newCommentBody.trim()}
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/95 disabled:bg-muted disabled:text-muted-foreground rounded-lg transition-colors shadow-sm h-[40px] shrink-0"
+            >
+              {submittingComment ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                'Publicar'
+              )}
+            </button>
+          </form>
+
+          {/* Comments List */}
+          <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+            {commentsLoading ? (
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span>Carregando comentários...</span>
+              </div>
+            ) : comments.length === 0 ? (
+              <p className="text-center py-6 text-xs text-muted-foreground leading-relaxed">
+                Nenhum comentário ainda. Seja o primeiro a opinar!
+              </p>
+            ) : (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-2.5 text-xs bg-muted/30 p-2.5 rounded-lg border border-border/40">
+                  <UserAvatar name={comment.user.name} size="sm" className="mt-0.5 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-foreground text-xs">{comment.user.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(comment.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <p className="text-foreground/90 whitespace-pre-wrap leading-relaxed text-xs">{comment.body}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </article>
   );
 }

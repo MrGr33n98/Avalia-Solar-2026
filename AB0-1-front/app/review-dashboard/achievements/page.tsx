@@ -86,8 +86,8 @@ export default function ConquistasPage() {
         />
         <MetricCard
           label="Próximo nível"
-          value={greenScore == null ? null : greenScore >= 500 ? 'Ouro' : 'Prata'}
-          unavailable={greenScore === null || greenScore === undefined}
+          value={summary?.gamification?.level?.next || 'Máximo'}
+          unavailable={loading || !summary?.gamification?.level}
           caption="Nível de avaliador"
           icon={Lock}
           iconColor="text-slate-500"

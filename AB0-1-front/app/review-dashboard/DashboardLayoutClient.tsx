@@ -45,6 +45,13 @@ export interface ReviewDashboardSummary {
       subtitle: string;
       state: string;
     }>;
+    level?: {
+      key: string;
+      name: string;
+      next: string | null;
+      progress: number;
+      threshold: number;
+    } | null;
   };
   impact?: {
     helpful_votes: number | null;

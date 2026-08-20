@@ -50,7 +50,7 @@ export default function CreatorStudioLayout({ children }: { children: React.Reac
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-violet-600">Creator</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Creator</p>
             <h1 className="text-xl font-bold">Creator Studio</h1>
           </div>
           <div className="flex items-center gap-3 text-sm">
@@ -73,7 +73,7 @@ export default function CreatorStudioLayout({ children }: { children: React.Reac
                 href={item.href}
                 className={cn(
                   'inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-semibold',
-                  active ? 'bg-violet-50 text-violet-700' : 'text-slate-600 hover:bg-slate-50'
+                  active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
                 )}
               >
                 <Icon className="h-4 w-4" />

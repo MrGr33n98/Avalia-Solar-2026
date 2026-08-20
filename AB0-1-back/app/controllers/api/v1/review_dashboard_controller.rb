@@ -72,7 +72,7 @@ module Api
         chart_data = measure_summary_step('activity_chart') { safe_activity_chart(start_date: start_date, end_date: end_date) }
 
         # Profile Completion — fonte única do domínio Reviewer
-        profile_completion = measure_summary_step('profile_completion') { Reviewer::ProfileCompletionService.new(user: current_user).call }
+        profile_completion = measure_summary_step('profile_completion') { ::Reviewer::ProfileCompletionService.new(user: current_user).call }
         completion_percent = profile_completion[:percent]
         missing_fields = profile_completion[:missing_fields]
 
@@ -135,7 +135,8 @@ module Api
             green_score: green_score,
             regional_ranking: regional_ranking,
             achievements: achievements,
-            earned_points: achievements.sum { |achievement| achievement[:xp].to_i }
+            earned_points: achievements.sum { |achievement| achievement[:xp].to_i },
+            level: current_user.gamification_level
           },
           impact: {
             helpful_votes: helpful_votes,

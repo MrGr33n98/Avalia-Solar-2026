@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'Review dashboard summary API', type: :request do
   let(:reviewer) { create(:user, role: 'review') }
-  let(:headers) { { 'Authorization' => "Bearer #{JWT.encode({ user_id: reviewer.id }, Rails.application.secret_key_base, 'HS256')}" } }
+  let(:headers) { { 'Authorization' => "Bearer #{JWT.encode({ user_id: reviewer.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')}" } }
 
   it 'returns summary for reviewer' do
     get '/api/v1/review_dashboard/summary', headers: headers

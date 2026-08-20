@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { getFeed } from '@/lib/api/feed';
 import { FeedItemRenderer } from './FeedItemRenderer';
 import { Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useFeedStore } from '@/store/feedStore';
 
@@ -19,6 +20,9 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
   const setItems = useFeedStore((state) => state.setItems);
   const openComposer = useFeedStore((state) => state.openComposer);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { reviewerProfile } = useAuth();
   const setTrendingTopics = useFeedStore((state) => state.setTrendingTopics);
@@ -28,9 +32,13 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
   const fetchInitial = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setNextCursor(null);
+    setHasMore(false);
     try {
       const res = await getFeed({ view, limit: 15 });
       setItems(res.data || []);
+      setNextCursor(res.meta?.next_cursor || null);
+      setHasMore(!!res.meta?.has_more);
       if (res.meta?.trending_topics) {
         setTrendingTopics(res.meta.trending_topics);
       }
@@ -41,9 +49,47 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
     }
   }, [view, setTrendingTopics, setItems]);
 
+  const fetchMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !nextCursor) return;
+    setLoadingMore(true);
+    try {
+      const res = await getFeed({ view, cursor: nextCursor, limit: 15 });
+      const newItems = res.data || [];
+      
+      // Update store items by appending and deduplicating
+      const currentItems = useFeedStore.getState().items;
+      const existingIds = new Set(currentItems.map((item) => item.id));
+      const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.id));
+      setItems([...currentItems, ...uniqueNewItems]);
+      
+      setNextCursor(res.meta?.next_cursor || null);
+      setHasMore(!!res.meta?.has_more);
+    } catch {
+      toast.error('Erro ao carregar mais publicações');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [view, nextCursor, hasMore, loadingMore, setItems]);
+
   useEffect(() => {
     fetchInitial();
   }, [fetchInitial]);
+
+  // IntersectionObserver for infinite scrolling
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          void fetchMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const target = document.getElementById('feed-infinite-scroll-anchor');
+    if (target) observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, fetchMore]);
 
   if (loading) {
     return (
@@ -102,6 +148,14 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
       {items.map((item) => (
         <FeedItemRenderer key={item.id} item={item} />
       ))}
+      {hasMore && (
+        <div id="feed-infinite-scroll-anchor" className="flex justify-center py-6">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>Carregando mais conteúdo...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

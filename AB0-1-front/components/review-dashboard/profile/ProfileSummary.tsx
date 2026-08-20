@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileSummaryProps {
-  greenScore?: number | null;
+  levelName?: string | null;
   profileCompletion?: number;
   className?: string;
 }
 
 export function ProfileSummary({
-  greenScore = null,
+  levelName = null,
   profileCompletion = 0,
   className,
 }: ProfileSummaryProps) {
@@ -28,17 +28,7 @@ export function ProfileSummary({
     .substring(0, 2)
     .toUpperCase();
 
-  // Derive level from green score
-  const level =
-    greenScore == null
-      ? 'Indisponível'
-      : greenScore >= 1500
-        ? 'Ouro'
-        : greenScore >= 500
-          ? 'Prata'
-          : greenScore >= 100
-            ? 'Bronze'
-            : 'Iniciante';
+  const level = levelName || 'Iniciante';
 
   const specialty =
     (user as (typeof user & { profession?: string }) | null)?.profession || 'Especialista Solar';
