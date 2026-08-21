@@ -175,6 +175,17 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // Autocapture desativado — todos os eventos são explícitos
       autocapture: false,
 
+      // PERFORMANCE P0: Bloquear dead-clicks-autocapture.js (12.2s CPU observado via Lighthouse).
+      // O PostHog SDK v1.x carrega esse plugin via remote config mesmo com autocapture:false.
+      // disable_dead_clicks impede o carregamento do chunk dead-clicks-autocapture.js.
+      // @ts-ignore — opção válida no SDK mas sem tipagem no @types
+      disable_dead_clicks: true,
+
+      // Bloquear remote config override de autocapture/dead-clicks.
+      // Sem isso, o dashboard do PostHog pode sobrescrever configurações locais.
+      // @ts-ignore
+      __preview_remote_config: false,
+
       // LGPD: não captura nada até consentimento explícito
       opt_out_capturing_by_default: !hasConsent,
 
@@ -185,11 +196,23 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         ? {
             maskAllInputs: true,
             maskTextSelector: '[data-ph-no-capture]',
+            // Mínimo 2s de sessão para evitar recordings inúteis
+            minimumDurationMilliseconds: 2000,
           }
         : undefined,
 
       // Bootstrap: usa $pageview no load inicial
       loaded: (ph) => {
+        // PERFORMANCE P0: Garantir que dead-clicks e autocapture estejam desabilitados
+        // mesmo que remote config tente sobrescrever após init.
+        // @ts-ignore
+        if (ph.config) {
+          // @ts-ignore
+          ph.config.disable_dead_clicks = true;
+          // @ts-ignore
+          ph.config.autocapture = false;
+        }
+
         if (hasConsent) {
           ph.capture('$pageview', {
             $current_url: window.location.origin + window.location.pathname,

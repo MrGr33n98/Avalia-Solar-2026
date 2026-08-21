@@ -125,12 +125,25 @@ const config: Config = {
         'shimmer': {
           '100%': { transform: 'translateX(100%)' },
         },
+        // Substitui framer-motion no CategoryMotionIcon — P0 perf fix
+        'category-icon-entrance': {
+          '0%': { opacity: '0', transform: 'scale(0.96) translateY(4px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        'category-icon-selected': {
+          '0%': { transform: 'scale(0.95)' },
+          '50%': { transform: 'scale(1.02)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'clay-press': 'clay-press var(--clay-duration) var(--clay-easing)',
         'shimmer': 'shimmer 2s infinite',
+        // Substitui framer-motion no CategoryMotionIcon
+        'category-icon-entrance': 'category-icon-entrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'category-icon-selected': 'category-icon-selected 0.2s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
     },
   },

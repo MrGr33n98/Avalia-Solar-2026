@@ -207,11 +207,14 @@ const nextConfig = {
   assetPrefix: '',
 
   // TASK-024: Enable image optimization
+  // P0 PERF FIX: AVIF primeiro (melhor compresso para ícones PNG 512x512, ~30% menor que WebP).
+  // minimumCacheTTL: ícones estáticos do diretório 3D são imutáveis. 86400s = 24h.
+  // Banners dinâmicos ainda expiram em 1h via runtime headers.
   images: {
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60 * 60, // 1 hora — banners atualizam sem precisar reiniciar servidor
+    formats: ['image/avif', 'image/webp'], // AVIF primeiro — melhor compresso
+    minimumCacheTTL: 60 * 60 * 24, // 24h para ícones estáticos (era 1h)
     deviceSizes: [320, 420, 640, 768, 1024, 1280, 1600, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 600, 900],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 600, 900], // 512 adicionado para ícones 3D
     remotePatterns: [
       {
         protocol: 'https',

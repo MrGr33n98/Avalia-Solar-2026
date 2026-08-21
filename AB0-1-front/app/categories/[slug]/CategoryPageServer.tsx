@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
+// CategoryPageClientV2 é o ponto de hidratação do client.
+// framer-motion em CategoryClientComponent entra aqui mas apenas hidrata APÓS o HTML do server.
+// LCP é o banner hero que agora tem priority+fetchPriority="high" em CategoryHero.tsx (sem carrossel).
 import CategoryPageClientV2 from './CategoryPageClientV2';
 import { Banner } from '@/lib/api';
 import { publicBannersApi, publicCategoriesApi } from '@/lib/api-public';

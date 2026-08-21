@@ -6,8 +6,10 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Context7Provider } from '@/app/context7/provider';
-import { ApolloProvider } from '@apollo/client/react';
-import { getApolloClient } from '@/lib/apollo-client';
+// P1 PERF FIX: ApolloProvider removido do global provider.
+// Apollo só é necessário em /dashboard, /compare, /review-dashboard.
+// Rotas públicas (/categories, /companies, /blog, /) não usam Apollo.
+// ApolloProvider é montado nos layouts específicos dessas rotas.
 import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 
 // Lazy load heavy client-side modals and floating components
@@ -38,7 +40,6 @@ import { PostHogProvider } from '@/components/PostHogProvider';
 import { getConsent, onConsentChange } from '@/lib/analytics/consent';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const apolloClient = getApolloClient();
   const pathname = usePathname();
   const isAppSurface = Boolean(
     pathname?.startsWith('/chat') || pathname?.startsWith('/review-dashboard')
@@ -88,9 +89,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     window.addEventListener('pointerdown', handleInteraction, { once: true });
     window.addEventListener('keydown', handleInteraction, { once: true });
 
-    // Load analytics faster if consent is already given to ensure initial page_view is caught
-    // For new users without consent, we wait 5s to prioritize initial LCP
-    const timeoutDelay = hasAnalyticsConsent() ? 1500 : 5000;
+    // PERFORMANCE FIX: Delay aumentado para não bloquear LCP.
+    // Com consentimento: 2s (já tem dados para pageview inicial).
+    // Sem consentimento mobile: 12s (TBT mobile muito alto com PostHog no critical path).
+    // Sem consentimento desktop: 8s.
+    const isMobile = typeof navigator !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent);
+    const timeoutDelay = hasAnalyticsConsent() ? 2000 : isMobile ? 12_000 : 8_000;
     const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), timeoutDelay);
 
     return () => {
@@ -161,28 +165,26 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <ApolloProvider client={apolloClient}>
-      <PostHogProvider>
-        <QueryProvider>
-          <Context7Provider>
-            <AuthProvider>
-              <CompanyProvider>
-                {children}
-                <QuoteWizardModal />
-                <QuickLeadModal />
-                <DynamicLeadWizardModal />
-                <SignupGateModalHost />
-                <Toaster />
-                {!isAppSurface && <CookieConsent />}
-                {isFeatureFlagEnabled('CHAT') &&
-                  !isAppSurface &&
-                  hasCookieDecision &&
-                  (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
-              </CompanyProvider>
-            </AuthProvider>
-          </Context7Provider>
-        </QueryProvider>
-      </PostHogProvider>
-    </ApolloProvider>
+    <PostHogProvider>
+      <QueryProvider>
+        <Context7Provider>
+          <AuthProvider>
+            <CompanyProvider>
+              {children}
+              <QuoteWizardModal />
+              <QuickLeadModal />
+              <DynamicLeadWizardModal />
+              <SignupGateModalHost />
+              <Toaster />
+              {!isAppSurface && <CookieConsent />}
+              {isFeatureFlagEnabled('CHAT') &&
+                !isAppSurface &&
+                hasCookieDecision &&
+                (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
+            </CompanyProvider>
+          </AuthProvider>
+        </Context7Provider>
+      </QueryProvider>
+    </PostHogProvider>
   );
 }

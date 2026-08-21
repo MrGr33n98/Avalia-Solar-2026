@@ -1,9 +1,9 @@
 'use client';
 
-import { useReducedMotion, motion } from 'framer-motion';
+// P0 PERF FIX: removido framer-motion (~31KB gzip) do critical path da category page.
+// Animações de hover/entrance implementadas via CSS puro sem impacto no bundle inicial.
 import { resolveCategoryVisual } from '@/lib/categories/category-visual-registry';
 import { cn } from '@/lib/utils';
-import { PRESET_BEHAVIORS, MOTION_TOKENS } from '@/lib/categories/category-motion';
 import { CategoryIcon, CategoryIconProps } from './CategoryIcon';
 
 export interface CategoryMotionIconProps extends CategoryIconProps {
@@ -15,96 +15,47 @@ export function CategoryMotionIcon({
   className,
   ...props
 }: CategoryMotionIconProps) {
-  const shouldReduceMotion = useReducedMotion();
   const visual = resolveCategoryVisual(props.slug, props.name, props.visualKey);
   const preset = visual?.motionPreset || 'neutral';
-  const behavior = PRESET_BEHAVIORS[preset];
 
-  // Se reduced-motion estiver ativo ou modo for 'none', renderiza o ícone estático direto
-  if (shouldReduceMotion || motionMode === 'none') {
+  // Se modo for 'none', renderiza o ícone estático direto
+  if (motionMode === 'none') {
     return <CategoryIcon {...props} className={className} />;
   }
 
-  // Definição dos estados de animação (variants) baseados no preset semântico
-  const containerVariants = {
-    idle: {
-      scale: 1,
-      x: 0,
-      y: 0,
-      rotate: 0,
-      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.02))',
-    },
-    hover: {
-      scale: behavior.hover.scale,
-      x: behavior.hover.x || 0,
-      y: behavior.hover.y || 0,
-      rotate: behavior.hover.rotate || 0,
-      filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.06))',
-      transition: {
-        duration: MOTION_TOKENS.duration.normal,
-        ease: MOTION_TOKENS.easing,
-      },
-    },
-    pressed: {
-      scale: MOTION_TOKENS.scale.pressed,
-      x: 0,
-      y: 0,
-      rotate: 0,
-      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.02))',
-      transition: {
-        duration: MOTION_TOKENS.duration.fast,
-        ease: MOTION_TOKENS.easing,
-      },
-    },
-    selected: {
-      scale: [MOTION_TOKENS.scale.pressed, MOTION_TOKENS.scale.selected, 1],
-      transition: {
-        duration: MOTION_TOKENS.duration.normal,
-        ease: MOTION_TOKENS.easing,
-      },
-    },
-    entrance: {
-      opacity: [0, 1],
-      scale: [0.96, 1],
-      y: [4, 0],
-      transition: {
-        duration: MOTION_TOKENS.duration.entrance,
-        ease: MOTION_TOKENS.easing,
-      },
-    },
-  };
-
-  const isInteractive = motionMode === 'interactive';
-  const isSelected = motionMode === 'selected';
-  const isEntrance = motionMode === 'entrance';
   const fillsAvailableSpace = props.fill || props.size === 'fill';
 
-  // Highlight radial sutil para a categoria de recarga (charging)
+  // Animações via CSS — zero JS, zero framer-motion no bundle
+  const motionClass = [
+    'relative flex items-center justify-center',
+    // Entrance: fade-in + scale via keyframes CSS
+    motionMode === 'entrance' && 'animate-category-icon-entrance',
+    // Interactive: hover scale via CSS transition + group hover (sem JS)
+    motionMode === 'interactive' && 'transition-transform duration-200 ease-out hover:scale-105 active:scale-95',
+    // Selected: scale pulse via CSS animation
+    motionMode === 'selected' && 'animate-category-icon-selected',
+    fillsAvailableSpace && 'h-full w-full',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  // Glow radial para charging — apenas via CSS, sem framer-motion
   const isCharging = preset === 'charging';
+  const isInteractive = motionMode === 'interactive';
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial={isEntrance ? 'entrance' : 'idle'}
-      animate={isSelected ? 'selected' : 'idle'}
-      whileHover={isInteractive ? 'hover' : undefined}
-      whileTap={isInteractive ? 'pressed' : undefined}
-      className={cn(
-        'relative flex items-center justify-center',
-        fillsAvailableSpace && 'h-full w-full',
-        className
-      )}
-    >
+    <div className={motionClass}>
       {/* Glow radial extremamente discreto atrás de carregadores */}
       {isCharging && isInteractive && (
         <span
-          className="absolute inset-[-8px] rounded-full bg-radial-gradient opacity-0 transition-opacity duration-300 pointer-events-none group-hover:opacity-5"
+          className="absolute inset-[-8px] rounded-full opacity-0 transition-opacity duration-300 pointer-events-none hover:opacity-5"
           style={{
             background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(255,255,255,0) 70%)',
           }}
         />
       )}
       <CategoryIcon {...props} />
-    </motion.div>
+    </div>
   );
 }

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { absoluteUrl } from '@/lib/site';
+// P1 PERF FIX: Apollo isolado nesta rota (não carrega no bundle público global)
+import { ApolloProviderWrapper } from '@/components/ApolloProviderWrapper';
 
 export const metadata: Metadata = {
   title: 'Comparador de empresas solares | Avalia Solar',
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function CompareLayout({ children }: { children: ReactNode }) {
   return (
-    <>
+    <ApolloProviderWrapper>
       <BreadcrumbSchema
         items={[
           { name: 'Home', item: '/' },
@@ -34,6 +36,7 @@ export default function CompareLayout({ children }: { children: ReactNode }) {
         ]}
       />
       {children}
-    </>
+    </ApolloProviderWrapper>
   );
 }
+

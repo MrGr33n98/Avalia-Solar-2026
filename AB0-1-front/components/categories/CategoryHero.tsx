@@ -2,11 +2,20 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { ChevronRight } from 'lucide-react';
-import { BannerMedia } from '@/components/banners/BannerMedia';
-import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { getFullImageUrl } from '@/utils/image';
 import { CategoryMotionIcon } from './CategoryMotionIcon';
+
+// LCP OPTIMIZATION P0: PremiumBannerCarousel carregado de forma lazy (dynamic import).
+// O banner hero (LCP candidate) é renderizado diretamente como <Image priority> antes
+// do carrossel ser hidratado. Isso elimina o delay causado pela hidratação de
+// framer-motion + embla-carousel no critical path do LCP.
+const PremiumBannerCarousel = dynamic(
+  () => import('@/components/PremiumBannerCarousel').then((m) => ({ default: m.PremiumBannerCarousel })),
+  { ssr: false }
+);
 
 interface Subcategory {
   id: number;
@@ -51,41 +60,21 @@ export default function CategoryHero({
   const displayTitle = name;
   const heroDescription = description || '';
 
-  // Montagem do carrossel unificado (Category Hero Banner + Banners Patrocinados)
-  const carouselItems = React.useMemo(() => {
-    const items: React.ReactNode[] = [];
-
-    // Item 1: Banner Hero próprio da Categoria
-    items.push(
-      <div key="category-default-hero" className="relative w-full h-full bg-slate-950">
-        <BannerMedia
-          src={resolvedCategoryBanner || FALLBACK_BANNER_SRC}
-          alt={name}
-          priority
-          quality={92}
-          sizes="(max-width: 768px) 100vw, 1280px"
-          className="absolute inset-0"
-          fallbackSrc="/images/default-banner.svg"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-slate-950/10" />
-      </div>
-    );
-
-    // Itens Adicionais: Banners Patrocinados
-    banners.forEach((b) => {
+  // Banners patrocinados para o carrossel lazy (excluindo o hero principal)
+  const sponsoredItems = React.useMemo(() => {
+    return banners.map((b) => {
       const bannerSrc = b.image_url ? getFullImageUrl(b.image_url) : FALLBACK_BANNER_SRC;
       const targetUrl = b.link_url || b.link;
 
       const content = (
         <div className="relative w-full h-full bg-slate-950">
-          <BannerMedia
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={bannerSrc}
             alt={b.title || 'Banner Patrocinado'}
-
-            quality={92}
-            sizes="(max-width: 768px) 100vw, 1280px"
-            className="absolute inset-0"
-            fallbackSrc="/images/default-banner.svg"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-contain"
           />
           {b.sponsored !== false && (
             <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
@@ -95,15 +84,10 @@ export default function CategoryHero({
         </div>
       );
 
-      items.push(
+      return (
         <div key={`sponsored-${b.id}`} className="relative w-full h-full">
           {targetUrl ? (
-            <a
-              href={targetUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full h-full"
-            >
+            <a href={targetUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
               {content}
             </a>
           ) : (
@@ -112,9 +96,10 @@ export default function CategoryHero({
         </div>
       );
     });
+  }, [banners]);
 
-    return items;
-  }, [bannerUrl, name, banners, resolvedCategoryBanner]);
+  // Aspect ratio idêntico ao PremiumBannerCarousel para evitar CLS
+  const aspectRatioCls = 'aspect-[12/3] sm:aspect-[16/3.2] md:aspect-[20/3.2]';
 
   return (
     <section className="bg-white pb-2 pt-3 md:pb-4 md:pt-4">
@@ -143,12 +128,48 @@ export default function CategoryHero({
         </nav>
 
         <div className="w-full">
-          <div className="overflow-hidden border border-slate-200 bg-slate-950 shadow-sm">
-            <PremiumBannerCarousel
-              items={carouselItems}
-              aspectRatio="aspect-[12/3] sm:aspect-[16/3.2] md:aspect-[20/3.2]"
-              autoplayDelay={5000}
-            />
+          <div className={`overflow-hidden border border-slate-200 bg-slate-950 shadow-sm relative ${aspectRatioCls}`}>
+            {/* 
+              LCP ELEMENT — renderizado diretamente (sem carrossel) para garantir
+              que o browser receba priority + fetchPriority="high" imediatamente.
+              O carrossel patrocinado (lazy) monta DEPOIS da hidratação.
+            */}
+            {banners.length === 0 ? (
+              // Sem banners patrocinados: banner hero estático direto
+              <Image
+                src={resolvedCategoryBanner || FALLBACK_BANNER_SRC}
+                alt={name}
+                fill
+                priority
+                fetchPriority="high"
+                quality={90}
+                sizes="(max-width: 768px) 100vw, 1280px"
+                className="object-contain"
+              />
+            ) : (
+              // Com banners patrocinados: carrossel lazy que inclui o hero como primeiro item
+              <PremiumBannerCarousel
+                items={[
+                  // Primeiro item: banner hero com priority (LCP)
+                  <div key="category-default-hero" className="relative w-full h-full bg-slate-950">
+                    <Image
+                      src={resolvedCategoryBanner || FALLBACK_BANNER_SRC}
+                      alt={name}
+                      fill
+                      priority
+                      fetchPriority="high"
+                      quality={90}
+                      sizes="(max-width: 768px) 100vw, 1280px"
+                      className="object-contain"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-slate-950/10" />
+                  </div>,
+                  ...sponsoredItems,
+                ]}
+                aspectRatio={aspectRatioCls}
+                autoplayDelay={5000}
+              />
+            )}
           </div>
 
           <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
