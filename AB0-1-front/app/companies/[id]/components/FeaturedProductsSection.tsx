@@ -47,7 +47,7 @@ export default function FeaturedProductsSection({
             />
 
             <h3 className="text-sm font-bold tracking-tight text-slate-950 md:text-base">
-              Produtos em Destaque
+              Produtos & Serviços em Destaque
             </h3>
 
             <span
@@ -73,7 +73,7 @@ export default function FeaturedProductsSection({
           </div>
 
           <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 md:text-xs">
-            Conheça os principais produtos e soluções da {company.name}.
+            Conheça os principais produtos, serviços e soluções da {company.name}.
           </p>
         </div>
       </div>
