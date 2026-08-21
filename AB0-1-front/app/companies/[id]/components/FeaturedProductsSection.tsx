@@ -1,5 +1,6 @@
 "use client";
 
+import { Star } from "lucide-react";
 import { Company, FeaturedProduct } from "@/lib/api";
 import FeaturedProductCard from "./FeaturedProductCard";
 
@@ -8,48 +9,125 @@ interface FeaturedProductsSectionProps {
   products: FeaturedProduct[];
 }
 
-export default function FeaturedProductsSection({ company, products }: FeaturedProductsSectionProps) {
+export default function FeaturedProductsSection({
+  company,
+  products,
+}: FeaturedProductsSectionProps) {
   if (!products || products.length === 0) {
     return null;
   }
 
   return (
-    <div className="mb-6 mt-6">
-      {/* Cabeçalho da Seção */}
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight">
-            Produtos em Destaque
-          </h3>
-          <p className="text-sm text-slate-500 font-medium">
-           Conheça os principais produtos e soluções da {company.name}.
+    <section
+      className="
+        my-4
+        overflow-hidden
+        rounded-xl
+        border
+        border-violet-200
+        bg-white
+        p-3
+        shadow-[0_1px_3px_rgba(15,23,42,0.04)]
+        md:p-4
+      "
+    >
+      {/* Cabeçalho */}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Star
+              aria-hidden="true"
+              className="
+                h-4
+                w-4
+                shrink-0
+                fill-violet-50
+                text-violet-600
+              "
+            />
+
+            <h3 className="text-sm font-bold tracking-tight text-slate-950 md:text-base">
+              Produtos em Destaque
+            </h3>
+
+            <span
+              className="
+                inline-flex
+                items-center
+                rounded-full
+                border
+                border-violet-100
+                bg-violet-50
+                px-1.5
+                py-0.5
+                text-[8px]
+                font-bold
+                uppercase
+                tracking-[0.08em]
+                text-violet-700
+                md:text-[9px]
+              "
+            >
+              Premium
+            </span>
+          </div>
+
+          <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500 md:text-xs">
+            Conheça os principais produtos e soluções da {company.name}.
           </p>
         </div>
       </div>
 
-      {/* Grid de Produtos - Desktop/Tablet */}
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <FeaturedProductCard 
-            key={product.id} 
-            product={product} 
+      {/* Desktop / Tablet */}
+      <div
+        className="
+          hidden
+          gap-2.5
+          md:grid
+          md:grid-cols-2
+          xl:grid-cols-3
+          xl:gap-3
+        "
+      >
+        {products.slice(0, 3).map((product) => (
+          <FeaturedProductCard
+            key={product.id}
+            product={product}
           />
         ))}
       </div>
 
-      {/* Carrossel Horizontal - Mobile */}
-      <div className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto pb-4 md:hidden scrollbar-hide">
-        {products.map((product) => (
-          <div 
-            key={product.id} 
-            className="w-[85%] snap-center shrink-0 first:pl-1 last:pr-1"
+      {/* Mobile / PWA */}
+      <div
+        className="
+          flex
+          w-full
+          snap-x
+          snap-mandatory
+          gap-2.5
+          overflow-x-auto
+          pb-1
+          pr-3
+          md:hidden
+          scrollbar-hide
+        "
+      >
+        {products.slice(0, 3).map((product) => (
+          <div
+            key={product.id}
+            className="
+              w-[76%]
+              max-w-[255px]
+              shrink-0
+              snap-start
+            "
           >
-            <FeaturedProductCard 
-              product={product} 
+            <FeaturedProductCard
+              product={product}
             />
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
