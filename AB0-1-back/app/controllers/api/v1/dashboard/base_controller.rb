@@ -4,10 +4,10 @@ module Api
       class BaseController < Api::V1::BaseController
         include Paginatable
 
-        # Skip the parent's authentication if we are redefining it here,
-        # but actually Api::V1::BaseController doesn't have before_action :authenticate_api_user
-        # it just defines the method.
-
+        # Autenticação via Api::V1::BaseController#decoded_token que aceita:
+        #   1. Header Authorization: Bearer <token>
+        #   2. Cookie signed :jwt_token (mecanismo usado pelo frontend via credentials: 'include')
+        # Não sobrescrever current_user aqui para não quebrar o suporte a cookies.
         before_action :authenticate_user!
         before_action :ensure_approved_user
         before_action :ensure_company
@@ -22,27 +22,6 @@ module Api
             status: :unauthorized,
             code: 'UNAUTHORIZED'
           )
-        end
-
-        def current_user
-          @current_user ||= begin
-            header = request.headers['Authorization']
-            token = header&.split&.last
-            if token.blank?
-              nil
-            else
-              payload = jwt_decode(token)
-              User.find_by(id: payload['user_id']) if payload
-            end
-          rescue StandardError
-            nil
-          end
-        end
-
-        def jwt_decode(token)
-          JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first.with_indifferent_access
-        rescue JWT::DecodeError
-          nil
         end
 
         def ensure_approved_user
