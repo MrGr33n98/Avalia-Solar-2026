@@ -1069,10 +1069,22 @@ end
     limit = feature_value_from_plan(:featured_products, include_defaults: true).to_i
     limit = 3 if limit.zero? # Fallback para 3 se não especificado (MVP)
 
-    products.active_status.where(featured: true)
-            .order(updated_at: :desc)
-            .limit(limit)
-            .map { |p| featured_product_payload(p) }
+    # Priorizar produtos do catálogo (relação canônica via company_products)
+    # Se vazio, fallback para produtos legacy
+    featured_catalog = catalog_products
+                       .where(status: 'active', featured: true)
+                       .order(updated_at: :desc)
+                       .limit(limit)
+
+    if featured_catalog.any?
+      featured_catalog.map { |p| featured_product_payload(p) }
+    else
+      # Fallback para produtos legacy
+      products.active_status.where(featured: true)
+              .order(updated_at: :desc)
+              .limit(limit)
+              .map { |p| featured_product_payload(p) }
+    end
   rescue StandardError => e
     Rails.logger.error("[Company#featured_products_for_public] company_id=#{id} error=#{e.message}")
     []
