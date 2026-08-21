@@ -539,17 +539,6 @@ export interface Product {
   banner_url?: string;
   price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
   slug?: string;
-}
-
-// Tipo para produtos em destaque no perfil público
-export interface FeaturedProduct {
-  id: number;
-  slug: string;
-  name: string;
-  short_description?: string | null;
-  image_url?: string | null;
-  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
-}
   sku?: string;
   stock?: number | null;
   company?: Partial<
@@ -574,6 +563,16 @@ export interface FeaturedProduct {
   category?: Partial<Pick<Category, 'id' | 'name' | 'seo_url'>> | null;
   categories?: Array<Partial<Pick<Category, 'id' | 'name' | 'seo_url'>>>;
   specs?: ProductSpecification[];
+}
+
+// Tipo para produtos em destaque no perfil público
+export interface FeaturedProduct {
+  id: number;
+  slug: string;
+  name: string;
+  short_description?: string | null;
+  image_url?: string | null;
+  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
 }
 
 export interface Lead {
