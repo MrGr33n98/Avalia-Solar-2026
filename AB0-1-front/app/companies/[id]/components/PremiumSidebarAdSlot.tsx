@@ -4,6 +4,7 @@ import { Award, ArrowRight, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
+import { hasPaidPlan } from "@/lib/feature-access";
 import { BannerSlot } from "@/components/banners/BannerSlot";
 import Link from "next/link";
 
@@ -13,6 +14,11 @@ interface PremiumSidebarAdSlotProps {
 }
 
 export default function PremiumSidebarAdSlot({ company, showCompetitorBanners }: PremiumSidebarAdSlotProps) {
+  // P0.5: Defesa em profundidade - nunca mostrar Ads para empresas com plano pago
+  if (hasPaidPlan(company)) {
+    return null;
+  }
+
   const fallbackMockup = (
     <Card className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center relative overflow-hidden">
       <div className="flex flex-col items-center justify-center space-y-3">

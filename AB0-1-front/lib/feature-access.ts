@@ -45,6 +45,16 @@ export function hasPaidPlan(company: {
   return company.has_paid_plan === true;
 }
 
+/**
+ * Verifica se a empresa pode exibir anúncios (Banner Ads) no perfil público.
+ * Retorna false para empresas com plano pago ativo.
+ */
+export function canShowCompanyProfileAds(company: {
+  has_paid_plan?: boolean | null;
+}): boolean {
+  return !hasPaidPlan(company);
+}
+
 
 export type ConversionFeature = 'quote' | 'whatsapp' | 'custom_cta';
 

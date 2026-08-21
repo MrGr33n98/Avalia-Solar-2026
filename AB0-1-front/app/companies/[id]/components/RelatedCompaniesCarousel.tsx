@@ -4,6 +4,7 @@ import { ShieldCheck, Lock, ChevronRight, ChevronLeft, Star, MapPin, Building2 }
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
+import { hasPaidPlan } from "@/lib/feature-access";
 import { companiesApiSafe } from "@/lib/api-client";
 import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
@@ -17,6 +18,10 @@ interface RelatedCompaniesCarouselProps {
 }
 
 export default function RelatedCompaniesCarousel({ company, showAlternatives }: RelatedCompaniesCarouselProps) {
+  // P0.11: Defesa em profundidade - nunca mostrar concorrentes para empresas com plano pago
+  const paidPlan = hasPaidPlan(company);
+  const shouldShowAlternatives = showAlternatives && !paidPlan;
+
   const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +29,7 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (!showAlternatives) {
+    if (!shouldShowAlternatives) {
       setLoading(false);
       return;
     }
@@ -47,7 +52,7 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
     };
 
     fetchRelated();
-  }, [company.id, company.category_id, company.category_info?.id, showAlternatives]);
+  }, [company.id, company.category_id, company.category_info?.id, shouldShowAlternatives]);
 
   // Autoplay Effect
   useEffect(() => {

@@ -655,6 +655,7 @@ module Api
           feature_access: company.respond_to?(:feature_access) ? company.feature_access : {},
           social_proof_enabled: company.respond_to?(:social_proof_enabled) ? company.social_proof_enabled : false,
           can_use_social_proof: company.can_use_social_proof?,
+          featured_products: company.respond_to?(:featured_products_for_public) ? company.featured_products_for_public : [],
           project_types: company.project_types || [],
           services_offered: company.services_offered || [],
           services: company.services_offered || [],

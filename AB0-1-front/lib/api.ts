@@ -292,6 +292,7 @@ export interface Company {
   };
   plan_id?: number | null;
   has_paid_plan?: boolean;
+  featured_products?: FeaturedProduct[];
   social_proof_enabled?: boolean;
   can_use_social_proof?: boolean;
   plan_features?: Record<string, any>;
@@ -521,7 +522,7 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  short_description?: string; // Short version of description
+  short_description?: string;
   price: number;
   brand_id?: number;
   brand_slug?: string;
@@ -536,6 +537,19 @@ export interface Product {
   image_urls?: string[];
   cover_url?: string;
   banner_url?: string;
+  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
+  slug?: string;
+}
+
+// Tipo para produtos em destaque no perfil público
+export interface FeaturedProduct {
+  id: number;
+  slug: string;
+  name: string;
+  short_description?: string | null;
+  image_url?: string | null;
+  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
+}
   sku?: string;
   stock?: number | null;
   company?: Partial<

@@ -1061,6 +1061,35 @@ end
     company_videos.where(status: 'published').order(created_at: :desc)
   end
 
+  # Retorna produtos em destaque para o perfil público
+  def featured_products_for_public
+    return [] unless has_paid_plan?
+
+    # Limite baseado no entitlement
+    limit = feature_value_from_plan(:featured_products, include_defaults: true).to_i
+    limit = 3 if limit.zero? # Fallback para 3 se não especificado (MVP)
+
+    products.active_status.where(featured: true)
+            .order(updated_at: :desc)
+            .limit(limit)
+            .map { |p| featured_product_payload(p) }
+  rescue StandardError => e
+    Rails.logger.error("[Company#featured_products_for_public] company_id=#{id} error=#{e.message}")
+    []
+  end
+
+  def featured_product_payload(product)
+    {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      short_description: product.short_description,
+      image_url: product.image_url,
+      price_mode: product.price_mode,
+      # Não incluir price para evitar expor valores sensíveis publicamente sem necessidade
+    }
+  end
+
   def calculate_historical_stats(days)
     end_date = Date.current
     start_date = end_date - days.days

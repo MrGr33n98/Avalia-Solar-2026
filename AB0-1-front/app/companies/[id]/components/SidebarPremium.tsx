@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Company, fetchApi } from "@/lib/api";
-import { isFeatureEnabled } from "@/lib/feature-access";
+import { hasPaidPlan, isFeatureEnabled } from "@/lib/feature-access";
 import { getFullImageUrl } from "@/utils/image";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,7 +32,7 @@ export default function SidebarPremium({
   // Entitlements
   const showFaq = isFeatureEnabled(company.feature_access, "faq_block");
   const showCompetitorBanners = isFeatureEnabled(company.feature_access, "show_competitor_banners");
-  const hasPaidPlan = company.featured || company.plan_status === 'active' || company.has_paid_plan || ["pro", "enterprise"].includes((company as any).plan_tier || "");
+  const paidPlan = hasPaidPlan(company);
 
   // Hook legado de tracking de expansão de FAQ
   const { trackQuestion } = useFaqExpand(intentCompanyId);
@@ -153,7 +153,7 @@ export default function SidebarPremium({
       )}
 
       {/* 4. Slot Lateral de Anúncios Patrocinados ou Galeria de Selos */}
-      {hasPaidPlan ? (
+      {paidPlan ? (
         company.badges && company.badges.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">

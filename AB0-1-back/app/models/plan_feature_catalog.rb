@@ -28,6 +28,15 @@ module PlanFeatureCatalog
       access_behavior: :toggle,
       group: 'public_profile'
     },
+    'featured_products' => {
+      label: 'Produtos em Destaque',
+      description: 'Exibe seção de produtos em destaque no perfil público da empresa.',
+      type: :integer,
+      default: 0,
+      access_behavior: :config,
+      group: 'public_profile',
+      aliases: %w[showcase_products products_showcase]
+    },
     'ideal_customer_block' => {
       label: 'Perfil de Cliente Ideal',
       description: 'Exibe para quem o serviço é mais indicado (ex: Residencial, Industrial).',
@@ -429,6 +438,7 @@ module PlanFeatureCatalog
       'national_coverage' => false,
       'local_seo_visibility' => true,
       'product_images_limit' => 3,
+      'featured_products' => 1,
       'featured_review' => false,
       'social_proof' => true,
       'faq_block' => false,
@@ -464,6 +474,7 @@ module PlanFeatureCatalog
       'national_coverage' => false,
       'local_seo_visibility' => true,
       'product_images_limit' => 5,
+      'featured_products' => 3,
       'featured_review' => true,
       'social_proof' => true,
       'faq_block' => true,
@@ -499,6 +510,7 @@ module PlanFeatureCatalog
       'national_coverage' => true,
       'local_seo_visibility' => true,
       'product_images_limit' => 10,
+      'featured_products' => 6,
       'featured_review' => true,
       'social_proof' => true,
       'faq_block' => true,
