@@ -37,6 +37,9 @@ class CompanySerializer < ActiveModel::Serializer
              :badges,
              :media_urls, :videos,
              :review_aggregates,
+             :featured_products,
+             :has_paid_plan,
+             :feature_access,
              :actions
 
   def actions
@@ -344,6 +347,22 @@ class CompanySerializer < ActiveModel::Serializer
     object.published_videos.map do |v|
       { id: v.id, url: v.url, thumbnail_url: v.thumbnail_url, provider: v.provider, video_id: v.video_id }
     end
+  end
+
+  def featured_products
+    return [] unless object.respond_to?(:featured_products_for_public)
+
+    object.featured_products_for_public
+  end
+
+  def has_paid_plan
+    object.respond_to?(:has_paid_plan?) ? object.has_paid_plan? : false
+  end
+
+  def feature_access
+    return {} unless object.respond_to?(:feature_access)
+
+    object.feature_access || {}
   end
 
   private
