@@ -196,8 +196,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         ? {
             maskAllInputs: true,
             maskTextSelector: '[data-ph-no-capture]',
-            // Mínimo 2s de sessão para evitar recordings inúteis
-            minimumDurationMilliseconds: 2000,
           }
         : undefined,
 
