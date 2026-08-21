@@ -33,7 +33,6 @@ export default function FeaturedProductsSection({ company, products }: FeaturedP
           <FeaturedProductCard 
             key={product.id} 
             product={product} 
-            companySlug={company.slug} 
           />
         ))}
       </div>
@@ -47,7 +46,6 @@ export default function FeaturedProductsSection({ company, products }: FeaturedP
           >
             <FeaturedProductCard 
               product={product} 
-              companySlug={company.slug} 
             />
           </div>
         ))}

@@ -1091,9 +1091,13 @@ end
   end
 
   def featured_product_payload(product)
+    # Gera um pseudo-slug compatível com a rota /products/[slug]
+    # que extrai o ID do primeiro segmento
+    pseudo_slug = "#{product.id}-#{product.name.parameterize}"
+    
     {
       id: product.id,
-      slug: product.slug,
+      slug: pseudo_slug,
       name: product.name,
       short_description: product.short_description,
       image_url: product.image_url,

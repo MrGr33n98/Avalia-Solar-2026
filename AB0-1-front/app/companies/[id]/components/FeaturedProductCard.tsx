@@ -10,10 +10,9 @@ import { getFullImageUrl } from "@/utils/image";
 
 interface FeaturedProductCardProps {
   product: FeaturedProduct;
-  companySlug: string;
 }
 
-export default function FeaturedProductCard({ product, companySlug }: FeaturedProductCardProps) {
+export default function FeaturedProductCard({ product }: FeaturedProductCardProps) {
   const imageUrl = product.image_url ? getFullImageUrl(product.image_url) : null;
 
   return (
@@ -65,7 +64,7 @@ export default function FeaturedProductCard({ product, companySlug }: FeaturedPr
           size="sm" 
           className="mt-auto w-full rounded-xl border-slate-200 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
         >
-          <Link href={`/companies/${companySlug}/products/${product.slug}`}>
+          <Link href={`/products/${product.slug}`}>
             Ver detalhes
             <ArrowRight className="ml-1 h-3 w-3" />
           </Link>
