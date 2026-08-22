@@ -361,39 +361,63 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto p-5 sm:max-w-[720px]">
-          <DialogHeader className="space-y-1">
-            <DialogTitle>{selectedProduct ? 'Editar produto' : 'Cadastrar produto'}</DialogTitle>
-            <DialogDescription>Os campos marcados são necessários para salvar um produto no catálogo da empresa.</DialogDescription>
+        <DialogContent
+          className="
+            w-[calc(100%-32px)]
+            max-h-[92vh]
+            overflow-y-auto
+            rounded-2xl
+            border
+            border-slate-200/80
+            bg-white
+            p-0
+            shadow-[0_24px_70px_-20px_rgba(15,23,42,0.28)]
+            sm:max-w-[820px]
+          "
+        >
+          <DialogHeader className="border-b border-slate-100 px-6 py-5 pr-14">
+            <DialogTitle className="text-xl font-bold tracking-tight text-slate-950">
+              {selectedProduct ? 'Editar produto' : 'Cadastrar produto'}
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-sm leading-5 text-slate-500">
+              Os campos marcados são necessários para salvar um produto no catálogo da empresa.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-x-4 gap-y-3 py-1 sm:grid-cols-2">
+          <div className="grid gap-x-5 gap-y-4 px-6 py-5 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="product-name">Nome *</Label>
+              <Label htmlFor="product-name" className="text-sm font-semibold text-slate-800">
+                Nome *
+              </Label>
               <Input
                 id="product-name"
                 value={editor.name}
                 onChange={(event) => setEditorField('name', event.target.value)}
                 placeholder="Ex.: Inversor solar trifásico"
-                className="h-9"
+                className="h-10 rounded-lg border-slate-200 bg-white px-3 text-sm shadow-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="product-sku">SKU *</Label>
+              <Label htmlFor="product-sku" className="text-sm font-semibold text-slate-800">
+                SKU *
+              </Label>
               <Input
                 id="product-sku"
                 value={editor.sku}
                 onChange={(event) => setEditorField('sku', event.target.value)}
                 placeholder="Código único do produto"
-                className="h-9"
+                className="h-10 rounded-lg border-slate-200 bg-white px-3 text-sm shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Categoria principal *</Label>
-              <Select value={editor.category_id || undefined} onValueChange={(value) => setEditorField('category_id', value)}>
-                <SelectTrigger className="h-9">
+              <Label className="text-sm font-semibold text-slate-800">Categoria principal *</Label>
+              <Select
+                value={editor.category_id || undefined}
+                onValueChange={(value) => setEditorField('category_id', value)}
+              >
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white shadow-none focus:ring-2 focus:ring-blue-500/10">
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -407,9 +431,12 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
             </div>
 
             <div className="space-y-1.5">
-              <Label>Modo de Preço</Label>
-              <Select value={editor.price_mode} onValueChange={(value) => setEditorField('price_mode', value as any)}>
-                <SelectTrigger className="h-9">
+              <Label className="text-sm font-semibold text-slate-800">Modo de Preço</Label>
+              <Select
+                value={editor.price_mode}
+                onValueChange={(value) => setEditorField('price_mode', value as any)}
+              >
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white shadow-none focus:ring-2 focus:ring-blue-500/10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -422,7 +449,9 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="product-price">Preço base (R$)</Label>
+              <Label htmlFor="product-price" className="text-sm font-semibold text-slate-800">
+                Preço base (R$)
+              </Label>
               <Input
                 id="product-price"
                 min="0"
@@ -431,12 +460,14 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                 value={editor.price}
                 onChange={(event) => setEditorField('price', event.target.value)}
                 disabled={editor.price_mode === 'on_request' || editor.price_mode === 'hidden'}
-                className="h-9"
+                className="h-10 rounded-lg border-slate-200 bg-white px-3 text-sm shadow-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="product-stock">Estoque disponível</Label>
+              <Label htmlFor="product-stock" className="text-sm font-semibold text-slate-800">
+                Estoque disponível
+              </Label>
               <Input
                 id="product-stock"
                 min="0"
@@ -444,14 +475,17 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                 type="number"
                 value={editor.stock}
                 onChange={(event) => setEditorField('stock', event.target.value)}
-                className="h-9"
+                className="h-10 rounded-lg border-slate-200 bg-white px-3 text-sm shadow-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}>
-                <SelectTrigger className="h-9">
+              <Label className="text-sm font-semibold text-slate-800">Status</Label>
+              <Select
+                value={editor.status}
+                onValueChange={(value) => setEditorField('status', value as ProductStatus)}
+              >
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white shadow-none focus:ring-2 focus:ring-blue-500/10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -463,20 +497,22 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
               </Select>
             </div>
 
-            <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3 sm:col-span-2">
-              <div className="flex items-start justify-between gap-3">
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:col-span-2">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-                    <ImageIcon className="h-4 w-4 text-blue-600" />
+                  <Label className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                      <ImageIcon className="h-4 w-4" />
+                    </span>
                     Mídia e Imagens do Produto
                   </Label>
-                  <p className="mt-0.5 text-xs leading-4 text-slate-500">
+                  <p className="mt-1 text-xs leading-4 text-slate-500">
                     Faça upload de fotos direto do dispositivo (JPG, PNG, WebP) ou informe a URL do fabricante/WEG.
                   </p>
                 </div>
 
                 {editor.images.length > 0 && (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                     <CheckCircle2 className="h-3 w-3" />
                     {editor.images.length} foto(s)
                   </span>
@@ -484,11 +520,11 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
               </div>
 
               {editor.previewUrls.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2 pt-1 sm:grid-cols-5">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                   {editor.previewUrls.map((url, idx) => (
                     <div
                       key={idx}
-                      className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-xs"
+                      className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={url} alt="Thumbnail do produto" className="max-h-full max-w-full object-contain" />
@@ -496,18 +532,18 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                         type="button"
                         onClick={() => handleRemovePreview(idx)}
                         title="Remover imagem"
-                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white opacity-85 transition hover:opacity-100"
+                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-rose-50"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ))}
 
                   <label
                     htmlFor="product-images-add"
-                    className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-slate-300 bg-white transition-colors hover:border-blue-400 hover:bg-blue-50/50"
+                    className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white transition hover:border-blue-400 hover:bg-blue-50/40"
                   >
-                    <Plus className="mb-0.5 h-4 w-4 text-slate-400" />
+                    <Plus className="mb-1 h-4 w-4 text-blue-600" />
                     <span className="text-[10px] font-semibold text-slate-600">Adicionar mais</span>
                     <Input
                       id="product-images-add"
@@ -523,13 +559,15 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                 <div>
                   <label
                     htmlFor="product-images"
-                    className="flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-4 py-4 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/40"
+                    className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-blue-400 hover:bg-blue-50/30"
                   >
-                    <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                      <ImagePlus className="h-4 w-4" />
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                      <ImagePlus className="h-5 w-5" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-800">Clique para escolher arquivos ou arraste suas fotos aqui</p>
-                    <p className="mt-0.5 text-xs text-slate-500">JPG, PNG ou WebP (até 5MB)</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Clique para escolher arquivos ou arraste suas fotos aqui
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WebP (até 5MB)</p>
                   </label>
                   <Input
                     id="product-images"
@@ -542,51 +580,76 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                 </div>
               )}
 
-              <div className="border-t border-slate-200 pt-2">
-                <Label htmlFor="product-image-url" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                  <LinkIcon className="h-3 w-3 text-slate-500" />
-                  URL da Imagem Externa (Opcional - Catálogo WEG ou Fornecedor)
+              <div className="border-t border-slate-200 pt-3">
+                <Label
+                  htmlFor="product-image-url"
+                  className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700"
+                >
+                  <LinkIcon className="h-3.5 w-3.5 text-slate-500" />
+                  URL da Imagem Externa
+                  <span className="font-normal text-slate-400">(Opcional - Catálogo WEG ou Fornecedor)</span>
                 </Label>
                 <Input
                   id="product-image-url"
                   value={editor.image_url}
                   onChange={(event) => setEditorField('image_url', event.target.value)}
                   placeholder="https://exemplo.com/imagem-do-produto.png"
-                  className="h-9 bg-white text-xs"
+                  className="h-10 rounded-lg border-slate-200 bg-white text-xs shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="product-description">Descrição *</Label>
+              <Label htmlFor="product-description" className="text-sm font-semibold text-slate-800">
+                Descrição *
+              </Label>
               <Textarea
                 id="product-description"
                 value={editor.description}
                 onChange={(event) => setEditorField('description', event.target.value)}
-                rows={4}
+                rows={3}
                 placeholder="Descreva o produto, aplicações e diferenciais."
+                className="min-h-[86px] resize-y rounded-lg border-slate-200 bg-white shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="product-short-description">Descrição curta</Label>
+              <Label htmlFor="product-short-description" className="text-sm font-semibold text-slate-800">
+                Descrição curta
+              </Label>
               <Input
                 id="product-short-description"
                 value={editor.short_description}
                 onChange={(event) => setEditorField('short_description', event.target.value)}
                 placeholder="Resumo exibido nas listagens"
-                className="h-9"
+                className="h-10 rounded-lg border-slate-200 bg-white shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/10"
               />
             </div>
           </div>
 
-          <DialogFooter className="pt-1">
-            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
+          <DialogFooter className="sticky bottom-0 z-10 border-t border-slate-100 bg-white/95 px-6 py-4 backdrop-blur">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              disabled={saving}
+              className="h-10 rounded-lg border-slate-200 px-5 font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
               Cancelar
             </Button>
-            <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={saveProduct} disabled={saving}>
+
+            <Button
+              type="button"
+              onClick={saveProduct}
+              disabled={saving}
+              className="h-10 rounded-lg bg-blue-600 px-5 font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/20"
+            >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {selectedProduct ? 'Salvar alterações' : editor.status === 'active' ? 'Cadastrar e publicar' : 'Salvar rascunho'}
+              {selectedProduct
+                ? 'Salvar alterações'
+                : editor.status === 'active'
+                  ? 'Cadastrar e publicar'
+                  : 'Salvar rascunho'}
             </Button>
           </DialogFooter>
         </DialogContent>
