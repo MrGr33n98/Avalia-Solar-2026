@@ -361,70 +361,189 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader><DialogTitle>{selectedProduct ? 'Editar produto' : 'Cadastrar produto'}</DialogTitle><DialogDescription>Os campos marcados são necessários para salvar um produto no catálogo da empresa.</DialogDescription></DialogHeader>
-          <div className="grid gap-4 py-2 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-name">Nome *</Label><Input id="product-name" value={editor.name} onChange={(event) => setEditorField('name', event.target.value)} placeholder="Ex.: Inversor solar trifásico" /></div>
-            <div className="space-y-2"><Label htmlFor="product-sku">SKU *</Label><Input id="product-sku" value={editor.sku} onChange={(event) => setEditorField('sku', event.target.value)} placeholder="Código único do produto" /></div>
-            <div className="space-y-2"><Label>Categoria principal *</Label><Select value={editor.category_id || undefined} onValueChange={(value) => setEditorField('category_id', value)}><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger><SelectContent>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Modo de Preço</Label><Select value={editor.price_mode} onValueChange={(value) => setEditorField('price_mode', value as any)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="fixed">Preço Fixo</SelectItem><SelectItem value="starting_at">A partir de</SelectItem><SelectItem value="on_request">Sob consulta</SelectItem><SelectItem value="hidden">Oculto</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="product-price">Preço base (R$)</Label><Input id="product-price" min="0" step="0.01" type="number" value={editor.price} onChange={(event) => setEditorField('price', event.target.value)} disabled={editor.price_mode === 'on_request' || editor.price_mode === 'hidden'} /></div>
-            <div className="space-y-2"><Label htmlFor="product-stock">Estoque disponível</Label><Input id="product-stock" min="0" step="1" type="number" value={editor.stock} onChange={(event) => setEditorField('stock', event.target.value)} /></div>
-            <div className="space-y-2"><Label>Status</Label><Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Rascunho</SelectItem><SelectItem value="active">Publicado</SelectItem><SelectItem value="archived">Arquivado</SelectItem><SelectItem value="disabled">Desativado</SelectItem></SelectContent></Select></div>
-            <div className="space-y-3 sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-              <div className="flex items-center justify-between">
+        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto p-5 sm:max-w-[720px]">
+          <DialogHeader className="space-y-1">
+            <DialogTitle>{selectedProduct ? 'Editar produto' : 'Cadastrar produto'}</DialogTitle>
+            <DialogDescription>Os campos marcados são necessários para salvar um produto no catálogo da empresa.</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-x-4 gap-y-3 py-1 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="product-name">Nome *</Label>
+              <Input
+                id="product-name"
+                value={editor.name}
+                onChange={(event) => setEditorField('name', event.target.value)}
+                placeholder="Ex.: Inversor solar trifásico"
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="product-sku">SKU *</Label>
+              <Input
+                id="product-sku"
+                value={editor.sku}
+                onChange={(event) => setEditorField('sku', event.target.value)}
+                placeholder="Código único do produto"
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Categoria principal *</Label>
+              <Select value={editor.category_id || undefined} onValueChange={(value) => setEditorField('category_id', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Modo de Preço</Label>
+              <Select value={editor.price_mode} onValueChange={(value) => setEditorField('price_mode', value as any)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Preço Fixo</SelectItem>
+                  <SelectItem value="starting_at">A partir de</SelectItem>
+                  <SelectItem value="on_request">Sob consulta</SelectItem>
+                  <SelectItem value="hidden">Oculto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="product-price">Preço base (R$)</Label>
+              <Input
+                id="product-price"
+                min="0"
+                step="0.01"
+                type="number"
+                value={editor.price}
+                onChange={(event) => setEditorField('price', event.target.value)}
+                disabled={editor.price_mode === 'on_request' || editor.price_mode === 'hidden'}
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="product-stock">Estoque disponível</Label>
+              <Input
+                id="product-stock"
+                min="0"
+                step="1"
+                type="number"
+                value={editor.stock}
+                onChange={(event) => setEditorField('stock', event.target.value)}
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={editor.status} onValueChange={(value) => setEditorField('status', value as ProductStatus)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                  <SelectItem value="active">Publicado</SelectItem>
+                  <SelectItem value="archived">Arquivado</SelectItem>
+                  <SelectItem value="disabled">Desativado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3 sm:col-span-2">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <Label className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                  <Label className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
                     <ImageIcon className="h-4 w-4 text-blue-600" />
                     Mídia e Imagens do Produto
                   </Label>
-                  <p className="text-xs text-slate-500 mt-0.5">Faça upload de fotos direto do dispositivo (JPG, PNG, WebP) ou informe a URL do fabricante/WEG.</p>
+                  <p className="mt-0.5 text-xs leading-4 text-slate-500">
+                    Faça upload de fotos direto do dispositivo (JPG, PNG, WebP) ou informe a URL do fabricante/WEG.
+                  </p>
                 </div>
+
                 {editor.images.length > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
                     <CheckCircle2 className="h-3 w-3" />
-                    {editor.images.length} foto(s) para envio
+                    {editor.images.length} foto(s)
                   </span>
                 )}
               </div>
 
               {editor.previewUrls.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 pt-2">
+                <div className="grid grid-cols-3 gap-2 pt-1 sm:grid-cols-5">
                   {editor.previewUrls.map((url, idx) => (
-                    <div key={idx} className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xs">
+                    <div
+                      key={idx}
+                      className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-xs"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={url} alt="Thumbnail do produto" className="max-h-full max-w-full object-contain" />
                       <button
                         type="button"
                         onClick={() => handleRemovePreview(idx)}
                         title="Remover imagem"
-                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white opacity-85 transition hover:opacity-100"
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white opacity-85 transition hover:opacity-100"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
-                  <label htmlFor="product-images-add" className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
-                    <Plus className="h-5 w-5 text-slate-400 mb-1" />
-                    <span className="text-[11px] font-semibold text-slate-600">Adicionar mais</span>
-                    <Input id="product-images-add" type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={handleFiles} />
+
+                  <label
+                    htmlFor="product-images-add"
+                    className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-slate-300 bg-white transition-colors hover:border-blue-400 hover:bg-blue-50/50"
+                  >
+                    <Plus className="mb-0.5 h-4 w-4 text-slate-400" />
+                    <span className="text-[10px] font-semibold text-slate-600">Adicionar mais</span>
+                    <Input
+                      id="product-images-add"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      className="hidden"
+                      onChange={handleFiles}
+                    />
                   </label>
                 </div>
               ) : (
                 <div>
-                  <label htmlFor="product-images" className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-6 py-8 transition-colors hover:border-blue-500 hover:bg-blue-50/40">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 mb-2 text-blue-600">
-                      <ImagePlus className="h-6 w-6" />
+                  <label
+                    htmlFor="product-images"
+                    className="flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-4 py-4 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/40"
+                  >
+                    <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                      <ImagePlus className="h-4 w-4" />
                     </div>
                     <p className="text-sm font-semibold text-slate-800">Clique para escolher arquivos ou arraste suas fotos aqui</p>
-                    <p className="text-xs text-slate-500 mt-1">Imagens nos formatos JPG, PNG ou WebP (até 5MB)</p>
+                    <p className="mt-0.5 text-xs text-slate-500">JPG, PNG ou WebP (até 5MB)</p>
                   </label>
-                  <Input id="product-images" type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={handleFiles} />
+                  <Input
+                    id="product-images"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    className="hidden"
+                    onChange={handleFiles}
+                  />
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-200">
-                <Label htmlFor="product-image-url" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">
+              <div className="border-t border-slate-200 pt-2">
+                <Label htmlFor="product-image-url" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <LinkIcon className="h-3 w-3 text-slate-500" />
                   URL da Imagem Externa (Opcional - Catálogo WEG ou Fornecedor)
                 </Label>
@@ -433,14 +552,43 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
                   value={editor.image_url}
                   onChange={(event) => setEditorField('image_url', event.target.value)}
                   placeholder="https://exemplo.com/imagem-do-produto.png"
-                  className="h-9 text-xs bg-white"
+                  className="h-9 bg-white text-xs"
                 />
               </div>
             </div>
-            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-description">Descrição *</Label><Textarea id="product-description" value={editor.description} onChange={(event) => setEditorField('description', event.target.value)} rows={5} placeholder="Descreva o produto, aplicações e diferenciais." /></div>
-            <div className="space-y-2 sm:col-span-2"><Label htmlFor="product-short-description">Descrição curta</Label><Input id="product-short-description" value={editor.short_description} onChange={(event) => setEditorField('short_description', event.target.value)} placeholder="Resumo exibido nas listagens" /></div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="product-description">Descrição *</Label>
+              <Textarea
+                id="product-description"
+                value={editor.description}
+                onChange={(event) => setEditorField('description', event.target.value)}
+                rows={4}
+                placeholder="Descreva o produto, aplicações e diferenciais."
+              />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="product-short-description">Descrição curta</Label>
+              <Input
+                id="product-short-description"
+                value={editor.short_description}
+                onChange={(event) => setEditorField('short_description', event.target.value)}
+                placeholder="Resumo exibido nas listagens"
+                className="h-9"
+              />
+            </div>
           </div>
-          <DialogFooter><Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancelar</Button><Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={saveProduct} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{selectedProduct ? 'Salvar alterações' : editor.status === 'active' ? 'Cadastrar e publicar' : 'Salvar rascunho'}</Button></DialogFooter>
+
+          <DialogFooter className="pt-1">
+            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={saveProduct} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {selectedProduct ? 'Salvar alterações' : editor.status === 'active' ? 'Cadastrar e publicar' : 'Salvar rascunho'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </section>
