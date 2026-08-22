@@ -244,7 +244,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               </th>
 
-              <th scope="col" className="w-[27%] px-4 py-4">
+              <th scope="col" className="w-[34%] px-4 py-4">
 
                 <div className="flex items-center gap-1">
 
@@ -270,7 +270,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               </th>
 
-              <th scope="col" className="hidden py-3.5 px-4 lg:table-cell">
+              <th scope="col" className="hidden w-[16%] px-3 py-4 2xl:table-cell">
 
                 <div className="flex items-center gap-1">
 
@@ -296,7 +296,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               </th>
 
-              <th scope="col" className="w-[17%] px-4 py-4">
+              <th scope="col" className="w-[20%] px-3 py-4">
 
                 <div className="flex items-center gap-1">
 
@@ -322,7 +322,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               </th>
 
-              <th scope="col" className="hidden py-3.5 px-4 w-32 xl:table-cell">
+              <th scope="col" className="hidden w-[12%] px-3 py-4 2xl:table-cell">
 
                 <div className="flex items-center gap-1">
 
@@ -348,13 +348,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               </th>
 
-              <th scope="col" className="py-3.5 px-4 w-32">
+              <th scope="col" className="w-[14%] px-3 py-4">
 
                 Status
 
               </th>
 
-              <th scope="col" className="w-[236px] px-4 py-4 text-right">
+              <th scope="col" className="w-[220px] px-3 py-4 text-right">
                 <span className="sr-only">Ações</span>
               </th>
 
@@ -412,7 +412,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
                   {/* Logo + Name */}
 
-                  <td className="py-4 px-4">
+                  <td className="px-3 py-4">
 
                     <div className="flex items-center gap-3">
 
@@ -618,7 +618,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
                   {/* Location */}
 
-                  <td className="hidden py-4 px-4 text-slate-500 text-xs lg:table-cell">
+                  <td className="hidden px-3 py-4 text-xs text-slate-500 2xl:table-cell">
 
                     <div className="flex items-center gap-1">
 
@@ -898,7 +898,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
                   {/* Projects/Cases count */}
 
-                  <td className="hidden py-4 px-4 xl:table-cell">
+                  <td className="hidden px-3 py-4 2xl:table-cell">
 
                     <div className="flex items-center gap-1.5">
 
@@ -1104,7 +1104,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
                   {/* Button Link & Comparison */}
 
-                  <td className="w-[236px] px-4 py-4 text-right">
+                  <td className="w-[220px] px-3 py-4 text-right">
 
                     <CategoryCompanyActions company={company} />
 
