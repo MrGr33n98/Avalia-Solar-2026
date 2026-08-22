@@ -372,24 +372,39 @@ export const CategoriesMegaMenu: React.FC<
                       bg-gradient-to-br
                       from-white
                       to-slate-50
-                      p-2
                       shadow-[0_3px_10px_rgba(15,23,42,0.06)]
                       transition-all
                       duration-200
                       group-hover/parent:border-blue-100
+                      group-hover/parent:bg-blue-50/30
                       group-hover/parent:shadow-[0_5px_14px_rgba(15,23,42,0.08)]
                     "
                   >
-                    <CategoryMotionIcon
-                      slug={
-                        category.slug
-                      }
-                      name={
-                        category.name
-                      }
-                      size="fill"
-                      motionMode="interactive"
-                    />
+                    <div
+                      className="
+                        flex
+                        h-full
+                        w-full
+                        items-center
+                        justify-center
+                        scale-[1.45]
+                        transition-transform
+                        duration-300
+                        ease-out
+                        group-hover/parent:scale-[1.55]
+                      "
+                    >
+                      <CategoryMotionIcon
+                        slug={
+                          category.slug
+                        }
+                        name={
+                          category.name
+                        }
+                        size="fill"
+                        motionMode="interactive"
+                      />
+                    </div>
                   </span>
 
                   <div className="min-w-0 flex-1">
@@ -428,8 +443,7 @@ export const CategoriesMegaMenu: React.FC<
                 {/* -------------------------------------------------------- */}
 
                 {category.children &&
-                  category.children
-                    .length >
+                  category.children.length >
                     0 && (
                     <div className="mt-5 flex flex-1 flex-col">
                       <div className="flex flex-col gap-1">
@@ -704,13 +718,11 @@ export const CategoriesMegaMenu: React.FC<
 
                   <div>
                     <p className="text-sm font-bold tracking-[-0.01em] text-slate-950">
-                      Explorar
-                      categorias
+                      Explorar categorias
                     </p>
 
                     <p className="hidden text-[11px] text-slate-500 sm:block">
-                      Encontre
-                      rapidamente a
+                      Encontre rapidamente a
                       solução ideal.
                     </p>
                   </div>
@@ -759,16 +771,13 @@ export const CategoriesMegaMenu: React.FC<
                   >
                     <div>
                       <h2 className="text-[17px] font-bold tracking-[-0.025em] text-slate-950">
-                        Explorar
-                        categorias
+                        Explorar categorias
                       </h2>
 
                       <p className="mt-2 text-[12.5px] leading-5 text-slate-500">
-                        Encontre
-                        empresas
-                        especializadas
-                        no que você
-                        precisa.
+                        Encontre empresas
+                        especializadas no que
+                        você precisa.
                       </p>
                     </div>
 
@@ -778,9 +787,7 @@ export const CategoriesMegaMenu: React.FC<
 
                     <Link
                       href="/categories"
-                      onClick={
-                        onClose
-                      }
+                      onClick={onClose}
                       className="
                         group/allcategories
                         mt-5
@@ -807,8 +814,7 @@ export const CategoriesMegaMenu: React.FC<
                         focus-visible:ring-blue-500
                       "
                     >
-                      Ver todas as
-                      categorias
+                      Ver todas as categorias
 
                       <ArrowRight
                         className="
@@ -880,15 +886,12 @@ export const CategoriesMegaMenu: React.FC<
                       </div>
 
                       <p className="relative mt-3 text-[13px] font-bold text-slate-950">
-                        Precisa de
-                        ajuda?
+                        Precisa de ajuda?
                       </p>
 
                       <p className="relative mt-1 text-[11.5px] leading-5 text-slate-500">
-                        Peça
-                        orientações e
-                        compare
-                        propostas
+                        Peça orientações e
+                        compare propostas
                         verificadas.
                       </p>
 
@@ -915,8 +918,7 @@ export const CategoriesMegaMenu: React.FC<
                           focus-visible:ring-blue-500
                         "
                       >
-                        Comparar
-                        gratuitamente
+                        Comparar gratuitamente
 
                         <ArrowRight
                           className="
