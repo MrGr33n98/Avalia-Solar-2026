@@ -18,6 +18,7 @@ import { toggleReaction, toggleSave, toggleFollow, getComments, postComment } fr
 import { toast } from 'sonner';
 
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { ShareModal } from '@/components/share/ShareModal';
 
 interface PublicationFeedCardProps {
   item: FeedItem;
@@ -38,6 +39,7 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
   const [newCommentBody, setNewCommentBody] = useState('');
   const [commentsCount, setCommentsCount] = useState(engagement.comments_count || 0);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleUseful = async () => {
     const nextUseful = !isUseful;
@@ -61,18 +63,6 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
     } catch {
       setIsSaved(isSaved);
     }
-  };
-
-  const handleShare = async () => {
-    const url = actor.slug
-      ? `${window.location.origin}/creators/${actor.slug}/posts/${subject.slug || subject.id}`
-      : `${window.location.origin}/posts/${subject.slug || subject.id}`;
-    if (navigator.share) {
-      await navigator.share({ title: subject.title || 'Publicação Avalia Solar', url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    toast.success('Link copiado.');
   };
 
   const handleFollow = async () => {
@@ -239,13 +229,30 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
           <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
         </button>
         <button
-          onClick={() => void handleShare()}
+          onClick={() => setShareOpen(true)}
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
         >
           <Share2 className="h-4 w-4" />
           <span>Compartilhar</span>
         </button>
       </div>
+
+      {actor.slug && subject.slug ? (
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          resource={{
+            resourceType: 'publication',
+            resourceId: subject.id,
+            title: subject.title || 'Publicação Avalia Solar',
+            description: subject.excerpt || subject.body,
+            imageUrl: subject.cover_image_url,
+            canonicalUrl: `/creators/${actor.slug}/posts/${subject.slug}`,
+            author: { name: actor.name, avatarUrl: actor.avatar_url || undefined },
+          }}
+          context={{ placement: 'feed', format: 'feed' }}
+        />
+      ) : null}
 
       {/* Inline Comments Section */}
       {showComments && (

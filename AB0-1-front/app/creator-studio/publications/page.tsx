@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileText, PenLine, Plus, Search } from 'lucide-react';
-import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
@@ -10,15 +9,17 @@ import type { PublicationStatus, ReviewerPublication } from '@/types/reviewer-pu
 import { PublicationCard } from '@/components/review-dashboard/publications/PublicationCard';
 import { PublicationEmptyState } from '@/components/review-dashboard/publications/PublicationEmptyState';
 import { useAuth } from '@/contexts/AuthContext';
+import { ShareModal } from '@/components/share/ShareModal';
 
 export default function PublicacoesPage() {
-  const { reviewerProfile } = useAuth();
+  const { user, reviewerProfile } = useAuth();
   const [items, setItems] = useState<ReviewerPublication[]>([]);
   const [tab, setTab] = useState<PublicationStatus>('published');
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
   const [summary, setSummary] = useState<Record<string, number>>({});
+  const [sharePublication, setSharePublication] = useState<ReviewerPublication | null>(null);
   const load = async () => {
     setBusy(true);
     try {
@@ -49,14 +50,7 @@ export default function PublicacoesPage() {
   };
 
   const share = async (publication: ReviewerPublication) => {
-    if (!reviewerProfile?.public_slug) return;
-    const url = `${window.location.origin}/creators/${reviewerProfile.public_slug}/posts/${publication.slug}`;
-    if (navigator.share) {
-      await navigator.share({ title: publication.title, url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    toast.success('Link da publicação copiado.');
+    setSharePublication(publication);
   };
   return (
     <div className="space-y-6">
@@ -163,6 +157,24 @@ export default function PublicacoesPage() {
           <PublicationEmptyState status={tab} />
         )}
       </div>
+      {sharePublication && reviewerProfile?.public_slug ? (
+        <ShareModal
+          open
+          onOpenChange={(open) => {
+            if (!open) setSharePublication(null);
+          }}
+          resource={{
+            resourceType: 'publication',
+            resourceId: sharePublication.id,
+            title: sharePublication.title,
+            description: sharePublication.excerpt || sharePublication.body,
+            imageUrl: sharePublication.cover_image?.url,
+            canonicalUrl: `/creators/${reviewerProfile.public_slug}/posts/${sharePublication.slug}`,
+            author: { name: user?.name || 'Creator', avatarUrl: user?.avatar_url || undefined },
+          }}
+          context={{ placement: 'creator_studio', format: 'card' }}
+        />
+      ) : null}
     </div>
   );
 }

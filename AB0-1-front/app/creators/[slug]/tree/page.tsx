@@ -5,6 +5,7 @@ import { Globe, Instagram, Linkedin, Youtube, Link2, MessageCircle, Download, Fi
 import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
 import { CreatorTreeLink } from '@/components/creator/tree/CreatorTreeLink';
 import { CreatorTreeViewTracker } from '@/components/creator/tree/CreatorTreeViewTracker';
+import { CreatorShareButton } from '@/components/creator/CreatorShareButton';
 
 type Props = { params: { slug: string } };
 
@@ -84,6 +85,9 @@ export default async function PublicCreatorTreePage({ params }: Props) {
         {(data.creator.city || data.creator.state) && <p className="mt-2 text-xs text-blue-200">{[data.creator.city, data.creator.state].filter(Boolean).join(' · ')}</p>}
         <div className="mt-4 flex justify-center gap-2">
           {socialLinks.map(([key, label, kind, Icon]) => data.creator[key] ? <a key={key} href={normalizeSocialUrl(String(data.creator[key]), kind)} target="_blank" rel="noreferrer" aria-label={label} className="grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><Icon className="h-4 w-4" /></a> : null)}
+        </div>
+        <div className="mt-4 flex justify-center">
+          <CreatorShareButton creatorSlug={params.slug} title={`${data.creator.name} | Avalia Solar`} context={{ placement: 'tree', format: 'link' }} />
         </div>
         </div>
         </div>

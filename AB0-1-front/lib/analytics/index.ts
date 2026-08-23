@@ -276,7 +276,8 @@ export function track<K extends AnalyticsEventName>(
       'search_performance', 'search_no_results', 'whatsapp_click', 'company_card_click', 'wizard_started',
       'wizard_step_completed', 'wizard_success', 'blog_cta_click', 'blog_conversion',
       'web_vital', 'web_vitals', 'cta_click', 'cta_clicked', 'banner_view', 'banner_click',
-      'comparison_add', 'comparison_remove', 'filter_applied', 'quick_filter_click'
+      'comparison_add', 'comparison_remove', 'filter_applied', 'quick_filter_click',
+      'creator_share_clicked'
     ];
     if (!knownEvents.includes(eventName as string)) {
       console.warn(`[Analytics] Evento desconhecido ou não mapeado: "${eventName}". Por favor, adicione ao schema.ts.`);

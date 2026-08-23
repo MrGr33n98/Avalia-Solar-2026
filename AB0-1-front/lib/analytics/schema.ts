@@ -51,6 +51,14 @@ export interface EventPayloadMap {
     cta_location?: string;
     [key: string]: any;
   };
+  creator_share_clicked: {
+    resource_type: 'publication' | 'creator' | 'review' | 'company' | 'tree';
+    resource_id: string;
+    platform: string;
+    format: string;
+    placement: string;
+    [key: string]: any;
+  };
   company_card_click: {
     company_id: string | number;
     company_name: string;
