@@ -12,10 +12,10 @@ import {
 import { Card } from '@/components/ui/card';
 
 import type { Category } from '@/lib/api';
+import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 import { buildCategoryPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { getFullImageUrl } from '@/utils/image';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 /* -------------------------------------------------------------------------- */
 /*                                   CONFIG                                   */
@@ -47,10 +47,6 @@ const CATEGORY_FALLBACKS: Array<
     /instalador/i,
     '/instaladores-solar-avalia-solar.webp',
   ],
-  [
-    /solar|energia/i,
-    '/energia-solar-avalia-solar.webp',
-  ],
 ];
 
 type LandingCategoryCardProps = {
@@ -62,9 +58,14 @@ type LandingCategoryCardProps = {
 /*                              IMAGE RESOLUTION                              */
 /* -------------------------------------------------------------------------- */
 
+type ResolvedCategoryImage = {
+  src: string;
+  isVisualAsset: boolean;
+};
+
 function resolveCategoryImage(
   category: Category,
-): string {
+): ResolvedCategoryImage {
   /*
    * Preserve a prioridade original:
    *
@@ -76,15 +77,17 @@ function resolveCategoryImage(
    * 6. Placeholder global
    */
 
-  const visualAsset =
-    getCategoryVisualAsset(
-      category?.seo_url,
-      category?.name,
-      category?.visual_key,
-    );
+  const visualAsset = getCategoryVisualAsset(
+    category?.seo_url,
+    category?.name,
+    category?.visual_key,
+  );
 
   if (visualAsset) {
-    return visualAsset;
+    return {
+      src: visualAsset,
+      isVisualAsset: true,
+    };
   }
 
   const remoteImage =
@@ -96,7 +99,10 @@ function resolveCategoryImage(
     );
 
   if (remoteImage) {
-    return remoteImage;
+    return {
+      src: remoteImage,
+      isVisualAsset: false,
+    };
   }
 
   const contextualFallback =
@@ -107,10 +113,10 @@ function resolveCategoryImage(
         ),
     )?.[1];
 
-  return (
-    contextualFallback ||
-    CATEGORY_IMAGE_PLACEHOLDER
-  );
+  return {
+    src: contextualFallback || CATEGORY_IMAGE_PLACEHOLDER,
+    isVisualAsset: false,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -148,8 +154,11 @@ export default function LandingCategoryCard({
     category?.id || reactId
   }-title-${reactId}`;
 
-  const imageSrc = imageError
-    ? CATEGORY_IMAGE_PLACEHOLDER
+  const resolvedImage = imageError
+    ? {
+        src: CATEGORY_IMAGE_PLACEHOLDER,
+        isVisualAsset: false,
+      }
     : resolveCategoryImage(category);
 
   return (
@@ -239,7 +248,7 @@ export default function LandingCategoryCard({
           )}
         >
           <Image
-            src={imageSrc}
+            src={resolvedImage.src}
             alt=""
             fill
             sizes="
@@ -248,7 +257,9 @@ export default function LandingCategoryCard({
               25vw
             "
             className={cn(
-              'object-cover object-center',
+              resolvedImage.isVisualAsset
+                ? 'object-contain object-center p-2'
+                : 'object-cover object-center',
 
               /*
                * Animação muito discreta.

@@ -75,6 +75,12 @@ export const CATEGORY_VISUAL_REGISTRY: Record<string, CategoryVisualDefinition> 
     alt: 'Painéis solares',
     motionPreset: 'solar',
   },
+  A11: {
+    code: 'A11',
+    src: '/icones/avalia_solar_23_icones_3d_perfeitos_512_transparentes/A11_energia_solar.png',
+    alt: 'Energia solar',
+    motionPreset: 'solar',
+  },
   B01: {
     code: 'B01',
     src: '/icones/avalia_solar_23_icones_3d_perfeitos_512_transparentes/B01_frotas_corporativas.png',
@@ -217,9 +223,11 @@ export const CATEGORY_SLUG_TO_VISUAL_CODE: Record<string, string> = {
   monitoramento: 'A09',
   monitoring_software: 'A09',
 
+  // Energia Solar
+  'energia-solar': 'A11',
+  'energia-solar-fotovoltaica': 'A11',
+
   // Painéis Solares
-  'energia-solar': 'A10',
-  'energia-solar-fotovoltaica': 'A10',
   'paineis-solares': 'A10',
   painel: 'A10',
   paineis: 'A10',

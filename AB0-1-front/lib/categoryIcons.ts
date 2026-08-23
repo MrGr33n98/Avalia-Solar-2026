@@ -6,8 +6,8 @@ export const CATEGORY_ICON_BASE_PATH =
 
 // Mapeamento slug → arquivo 3D correto
 export const CATEGORY_ICON_MAP: Record<string, string> = {
-  'energia-solar': `${CATEGORY_ICON_BASE_PATH}/A10_paineis_solares.png`,
-  'energia-solar-fotovoltaica': `${CATEGORY_ICON_BASE_PATH}/A10_paineis_solares.png`,
+  'energia-solar': `${CATEGORY_ICON_BASE_PATH}/A11_energia_solar.png`,
+  'energia-solar-fotovoltaica': `${CATEGORY_ICON_BASE_PATH}/A11_energia_solar.png`,
 
   'energia-solar-residencial': `${CATEGORY_ICON_BASE_PATH}/A04_solar_residencial.png`,
   residencial: `${CATEGORY_ICON_BASE_PATH}/A04_solar_residencial.png`,

@@ -39,10 +39,10 @@ describe('LandingCategoryCard', () => {
     render(<LandingCategoryCard category={category} />);
 
     const link = screen.getByRole('link', { name: 'Energia Solar' });
-    expect(link.parentElement).toHaveClass('h-[216px]', 'sm:h-[220px]');
+    expect(link.parentElement).toHaveClass('h-[280px]', 'sm:h-[288px]');
     expect(screen.getByTestId('next-image').parentElement).toHaveClass(
-      'h-[92px]',
-      'sm:h-[96px]'
+      'h-[130px]',
+      'sm:h-[136px]'
     );
   });
 
@@ -57,14 +57,26 @@ describe('LandingCategoryCard', () => {
     expect(screen.getByTestId('next-image')).toHaveAttribute('alt', '');
   });
 
-  it('uses the placeholder when the category has no banner or logo', () => {
+  it('uses the registered 3D asset for the generic solar category', () => {
     render(<LandingCategoryCard category={category} />);
 
-    expect(screen.getByTestId('next-image')).toHaveAttribute('data-src', '/images/avalia-solar-place-holder.PNG');
+    expect(screen.getByTestId('next-image')).toHaveAttribute(
+      'data-src',
+      '/icones/avalia_solar_23_icones_3d_perfeitos_512_transparentes/A11_energia_solar.png'
+    );
   });
 
   it('falls back to the placeholder when the selected image fails to load', () => {
-    render(<LandingCategoryCard category={{ ...category, banner_url: '/broken.jpg' }} />);
+    render(
+      <LandingCategoryCard
+        category={{
+          ...category,
+          name: 'Categoria desconhecida',
+          seo_url: 'categoria-desconhecida',
+          banner_url: '/broken.jpg',
+        }}
+      />
+    );
 
     const image = screen.getByTestId('next-image');
     expect(image).toHaveAttribute('data-src', 'http://localhost:3001/broken.jpg');

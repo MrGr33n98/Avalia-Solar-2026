@@ -1,4 +1,5 @@
 import { normalizeCategoryKey } from './categoryIcons';
+import { resolveCategoryVisual } from './categories/category-visual-registry';
 
 export type CategoryVisualKey =
   | 'battery_storage'
@@ -163,6 +164,9 @@ export function getCategoryVisualAsset(
   name?: string | null,
   visualKey?: string | null
 ) {
+  const registryVisual = resolveCategoryVisual(slug, name, visualKey);
+  if (registryVisual) return registryVisual.src;
+
   if (visualKey && visualKey in CATEGORY_VISUAL_ASSETS) {
     return CATEGORY_VISUAL_ASSETS[visualKey as CategoryVisualKey];
   }

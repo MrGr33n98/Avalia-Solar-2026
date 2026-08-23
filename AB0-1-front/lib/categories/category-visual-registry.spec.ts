@@ -3,6 +3,12 @@ import { resolveCategoryVisual } from './category-visual-registry';
 
 describe('resolvedores visuais de categorias', () => {
   it.each([
+    ['energia-solar', 'Energia Solar', 'A11_energia_solar.png'],
+    [
+      'energia-solar-fotovoltaica',
+      'Energia Solar Fotovoltaica',
+      'A11_energia_solar.png',
+    ],
     ['frotas-eletricas-empresas', 'Frotas Elétricas Corporativas', 'B01_frotas_corporativas.png'],
     [
       'frotas-eletricas-logistica',
