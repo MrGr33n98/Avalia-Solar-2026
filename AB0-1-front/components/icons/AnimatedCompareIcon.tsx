@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useId } from 'react';
+import { Check, Loader2 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
-import { Loader2, Check } from 'lucide-react';
 
 export interface AnimatedCompareIconProps {
-  size?: number | 'sm' | 'md' | 'lg' | 'xl';
+  size?: number | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   animated?: boolean;
   active?: boolean;
   selected?: boolean;
   disabled?: boolean;
   loading?: boolean;
   intensity?: 'subtle' | 'normal' | 'strong';
+
+  /**
+   * default:
+   * Mantém a identidade azul existente do componente.
+   *
+   * solar:
+   * Variante premium para superfícies escuras,
+   * utilizada pela MobileBottomNav.
+   */
+  variant?: 'default' | 'solar';
+
   className?: string;
   'aria-hidden'?: boolean | 'true' | 'false';
   'aria-label'?: string;
@@ -21,9 +33,12 @@ const sizeMap = {
   md: 24,
   lg: 32,
   xl: 40,
-};
+} as const;
 
-export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedCompareIconProps>(
+export const AnimatedCompareIcon = React.forwardRef<
+  HTMLDivElement,
+  AnimatedCompareIconProps
+>(
   (
     {
       size = 'md',
@@ -33,6 +48,7 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
       disabled = false,
       loading = false,
       intensity = 'normal',
+      variant = 'default',
       className,
       'aria-hidden': ariaHidden,
       'aria-label': ariaLabel,
@@ -40,17 +56,33 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
     },
     ref
   ) => {
-    const pxSize = typeof size === 'number' ? size : sizeMap[size as keyof typeof sizeMap] || 24;
+    const gradientId = useId().replace(/:/g, '');
+    const pxSize =
+      typeof size === 'number'
+        ? size
+        : sizeMap[size as keyof typeof sizeMap] ?? 24;
 
     if (loading) {
-      return <Loader2 className={cn('animate-spin text-slate-400', className)} size={pxSize} aria-hidden="true" />;
+      return (
+        <Loader2
+          className={cn(
+            'animate-spin',
+            variant === 'solar'
+              ? 'text-amber-400'
+              : 'text-slate-400',
+            className
+          )}
+          size={pxSize}
+          aria-hidden="true"
+        />
+      );
     }
 
     if (selected) {
       return (
-        <Check 
-          className={cn('text-green-600', className)} 
-          size={pxSize} 
+        <Check
+          className={cn('text-emerald-500', className)}
+          size={pxSize}
           aria-hidden={ariaHidden}
         />
       );
@@ -58,124 +90,292 @@ export const AnimatedCompareIcon = React.forwardRef<HTMLDivElement, AnimatedComp
 
     const getDuration = () => {
       switch (intensity) {
-        case 'subtle': return '6s';
-        case 'strong': return '2.5s';
+        case 'subtle':
+          return '6s';
+
+        case 'strong':
+          return '2.5s';
+
         case 'normal':
-        default: return '4s';
+        default:
+          return '4s';
       }
     };
+
+    const isSolar = variant === 'solar';
+
+    const colors = isSolar
+      ? {
+          background: '#111827',
+          baseBorder: '#FBBF24',
+          arrowStart: '#FACC15',
+          arrowEnd: '#F59E0B',
+          highlightStart: '#FDE68A',
+          highlightMiddle: '#FACC15',
+          highlightEnd: '#F59E0B',
+        }
+      : {
+          background: '#FFFFFF',
+          baseBorder: '#BFDBFE',
+          arrowStart: '#2563EB',
+          arrowEnd: '#1D4ED8',
+          highlightStart: '#93C5FD',
+          highlightMiddle: '#2563EB',
+          highlightEnd: '#1D4ED8',
+        };
 
     return (
       <div
         ref={ref}
         className={cn(
-          'relative inline-flex items-center justify-center rounded-full transition-all duration-200 ease-out group',
-          active && !disabled ? 'scale-[0.94]' : 'scale-100',
-          !disabled ? 'hover:scale-[1.03] hover:shadow-[0_0_12px_rgba(234,179,8,0.15)]' : '',
-          disabled && 'opacity-50 cursor-not-allowed',
+          'group relative inline-flex shrink-0 items-center justify-center rounded-full',
+          'transition-[transform,filter] duration-200 ease-out',
+
+          active && !disabled
+            ? 'scale-[0.96]'
+            : 'scale-100',
+
+          !disabled &&
+            !isSolar &&
+            'hover:scale-[1.03] hover:drop-shadow-[0_0_8px_rgba(37,99,235,0.18)]',
+
+          !disabled &&
+            isSolar &&
+            'hover:scale-[1.035] hover:drop-shadow-[0_0_9px_rgba(250,204,21,0.22)]',
+
+          disabled && 'cursor-not-allowed opacity-45',
+
           className
         )}
-        style={{ width: pxSize, height: pxSize }}
+        style={{
+          width: pxSize,
+          height: pxSize,
+        }}
         aria-hidden={ariaHidden}
         aria-label={ariaLabel}
         {...props}
       >
+        {/* Glow premium somente na variante Solar */}
+        {isSolar && (
+          <>
+            <span
+              aria-hidden="true"
+              className={cn(
+                'pointer-events-none absolute inset-[-16%] rounded-full',
+                'bg-amber-400/[0.07] blur-[5px]',
+                animated &&
+                  !disabled &&
+                  'motion-safe:animate-pulse motion-reduce:animate-none'
+              )}
+            />
+
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[-8%] rounded-full border border-amber-400/10"
+            />
+          </>
+        )}
+
         <svg
           width="100%"
           height="100%"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="overflow-visible"
+          className="relative overflow-visible"
         >
           <defs>
-            <linearGradient id="arrowBlueGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#2563EB" />
-              <stop offset="100%" stopColor="#1D4ED8" />
+            <linearGradient
+              id={`${gradientId}-arrow-primary`}
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="0"
+            >
+              <stop
+                offset="0%"
+                stopColor={colors.arrowStart}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.arrowEnd}
+              />
             </linearGradient>
 
-            <linearGradient id="arrowBlueSecondaryGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#1D4ED8" />
-              <stop offset="100%" stopColor="#2563EB" />
+            <linearGradient
+              id={`${gradientId}-arrow-secondary`}
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="0"
+            >
+              <stop
+                offset="0%"
+                stopColor={colors.arrowEnd}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.arrowStart}
+              />
             </linearGradient>
 
-            <linearGradient id="borderHighlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#93C5FD" />
-              <stop offset="50%" stopColor="#2563EB" />
-              <stop offset="100%" stopColor="#1D4ED8" />
+            <linearGradient
+              id={`${gradientId}-border`}
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop
+                offset="0%"
+                stopColor={colors.highlightStart}
+              />
+              <stop
+                offset="50%"
+                stopColor={colors.highlightMiddle}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.highlightEnd}
+              />
             </linearGradient>
-            
-            <style>
-              {`
-                @media (prefers-reduced-motion: no-preference) {
-                  .border-anim {
-                    transform-origin: 12px 12px;
-                    ${!disabled && animated ? `animation: spinBorder ${getDuration()} linear infinite;` : ''}
-                  }
-                  .group:hover .arrow-top {
-                    transform: translateX(-1.5px);
-                  }
-                  .group:hover .arrow-bottom {
-                    transform: translateX(1.5px);
-                  }
-                  @keyframes spinBorder {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                  }
-                }
-                .arrow-top, .arrow-bottom {
-                  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-              `}
-            </style>
+
+            {isSolar && (
+              <radialGradient
+                id={`${gradientId}-background`}
+                cx="50%"
+                cy="35%"
+                r="75%"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="#1F2937"
+                />
+                <stop
+                  offset="75%"
+                  stopColor="#111827"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="#090E17"
+                />
+              </radialGradient>
+            )}
           </defs>
 
-          {/* Fundo interno */}
-          <circle cx="12" cy="12" r="11" fill="white" />
-          
-          {/* Borda Base Estática - muito sutil */}
-          <circle 
-            cx="12" 
-            cy="12" 
-            r="11.5" 
-            fill="none" 
-            stroke="#BFDBFE" 
-            strokeWidth="1" 
-            className="opacity-40"
+          {/* Fundo */}
+          <circle
+            cx="12"
+            cy="12"
+            r="10.85"
+            fill={
+              isSolar
+                ? `url(#${gradientId}-background)`
+                : colors.background
+            }
           />
 
-          {/* Borda Animada (Highlight) */}
-          <circle 
-            cx="12" 
-            cy="12" 
-            r="11.5" 
-            fill="none" 
-            stroke="url(#borderHighlightGrad)" 
-            strokeWidth="1.2"
+          {/* Borda interna premium */}
+          {isSolar && (
+            <circle
+              cx="12"
+              cy="12"
+              r="10.1"
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="0.45"
+            />
+          )}
+
+          {/* Borda base */}
+          <circle
+            cx="12"
+            cy="12"
+            r="11.35"
+            fill="none"
+            stroke={colors.baseBorder}
+            strokeWidth={isSolar ? 0.75 : 1}
+            opacity={isSolar ? 0.25 : 0.4}
+          />
+
+          {/* Segmento rotativo */}
+          <circle
+            cx="12"
+            cy="12"
+            r="11.35"
+            fill="none"
+            stroke={`url(#${gradientId}-border)`}
+            strokeWidth={isSolar ? 1.35 : 1.2}
             strokeLinecap="round"
-            strokeDasharray="30 42"
-            strokeDashoffset="0"
-            className="border-anim"
+            strokeDasharray={isSolar ? '19 53' : '30 42'}
+            className={cn(
+              'origin-center',
+              animated &&
+                !disabled &&
+                'motion-safe:animate-spin motion-reduce:animate-none'
+            )}
+            style={{
+              animationDuration:
+                animated && !disabled
+                  ? getDuration()
+                  : undefined,
+            }}
           />
 
-          {/* Seta Superior (Esquerda - Azul) */}
+          {/* Segundo fragmento discreto para efeito premium */}
+          {isSolar && (
+            <circle
+              cx="12"
+              cy="12"
+              r="11.35"
+              fill="none"
+              stroke="#FDE68A"
+              strokeWidth="0.65"
+              strokeLinecap="round"
+              strokeDasharray="4 68"
+              opacity="0.75"
+              className={cn(
+                'origin-center',
+                animated &&
+                  !disabled &&
+                  'motion-safe:animate-spin motion-reduce:animate-none'
+              )}
+              style={{
+                animationDuration:
+                  animated && !disabled
+                    ? `${parseFloat(getDuration()) * 1.35}s`
+                    : undefined,
+                animationDirection: 'reverse',
+              }}
+            />
+          )}
+
+          {/* Seta superior */}
           <path
             d="M8 6.5L4.5 9L8 11.5M4.5 9H16"
-            stroke="url(#arrowBlueGrad)"
-            strokeWidth="1.25"
+            stroke={`url(#${gradientId}-arrow-primary)`}
+            strokeWidth={isSolar ? 1.45 : 1.25}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="arrow-top"
+            className={cn(
+              'transition-transform duration-300 ease-out',
+              !disabled &&
+                'group-hover:-translate-x-[1px]'
+            )}
           />
 
-          {/* Seta Inferior (Direita - Azul) */}
+          {/* Seta inferior */}
           <path
             d="M16 17.5L19.5 15L16 12.5M19.5 15H8"
-            stroke="url(#arrowBlueSecondaryGrad)"
-            strokeWidth="1.25"
+            stroke={`url(#${gradientId}-arrow-secondary)`}
+            strokeWidth={isSolar ? 1.45 : 1.25}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="arrow-bottom"
+            className={cn(
+              'transition-transform duration-300 ease-out',
+              !disabled &&
+                'group-hover:translate-x-[1px]'
+            )}
           />
         </svg>
       </div>
