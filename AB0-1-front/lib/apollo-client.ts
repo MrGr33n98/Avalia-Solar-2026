@@ -4,6 +4,10 @@ import { onError } from '@apollo/client/link/error';
 import { track } from './analytics/lazy';
 import { getApiOrigin } from './api-config';
 
+// GraphQL is opt-in because REST is the production contract for this flow.
+// Set NEXT_PUBLIC_GRAPHQL_ENABLED=true only when /graphql is deployed.
+export const GRAPHQL_ENABLED = process.env.NEXT_PUBLIC_GRAPHQL_ENABLED === 'true';
+
 // URL do endpoint GraphQL obtido dinamicamente a partir do origin
 const getGraphqlUrl = () => {
   const origin = getApiOrigin();

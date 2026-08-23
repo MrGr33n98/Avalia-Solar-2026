@@ -76,7 +76,11 @@ async function mockReviewerApis(
 test.describe('Review Dashboard — contrato atual', () => {
   test('home exibe dados reais e null não vira score fictício', async ({ page }) => {
     await mockReviewerApis(page);
+    const summaryRequest = page.waitForRequest('**/api/v1/review_dashboard/summary');
+    const leadsRequest = page.waitForRequest('**/api/v1/leads/mine');
     await page.goto('/review-dashboard');
+    await summaryRequest;
+    await leadsRequest;
     await expect(page.getByText('Meu painel')).toBeVisible();
     await expect(page.getByText('Indisponível').first()).toBeVisible();
     await expect(page.getByText('Ótima empresa!')).toBeVisible();

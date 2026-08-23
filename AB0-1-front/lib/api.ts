@@ -2,11 +2,11 @@
 // Imports
 // =======================
 import { getApiBaseUrl, getApiRequestHeaders, buildApiUrl } from './api-config';
-import { ApiError, toApiError } from './api-error';
+import { ApiError, toApiError, type ApiErrorOptions } from './api-error';
 import { clearRealtimeAuthToken } from './realtime-auth';
 import * as Sentry from '@sentry/nextjs';
 import { logError } from './error-handler';
-import { apolloClient } from './apollo-client';
+import { apolloClient, GRAPHQL_ENABLED } from './apollo-client';
 import { gql } from '@apollo/client';
 import type { Banner } from './api-banner-types';
 import type { FeatureAccessEntry, CompanyFeatureAccessResponse } from './feature-access-types';
@@ -1015,11 +1015,64 @@ const DEFAULT_PUBLIC_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const getErrorStatus = (error: any): number | undefined => {
-  const contextStatus = error?.context?.status ?? error?.status;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getErrorStatus = (error: unknown): number | undefined => {
+  const record = isRecord(error) ? error : undefined;
+  const context = record && isRecord(record.context) ? record.context : undefined;
+  const contextStatus = context?.status ?? record?.status;
   if (typeof contextStatus === 'number') return contextStatus;
-  const matched = String(error?.message || '').match(/\[(\d{3})\]/);
+  const message = error instanceof Error
+    ? error.message
+    : typeof record?.message === 'string'
+      ? record.message
+      : '';
+  const matched = message.match(/\[(\d{3})\]/);
   return matched ? Number(matched[1]) : undefined;
+};
+
+function normalizeUnknownApiError(error: unknown, fallback: ApiErrorOptions): ApiError {
+  if (error instanceof ApiError) return error;
+  if (error instanceof Error) return toApiError(error, fallback);
+
+  if (typeof error === 'string' && error.trim()) {
+    return new ApiError(error, fallback);
+  }
+
+  if (isRecord(error)) {
+    const response = isRecord(error.response) ? error.response : undefined;
+    const responseData = response && isRecord(response.data) ? response.data : undefined;
+    const messageCandidates = [
+      error.message,
+      responseData?.error,
+      responseData?.message,
+      response?.statusText,
+    ];
+    const message = messageCandidates.find(
+      (candidate): candidate is string => typeof candidate === 'string' && candidate.length > 0
+    );
+    const responseStatus = response?.status;
+    const status =
+      typeof error.status === 'number'
+        ? error.status
+        : typeof responseStatus === 'number'
+          ? responseStatus
+          : fallback.status;
+
+    return new ApiError(message || 'Erro desconhecido na API', {
+      ...fallback,
+      status,
+      details: responseData ?? fallback.details,
+    });
+  }
+
+  return new ApiError('Erro desconhecido na API', fallback);
+}
+
+const getErrorContext = (error: unknown, fallback: Record<string, unknown>) => {
+  if (isRecord(error) && isRecord(error.context)) return error.context;
+  return fallback;
 };
 
 const shouldUsePublicCache = (method: string, url: string) => {
@@ -1140,14 +1193,15 @@ export const api = {
   baseUrl: API_BASE_URL,
 
   request: async function <T>(config: any): Promise<{ data: T }> {
-    let lastError: any;
+    let lastError: ApiError | undefined;
     const silentStatusCodes = Array.isArray(config?.silentStatusCodes)
       ? config.silentStatusCodes
       : [];
     const isRequestSilent = config?.silent === true;
     const requestTag = config?.tag ? ` ${config.tag}` : '';
 
-    const maxRetries = config.retries ?? MAX_RETRIES;
+    const configuredAttempts = config.retries ?? MAX_RETRIES;
+    const maxAttempts = Math.max(1, configuredAttempts);
     const timeoutDuration = config.timeout ?? TIMEOUT;
     const requestMethod = (config.method || 'GET').toUpperCase();
     const rateLimitKey = `${requestMethod}:${config.url}`;
@@ -1160,7 +1214,7 @@ export const api = {
       });
     }
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       let url = '';
       try {
         // Use buildApiUrl to ensure consistent and normalized URL construction
@@ -1317,9 +1371,12 @@ export const api = {
             setCachedPublicResponse(cacheKey, data, cacheTtlMs);
           }
           return { data };
-        } catch (fetchError: any) {
+        } catch (fetchError: unknown) {
           clearTimeout(timeoutId);
-          if (fetchError.name === 'AbortError') {
+          const isAbortError =
+            (fetchError instanceof Error && fetchError.name === 'AbortError') ||
+            (isRecord(fetchError) && fetchError.name === 'AbortError');
+          if (isAbortError) {
             throw new ApiError('Request timeout', {
               status: 0,
               url,
@@ -1329,37 +1386,41 @@ export const api = {
           }
           throw fetchError;
         }
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        const normalizedError = normalizeUnknownApiError(error, {
+          url,
+          method: requestMethod,
+        });
+        lastError = normalizedError;
 
         // Retry if it's a timeout, network failure, or 5xx (avoid retrying 4xx like 403/429)
-        const status = getErrorStatus(error);
+        const status = getErrorStatus(normalizedError);
         const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(requestMethod);
         const isRetryableStatus =
           typeof status === 'number' && (status === 401 || status === 404 || status >= 500);
         const isRetryable =
-          error.message === 'Request timeout' ||
-          error.message.includes('Network request failed') ||
+          normalizedError.message === 'Request timeout' ||
+          normalizedError.message.includes('Network request failed') ||
           (isIdempotent && isRetryableStatus);
 
-        if (!isRetryable || attempt === maxRetries - 1) {
-          const errorStatus = error?.context?.status;
+        if (!isRetryable || attempt === maxAttempts - 1) {
+          const errorStatus = getErrorStatus(normalizedError);
           const shouldSilence = isRequestSilent || silentStatusCodes.includes(errorStatus);
           if (errorStatus === 404) {
             console.warn(`[API] Resource not found (404) after ${attempt + 1} attempts: ${url}`);
           } else if (!shouldSilence) {
-            console.error('[API] Final Error:', error);
+            console.error('[API] Final Error:', normalizedError);
 
             // Log to Sentry using centralized error handler
-            logError(error instanceof Error ? error : new Error(String(error)), {
+            logError(normalizedError, {
               action: 'api_request_failure',
               metadata: {
                 url,
                 method: requestMethod,
                 attempt: attempt + 1,
                 status: errorStatus,
-                isTimeout: error.message === 'Request timeout',
-                details: error?.context?.details || error?.details,
+                isTimeout: normalizedError.message === 'Request timeout',
+                details: normalizedError.details,
               },
             });
           } else {
@@ -1369,18 +1430,25 @@ export const api = {
               method: requestMethod,
             });
           }
-          throw error;
+          throw normalizedError;
         }
 
         const delay = RETRY_DELAY * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
         console.warn(
-          `[API] Attempt ${attempt + 1} failed (${error.message}), retrying in ${delay}ms...`
+          `[API] Attempt ${attempt + 1} failed (${normalizedError.message}), retrying in ${delay}ms...`
         );
         await sleep(delay); // Exponential backoff
       }
     }
 
-    throw lastError;
+    if (lastError) {
+      throw lastError;
+    }
+
+    throw new ApiError('API request failed before an attempt was completed', {
+      url: buildApiUrl(config.url),
+      method: requestMethod,
+    });
   },
 };
 
@@ -1421,8 +1489,13 @@ export async function fetchApi<T = any>(endpoint: string, options: any = {}): Pr
       skipAuthRefresh: options.skipAuthRefresh,
     });
     return response.data;
-  } catch (error: any) {
-    const status = error?.status || error?.context?.status;
+  } catch (error: unknown) {
+    const normalizedError = normalizeUnknownApiError(error, {
+      url,
+      method: options.method || 'GET',
+      details: { params: options.params },
+    });
+    const status = getErrorStatus(normalizedError);
     if (options?.fallbackOnStatus && status !== undefined) {
       const fallbackForStatus = options.fallbackOnStatus[status];
       if (fallbackForStatus !== undefined) {
@@ -1433,23 +1506,23 @@ export async function fetchApi<T = any>(endpoint: string, options: any = {}): Pr
 
     // If a fallback is provided, return it instead of throwing
     if (options.fallback !== undefined) {
-      console.warn(`[API] Using fallback for ${url} due to error:`, error?.message);
+      console.warn(`[API] Using fallback for ${url} due to error:`, normalizedError.message);
       return options.fallback;
     }
 
     // Log the error with full context
-    const errorContext = error?.context || {
+    const errorContext = getErrorContext(normalizedError, {
       url,
       method: options.method || 'GET',
       params: options.params,
-    };
+    });
 
     const shouldSilence = isSilent || silentStatusCodes.includes(status);
     if (!shouldSilence) {
       console.error(`[API] fetchApi Error for ${url}:`, {
-        message: error.message,
+        message: normalizedError.message,
         context: errorContext,
-        stack: error.stack,
+        stack: normalizedError.stack,
       });
     } else {
       console.info(`[API] fetchApi Error (silenced) for ${url}:`, {
@@ -1458,51 +1531,23 @@ export async function fetchApi<T = any>(endpoint: string, options: any = {}): Pr
       });
     }
 
-    if (error instanceof ApiError) {
-      if (!(error as any).context) {
-        (error as any).context = errorContext;
+    // Keep the established, actionable 404 message while still handling only
+    // the normalized Error instance from this point onward.
+    if (status === 404) {
+      normalizedError.message = `[404] O recurso solicitado não foi encontrado (${url}). Verifique o endereço e tente novamente.`;
+    }
+
+    if (normalizedError instanceof ApiError) {
+      if (!(normalizedError as ApiError & { context?: unknown }).context) {
+        (normalizedError as ApiError & { context: unknown }).context = errorContext;
       }
-      throw error;
+      throw normalizedError;
     }
 
-    // Specific handling for 404 Not Found
-    if (error.message?.includes('[404]') || error.context?.status === 404) {
-      const customMessage = `[404] The requested resource was not found (${url}). Please verify the address and try again.`;
-      console.warn(`[API] 404 Error: ${customMessage}`);
-
-      const enhancedError = new ApiError(customMessage, {
-        status: 404,
-        url,
-        method: options.method || 'GET',
-        details: errorContext,
-      });
-      (enhancedError as any).context = errorContext;
-      throw enhancedError;
+    if (!(normalizedError as ApiError & { context?: unknown }).context) {
+      (normalizedError as ApiError & { context: unknown }).context = errorContext;
     }
-
-    if (error?.response) {
-      const msg =
-        error.response.data?.error || `Erro na API (${error.response.status}): ${error.message}`;
-      const enhancedError = new ApiError(msg, {
-        status: error.response.status,
-        url,
-        method: options.method || 'GET',
-        details: error.response.data,
-      });
-      (enhancedError as any).context = errorContext;
-      throw enhancedError;
-    }
-
-    const detailedMessage = error?.message || error?.toString?.() || 'Erro desconhecido na API';
-    const enhancedError = toApiError(error, {
-      status: errorContext?.status,
-      url,
-      method: options.method || 'GET',
-      details: errorContext,
-    });
-    enhancedError.message = `${detailedMessage} (Endpoint: ${endpoint})`;
-    (enhancedError as any).context = errorContext;
-    throw enhancedError;
+    throw normalizedError;
   }
 }
 
@@ -2143,7 +2188,7 @@ export const reviewsApi = {
     };
 
     try {
-      if (apolloClient) {
+      if (GRAPHQL_ENABLED && apolloClient) {
         const { data } = await apolloClient.query({
           query: gql`
             query GetMyReviews($page: Int, $perPage: Int) {
