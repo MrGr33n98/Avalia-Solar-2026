@@ -2,7 +2,8 @@
 
 import { useRef, useEffect } from 'react';
 import { useBannersQuery, type Banner } from '@/hooks/useBannersQuery';
-import { BannerContainer, getBannerAspectRatio } from './BannerContainer';
+import { BannerContainer } from './BannerContainer';
+import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
 import { getFullImageUrl } from '@/utils/image';
 import { cn } from '@/lib/utils';
 import { type BannerLocation } from '@/lib/banners/placements';
@@ -74,9 +75,9 @@ export function BannerByLocation({
       <div
         className={cn(
           'w-full animate-pulse rounded-none bg-muted',
-          getBannerAspectRatio(location),
           className
         )}
+        style={{ aspectRatio: resolveBannerAspectRatio({ position: location }) }}
       />
     );
   }
@@ -97,7 +98,6 @@ export function BannerByLocation({
         ref={containerRef}
         className={cn(
           'relative w-full min-w-0 overflow-hidden !rounded-none bg-slate-50',
-          getBannerAspectRatio(location),
           className
         )}
       >

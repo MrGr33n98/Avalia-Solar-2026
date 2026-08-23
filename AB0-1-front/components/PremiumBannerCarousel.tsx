@@ -19,6 +19,7 @@ interface PremiumBannerCarouselProps {
   autoplayDelay?: number;
   className?: string;
   aspectRatio?: string;
+  aspectRatios?: string[];
   onItemClick?: (index: number) => void;
   onActiveIndexChange?: (index: number) => void;
   compactControls?: boolean;
@@ -29,6 +30,7 @@ export function PremiumBannerCarousel({
   autoplayDelay = 5000,
   className,
   aspectRatio = "aspect-[3/1] md:aspect-[4/1]",
+  aspectRatios,
   onItemClick,
   onActiveIndexChange,
   compactControls = false,
@@ -153,7 +155,13 @@ export function PremiumBannerCarousel({
               className="min-w-0 cursor-pointer pl-0"
               onClick={() => onItemClick?.(index)}
             >
-              <div className={cn("relative w-full overflow-hidden", aspectRatio)}>
+              <div
+                className={cn(
+                  'relative w-full overflow-hidden',
+                  aspectRatios?.[index] ? undefined : aspectRatio
+                )}
+                style={aspectRatios?.[index] ? { aspectRatio: aspectRatios[index] } : undefined}
+              >
                 {item}
               </div>
             </CarouselItem>

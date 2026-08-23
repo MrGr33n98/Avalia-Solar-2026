@@ -418,7 +418,9 @@ export default function CategoryPageClient({
               <CategoryAdsRail
                 categoryId={categoryId}
                 initialFilterBanners={initialBanners.filter((b) => b.position === 'categories_filter_sidebar')}
-                initialRightRailBanners={initialBanners.filter((b) => b.position === 'categories_right_rail')}
+                initialRightRailBanners={initialBanners.filter(
+                  (b) => b.position === 'categories_right_rail' || b.position === 'sidebar'
+                )}
                 onHasBannersChange={setHasBanners}
               />
             </div>

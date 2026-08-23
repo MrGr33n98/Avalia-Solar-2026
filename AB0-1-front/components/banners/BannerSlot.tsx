@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
-import { BannerContainer, getBannerAspectRatio } from '@/components/BannerContainer';
+import { BannerContainer } from '@/components/BannerContainer';
+import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
 import { cn } from '@/lib/utils';
 
 interface BannerSlotProps {
@@ -49,9 +50,9 @@ export function BannerSlot({
         <div
           className={cn(
             'flex w-full items-center justify-center rounded-3xl border border-slate-200/50 bg-slate-100 animate-pulse',
-            getBannerAspectRatio(placement),
             'mb-[26px] md:mb-0'
           )}
+          style={{ aspectRatio: resolveBannerAspectRatio({ position: placement }) }}
         >
           <div className="flex flex-col items-center gap-2">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />

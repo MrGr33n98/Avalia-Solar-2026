@@ -6,6 +6,8 @@ import { analyticsApi } from '@/lib/api-analytics';
 import { track } from '@/lib/analytics/lazy';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { cn } from '@/lib/utils';
+import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
+import { BANNER_PLACEMENT_ASPECT_RATIOS } from '@/lib/banners/placements';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { BannerMedia } from '@/components/banners/BannerMedia';
 
@@ -34,52 +36,6 @@ interface BannerContainerProps {
 }
 
 const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
-
-/**
- * Shared by the banner renderer and its loading state so the slot never
- * changes height when API data arrives.
- */
-export function getBannerAspectRatio(position?: string) {
-  switch (position) {
-    case 'navbar':
-      return 'aspect-[10/1]';
-    case 'financing_simulator_micro_banner':
-      return 'aspect-[3/1]';
-    case 'sidebar':
-      return 'aspect-[1/1]';
-    case 'categories_top':
-      return 'aspect-[12/2.5] sm:aspect-[12/1] md:aspect-[14/1]';
-    case 'compare_hero':
-      return 'aspect-[16/7] md:aspect-[40/7]';
-    case 'compare_page_sidebar':
-      return 'aspect-[1/2]';
-    case 'compare_page_top':
-      return 'h-[88px] sm:h-[104px]';
-    case 'compare_page_inline':
-    case 'compare_page_bottom':
-      return 'aspect-[3/1] sm:aspect-[15/2]';
-    case 'search_top':
-      return 'aspect-[20/3]';
-    case 'home_top':
-      return 'aspect-[15/2]';
-    case 'company_profile_about_inline':
-      return 'aspect-[15/2]';
-    case 'companies_top':
-      return 'h-[88px] max-h-[88px] w-full sm:h-[104px] sm:max-h-[104px] md:h-[120px] md:max-h-[120px] lg:h-[136px] lg:max-h-[136px]';
-    case 'search_mid':
-      return 'aspect-[15/2]';
-    case 'categories_filter_sidebar':
-      return 'aspect-[6/5]';
-    case 'categories_right_rail':
-    case 'companies_right_rail':
-      return 'aspect-[1/2]';
-    case 'companies_footer':
-    case 'article_footer_cta':
-      return 'aspect-[15/2]';
-    default:
-      return 'aspect-[21/5] sm:aspect-[4/1]';
-  }
-}
 
 function BannerImage({
   banner,
@@ -247,7 +203,6 @@ export function BannerContainer({
   }
 
   try {
-    const aspectRatio = getBannerAspectRatio(position);
     const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
     const isCompactControls = position ? [
       'company_profile_about_inline',
@@ -328,12 +283,21 @@ export function BannerContainer({
     const items = displayBanners.map((banner, idx) =>
       renderBannerItem(banner, priority && idx === 0)
     );
+    const aspectRatios = displayBanners.map((banner) =>
+      resolveBannerAspectRatio({
+        position,
+        sourcePosition: banner.position,
+        width: banner.width,
+        height: banner.height,
+      })
+    );
 
     return (
       <div ref={containerRef} className={cn('m-0 w-full min-w-0 max-w-full overflow-hidden p-0', className)}>
         <PremiumBannerCarousel
           items={items}
-          aspectRatio={aspectRatio}
+          aspectRatios={aspectRatios}
+          aspectRatio={BANNER_PLACEMENT_ASPECT_RATIOS[position || '']}
           autoplayDelay={4000}
           onActiveIndexChange={(index) => {
             activeIndexRef.current = index;
