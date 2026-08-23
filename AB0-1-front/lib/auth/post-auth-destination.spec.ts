@@ -2,6 +2,7 @@ import {
   isSafeReturnTo,
   resolvePostAuthDestination,
   hasCompanyWorkspaceAccess,
+  resolveCompanyId,
 } from './post-auth-destination';
 import type { User } from '@/lib/api';
 
@@ -36,6 +37,20 @@ describe('hasCompanyWorkspaceAccess', () => {
   });
 });
 
+describe('resolveCompanyId', () => {
+  it('prioriza empresa persistida quando ela está entre memberships', () => {
+    expect(resolveCompanyId({ userCompanyId: 42, membershipCompanyIds: [11, 42, 99] })).toBe(42);
+  });
+
+  it('usa primeira membership quando empresa persistida é inválida', () => {
+    expect(resolveCompanyId({ userCompanyId: 7, membershipCompanyIds: [11, 42] })).toBe(11);
+  });
+
+  it('retorna null sem memberships', () => {
+    expect(resolveCompanyId({ userCompanyId: 42, membershipCompanyIds: [] })).toBeNull();
+  });
+});
+
 // ─── resolvePostAuthDestination ───────────────────────────────────────────────
 
 describe('resolvePostAuthDestination', () => {
@@ -56,8 +71,8 @@ describe('resolvePostAuthDestination', () => {
     })).toBe('/dashboard?company_id=42');
   });
 
-  // Cenário 3 — company, 3 memberships, sem activeCompanyId → chooser
-  it('[C3] company, 3 memberships, sem empresa ativa → select-company', () => {
+  // Cenário 3 — company, 3 memberships, sem activeCompanyId → primeira membership
+  it('[C3] company, 3 memberships, sem empresa ativa → select-company para resolução local', () => {
     expect(resolvePostAuthDestination({
       user: user('company'),
       activeMembershipsCount: 3,

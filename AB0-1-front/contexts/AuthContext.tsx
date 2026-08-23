@@ -19,7 +19,7 @@ import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
-import { resolvePostAuthDestination } from '@/lib/auth/post-auth-destination';
+import { resolveCompanyId, resolvePostAuthDestination } from '@/lib/auth/post-auth-destination';
 import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
 import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
@@ -199,7 +199,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (activeMemberships.length > 0) {
-        const companyId = activeMemberships[0].company_id;
+        const companyId = resolveCompanyId({
+          userCompanyId: nextUser.company_id,
+          membershipCompanyIds: activeMemberships.map((membership) => membership.company_id),
+        });
+        if (!companyId) return '/select-company';
         try {
           await companyAccessApi.selectActiveCompany(companyId);
         } catch {

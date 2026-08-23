@@ -1,11 +1,12 @@
 'use client';
 
-import { ChevronDown, HelpCircle, PanelLeft, Settings } from 'lucide-react';
+import { HelpCircle, PanelLeft, Settings } from 'lucide-react';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { CommandMenu } from './CommandMenu';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { CompanySwitcher } from '@/components/company/CompanySwitcher';
 import { CompanyPlanBadge } from './CompanyPlanBadge';
 import {
   DropdownMenu,
@@ -58,37 +59,7 @@ export default function DashboardToolbar({
             {company?.plan_tier ? <CompanyPlanBadge planTier={company.plan_tier} compact /> : null}
           </div>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="hidden min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-[hsl(var(--dashboard-surface))] sm:flex"
-                aria-label="Menu da empresa"
-              >
-                <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-md bg-[hsl(var(--dashboard-accent))] text-[10px] font-black text-[hsl(var(--dashboard-accent-foreground))]">
-                  {company?.name?.slice(0, 2).toUpperCase() || 'AS'}
-                </span>
-                <span className="hidden max-w-[140px] truncate text-xs font-bold text-[hsl(var(--dashboard-ink))] md:inline">
-                  {company?.name || 'Empresa'}
-                </span>
-                <ChevronDown
-                  className="hidden h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))] md:block"
-                  aria-hidden="true"
-                />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 bg-[hsl(var(--dashboard-panel))] text-[hsl(var(--dashboard-ink))]">
-              <DropdownMenuLabel>Opções da Empresa</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => onTabChange('overview')}>
-                Visão Geral
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.location.href = '/select-company'}>
-                <AnimatedCompareIcon className="mr-2" size={16} aria-hidden="true" />
-                Alternar Empresa
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CompanySwitcher className="hidden sm:flex" />
 
           <div className="hidden w-full max-w-[240px] md:block lg:max-w-[320px]">
             <CommandMenu onSelectTab={onTabChange} />
@@ -164,9 +135,9 @@ export default function DashboardToolbar({
                 <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
                 Configurações
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.location.href = '/select-company'}>
+              <DropdownMenuItem onSelect={() => window.location.href = '/select-company?mode=add'}>
                 <AnimatedCompareIcon className="mr-2" size={16} aria-hidden="true" />
-                Alternar Empresa
+                Adicionar empresa
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

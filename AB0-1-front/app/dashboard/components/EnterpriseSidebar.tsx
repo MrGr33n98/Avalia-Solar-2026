@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useCompanyContext } from '@/context/CompanyContext';
+import { CompanySelectorModal } from '@/components/company/CompanySelectorModal';
 import { CompanyPlanBadge } from './CompanyPlanBadge';
 import {
   DASHBOARD_NAVIGATION,
@@ -239,6 +240,7 @@ export default function EnterpriseSidebar({
   visibleTabIds,
 }: EnterpriseSidebarProps) {
   const { activeCompany } = useCompanyContext();
+  const [companySelectorOpen, setCompanySelectorOpen] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([
@@ -348,7 +350,7 @@ export default function EnterpriseSidebar({
           <Button
             type="button"
             variant="ghost"
-            onClick={() => { window.location.href = '/select-company'; }}
+            onClick={() => setCompanySelectorOpen(true)}
             aria-label="Alternar Empresa"
             className={cn(
               'w-full rounded-lg border border-transparent text-left transition-colors text-slate-200 hover:bg-white/10 hover:text-white',
@@ -369,6 +371,11 @@ export default function EnterpriseSidebar({
               Alternar Empresa
             </span>
           </Button>
+
+          <CompanySelectorModal
+            open={companySelectorOpen}
+            onOpenChange={setCompanySelectorOpen}
+          />
 
           <Button
             type="button"

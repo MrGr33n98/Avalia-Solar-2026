@@ -86,9 +86,11 @@ export function CompanySwitcher({ className }: CompanySwitcherProps) {
               <DropdownMenuItem
                 key={company.id}
                 onSelect={() => {
-                  void selectCompany(company).catch((error) => {
-                    console.warn('[CompanySwitcher] Failed to select company', error);
-                  });
+                  void selectCompany(company)
+                    .then(() => router.replace(`/dashboard?company_id=${company.id}`))
+                    .catch((error) => {
+                      console.warn('[CompanySwitcher] Failed to select company', error);
+                    });
                 }}
                 className="gap-2 cursor-pointer"
               >
@@ -151,7 +153,7 @@ export function CompanySwitcher({ className }: CompanySwitcherProps) {
             <DropdownMenuSeparator />
             
             <DropdownMenuItem 
-              onSelect={() => router.push('/register')}
+              onSelect={() => router.push('/select-company?mode=add')}
               className="gap-2 cursor-pointer text-primary focus:text-primary"
             >
               <Plus className="h-4 w-4" />

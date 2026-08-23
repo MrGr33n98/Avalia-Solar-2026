@@ -111,9 +111,9 @@ test.describe('Select Company Flow', () => {
     });
 
     await page.goto('/select-company');
-    await expect(page.locator('h1')).toContainText('Escolha a empresa para administrar');
+    await expect(page.locator('h1')).toContainText('Encontre a empresa que você busca');
 
-    await page.fill('input[placeholder="Buscar empresa por nome..."]', 'voli');
+    await page.fill('input[placeholder="Buscar por nome da empresa"]', 'voli');
     await expect(page.locator('text=Volitbras')).toBeVisible();
     await expect(page.locator('img[alt=\"Volitbras\"]')).toBeVisible();
     await page.click('button:has-text("Solicitar acesso")');
@@ -126,7 +126,7 @@ test.describe('Select Company Flow', () => {
     expect(requestPayload.company_id).toBe(99);
   });
 
-  test('authenticated user can select a different owned company', async ({ page, context }) => {
+  test('authenticated user with owned companies skips onboarding and opens active workspace', async ({ page, context }) => {
     await context.addCookies([
       {
         name: 'jwt_token',
@@ -134,8 +134,6 @@ test.describe('Select Company Flow', () => {
         url: 'http://localhost:3000',
       },
     ]);
-
-    let selectPayload: any = null;
 
     await page.route('**/*', async (route) => {
       const url = route.request().url();
@@ -214,11 +212,10 @@ test.describe('Select Company Flow', () => {
       }
 
       if (url.includes('/api/v1/company_access/select_active_company')) {
-        selectPayload = route.request().postDataJSON();
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ message: 'ok', company_id: selectPayload.company_id }),
+          body: JSON.stringify({ message: 'ok', company_id: 321 }),
         });
         return;
       }
@@ -227,13 +224,7 @@ test.describe('Select Company Flow', () => {
     });
 
     await page.goto('/select-company');
-    const selectButtons = page.locator('button:has-text("Selecionar")');
-    await expect(selectButtons.nth(1)).toBeVisible();
-    await selectButtons.nth(1).scrollIntoViewIfNeeded();
-    await selectButtons.nth(1).click();
-
-    await expect
-      .poll(() => selectPayload?.company_id, { timeout: 10_000 })
-      .toBe(654);
+    await expect(page).toHaveURL(/\/dashboard\?company_id=321/, { timeout: 10_000 });
+    await expect(page.getByText('Encontre a empresa que você busca')).toHaveCount(0);
   });
 });

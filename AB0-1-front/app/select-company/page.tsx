@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -86,8 +86,10 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
 
 export default function SelectCompanyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const { companies, selectCompany, isLoading } = useCompanyContext();
+  const { companies, activeCompany, selectCompany, isLoading } = useCompanyContext();
+  const isAddMode = searchParams.get('mode') === 'add';
 
   // State machine para determinar qual UI exibir
   const [entryState, setEntryState] = useState<CompanyEntryState>('loading');
@@ -126,20 +128,26 @@ export default function SelectCompanyPage() {
       return;
     }
 
+    // Esta tela é onboarding por padrão. Usuários já vinculados só chegam aqui
+    // explicitamente quando querem adicionar outra empresa.
+    if (companies.length > 0 && !isAddMode && !autoSelectAttempted) {
+      const company = activeCompany || companies[0];
+      setAutoSelectAttempted(true);
+      setEntryState('single-membership');
+      void selectCompany(company)
+        .then(() => router.replace(`/dashboard?company_id=${company.id}`))
+        .catch(() => setEntryState('error'));
+      return;
+    }
+
     // Reviewer puro (sem companies) → vai para review-dashboard, não fica nesta tela
-    if (user?.role === 'review' && companies.length === 0 && !autoSelectAttempted) {
+    if (user?.role === 'review' && companies.length === 0 && !isAddMode && !autoSelectAttempted) {
       router.replace('/review-dashboard');
       return;
     }
 
-    if (companies.length === 1 && !autoSelectAttempted) {
-      setAutoSelectAttempted(true);
-      setEntryState('single-membership');
-      void selectCompany(companies[0]).then(() => {
-        router.replace(`/dashboard?company_id=${companies[0].id}`);
-      }).catch(() => {
-        setEntryState('no-membership');
-      });
+    if (isAddMode) {
+      setEntryState('no-membership');
       return;
     }
 
@@ -155,7 +163,20 @@ export default function SelectCompanyPage() {
     }
 
     setEntryState('no-membership');
-  }, [authLoading, isLoading, contextLoading, isAuthenticated, companies, pendingRequestIds, user, autoSelectAttempted, selectCompany, router]);
+  }, [
+    authLoading,
+    isLoading,
+    contextLoading,
+    isAuthenticated,
+    companies,
+    activeCompany,
+    pendingRequestIds,
+    user,
+    autoSelectAttempted,
+    isAddMode,
+    selectCompany,
+    router,
+  ]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -336,6 +357,15 @@ export default function SelectCompanyPage() {
         </div>
       </div>
     );
+  }
+
+  if (entryState === 'guest') {
+    router.replace('/login?return_to=%2Fselect-company');
+    return null;
+  }
+
+  if (!isAddMode && (entryState === 'single-membership' || entryState === 'error')) {
+    return null;
   }
 
   const submitSearch = () => {

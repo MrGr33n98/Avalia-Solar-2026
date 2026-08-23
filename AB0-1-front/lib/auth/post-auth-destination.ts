@@ -40,6 +40,18 @@ export function hasCompanyWorkspaceAccess({
   return false;
 }
 
+export function resolveCompanyId({
+  userCompanyId,
+  membershipCompanyIds,
+}: {
+  userCompanyId?: number | null;
+  membershipCompanyIds: number[];
+}): number | null {
+  const persistedCompanyId = Number(userCompanyId);
+  if (membershipCompanyIds.includes(persistedCompanyId)) return persistedCompanyId;
+  return membershipCompanyIds[0] ?? null;
+}
+
 export function isReturnToCompatibleWithRole(
   returnTo: string,
   user: Pick<User, 'role'>,

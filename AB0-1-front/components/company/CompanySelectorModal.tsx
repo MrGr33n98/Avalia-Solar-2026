@@ -37,6 +37,7 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
     try {
       await selectCompany(company);
       onOpenChange(false);
+      router.replace(`/dashboard?company_id=${company.id}`);
     } catch (error) {
       console.error('[CompanySelectorModal] Failed to select company', error);
       setSelectError('Não foi possível selecionar a empresa. Tente novamente.');
