@@ -17,6 +17,12 @@ export interface FeedSubject {
   excerpt?: string;
   body?: string;
   cover_image_url?: string;
+  publication_type?: string;
+  views_count?: number;
+  shares_count?: number;
+  category?: string | null;
+  share_url?: string;
+  og_image_url?: string;
   rating?: number;
   headline?: string;
   comment?: string;

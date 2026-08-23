@@ -34,5 +34,15 @@ RSpec.describe Feed::Serializer, type: :service do
       expect(result[:subject][:company][:name]).to eq(company.name)
       expect(result[:subject][:company][:slug]).to eq(company.slug)
     end
+
+    it 'serializes publication cover as URL and includes publication metadata' do
+      serializer = described_class.new([feed_item_pub], current_user: user)
+      result = serializer.serialize.first
+
+      expect(result[:subject][:publication_type]).to eq(pub.publication_type)
+      expect(result[:subject][:category]).to eq(pub.category)
+      expect(result[:subject]).to have_key(:cover_image_url)
+      expect(result[:subject][:cover_image_url]).to be_nil
+    end
   end
 end

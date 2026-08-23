@@ -43,7 +43,12 @@ module Feed
         if publications.any?
           ActiveRecord::Associations::Preloader.new(
             records: publications,
-            associations: [cover_image_attachment: :blob]
+            associations: [
+              { cover_image_attachment: :blob },
+              :reviewer_publication_events,
+              :reviewer_publication_comments,
+              :reviewer_publication_likes
+            ]
           ).call
         end
       end
@@ -110,7 +115,11 @@ module Feed
           slug: subject.slug,
           excerpt: subject.excerpt,
           body: subject.body,
-          cover_image_url: subject.cover_image
+          cover_image_url: attachment_url(subject.cover_image),
+          publication_type: subject.publication_type,
+          category: subject.category,
+          views_count: publication_events(subject).count { |event| event.event_name == 'publication_view' },
+          shares_count: publication_events(subject).count { |event| event.event_name == 'publication_share' }
         }
       elsif subject.is_a?(Review)
         {
@@ -146,6 +155,23 @@ module Feed
             slug: ent.try(:slug)
           }
         }
+      end
+    end
+
+    def attachment_url(attachment)
+      return nil unless attachment&.attached?
+
+      Rails.application.routes.url_helpers.rails_blob_url(
+        attachment,
+        host: ENV.fetch('APP_HOST', 'https://avaliasolar.com.br')
+      )
+    end
+
+    def publication_events(subject)
+      if subject.association(:reviewer_publication_events).loaded?
+        subject.reviewer_publication_events
+      else
+        ReviewerPublicationEvent.where(reviewer_publication_id: subject.id)
       end
     end
 

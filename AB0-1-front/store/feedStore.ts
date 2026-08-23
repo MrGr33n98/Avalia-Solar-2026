@@ -22,7 +22,9 @@ export const useFeedStore = create<FeedState>((set) => ({
   setTrendingTopics: (topics) => set({ trendingTopics: topics }),
   items: [],
   setItems: (items) => set({ items }),
-  prependPublication: (pub) => set((state) => ({ items: [pub, ...state.items] })),
+  prependPublication: (pub) => set((state) => ({
+    items: [pub, ...state.items.filter((item) => item.id !== pub.id)],
+  })),
   isComposerOpen: false,
   openComposer: () => set({ isComposerOpen: true }),
   closeComposer: () => set({ isComposerOpen: false }),

@@ -16,6 +16,6 @@ export function FeedItemRenderer({ item }: FeedItemRendererProps) {
     case 'review':
       return <ReviewFeedCard item={item} />;
     default:
-      return <PublicationFeedCard item={item} />;
+      return null;
   }
 }

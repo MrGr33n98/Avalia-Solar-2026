@@ -36,7 +36,21 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
     setHasMore(false);
     try {
       const res = await getFeed({ view, limit: 15 });
-      setItems(res.data || []);
+      const incomingItems = res.data || [];
+      const existingItems = useFeedStore.getState().items;
+      const incomingIds = new Set(incomingItems.map((item) => item.id));
+      const incomingSubjectIds = new Set(
+        incomingItems
+          .filter((item) => item.type === 'reviewer_publication')
+          .map((item) => item.subject.id)
+      );
+      const optimisticItems = existingItems.filter(
+        (item) =>
+          item.id.startsWith('feed_optimistic_') &&
+          !incomingIds.has(item.id) &&
+          !incomingSubjectIds.has(item.subject.id)
+      );
+      setItems([...optimisticItems, ...incomingItems]);
       setNextCursor(res.meta?.next_cursor || null);
       setHasMore(!!res.meta?.has_more);
       if (res.meta?.trending_topics) {

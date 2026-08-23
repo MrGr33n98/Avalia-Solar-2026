@@ -5,7 +5,10 @@ module Social
     queue_as :default
 
     def perform(subject_type, subject_id, verb: 'published')
-      subject = subject_type.constantize.find_by(id: subject_id)
+      subject_class = subject_type.safe_constantize
+      return unless [ReviewerPublication, Review].include?(subject_class)
+
+      subject = subject_class.find_by(id: subject_id)
       return unless subject
 
       actor = if subject.is_a?(ReviewerPublication)
@@ -16,14 +19,14 @@ module Social
 
       return unless actor
 
-      FeedItem.find_or_create_by!(
+      feed_item = FeedItem.find_or_initialize_by(
         actor: actor,
         subject: subject,
         verb: verb
-      ) do |item|
-        item.visibility = 'public'
-        item.published_at = subject.try(:published_at) || subject.created_at
       end
+      feed_item.visibility = 'public'
+      feed_item.published_at ||= subject.try(:published_at) || subject.created_at
+      feed_item.save!
     end
   end
 end

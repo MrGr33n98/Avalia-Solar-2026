@@ -57,9 +57,10 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
       // 2. Publish publication
       const published = await reviewerPublicationsApi.publish(draft.id);
 
-      // 3. Map to FeedItem contract
+      // 3. Map to FeedItem contract. Backend projection remains source of truth;
+      // reload reconciles this optimistic item with GET /feed.
       const feedItem: FeedItem = {
-        id: `reviewer_publication_${published.id}`,
+        id: `feed_optimistic_reviewer_publication_${published.id}`,
         type: 'reviewer_publication',
         verb: 'publish',
         published_at: published.published_at || published.created_at || new Date().toISOString(),
@@ -80,6 +81,8 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
           slug: published.slug,
           excerpt: published.excerpt || '',
           body: published.body,
+          publication_type: published.publication_type,
+          category: published.category,
           cover_image_url: published.cover_image?.url || undefined,
         },
         entities: [],
@@ -95,7 +98,7 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
       prependPublication(feedItem);
 
       // 5. Success cleanup
-      toast.success('Publicação criada');
+      toast.success('Publicação criada. Seu conteúdo já está disponível para a comunidade.');
       setBody('');
       onClose();
     } catch (err: unknown) {

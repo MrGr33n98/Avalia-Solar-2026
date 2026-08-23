@@ -4,6 +4,13 @@
 
 # Example scheduled jobs:
 
+social_outbox_processor_job:
+  cron: '*/1 * * * *'
+  class: Social::ProcessOutboxEventsJob
+  queue: default
+  description: 'Processa eventos sociais pendentes e projeta itens no feed'
+  enabled: true
+
 # Daily cache cleanup at 3 AM
 cache_cleanup_job:
   cron: '0 3 * * *'  # Every day at 3:00 AM
