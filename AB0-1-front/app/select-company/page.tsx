@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -84,7 +84,7 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
     : fallback;
 };
 
-export default function SelectCompanyPage() {
+function SelectCompanyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -590,4 +590,23 @@ export default function SelectCompanyPage() {
   }
 
   return null;
+}
+
+function SelectCompanyLoading() {
+  return (
+    <div className="flex h-[80vh] items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Carregando empresas...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function SelectCompanyPage() {
+  return (
+    <Suspense fallback={<SelectCompanyLoading />}>
+      <SelectCompanyContent />
+    </Suspense>
+  );
 }
