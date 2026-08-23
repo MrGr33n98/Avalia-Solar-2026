@@ -15,6 +15,7 @@ import { InstagramStoryTemplate } from '@/components/social-templates/InstagramS
 import { LinkedInTemplate } from '@/components/social-templates/LinkedInTemplate';
 import { XTemplate } from '@/components/social-templates/XTemplate';
 import { OpenGraphTemplate } from '@/components/social-templates/OpenGraphTemplate';
+import { CopyLinkRow } from './CopyLinkRow';
 
 interface ShareModalProps {
   open: boolean;
@@ -22,6 +23,8 @@ interface ShareModalProps {
   resource: ShareResource;
   context: ShareContext;
 }
+
+const SHARE_ASSET_FORMATS = new Set(['feed', 'story', 'card', 'og']);
 
 export function ShareModal({ open, onOpenChange, resource, context }: ShareModalProps) {
   const [completed, setCompleted] = useState<SharePlatform | null>(null);
@@ -78,8 +81,9 @@ export function ShareModal({ open, onOpenChange, resource, context }: ShareModal
           <DialogDescription>Escolha onde distribuir este conteúdo.</DialogDescription>
         </DialogHeader>
         <SharePreview resource={resource} />
+        <CopyLinkRow url={buildAttributedUrl(resource, 'copy', format)} />
         <SocialFormatSelector value={format} onChange={setFormat} />
-        {template ? <div className="max-w-full overflow-auto rounded-xl bg-slate-100 p-2">{template}</div> : null}
+        {SHARE_ASSET_FORMATS.has(format) && template ? <div className="max-w-full overflow-auto rounded-xl bg-slate-100 p-2">{template}</div> : null}
         <SharePlatformGrid onSelect={(target) => void selectPlatform(target.platform)} completed={completed} />
       </DialogContent>
     </Dialog>
