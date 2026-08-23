@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, ImagePlus, Save, Send, X } from 'lucide-react';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { PublicationType, ReviewerPublication } from '@/types/reviewer-publication';
+import { getPublicationTypeLabel } from '@/lib/publications/publicationTypes';
 export function PublicationComposer({ publication }: { publication?: ReviewerPublication }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -86,10 +87,10 @@ export function PublicationComposer({ publication }: { publication?: ReviewerPub
               onChange={(e) => set('publication_type', e.target.value)}
               className="h-11 rounded-xl border border-slate-200 px-3 font-normal"
             >
-              <option value="article">Artigo</option>
-              <option value="case_study">Estudo de caso</option>
-              <option value="tip">Dica</option>
-              <option value="project">Projeto</option>
+              <option value="article">{getPublicationTypeLabel('article')}</option>
+              <option value="case_study">{getPublicationTypeLabel('case_study')}</option>
+              <option value="tip">{getPublicationTypeLabel('tip')}</option>
+              <option value="project">{getPublicationTypeLabel('project')}</option>
             </select>
           </label>
           <label className="grid gap-2 text-sm font-semibold text-slate-700">

@@ -6,6 +6,7 @@ import {
   ThumbsUp,
   MessageSquare,
   Bookmark,
+  Share2,
   Building2,
   CheckCircle2,
   UserPlus,
@@ -60,6 +61,18 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
     } catch {
       setIsSaved(isSaved);
     }
+  };
+
+  const handleShare = async () => {
+    const url = actor.slug
+      ? `${window.location.origin}/creators/${actor.slug}/posts/${subject.slug || subject.id}`
+      : `${window.location.origin}/posts/${subject.slug || subject.id}`;
+    if (navigator.share) {
+      await navigator.share({ title: subject.title || 'Publicação Avalia Solar', url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast.success('Link copiado.');
   };
 
   const handleFollow = async () => {
@@ -224,6 +237,13 @@ export function PublicationFeedCard({ item }: PublicationFeedCardProps) {
         >
           <Bookmark className="h-4 w-4" />
           <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
+        </button>
+        <button
+          onClick={() => void handleShare()}
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Share2 className="h-4 w-4" />
+          <span>Compartilhar</span>
         </button>
       </div>
 

@@ -8,6 +8,7 @@ import { CreatorStickyContact } from '@/components/creator/CreatorStickyContact'
 import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
 import { CreatorReviewCard, type CreatorReview } from '@/components/creator/CreatorReviewCard';
 import { CreatorFollowList } from '@/components/creator/CreatorFollowList';
+import { getPublicationTypeLabel } from '@/lib/publications/publicationTypes';
 
 type CreatorData = {
   creator: {
@@ -176,7 +177,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
                       className="group block border-b border-slate-200/70 pb-3 last:border-0"
                     >
                       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1e5eff]">
-                        <span>{post.publication_type || 'Artigo'}</span>
+                        <span>{getPublicationTypeLabel(post.publication_type, 'shortLabel')}</span>
                         {post.published_at && (
                           <span className="font-normal text-[#718096]">
                             {new Date(post.published_at).toLocaleDateString('pt-BR')}

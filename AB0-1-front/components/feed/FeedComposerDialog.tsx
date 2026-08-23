@@ -10,19 +10,22 @@ import { useFeedStore } from '@/store/feedStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { FeedItem } from '@/types/feed';
+import type { PublicationType } from '@/types/reviewer-publication';
 
 interface FeedComposerDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onPublished?: (publication: { id: number; slug: string; title: string; url: string }) => void;
 }
 
-export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps) {
+export function FeedComposerDialog({ isOpen, onClose, onPublished }: FeedComposerDialogProps) {
   const { user, reviewerProfile } = useAuth();
   const prependPublication = useFeedStore((state) => state.prependPublication);
 
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publicationType, setPublicationType] = useState<PublicationType>('tip');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,7 +54,7 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
       const draft = await reviewerPublicationsApi.create({
         title,
         body,
-        publication_type: 'tip',
+        publication_type: publicationType,
       });
 
       // 2. Publish publication
@@ -99,7 +102,16 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
 
       // 5. Success cleanup
       toast.success('Publicação criada. Seu conteúdo já está disponível para a comunidade.');
+      onPublished?.({
+        id: published.id,
+        slug: published.slug,
+        title: published.title,
+        url: reviewerProfile?.public_slug
+          ? `/creators/${reviewerProfile.public_slug}/posts/${published.slug}`
+          : `/posts/${published.slug}`,
+      });
       setBody('');
+      setPublicationType('tip');
       onClose();
     } catch (err: unknown) {
       console.error(err);
@@ -205,6 +217,20 @@ export function FeedComposerDialog({ isOpen, onClose }: FeedComposerDialogProps)
                 aria-label="Conteúdo da publicação"
                 autoFocus
               />
+              <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                Tipo
+                <select
+                  value={publicationType}
+                  onChange={(event) => setPublicationType(event.target.value as PublicationType)}
+                  disabled={submitting}
+                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal"
+                >
+                  <option value="tip">Insight</option>
+                  <option value="article">Artigo</option>
+                  <option value="case_study">Estudo de caso</option>
+                  <option value="project">Projeto</option>
+                </select>
+              </label>
             </div>
 
             {/* Footer actions */}

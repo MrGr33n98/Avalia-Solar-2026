@@ -2,14 +2,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileText, PenLine, Plus, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { PublicationStatus, ReviewerPublication } from '@/types/reviewer-publication';
 import { PublicationCard } from '@/components/review-dashboard/publications/PublicationCard';
 import { PublicationEmptyState } from '@/components/review-dashboard/publications/PublicationEmptyState';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PublicacoesPage() {
+  const { reviewerProfile } = useAuth();
   const [items, setItems] = useState<ReviewerPublication[]>([]);
   const [tab, setTab] = useState<PublicationStatus>('published');
   const [query, setQuery] = useState('');
@@ -43,6 +46,17 @@ export default function PublicacoesPage() {
   const archive = async (id: number) => {
     await reviewerPublicationsApi.archive(id);
     await load();
+  };
+
+  const share = async (publication: ReviewerPublication) => {
+    if (!reviewerProfile?.public_slug) return;
+    const url = `${window.location.origin}/creators/${reviewerProfile.public_slug}/posts/${publication.slug}`;
+    if (navigator.share) {
+      await navigator.share({ title: publication.title, url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast.success('Link da publicação copiado.');
   };
   return (
     <div className="space-y-6">
@@ -78,9 +92,9 @@ export default function PublicacoesPage() {
           iconBgColor="bg-amber-50"
         />
         <MetricCard
-          label="Visualizações"
-          value="—"
-          caption="Métrica ainda não registrada"
+          label="Interações"
+          value={items.reduce((total, item) => total + (item.metrics?.comments || 0), 0)}
+          caption="Comentários nas publicações"
           icon={Search}
           iconColor="text-slate-500"
           iconBgColor="bg-slate-50"
@@ -136,6 +150,12 @@ export default function PublicacoesPage() {
                 key={item.id}
                 publication={item}
                 onArchive={item.status === 'published' ? archive : undefined}
+                onShare={item.status === 'published' ? share : undefined}
+                publicUrl={
+                  item.status === 'published' && reviewerProfile?.public_slug
+                    ? `/creators/${reviewerProfile.public_slug}/posts/${item.slug}`
+                    : undefined
+                }
               />
             ))}
           </div>

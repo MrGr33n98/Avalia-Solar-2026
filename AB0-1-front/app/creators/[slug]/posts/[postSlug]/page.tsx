@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { PublicationComments } from '@/components/creator/PublicationComments';
 import { CreatorShareButton } from '@/components/creator/CreatorShareButton';
 import { PublicationLikeButton } from '@/components/creator/PublicationLikeButton';
+import { getPublicationTypeLabel } from '@/lib/publications/publicationTypes';
 
 type Post = {
   title: string;
@@ -79,7 +80,7 @@ export default async function CreatorPostPage({
         <span>
           {post.published_at ? new Date(post.published_at).toLocaleDateString('pt-BR') : ''}
         </span>
-        {post.publication_type && <span>• {post.publication_type}</span>}<span>• {readingTime} min de leitura</span>
+        <span>• {getPublicationTypeLabel(post.publication_type, 'shortLabel')}</span><span>• {readingTime} min de leitura</span>
       </div>
       {post.cover_image && (
         <Image src={post.cover_image} alt={post.title} width={1200} height={630} className="mt-8 max-h-[420px] w-full rounded-2xl object-cover" priority sizes="(max-width: 768px) 100vw, 768px" />
