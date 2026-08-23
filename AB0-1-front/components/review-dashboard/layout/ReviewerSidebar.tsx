@@ -5,18 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ChevronLeft } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import {
-  reviewerNavItems,
-  isNavItemActive,
-  type ReviewerNavItem,
-} from '../reviewerNavigation';
+import { reviewerNavItems, isNavItemActive, type ReviewerNavItem } from '../reviewerNavigation';
 import { layout } from '../tokens';
 
 const STORAGE_KEY = 'reviewer_sidebar_collapsed';
@@ -47,6 +38,7 @@ export function ReviewerSidebar() {
           'sticky top-[72px] h-[calc(100vh-72px)] shrink-0 z-20'
         )}
         style={{ width: collapsed ? layout.sidebarCollapsed : layout.sidebarExpanded }}
+        aria-label="Navegação do painel"
       >
         {/* Header */}
         {!collapsed && (
@@ -140,9 +132,7 @@ function SidebarItem({
         )}
       />
 
-      {!collapsed && (
-        <span className="truncate">{item.label}</span>
-      )}
+      {!collapsed && <span className="truncate">{item.label}</span>}
 
       {/* Notification dot */}
       {item.badge === 'dot' && !collapsed && (

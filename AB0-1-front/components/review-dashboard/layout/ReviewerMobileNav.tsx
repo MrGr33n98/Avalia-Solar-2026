@@ -5,11 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { MoreHorizontal, X } from 'lucide-react';
-import {
-  mobileBottomNavItems,
-  mobileDrawerItems,
-  isNavItemActive,
-} from '../reviewerNavigation';
+import { mobileBottomNavItems, mobileDrawerItems, isNavItemActive } from '../reviewerNavigation';
 
 export function ReviewerMobileNav() {
   const pathname = usePathname();
@@ -23,8 +19,9 @@ export function ReviewerMobileNav() {
           'fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden',
           'pb-[env(safe-area-inset-bottom)]'
         )}
+        aria-label="Navegação do painel"
       >
-        <div className="flex items-center justify-around h-16">
+        <div className="flex min-h-16 items-center justify-around">
           {mobileBottomNavItems.map((item) => {
             const Icon = item.icon;
             const active = isNavItemActive(pathname, item);
@@ -77,14 +74,14 @@ export function ReviewerMobileNav() {
           <span className="text-base font-semibold text-slate-900">Mais opções</span>
           <button
             onClick={() => setDrawerOpen(false)}
-            className="p-1 rounded-lg hover:bg-slate-100"
+            className="min-h-11 min-w-11 rounded-lg p-2 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             aria-label="Fechar menu"
           >
             <X className="h-5 w-5 text-slate-500" />
           </button>
         </div>
 
-        <nav className="px-3 py-2">
+        <nav className="px-3 py-2" aria-label="Mais opções do painel">
           <ul className="space-y-0.5">
             {mobileDrawerItems.map((item) => {
               const Icon = item.icon;
@@ -96,9 +93,7 @@ export function ReviewerMobileNav() {
                     onClick={() => setDrawerOpen(false)}
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
-                      active
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-slate-600 hover:bg-slate-50'
+                      active ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'
                     )}
                   >
                     <Icon className={cn('h-5 w-5', active ? 'text-blue-600' : 'text-slate-400')} />
@@ -115,7 +110,7 @@ export function ReviewerMobileNav() {
       </div>
 
       {/* Spacer para conteúdo não ficar atrás do bottom nav */}
-      <div className="h-16 lg:hidden" />
+      <div className="h-[calc(4rem+env(safe-area-inset-bottom))] lg:hidden" aria-hidden="true" />
     </>
   );
 }

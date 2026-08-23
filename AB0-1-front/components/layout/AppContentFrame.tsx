@@ -11,11 +11,12 @@ export default function AppContentFrame({ children }: AppContentFrameProps) {
   const pathname = usePathname();
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
   const isDashboardRoute = pathname?.startsWith('/dashboard');
+  const isReviewerRoute = pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/');
 
   return (
     <div
       className={
-        isChatRoute || isDashboardRoute
+        isChatRoute || isDashboardRoute || isReviewerRoute
           ? 'pb-0'
           : 'pb-[calc(5.5rem+var(--safe-area-inset-bottom))] md:pb-0'
       }

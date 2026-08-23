@@ -24,8 +24,12 @@ module Api
         green_score = measure_summary_step('green_score') { current_user.calculate_green_score }
         regional_ranking = measure_summary_step('regional_ranking') { current_user.regional_ranking(score: green_score) }
         achievements = measure_summary_step('achievements') { current_user.achievements }
-        helpful_votes = measure_summary_step('impact_helpful_votes') { current_user.reviews.sum(:helpful_count) }
-        impacted_people = measure_summary_step('impact_read_count') { current_user.reviews.sum(:read_count) }
+        helpful_votes = measure_summary_step('impact_helpful_votes') do
+          current_user.reviews.where(status: :approved).sum(:helpful_count)
+        end
+        impacted_people = measure_summary_step('impact_read_count') do
+          current_user.reviews.where(status: :approved).sum(:read_count)
+        end
 
         # Recommendations (real logic instead of mocked array)
         # Using the companies with highest rating from the same state/city
@@ -156,7 +160,13 @@ module Api
         }
       rescue StandardError => e
         Rails.logger.error("[ReviewDashboard] summary failed user=#{current_user&.id}: #{e.class} #{e.message}")
-        render json: { error: 'Não foi possível carregar o resumo do dashboard.', code: 'review_dashboard_summary_unavailable' }, status: :service_unavailable
+        render json: {
+          error: {
+            code: 'REVIEW_DASHBOARD_SUMMARY_UNAVAILABLE',
+            message: 'Não foi possível carregar o resumo do dashboard.',
+            request_id: request.request_id
+          }
+        }, status: :service_unavailable, headers: { 'X-Request-ID' => request.request_id }
       end
 
       private
@@ -177,7 +187,7 @@ module Api
         scope.count
       rescue StandardError => e
         Rails.logger.error("[ReviewDashboard] count failed: #{e.class} #{e.message}")
-        0
+        nil
       end
 
       def safe_activity_chart(start_date:, end_date:)
@@ -191,24 +201,7 @@ module Api
         end
       rescue StandardError => e
         Rails.logger.error("[ReviewDashboard] activity chart failed: #{e.class} #{e.message}")
-        empty_activity_chart(start_date: start_date, end_date: end_date)
-      end
-
-      def empty_activity_chart(start_date:, end_date:)
-        (start_date.to_date..end_date.to_date).map do |date|
-          {
-            date: date.to_s,
-            profile_views: 0,
-            whatsapp_clicks: 0,
-            cta_clicks: 0
-          }
-        end
-      end
-
-      def avatar_attached?
-        current_user.respond_to?(:avatar) && current_user.avatar.attached?
-      rescue StandardError
-        false
+        nil
       end
 
     end

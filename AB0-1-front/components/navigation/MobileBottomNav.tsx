@@ -33,6 +33,7 @@ export default function MobileBottomNav() {
     pathname.startsWith('/creator-studio/');
   if (isInternalProfile) return null;
   if (pathname?.startsWith('/dashboard')) return null;
+  if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/')) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-slate-200 bg-white/95 px-2 pb-[max(0.125rem,var(--sab,env(safe-area-inset-bottom)))] pt-0.5 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.15)] backdrop-blur-xl md:hidden h-[52px]">

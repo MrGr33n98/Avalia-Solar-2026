@@ -185,7 +185,9 @@ class User < ApplicationRecord
   end
 
   def gamification_level
-    score = calculate_green_score || 0
+    score = calculate_green_score
+    return nil if score.nil?
+
     if score >= 5000
       { key: 'platinum', name: 'Platina', next: nil, progress: 100, threshold: 5000 }
     elsif score >= 1500
@@ -208,13 +210,13 @@ class User < ApplicationRecord
       my_score = ranking_score
       next nil if my_score.nil?
 
-      review_counts = Review.where(user_id: users_in_region.select(:id)).group(:user_id).count
+      review_counts = Review.where(user_id: users_in_region.select(:id), status: :approved).group(:user_id).count
       helpful_counts = ReviewVote.joins(:review)
-                                 .where(reviews: { user_id: users_in_region.select(:id) }, vote_type: 'useful')
+                                 .where(reviews: { user_id: users_in_region.select(:id), status: :approved }, vote_type: 'useful')
                                  .group('reviews.user_id').count
       scores = users_in_region.pluck(:id, :name, :city, :state).to_h do |user_id, name, user_city, user_state|
-        profile_points = [name, user_city, user_state].count(&:present?) * 20
-        [user_id, review_counts.fetch(user_id, 0) * 35 + helpful_counts.fetch(user_id, 0) * 2 + profile_points]
+        profile_points = [name, user_city, user_state].count(&:present?) * Reviewer::GreenScoreService::PROFILE_FIELD_POINTS
+        [user_id, review_counts.fetch(user_id, 0) * Reviewer::GreenScoreService::REVIEW_POINTS + helpful_counts.fetch(user_id, 0) * Reviewer::GreenScoreService::USEFUL_VOTE_POINTS + profile_points]
       end
       scores.values.count { |score| score > my_score } + 1
     end

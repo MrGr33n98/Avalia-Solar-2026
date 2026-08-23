@@ -1,23 +1,13 @@
 'use client';
 
-import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { ProfileSummary } from '@/components/review-dashboard/profile/ProfileSummary';
 import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
 import { ActionCard } from '@/components/review-dashboard/cards/ActionCard';
-import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { useDashboardContext } from './DashboardLayoutClient';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Leaf,
-  Star,
-  Clock,
-  Zap,
-  Trophy,
-  Activity,
-  CheckCircle2,
-  CircleDot,
-} from 'lucide-react';
+import { buildPrimeDashboardViewModel } from '@/lib/review-dashboard/types';
+import { Leaf, Star, Clock, Zap, Trophy, Activity, CheckCircle2 } from 'lucide-react';
 
 export default function MeuPainelPage() {
   const { user } = useAuth();
@@ -30,6 +20,8 @@ export default function MeuPainelPage() {
     summaryLoading,
     reviewsLoading,
     leadsLoading,
+    reviewsError,
+    solutionsError,
   } = useDashboardContext();
 
   if (error && !summary && !reviewsLoading && !leadsLoading) {
@@ -52,41 +44,68 @@ export default function MeuPainelPage() {
     );
   }
 
-  const greenScore = summary?.gamification?.green_score ?? null;
-  const reviewsCount = reviews.length;
-
-  const inAnalysisCount = reviews.filter(
-    (r) => r.status === 'in_analysis' || r.status === 'pending'
-  ).length;
-  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+  const inAnalysisCount = reviewsLoading
+    ? null
+    : reviews.filter((r) => r.status === 'in_analysis' || r.status === 'pending').length;
+  const viewModel = buildPrimeDashboardViewModel({
+    user,
+    summary,
+    reviewsCount: reviewsLoading ? null : reviews.length,
+    pendingReviews: inAnalysisCount,
+    solutionsCount: solutions.length,
+  });
+  const reviewsCount = viewModel.reputation.data?.totalReviews ?? null;
+  const greenScore = viewModel.reputation.data?.greenScore ?? null;
+  const profileCompletion = viewModel.profile.data?.completionPercent;
+  const summaryIsStale = Boolean(summary && error);
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <ReviewerPageHeader
-        title="Meu painel"
-        description="Acompanhe suas contribuições e evolua de nível."
-        action={
-          <a
-            href="/review-dashboard/achievements"
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-none"
-          >
-            <Trophy className="h-4 w-4 text-amber-500" />
-            Avance de nível
-          </a>
-        }
-      />
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+            Meu painel
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+            Olá, {viewModel.identity.firstName}.
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Sua reputação, impacto e próximos passos em um só lugar.
+          </p>
+          {summaryIsStale && (
+            <p className="mt-2 text-xs font-medium text-amber-700" role="status">
+              Não foi possível atualizar agora. Exibindo último dado disponível.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          aria-label="Atualizar painel"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+        >
+          <Activity className="h-4 w-4" />
+          <span className="sr-only">Atualizar</span>
+        </button>
+      </div>
 
       {/* Profile Summary */}
-      <ProfileSummary levelName={summary?.gamification?.level?.name} profileCompletion={profileCompletion} />
+      <ProfileSummary
+        levelName={viewModel.identity.levelName}
+        profileCompletion={profileCompletion}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
         <MetricCard
           label="Green Score"
           value={greenScore}
-          unavailable={summaryLoading || greenScore === null || greenScore === undefined}
-          caption="Calculado por contribuições reais"
+          unavailable={
+            summaryLoading || viewModel.reputation.status !== 'ready' || greenScore === null
+          }
+          unavailableLabel="—"
+          caption={summaryLoading ? 'Carregando' : 'Contribuições aprovadas'}
           icon={Leaf}
           iconColor="text-green-600"
           iconBgColor="bg-green-50"
@@ -94,19 +113,82 @@ export default function MeuPainelPage() {
         />
         <MetricCard
           label="Avaliações"
-          value={reviewsLoading ? null : reviewsCount}
-          caption="Total realizadas"
+          value={reviewsCount}
+          unavailable={Boolean(reviewsError)}
+          unavailableLabel="—"
+          caption={reviewsError ? 'Indisponível agora' : 'Total realizadas'}
           icon={Star}
           iconColor="text-amber-500"
           iconBgColor="bg-amber-50"
         />
         <MetricCard
+          label="Publicadas"
+          value={summaryLoading ? null : (summary?.kpis?.reviews_published ?? null)}
+          unavailable={
+            summaryLoading ||
+            summary?.kpis?.reviews_published === null ||
+            summary?.kpis?.reviews_published === undefined
+          }
+          unavailableLabel="—"
+          caption="Visíveis na comunidade"
+          icon={CheckCircle2}
+          iconColor="text-emerald-600"
+          iconBgColor="bg-emerald-50"
+        />
+        <MetricCard
           label="Em análise"
           value={inAnalysisCount}
+          unavailable={Boolean(reviewsError)}
+          unavailableLabel="—"
           caption="Aguardando aprovação"
           icon={Clock}
           iconColor="text-purple-600"
           iconBgColor="bg-purple-50"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <MetricCard
+          label="Impacto"
+          value={viewModel.impact.data?.impactedPeople ?? null}
+          unavailable={
+            viewModel.impact.status !== 'ready' || viewModel.impact.data?.impactedPeople === null
+          }
+          unavailableLabel="—"
+          caption="Pessoas alcançadas"
+        />
+        <MetricCard
+          label="Ranking regional"
+          value={viewModel.reputation.data?.regionalRanking ?? null}
+          unavailable={
+            viewModel.reputation.status !== 'ready' ||
+            viewModel.reputation.data?.regionalRanking === null
+          }
+          unavailableLabel="—"
+          caption={
+            viewModel.reputation.data?.regionalRanking === null
+              ? 'Ainda não disponível'
+              : 'Posição atual'
+          }
+        />
+        <MetricCard
+          label="Conquistas"
+          value={viewModel.reputation.data?.achievementsCount ?? null}
+          unavailable={
+            viewModel.reputation.status !== 'ready' ||
+            viewModel.reputation.data?.achievementsCount === null
+          }
+          unavailableLabel="—"
+          caption="Registradas no perfil"
+        />
+        <MetricCard
+          label="Votos úteis"
+          value={viewModel.impact.data?.helpfulVotes ?? null}
+          unavailable={
+            viewModel.impact.status !== 'ready' || viewModel.impact.data?.helpfulVotes === null
+          }
+          unavailableLabel="—"
+          caption="Feedback da comunidade"
         />
       </div>
 
@@ -141,172 +223,148 @@ export default function MeuPainelPage() {
         </div>
       </div>
 
-      {/* Bottom grid: Conquistas + Atividade + Resumo + Dica */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Conquistas */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <SectionHeader
-            title="Conquistas"
-            linkLabel="Ver todas as conquistas"
-            linkHref="/review-dashboard/achievements"
-          />
-          <div className="space-y-3">
-            {summaryLoading ? (
-              <div className="space-y-2">
-                <div className="h-10 bg-slate-100 animate-pulse rounded-lg" />
-                <div className="h-10 bg-slate-100 animate-pulse rounded-lg" />
-              </div>
-            ) : (summary?.gamification?.achievements ?? []).length > 0 ? (
-              (summary?.gamification?.achievements ?? [])
-                .slice(0, 2)
-                .map(
-                  (
-                    achievement: { title: string; subtitle: string; state: string },
-                    index: number
-                  ) => (
-                    <AchievementItem
-                      key={index}
-                      title={achievement.title}
-                      description={achievement.subtitle}
-                      unlocked={achievement.state !== 'bloqueado'}
-                    />
-                  )
-                )
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-4">Nenhuma conquista disponível.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Atividade recente */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <SectionHeader title="Atividade recente" />
-          {reviews.length === 0 && solutions.length === 0 ? (
-            <div className="flex flex-col items-center py-6 text-center">
-              <Activity className="h-10 w-10 text-slate-300 mb-3" />
-              <p className="text-sm font-medium text-slate-700">Comece sua contribuição</p>
-              <p className="mt-1 text-xs text-slate-400">
-                Ainda não há atividades para mostrar. Explore o dashboard e comece agora!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {reviews.slice(0, 3).map((review) => (
-                <div key={review.id} className="flex items-start gap-2.5 text-sm">
-                  <Star className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-slate-700 truncate">
-                      Avaliação:{' '}
-                      {typeof review.company === 'string'
-                        ? review.company
-                        : review.company?.name || 'Empresa'}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {new Date(review.created_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Resumo do perfil */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <SectionHeader
-            title="Resumo do perfil"
-            linkLabel="Ver detalhes do perfil"
-            linkHref="/review-dashboard/profile"
-          />
-          <div className="space-y-2.5">
-            <ProfileCheckItem
-              label="Dados pessoais completos"
-              done={!!(user?.name && user?.email)}
-            />
-            <ProfileCheckItem
-              label="Foto de perfil cadastrada"
-              done={
-                summary?.profile?.items?.find(
-                  (i: { key: string; completed: boolean }) => i.key === 'avatar'
-                )?.completed ?? false
-              }
-            />
-            <ProfileCheckItem label="Localização definida" done={!!(user?.city && user?.state)} />
-            <ProfileCheckItem
-              label="Profissão preenchida"
-              done={
-                summary?.profile?.items?.find(
-                  (i: { key: string; completed: boolean }) => i.key === 'profession'
-                )?.completed ?? false
-              }
-            />
-            <ProfileCheckItem
-              label="Soluções adicionadas"
-              done={solutions.length > 0}
-              detail={`${solutions.length}/5`}
-            />
-            <ProfileCheckItem
-              label="Primeira avaliação publicada"
-              done={reviewsCount > 0}
-              detail={`${Math.min(reviewsCount, 1)}/1`}
-            />
-          </div>
-        </div>
-
-        {/* Dica da comunidade */}
-        <TipCard title="Dica da Comunidade">
-          Perfis completos passam mais confiança para a comunidade e facilitam o contato de parceiros.
-        </TipCard>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.25fr_1fr_0.85fr]">
+        <NextBestAction action={viewModel.nextAction} />
+        <RecentActivity summary={summary} loading={summaryLoading} error={error} />
+        <AchievementsPreview summary={summary} loading={summaryLoading} />
       </div>
-    </div>
-  );
-}
 
-function AchievementItem({
-  title,
-  description,
-  unlocked,
-}: {
-  title: string;
-  description: string;
-  unlocked: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className={`rounded-xl p-2 shrink-0 ${unlocked ? 'bg-green-50' : 'bg-slate-50'}`}>
-        <Trophy className={`h-4 w-4 ${unlocked ? 'text-green-600' : 'text-slate-400'}`} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-800">{title}</p>
-        <p className="text-xs text-slate-400">{description}</p>
-        {!unlocked && (
-          <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-            Ainda não conquistado
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ProfileCheckItem({
-  label,
-  done,
-  detail,
-}: {
-  label: string;
-  done: boolean;
-  detail?: string;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {done ? (
-        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-      ) : (
-        <CircleDot className="h-4 w-4 text-slate-300 shrink-0" />
+      {(reviewsError || solutionsError) && (
+        <p
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          role="status"
+        >
+          Algumas informações não puderam ser atualizadas agora. Os dados disponíveis continuam
+          visíveis.
+        </p>
       )}
-      <span className="text-sm text-slate-600 flex-1 truncate">{label}</span>
-      {detail && <span className="text-xs text-slate-400 shrink-0">{detail}</span>}
+
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 md:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+          Dica da comunidade
+        </p>
+        <p className="mt-2 text-sm leading-6 text-amber-950">
+          Perfis completos passam mais confiança para a comunidade e facilitam o contato de
+          parceiros.
+        </p>
+        <a
+          href="/review-dashboard/profile"
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-amber-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
+        >
+          Completar perfil
+        </a>
+      </section>
     </div>
+  );
+}
+
+function NextBestAction({
+  action,
+}: {
+  action: ReturnType<typeof buildPrimeDashboardViewModel>['nextAction'];
+}) {
+  return (
+    <section className="rounded-2xl border border-blue-100 bg-[#0B2F7A] p-5 text-white shadow-sm md:p-6">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-200">
+        Próximo passo
+      </p>
+      <h2 className="mt-3 text-xl font-semibold tracking-tight">{action.title}</h2>
+      <p className="mt-2 text-sm leading-6 text-blue-100">{action.description}</p>
+      <a
+        href={action.href}
+        className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0B2F7A] transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B2F7A]"
+      >
+        Começar agora
+      </a>
+    </section>
+  );
+}
+
+function RecentActivity({
+  summary,
+  loading,
+  error,
+}: {
+  summary: ReturnType<typeof useDashboardContext>['summary'];
+  loading: boolean;
+  error: string | null;
+}) {
+  const activities = summary?.recent_activities ?? [];
+  return (
+    <section
+      className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/[0.03] md:p-6"
+      aria-labelledby="recent-activity-title"
+    >
+      <SectionHeader
+        title="Atividade recente"
+        linkLabel="Ver avaliações"
+        linkHref="/review-dashboard/reviews"
+      />
+      {loading ? (
+        <div className="space-y-3">
+          <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
+        </div>
+      ) : error && !summary ? (
+        <p className="text-sm text-slate-500">Atividade indisponível agora.</p>
+      ) : activities.length === 0 ? (
+        <p className="text-sm leading-6 text-slate-500">
+          Sua atividade aparecerá aqui conforme você contribuir.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {activities.slice(0, 3).map((item, index) => (
+            <div key={`${item.title}-${index}`} className="flex gap-3">
+              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                <p className="mt-1 text-xs text-slate-400">{item.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AchievementsPreview({
+  summary,
+  loading,
+}: {
+  summary: ReturnType<typeof useDashboardContext>['summary'];
+  loading: boolean;
+}) {
+  const achievements = summary?.gamification?.achievements ?? [];
+  return (
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/[0.03] md:p-6">
+      <SectionHeader
+        title="Conquistas"
+        linkLabel="Ver todas"
+        linkHref="/review-dashboard/achievements"
+      />
+      {loading ? (
+        <div className="space-y-3">
+          <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
+        </div>
+      ) : achievements.length === 0 ? (
+        <p className="text-sm leading-6 text-slate-500">Sua primeira conquista está próxima.</p>
+      ) : (
+        <div className="space-y-4">
+          {achievements.slice(0, 3).map((item, index) => (
+            <div key={`${item.title}-${index}`} className="flex items-start gap-3">
+              <div className="rounded-xl bg-amber-50 p-2">
+                <Trophy className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{item.subtitle}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

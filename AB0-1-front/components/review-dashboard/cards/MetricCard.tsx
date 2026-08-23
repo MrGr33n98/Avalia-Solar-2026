@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import { type LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
@@ -12,6 +13,8 @@ interface MetricCardProps {
   iconBgColor?: string;
   highlight?: boolean;
   unavailable?: boolean;
+  unavailableLabel?: string;
+  href?: string;
   className?: string;
 }
 
@@ -24,32 +27,38 @@ export function MetricCard({
   iconBgColor = 'bg-slate-50',
   highlight = false,
   unavailable = false,
+  unavailableLabel = 'Indisponível',
+  href,
   className,
 }: MetricCardProps) {
   // O estado "indisponível" é ativado se for explicitamente marcado ou se o valor for nulo/indisponível
   const isUnavailable =
-    unavailable ||
-    value === null ||
-    value === undefined ||
-    value === 'Indisponível';
+    unavailable || value === null || value === undefined || value === 'Indisponível';
 
   const displayValue = isUnavailable
     ? value && typeof value === 'string' && value !== 'Indisponível'
       ? value
-      : 'Indisponível'
+      : unavailableLabel
     : value;
 
-  return (
+  const card = (
     <div
       className={cn(
         'rounded-xl border border-slate-200 bg-white p-3.5 transition-all min-w-0 flex items-center gap-3.5 shadow-none hover:border-slate-350 min-h-[72px] md:h-[80px]',
-        highlight && 'border-blue-100 bg-blue-50/20',
+        highlight && 'border-blue-200 bg-blue-50/20',
         className
       )}
+      aria-label={`${label}: ${displayValue}`}
+      role="group"
     >
       {/* Icon on the left */}
       {Icon && (
-        <div className={cn('rounded-lg p-2.5 shrink-0 flex items-center justify-center w-9 h-9', iconBgColor)}>
+        <div
+          className={cn(
+            'rounded-lg p-2.5 shrink-0 flex items-center justify-center w-9 h-9',
+            iconBgColor
+          )}
+        >
           <Icon className={cn('h-5 w-5', iconColor)} />
         </div>
       )}
@@ -79,5 +88,13 @@ export function MetricCard({
         </div>
       </div>
     </div>
+  );
+
+  return href ? (
+    <Link href={href} className="block min-w-0">
+      {card}
+    </Link>
+  ) : (
+    card
   );
 }

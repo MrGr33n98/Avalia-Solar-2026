@@ -101,6 +101,7 @@ export default function Navbar() {
 
   if (pathname?.startsWith('/f/')) return null;
   if (pathname?.startsWith('/dashboard')) return null;
+  if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/')) return null;
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">

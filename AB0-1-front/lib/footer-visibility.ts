@@ -22,6 +22,7 @@ const OPERATIONAL_ROUTE_PREFIXES = [
   '/register-user',
   '/reset-password',
   '/review',
+  '/review-dashboard',
   '/reviews/my',
   '/select-company',
   '/signup',

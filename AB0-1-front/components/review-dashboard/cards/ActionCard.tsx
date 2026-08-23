@@ -52,7 +52,7 @@ export function ActionCard({
   }
 
   return (
-    <button onClick={onClick} className={cn(sharedClasses, 'text-left w-full')}>
+    <button type="button" onClick={onClick} className={cn(sharedClasses, 'text-left w-full')}>
       {content}
     </button>
   );

@@ -29,6 +29,13 @@ import type { UserSolution } from '@/components/profile/UserSolutionChip';
 import { canAccessReviewDashboard } from '@/lib/auth/role-access';
 
 export interface ReviewDashboardSummary {
+  meta?: {
+    schema_version?: number;
+    generated_at?: string;
+    request_id?: string;
+    partial?: boolean;
+    stale_sections?: string[];
+  };
   kpis?: {
     estimated_savings?: number;
     quotes_total: number | null;
@@ -41,9 +48,15 @@ export interface ReviewDashboardSummary {
     regional_ranking: number | null;
     earned_points?: number;
     achievements: Array<{
+      id?: string;
       title: string;
       subtitle: string;
+      description?: string;
       state: string;
+      unlocked?: boolean;
+      progress?: number | null;
+      target?: number | null;
+      unlocked_at?: string | null;
     }>;
     level?: {
       key: string;
@@ -167,8 +180,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setSummaryLoading(true);
         try {
           setSummary((await reviewDashboardApi.getSummary()) as ReviewDashboardSummary);
+          setError(null);
         } catch (err) {
           console.warn('[ReviewDashboard] Summary unavailable', err);
+          setError('Não foi possível carregar o resumo do dashboard.');
         } finally {
           setSummaryLoading(false);
         }
@@ -178,7 +193,11 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setReviewsError(null);
         try {
           const response = await reviewsApi.listMine({ per_page: 100 });
-          setReviews(response.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+          setReviews(
+            response.sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+          );
         } catch (err) {
           const apiError = err instanceof ApiError ? err : (err as { status?: number });
           const status = apiError.status;
@@ -187,7 +206,6 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
               ? 'Você não tem autorização para carregar suas avaliações.'
               : 'Não foi possível carregar suas avaliações.'
           );
-          setReviews([]);
           track('review_dashboard_reviews_load_failed', {
             status: status ?? 'unknown',
             endpoint: '/reviews/mine',
@@ -195,7 +213,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           });
           if (status === 401) {
             setIsRedirecting(true);
-            router.push(`/login?redirect=${encodeURIComponent('/review-dashboard/reviews')}&error=session_expired`);
+            router.push(
+              `/login?redirect=${encodeURIComponent('/review-dashboard/reviews')}&error=session_expired`
+            );
           }
         } finally {
           setReviewsLoading(false);
