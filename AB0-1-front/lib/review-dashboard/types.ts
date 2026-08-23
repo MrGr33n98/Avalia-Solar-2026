@@ -12,6 +12,7 @@ export interface ReviewDashboardMeta {
   request_id?: string;
   partial?: boolean;
   stale_sections?: string[];
+  duration_ms?: number;
 }
 
 export interface ReviewDashboardSummaryDto {
@@ -82,6 +83,27 @@ export interface ReviewDashboardSummaryDto {
     missing_fields?: string[];
     items?: Array<{ key?: string; label?: string; completed?: boolean }>;
   } | null;
+}
+
+export interface ReviewDashboardErrorPayload {
+  error?: {
+    code?: string;
+    message?: string;
+    fields?: Record<string, string[]>;
+    request_id?: string;
+  };
+  code?: string;
+  message?: string;
+  errors?: string[];
+}
+
+export function getDashboardErrorMessage(payload: ReviewDashboardErrorPayload): string {
+  return (
+    payload.error?.message ||
+    payload.message ||
+    payload.errors?.join(', ') ||
+    'Não foi possível atualizar esta informação.'
+  );
 }
 
 export type NextBestActionType =

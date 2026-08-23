@@ -35,6 +35,7 @@ export interface ReviewDashboardSummary {
     request_id?: string;
     partial?: boolean;
     stale_sections?: string[];
+    duration_ms?: number;
   };
   kpis?: {
     estimated_savings?: number;
