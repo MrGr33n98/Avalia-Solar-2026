@@ -11,17 +11,7 @@ export interface AnimatedCompareIconProps {
   disabled?: boolean;
   loading?: boolean;
   intensity?: 'subtle' | 'normal' | 'strong';
-
-  /**
-   * default:
-   * Mantém a identidade azul existente do componente.
-   *
-   * solar:
-   * Variante premium para superfícies escuras,
-   * utilizada pela MobileBottomNav.
-   */
   variant?: 'default' | 'solar';
-
   className?: string;
   'aria-hidden'?: boolean | 'true' | 'false';
   'aria-label'?: string;
@@ -57,6 +47,7 @@ export const AnimatedCompareIcon = React.forwardRef<
     ref
   ) => {
     const gradientId = useId().replace(/:/g, '');
+
     const pxSize =
       typeof size === 'number'
         ? size
@@ -67,9 +58,7 @@ export const AnimatedCompareIcon = React.forwardRef<
         <Loader2
           className={cn(
             'animate-spin',
-            variant === 'solar'
-              ? 'text-amber-400'
-              : 'text-slate-400',
+            variant === 'solar' ? 'text-amber-500' : 'text-blue-600',
             className
           )}
           size={pxSize}
@@ -81,7 +70,7 @@ export const AnimatedCompareIcon = React.forwardRef<
     if (selected) {
       return (
         <Check
-          className={cn('text-emerald-500', className)}
+          className={cn('text-emerald-600', className)}
           size={pxSize}
           aria-hidden={ariaHidden}
         />
@@ -92,10 +81,8 @@ export const AnimatedCompareIcon = React.forwardRef<
       switch (intensity) {
         case 'subtle':
           return '6s';
-
         case 'strong':
           return '2.5s';
-
         case 'normal':
         default:
           return '4s';
@@ -106,17 +93,17 @@ export const AnimatedCompareIcon = React.forwardRef<
 
     const colors = isSolar
       ? {
-          background: '#111827',
-          baseBorder: '#FBBF24',
-          arrowStart: '#FACC15',
-          arrowEnd: '#F59E0B',
+          background: '#FFFFFF',
+          baseBorder: '#FDE68A',
+          arrowStart: '#F59E0B',
+          arrowEnd: '#D97706',
           highlightStart: '#FDE68A',
-          highlightMiddle: '#FACC15',
+          highlightMiddle: '#FBBF24',
           highlightEnd: '#F59E0B',
         }
       : {
           background: '#FFFFFF',
-          baseBorder: '#BFDBFE',
+          baseBorder: '#DBEAFE',
           arrowStart: '#2563EB',
           arrowEnd: '#1D4ED8',
           highlightStart: '#93C5FD',
@@ -131,19 +118,17 @@ export const AnimatedCompareIcon = React.forwardRef<
           'group relative inline-flex shrink-0 items-center justify-center rounded-full',
           'transition-[transform,filter] duration-200 ease-out',
 
-          active && !disabled
-            ? 'scale-[0.96]'
-            : 'scale-100',
+          active && !disabled ? 'scale-[0.96]' : 'scale-100',
 
           !disabled &&
             !isSolar &&
-            'hover:scale-[1.03] hover:drop-shadow-[0_0_8px_rgba(37,99,235,0.18)]',
+            'hover:scale-[1.035] hover:drop-shadow-[0_0_8px_rgba(37,99,235,0.18)]',
 
           !disabled &&
             isSolar &&
-            'hover:scale-[1.035] hover:drop-shadow-[0_0_9px_rgba(250,204,21,0.22)]',
+            'hover:scale-[1.035] hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.18)]',
 
-          disabled && 'cursor-not-allowed opacity-45',
+          disabled && 'cursor-not-allowed opacity-40',
 
           className
         )}
@@ -155,27 +140,6 @@ export const AnimatedCompareIcon = React.forwardRef<
         aria-label={ariaLabel}
         {...props}
       >
-        {/* Glow premium somente na variante Solar */}
-        {isSolar && (
-          <>
-            <span
-              aria-hidden="true"
-              className={cn(
-                'pointer-events-none absolute inset-[-16%] rounded-full',
-                'bg-amber-400/[0.07] blur-[5px]',
-                animated &&
-                  !disabled &&
-                  'motion-safe:animate-pulse motion-reduce:animate-none'
-              )}
-            />
-
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-[-8%] rounded-full border border-amber-400/10"
-            />
-          </>
-        )}
-
         <svg
           width="100%"
           height="100%"
@@ -192,14 +156,8 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="1"
               y2="0"
             >
-              <stop
-                offset="0%"
-                stopColor={colors.arrowStart}
-              />
-              <stop
-                offset="100%"
-                stopColor={colors.arrowEnd}
-              />
+              <stop offset="0%" stopColor={colors.arrowStart} />
+              <stop offset="100%" stopColor={colors.arrowEnd} />
             </linearGradient>
 
             <linearGradient
@@ -209,14 +167,8 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="1"
               y2="0"
             >
-              <stop
-                offset="0%"
-                stopColor={colors.arrowEnd}
-              />
-              <stop
-                offset="100%"
-                stopColor={colors.arrowStart}
-              />
+              <stop offset="0%" stopColor={colors.arrowEnd} />
+              <stop offset="100%" stopColor={colors.arrowStart} />
             </linearGradient>
 
             <linearGradient
@@ -226,88 +178,41 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="100%"
               y2="100%"
             >
-              <stop
-                offset="0%"
-                stopColor={colors.highlightStart}
-              />
-              <stop
-                offset="50%"
-                stopColor={colors.highlightMiddle}
-              />
-              <stop
-                offset="100%"
-                stopColor={colors.highlightEnd}
-              />
+              <stop offset="0%" stopColor={colors.highlightStart} />
+              <stop offset="50%" stopColor={colors.highlightMiddle} />
+              <stop offset="100%" stopColor={colors.highlightEnd} />
             </linearGradient>
-
-            {isSolar && (
-              <radialGradient
-                id={`${gradientId}-background`}
-                cx="50%"
-                cy="35%"
-                r="75%"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="#1F2937"
-                />
-                <stop
-                  offset="75%"
-                  stopColor="#111827"
-                />
-                <stop
-                  offset="100%"
-                  stopColor="#090E17"
-                />
-              </radialGradient>
-            )}
           </defs>
 
-          {/* Fundo */}
+          {/* Fundo branco */}
           <circle
             cx="12"
             cy="12"
-            r="10.85"
-            fill={
-              isSolar
-                ? `url(#${gradientId}-background)`
-                : colors.background
-            }
+            r="10.8"
+            fill={colors.background}
           />
-
-          {/* Borda interna premium */}
-          {isSolar && (
-            <circle
-              cx="12"
-              cy="12"
-              r="10.1"
-              fill="none"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="0.45"
-            />
-          )}
 
           {/* Borda base */}
           <circle
             cx="12"
             cy="12"
-            r="11.35"
+            r="11.3"
             fill="none"
             stroke={colors.baseBorder}
-            strokeWidth={isSolar ? 0.75 : 1}
-            opacity={isSolar ? 0.25 : 0.4}
+            strokeWidth="0.9"
+            opacity="0.7"
           />
 
-          {/* Segmento rotativo */}
+          {/* Circunferência animada */}
           <circle
             cx="12"
             cy="12"
-            r="11.35"
+            r="11.3"
             fill="none"
             stroke={`url(#${gradientId}-border)`}
-            strokeWidth={isSolar ? 1.35 : 1.2}
+            strokeWidth="1.2"
             strokeLinecap="round"
-            strokeDasharray={isSolar ? '19 53' : '30 42'}
+            strokeDasharray="24 47"
             className={cn(
               'origin-center',
               animated &&
@@ -316,51 +221,20 @@ export const AnimatedCompareIcon = React.forwardRef<
             )}
             style={{
               animationDuration:
-                animated && !disabled
-                  ? getDuration()
-                  : undefined,
+                animated && !disabled ? getDuration() : undefined,
             }}
           />
-
-          {/* Segundo fragmento discreto para efeito premium */}
-          {isSolar && (
-            <circle
-              cx="12"
-              cy="12"
-              r="11.35"
-              fill="none"
-              stroke="#FDE68A"
-              strokeWidth="0.65"
-              strokeLinecap="round"
-              strokeDasharray="4 68"
-              opacity="0.75"
-              className={cn(
-                'origin-center',
-                animated &&
-                  !disabled &&
-                  'motion-safe:animate-spin motion-reduce:animate-none'
-              )}
-              style={{
-                animationDuration:
-                  animated && !disabled
-                    ? `${parseFloat(getDuration()) * 1.35}s`
-                    : undefined,
-                animationDirection: 'reverse',
-              }}
-            />
-          )}
 
           {/* Seta superior */}
           <path
             d="M8 6.5L4.5 9L8 11.5M4.5 9H16"
             stroke={`url(#${gradientId}-arrow-primary)`}
-            strokeWidth={isSolar ? 1.45 : 1.25}
+            strokeWidth="1.35"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
-              !disabled &&
-                'group-hover:-translate-x-[1px]'
+              !disabled && 'group-hover:-translate-x-[1px]'
             )}
           />
 
@@ -368,13 +242,12 @@ export const AnimatedCompareIcon = React.forwardRef<
           <path
             d="M16 17.5L19.5 15L16 12.5M19.5 15H8"
             stroke={`url(#${gradientId}-arrow-secondary)`}
-            strokeWidth={isSolar ? 1.45 : 1.25}
+            strokeWidth="1.35"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
-              !disabled &&
-                'group-hover:translate-x-[1px]'
+              !disabled && 'group-hover:translate-x-[1px]'
             )}
           />
         </svg>

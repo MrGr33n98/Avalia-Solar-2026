@@ -80,10 +80,10 @@ export default function MobileBottomNav() {
     pathname.startsWith('/messages');
 
   const commonItemClass =
-    'group relative flex min-w-0 flex-col items-center justify-center gap-[3px] ' +
-    'outline-none transition-colors duration-200 ' +
-    'focus-visible:ring-2 focus-visible:ring-blue-400/60 ' +
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0F18]';
+    'group relative flex min-w-0 flex-col items-center justify-center ' +
+    'gap-[2px] outline-none transition-all duration-200 ' +
+    'focus-visible:ring-2 focus-visible:ring-blue-500/40 ' +
+    'focus-visible:ring-offset-1 focus-visible:ring-offset-white';
 
   return (
     <nav
@@ -92,78 +92,76 @@ export default function MobileBottomNav() {
         'fixed inset-x-0 bottom-0 z-[1000] md:hidden',
 
         /*
-         * Superfície premium dark.
-         * Somente a FooterBar é escura.
+         * Barra branca premium.
          */
-        'border-t border-white/[0.07]',
-        'bg-[#090E16]/[0.985]',
-        'shadow-[0_-10px_32px_-15px_rgba(2,6,23,0.55)]',
+        'h-[64px]',
+        'bg-white/95',
+        'border-t border-slate-200/80',
         'backdrop-blur-xl',
 
         /*
-         * Altura útil + safe-area.
+         * Profundidade elegante sem parecer card pesado.
          */
-        'h-[72px]',
-        'pb-[max(0.25rem,var(--sab,env(safe-area-inset-bottom)))]'
+        'shadow-[0_-8px_30px_-18px_rgba(15,23,42,0.32)]',
+
+        /*
+         * Safe area PWA / iOS.
+         */
+        'pb-[max(0.125rem,var(--sab,env(safe-area-inset-bottom)))]'
       )}
     >
-      {/* Highlight superior quase imperceptível */}
+      {/* Linha superior muito sutil */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent"
+        className="
+          pointer-events-none
+          absolute inset-x-0 top-0 h-px
+          bg-gradient-to-r
+          from-transparent
+          via-slate-300/60
+          to-transparent
+        "
       />
 
-      {/* Gradiente interno para profundidade */}
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.025] via-transparent to-black/10"
-      />
-
-      <div className="relative mx-auto grid h-full max-w-md grid-cols-5 items-end px-2">
+        className="
+          relative
+          mx-auto
+          grid
+          h-full
+          max-w-md
+          grid-cols-5
+          items-end
+          px-2
+        "
+      >
         {/* ======================================================
             1. INÍCIO
         ====================================================== */}
         <Link
           href="/"
-          aria-current={
-            isHomeActive
-              ? 'page'
-              : undefined
-          }
+          aria-current={isHomeActive ? 'page' : undefined}
           className={cn(
             commonItemClass,
-            'h-[62px] rounded-2xl pb-[9px] pt-[7px]',
+            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
 
             isHomeActive
-              ? 'text-blue-400'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-blue-600'
+              : 'text-slate-600 hover:text-slate-950'
           )}
         >
-          <span
-            className={cn(
-              'relative flex h-7 w-9 items-center justify-center rounded-xl transition-all duration-200',
-
-              isHomeActive &&
-                'bg-blue-500/[0.08]'
-            )}
-          >
-            <Home
-              className="h-[21px] w-[21px]"
-              strokeWidth={
-                isHomeActive
-                  ? 2.35
-                  : 1.8
-              }
-            />
-          </span>
+          <Home
+            className="h-[20px] w-[20px]"
+            strokeWidth={isHomeActive ? 2.25 : 1.8}
+          />
 
           <span
             className={cn(
-              'max-w-full truncate text-[10px] leading-none tracking-[-0.01em]',
+              'truncate text-[9px] leading-none',
 
               isHomeActive
-                ? 'font-semibold text-blue-400'
-                : 'font-medium text-slate-400'
+                ? 'font-semibold text-blue-600'
+                : 'font-medium text-slate-600'
             )}
           >
             Início
@@ -172,7 +170,14 @@ export default function MobileBottomNav() {
           {isHomeActive && (
             <span
               aria-hidden="true"
-              className="absolute bottom-[3px] h-[3px] w-[3px] rounded-full bg-blue-400 shadow-[0_0_7px_rgba(96,165,250,0.8)]"
+              className="
+                absolute
+                bottom-[1px]
+                h-[2px]
+                w-[14px]
+                rounded-full
+                bg-blue-600
+              "
             />
           )}
         </Link>
@@ -182,45 +187,28 @@ export default function MobileBottomNav() {
         ====================================================== */}
         <Link
           href="/companies"
-          aria-current={
-            isCompaniesActive
-              ? 'page'
-              : undefined
-          }
+          aria-current={isCompaniesActive ? 'page' : undefined}
           className={cn(
             commonItemClass,
-            'h-[62px] rounded-2xl pb-[9px] pt-[7px]',
+            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
 
             isCompaniesActive
-              ? 'text-blue-400'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-blue-600'
+              : 'text-slate-600 hover:text-slate-950'
           )}
         >
-          <span
-            className={cn(
-              'relative flex h-7 w-9 items-center justify-center rounded-xl transition-all duration-200',
-
-              isCompaniesActive &&
-                'bg-blue-500/[0.08]'
-            )}
-          >
-            <Building2
-              className="h-[21px] w-[21px]"
-              strokeWidth={
-                isCompaniesActive
-                  ? 2.35
-                  : 1.8
-              }
-            />
-          </span>
+          <Building2
+            className="h-[20px] w-[20px]"
+            strokeWidth={isCompaniesActive ? 2.25 : 1.8}
+          />
 
           <span
             className={cn(
-              'max-w-full truncate text-[10px] leading-none tracking-[-0.01em]',
+              'truncate text-[9px] leading-none',
 
               isCompaniesActive
-                ? 'font-semibold text-blue-400'
-                : 'font-medium text-slate-400'
+                ? 'font-semibold text-blue-600'
+                : 'font-medium text-slate-600'
             )}
           >
             Empresas
@@ -229,155 +217,213 @@ export default function MobileBottomNav() {
           {isCompaniesActive && (
             <span
               aria-hidden="true"
-              className="absolute bottom-[3px] h-[3px] w-[3px] rounded-full bg-blue-400 shadow-[0_0_7px_rgba(96,165,250,0.8)]"
+              className="
+                absolute
+                bottom-[1px]
+                h-[2px]
+                w-[14px]
+                rounded-full
+                bg-blue-600
+              "
             />
           )}
         </Link>
 
         {/* ======================================================
             3. BUSCAR
-
-            ÚNICO elemento que rompe verticalmente a silhueta.
+            ÚNICA ASSIMETRIA DA FOOTERBAR
         ====================================================== */}
-        <div className="relative flex h-[72px] min-w-0 flex-col items-center">
+        <div
+          className="
+            relative
+            flex
+            h-[64px]
+            min-w-0
+            flex-col
+            items-center
+          "
+        >
           {/*
-           * Halo recortado.
-           *
-           * Tem a mesma cor da FooterBar para criar o efeito
-           * de notch/assimetria SOMENTE na busca.
-           */}
+            Peça branca que simula o encaixe/curva da barra.
+
+            O círculo é propositalmente maior que o FAB.
+            Como tem a mesma cor da FooterBar, cria visualmente
+            a curva da referência.
+          */}
           <div
             aria-hidden="true"
-            className={cn(
-              'pointer-events-none absolute -top-[18px]',
-              'h-[72px] w-[72px] rounded-full',
-              'bg-[#090E16]',
-              'ring-1 ring-white/[0.06]'
-            )}
+            className="
+              pointer-events-none
+              absolute
+              -top-[17px]
+
+              h-[66px]
+              w-[78px]
+
+              rounded-[50%]
+
+              bg-white
+
+              border-t
+              border-slate-200/80
+
+              shadow-[0_-5px_14px_-12px_rgba(15,23,42,0.20)]
+            "
           />
 
+          {/* FAB */}
           <button
             type="button"
             onClick={() =>
-              router.push(
-                '/companies?focus=search'
-              )
+              router.push('/companies?focus=search')
             }
             aria-label="Buscar empresas e categorias"
             className={cn(
-              'absolute -top-[14px] z-10',
-              'flex h-[58px] w-[58px] items-center justify-center',
+              'absolute -top-[10px] z-10',
+
+              'flex h-[48px] w-[48px]',
+              'items-center justify-center',
+
               'rounded-full',
 
               /*
-               * Azul Prime com profundidade.
+               * Azul Prime.
                */
-              'border border-blue-300/20',
-              'bg-gradient-to-b from-[#3982FF] via-[#2563EB] to-[#1D4ED8]',
+              'bg-gradient-to-b',
+              'from-[#3B82F6]',
+              'via-[#2563EB]',
+              'to-[#1D4ED8]',
+
               'text-white',
 
               /*
-               * Ring escuro conecta o botão à barra.
+               * Contorno branco cria a integração com o recorte.
                */
-              'ring-[5px] ring-[#090E16]',
+              'ring-[4px] ring-white',
 
               /*
-               * Glow controlado.
+               * Sombra premium.
                */
-              'shadow-[0_10px_28px_rgba(37,99,235,0.38),0_0_20px_rgba(59,130,246,0.12)]',
+              'shadow-[0_7px_18px_rgba(37,99,235,0.30)]',
 
               'outline-none',
+
               'transition-[transform,box-shadow] duration-200 ease-out',
+
+              'hover:shadow-[0_9px_22px_rgba(37,99,235,0.36)]',
+
               'active:scale-[0.94]',
-              'hover:shadow-[0_12px_30px_rgba(37,99,235,0.44),0_0_24px_rgba(59,130,246,0.15)]',
-              'focus-visible:ring-[5px] focus-visible:ring-[#090E16]',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400'
+
+              'focus-visible:outline',
+              'focus-visible:outline-2',
+              'focus-visible:outline-offset-2',
+              'focus-visible:outline-blue-500'
             )}
           >
             <Search
-              className="h-[26px] w-[26px]"
-              strokeWidth={2.15}
+              className="h-[21px] w-[21px]"
+              strokeWidth={2.25}
             />
 
-            {/* reflexo premium */}
+            {/* reflexo sutil */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-[14px] top-[6px] h-px rounded-full bg-white/30"
+              className="
+                pointer-events-none
+                absolute
+                left-[12px]
+                right-[12px]
+                top-[5px]
+                h-px
+                rounded-full
+                bg-white/35
+              "
             />
           </button>
 
-          <span className="absolute bottom-[7px] text-[10px] font-semibold leading-none tracking-[-0.01em] text-blue-400">
+          <span
+            className="
+              absolute
+              bottom-[6px]
+              text-[9px]
+              font-semibold
+              leading-none
+              text-slate-900
+            "
+          >
             Buscar
           </span>
         </div>
 
         {/* ======================================================
             4. COMPARAR
-
-            Circunferência animada, mas NÃO rompe a FooterBar.
+            CÍRCULO ANIMADO SEM CRIAR ASSIMETRIA
         ====================================================== */}
         <button
           type="button"
           onClick={handleComparisonClick}
           aria-label={`Comparar: ${count} de ${maxComparison} empresas selecionadas`}
-          aria-disabled={
-            count === 0
-          }
+          aria-disabled={count === 0}
           className={cn(
             commonItemClass,
-            'h-[62px] rounded-2xl pb-[9px] pt-[7px]',
+            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
 
             isCompareActive
-              ? 'text-amber-300'
-              : count > 0
-                ? 'text-amber-200'
-                : 'text-slate-400 hover:text-slate-200'
+              ? 'text-blue-600'
+              : 'text-slate-600 hover:text-slate-950'
           )}
         >
-          <span className="relative flex h-7 w-10 items-center justify-center">
-            {/*
-             * Glow externo.
-             * Não muda dimensões/layout da barra.
-             */}
-            {count > 0 && (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'pointer-events-none absolute h-[38px] w-[38px] rounded-full',
-                  'border border-amber-400/15',
-                  'shadow-[0_0_16px_rgba(250,204,21,0.07)]',
-
-                  'motion-safe:animate-pulse motion-reduce:animate-none'
-                )}
-              />
-            )}
-
+          <span
+            className="
+              relative
+              flex
+              h-[24px]
+              w-[32px]
+              items-center
+              justify-center
+            "
+          >
             <AnimatedCompareIcon
-              size={32}
-              variant="solar"
+              size={25}
+              variant="default"
               animated
-              intensity={
-                count > 0
-                  ? 'strong'
-                  : 'subtle'
-              }
+              intensity={count > 0 ? 'strong' : 'subtle'}
               active={isCompareActive}
               aria-hidden="true"
             />
 
-            {/* Contador */}
+            {/* Badge */}
             {count > 0 && (
               <span
                 aria-live="polite"
-                className={cn(
-                  'absolute -right-[3px] -top-[6px] z-20',
-                  'flex h-[17px] min-w-[17px] items-center justify-center',
-                  'rounded-full px-1',
-                  'bg-amber-400',
-                  'text-[9px] font-extrabold leading-none text-[#111827]',
-                  'ring-[2px] ring-[#090E16]',
-                  'shadow-[0_2px_8px_rgba(245,158,11,0.35)]'
-                )}
+                className="
+                  absolute
+                  -right-[3px]
+                  -top-[5px]
+
+                  z-20
+
+                  flex
+                  h-[14px]
+                  min-w-[14px]
+                  items-center
+                  justify-center
+
+                  rounded-full
+
+                  bg-blue-600
+                  px-[3px]
+
+                  text-[8px]
+                  font-bold
+                  leading-none
+                  text-white
+
+                  ring-2
+                  ring-white
+
+                  shadow-sm
+                "
               >
                 {count}
               </span>
@@ -386,11 +432,11 @@ export default function MobileBottomNav() {
 
           <span
             className={cn(
-              'max-w-full truncate text-[10px] leading-none tracking-[-0.01em]',
+              'truncate text-[9px] leading-none',
 
-              isCompareActive || count > 0
-                ? 'font-semibold text-amber-300'
-                : 'font-medium text-slate-400'
+              isCompareActive
+                ? 'font-semibold text-blue-600'
+                : 'font-medium text-slate-600'
             )}
           >
             Comparar
@@ -399,7 +445,14 @@ export default function MobileBottomNav() {
           {isCompareActive && (
             <span
               aria-hidden="true"
-              className="absolute bottom-[3px] h-[3px] w-[3px] rounded-full bg-amber-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"
+              className="
+                absolute
+                bottom-[1px]
+                h-[2px]
+                w-[14px]
+                rounded-full
+                bg-blue-600
+              "
             />
           )}
         </button>
@@ -409,51 +462,63 @@ export default function MobileBottomNav() {
         ====================================================== */}
         <button
           type="button"
-          onClick={() =>
-            toggleChat('expanded')
-          }
+          onClick={() => toggleChat('expanded')}
           aria-label="Abrir mensagens"
           className={cn(
             commonItemClass,
-            'h-[62px] rounded-2xl pb-[9px] pt-[7px]',
+            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
 
             isMessagesActive
-              ? 'text-blue-400'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-blue-600'
+              : 'text-slate-600 hover:text-slate-950'
           )}
         >
-          <span className="relative flex h-7 w-9 items-center justify-center">
+          <span
+            className="
+              relative
+              flex
+              h-[22px]
+              w-[28px]
+              items-center
+              justify-center
+            "
+          >
             <MessageCircle
-              className="h-[21px] w-[21px]"
-              strokeWidth={
-                isMessagesActive
-                  ? 2.35
-                  : 1.8
-              }
+              className="h-[20px] w-[20px]"
+              strokeWidth={isMessagesActive ? 2.25 : 1.8}
             />
 
+            {/* Só um ponto discreto */}
             {unreadMessagesCount > 0 && (
               <span
                 aria-live="polite"
                 aria-label={`${unreadMessagesCount} mensagens não lidas`}
-                className={cn(
-                  'absolute -right-[1px] top-[1px]',
-                  'h-[7px] w-[7px] rounded-full',
-                  'bg-blue-500',
-                  'ring-2 ring-[#090E16]',
-                  'shadow-[0_0_8px_rgba(59,130,246,0.75)]'
-                )}
+                className="
+                  absolute
+                  -right-[1px]
+                  -top-[1px]
+
+                  h-[6px]
+                  w-[6px]
+
+                  rounded-full
+
+                  bg-blue-600
+
+                  ring-[1.5px]
+                  ring-white
+                "
               />
             )}
           </span>
 
           <span
             className={cn(
-              'max-w-full truncate text-[10px] leading-none tracking-[-0.01em]',
+              'truncate text-[9px] leading-none',
 
               isMessagesActive
-                ? 'font-semibold text-blue-400'
-                : 'font-medium text-slate-400'
+                ? 'font-semibold text-blue-600'
+                : 'font-medium text-slate-600'
             )}
           >
             Mensagens
@@ -462,7 +527,14 @@ export default function MobileBottomNav() {
           {isMessagesActive && (
             <span
               aria-hidden="true"
-              className="absolute bottom-[3px] h-[3px] w-[3px] rounded-full bg-blue-400 shadow-[0_0_7px_rgba(96,165,250,0.8)]"
+              className="
+                absolute
+                bottom-[1px]
+                h-[2px]
+                w-[14px]
+                rounded-full
+                bg-blue-600
+              "
             />
           )}
         </button>
