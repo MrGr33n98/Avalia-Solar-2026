@@ -349,8 +349,8 @@ export default function MobileBottomNav() {
         </div>
 
         {/* ======================================================
-            4. COMPARAR
-            Circunferência menor, sem interferir na label.
+          4. COMPARAR
+          Circunferência compacta sem encostar na label.
         ====================================================== */}
         <button
           type="button"
@@ -359,6 +359,10 @@ export default function MobileBottomNav() {
           aria-disabled={count === 0}
           className={cn(
             commonItemClass,
+
+            /*
+             * Mantém o mesmo alinhamento dos outros itens.
+             */
             'h-[56px] rounded-xl pb-[6px] pt-[7px]',
 
             isCompareActive
@@ -369,16 +373,22 @@ export default function MobileBottomNav() {
           <span
             className="
               relative
-              mb-[2px]
+
+              mb-[4px]
+
               flex
-              h-[22px]
-              w-[30px]
+
+              h-[19px]
+              w-[26px]
+
+              shrink-0
+
               items-center
               justify-center
             "
           >
             <AnimatedCompareIcon
-              size={22}
+              size={19}
               variant="default"
               animated
               intensity={count > 0 ? 'strong' : 'subtle'}
@@ -386,20 +396,21 @@ export default function MobileBottomNav() {
               aria-hidden="true"
             />
 
-            {/* Badge menor e mais próximo do ícone */}
+            {/* Badge compacto */}
             {count > 0 && (
               <span
                 aria-live="polite"
                 className="
                   absolute
-                  -right-[2px]
+
+                  -right-[1px]
                   -top-[4px]
 
                   z-20
 
                   flex
-                  h-[13px]
-                  min-w-[13px]
+                  h-[12px]
+                  min-w-[12px]
                   items-center
                   justify-center
 
@@ -416,7 +427,7 @@ export default function MobileBottomNav() {
                   ring-[1.5px]
                   ring-white
 
-                  shadow-[0_2px_5px_rgba(37,99,235,0.22)]
+                  shadow-[0_1px_4px_rgba(37,99,235,0.20)]
                 "
               >
                 {count}
@@ -426,7 +437,10 @@ export default function MobileBottomNav() {
 
           <span
             className={cn(
-              'truncate text-[9px] leading-none',
+              /*
+               * Label fica em seu próprio plano vertical.
+               */
+              'relative z-10 truncate text-[9px] leading-none',
 
               isCompareActive
                 ? 'font-semibold text-blue-600'

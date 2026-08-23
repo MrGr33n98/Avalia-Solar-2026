@@ -18,11 +18,11 @@ export interface AnimatedCompareIconProps {
 }
 
 const sizeMap = {
-  xs: 16,
-  sm: 20,
-  md: 24,
-  lg: 32,
-  xl: 40,
+  xs: 14,
+  sm: 18,
+  md: 20,
+  lg: 28,
+  xl: 36,
 } as const;
 
 export const AnimatedCompareIcon = React.forwardRef<
@@ -51,14 +51,16 @@ export const AnimatedCompareIcon = React.forwardRef<
     const pxSize =
       typeof size === 'number'
         ? size
-        : sizeMap[size as keyof typeof sizeMap] ?? 24;
+        : sizeMap[size as keyof typeof sizeMap] ?? 20;
 
     if (loading) {
       return (
         <Loader2
           className={cn(
             'animate-spin',
-            variant === 'solar' ? 'text-amber-500' : 'text-blue-600',
+            variant === 'solar'
+              ? 'text-amber-500'
+              : 'text-blue-600',
             className
           )}
           size={pxSize}
@@ -83,11 +85,11 @@ export const AnimatedCompareIcon = React.forwardRef<
           return '6s';
 
         case 'strong':
-          return '2.5s';
+          return '2.8s';
 
         case 'normal':
         default:
-          return '4s';
+          return '4.5s';
       }
     };
 
@@ -118,19 +120,20 @@ export const AnimatedCompareIcon = React.forwardRef<
         ref={ref}
         className={cn(
           'group relative inline-flex shrink-0 items-center justify-center rounded-full',
+
           'transition-[transform,filter] duration-200 ease-out',
 
           active && !disabled
-            ? 'scale-[0.96]'
+            ? 'scale-[0.97]'
             : 'scale-100',
 
           !disabled &&
             !isSolar &&
-            'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_rgba(37,99,235,0.16)]',
+            'hover:scale-[1.025] hover:drop-shadow-[0_0_4px_rgba(37,99,235,0.14)]',
 
           !disabled &&
             isSolar &&
-            'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.16)]',
+            'hover:scale-[1.025] hover:drop-shadow-[0_0_4px_rgba(245,158,11,0.14)]',
 
           disabled &&
             'cursor-not-allowed opacity-40',
@@ -165,6 +168,7 @@ export const AnimatedCompareIcon = React.forwardRef<
                 offset="0%"
                 stopColor={colors.arrowStart}
               />
+
               <stop
                 offset="100%"
                 stopColor={colors.arrowEnd}
@@ -182,6 +186,7 @@ export const AnimatedCompareIcon = React.forwardRef<
                 offset="0%"
                 stopColor={colors.arrowEnd}
               />
+
               <stop
                 offset="100%"
                 stopColor={colors.arrowStart}
@@ -199,10 +204,12 @@ export const AnimatedCompareIcon = React.forwardRef<
                 offset="0%"
                 stopColor={colors.highlightStart}
               />
+
               <stop
                 offset="50%"
                 stopColor={colors.highlightMiddle}
               />
+
               <stop
                 offset="100%"
                 stopColor={colors.highlightEnd}
@@ -210,37 +217,38 @@ export const AnimatedCompareIcon = React.forwardRef<
             </linearGradient>
           </defs>
 
-          {/* Fundo interno menor */}
+          {/* Fundo interno compacto */}
           <circle
             cx="12"
             cy="12"
-            r="9.35"
+            r="8.25"
             fill={colors.background}
           />
 
-          {/* Borda base menor */}
+          {/* Circunferência base compacta */}
           <circle
             cx="12"
             cy="12"
-            r="9.85"
+            r="8.75"
             fill="none"
             stroke={colors.baseBorder}
-            strokeWidth="0.8"
-            opacity="0.65"
+            strokeWidth="0.7"
+            opacity="0.6"
           />
 
-          {/* Circunferência animada menor */}
+          {/* Circunferência animada compacta */}
           <circle
             cx="12"
             cy="12"
-            r="9.85"
+            r="8.75"
             fill="none"
             stroke={`url(#${gradientId}-border)`}
-            strokeWidth="1.05"
+            strokeWidth="0.9"
             strokeLinecap="round"
-            strokeDasharray="20 42"
+            strokeDasharray="17 38"
             className={cn(
               'origin-center',
+
               animated &&
                 !disabled &&
                 'motion-safe:animate-spin motion-reduce:animate-none'
@@ -255,29 +263,31 @@ export const AnimatedCompareIcon = React.forwardRef<
 
           {/* Seta superior */}
           <path
-            d="M8.25 7L5.25 9.15L8.25 11.3M5.25 9.15H15.75"
+            d="M8.7 7.6L6 9.45L8.7 11.3M6 9.45H15.4"
             stroke={`url(#${gradientId}-arrow-primary)`}
-            strokeWidth="1.2"
+            strokeWidth="1.1"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
+
               !disabled &&
-                'group-hover:-translate-x-[0.75px]'
+                'group-hover:-translate-x-[0.6px]'
             )}
           />
 
           {/* Seta inferior */}
           <path
-            d="M15.75 17L18.75 14.85L15.75 12.7M18.75 14.85H8.25"
+            d="M15.3 16.4L18 14.55L15.3 12.7M18 14.55H8.6"
             stroke={`url(#${gradientId}-arrow-secondary)`}
-            strokeWidth="1.2"
+            strokeWidth="1.1"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
+
               !disabled &&
-                'group-hover:translate-x-[0.75px]'
+                'group-hover:translate-x-[0.6px]'
             )}
           />
         </svg>
