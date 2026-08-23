@@ -88,5 +88,15 @@ RSpec.describe Creator::PublicProfileService, type: :service do
       expect { described_class.new(profile).call }.not_to raise_error
       expect(described_class.new(profile).call[:recent_reviews]).to eq([])
     end
+
+    it 'expõe Tree somente quando há bloco ativo' do
+      result = described_class.new(profile).call[:creator]
+      expect(result).to include(tree_enabled: false, tree_url: nil)
+
+      create(:creator_tree_block, reviewer: profile, active: true)
+      result = described_class.new(profile).call[:creator]
+
+      expect(result).to include(tree_enabled: true, tree_url: "/creators/#{profile.public_slug}/tree")
+    end
   end
 end

@@ -3,9 +3,9 @@
 import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function CreatorShareButton({ endpoint }: { endpoint?: string }) {
+export function CreatorShareButton({ endpoint, creatorSlug }: { endpoint?: string; creatorSlug: string }) {
   async function share() {
-    const url = window.location.href;
+    const url = `${window.location.origin}/creators/${encodeURIComponent(creatorSlug)}`;
     if (navigator.share) {
       await navigator.share({ title: document.title, url });
       if (endpoint) void fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ share: { channel: 'native' } }) });

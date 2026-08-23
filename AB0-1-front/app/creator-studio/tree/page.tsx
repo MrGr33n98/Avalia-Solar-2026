@@ -30,6 +30,7 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { useAuth } from '@/contexts/AuthContext';
 import { companiesApi, reviewerProfileApi, type Company } from '@/lib/api';
 import { creatorTreeApi, type CreatorTreeBlock } from '@/lib/api/creatorTree';
+import { creatorTreeUrl } from '@/lib/api/creatorTree';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { ReviewerPublication } from '@/types/reviewer-publication';
 
@@ -80,7 +81,7 @@ export default function CreatorTreePage() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '', color: 'blue', icon: 'link' });
 
-  const publicUrl = slug && typeof window !== 'undefined' ? `${window.location.origin}/@${slug}` : '';
+  const publicUrl = slug ? creatorTreeUrl(slug) : '';
 
   useEffect(() => {
     void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])

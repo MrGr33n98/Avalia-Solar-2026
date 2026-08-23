@@ -24,8 +24,13 @@ class CreatorTreeBlock < ApplicationRecord
   scope :active_ordered, -> { where(active: true).order(position: :asc, id: :asc) }
 
   before_validation :normalize_whatsapp
+  after_commit :invalidate_creator_profile_cache
 
   private
+
+  def invalidate_creator_profile_cache
+    Creator::PublicProfileService.invalidate(reviewer)
+  end
 
   def safe_url
     return if url.blank?

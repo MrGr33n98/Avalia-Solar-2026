@@ -24,6 +24,8 @@ type CreatorData = {
     linkedin_url?: string;
     instagram_url?: string;
     youtube_url?: string;
+    tree_enabled?: boolean;
+    tree_url?: string | null;
   };
   stats: Record<string, number | null>;
   recent_publications: Array<{
@@ -129,6 +131,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
         </nav>
         <CreatorHero
           creator={creator}
+          creatorSlug={params.slug}
           publicationCount={data.recent_publications.length}
           reviewCount={stats.review_count ?? 0}
         />
@@ -146,27 +149,16 @@ export default async function CreatorPage({ params }: { params: { slug: string }
                 {creator.public_bio || 'Perfil público do avaliador Avalia Solar.'}
               </p>
             </section>
-            <section className="grid grid-cols-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.03)] text-center">
-              <div>
-                <strong className="block text-2xl">{data.recent_publications.length}</strong>
-                <span className="text-xs text-[#718096]">Publicações</span>
-              </div>
-              <div>
-                <strong className="block text-2xl">{stats.review_count ?? 0}</strong>
-                <span className="text-xs text-[#718096]">Avaliações</span>
-              </div>
-              <div>
-                <strong className="block text-2xl">{stats.achievement_count ?? 0}</strong>
-                <span className="text-xs text-[#718096]">Conquistas</span>
-              </div>
-            </section>
+            <p className="text-sm text-[#718096]">
+              {data.recent_publications.length} publicações · {stats.review_count ?? 0} avaliações
+              · {stats.achievement_count ?? 0} conquistas
+            </p>
             <section
               id="publicacoes"
               className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_6px_24px_rgba(15,23,42,0.03)]"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-bold">Publicações mais recentes</h2>
-                <Link href="/review-dashboard/publications/new" className="inline-flex min-h-10 items-center rounded-lg bg-[#1e5eff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#174dcc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e5eff] focus-visible:ring-offset-2">Criar publicação</Link>
               </div>
               <div className="mt-4 space-y-3">
                 {data.recent_publications.length ? (
@@ -225,6 +217,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
             <CreatorContactForm
               creatorSlug={params.slug}
               whatsappUrl={creator.whatsapp_url}
+              treeUrl={creator.tree_enabled ? creator.tree_url || undefined : undefined}
               socialLinks={socialLinks}
             />
             <section
@@ -259,7 +252,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
           </aside>
         </div>
       </div>
-      <CreatorStickyContact />
+      <CreatorStickyContact whatsappUrl={creator.whatsapp_url} />
     </main>
   );
 }

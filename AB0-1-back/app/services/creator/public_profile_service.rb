@@ -30,7 +30,10 @@ module Creator
     private
 
     def creator
-      Creator::IdentityProjection.resolve(@profile)
+      Creator::IdentityProjection.resolve(@profile).merge(
+        tree_enabled: @profile.creator_tree_blocks.active_ordered.exists?,
+        tree_url: @profile.creator_tree_blocks.active_ordered.exists? ? "/creators/#{@profile.public_slug}/tree" : nil
+      )
     end
 
     def stats

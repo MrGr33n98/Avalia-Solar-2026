@@ -1,6 +1,7 @@
 import Image from 'next/image';
-import { CheckCircle2, ExternalLink, Instagram, Linkedin } from 'lucide-react';
+import { CheckCircle2, Instagram, Linkedin } from 'lucide-react';
 import { CreatorShareButton } from './CreatorShareButton';
+import { track } from '@/lib/analytics/lazy';
 
 type Creator = {
   name: string;
@@ -12,14 +13,22 @@ type Creator = {
   website_url?: string;
   linkedin_url?: string;
   instagram_url?: string;
+  whatsapp_url?: string;
+  tree_enabled?: boolean;
+  tree_url?: string | null;
   gamification_level?: {
     name: string;
   } | null;
 };
 
-type Props = { creator: Creator; publicationCount: number; reviewCount: number };
+type Props = {
+  creator: Creator;
+  creatorSlug: string;
+  publicationCount: number;
+  reviewCount: number;
+};
 
-export function CreatorHero({ creator, publicationCount, reviewCount }: Props) {
+export function CreatorHero({ creator, creatorSlug, publicationCount, reviewCount }: Props) {
   const location = [creator.city, creator.state].filter(Boolean).join(', ') || 'Brasil';
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
@@ -72,6 +81,38 @@ export function CreatorHero({ creator, publicationCount, reviewCount }: Props) {
             {creator.public_headline || 'Especialista em Energia Solar'}
           </p>
           <p className="mt-1 text-sm text-[#718096]">⌖ {location}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href="#contato"
+              className="inline-flex min-h-10 items-center rounded-lg bg-[#1e5eff] px-4 py-2 text-sm font-semibold text-white hover:bg-[#174dcc]"
+            >
+              Entrar em contato
+            </a>
+            {creator.whatsapp_url && (
+              <a
+                href={creator.whatsapp_url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track('whatsapp_click', {
+                  company_id: 'creator',
+                  company_name: creatorSlug,
+                  cta_location: 'creator_profile_hero',
+                })}
+                className="inline-flex min-h-10 items-center rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+              >
+                WhatsApp
+              </a>
+            )}
+            {creator.tree_enabled && creator.tree_url && (
+              <a
+                href={creator.tree_url}
+                className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Meu Tree
+              </a>
+            )}
+            <CreatorShareButton creatorSlug={creatorSlug} />
+          </div>
         </div>
         <nav
           aria-label="Seções do perfil"

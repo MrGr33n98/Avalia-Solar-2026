@@ -4,14 +4,18 @@ import { useState } from 'react';
 import { buildApiUrl } from '@/lib/api-config';
 import { ExternalLink, Globe, Instagram, Linkedin } from 'lucide-react';
 import { normalizeSocialUrl, type SocialUrlKind } from '@/lib/socialUrl';
+import { track } from '@/lib/analytics/lazy';
+import Link from 'next/link';
 
 export function CreatorContactForm({
   creatorSlug,
   whatsappUrl,
+  treeUrl,
   socialLinks = [],
 }: {
   creatorSlug: string;
   whatsappUrl?: string;
+  treeUrl?: string;
   socialLinks?: Array<{ label: string; value: string; icon: 'linkedin' | 'instagram' | 'website' }>;
 }) {
   const [sent, setSent] = useState(false);
@@ -46,6 +50,11 @@ export function CreatorContactForm({
           href={whatsappUrl}
           target="_blank"
           rel="noreferrer"
+          onClick={() => track('whatsapp_click', {
+            company_id: 'creator',
+            company_name: creatorSlug,
+            cta_location: 'creator_profile',
+          })}
           className="mt-3 flex min-h-10 items-center justify-center rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
         >
           Falar no WhatsApp
@@ -76,6 +85,14 @@ export function CreatorContactForm({
             );
           })}
         </div>
+      )}
+      {treeUrl && (
+        <Link
+          href={treeUrl}
+          className="mt-3 flex min-h-10 items-center justify-center rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Meu Tree ↗
+        </Link>
       )}
       <p className="mt-2 text-sm text-slate-600">Tire dúvidas ou fale sobre seu projeto.</p>
       <form onSubmit={submit} className="mt-4 space-y-3">

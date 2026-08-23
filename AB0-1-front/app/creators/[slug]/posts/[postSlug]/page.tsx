@@ -74,7 +74,7 @@ export default async function CreatorPostPage({
         </Link>{' '}
         / Publicação
       </p>
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4"><h1 className="text-4xl font-bold text-slate-900">{post.title}</h1><div className="flex items-center gap-2"><PublicationLikeButton creatorSlug={params.slug} publicationSlug={params.postSlug} initialCount={post.likes_count ?? 0} /><CreatorShareButton endpoint={`/api/v1/creators/${params.slug}/publications/${params.postSlug}/share`} /></div></div>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4"><h1 className="text-4xl font-bold text-slate-900">{post.title}</h1><div className="flex items-center gap-2"><PublicationLikeButton creatorSlug={params.slug} publicationSlug={params.postSlug} initialCount={post.likes_count ?? 0} /><CreatorShareButton creatorSlug={params.slug} endpoint={`/api/v1/creators/${params.slug}/publications/${params.postSlug}/share`} /></div></div>
       {post.excerpt && <p className="mt-4 text-xl text-slate-600">{post.excerpt}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
         <span>

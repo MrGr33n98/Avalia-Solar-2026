@@ -55,6 +55,11 @@ export type PublicCreatorTreeResponse = {
   blocks: PublicCreatorTreeBlock[];
 };
 
+export function creatorTreeUrl(slug: string, origin?: string): string {
+  const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${base}/creators/${encodeURIComponent(slug)}/tree`;
+}
+
 export type CreatorTreeListResponse = {
   profile: {
     public_slug?: string | null;
