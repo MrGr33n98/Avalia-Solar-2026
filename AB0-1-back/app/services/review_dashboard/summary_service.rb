@@ -17,14 +17,16 @@ module ReviewDashboard
       start_date = start_date.beginning_of_day
 
       started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      chart_data = measure('activity_chart') { activity_chart(start_date:, end_date: now) }
       sections = {
         kpis: measure('kpis') { kpis },
         gamification: measure('gamification') { gamification },
         impact: measure('impact') { impact },
         recommendations: measure('recommendations') { recommendations },
         recent_activities: measure('recent_activities') { recent_activities },
-        charts: chart_data.nil? ? nil : { activity_30d: chart_data },
+        charts: measure('charts') do
+          chart_data = activity_chart(start_date:, end_date: now)
+          chart_data ? { activity_30d: chart_data } : nil
+        end,
         profile: measure('profile') { profile },
         sustainable_journey: nil
       }
@@ -113,7 +115,7 @@ module ReviewDashboard
         {
           name: company.name,
           city: [company.city, company.state].compact.join(', '),
-            rating: company.rating_avg,
+          rating: company.rating_avg,
           badge: company.featured ? 'Popular' : 'Verificada'
         }
       end
