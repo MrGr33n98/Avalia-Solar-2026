@@ -47,6 +47,7 @@ export async function generateMetadata({
       title: post.title,
       description: desc,
       images: post.cover_image ? [post.cover_image] : undefined,
+      url: `https://www.avaliasolar.com.br/creators/${params.slug}/posts/${params.postSlug}`,
       publishedTime: post.published_at,
       modifiedTime: post.updated_at || post.published_at,
       authors: post.author?.name ? [post.author.name] : undefined,
