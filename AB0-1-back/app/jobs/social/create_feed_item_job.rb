@@ -23,7 +23,7 @@ module Social
         actor: actor,
         subject: subject,
         verb: verb
-      end
+      )
       feed_item.visibility = 'public'
       feed_item.published_at ||= subject.try(:published_at) || subject.created_at
       feed_item.save!
