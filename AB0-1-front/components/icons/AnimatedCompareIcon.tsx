@@ -81,8 +81,10 @@ export const AnimatedCompareIcon = React.forwardRef<
       switch (intensity) {
         case 'subtle':
           return '6s';
+
         case 'strong':
           return '2.5s';
+
         case 'normal':
         default:
           return '4s';
@@ -118,17 +120,20 @@ export const AnimatedCompareIcon = React.forwardRef<
           'group relative inline-flex shrink-0 items-center justify-center rounded-full',
           'transition-[transform,filter] duration-200 ease-out',
 
-          active && !disabled ? 'scale-[0.96]' : 'scale-100',
+          active && !disabled
+            ? 'scale-[0.96]'
+            : 'scale-100',
 
           !disabled &&
             !isSolar &&
-            'hover:scale-[1.035] hover:drop-shadow-[0_0_8px_rgba(37,99,235,0.18)]',
+            'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_rgba(37,99,235,0.16)]',
 
           !disabled &&
             isSolar &&
-            'hover:scale-[1.035] hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.18)]',
+            'hover:scale-[1.03] hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.16)]',
 
-          disabled && 'cursor-not-allowed opacity-40',
+          disabled &&
+            'cursor-not-allowed opacity-40',
 
           className
         )}
@@ -156,8 +161,14 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="1"
               y2="0"
             >
-              <stop offset="0%" stopColor={colors.arrowStart} />
-              <stop offset="100%" stopColor={colors.arrowEnd} />
+              <stop
+                offset="0%"
+                stopColor={colors.arrowStart}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.arrowEnd}
+              />
             </linearGradient>
 
             <linearGradient
@@ -167,8 +178,14 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="1"
               y2="0"
             >
-              <stop offset="0%" stopColor={colors.arrowEnd} />
-              <stop offset="100%" stopColor={colors.arrowStart} />
+              <stop
+                offset="0%"
+                stopColor={colors.arrowEnd}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.arrowStart}
+              />
             </linearGradient>
 
             <linearGradient
@@ -178,41 +195,50 @@ export const AnimatedCompareIcon = React.forwardRef<
               x2="100%"
               y2="100%"
             >
-              <stop offset="0%" stopColor={colors.highlightStart} />
-              <stop offset="50%" stopColor={colors.highlightMiddle} />
-              <stop offset="100%" stopColor={colors.highlightEnd} />
+              <stop
+                offset="0%"
+                stopColor={colors.highlightStart}
+              />
+              <stop
+                offset="50%"
+                stopColor={colors.highlightMiddle}
+              />
+              <stop
+                offset="100%"
+                stopColor={colors.highlightEnd}
+              />
             </linearGradient>
           </defs>
 
-          {/* Fundo branco */}
+          {/* Fundo interno menor */}
           <circle
             cx="12"
             cy="12"
-            r="10.8"
+            r="9.35"
             fill={colors.background}
           />
 
-          {/* Borda base */}
+          {/* Borda base menor */}
           <circle
             cx="12"
             cy="12"
-            r="11.3"
+            r="9.85"
             fill="none"
             stroke={colors.baseBorder}
-            strokeWidth="0.9"
-            opacity="0.7"
+            strokeWidth="0.8"
+            opacity="0.65"
           />
 
-          {/* Circunferência animada */}
+          {/* Circunferência animada menor */}
           <circle
             cx="12"
             cy="12"
-            r="11.3"
+            r="9.85"
             fill="none"
             stroke={`url(#${gradientId}-border)`}
-            strokeWidth="1.2"
+            strokeWidth="1.05"
             strokeLinecap="round"
-            strokeDasharray="24 47"
+            strokeDasharray="20 42"
             className={cn(
               'origin-center',
               animated &&
@@ -221,33 +247,37 @@ export const AnimatedCompareIcon = React.forwardRef<
             )}
             style={{
               animationDuration:
-                animated && !disabled ? getDuration() : undefined,
+                animated && !disabled
+                  ? getDuration()
+                  : undefined,
             }}
           />
 
           {/* Seta superior */}
           <path
-            d="M8 6.5L4.5 9L8 11.5M4.5 9H16"
+            d="M8.25 7L5.25 9.15L8.25 11.3M5.25 9.15H15.75"
             stroke={`url(#${gradientId}-arrow-primary)`}
-            strokeWidth="1.35"
+            strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
-              !disabled && 'group-hover:-translate-x-[1px]'
+              !disabled &&
+                'group-hover:-translate-x-[0.75px]'
             )}
           />
 
           {/* Seta inferior */}
           <path
-            d="M16 17.5L19.5 15L16 12.5M19.5 15H8"
+            d="M15.75 17L18.75 14.85L15.75 12.7M18.75 14.85H8.25"
             stroke={`url(#${gradientId}-arrow-secondary)`}
-            strokeWidth="1.35"
+            strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={cn(
               'transition-transform duration-300 ease-out',
-              !disabled && 'group-hover:translate-x-[1px]'
+              !disabled &&
+                'group-hover:translate-x-[0.75px]'
             )}
           />
         </svg>

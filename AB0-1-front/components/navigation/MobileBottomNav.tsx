@@ -92,7 +92,7 @@ export default function MobileBottomNav() {
         'fixed inset-x-0 bottom-0 z-[1000] md:hidden',
 
         /*
-         * Barra branca premium.
+         * FooterBar branca, limpa e premium.
          */
         'h-[64px]',
         'bg-white/95',
@@ -100,17 +100,17 @@ export default function MobileBottomNav() {
         'backdrop-blur-xl',
 
         /*
-         * Profundidade elegante sem parecer card pesado.
+         * Sombra leve para separar do conteúdo.
          */
         'shadow-[0_-8px_30px_-18px_rgba(15,23,42,0.32)]',
 
         /*
-         * Safe area PWA / iOS.
+         * Safe area para iOS / PWA.
          */
         'pb-[max(0.125rem,var(--sab,env(safe-area-inset-bottom)))]'
       )}
     >
-      {/* Linha superior muito sutil */}
+      {/* Linha superior sutil */}
       <div
         aria-hidden="true"
         className="
@@ -244,11 +244,8 @@ export default function MobileBottomNav() {
           "
         >
           {/*
-            Peça branca que simula o encaixe/curva da barra.
-
-            O círculo é propositalmente maior que o FAB.
-            Como tem a mesma cor da FooterBar, cria visualmente
-            a curva da referência.
+            Peça branca que cria o efeito de encaixe/curva
+            exclusivamente no Buscar.
           */}
           <div
             aria-hidden="true"
@@ -271,7 +268,6 @@ export default function MobileBottomNav() {
             "
           />
 
-          {/* FAB */}
           <button
             type="button"
             onClick={() =>
@@ -286,9 +282,6 @@ export default function MobileBottomNav() {
 
               'rounded-full',
 
-              /*
-               * Azul Prime.
-               */
               'bg-gradient-to-b',
               'from-[#3B82F6]',
               'via-[#2563EB]',
@@ -297,12 +290,12 @@ export default function MobileBottomNav() {
               'text-white',
 
               /*
-               * Contorno branco cria a integração com o recorte.
+               * Ring branco integra o FAB à FooterBar.
                */
               'ring-[4px] ring-white',
 
               /*
-               * Sombra premium.
+               * Sombra azul controlada.
                */
               'shadow-[0_7px_18px_rgba(37,99,235,0.30)]',
 
@@ -325,7 +318,7 @@ export default function MobileBottomNav() {
               strokeWidth={2.25}
             />
 
-            {/* reflexo sutil */}
+            {/* Reflexo superior */}
             <span
               aria-hidden="true"
               className="
@@ -357,7 +350,7 @@ export default function MobileBottomNav() {
 
         {/* ======================================================
             4. COMPARAR
-            CÍRCULO ANIMADO SEM CRIAR ASSIMETRIA
+            Circunferência menor, sem interferir na label.
         ====================================================== */}
         <button
           type="button"
@@ -376,15 +369,16 @@ export default function MobileBottomNav() {
           <span
             className="
               relative
+              mb-[2px]
               flex
-              h-[24px]
-              w-[32px]
+              h-[22px]
+              w-[30px]
               items-center
               justify-center
             "
           >
             <AnimatedCompareIcon
-              size={25}
+              size={22}
               variant="default"
               animated
               intensity={count > 0 ? 'strong' : 'subtle'}
@@ -392,37 +386,37 @@ export default function MobileBottomNav() {
               aria-hidden="true"
             />
 
-            {/* Badge */}
+            {/* Badge menor e mais próximo do ícone */}
             {count > 0 && (
               <span
                 aria-live="polite"
                 className="
                   absolute
-                  -right-[3px]
-                  -top-[5px]
+                  -right-[2px]
+                  -top-[4px]
 
                   z-20
 
                   flex
-                  h-[14px]
-                  min-w-[14px]
+                  h-[13px]
+                  min-w-[13px]
                   items-center
                   justify-center
 
                   rounded-full
 
                   bg-blue-600
-                  px-[3px]
+                  px-[2px]
 
-                  text-[8px]
+                  text-[7px]
                   font-bold
                   leading-none
                   text-white
 
-                  ring-2
+                  ring-[1.5px]
                   ring-white
 
-                  shadow-sm
+                  shadow-[0_2px_5px_rgba(37,99,235,0.22)]
                 "
               >
                 {count}
@@ -488,7 +482,6 @@ export default function MobileBottomNav() {
               strokeWidth={isMessagesActive ? 2.25 : 1.8}
             />
 
-            {/* Só um ponto discreto */}
             {unreadMessagesCount > 0 && (
               <span
                 aria-live="polite"
