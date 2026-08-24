@@ -45,11 +45,23 @@ module Feed
 
       if @view == 'for_you' && @cursor_data[:score]
         score = @cursor_data[:score].to_i
+
+        cursor_condition = <<~SQL.squish
+          COALESCE(engagement.engagement_score, 0) < ?
+          OR (
+            COALESCE(engagement.engagement_score, 0) = ?
+            AND (
+              feed_items.published_at < ?
+              OR (
+                feed_items.published_at = ?
+                AND feed_items.id < ?
+              )
+            )
+          )
+        SQL
+
         return scope.where(
-          'COALESCE(engagement.engagement_score, 0) < ? OR '
-          '(COALESCE(engagement.engagement_score, 0) = ? AND '
-          '(feed_items.published_at < ? OR '
-          '(feed_items.published_at = ? AND feed_items.id < ?)))',
+          cursor_condition,
           score,
           score,
           @cursor_data[:published_at],
