@@ -1,13 +1,13 @@
 'use client';
 
-import { Building2, MapPin, RotateCcw, ShieldCheck, SlidersHorizontal, Star, ChevronDown } from 'lucide-react';
+import { Building2, MapPin, RotateCcw, ShieldCheck, SlidersHorizontal, Star } from 'lucide-react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
+import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
 
 interface DecisionChipsProps {
   filters: {
@@ -21,12 +21,8 @@ interface DecisionChipsProps {
   hasActiveFilters?: boolean;
   onOpenMoreFilters?: () => void;
   activeFiltersCount?: number;
+  moreFiltersOpen?: boolean;
 }
-
-const UFS = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
-  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
 
 export default function DecisionChips({
   filters,
@@ -35,6 +31,7 @@ export default function DecisionChips({
   hasActiveFilters = false,
   onOpenMoreFilters,
   activeFiltersCount = 0,
+  moreFiltersOpen = false,
 }: DecisionChipsProps) {
   return (
     <section className="bg-white py-3">
@@ -117,8 +114,8 @@ export default function DecisionChips({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Qualquer Estado</SelectItem>
-              {UFS.map(uf => (
-                <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+              {BRAZIL_STATES_OPTIONS.map(({ state, label }) => (
+                <SelectItem key={state} value={state}>{label} ({state})</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -151,7 +148,11 @@ export default function DecisionChips({
           <button
             type="button"
             onClick={onOpenMoreFilters}
-            className="flex h-9 min-w-0 items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2 sm:px-3 text-[10px] sm:text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 sm:h-11"
+            aria-haspopup="dialog"
+            aria-expanded={moreFiltersOpen}
+            aria-controls="category-filters-panel"
+            id="category-more-filters"
+            className="flex h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:h-11 sm:gap-1.5 sm:px-3 sm:text-xs"
           >
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-blue-600 sm:h-4 sm:w-4" />
             <span>Mais filtros</span>

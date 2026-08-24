@@ -7,6 +7,10 @@ import CategoryHero from '@/components/categories/CategoryHero';
 import CategoryAdsRail from '@/components/categories/CategoryAdsRail';
 import { cn } from '@/lib/utils';
 import DecisionChips from '@/components/categories/DecisionChips';
+import CategoryFiltersPanel, {
+  CategoryFilterValue,
+  CategoryFilters,
+} from '@/components/categories/CategoryFiltersPanel';
 import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
 import CategoryCompaniesTable from '@/components/categories/CategoryCompaniesTable';
 import FeaturedCompanyCard from '@/components/categories/FeaturedCompanyCard';
@@ -33,72 +37,7 @@ import { Banner, Category, Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
 
-function CategoryMobileFiltersSheet({
-  open,
-  filters,
-  onChange,
-  onClear,
-  onClose,
-}: {
-  open: boolean;
-  filters: { verified: boolean; minRating: number; state: string; projectType?: string };
-  onChange: (key: string, value: SidebarFilterValue) => void;
-  onClear: () => void;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filtros da categoria">
-      <button type="button" className="absolute inset-0 bg-slate-950/40" aria-label="Fechar filtros" onClick={onClose} />
-      <section className="absolute inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-950">Filtrar empresas</h2>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Fechar filtros"><X className="h-5 w-5" /></button>
-        </div>
-        <div className="space-y-5">
-          <label className="block text-sm font-semibold text-slate-800">
-            Estado
-            <input value={filters.state} onChange={(event) => onChange('state', event.target.value.toUpperCase())} placeholder="Ex.: SC" maxLength={2} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 uppercase outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-          </label>
-          <label className="flex min-h-11 items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-800">
-            Somente empresas verificadas
-            <input type="checkbox" checked={filters.verified} onChange={(event) => onChange('verified', event.target.checked)} className="h-5 w-5 accent-blue-600" />
-          </label>
-          <label className="block text-sm font-semibold text-slate-800">
-            Avaliação mínima
-            <select value={filters.minRating || 0} onChange={(event) => onChange('minRating', Number(event.target.value))} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-600">
-              <option value={0}>Qualquer avaliação</option>
-              <option value={4}>4,0 ou mais</option>
-              <option value={4.5}>4,5 ou mais</option>
-            </select>
-          </label>
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button type="button" onClick={onClear} className="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700">Limpar</button>
-          <button type="button" onClick={onClose} className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">Aplicar filtros</button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 type CategoryBanner = Banner & { company_id?: number };
-type SidebarFilterValue = string | number | boolean | undefined;
 
 interface CategoryPageClientProps {
   initialCategory: Category;
@@ -124,7 +63,7 @@ export default function CategoryPageClient({
   // Initialise from URL params so filters are shareable / survive back-navigation
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [sidebarFilters, setSidebarFilters] = useState(() => ({
+  const [sidebarFilters, setSidebarFilters] = useState<CategoryFilters>(() => ({
     verified: searchParams.get('verified') === 'true',
     minRating: parseFloat(searchParams.get('min_rating') || '0') || 0,
     state: searchParams.get('state') || '',
@@ -132,6 +71,7 @@ export default function CategoryPageClient({
   }));
   const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'rating_desc');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [draftFilters, setDraftFilters] = useState<CategoryFilters>(sidebarFilters);
   const isLoading = false;
 
   const [hasBanners, setHasBanners] = useState(false);
@@ -177,7 +117,21 @@ export default function CategoryPageClient({
     return result;
   }, [initialCompanies]);
 
-  const handleSidebarFilterChange = (key: string, value: SidebarFilterValue) => {
+  const trackFilterEvent = useCallback(
+    (eventName: string, filtersCount: number) => {
+      track(eventName, {
+        category_slug: slug,
+        viewport:
+          typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+            ? 'desktop'
+            : 'mobile',
+        active_filters_count: filtersCount,
+      });
+    },
+    [slug]
+  );
+
+  const handleSidebarFilterChange = (key: string, value: CategoryFilterValue) => {
     setSidebarFilters((prev) => ({ ...prev, [key]: value }));
     const urlKey: Record<string, string> = {
       verified: 'verified',
@@ -193,6 +147,58 @@ export default function CategoryPageClient({
             : String(value),
       });
     }
+  };
+
+  const openFilters = () => {
+    setDraftFilters(sidebarFilters);
+    setMobileFiltersOpen(true);
+    trackFilterEvent('category_filters_opened', activeFiltersCount);
+  };
+
+  const applyPanelFilters = (nextFilters: CategoryFilters) => {
+    setSidebarFilters(nextFilters);
+    syncToUrl({
+      verified: nextFilters.verified ? 'true' : undefined,
+      min_rating: nextFilters.minRating > 0 ? String(nextFilters.minRating) : undefined,
+      state: nextFilters.state || undefined,
+      project_type: nextFilters.projectType || undefined,
+    });
+    const nextCount = [
+      nextFilters.verified,
+      nextFilters.minRating > 0,
+      nextFilters.state,
+      nextFilters.projectType,
+    ].filter(Boolean).length;
+    trackFilterEvent('category_filters_applied', nextCount);
+    setMobileFiltersOpen(false);
+  };
+
+  const handlePanelChange = (key: keyof CategoryFilters, value: CategoryFilterValue) => {
+    const nextFilters = { ...draftFilters, [key]: value } as CategoryFilters;
+    setDraftFilters(nextFilters);
+    const nextCount = [
+      nextFilters.verified,
+      nextFilters.minRating > 0,
+      nextFilters.state,
+      nextFilters.projectType,
+    ].filter(Boolean).length;
+    trackFilterEvent('category_filter_changed', nextCount);
+  };
+
+  const clearPanelFilters = () => {
+    const clearedFilters: CategoryFilters = {
+      verified: false,
+      minRating: 0,
+      state: '',
+      projectType: undefined,
+    };
+    setDraftFilters(clearedFilters);
+    trackFilterEvent('category_filters_cleared', 0);
+  };
+
+  const closeFilters = () => {
+    setMobileFiltersOpen(false);
+    trackFilterEvent('category_filters_closed', activeFiltersCount);
   };
 
   const handleSortChange = (value: string) => {
@@ -295,16 +301,19 @@ export default function CategoryPageClient({
             onFilterChange={handleSidebarFilterChange}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
-            onOpenMoreFilters={() => setMobileFiltersOpen(true)}
+            onOpenMoreFilters={openFilters}
             activeFiltersCount={activeFiltersCount}
+            moreFiltersOpen={mobileFiltersOpen}
           />
 
-          <CategoryMobileFiltersSheet
+          <CategoryFiltersPanel
             open={mobileFiltersOpen}
-            filters={sidebarFilters}
-            onChange={handleSidebarFilterChange}
-            onClear={handleClearFilters}
-            onClose={() => setMobileFiltersOpen(false)}
+            filters={draftFilters}
+            resultCount={initialCompanies.length}
+            onChange={handlePanelChange}
+            onApply={() => applyPanelFilters(draftFilters)}
+            onClear={clearPanelFilters}
+            onClose={closeFilters}
           />
 
 
