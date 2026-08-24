@@ -64,6 +64,19 @@ docs/observability/*
 !docs/observability/new-relic-setup.md
 !docs/prd/
 !docs/prd/*
+!docs/groups/
+docs/groups/*
+!docs/groups/GROUPS_EXISTING_ARCHITECTURE_AUDIT.md
+!docs/groups/README.md
+!docs/groups/API_CONTRACT.md
+!docs/groups/AUTHORIZATION_MATRIX.md
+!docs/groups/MODERATION.md
+!docs/groups/FRONTEND_ARCHITECTURE.md
+!docs/groups/PWA.md
+!docs/groups/ARCHITECTURE.md
+!docs/adr/
+docs/adr/*
+!docs/adr/ADR_GROUP_POST_MODEL.md
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/
