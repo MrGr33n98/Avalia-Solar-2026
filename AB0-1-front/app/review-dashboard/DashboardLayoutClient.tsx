@@ -139,6 +139,10 @@ export function useDashboardContext() {
   return ctx;
 }
 
+export function useOptionalDashboardContext() {
+  return useContext(DashboardContext);
+}
+
 /**
  * Pure data provider without layout UI.
  * Used by the new ReviewerDashboardShell architecture.

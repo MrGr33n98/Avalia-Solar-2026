@@ -6,8 +6,9 @@ import type { ChangeEvent, ChangeEventHandler } from 'react';
 import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDashboardContext } from '../DashboardLayoutClient';
-import { reviewerProfileApi, usersApi } from '@/lib/api';
+import { useOptionalDashboardContext } from '../DashboardLayoutClient';
+import { reviewerProfileApi, reviewerSolutionsApi, usersApi } from '@/lib/api';
+import type { UserSolution } from '@/components/profile/UserSolutionChip';
 import { buildProfilePatch } from '@/lib/profile-delta';
 import { toast } from 'sonner';
 import { track } from '@/lib/analytics/lazy';
@@ -32,7 +33,12 @@ export default function MeuPerfilPage() {
   const pathname = usePathname();
   const isCreatorStudio = pathname?.startsWith('/creator-studio');
   const { user } = useAuth();
-  const { loading, summary, reviews, solutions, onRefresh } = useDashboardContext();
+  const dashboard = useOptionalDashboardContext();
+  const summary = dashboard?.summary ?? null;
+  const reviews = dashboard?.reviews ?? [];
+  const onRefresh = dashboard?.onRefresh ?? (async () => undefined);
+  const [standaloneSolutions, setStandaloneSolutions] = useState<UserSolution[]>([]);
+  const solutions = dashboard?.solutions ?? standaloneSolutions;
   const [saving, setSaving] = useState(false);
   const [publicSaving, setPublicSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -65,6 +71,19 @@ export default function MeuPerfilPage() {
 
   const [profileData, setProfileData] = useState<ReviewerProfileData>({});
   const profileUser = user as (typeof user & { profession?: string }) | null;
+  useEffect(() => {
+    if (dashboard) return;
+    void reviewerSolutionsApi
+      .list()
+      .then((response) => {
+        const data = Array.isArray(response)
+          ? response
+          : (response as { data?: UserSolution[] }).data || [];
+        setStandaloneSolutions(data);
+      })
+      .catch(() => setStandaloneSolutions([]));
+  }, [dashboard]);
+
   useEffect(() => {
     void reviewerProfileApi
       .get()

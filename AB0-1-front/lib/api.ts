@@ -595,6 +595,35 @@ export interface Lead {
   updated_at?: string;
 }
 
+export interface CreatorLead {
+  id: number;
+  name: string;
+  message?: string | null;
+  intent: string;
+  source?: string | null;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost' | string;
+  publication_id?: number | null;
+  created_at: string;
+  updated_at: string;
+  handled_at?: string | null;
+}
+
+export interface CreatorLeadListResponse {
+  data: CreatorLead[];
+  meta?: {
+    next_cursor?: string | null;
+    has_more?: boolean;
+    total?: number;
+  };
+  stats?: {
+    total: number;
+    new: number;
+    responded: number;
+    converted: number;
+    conversion_rate: number;
+  };
+}
+
 export interface Review {
   id: number;
   rating: number;
@@ -2174,6 +2203,32 @@ export const leadsApi = {
       body: JSON.stringify({ lead }),
     }),
   delete: (id: number) => fetchApi(`/leads/${id}`, { method: 'DELETE' }),
+};
+
+export const creatorLeadsApi = {
+  mine: async (params: {
+    status?: string;
+    q?: string;
+    source?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    cursor?: string;
+  } = {}): Promise<CreatorLeadListResponse> => {
+    const response = await fetchApi<CreatorLead[] | CreatorLeadListResponse>('/reviewer/creator_leads', {
+      params,
+      timeout: 5000,
+      retries: 0,
+    });
+
+    if (Array.isArray(response)) return { data: response };
+    return { ...response, data: Array.isArray(response.data) ? response.data : [] };
+  },
+  update: (id: number, status: string) =>
+    fetchApi<CreatorLead>(`/reviewer/creator_leads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ lead: { status } }),
+    }),
 };
 
 export const reviewsApi = {

@@ -3,7 +3,19 @@ module Api
     class CreatorsController < Api::V1::BaseController
       around_action :log_creator_request
       def index
-        render json: ReviewerProfile.where(creator_enabled: true).select(:public_slug, :creator_enabled)
+        profiles = ReviewerProfile.where(creator_enabled: true).includes(:user).order(id: :desc)
+
+        if params[:q].present?
+          term = "%#{ActiveRecord::Base.sanitize_sql_like(params[:q].to_s.strip)}%"
+          profiles = profiles.joins(:user).where(
+            'users.name ILIKE :term OR reviewer_profiles.public_headline ILIKE :term OR reviewer_profiles.public_bio ILIKE :term',
+            term: term
+          )
+        end
+
+        limit = [[params.fetch(:limit, 24).to_i, 1].max, 60].min
+        profiles = profiles.limit(limit)
+        render json: profiles.map { |profile| creator_card(profile) }
       end
 
       def show
@@ -180,6 +192,23 @@ module Api
 
       def public_profile
         ::ReviewerProfile.includes(:user).find_by(public_slug: params[:slug], creator_enabled: true)
+      end
+
+      def creator_card(profile)
+        identity = Creator::IdentityProjection.resolve(profile)
+        {
+          public_slug: profile.public_slug,
+          name: identity[:name],
+          public_headline: identity[:public_headline],
+          public_bio: identity[:public_bio].to_s.truncate(180),
+          avatar_url: identity[:avatar_url],
+          city: identity[:city],
+          state: identity[:state],
+          stats: {
+            review_count: profile.user.reviews.approved_only.count,
+            publication_count: profile.user.reviewer_publications.published.count
+          }
+        }
       end
     end
   end

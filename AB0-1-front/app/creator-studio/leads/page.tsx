@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
-import { leadsApi, type Lead } from '@/lib/api';
+import { creatorLeadsApi, type CreatorLead } from '@/lib/api';
 
 export default function CreatorLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<CreatorLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void leadsApi.mine()
-      .then(setLeads)
+    void creatorLeadsApi
+      .mine()
+      .then((response) => setLeads(response.data))
       .catch(() => setError('Não foi possível carregar seus leads.'))
       .finally(() => setLoading(false));
   }, []);
@@ -22,7 +23,7 @@ export default function CreatorLeadsPage() {
       <div>
         <p className="text-sm font-semibold text-blue-600">Creator Studio</p>
         <h2 className="mt-1 text-3xl font-bold">Leads</h2>
-        <p className="mt-2 text-sm text-slate-600">O endpoint existente de leads continua sendo reutilizado nesta primeira separação de domínio.</p>
+        <p className="mt-2 text-sm text-slate-600">Acompanhe oportunidades recebidas pelo seu perfil público.</p>
       </div>
       {loading ? <p className="rounded-xl bg-white p-6 text-sm text-slate-500">Carregando leads...</p> : error ? <p className="rounded-xl bg-red-50 p-6 text-sm text-red-700">{error}</p> : leads.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
