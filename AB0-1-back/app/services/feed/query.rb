@@ -24,7 +24,8 @@ module Feed
         )
       end
 
-      items = candidates.includes(:actor, :subject).recent.limit(@limit + 1).to_a
+      ranked_candidates = Feed::Ranker.new(candidates, view: @view).call
+      items = ranked_candidates.includes(:actor, :subject).limit(@limit + 1).to_a
       has_more = items.size > @limit
       items = items.first(@limit)
 
