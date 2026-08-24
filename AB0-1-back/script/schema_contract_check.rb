@@ -42,6 +42,7 @@ required_indexes = {
 required_migrations = %w[
   20260814122000
   20260814124000
+  20260814125000
   20260817200000
 ].freeze
 
