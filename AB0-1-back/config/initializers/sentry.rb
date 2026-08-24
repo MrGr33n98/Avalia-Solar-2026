@@ -74,7 +74,7 @@ Sentry.init do |config|
       )
       event.extra.merge!(
         request_id: request_id,
-        method: request.request_method if request.respond_to?(:request_method),
+        method: request.respond_to?(:request_method) ? request.request_method : nil,
         path: request.path
       )
     end
