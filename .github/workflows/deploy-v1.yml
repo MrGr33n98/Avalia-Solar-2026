@@ -179,6 +179,7 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load
           bundle exec rails zeitwerk:check
+          bundle exec rails runner script/schema_contract_check.rb
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
 
   deploy:
@@ -386,7 +387,9 @@ jobs:
             [ -z "$PREVIOUS_FRONTEND_ID" ] || docker image tag "$PREVIOUS_FRONTEND_ID" "$FRONTEND_ROLLBACK_IMAGE"
 
             echo "?? Parando aplicacoes para liberar memoria RAM..."
-            docker compose stop backend frontend worker || true
+            # Mantenha web antiga atendendo tráfego até migration e contrato passarem.
+            # O worker é parado separadamente para evitar jobs concorrentes durante o release.
+            docker compose stop worker || true
 
             echo "?? Baixando imagens imutaveis, uma por vez..."
             docker pull -q "$BACKEND_IMAGE"
@@ -482,10 +485,21 @@ jobs:
             echo "?? Parando $WORKER_SERVICE para liberar memoria e drenar jobs..."
             docker compose stop -t 60 "$WORKER_SERVICE" || true
 
+            export GIT_SHA
+
             echo "?? Executando migrations uma unica vez com a nova imagem..."
             if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate --trace"; then
               echo "!! Migration falhou; mantendo a aplicacao anterior"
               echo "?? Estado da migration:"
+              docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate:status || true"
+              docker compose logs --tail=300 backend || true
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
+            echo "?? Validando contrato de schema da release..."
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner script/schema_contract_check.rb"; then
+              echo "!! Contrato de schema falhou; abortando antes de atualizar o backend"
               docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate:status || true"
               docker compose logs --tail=300 backend || true
               docker start ab0-worker >/dev/null 2>&1 || true
