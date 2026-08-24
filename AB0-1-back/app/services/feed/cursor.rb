@@ -2,8 +2,10 @@
 
 module Feed
   class Cursor
-    def self.encode(published_at, id)
-      Base64.strict_encode64({ published_at: published_at.iso8601(6), id: id }.to_json)
+    def self.encode(published_at, id, score: nil)
+      payload = { published_at: published_at.iso8601(6), id: id }
+      payload[:score] = score if score
+      Base64.strict_encode64(payload.to_json)
     rescue StandardError
       nil
     end
@@ -14,7 +16,8 @@ module Feed
       decoded = JSON.parse(Base64.strict_decode64(cursor_string))
       {
         published_at: Time.zone.parse(decoded['published_at']),
-        id: decoded['id'].to_i
+        id: decoded['id'].to_i,
+        score: decoded['score']
       }
     rescue StandardError
       nil

@@ -14,7 +14,7 @@ module Feed
       return @scope.recent unless @view == 'for_you'
 
       @scope
-        .left_joins("LEFT JOIN (#{engagement_counts_sql}) engagement ON engagement.subject_type = feed_items.subject_type AND engagement.subject_id = feed_items.subject_id")
+        .joins("LEFT JOIN (#{engagement_counts_sql}) engagement ON engagement.subject_type = feed_items.subject_type AND engagement.subject_id = feed_items.subject_id")
         .select('feed_items.*', "COALESCE(engagement.engagement_score, 0) AS engagement_score")
         .order(Arel.sql('COALESCE(engagement.engagement_score, 0) DESC'), published_at: :desc, id: :desc)
     end

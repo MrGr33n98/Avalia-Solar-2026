@@ -15,22 +15,18 @@ module Feed
     def call
       candidates = CandidateBuilder.new(user: @user, view: @view).call
 
-      if @cursor_data
-        candidates = candidates.where(
-          'published_at < ? OR (published_at = ? AND id < ?)',
-          @cursor_data[:published_at],
-          @cursor_data[:published_at],
-          @cursor_data[:id]
-        )
-      end
-
       ranked_candidates = Feed::Ranker.new(candidates, view: @view).call
+      ranked_candidates = apply_cursor(ranked_candidates)
       items = ranked_candidates.includes(:actor, :subject).limit(@limit + 1).to_a
       has_more = items.size > @limit
       items = items.first(@limit)
 
       next_cursor = if has_more && items.last
-                      Feed::Cursor.encode(items.last.published_at, items.last.id)
+                      Feed::Cursor.encode(
+                        items.last.published_at,
+                        items.last.id,
+                        score: @view == 'for_you' ? items.last.engagement_score : nil
+                      )
                     else
                       nil
                     end
@@ -40,6 +36,34 @@ module Feed
         next_cursor: next_cursor,
         has_more: has_more
       }
+    end
+
+    private
+
+    def apply_cursor(scope)
+      return scope unless @cursor_data
+
+      if @view == 'for_you' && @cursor_data[:score]
+        score = @cursor_data[:score].to_i
+        return scope.where(
+          'COALESCE(engagement.engagement_score, 0) < ? OR '
+          '(COALESCE(engagement.engagement_score, 0) = ? AND '
+          '(feed_items.published_at < ? OR '
+          '(feed_items.published_at = ? AND feed_items.id < ?)))',
+          score,
+          score,
+          @cursor_data[:published_at],
+          @cursor_data[:published_at],
+          @cursor_data[:id]
+        )
+      end
+
+      scope.where(
+        'feed_items.published_at < ? OR (feed_items.published_at = ? AND feed_items.id < ?)',
+        @cursor_data[:published_at],
+        @cursor_data[:published_at],
+        @cursor_data[:id]
+      )
     end
   end
 end
