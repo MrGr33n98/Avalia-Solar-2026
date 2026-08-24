@@ -19,7 +19,7 @@ RSpec.describe Feed::Ranker, type: :service do
   it 'mantém ordem cronológica em recent' do
     items = described_class.new(FeedItem.public_items, view: 'recent').call.to_a
 
-    expect(items.map(&:subject)).to eq([newer_publication, older_publication])
+    expect(items.map(&:subject_id)).to eq([newer_publication.id, older_publication.id])
   end
 
   it 'prioriza engajamento persistido em for_you' do
