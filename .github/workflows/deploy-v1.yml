@@ -177,7 +177,7 @@ jobs:
           RAILS_ENV: test
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: |
-          bundle exec rails db:create db:schema:load
+          bundle exec rails db:create db:schema:load db:migrate
           bundle exec rails zeitwerk:check
           bundle exec rails runner script/schema_contract_check.rb
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'

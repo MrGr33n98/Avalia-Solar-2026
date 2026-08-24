@@ -77,7 +77,12 @@ required_indexes.each do |table, indexes|
   next unless connection.data_source_exists?(table)
 
   indexes.each do |index_definition|
-    next if connection.index_exists?(table, index_definition[:columns], name: index_definition[:name])
+    index_exists = if index_definition[:name]
+                     connection.index_exists?(table, index_definition[:columns], name: index_definition[:name])
+                   else
+                     connection.index_exists?(table, index_definition[:columns])
+                   end
+    next if index_exists
 
     description = index_definition[:name] || index_definition[:columns].join('_')
     errors << "índice ausente: #{table}.#{description}"
