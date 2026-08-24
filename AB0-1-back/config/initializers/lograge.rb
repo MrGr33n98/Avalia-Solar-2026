@@ -12,6 +12,8 @@ Rails.application.configure do
       time: Time.current.iso8601,
       params: event.payload[:params].to_h.except('controller', 'action', 'format'),
       request_id: event.payload[:request_id],
+      exception: event.payload[:exception]&.first,
+      exception_message: event.payload[:exception]&.last,
       user_id: event.payload[:user_id], # Requires controller instrumentation
       remote_ip: event.payload[:remote_ip],
       user_agent: event.payload[:user_agent]

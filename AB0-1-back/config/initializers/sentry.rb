@@ -64,6 +64,34 @@ Sentry.init do |config|
       server_name: ENV['HOSTNAME'] || Socket.gethostname,
       git_sha: config.release
     )
+
+    request = hint[:request]
+    if request.respond_to?(:path)
+      request_id = request.respond_to?(:get_header) ? request.get_header('action_dispatch.request_id') : nil
+      event.tags.merge!(
+        route: request.path,
+        request_id: request_id
+      )
+      event.extra.merge!(
+        request_id: request_id,
+        method: request.request_method if request.respond_to?(:request_method),
+        path: request.path
+      )
+    end
+
+    exception = hint[:exception]
+    if exception
+      event.tags[:exception_class] = exception.class.name
+      event.extra[:cause_class] = exception.cause.class.name if exception.cause
+    end
+
+    if defined?(ActiveRecord::Base) && ActiveRecord::Base.connected?
+      event.extra[:schema_version] = ActiveRecord::Base.connection.select_value(
+        'SELECT MAX(version) FROM schema_migrations'
+      )
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.warn("[SENTRY] Não foi possível obter schema_version: #{e.class}")
+    end
     
     event
   end

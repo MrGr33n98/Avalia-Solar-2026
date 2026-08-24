@@ -10,7 +10,7 @@ ActiveAdmin.register CreatorTreeBlock do
   index do
     selectable_column
     id_column
-    column('Creator') { |block| block.reviewer.user.name }
+    column('Creator') { |block| block.reviewer&.user&.name.presence || 'Creator indisponível' }
     column :block_type
     column :title
     column :active
