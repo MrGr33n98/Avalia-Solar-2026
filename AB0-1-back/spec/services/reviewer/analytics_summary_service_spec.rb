@@ -47,6 +47,27 @@ RSpec.describe Reviewer::AnalyticsSummaryService do
     expect(grouped_queries.size).to eq(1)
   end
 
+  it 'retorna métricas de publicação, Tree, reações, compartilhamentos e WhatsApp' do
+    publication.update!(status: 'published', published_at: Time.current)
+    create_view(publication, created_at: Time.current)
+    ReviewerPublicationEvent.create!(reviewer_publication: publication, event_name: 'publication_share')
+    ReviewerPublicationLike.create!(reviewer_publication: publication, visitor_key: 'visitor-1')
+    create(:analytics_event, user: user, event_type: 'whatsapp_click', company_id: 1)
+
+    result = described_class.new(user: user, profile: profile).call
+
+    expect(result).to include(
+      publications: 1,
+      publication_views: 1,
+      publication_reactions: 1,
+      publication_shares: 1,
+      tree_views: 5,
+      tree_clicks: 0,
+      whatsapp_clicks: 1,
+      leads: 0
+    )
+  end
+
   private
 
   def create_view(target_publication, created_at:)

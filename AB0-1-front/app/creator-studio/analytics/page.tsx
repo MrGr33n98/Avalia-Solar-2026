@@ -9,6 +9,15 @@ type AnalyticsData = {
   views: number;
   followers: number;
   clicks: number;
+  publications?: number;
+  publication_views?: number;
+  publication_reactions?: number;
+  publication_comments?: number;
+  publication_shares?: number;
+  tree_views?: number;
+  tree_clicks?: number;
+  whatsapp_clicks?: number;
+  leads?: number;
   daily_views: Array<{ date: string; views: number }>;
 };
 
@@ -85,7 +94,7 @@ export default function CreatorAnalyticsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.02)] transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-[#53627a]">Visualizações Totais</span>
@@ -95,6 +104,11 @@ export default function CreatorAnalyticsPage() {
           </div>
           <p className="mt-3 text-3xl font-bold">{data.views}</p>
           <p className="mt-1 text-xs text-[#718096]">Perfil + publicações públicas</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.02)] transition hover:shadow-md">
+          <div className="flex items-center justify-between"><span className="text-sm font-medium text-[#53627a]">Publicações</span><div className="rounded-lg bg-amber-50 p-2 text-amber-600"><Sparkles className="h-5 w-5" /></div></div>
+          <p className="mt-3 text-3xl font-bold">{data.publications ?? 0}</p>
+          <p className="mt-1 text-xs text-[#718096]">Conteúdo publicado</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.02)] transition hover:shadow-md">
@@ -119,6 +133,27 @@ export default function CreatorAnalyticsPage() {
           <p className="mt-1 text-xs text-[#718096]">Redirecionamentos em blocos ativos</p>
         </div>
       </div>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <h3 className="font-bold">Publicações</h3>
+          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <Metric label="Visualizações" value={data.publication_views ?? 0} />
+            <Metric label="Reações" value={data.publication_reactions ?? 0} />
+            <Metric label="Comentários" value={data.publication_comments ?? 0} />
+            <Metric label="Compartilhamentos" value={data.publication_shares ?? 0} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <h3 className="font-bold">Conversão</h3>
+          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <Metric label="Tree views" value={data.tree_views ?? 0} />
+            <Metric label="Cliques Tree" value={data.tree_clicks ?? data.clicks} />
+            <Metric label="WhatsApp" value={data.whatsapp_clicks ?? 0} />
+            <Metric label="Leads" value={data.leads ?? 0} />
+          </div>
+        </div>
+      </section>
 
       {/* Chart & Insights Grid */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -184,4 +219,8 @@ export default function CreatorAnalyticsPage() {
       </div>
     </div>
   );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-xl bg-slate-50 p-3"><span className="block text-xs text-[#718096]">{label}</span><strong className="mt-1 block text-xl text-[#0b1730]">{value}</strong></div>;
 }
