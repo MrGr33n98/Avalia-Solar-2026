@@ -386,10 +386,7 @@ jobs:
             [ -z "$PREVIOUS_BACKEND_ID" ] || docker image tag "$PREVIOUS_BACKEND_ID" "$BACKEND_ROLLBACK_IMAGE"
             [ -z "$PREVIOUS_FRONTEND_ID" ] || docker image tag "$PREVIOUS_FRONTEND_ID" "$FRONTEND_ROLLBACK_IMAGE"
 
-            echo "?? Parando aplicacoes para liberar memoria RAM..."
-            # Mantenha web antiga atendendo tráfego até migration e contrato passarem.
-            # O worker é parado separadamente para evitar jobs concorrentes durante o release.
-            docker compose stop worker || true
+            echo "?? Mantendo web anterior atendendo trafego ate migration e contrato passarem..."
 
             echo "?? Baixando imagens imutaveis, uma por vez..."
             docker pull -q "$BACKEND_IMAGE"
