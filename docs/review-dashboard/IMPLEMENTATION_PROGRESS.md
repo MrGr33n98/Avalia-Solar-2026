@@ -81,11 +81,13 @@ Status: DONE
 
 - Eventos de mutation reviewer registrados via analytics lazy.
 - Visão operacional ActiveAdmin criada com contagens reais e score médio indisponível quando não calculável.
+- Dashboard operacional ampliado com filas reais de moderação, verificação de soluções, publicações recentes, comentários, visualizações e ações rápidas.
+- Request specs adicionados para métricas, filas e estados vazios.
 
 ## Dívida restante
 
 - Executar RSpec completo e E2E Playwright contra stack integrada.
-- Completar dashboard operacional ActiveAdmin.
+- Executar RSpec completo e E2E Playwright contra stack integrada.
 - Adicionar documentação RSwag dos endpoints novos.
 - Integrar eventos PostHog de todas as mutations.
 - Implementar ledger de Green Score antes de Rewards.
