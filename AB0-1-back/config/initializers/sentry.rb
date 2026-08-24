@@ -85,13 +85,15 @@ Sentry.init do |config|
       event.extra[:cause_class] = exception.cause.class.name if exception.cause
     end
 
-     if defined?(ActiveRecord::Base) && ActiveRecord::Base.connected? &&
+    if defined?(ActiveRecord::Base) && ActiveRecord::Base.connected? &&
        ActiveRecord::Base.connection.data_source_exists?('schema_migrations')
-      event.extra[:schema_version] = ActiveRecord::Base.connection.select_value(
-        'SELECT MAX(version) FROM schema_migrations'
-      )
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.warn("[SENTRY] Não foi possível obter schema_version: #{e.class}")
+      begin
+        event.extra[:schema_version] = ActiveRecord::Base.connection.select_value(
+          'SELECT MAX(version) FROM schema_migrations'
+        )
+      rescue ActiveRecord::ActiveRecordError => e
+        Rails.logger.warn("[SENTRY] Não foi possível obter schema_version: #{e.class}")
+      end
     end
     
     event
