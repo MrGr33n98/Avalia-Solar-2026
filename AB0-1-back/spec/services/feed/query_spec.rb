@@ -27,4 +27,5 @@ RSpec.describe Feed::Query, type: :service do
 
     expect(first_page[:items].map(&:id) & second_page[:items].map(&:id)).to be_empty
   end
+
 end
