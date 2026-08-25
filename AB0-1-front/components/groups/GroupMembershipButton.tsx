@@ -1,13 +1,14 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LogIn, LogOut, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { getMembership, joinGroup, leaveGroup } from '@/lib/api/groups';
+import { joinGroup, leaveGroup } from '@/lib/api/groups';
 import type { Group } from '@/types/groups';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 type GroupMembershipButtonProps = {
   group: Group;
@@ -17,13 +18,7 @@ type GroupMembershipButtonProps = {
 export function GroupMembershipButton({ group, compact = false }: GroupMembershipButtonProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const membershipQuery = useQuery({
-    queryKey: ['group-membership', group.slug],
-    queryFn: () => getMembership(group.slug),
-    enabled: isAuthenticated,
-    initialData: group.membership,
-  });
-  const currentMembership = membershipQuery.data ?? group.membership;
+  const [currentMembership, setCurrentMembership] = useState(group.membership);
   const isPending = currentMembership?.status === 'pending';
   const isMember = currentMembership?.status === 'active';
   const canJoin = group.permissions.can_join;
@@ -31,7 +26,8 @@ export function GroupMembershipButton({ group, compact = false }: GroupMembershi
 
   const mutation = useMutation({
     mutationFn: () => (isMember ? leaveGroup(group.slug) : joinGroup(group.slug)),
-    onSuccess: async () => {
+    onSuccess: async (nextMembership) => {
+      setCurrentMembership(nextMembership);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['group', group.slug] }),
         queryClient.invalidateQueries({ queryKey: ['group-membership', group.slug] }),

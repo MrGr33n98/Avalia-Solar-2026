@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { GroupHero } from '@/components/groups/GroupHero';
@@ -49,7 +50,7 @@ export default async function GroupDetailPage({ params }: GroupPageProps) {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:py-10">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-5 text-sm"><a href="/groups" className="font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Comunidades</a><span className="mx-2 text-slate-400">/</span><span className="text-slate-500">{group.name}</span></div>
+        <div className="mb-5 text-sm"><Link href="/groups" className="font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Comunidades</Link><span className="mx-2 text-slate-400">/</span><span className="text-slate-500">{group.name}</span></div>
         <GroupHero group={group} />
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="min-w-0 space-y-6">
