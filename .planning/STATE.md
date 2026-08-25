@@ -26,6 +26,7 @@
 ### Todos
 - Aguardar feedback do usuário para aprovação do roadmap.
 - Iniciar a fase de planejamento detalhado da Fase 1 após a aprovação.
+- Groups frontend closeout: testes, E2E, staging smoke e validação visual ainda pendentes.
 
 ### Bloqueadores
 - Nenhum bloqueador técnico identificado no momento. A aprovação do roadmap é o próximo passo.

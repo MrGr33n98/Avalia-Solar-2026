@@ -46,13 +46,20 @@ Experiência frontend de comunidades com discovery responsivo, detalhe, tópicos
 - Registro da feature flag `GROUPS`; MobileBottomNav permaneceu intacto.
 - Mini mapa de auditoria em `docs/groups/GROUPS_FRONTEND_DISCOVERY_MAP.md`.
 
+## Quality Closeout
+
+- Feature flag alinhada em fail-closed: `NEXT_PUBLIC_GROUPS_ENABLED === 'true'`; `.env.example` mantém `false`.
+- SSR detail e metadata encaminham somente cookie atual ao backend; requests Groups usam `cache: 'no-store'`.
+- `npm run build` — passou. Warnings permanecem fora do escopo: DNS indisponível durante warm cache e warning de dependência Prisma/OpenTelemetry.
+- Validação manual desktop/mobile ainda pendente neste ambiente.
+
 ## Verification
 
 - `npx eslint app/groups components/groups lib/api/groups.ts types/groups.ts lib/feature-flags/index.ts` — passou.
 - `npm run typecheck` — passou.
 - Teste Jest representativo `components/categories/DecisionChips.test.tsx` — passou: 2 testes.
 - `npm run lint` global — falha por problemas preexistentes fora de Groups; não corrigidos fora do escopo.
-- `npm run build` — interrompido pelo ambiente durante execução; typecheck e lint direcionado passaram.
+- `npm run build` — passou; warm cache registrou falhas de DNS externas tratadas pelo fallback existente.
 
 ## Deviations from Plan
 
@@ -80,5 +87,12 @@ Experiência frontend de comunidades com discovery responsivo, detalhe, tópicos
 ## Self-Check: PASSED
 
 - Rotas, componentes, cliente, tipos e mapa existem.
-- Commits verificados: `0af74526`, `1a5c5513`, `359e9c35`, `de2af8db`.
+- Commits verificados: `0af74526`, `1a5c5513`, `359e9c35`, `de2af8db`, `83948b71`.
 - Árvore Git limpa após commits.
+
+## PENDENTE
+
+- Test coverage
+- E2E
+- Staging smoke
+- Validação visual desktop/mobile
