@@ -23,5 +23,12 @@ Status: planejamento. Nenhum endpoint Groups está implementado no estado audita
 - `POST /api/v1/groups/:slug/posts`
 - `GET /api/v1/groups/:slug/topics`
 - `GET /api/v1/groups/:slug/rules`
+- `GET /api/v1/groups/:group_slug/posts`
+- `POST /api/v1/groups/:group_slug/posts`
+- `GET /api/v1/groups/:group_slug/posts/:id`
+- `PATCH /api/v1/groups/:group_slug/posts/:id`
+- `DELETE /api/v1/groups/:group_slug/posts/:id`
+- `POST /api/v1/groups/:group_slug/posts/:id/hide|restore|pin|close_comments|open_comments`
+- `DELETE /api/v1/groups/:group_slug/posts/:id/pin`
 
 Criação, alteração, moderação e convites entram somente após policies, rate limits e audit log definidos.
