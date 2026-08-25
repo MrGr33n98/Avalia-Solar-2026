@@ -63,6 +63,7 @@ services:
       RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
       APP_HOST: "https://api.avaliasolar.com.br"
+      GROUPS_ENABLED: ${GROUPS_ENABLED:-false}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.avaliasolar.com.br}
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
@@ -118,6 +119,7 @@ services:
       GIT_SHA: ${GIT_SHA:-unknown}
       RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
+      GROUPS_ENABLED: ${GROUPS_ENABLED:-false}
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
@@ -151,6 +153,7 @@ services:
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_API_BASE_URL: "https://api.avaliasolar.com.br"
       NEXT_PUBLIC_SITE_URL: "https://www.avaliasolar.com.br"
+      NEXT_PUBLIC_GROUPS_ENABLED: ${NEXT_PUBLIC_GROUPS_ENABLED:-false}
       API_PROXY_TARGET: "http://ab0-backend:3001"
       API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
       # Analytics

@@ -59,3 +59,11 @@ O domínio Groups base atual existe somente até `Group`, `GroupMembership`, `Gr
 ## Próximo passo recomendado
 
 Planejar primeiro um contrato técnico de `GroupPost` + moderation/report lifecycle. Sem isso, não implementar UI de governança que só simula operações inexistentes.
+
+## Delivery de produção
+
+- Backend runtime recebe `GROUPS_ENABLED` via `docker-compose.yml`; default permanece `false`.
+- Worker recebe mesma flag para manter comportamento consistente em jobs Groups.
+- Frontend recebe `NEXT_PUBLIC_GROUPS_ENABLED` como Docker `ARG` antes de `npm run build`; production workflow exige variável `true`.
+- Docker build verifica marcador da discovery no bundle quando flag está habilitada.
+- Validação VPS e API pública dependem de execução do workflow/deploy; não são simuladas localmente.

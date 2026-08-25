@@ -101,6 +101,14 @@ jobs:
           cache-to: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache,mode=max
 
+      - name: Verify production Groups build flag
+        if: matrix.component == 'frontend'
+        run: |
+          if [ "${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}" != "true" ]; then
+            echo "::error::NEXT_PUBLIC_GROUPS_ENABLED deve ser explicitamente true para produção."
+            exit 1
+          fi
+
       - name: Build and Push Frontend
         if: matrix.component == 'frontend'
         uses: docker/build-push-action@v5
@@ -127,6 +135,7 @@ jobs:
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
             NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE=true
+            NEXT_PUBLIC_GROUPS_ENABLED=${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
@@ -214,6 +223,8 @@ jobs:
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE || 'worker' }}
+          GROUPS_ENABLED: ${{ vars.GROUPS_ENABLED }}
+          NEXT_PUBLIC_GROUPS_ENABLED: ${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -221,7 +232,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
           script_stop: false
-          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE,GROUPS_ENABLED,NEXT_PUBLIC_GROUPS_ENABLED
           script: |
             set -Eeuo pipefail
 
@@ -374,6 +385,16 @@ jobs:
             BACKEND_ROLLBACK_IMAGE="${BACKEND_REPO}:rollback"
             FRONTEND_ROLLBACK_IMAGE="${FRONTEND_REPO}:rollback"
             export BACKEND_IMAGE FRONTEND_IMAGE
+            export GROUPS_ENABLED
+            export NEXT_PUBLIC_GROUPS_ENABLED
+            if [ "$GROUPS_ENABLED" != "true" ]; then
+              echo "!! ERRO: GROUPS_ENABLED deve ser explicitamente true em produção"
+              exit 1
+            fi
+            if [ "$NEXT_PUBLIC_GROUPS_ENABLED" != "true" ]; then
+              echo "!! ERRO: NEXT_PUBLIC_GROUPS_ENABLED deve ser explicitamente true em produção"
+              exit 1
+            fi
 
             echo "?? Limpando cache e imagens Docker antigas nao utilizadas para liberar espaco..."
             docker container prune -f || true
