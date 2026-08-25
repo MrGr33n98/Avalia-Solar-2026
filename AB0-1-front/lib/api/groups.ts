@@ -62,7 +62,7 @@ export async function getMembership(slug: string): Promise<GroupMembership | nul
   try {
     return await request<GroupMembership | null>(`groups/${encodeURIComponent(slug)}/membership`);
   } catch (error) {
-    if (error instanceof GroupsApiError && (error.status === 401 || error.status === 404)) return null;
+    if (error instanceof GroupsApiError && error.status === 401) return null;
     throw error;
   }
 }

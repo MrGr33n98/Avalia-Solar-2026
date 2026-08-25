@@ -39,7 +39,7 @@ export function GroupCard({ group }: GroupCardProps) {
       </div>
 
       <p className="line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-slate-600">
-        {group.short_description || 'Uma comunidade para trocar experiências sobre energia solar.'}
+        {group.short_description || 'Descrição não informada.'}
       </p>
 
       <div className="mt-5 flex items-center gap-2 text-sm text-slate-500">
