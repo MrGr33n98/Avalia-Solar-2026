@@ -12,6 +12,8 @@ module Groups
     end
 
     def call
+      raise ArgumentError, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
+
       Group.transaction do
         attributes = @attributes.merge(owner: @owner, status: 'active')
         attributes[:slug] = attributes[:slug].presence || attributes[:name].to_s.parameterize

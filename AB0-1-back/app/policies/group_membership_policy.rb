@@ -2,7 +2,8 @@
 
 class GroupMembershipPolicy < ApplicationPolicy
   def show?
-    user.present? && (record.user_id == user.id || GroupPolicy.new(user, record.group).manage_members?)
+    Groups::Feature.enabled? && user.present? &&
+      (record.user_id == user.id || GroupPolicy.new(user, record.group).manage_members?)
   end
 
   def create?
@@ -10,19 +11,20 @@ class GroupMembershipPolicy < ApplicationPolicy
   end
 
   def update?
-    GroupPolicy.new(user, record.group).manage_members?
+    Groups::Feature.enabled? && GroupPolicy.new(user, record.group).manage_members?
   end
 
   def destroy?
-    user.present? && record.user_id == user.id && record.role != 'owner'
+    Groups::Feature.enabled? && user.present? && record.user_id == user.id && record.role != 'owner' && record.active?
   end
 
   class Scope < Scope
     def resolve
       return scope.none unless user
-      return scope.all if user.respond_to?(:admin?) && user.admin?
+      return scope.all if user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
 
-      scope.where(user_id: user.id).or(scope.where(group_id: GroupPolicy::Scope.new(user, Group).resolve.select(:id)))
+      visible_group_ids = GroupPolicy::Scope.new(user, Group).resolve.select(:id)
+      scope.where(user_id: user.id).or(scope.where(group_id: visible_group_ids))
     end
   end
 end

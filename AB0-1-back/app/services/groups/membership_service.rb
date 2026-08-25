@@ -24,8 +24,11 @@ module Groups
     end
 
     def join
+      raise Forbidden, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
+      raise Forbidden, 'Usuário inválido' unless @user.is_a?(User)
       raise Forbidden, 'Grupo não aceita novas participações' unless @group.status == 'active'
       raise Forbidden, 'Este grupo exige convite' if @group.membership_mode == 'invite_only'
+      raise Forbidden, 'Grupo privado exige convite' unless @group.visibility == 'public'
 
       GroupMembership.transaction(requires_new: true) do
         membership = GroupMembership.where(group_id: @group.id, user_id: @user.id).lock.first
@@ -50,6 +53,8 @@ module Groups
     end
 
     def leave
+      raise Forbidden, 'Grupo não está habilitado' unless Groups::Feature.enabled?
+
       membership = GroupMembership.where(group: @group, user: @user).lock.first
       return nil unless membership&.active?
       raise OwnerCannotLeave, 'Owner deve transferir o grupo antes de sair' if membership.role == 'owner'
@@ -63,6 +68,8 @@ module Groups
     end
 
     def approve(membership:, approver:)
+      raise Forbidden, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
+      raise Forbidden, 'Membership não pertence ao grupo' unless membership.group_id == @group.id
       raise Forbidden, 'Usuário sem permissão para aprovar participação' unless GroupPolicy.new(approver, @group).manage_members?
       raise Forbidden, 'Solicitação não está pendente' unless membership.pending?
 

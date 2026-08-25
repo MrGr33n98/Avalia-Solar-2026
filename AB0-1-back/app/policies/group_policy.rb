@@ -18,15 +18,15 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def update?
-    owner_or_admin?
+    Groups::Feature.enabled? && owner_or_admin?
   end
 
   def destroy?
-    owner_or_admin?
+    Groups::Feature.enabled? && owner_or_admin?
   end
 
   def join?
-    Groups::Feature.enabled? && user.present? && record.status == 'active' && record.visibility != 'private_hidden'
+    Groups::Feature.enabled? && user.is_a?(User) && record.status == 'active' && record.visibility == 'public'
   end
 
   def leave?
@@ -34,15 +34,15 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def invite?
-    active_membership? && !member_role?
+    Groups::Feature.enabled? && active_membership? && !member_role? && record.visibility != 'private_hidden'
   end
 
   def manage_members?
-    owner_or_admin? || moderator_role?
+    Groups::Feature.enabled? && (owner_or_admin? || moderator_role?)
   end
 
   def moderate?
-    owner_or_admin? || moderator_role?
+    Groups::Feature.enabled? && (owner_or_admin? || moderator_role?)
   end
 
   class Scope < Scope

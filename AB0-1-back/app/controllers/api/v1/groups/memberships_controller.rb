@@ -25,6 +25,8 @@ module Api
         def destroy
           authorize @group, :leave?
           membership = ::Groups::MembershipService.leave(group: @group, user: current_user)
+          return render json: { data: nil }, status: :ok unless membership
+
           render json: { data: GroupMembershipSerializer.new(membership).as_json }, status: :ok
         end
 

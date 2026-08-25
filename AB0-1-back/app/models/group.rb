@@ -12,7 +12,7 @@ class Group < ApplicationRecord
   has_many :members, through: :group_memberships, source: :user
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[created_at featured id name owner_id slug status updated_at verified visibility]
+    %w[created_at featured id name official owner_id slug status updated_at verified visibility]
   end
 
   def self.ransackable_associations(_auth_object = nil)

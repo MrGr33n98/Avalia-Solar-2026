@@ -1,3 +1,59 @@
+# Groups — contrato frontend para próxima fase
+
+Status: contrato preliminar; frontend não implementado nesta fase.
+
+## Endpoints
+
+| Método | Endpoint | Auth | Uso |
+|---|---|---|---|
+| GET | `/api/v1/groups` | opcional | discovery de grupos públicos ativos |
+| GET | `/api/v1/groups/:slug` | opcional | identidade e capabilities |
+| POST | `/api/v1/groups` | JWT | criar grupo autorizado |
+| PATCH | `/api/v1/groups/:slug` | JWT | owner atualizar dados não administrativos |
+| POST | `/api/v1/groups/:slug/join` | JWT | entrar em grupo público |
+| DELETE | `/api/v1/groups/:slug/join` | JWT | sair sem apagar histórico |
+| GET | `/api/v1/groups/:slug/membership` | JWT | membership do usuário atual |
+| GET | `/api/v1/groups/:slug/members` | opcional | membros ativos; resposta inicial limitada |
+
+`GET /api/v1/groups` aceita `search`, `category`, `featured` e `view=new|active|featured`. A lista retorna grupos `active/public`.
+
+## Estados de resposta
+
+- `200`: leitura, join idempotente, leave.
+- `201`: criação de grupo.
+- `401`: endpoint autenticado sem JWT válido.
+- `403`: ação não permitida, grupo invite-only/privado ou owner tentando sair.
+- `404`: feature desligada ou grupo não visível no policy scope; não distinguir grupo privado inexistente.
+- `422`: validação de domínio.
+
+## Shape
+
+`GET /groups/:slug` retorna `data` com identidade, `stats`, `membership` contextual e `permissions` calculadas pelo backend. Frontend não recalcula capabilities.
+
+`GET /groups` retorna `data[]` compacto com `id`, `name`, `slug`, `short_description`, visibilidade pública, badges, stats e capabilities.
+
+## Membership states
+
+- `null`: usuário sem membership.
+- `pending`: solicitação aguardando aprovação.
+- `active`: participante; join deve ficar idempotente.
+- `left`: histórico preservado após leave.
+- `banned`: não mostrar ação de reentrada.
+
+Para grupo `open`, join retorna `active`; para `approval`, retorna `pending`; `invite_only` retorna `403`.
+
+## Loading/error
+
+- loading: skeleton da geometria final; sem spinner bloqueante grande.
+- API indisponível: `Não foi possível carregar as comunidades.` com retry.
+- `404`: `Comunidade não encontrada.`
+- `403`: `Este conteúdo está disponível somente para membros.`
+
+## Rollout
+
+Não criar rota, chamada ou menu frontend até `GROUPS_ENABLED=true` em staging e CI/RSpec/schema contract passarem. Production default permanece `false`.
+
+Não implementar posts, topics, rules, feed, reactions, saves, PWA ou menu adicional nesta fase.
 # Groups — contrato para Fase 2 frontend
 
 Status: contrato preliminar; frontend não implementado nesta fase.

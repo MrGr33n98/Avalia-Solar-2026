@@ -33,4 +33,5 @@ class GroupMembership < ApplicationRecord
   def pending?
     status == 'pending'
   end
+
 end
