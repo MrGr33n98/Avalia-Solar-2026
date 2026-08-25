@@ -101,14 +101,6 @@ jobs:
           cache-to: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache,mode=max
 
-      - name: Verify production Groups build flag
-        if: matrix.component == 'frontend'
-        run: |
-          if [ "${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}" != "true" ]; then
-            echo "::error::NEXT_PUBLIC_GROUPS_ENABLED deve ser explicitamente true para produção."
-            exit 1
-          fi
-
       - name: Build and Push Frontend
         if: matrix.component == 'frontend'
         uses: docker/build-push-action@v5
@@ -135,7 +127,7 @@ jobs:
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
             NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE=true
-            NEXT_PUBLIC_GROUPS_ENABLED=${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}
+            NEXT_PUBLIC_GROUPS_ENABLED=true
           secrets: |
             NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
@@ -223,8 +215,8 @@ jobs:
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE || 'worker' }}
-          GROUPS_ENABLED: ${{ vars.GROUPS_ENABLED }}
-          NEXT_PUBLIC_GROUPS_ENABLED: ${{ vars.NEXT_PUBLIC_GROUPS_ENABLED }}
+          GROUPS_ENABLED: true
+          NEXT_PUBLIC_GROUPS_ENABLED: true
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

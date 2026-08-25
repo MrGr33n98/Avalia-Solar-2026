@@ -7,11 +7,11 @@
 
 ### Frontend build-time
 
-`GitHub Actions vars.NEXT_PUBLIC_GROUPS_ENABLED` é validada como `true` antes do build. O workflow passa o valor em `build-args`; `Dockerfile.frontend` declara `ARG NEXT_PUBLIC_GROUPS_ENABLED=false`, exporta no estágio `builder` antes de `npm run build` e verifica o marcador `Encontre seu grupo` no bundle quando habilitada. Nova imagem recebe tag imutável `${GITHUB_SHA}`.
+O workflow production passa `NEXT_PUBLIC_GROUPS_ENABLED=true` diretamente em `build-args`; isso evita falha quando variável GitHub não existe. `Dockerfile.frontend` declara `ARG NEXT_PUBLIC_GROUPS_ENABLED=false`, exporta no estágio `builder` antes de `npm run build` e verifica marcador `Encontre seu grupo` no bundle quando habilitada. Nova imagem recebe tag imutável `${GITHUB_SHA}`.
 
 ### Backend runtime
 
-`GitHub Actions vars.GROUPS_ENABLED` é encaminhada ao SSH deploy. O workflow exige valor `true` em produção. `docker-compose.yml` injeta `GROUPS_ENABLED` em `backend` e `worker`; default continua `false` fora do ambiente configurado.
+O workflow production encaminha `GROUPS_ENABLED=true` ao SSH deploy. `docker-compose.yml` injeta `GROUPS_ENABLED` em `backend` e `worker`; default continua `false` fora do ambiente configurado.
 
 ### Frontend runtime
 
