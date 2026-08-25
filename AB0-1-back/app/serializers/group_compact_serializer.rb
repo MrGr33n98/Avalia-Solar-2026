@@ -37,7 +37,7 @@ class GroupCompactSerializer
     {
       can_join: policy.join?,
       can_leave: policy.leave?,
-      can_post: false,
+      can_post: @current_user.present? && GroupPolicy.new(@current_user, @group).create_post?,
       can_invite: @current_user.present? && policy.invite?,
       can_moderate: @current_user.present? && policy.moderate?,
       can_manage_members: @current_user.present? && policy.manage_members?

@@ -62,6 +62,16 @@ Rails.application.routes.draw do
         resources :members, only: :index, controller: 'groups/members'
         resources :topics, only: :index, controller: 'groups/topics'
         resources :rules, only: :index, controller: 'groups/rules'
+        resources :posts, only: %i[index create show update destroy], controller: 'groups/posts' do
+          member do
+            post :hide
+            post :restore
+            post :pin
+            delete :pin, action: :unpin
+            post :close_comments
+            post :open_comments
+          end
+        end
       end
       resources :social_follows, path: 'follows', only: %i[index create] do
         collection do

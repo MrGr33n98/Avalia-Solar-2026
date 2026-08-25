@@ -2,6 +2,7 @@
 
 class GroupTopic < ApplicationRecord
   belongs_to :group, inverse_of: :group_topics
+  has_many :group_posts, dependent: :nullify
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[active created_at group_id id name position slug updated_at]

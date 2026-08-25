@@ -41,6 +41,16 @@ class GroupPolicy < ApplicationPolicy
     Groups::Feature.enabled? && (owner_or_admin? || moderator_role?)
   end
 
+  def create_post?
+    return false unless Groups::Feature.enabled? && user.is_a?(User) && user.active? && active_membership?
+    return false unless record.status == 'active'
+
+    case record.posting_mode
+    when 'admins_only' then owner_or_admin? || moderator_role?
+    else true
+    end
+  end
+
   def moderate?
     Groups::Feature.enabled? && (owner_or_admin? || moderator_role?)
   end

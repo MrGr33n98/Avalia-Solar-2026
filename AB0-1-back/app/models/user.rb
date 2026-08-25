@@ -25,6 +25,7 @@ class User < ApplicationRecord
   has_many :reviewer_solutions, dependent: :destroy
   has_many :reviewer_publications, dependent: :destroy
   has_many :group_memberships, dependent: :destroy
+  has_many :group_posts, dependent: :restrict_with_error
   has_many :owned_groups, class_name: 'Group', foreign_key: :owner_id, dependent: :restrict_with_error
   has_one :reviewer_profile, dependent: :destroy
   has_many :analytics_events, dependent: :destroy
