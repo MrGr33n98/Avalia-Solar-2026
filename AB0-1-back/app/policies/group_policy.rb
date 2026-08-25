@@ -14,6 +14,7 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def create?
+    return true if admin?
     Groups::Feature.enabled? && user.present? && user.is_a?(User) && user.active?
   end
 
