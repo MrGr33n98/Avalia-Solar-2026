@@ -8,19 +8,17 @@ import { GroupsSidebar } from '@/components/groups/GroupsSidebar';
 import { GroupRules } from '@/components/groups/GroupRules';
 import { GroupTopics } from '@/components/groups/GroupTopics';
 import { getGroup, getMembers, getRules, getTopics } from '@/lib/api/groups';
+import { getGroupsServerHeaders } from '@/lib/api/groups-server';
+import { isGroupsEnabled } from '@/lib/features/groups';
 
 type GroupPageProps = {
   params: { slug: string };
 };
 
-function groupsEnabled() {
-  return process.env.NEXT_PUBLIC_FEATURE_GROUPS !== 'false' && process.env.NEXT_PUBLIC_GROUPS_ENABLED !== 'false';
-}
-
 export async function generateMetadata({ params }: GroupPageProps): Promise<Metadata> {
-  if (!groupsEnabled()) return {};
+  if (!isGroupsEnabled()) return {};
   try {
-    const group = await getGroup(params.slug);
+    const group = await getGroup(params.slug, getGroupsServerHeaders());
     return { title: `${group.name} | Comunidades Avalia Solar`, description: group.short_description || group.description || undefined };
   } catch {
     return { title: 'Comunidade | Avalia Solar' };
@@ -28,20 +26,20 @@ export async function generateMetadata({ params }: GroupPageProps): Promise<Meta
 }
 
 export default async function GroupDetailPage({ params }: GroupPageProps) {
-  if (!groupsEnabled()) notFound();
+  if (!isGroupsEnabled()) notFound();
 
   let group;
   try {
-    group = await getGroup(params.slug);
+    group = await getGroup(params.slug, getGroupsServerHeaders());
   } catch (error) {
     if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) notFound();
     return <GroupDetailError />;
   }
 
   const [membersResult, topicsResult, rulesResult] = await Promise.allSettled([
-    getMembers(params.slug),
-    getTopics(params.slug),
-    getRules(params.slug),
+    getMembers(params.slug, getGroupsServerHeaders()),
+    getTopics(params.slug, getGroupsServerHeaders()),
+    getRules(params.slug, getGroupsServerHeaders()),
   ]);
   const members = membersResult.status === 'fulfilled' ? membersResult.value : [];
   const topics = topicsResult.status === 'fulfilled' ? topicsResult.value : [];

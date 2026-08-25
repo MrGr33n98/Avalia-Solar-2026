@@ -28,10 +28,11 @@
 - Tipos em `AB0-1-front/types/groups.ts`, sem campos além dos serializers.
 - React Query já é global via `lib/QueryProvider.tsx`; mutations invalidam detalhe, membership e discovery.
 - `Navbar`, `MobileBottomNav` e `AppContentFrame` já são globais; nenhuma navegação duplicada será criada.
-- Feature flag frontend usa `GROUPS`; página retorna `notFound()` quando flag pública está explicitamente desligada.
+- Feature flag frontend usa `NEXT_PUBLIC_GROUPS_ENABLED`; página retorna `notFound()` quando não está explicitamente em `true`.
 
 ## Decisões de escopo
 
 - Sem feed, posts, comentários, criação ou moderação frontend.
 - Categoria nominal não é exibida: backend retorna apenas `category_id`.
 - Grupo privado continua protegido pelo backend; respostas `404` são apresentadas sem revelar existência.
+- SSR encaminha somente cookie da requisição atual, com `cache: 'no-store'`, preservando membership sem vazar headers internos.

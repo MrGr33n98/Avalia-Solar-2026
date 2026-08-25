@@ -23,6 +23,7 @@ export class GroupsApiError extends Error {
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(buildApiUrl(path), {
     ...init,
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       ...getApiRequestHeaders(),
@@ -54,8 +55,8 @@ export async function getGroups(params: GroupsQuery = {}): Promise<Group[]> {
   return request<Group[]>(`groups${suffix ? `?${suffix}` : ''}`);
 }
 
-export function getGroup(slug: string): Promise<Group> {
-  return request<Group>(`groups/${encodeURIComponent(slug)}`);
+export function getGroup(slug: string, headers?: HeadersInit): Promise<Group> {
+  return request<Group>(`groups/${encodeURIComponent(slug)}`, { headers });
 }
 
 export async function getMembership(slug: string): Promise<GroupMembership | null> {
@@ -75,14 +76,14 @@ export function leaveGroup(slug: string): Promise<GroupMembership | null> {
   return request<GroupMembership | null>(`groups/${encodeURIComponent(slug)}/join`, { method: 'DELETE' });
 }
 
-export function getMembers(slug: string): Promise<GroupMember[]> {
-  return request<GroupMember[]>(`groups/${encodeURIComponent(slug)}/members`);
+export function getMembers(slug: string, headers?: HeadersInit): Promise<GroupMember[]> {
+  return request<GroupMember[]>(`groups/${encodeURIComponent(slug)}/members`, { headers });
 }
 
-export function getTopics(slug: string): Promise<GroupTopic[]> {
-  return request<GroupTopic[]>(`groups/${encodeURIComponent(slug)}/topics`);
+export function getTopics(slug: string, headers?: HeadersInit): Promise<GroupTopic[]> {
+  return request<GroupTopic[]>(`groups/${encodeURIComponent(slug)}/topics`, { headers });
 }
 
-export function getRules(slug: string): Promise<GroupRule[]> {
-  return request<GroupRule[]>(`groups/${encodeURIComponent(slug)}/rules`);
+export function getRules(slug: string, headers?: HeadersInit): Promise<GroupRule[]> {
+  return request<GroupRule[]>(`groups/${encodeURIComponent(slug)}/rules`, { headers });
 }
