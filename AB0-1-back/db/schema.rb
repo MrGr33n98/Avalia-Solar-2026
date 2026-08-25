@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_19_153600) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_24_200100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2090,6 +2090,60 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_19_153600) do
     t.index ["user_id"], name: "index_gated_downloads_on_user_id"
   end
 
+  create_table "group_memberships", force: :cascade do |t|
+    t.bigint "group_id", null: false
+    t.bigint "user_id", null: false
+    t.string "role", default: "member", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "joined_at"
+    t.datetime "approved_at"
+    t.bigint "approved_by_id"
+    t.string "notifications_level", default: "highlights", null: false
+    t.datetime "muted_until"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approved_by_id"], name: "index_group_memberships_on_approved_by_id"
+    t.index ["group_id", "role"], name: "index_group_memberships_on_group_id_and_role"
+    t.index ["group_id", "status"], name: "index_group_memberships_on_group_id_and_status"
+    t.index ["group_id", "user_id"], name: "index_group_memberships_on_group_id_and_user_id", unique: true
+    t.index ["group_id"], name: "index_group_memberships_on_group_id"
+    t.index ["user_id"], name: "index_group_memberships_on_user_id"
+    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying, 'highlights'::character varying, 'mentions'::character varying, 'off'::character varying]::text[])", name: "group_memberships_notifications_level_check"
+    t.check_constraint "role::text = ANY (ARRAY['member'::character varying, 'moderator'::character varying, 'admin'::character varying, 'owner'::character varying]::text[])", name: "group_memberships_role_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'active'::character varying, 'rejected'::character varying, 'left'::character varying, 'banned'::character varying]::text[])", name: "group_memberships_status_check"
+  end
+
+  create_table "groups", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.string "short_description"
+    t.string "visibility", default: "public", null: false
+    t.string "membership_mode", default: "open", null: false
+    t.string "posting_mode", default: "members", null: false
+    t.string "status", default: "draft", null: false
+    t.bigint "owner_id", null: false
+    t.bigint "category_id"
+    t.boolean "official", default: false, null: false
+    t.boolean "verified", default: false, null: false
+    t.boolean "featured", default: false, null: false
+    t.integer "members_count", default: 0, null: false
+    t.integer "posts_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_groups_on_category_id"
+    t.index ["featured"], name: "index_groups_on_featured"
+    t.index ["owner_id"], name: "index_groups_on_owner_id"
+    t.index ["slug"], name: "index_groups_on_slug", unique: true
+    t.index ["status", "visibility"], name: "index_groups_on_status_and_visibility"
+    t.index ["status"], name: "index_groups_on_status"
+    t.index ["visibility"], name: "index_groups_on_visibility"
+    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying, 'approval'::character varying, 'invite_only'::character varying]::text[])", name: "groups_membership_mode_check"
+    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying, 'moderated'::character varying, 'admins_only'::character varying]::text[])", name: "groups_posting_mode_check"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'suspended'::character varying]::text[])", name: "groups_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'private_visible'::character varying, 'private_hidden'::character varying]::text[])", name: "groups_visibility_check"
+  end
+
   create_table "growth_insights", force: :cascade do |t|
     t.date "period_start"
     t.date "period_end"
@@ -3660,6 +3714,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_19_153600) do
   add_foreign_key "forum_questions", "users"
   add_foreign_key "gated_downloads", "companies"
   add_foreign_key "gated_downloads", "users"
+  add_foreign_key "group_memberships", "groups"
+  add_foreign_key "group_memberships", "users"
+  add_foreign_key "group_memberships", "users", column: "approved_by_id"
+  add_foreign_key "groups", "categories"
+  add_foreign_key "groups", "users", column: "owner_id"
   add_foreign_key "intent_score_histories", "intent_scores"
   add_foreign_key "intent_scores", "companies"
   add_foreign_key "knowledge_articles", "categories"

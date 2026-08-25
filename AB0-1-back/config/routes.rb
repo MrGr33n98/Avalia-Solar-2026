@@ -56,6 +56,11 @@ Rails.application.routes.draw do
 
       # Social Core API routes
       get 'feed', to: 'feed#index'
+      resources :groups, param: :slug, only: %i[index show create update], controller: 'groups' do
+        resource :join, only: %i[create destroy], controller: 'groups/memberships'
+        resource :membership, only: :show, controller: 'groups/memberships'
+        resources :members, only: :index, controller: 'groups/members'
+      end
       resources :social_follows, path: 'follows', only: %i[index create] do
         collection do
           delete '/', to: 'social_follows#destroy'

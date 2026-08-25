@@ -24,6 +24,7 @@ class Category < ApplicationRecord
                                      after_remove: :update_metrics_on_change
 
   has_many :articles, dependent: :nullify
+  has_many :groups, dependent: :nullify
   has_many :rating_criteria, dependent: :destroy
 
   has_one_attached :banner

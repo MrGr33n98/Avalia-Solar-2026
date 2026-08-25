@@ -23,6 +23,7 @@ module Api
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
       rescue_from Pundit::NotAuthorizedError, with: :authorization_error
+      rescue_from ::Groups::MembershipService::Error, with: :groups_error
 
       def set_effective_company_header
         company = current_user&.company
@@ -212,6 +213,14 @@ module Api
           message: 'Permissão insuficiente para esta ação',
           status: :forbidden,
           code: 'POLICY_FORBIDDEN', details: { action: params[:action], resource: self.class.name, required_role: 'owner_or_admin' }
+        )
+      end
+
+      def groups_error(exception)
+        render_error_response(
+          message: exception.message,
+          status: :forbidden,
+          code: 'GROUP_ACTION_FORBIDDEN'
         )
       end
     end

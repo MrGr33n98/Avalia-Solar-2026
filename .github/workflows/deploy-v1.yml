@@ -503,6 +503,14 @@ jobs:
               exit 1
             fi
 
+            echo "?? Executando smoke query Groups na release..."
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner 'Group.limit(1).load; GroupMembership.limit(1).load; puts \"GROUPS_SMOKE_OK\"'"; then
+              echo "!! Smoke query Groups falhou; abortando antes de atualizar o backend"
+              docker compose logs --tail=300 backend || true
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
             echo "?? Atualizando backend..."
             docker compose up -d --no-deps --no-build backend
             if ! wait_for_health backend 90; then

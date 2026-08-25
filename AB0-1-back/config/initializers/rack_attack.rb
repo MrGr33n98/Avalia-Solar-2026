@@ -68,6 +68,18 @@ class Rack::Attack
     req.ip if req.path.match?(%r{\A/api/v1/creator_tree/[^/]+/view\z}) && req.post?
   end
 
+  throttle('groups/create/ip', limit: 5, period: 1.minute) do |req|
+    req.ip if req.path == '/api/v1/groups' && req.post?
+  end
+
+  throttle('groups/join/ip', limit: 20, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/groups/[^/]+/join\z}) && req.post?
+  end
+
+  throttle('groups/leave/ip', limit: 20, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/groups/[^/]+/join\z}) && req.delete?
+  end
+
 
   # === Existing Rules ===
 
