@@ -84,6 +84,33 @@ RSpec.describe 'Groups API', type: :request do
     end
   end
 
+  describe 'topics e rules' do
+    it 'lista somente topics e rules ativos de grupo visível' do
+      active_topic = create(:group_topic, group: group)
+      create(:group_topic, group: group, active: false, slug: 'inativo')
+      active_rule = create(:group_rule, group: group)
+      create(:group_rule, group: group, active: false, title: 'Regra inativa')
+
+      get "/api/v1/groups/#{group.slug}/topics"
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.fetch('data').pluck('id')).to eq([active_topic.id])
+
+      get "/api/v1/groups/#{group.slug}/rules"
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.fetch('data').pluck('id')).to eq([active_rule.id])
+    end
+
+    it 'não revela topics ou rules de grupo privado a não membro' do
+      group.update!(visibility: 'private_hidden')
+
+      get "/api/v1/groups/#{group.slug}/topics", headers: auth_headers_for(outsider)
+      expect(response).to have_http_status(:not_found)
+
+      get "/api/v1/groups/#{group.slug}/rules", headers: auth_headers_for(outsider)
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'POST /api/v1/groups' do
     it 'cria grupo e não aceita atributos administrativos' do
       post '/api/v1/groups',

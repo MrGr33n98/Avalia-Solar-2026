@@ -12,6 +12,8 @@ class Group < ApplicationRecord
   has_many :members, through: :group_memberships, source: :user
   has_many :group_topics, dependent: :destroy
   has_many :group_rules, dependent: :destroy
+  has_many :active_group_topics, -> { active }, class_name: 'GroupTopic', inverse_of: :group
+  has_many :active_group_rules, -> { active }, class_name: 'GroupRule', inverse_of: :group
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[created_at featured id name official owner_id slug status updated_at verified visibility]

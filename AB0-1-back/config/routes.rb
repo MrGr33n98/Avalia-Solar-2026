@@ -60,6 +60,8 @@ Rails.application.routes.draw do
         resource :join, only: %i[create destroy], controller: 'groups/memberships'
         resource :membership, only: :show, controller: 'groups/memberships'
         resources :members, only: :index, controller: 'groups/members'
+        resources :topics, only: :index, controller: 'groups/topics'
+        resources :rules, only: :index, controller: 'groups/rules'
       end
       resources :social_follows, path: 'follows', only: %i[index create] do
         collection do

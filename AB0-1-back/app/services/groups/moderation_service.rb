@@ -19,6 +19,8 @@ module Groups
     end
 
     def reject_membership
+      raise Unsupported, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
+
       group = @membership.group
       raise Unsupported, 'Solicitação não está pendente' unless @membership.pending?
       raise Unsupported, 'Usuário sem permissão para moderar' unless GroupPolicy.new(@approver, group).manage_members?

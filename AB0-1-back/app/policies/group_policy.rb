@@ -26,7 +26,7 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def join?
-    Groups::Feature.enabled? && user.is_a?(User) && record.status == 'active' && record.visibility == 'public'
+    Groups::Feature.enabled? && user.is_a?(User) && user.active? && record.status == 'active' && record.visibility == 'public'
   end
 
   def leave?

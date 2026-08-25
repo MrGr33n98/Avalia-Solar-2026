@@ -26,6 +26,7 @@ module Groups
     def join
       raise Forbidden, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
       raise Forbidden, 'Usuário inválido' unless @user.is_a?(User)
+      raise Forbidden, 'Usuário não está ativo' unless @user.active?
       raise Forbidden, 'Grupo não aceita novas participações' unless @group.status == 'active'
       raise Forbidden, 'Este grupo exige convite' if @group.membership_mode == 'invite_only'
       raise Forbidden, 'Grupo privado exige convite' unless @group.visibility == 'public'

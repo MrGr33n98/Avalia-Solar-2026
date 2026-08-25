@@ -20,4 +20,21 @@ FactoryBot.define do
     approved_at { Time.current }
     notifications_level { 'highlights' }
   end
+
+  factory :group_topic do
+    association :group
+    name { 'Migração ACL' }
+    slug { 'migracao-acl' }
+    description { 'Discussões sobre migração.' }
+    position { 0 }
+    active { true }
+  end
+
+  factory :group_rule do
+    association :group
+    title { 'Respeito entre membros' }
+    description { 'Mantenha discussões profissionais.' }
+    position { 0 }
+    active { true }
+  end
 end
