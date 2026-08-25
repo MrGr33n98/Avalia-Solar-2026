@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class Group < ApplicationRecord
+  has_one_attached :avatar
+  has_many_attached :hero_images
+
+  ALLOWED_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
+  MAX_AVATAR_SIZE = 2.megabytes
+  MAX_HERO_SIZE = 5.megabytes
+
   VISIBILITIES = %w[public private_visible private_hidden].freeze
   MEMBERSHIP_MODES = %w[open approval invite_only].freeze
   POSTING_MODES = %w[members moderated admins_only].freeze
@@ -33,6 +40,9 @@ class Group < ApplicationRecord
   validates :posting_mode, inclusion: { in: POSTING_MODES }
   validates :status, inclusion: { in: STATUSES }
 
+  validate :validate_avatar
+  validate :validate_hero_images
+
   scope :discoverable, -> { where(status: 'active', visibility: 'public') }
   scope :featured_groups, -> { discoverable.where(featured: true) }
   scope :newest, -> { order(created_at: :desc, id: :desc) }
@@ -42,5 +52,75 @@ class Group < ApplicationRecord
     return nil unless user
 
     group_memberships.find_by(user_id: user.id, status: 'active')
+  end
+
+  def avatar_url
+    return unless avatar.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(avatar, options)
+  rescue StandardError
+    nil
+  end
+
+  def hero_preview_url
+    return unless hero_images.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(hero_images.first, options)
+  rescue StandardError
+    nil
+  end
+
+  def hero_images_data
+    return [] unless hero_images.attached?
+
+    options = Rails.application.routes.default_url_options.dup
+    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+
+    hero_images.map do |image|
+      {
+        id: image.id,
+        url: Rails.application.routes.url_helpers.rails_storage_proxy_url(image, options)
+      }
+    rescue StandardError
+      nil
+    end.compact
+  end
+
+  private
+
+  def validate_avatar
+    return unless avatar.attached?
+
+    unless avatar.content_type.in?(ALLOWED_CONTENT_TYPES)
+      errors.add(:avatar, 'deve ser PNG, JPEG, JPG ou WEBP')
+    end
+
+    if avatar.blob.byte_size > MAX_AVATAR_SIZE
+      errors.add(:avatar, 'não pode exceder 2 MB')
+    end
+  end
+
+  def validate_hero_images
+    return unless hero_images.attached?
+
+    if hero_images.count > 5
+      errors.add(:hero_images, 'não pode ter mais do que 5 imagens')
+    end
+
+    hero_images.each do |image|
+      unless image.content_type.in?(ALLOWED_CONTENT_TYPES)
+        errors.add(:hero_images, "imagem #{image.filename} deve ser PNG, JPEG, JPG ou WEBP")
+      end
+
+      if image.blob.byte_size > MAX_HERO_SIZE
+        errors.add(:hero_images, "imagem #{image.filename} não pode exceder 5 MB")
+      end
+    end
   end
 end

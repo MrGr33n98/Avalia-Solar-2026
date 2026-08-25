@@ -38,6 +38,7 @@ export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   article_footer_cta: '15/2',
   company_profile_related_carousel: '15/2',
   comparison_floating_bar: '6/1',
+  groups_right_rail: '1/2',
 };
 
 export type BannerLocation =
@@ -61,4 +62,5 @@ export type BannerLocation =
   | 'financing_simulator_micro_banner'
   | 'company_profile_about_inline'
   | 'company_profile_sidebar_sponsored'
-  | 'company_profile_related_carousel';
+  | 'company_profile_related_carousel'
+  | 'groups_right_rail';

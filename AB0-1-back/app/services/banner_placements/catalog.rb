@@ -24,7 +24,8 @@ module BannerPlacements
       'pricing_advertise_section' => Entry.new('pricing_advertise_section', 'Página de Planos', ['/pricing*'], [1200, 160], 'premium', 'active'),
       'company_profile_related_carousel' => Entry.new('company_profile_related_carousel', 'Empresas Relacionadas', ['/companies/:id*'], [1200, 160], 'premium', 'active'),
       'compare_page_bottom' => Entry.new('compare_page_bottom', 'Rodapé do Comparador', ['/compare*'], [1200, 160], 'premium', 'active'),
-      'comparison_floating_bar' => Entry.new('comparison_floating_bar', 'Barra flutuante do Comparador', ['/compare*'], [720, 120], 'premium', 'active')
+      'comparison_floating_bar' => Entry.new('comparison_floating_bar', 'Barra flutuante do Comparador', ['/compare*'], [720, 120], 'premium', 'active'),
+      'groups_right_rail' => Entry.new('groups_right_rail', 'Lateral de Comunidades', ['/groups/*'], [300, 600], 'premium', 'active')
     }.freeze
     def self.keys
       ENTRIES.keys

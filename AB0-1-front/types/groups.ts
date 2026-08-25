@@ -41,6 +41,12 @@ export interface Group {
   stats: GroupStats;
   membership: GroupMembership | null;
   permissions: GroupPermissions;
+  avatar_url?: string | null;
+  hero_preview_url?: string | null;
+  hero_images?: {
+    id: number | string;
+    url: string;
+  }[];
   description?: string | null;
   membership_mode?: GroupMembershipMode;
   posting_mode?: string;

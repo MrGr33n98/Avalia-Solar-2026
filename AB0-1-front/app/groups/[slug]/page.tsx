@@ -48,20 +48,45 @@ export default async function GroupDetailPage({ params }: GroupPageProps) {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:py-10">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-5 text-sm"><Link href="/groups" className="font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Comunidades</Link><span className="mx-2 text-slate-400">/</span><span className="text-slate-500">{group.name}</span></div>
+      <div className="mx-auto max-w-[1320px]">
+        <div className="mb-5 text-sm">
+          <Link href="/groups" className="font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+            Comunidades
+          </Link>
+          <span className="mx-2 text-slate-400">/</span>
+          <span className="text-slate-500 font-medium">{group.name}</span>
+        </div>
+
         <GroupHero group={group} />
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">
-            <nav className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" aria-label="Seções da comunidade">
-              <a href="#discussions" className="min-h-11 whitespace-nowrap rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Discussões</a>
-              <a href="#members" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Membros</a>
-              <a href="#rules" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Regras</a>
+            <nav className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm no-scrollbar scrollbar-none" aria-label="Seções da comunidade">
+              <a href="#discussions" className="min-h-11 whitespace-nowrap rounded-xl bg-blue-50/80 px-4 py-2.5 text-sm font-semibold text-blue-700 border border-blue-100/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                Discussões
+              </a>
+              {topics.length > 0 && (
+                <a href="#topics" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                  Assuntos
+                </a>
+              )}
+              <a href="#members" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                Membros
+              </a>
+              {rules.length > 0 && (
+                <a href="#rules" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                  Regras
+                </a>
+              )}
             </nav>
+
             <GroupFeed group={group} topics={topics} />
-            <GroupTopics topics={topics} />
+            
+            {topics.length > 0 && <GroupTopics topics={topics} />}
+            
             <GroupMembersPreview members={members} />
-            <GroupRules rules={rules} />
+            
+            {rules.length > 0 && <GroupRules rules={rules} />}
           </div>
           <GroupsSidebar group={group} />
         </div>

@@ -8,6 +8,7 @@ class GroupSerializer < GroupCompactSerializer
       posting_mode: @group.posting_mode,
       status: @group.status,
       category_id: @group.category_id,
+      hero_images: @group.hero_images_data,
       created_at: @group.created_at&.iso8601,
       updated_at: @group.updated_at&.iso8601
     )

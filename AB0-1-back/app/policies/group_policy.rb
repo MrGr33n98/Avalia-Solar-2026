@@ -15,7 +15,7 @@ class GroupPolicy < ApplicationPolicy
 
   def create?
     return true if admin?
-    Groups::Feature.enabled? && user.present? && user.is_a?(User) && user.active?
+    Groups::Feature.enabled? && user.present? && user.is_a?(User) && user.active_status?
   end
 
   def update?
@@ -27,7 +27,11 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def join?
-    Groups::Feature.enabled? && user.is_a?(User) && user.active? && record.status == 'active' && record.visibility == 'public'
+    return false unless Groups::Feature.enabled? && user.present?
+    return true if admin?
+    return false unless user.is_a?(User)
+
+    user.active_status? && record.status == 'active' && record.visibility == 'public'
   end
 
   def leave?
@@ -43,13 +47,11 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def create_post?
-    return false unless Groups::Feature.enabled? && user.is_a?(User) && user.active? && active_membership?
-    return false unless record.status == 'active'
+    return false unless Groups::Feature.enabled? && user.present?
+    return true if admin? && active_membership?
+    return false unless user.is_a?(User)
 
-    case record.posting_mode
-    when 'admins_only' then owner_or_admin? || moderator_role?
-    else true
-    end
+    user.active_status? && active_membership? && record.status == 'active' && (record.posting_mode != 'admins_only' || owner_or_admin? || moderator_role?)
   end
 
   def moderate?

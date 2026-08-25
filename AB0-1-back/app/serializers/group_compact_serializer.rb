@@ -17,6 +17,8 @@ class GroupCompactSerializer
       verified: @group.verified,
       featured: @group.featured,
       stats: { members: @group.members_count, posts: @group.posts_count },
+      avatar_url: @group.avatar_url,
+      hero_preview_url: @group.hero_preview_url,
       membership: membership_payload,
       permissions: permissions_payload
     }
