@@ -3,6 +3,7 @@ import type {
   Group,
   GroupMember,
   GroupMembership,
+  GroupPost,
   GroupRule,
   GroupsQuery,
   GroupTopic,
@@ -86,4 +87,15 @@ export function getTopics(slug: string, headers?: HeadersInit): Promise<GroupTop
 
 export function getRules(slug: string, headers?: HeadersInit): Promise<GroupRule[]> {
   return request<GroupRule[]>(`groups/${encodeURIComponent(slug)}/rules`, { headers });
+}
+
+export function getGroupPosts(slug: string, params: { topic?: number; sort?: 'recent' | 'oldest'; page?: number; per_page?: number } = {}, headers?: HeadersInit): Promise<GroupPost[]> {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value !== undefined) query.set(key, String(value)); });
+  const suffix = query.toString();
+  return request<GroupPost[]>(`groups/${encodeURIComponent(slug)}/posts${suffix ? `?${suffix}` : ''}`, { headers });
+}
+
+export function createGroupPost(slug: string, post: { title?: string; body: string; group_topic_id?: number }): Promise<GroupPost> {
+  return request<GroupPost>(`groups/${encodeURIComponent(slug)}/posts`, { method: 'POST', body: JSON.stringify({ post }) });
 }

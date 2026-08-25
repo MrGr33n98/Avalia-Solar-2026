@@ -7,6 +7,7 @@ import { GroupMembersPreview } from '@/components/groups/GroupMembersPreview';
 import { GroupsSidebar } from '@/components/groups/GroupsSidebar';
 import { GroupRules } from '@/components/groups/GroupRules';
 import { GroupTopics } from '@/components/groups/GroupTopics';
+import { GroupFeed } from '@/components/groups/GroupFeed';
 import { getGroup, getMembers, getRules, getTopics } from '@/lib/api/groups';
 import { getGroupsServerHeaders } from '@/lib/api/groups-server';
 import { isGroupsEnabled } from '@/lib/features/groups';
@@ -53,10 +54,11 @@ export default async function GroupDetailPage({ params }: GroupPageProps) {
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="min-w-0 space-y-6">
             <nav className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" aria-label="Seções da comunidade">
-              <a href="#topics" className="min-h-11 whitespace-nowrap rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Visão geral</a>
+              <a href="#discussions" className="min-h-11 whitespace-nowrap rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Discussões</a>
               <a href="#members" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Membros</a>
               <a href="#rules" className="min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Regras</a>
             </nav>
+            <GroupFeed group={group} topics={topics} />
             <GroupTopics topics={topics} />
             <GroupMembersPreview members={members} />
             <GroupRules rules={rules} />

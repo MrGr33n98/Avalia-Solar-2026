@@ -79,6 +79,32 @@ export interface GroupRule {
   position: number;
 }
 
+export interface GroupPost {
+  id: number;
+  title: string | null;
+  body: string;
+  status: 'published' | 'hidden' | 'removed' | string;
+  pinned: boolean;
+  comments_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  author: {
+    id: number;
+    name: string | null;
+    avatar_url: string | null;
+  };
+  topic: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  permissions: {
+    can_edit: boolean;
+    can_delete: boolean;
+    can_moderate: boolean;
+  };
+}
+
 export interface GroupsQuery {
   search?: string;
   category?: number;
