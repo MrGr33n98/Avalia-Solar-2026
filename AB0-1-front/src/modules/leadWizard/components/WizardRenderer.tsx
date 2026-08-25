@@ -107,7 +107,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
 
   if (status === 'OTP_VERIFICATION' || (status === 'SUBMITTING' && leadResult)) {
     return (
-      <div className="max-w-2xl mx-auto w-full bg-white rounded-xl shadow-sm border p-8 md:p-10 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="max-w-[500px] mx-auto w-full space-y-5 animate-in slide-in-from-bottom-4 duration-500">
         <div className="text-center space-y-3">
           <div className="mx-auto w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-2">
             <Mail className="h-6 w-6 text-blue-600" />
@@ -125,7 +125,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
           </Alert>
         )}
 
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-5">
           <InputOTP 
             maxLength={6} 
             value={otpValue} 
@@ -145,7 +145,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
 
           <div className="w-full space-y-4">
             <Button 
-              className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-100"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-100"
               onClick={() => handleVerifyOtp(otpValue)}
               disabled={otpValue.length < 6 || status === 'SUBMITTING'}
             >
@@ -171,7 +171,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
           </div>
         </div>
 
-        <div className="pt-6 border-t flex items-center justify-center gap-6 opacity-50">
+        <div className="pt-4 border-t flex items-center justify-center gap-6 opacity-50">
           <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
             SEGURO
@@ -190,9 +190,9 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
   const companyUnavailable = schema.availability?.company_available === false;
 
   return (
-    <div className="max-w-2xl mx-auto w-full bg-white rounded-xl shadow-sm border p-6 md:p-8">
+    <div className="max-w-[500px] mx-auto w-full">
       {/* Branding / Header */}
-      <div className="mb-8">
+      <div className="mb-5">
         {isPremiumCustom && (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mb-4">
             Atendimento Exclusivo
@@ -212,14 +212,14 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
       </div>
 
       {serverError && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{serverError}</AlertDescription>
         </Alert>
       )}
 
       {/* Step Content */}
-      <div className="min-h-[300px]">
+      <div className="min-h-[220px]">
         <WizardStep 
           step={currentStep}
           answers={answers}
@@ -230,12 +230,12 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
       </div>
 
       {/* Footer Navigation */}
-      <div className="mt-8 pt-6 border-t flex items-center justify-between">
+      <div className="mt-5 pt-4 border-t flex items-center justify-between">
         <Button 
           variant="ghost" 
+          className={canGoBack ? 'h-11' : 'invisible h-11'}
           onClick={prevStep} 
           disabled={!canGoBack || status === 'SUBMITTING'}
-          className={!canGoBack ? 'invisible' : ''}
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>
@@ -243,7 +243,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
         <Button 
           onClick={nextStep} 
           disabled={status === 'SUBMITTING' || companyUnavailable}
-          className="min-w-[140px]"
+          className="h-12 min-w-[140px]"
         >
           {status === 'SUBMITTING' ? (
             <span className="flex items-center">

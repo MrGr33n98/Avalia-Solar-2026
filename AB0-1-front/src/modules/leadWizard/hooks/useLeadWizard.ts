@@ -10,6 +10,7 @@ import {
   track
 } from '@/lib/analytics/consolidated';
 import { buildWizardPayload } from '../utils/payload';
+import { normalizeWizardError } from '../errors/normalizeWizardError';
 
 const SESSION_KEY = 'leadWizardSession';
 const OTP_RESEND_COOLDOWN_SECONDS = 60;
@@ -25,6 +26,7 @@ const getRemainingCooldown = (otpSentAt?: string) => {
 };
 
 export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) => {
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [status, setStatus] = useState<WizardStateStatus>('IDLE');
   const [schema, setSchema] = useState<WizardSchema | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -34,6 +36,10 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
   const [leadResult, setLeadResult] = useState<{ lead_id: number; otp_sent_at: string; email_hint?: string } | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [distributedCompanies, setDistributedCompanies] = useState<any[]>([]);
+
+  useEffect(() => {
+    setIdempotencyKey(crypto.randomUUID());
+  }, [categoryId, preferredCompanyId]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -194,7 +200,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     setServerError(null);
     try {
       const payload = buildPayload();
-      const result = await wizardApi.submitLead(payload);
+      const result = await wizardApi.submitLead(payload, idempotencyKey);
       setLeadResult(result);
       setStatus('OTP_VERIFICATION');
       setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS);
@@ -203,9 +209,17 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       trackWizardContactSubmitted(String(result.lead_id), categoryId);
 
       track('wizard_otp_viewed', { category_id: categoryId, lead_id: result.lead_id });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setServerError(error?.message || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente.');
+      const normalized = normalizeWizardError(error, 'Ocorreu um erro ao enviar sua solicitação. Tente novamente.');
+      if (normalized.code === 'EMAIL_DELIVERY_FAILED' && normalized.leadId) {
+        setLeadResult({ lead_id: normalized.leadId, otp_sent_at: new Date(0).toISOString(), email_hint: normalized.emailHint });
+        setResendCooldown(0);
+        setServerError(normalized.message);
+        setStatus('OTP_VERIFICATION');
+        return;
+      }
+      setServerError(normalized.message);
       setStatus('ERROR');
     }
   };
@@ -219,6 +233,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setDistributedCompanies(response.companies || []);
       setStatus('SUCCESS');
       localStorage.removeItem(SESSION_KEY); // ONLY CLEAR AFTER SUCCESS
+      setIdempotencyKey(crypto.randomUUID());
 
       // PostHog Semantic Events Sequence
       trackOtpVerified(String(leadResult.lead_id));
@@ -238,8 +253,8 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
         lead_id: leadResult.lead_id,
         distributed_count: response.companies?.length || 0
       });
-    } catch (error: any) {
-      setServerError(error?.message || 'Código inválido ou expirado.');
+    } catch (error: unknown) {
+      setServerError(normalizeWizardError(error, 'Código inválido ou expirado.').message);
       setStatus('OTP_VERIFICATION');
     }
   };
@@ -256,8 +271,8 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setResendCooldown(OTP_RESEND_COOLDOWN_SECONDS);
       setStatus('OTP_VERIFICATION');
       track('wizard_otp_resend_clicked', { lead_id: leadResult.lead_id });
-    } catch (error: any) {
-      setServerError('Erro ao reenviar código.');
+    } catch (error: unknown) {
+      setServerError(normalizeWizardError(error, 'Erro ao reenviar código.').message);
       setStatus('OTP_VERIFICATION');
     }
   };

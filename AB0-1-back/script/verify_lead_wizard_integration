@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "Verificando contrato e integração do Lead Wizard..."
+bundle exec rspec spec/requests/api/v1/leads_wizard_spec.rb "$@"

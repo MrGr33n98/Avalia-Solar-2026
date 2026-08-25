@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { leadsWizardApi } from '@/lib/api-client';
 import { track } from '@/lib/analytics/lazy';
+import { normalizeWizardError } from '@/src/modules/leadWizard/errors/normalizeWizardError';
 import { Zap, ShieldCheck, Clock, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
 
 type QuickLeadOpenDetail = {
@@ -142,7 +143,7 @@ export default function QuickLeadModal() {
       setStep(2);
       track('Quick Lead Created', { lead_id: response.lead_id });
     } catch (err: unknown) {
-      setError(getWizardErrorMessage(err, 'Erro ao enviar solicitação.'));
+      setError(normalizeWizardError(err, 'Erro ao enviar solicitação.').message);
     } finally {
       setSubmitting(false);
     }
@@ -204,7 +205,7 @@ export default function QuickLeadModal() {
       track('Quick Lead Verified', { lead_id: leadId });
       startPolling(leadId);
     } catch (err: unknown) {
-      setError(getWizardErrorMessage(err, 'Código inválido.'));
+      setError(normalizeWizardError(err, 'Código inválido.').message);
     } finally {
       setSubmitting(false);
     }
@@ -217,7 +218,7 @@ export default function QuickLeadModal() {
       await leadsWizardApi.resendEmailCode(leadId);
       setResendCooldown(60);
     } catch (err: unknown) {
-      setError(getWizardErrorMessage(err, 'Erro ao reenviar.'));
+      setError(normalizeWizardError(err, 'Erro ao reenviar.').message);
     } finally {
       setSubmitting(false);
     }
@@ -227,11 +228,11 @@ export default function QuickLeadModal() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-md p-0 overflow-hidden z-[10000] rounded-2xl border-none">
         {/* Header - Impact & Empathy */}
-        <div className="bg-blue-600 px-6 py-6 text-white relative overflow-hidden">
+        <div className="bg-blue-600 px-5 py-4 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
              <Zap className="h-24 w-24 fill-current" />
           </div>
-          <DialogTitle className="text-2xl font-black flex items-center gap-2 tracking-tight">
+          <DialogTitle className="text-xl font-black flex items-center gap-2 tracking-tight">
             Solicitar Orçamento Grátis
           </DialogTitle>
           <DialogDescription className="text-blue-100 mt-1 font-medium leading-relaxed">
@@ -239,10 +240,10 @@ export default function QuickLeadModal() {
           </DialogDescription>
         </div>
 
-        <div className="p-5 md:p-6 bg-white">
+        <div className="p-4 md:p-5 bg-white">
           {step === 1 && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 gap-3">
                 <div className="hidden" aria-hidden="true">
                   <Input tabIndex={-1} autoComplete="off" value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
                 </div>
@@ -252,7 +253,7 @@ export default function QuickLeadModal() {
                   <Input id="quick-name" required placeholder="Seu nome completo" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="h-11 rounded-xl border-slate-200" />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="quick-email" className="text-xs font-black text-slate-400 uppercase tracking-widest">E-mail *</Label>
                     <Input id="quick-email" type="email" required placeholder="seu@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11 rounded-xl border-slate-200" />
@@ -278,13 +279,13 @@ export default function QuickLeadModal() {
 
               {error && <div className="text-xs font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">{error}</div>}
 
-              <Button type="submit" disabled={submitting} className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-100 transition-all hover:scale-[1.02]">
+              <Button type="submit" disabled={submitting} className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-100 transition-all hover:scale-[1.02]">
                 {submitting ? 'Enviando...' : 'SOLICITAR AGORA'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
 
               {/* Trust Signals */}
-              <div className="flex items-center justify-center gap-4 pt-2">
+              <div className="flex items-center justify-center gap-3 pt-2">
                  <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                    <ShieldCheck className="h-3 w-3 text-emerald-500" />
                    SEGURO
@@ -302,13 +303,13 @@ export default function QuickLeadModal() {
           )}
 
           {step === 2 && (
-            <div className="space-y-6 py-4">
+            <div className="space-y-4 py-2">
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-black text-slate-900">Verifique seu E-mail</h3>
                 <p className="text-sm text-slate-500 font-medium">Enviamos um código para <strong>{verificationHint}</strong></p>
               </div>
-              
-              <div className="flex flex-col items-center gap-6">
+
+              <div className="flex flex-col items-center gap-4">
                 <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
                   <InputOTPGroup className="gap-2">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -330,7 +331,7 @@ export default function QuickLeadModal() {
           )}
 
           {step === 3 && (
-            <div className="py-8 text-center space-y-6">
+            <div className="py-5 text-center space-y-4">
               {matchingStatus === 'processing' ? (
                 <>
                   <div className="mx-auto h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
@@ -370,50 +371,3 @@ export default function QuickLeadModal() {
 }
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-
-const FIELD_LABELS: Record<string, string> = {
-  company_id: 'Empresa selecionada',
-  product_vertical: 'Vertical do projeto',
-  project_profile: 'Perfil do projeto',
-  quote_type: 'Tipo de orçamento',
-  system_size_band: 'Tamanho do sistema',
-  decision_timeline: 'Prazo de decisão',
-  address_full: 'Endereço completo',
-  name: 'Nome completo',
-  email: 'E-mail',
-  phone: 'WhatsApp',
-  consent_at: 'Consentimento'
-};
-
-const normalizeFieldMessage = (message: string) => {
-  if (message === 'is required') return 'é obrigatório.';
-  return message;
-};
-
-type WizardApiError = {
-  message?: string;
-  details?: {
-    fields?: Record<string, unknown>;
-  };
-};
-
-const getWizardErrorMessage = (error: unknown, fallback: string) => {
-  const apiError = error as WizardApiError;
-  const fields = apiError.details?.fields;
-  if (fields && typeof fields === 'object') {
-    const [field, messages] = Object.entries(fields)[0] || [];
-    if (field) {
-      const label = FIELD_LABELS[field] || field;
-      const firstMessage = Array.isArray(messages) ? messages[0] : messages;
-      if (typeof firstMessage === 'string' && firstMessage.trim().length > 0) {
-        return `${label}: ${normalizeFieldMessage(firstMessage)}`;
-      }
-    }
-  }
-
-  if (typeof apiError.message === 'string' && !apiError.message.includes('validation_failed')) {
-    return apiError.message;
-  }
-
-  return fallback;
-};

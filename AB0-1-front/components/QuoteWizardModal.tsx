@@ -18,6 +18,7 @@ import {
   useBillValueIntent,
   useQuoteWizardTracking,
 } from '@/lib/analytics/hooks/useIntentTracking';
+import { normalizeWizardError } from '@/src/modules/leadWizard/errors/normalizeWizardError';
 import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -85,6 +86,7 @@ export default function QuoteWizardModal() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [companies, setCompanies] = useState<WizardCompany[]>([]);
   const [verificationHint, setVerificationHint] = useState('');
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const formatRating = (rating: unknown) => {
     const parsed = Number(rating ?? 0);
     return Number.isFinite(parsed) ? parsed.toFixed(1) : '0.0';
@@ -101,7 +103,7 @@ export default function QuoteWizardModal() {
   const resetWizard = useCallback(() => {
     setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
     setError(null); setSubmitting(false); setResendCooldown(0);
-    setCompanies([]); setVerificationHint('');
+    setCompanies([]); setVerificationHint(''); setIdempotencyKey(crypto.randomUUID());
     resetTracking();
   }, [resetTracking]);
 
@@ -135,7 +137,7 @@ export default function QuoteWizardModal() {
       setResendCooldown(60);
       toast.success('Código reenviado com sucesso!');
     } catch (err: unknown) {
-      setError(getWizardErrorMessage(err, 'Erro ao reenviar código.'));
+      setError(normalizeWizardError(err, 'Erro ao reenviar código.').message);
       toast.error('Não foi possível reenviar o código.');
     } finally {
       setSubmitting(false);
@@ -187,7 +189,7 @@ export default function QuoteWizardModal() {
           },
           preferred_company_id: preferredCompanyId
         };
-        const response = await leadsWizardApi.create(payload);
+        const response = await leadsWizardApi.create(payload, idempotencyKey);
         setLeadId(response.lead_id);
         setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
@@ -195,7 +197,7 @@ export default function QuoteWizardModal() {
         trackStep(8, TOTAL_STEPS, { action: 'lead_created', product_vertical: form.productVertical });
         setStep(8);
       } catch (err: unknown) {
-        setError(getWizardErrorMessage(err, 'Erro ao iniciar orçamento.'));
+        setError(normalizeWizardError(err, 'Erro ao iniciar orçamento.').message);
       } finally {
         setSubmitting(false);
       }
@@ -232,7 +234,7 @@ export default function QuoteWizardModal() {
       }
     } catch (err: unknown) {
       trackSubmission(false, leadId);
-      setError(getWizardErrorMessage(err, 'Erro na validação.'));
+      setError(normalizeWizardError(err, 'Erro na validação.').message);
     } finally {
       setSubmitting(false);
     }
@@ -253,7 +255,7 @@ export default function QuoteWizardModal() {
       <DialogContent
         overlayClassName="bg-black/65 backdrop-blur-md"
         className={cn(
-          'z-[10000] flex max-h-[90dvh] max-w-xl flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
+          'z-[10000] flex max-h-[90dvh] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
           'max-md:left-1/2 max-md:top-1/2 max-md:translate-x-[-50%] max-md:translate-y-[-50%] max-md:w-[min(calc(100vw-32px),420px)]',
           'max-md:max-h-[min(72dvh,720px)]',
           'max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
@@ -276,9 +278,9 @@ export default function QuoteWizardModal() {
           <Progress value={progressValue} className="h-1.5 rounded-full bg-[#19315E]" />
         </div>
 
-        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-10 md:py-8 overscroll-contain safe-x">
+        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-6 md:py-5 overscroll-contain safe-x">
           {step === 1 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[1]} title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
               <div className="grid grid-cols-1 gap-2 md:gap-3">
                 {['Energia Solar e/ou Baterias', 'Bombas de Calor', 'Carregadores Veiculares (EV)'].map(v => {
@@ -305,7 +307,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 2 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[2]} title="Qual o tipo de projeto?" subtitle="Selecione o perfil da instalação." />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Residencial', 'Condominio', 'Comercial'].map(v => (
@@ -318,7 +320,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 3 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[3]} title="Tipo de Orçamento" subtitle="Escolha o que deseja cotar." />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Energia Solar', 'Solar + Bateria', 'Apenas Bateria'].map(v => (
@@ -331,7 +333,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 4 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[4]} title="Tamanho do Sistema" subtitle="Você já sabe a potência necessária?" />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Ate 7 kWp', '8 kWp ou mais', 'unknown'].map(v => (
@@ -360,7 +362,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 5 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[5]} title="Quando pretende decidir?" subtitle="Ajude as empresas a priorizarem seu contato." />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
                 {['Agora', 'Em ate 6 meses', 'Mais de 6 meses'].map(v => (
@@ -373,7 +375,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 6 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[6]} title="Onde será a instalação?" subtitle="Informe o endereço completo." />
               <div className="space-y-1.5">
                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Endereço Completo</Label>
@@ -383,7 +385,7 @@ export default function QuoteWizardModal() {
           )}
 
           {step === 7 && (
-            <div className="space-y-5 md:space-y-6">
+            <div className="space-y-4">
               <WizardHeading kicker={STEP_KICKERS[7]} title="Seus Dados de Contato" subtitle="Quase lá! Como as empresas podem falar com você?" />
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
@@ -462,7 +464,7 @@ export default function QuoteWizardModal() {
         </div>
 
         {/* Action Footer */}
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 md:px-10 md:pt-5 md:pb-5 rounded-b-2xl safe-x pb-[calc(0.75rem+var(--sab))]">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 md:px-6 md:py-3 rounded-b-2xl safe-x pb-[calc(0.75rem+var(--sab))]">
           {step <= TOTAL_STEPS ? (
             <>
               <Button variant="ghost" className="h-12 min-h-[48px] rounded-xl px-3 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-slate-50 hover:text-[#1268E8] disabled:text-slate-300" onClick={handleBack} disabled={step === 1 || submitting}>
@@ -516,8 +518,8 @@ const OptionButton = ({ selected, children, className, ...props }: OptionButtonP
   <button type="button" className={cn(
     'w-full border px-3 md:px-4 min-h-[48px] py-2 md:py-3 text-left text-[12px] md:text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
     'rounded-xl border-slate-200 bg-white text-[#0B1B36] shadow-sm',
-    selected 
-      ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md' 
+    selected
+      ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md'
       : 'hover:border-blue-300 hover:bg-slate-50 hover:shadow',
     className
   )} aria-pressed={selected} {...props}>
@@ -535,50 +537,3 @@ const parseNumber = (v: string) => {
 };
 
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-
-const FIELD_LABELS: Record<string, string> = {
-  company_id: 'Empresa selecionada',
-  product_vertical: 'Vertical do projeto',
-  project_profile: 'Perfil do projeto',
-  quote_type: 'Tipo de orçamento',
-  system_size_band: 'Tamanho do sistema',
-  decision_timeline: 'Prazo de decisão',
-  address_full: 'Endereço completo',
-  name: 'Nome completo',
-  email: 'E-mail',
-  phone: 'Telefone',
-  consent_at: 'Consentimento'
-};
-
-const normalizeFieldMessage = (message: string) => {
-  if (message === 'is required') return 'é obrigatório.';
-  return message;
-};
-
-type WizardApiError = {
-  message?: string;
-  details?: {
-    fields?: Record<string, unknown>;
-  };
-};
-
-const getWizardErrorMessage = (error: unknown, fallback: string) => {
-  const apiError = error as WizardApiError;
-  const fields = apiError.details?.fields;
-  if (fields && typeof fields === 'object') {
-    const [field, messages] = Object.entries(fields)[0] || [];
-    if (field) {
-      const label = FIELD_LABELS[field] || field;
-      const firstMessage = Array.isArray(messages) ? messages[0] : messages;
-      if (typeof firstMessage === 'string' && firstMessage.trim().length > 0) {
-        return `${label}: ${normalizeFieldMessage(firstMessage)}`;
-      }
-    }
-  }
-
-  if (typeof apiError.message === 'string' && !apiError.message.includes('validation_failed')) {
-    return apiError.message;
-  }
-
-  return fallback;
-};

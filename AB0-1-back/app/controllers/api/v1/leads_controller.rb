@@ -139,8 +139,16 @@ class Api::V1::LeadsController < Api::V1::BaseController
   # Resilient wizard creation using LeadWizard::Creator
   def wizard_create
     idempotency_key = request.headers['Idempotency-Key'].to_s.strip.presence
+    Rails.logger.info("[LeadsController#wizard_create] stage=received idempotency_key=#{idempotency_key}")
+
     if idempotency_key && (existing = Lead.find_by(idempotency_key: idempotency_key))
-      return render json: { lead_id: existing.id, status: existing.wizard_status, email_hint: mask_email(existing.email) }, status: :ok
+      Rails.logger.info("[LeadsController#wizard_create] stage=idempotency_hit lead_id=#{existing.id}")
+      return render json: {
+        lead_id: existing.id,
+        status: existing.wizard_status,
+        otp_sent_at: existing.otp_sent_at,
+        email_hint: mask_email(existing.email)
+      }, status: :ok
     end
 
     result = LeadWizard::Creator.new(
@@ -154,32 +162,42 @@ class Api::V1::LeadsController < Api::V1::BaseController
       lead = result[:lead]
       lead.idempotency_key = idempotency_key if idempotency_key && lead.respond_to?(:idempotency_key=)
       lead.save! if lead.changed?
+      Rails.logger.info("[LeadsController#wizard_create] stage=persisted lead_id=#{lead.id}")
+
       persist_identity_on_lead!(lead)
       identity_metadata = identity_tracking_metadata(lead)
+
       otp_code = lead.generate_otp!
+      Rails.logger.info("[LeadsController#wizard_create] stage=otp_generated lead_id=#{lead.id}")
       log_otp_code(lead, otp_code)
+
       deliver_otp_email!(lead, otp_code)
+      Rails.logger.info("[LeadsController#wizard_create] stage=email_sent lead_id=#{lead.id}")
 
-      Analytics::TrackEventService.call(
-        event_type: 'lead_initiated',
-        company_id: lead.company_id,
-        metadata: request_metadata.merge(identity_metadata).merge(
-          lead_id: lead.id,
-          template_key: lead.template_key,
-          template_version: lead.template_version
-        )
-      )
-
-      Analytics::PostHogService.capture(
-        'wizard_contact_submitted',
-        {
-          lead_id: lead.id,
+      # Analytics isolado: falhas não interrompem o pipeline
+      safe_analytics do
+        Analytics::TrackEventService.call(
+          event_type: 'lead_initiated',
           company_id: lead.company_id,
-          category_id: lead.respond_to?(:product_vertical) ? lead.product_vertical : nil,
-          template_key: lead.respond_to?(:template_key) ? lead.template_key : nil
-        }.compact,
-        distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{lead.id}"
-      )
+          metadata: request_metadata.merge(identity_metadata).merge(
+            lead_id: lead.id,
+            template_key: lead.template_key,
+            template_version: lead.template_version
+          )
+        )
+
+        Analytics::PostHogService.capture(
+          'wizard_contact_submitted',
+          {
+            lead_id: lead.id,
+            company_id: lead.company_id,
+            category_id: lead.respond_to?(:product_vertical) ? lead.product_vertical : nil,
+            template_key: lead.respond_to?(:template_key) ? lead.template_key : nil
+          }.compact,
+          distinct_id: current_user&.posthog_distinct_id || "anon_lead_#{lead.id}"
+        )
+      end
+      Rails.logger.info("[LeadsController#wizard_create] stage=completed lead_id=#{lead.id}")
 
       render json: {
         lead_id: lead.id,
@@ -189,31 +207,67 @@ class Api::V1::LeadsController < Api::V1::BaseController
         email_hint: mask_email(lead.email)
       }, status: :created
     elsif result[:error] == 'internal_error'
-      render json: { error: 'Internal Server Error', message: result[:message] }, status: :internal_server_error
+      Rails.logger.error("[LeadsController#wizard_create] stage=creator_error message=#{result[:message]}")
+      render_wizard_error(
+        code: 'INTERNAL_ERROR',
+        message: 'Ocorreu um erro interno ao processar os dados.',
+        status: :internal_server_error,
+        retryable: true
+      )
     else
-      render json: { error: 'validation_failed', fields: result[:errors] }, status: :unprocessable_entity
+      Rails.logger.warn("[LeadsController#wizard_create] stage=validation_failed errors=#{result[:errors]}")
+      render_wizard_error(
+        code: 'VALIDATION_FAILED',
+        message: 'Alguns campos informados estão incorretos ou faltando.',
+        status: :unprocessable_entity,
+        retryable: false,
+        fields: result[:errors]
+      )
     end
   rescue EmailDeliveryFailed => e
-    Rails.logger.error("Leads wizard_create email delivery error: #{e.message}")
-    render json: {
-      error: 'Nao conseguimos enviar o codigo de verificacao. Tente novamente em instantes.',
-      code: 'EMAIL_DELIVERY_FAILED'
-    }, status: :service_unavailable
+    Rails.logger.error(
+      "[LeadsController#wizard_create] stage=email_delivery_failed error=#{e.message} lead_id=#{lead&.id}"
+    )
+    render_wizard_error(
+      code: 'EMAIL_DELIVERY_FAILED',
+      message: 'Não conseguimos enviar o código de verificação. Tente novamente em instantes.',
+      status: :service_unavailable,
+      retryable: true,
+      lead_id: lead&.id
+    )
   rescue StandardError => e
-    Rails.logger.error("Leads wizard_create critical error: #{e.class} - #{e.message}\n#{e.backtrace.first(5).join("\n")}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    Rails.logger.error("[LeadsController#wizard_create] stage=critical_error error=#{e.class} - #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+    render_wizard_error(
+      code: 'INTERNAL_ERROR',
+      message: 'Erro interno no servidor.',
+      status: :internal_server_error,
+      retryable: true
+    )
   end
 
   def send_otp
-    return render json: { error: 'Lead not found' }, status: :not_found if @lead.nil?
+    if @lead.nil?
+      return render_wizard_error(
+        code: 'NOT_FOUND', message: 'Lead não encontrado', status: :not_found, retryable: false
+      )
+    end
     if @lead.otp_verified_at.present?
-      return render json: { error: 'Verification code already confirmed' }, status: :unprocessable_entity
+      return render_wizard_error(
+        code: 'ALREADY_VERIFIED', message: 'O código de verificação já foi confirmado.',
+        status: :unprocessable_entity, retryable: false
+      )
     end
 
     unless @lead.otp_can_resend?
       retry_in = ::Lead::OTP_RESEND_COOLDOWN - (Time.current - @lead.otp_sent_at)
-      return render json: { error: 'Verification code recently sent', retry_in: retry_in.to_i },
-                    status: :too_many_requests
+      return render_wizard_error(
+        code: 'OTP_RESEND_COOLDOWN',
+        message: 'Código de verificação enviado recentemente.',
+        status: :too_many_requests,
+        retryable: true,
+        lead_id: @lead.id,
+        retry_in: retry_in.to_i
+      )
     end
     otp_code = @lead.generate_otp!
     log_otp_code(@lead, otp_code)
@@ -226,13 +280,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
     }, status: :ok
   rescue EmailDeliveryFailed => e
     Rails.logger.error("Leads send_otp email delivery error: #{e.message}")
-    render json: {
-      error: 'Nao conseguimos reenviar o codigo de verificacao. Tente novamente em instantes.',
-      code: 'EMAIL_DELIVERY_FAILED'
-    }, status: :service_unavailable
+    render_wizard_error(
+      code: 'EMAIL_DELIVERY_FAILED',
+      message: 'Não conseguimos reenviar o código de verificação. Tente novamente em instantes.',
+      status: :service_unavailable,
+      retryable: true,
+      lead_id: @lead.id
+    )
   rescue StandardError => e
     Rails.logger.error("Leads send_otp error: #{e.message}")
-    render json: { error: 'Unable to send verification email' }, status: :internal_server_error
+    render_wizard_error(
+      code: 'INTERNAL_ERROR', message: 'Não foi possível enviar o e-mail de verificação.',
+      status: :internal_server_error, retryable: true
+    )
   end
 
   def resend_otp
@@ -240,41 +300,82 @@ class Api::V1::LeadsController < Api::V1::BaseController
   end
 
   def verify_otp
-    return render json: { error: 'Lead not found' }, status: :not_found if @lead.nil?
+    if @lead.nil?
+      return render_wizard_error(
+        code: 'NOT_FOUND', message: 'Lead não encontrado', status: :not_found, retryable: false
+      )
+    end
 
     if @lead.otp_verified_at.present?
       companies = distributed_companies(@lead)
       return render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok
     end
     if @lead.otp_attempts_exceeded?
-      return render json: { error: 'Verification attempts exceeded' }, status: :unprocessable_entity
+      return render_wizard_error(
+        code: 'OTP_ATTEMPTS_EXCEEDED', message: 'Limite de tentativas de verificação excedido.',
+        status: :unprocessable_entity, retryable: false
+      )
     end
-    return render json: { error: 'Verification code expired' }, status: :unprocessable_entity if @lead.otp_expired?
+    if @lead.otp_expired?
+      return render_wizard_error(
+        code: 'OTP_EXPIRED', message: 'O código de verificação expirou.',
+        status: :unprocessable_entity, retryable: true, lead_id: @lead.id
+      )
+    end
 
     otp_code = params[:otp_code].presence || params.dig(:lead, :otp_code)
-    return render json: { error: 'Verification code is required' }, status: :unprocessable_entity if otp_code.blank?
+    if otp_code.blank?
+      return render_wizard_error(
+        code: 'VALIDATION_FAILED', message: 'Código de verificação é obrigatório.',
+        status: :unprocessable_entity, retryable: false
+      )
+    end
 
     unless @lead.valid_otp?(otp_code)
       @lead.increment_otp_attempts!
-      return render json: { error: 'Invalid verification code' }, status: :unprocessable_entity
+      return render_wizard_error(
+        code: 'INVALID_OTP', message: 'Código de verificação inválido.',
+        status: :unprocessable_entity, retryable: true, lead_id: @lead.id
+      )
     end
+
     companies = []
     persist_identity_on_lead!(@lead)
     identity_metadata = identity_tracking_metadata(@lead)
+
     ::Lead.transaction do
       @lead.update!(otp_verified_at: Time.current, wizard_status: 'verified')
       @lead.update!(wizard_status: 'routing') if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
+    end
 
-      distinct_id = current_user&.id || "anon_lead_#{@lead.id}"
+    # Fora da transação:
+    # 1. Roteamento e distribuição
+    preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
+    if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
+      begin
+        LeadRoutingJob.perform_later(@lead.id, preferred_company_id)
+      rescue StandardError => e
+        Rails.logger.error("[LeadsController#verify_otp] Falha ao enfileirar LeadRoutingJob: #{e.message}")
+      end
+    else
+      begin
+        companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
+        @lead.update!(wizard_status: 'distributed') if companies.any?
+      rescue StandardError => e
+        Rails.logger.error("[LeadsController#verify_otp] Falha ao distribuir lead: #{e.message}")
+      end
+    end
 
-      # 1. OTP Verified
+    # 2. Analytics isolado
+    safe_analytics do
+      distinct_id = current_user&.posthog_distinct_id || "anon_lead_#{@lead.id}"
+
       Analytics::PostHogService.track_server_event(
         'otp_verified',
         distinct_id,
         { lead_id: @lead.id, auth_method: 'email' }
       )
 
-      # 2. Lead Created (Successfully persisted and verified)
       Analytics::PostHogService.track_server_event(
         'lead_created',
         distinct_id,
@@ -299,15 +400,6 @@ class Api::V1::LeadsController < Api::V1::BaseController
         )
       end
 
-      preferred_company_id = params[:preferred_company_id].presence&.to_i || @lead.company_id
-      if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
-        LeadRoutingJob.perform_later(@lead.id, preferred_company_id)
-      else
-        companies = LeadDistributionService.new(@lead, preferred_company_id: preferred_company_id).call
-        @lead.update!(wizard_status: 'distributed') if companies.any?
-      end
-
-      # 3. Lead Dispatched (One event per recipient as per V2)
       companies.each do |comp|
         Analytics::PostHogService.track_server_event(
           'lead_dispatched',
@@ -326,10 +418,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
         )
       )
     end
+
     render json: { lead_id: @lead.id, companies: serialize_companies(companies) }, status: :ok
   rescue StandardError => e
-    Rails.logger.error("Leads verify_otp error: #{e.message}")
-    render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+    Rails.logger.error("Leads verify_otp critical error: #{e.class} - #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+    render_wizard_error(
+      code: 'INTERNAL_ERROR', message: 'Erro interno no servidor.',
+      status: :internal_server_error, retryable: true
+    )
   end
 
   def wizard_result
@@ -685,5 +781,29 @@ class Api::V1::LeadsController < Api::V1::BaseController
     end
   rescue JSON::ParserError
     {}
+  end
+
+  def render_wizard_error(code:, message:, status:, retryable: true, **details)
+    fields = details[:fields]
+    lead_id = details[:lead_id]
+    payload = {
+      error: {
+        code: code.to_s.upcase,
+        message: message,
+        retryable: retryable
+      }
+    }
+    payload[:error][:fields] = fields if fields.present?
+    payload[:error][:lead_id] = lead_id if lead_id.present?
+    payload[:error][:email_hint] = mask_email(Lead.find_by(id: lead_id)&.email) if lead_id.present?
+    payload[:error].merge!(details.except(:fields, :lead_id).compact)
+
+    render json: payload, status: status
+  end
+
+  def safe_analytics
+    yield
+  rescue StandardError => e
+    Rails.logger.warn("[LeadsController#safe_analytics] Falha de analytics: #{e.class} - #{e.message}")
   end
 end

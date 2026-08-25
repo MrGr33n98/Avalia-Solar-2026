@@ -16,6 +16,28 @@ module LeadWizard
     ].freeze
     DECISION_CONTEXT_KEYS = %w[source view_mode result_position approximate_location filter_context].freeze
     IDENTITY_FIELD_KEYS = %w[anonymous_id session_id].freeze
+    SCHEMA_FIELD_ALIASES = {
+      'full_name' => %w[fullName name],
+      'zipcode' => %w[zipCode],
+      'project_profile' => %w[projectProfile],
+      'system_size_band' => %w[systemSizeBand systemSizeChoice],
+      'decision_timeline' => %w[decisionTimeline]
+    }.freeze
+    LEGACY_OPTION_VALUES = {
+      'project_profile' => {
+        'Residencial' => 'residential', 'Comercial' => 'commercial',
+        'Industrial' => 'industrial', 'Rural' => 'rural'
+      },
+      'system_size_band' => {
+        'Ate 7 kWp' => 'up_to_7_kwp', 'Até 7 kWp' => 'up_to_7_kwp',
+        '8 kWp ou mais' => '8_kwp_plus', 'Não sei' => 'dont_know'
+      },
+      'decision_timeline' => {
+        'Agora' => 'immediate', 'Imediato' => 'immediate',
+        'Em ate 6 meses' => '6_months', 'Em até 6 meses' => '6_months',
+        'Mais de 6 meses' => 'researching'
+      }
+    }.freeze
 
     CORE_WIZARD_KEYS = %w[
       full_name fullName name
@@ -81,6 +103,24 @@ module LeadWizard
 
       category_id = value_for(core_params, 'category_id', 'categoryId') || @params['category_id']
       company_id = @preferred_company_id || value_for(core_params, 'preferred_company_id', 'preferredCompanyId')
+
+      if category_id.blank?
+        resolved_vertical = value_for(core_params, 'product_vertical', 'productVertical')
+        if resolved_vertical.present?
+          normalized_vertical = resolved_vertical.downcase
+          cat = Category.where(
+            "LOWER(name) = :value OR LOWER(seo_url) = :value OR :value LIKE CONCAT('%', LOWER(name), '%')",
+            value: normalized_vertical
+          ).first
+          category_id = cat&.id
+        end
+      end
+
+      if category_id.blank? && company_id.present?
+        preferred_company = Company.find_by(id: company_id)
+        category_id = preferred_company&.categories&.first&.id
+      end
+
       schema_info = resolve_schema_info(category_id: category_id, preferred_company_id: company_id)
       company_available = schema_info.dig(:availability, :company_available) != false
       category = Category.find_by(id: category_id)
@@ -170,10 +210,15 @@ module LeadWizard
     end
 
     def field_value_for_schema_field(answers, core_params, key)
-      answers[key] ||
-        answers[key.to_sym] ||
-        core_params[key] ||
-        core_params[key.to_sym]
+      keys = [key, *SCHEMA_FIELD_ALIASES.fetch(key, [])]
+      value = keys.lazy.filter_map do |candidate|
+        answers[candidate] || answers[candidate.to_sym] ||
+          core_params[candidate] || core_params[candidate.to_sym]
+      end.find(&:present?)
+      return value if value.present?
+      return value_for(core_params, 'address_full', 'addressFull') if key == 'zipcode'
+
+      nil
     end
 
     def validate_field_options(key, value, field)
@@ -181,7 +226,8 @@ module LeadWizard
       return if options.blank? || value.blank?
 
       allowed_values = options.map { |option| option[:value].to_s }
-      return if allowed_values.include?(value.to_s)
+      normalized_value = LEGACY_OPTION_VALUES.fetch(key, {}).fetch(value.to_s, value.to_s)
+      return if allowed_values.include?(normalized_value)
 
       @errors[key] ||= []
       @errors[key] << 'is not a valid option'
@@ -223,8 +269,8 @@ module LeadWizard
       attribution.merge!(identity_fields) if identity_fields.present?
       raw_context = normalize_hash(@params['decision_context']).slice(*DECISION_CONTEXT_KEYS)
       decision_context = sanitize_decision_context(raw_context)
-      decision_context['company_id'] = @lead.company_id if @lead.company_id.present?
-      decision_context['category_id'] = @lead.category_id if @lead.category_id.present?
+      decision_context['company_id'] = lead.company_id if lead.company_id.present?
+      decision_context['category_id'] = lead.category_id if lead.category_id.present?
       attribution['decision_context'] = decision_context if decision_context.present?
 
       assign_if_present(lead, :utm_source, utm['utm_source'])

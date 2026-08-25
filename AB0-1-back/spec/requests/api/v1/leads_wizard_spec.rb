@@ -9,12 +9,17 @@ RSpec.describe 'Leads wizard API', type: :request do
 
   let(:category) { Category.create!(name: 'Solar', description: 'Categoria de energia solar') }
   let(:other_category) { Category.create!(name: 'Mobilidade', description: 'Categoria de mobilidade') }
+  let(:paid_plan) do
+    Plan.create!(name: "Pro Wizard #{SecureRandom.hex(4)}", price: 99, features_json: { 'custom_ctas' => true })
+  end
 
   def create_company(attrs = {})
+    random_id = SecureRandom.hex(4)
+    cnpj_val = Array.new(14) { rand(10) }.join
     base_attrs = {
       name: 'Solar Company',
       description: 'Descricao da empresa',
-      email: 'contato@empresa.com',
+      email: "contato_#{random_id}@empresa.com",
       state: 'RJ',
       city: 'Rio de Janeiro',
       phone: '21999999999',
@@ -22,7 +27,8 @@ RSpec.describe 'Leads wizard API', type: :request do
       verified: true,
       featured: false,
       active_admin: true,
-      cnpj: '12345678901234'
+      cnpj: cnpj_val,
+      plan: paid_plan
     }
     base_attrs[:plan_status] = 'active' if Company.column_names.include?('plan_status')
 
@@ -136,8 +142,9 @@ RSpec.describe 'Leads wizard API', type: :request do
 
     expect(response).to have_http_status(:ok)
     payload = JSON.parse(response.body)
-    expect(payload['companies'].size).to eq(3)
-    expect(payload['companies'].first['id']).to eq(company_b.id)
+    expect(payload['companies']).to eq([])
+    expect(Lead.find(lead_id).wizard_status).to eq('routing')
+    expect(LeadRoutingJob).to have_been_enqueued.with(lead_id, company_b.id)
   end
 
   it 'accepts camelCase wizard payloads from the multi-step modal' do
@@ -190,7 +197,30 @@ RSpec.describe 'Leads wizard API', type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
 
     payload = JSON.parse(response.body)
-    expect(payload['error']).to eq('validation_failed')
-    expect(payload.dig('fields', 'preferred_company_id')).to be_present
+    expect(payload.dig('error', 'code')).to eq('VALIDATION_FAILED')
+    expect(payload.dig('error', 'retryable')).to be(false)
+    expect(payload.dig('error', 'fields', 'preferred_company_id')).to be_present
+  end
+
+  it 'retorna contexto do lead quando envio de e-mail falha' do
+    allow(Lead).to receive(:generate_otp_code).and_return('123456')
+    allow(LeadVerificationMailer).to receive(:verification_code).and_raise(StandardError, 'SMTP indisponível')
+
+    post '/api/v1/leads/wizard_create', params: {
+      lead: {
+        product_vertical: 'Energia Solar', project_profile: 'Residencial',
+        quote_type: 'Energia Solar', system_size_band: 'Ate 7 kWp',
+        decision_timeline: 'Agora', address_full: 'Rua Teste, 1',
+        full_name: 'Lead SMTP', email: 'smtp@example.com',
+        phone: '21999999999', consent: true
+      },
+      preferred_company_id: company_a.id
+    }
+
+    expect(response).to have_http_status(:service_unavailable)
+    payload = JSON.parse(response.body)
+    expect(payload.dig('error', 'code')).to eq('EMAIL_DELIVERY_FAILED')
+    expect(payload.dig('error', 'lead_id')).to be_present
+    expect(payload.dig('error', 'email_hint')).to eq('sm***@example.com')
   end
 end

@@ -18,10 +18,11 @@ export const wizardApi = {
     }
   },
 
-  submitLead: async (payload: WizardPayload): Promise<{ lead_id: number; otp_sent_at: string; email_hint?: string; error?: any }> => {
+  submitLead: async (payload: WizardPayload, idempotencyKey: string): Promise<{ lead_id: number; otp_sent_at: string; email_hint?: string }> => {
     try {
       const response = await fetchApi<any>('/leads/wizard_create', {
         method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify(payload),
       });
       return response;

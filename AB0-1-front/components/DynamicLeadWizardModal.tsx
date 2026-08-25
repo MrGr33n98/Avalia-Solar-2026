@@ -147,7 +147,7 @@ export default function DynamicLeadWizardModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden max-h-[92vh] flex flex-col z-[10000] rounded-2xl border-none">
+      <DialogContent className="max-w-[500px] p-0 overflow-hidden max-h-[85dvh] flex flex-col z-[10000] rounded-2xl border-none">
         <div className="bg-slate-950 px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -177,7 +177,7 @@ export default function DynamicLeadWizardModal() {
               preferredCompanyId={preferredCompanyId}
             />
           ) : isResolvingCategory ? (
-            <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border bg-white p-5 text-center shadow-sm">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <h2 className="mt-4 text-lg font-bold text-slate-900">
                 Preparando formulario
@@ -187,7 +187,7 @@ export default function DynamicLeadWizardModal() {
               </p>
             </div>
           ) : showCategoryPicker ? (
-            <div className="mx-auto max-w-2xl rounded-2xl border bg-white p-6 shadow-sm">
+            <div className="mx-auto max-w-[500px] p-4">
               <h2 className="text-xl font-bold text-slate-900">
                 Escolha a categoria do seu interesse
               </h2>
@@ -200,7 +200,7 @@ export default function DynamicLeadWizardModal() {
                     key={category.id}
                     type="button"
                     variant="outline"
-                    className="group justify-start rounded-xl px-4 py-8 text-left flex items-center gap-3 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/20"
+                    className="group justify-start rounded-xl px-4 py-4 text-left flex items-center gap-3 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/20"
                     onClick={() => setCategoryId(category.id)}
                   >
                     <CategoryMotionIcon
@@ -217,7 +217,7 @@ export default function DynamicLeadWizardModal() {
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-6 text-center shadow-sm">
+            <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-4 text-center shadow-sm">
               <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
               <h2 className="mt-4 text-lg font-bold text-slate-900">
                 Nao foi possivel abrir o formulario
