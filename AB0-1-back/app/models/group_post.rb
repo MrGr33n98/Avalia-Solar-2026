@@ -18,7 +18,7 @@ class GroupPost < ApplicationRecord
   validate :topic_is_active
 
   scope :published, -> { where(status: 'published') }
-  scope :visible, -> { where(status: %w[published hidden]) }
+  scope :visible, -> { where(status: 'published') }
   scope :recent, -> { order(pinned: :desc, created_at: :desc, id: :desc) }
   scope :oldest, -> { order(created_at: :asc, id: :asc) }
 

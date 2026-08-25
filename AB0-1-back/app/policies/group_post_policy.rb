@@ -60,7 +60,11 @@ class GroupPostPolicy < ApplicationPolicy
   private
 
   def author?
-    user.is_a?(User) && user.active? && record.user_id == user.id && record.group.active_membership_for(user).present?
+    user.is_a?(User) && user.active? && record.user_id == user.id && active_membership?
+  end
+
+  def active_membership?
+    record.group.active_membership_for(user).present?
   end
 
   def can_moderate?
