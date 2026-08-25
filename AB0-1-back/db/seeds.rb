@@ -487,6 +487,9 @@ end
 require_relative 'seeds/knowledge_base'
 Seeds::KnowledgeBase.run!
 
+require_relative 'seeds/groups'
+Seeds::Groups.run!
+
 puts "\n=== SEED CONCLUÍDO ==="
 puts "Mobilidade Elétrica em primeiro lugar."
 puts "Novos hubs adicionados para expansão estratégica."

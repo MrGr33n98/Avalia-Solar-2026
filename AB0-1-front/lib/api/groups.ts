@@ -53,7 +53,17 @@ export async function getGroups(params: GroupsQuery = {}): Promise<Group[]> {
   if (params.featured !== undefined) query.set('featured', String(params.featured));
   if (params.view) query.set('view', params.view);
   const suffix = query.toString();
-  return request<Group[]>(`groups${suffix ? `?${suffix}` : ''}`);
+  const data = await request<Group[]>(`groups${suffix ? `?${suffix}` : ''}`);
+
+  if (!Array.isArray(data)) {
+    throw new GroupsApiError(
+      'Resposta inválida da API de comunidades: esperava uma lista',
+      500,
+      'INVALID_RESPONSE'
+    );
+  }
+
+  return data;
 }
 
 export function getGroup(slug: string, headers?: HeadersInit): Promise<Group> {

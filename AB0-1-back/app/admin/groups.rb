@@ -2,7 +2,7 @@
 
 ActiveAdmin.register Group do
   menu label: 'Comunidades', parent: 'Reviews', if: proc { Groups::Feature.enabled? }
-  permit_params :name, :slug, :description, :short_description, :visibility, :membership_mode, :posting_mode, :category_id
+  permit_params :name, :slug, :description, :short_description, :visibility, :membership_mode, :posting_mode, :category_id, :status, :official, :verified, :featured
 
   controller do
     before_action :ensure_groups_enabled!
@@ -47,10 +47,14 @@ ActiveAdmin.register Group do
       f.input :slug
       f.input :description
       f.input :short_description
-      f.input :visibility, as: :select, collection: Group::VISIBILITIES
-      f.input :membership_mode, as: :select, collection: Group::MEMBERSHIP_MODES
-      f.input :posting_mode, as: :select, collection: Group::POSTING_MODES
+      f.input :status, as: :select, collection: [['Rascunho (Draft)', 'draft'], ['Publicado (Active)', 'active'], ['Arquivado (Archived)', 'archived'], ['Suspenso (Suspended)', 'suspended']], include_blank: false
+      f.input :visibility, as: :select, collection: Group::VISIBILITIES, include_blank: false
+      f.input :membership_mode, as: :select, collection: Group::MEMBERSHIP_MODES, include_blank: false
+      f.input :posting_mode, as: :select, collection: Group::POSTING_MODES, include_blank: false
       f.input :category
+      f.input :official
+      f.input :verified
+      f.input :featured
     end
     f.actions
   end

@@ -25,4 +25,13 @@ RSpec.describe 'ActiveAdmin Groups', type: :request do
 
     expect(response).to have_http_status(:success)
   end
+
+  it 'consegue atualizar e publicar um grupo com status draft' do
+    group = create(:group, status: 'draft')
+
+    patch "/admin/groups/#{group.id}", params: { group: { status: 'active' } }
+
+    expect(response).to have_http_status(:redirect)
+    expect(group.reload.status).to eq('active')
+  end
 end

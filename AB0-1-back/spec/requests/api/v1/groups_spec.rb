@@ -17,6 +17,9 @@ RSpec.describe 'Groups API', type: :request do
     it 'lista somente grupos públicos ativos' do
       public_group = group
       private_group = create(:group, owner: owner, visibility: 'private_hidden')
+      draft_group = create(:group, owner: owner, status: 'draft')
+      archived_group = create(:group, owner: owner, status: 'archived')
+      suspended_group = create(:group, owner: owner, status: 'suspended')
 
       get '/api/v1/groups'
 
@@ -24,6 +27,73 @@ RSpec.describe 'Groups API', type: :request do
       ids = response.parsed_body.fetch('data').pluck('id')
       expect(ids).to include(public_group.id)
       expect(ids).not_to include(private_group.id)
+      expect(ids).not_to include(draft_group.id)
+      expect(ids).not_to include(archived_group.id)
+      expect(ids).not_to include(suspended_group.id)
+    end
+
+    it 'filtra por destaque (featured)' do
+      featured_group = create(:group, owner: owner, featured: true)
+      non_featured_group = create(:group, owner: owner, featured: false)
+
+      get '/api/v1/groups', params: { featured: 'true' }
+
+      expect(response).to have_http_status(:ok)
+      ids = response.parsed_body.fetch('data').pluck('id')
+      expect(ids).to include(featured_group.id)
+      expect(ids).not_to include(non_featured_group.id)
+    end
+
+    it 'filtra por categoria' do
+      category1 = create(:category)
+      category2 = create(:category)
+      group_cat1 = create(:group, owner: owner, category: category1)
+      group_cat2 = create(:group, owner: owner, category: category2)
+
+      get '/api/v1/groups', params: { category: category1.id }
+
+      expect(response).to have_http_status(:ok)
+      ids = response.parsed_body.fetch('data').pluck('id')
+      expect(ids).to include(group_cat1.id)
+      expect(ids).not_to include(group_cat2.id)
+    end
+
+    it 'filtra por termo de busca (search)' do
+      group_match = create(:group, owner: owner, name: 'Energia Solar Integrada')
+      group_no_match = create(:group, owner: owner, name: 'Associação de Engenharia')
+
+      get '/api/v1/groups', params: { search: 'solar' }
+
+      expect(response).to have_http_status(:ok)
+      ids = response.parsed_body.fetch('data').pluck('id')
+      expect(ids).to include(group_match.id)
+      expect(ids).not_to include(group_no_match.id)
+    end
+
+    it 'ordena e filtra por view=featured' do
+      featured1 = create(:group, owner: owner, featured: true, posts_count: 5)
+      featured2 = create(:group, owner: owner, featured: true, posts_count: 10)
+      non_featured = create(:group, owner: owner, featured: false)
+
+      get '/api/v1/groups', params: { view: 'featured' }
+
+      expect(response).to have_http_status(:ok)
+      data = response.parsed_body.fetch('data')
+      ids = data.pluck('id')
+      expect(ids).to include(featured1.id, featured2.id)
+      expect(ids).not_to include(non_featured.id)
+      expect(ids.index(featured2.id)).to be < ids.index(featured1.id)
+    end
+
+    it 'ordena por view=new' do
+      group_old = create(:group, owner: owner, created_at: 2.days.ago)
+      group_new = create(:group, owner: owner, created_at: Time.current)
+
+      get '/api/v1/groups', params: { view: 'new' }
+
+      expect(response).to have_http_status(:ok)
+      ids = response.parsed_body.fetch('data').pluck('id')
+      expect(ids.index(group_new.id)).to be < ids.index(group_old.id)
     end
 
     it 'retorna 404 quando feature está desligada' do
