@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { FeedGroupsNav } from './FeedGroupsNav';
 
 interface FeedLeftRailProps {
   activeView?: string;
@@ -67,45 +68,53 @@ export function FeedLeftRail({ activeView = 'for_you' }: FeedLeftRailProps) {
         )}
       </div>
 
-      {/* Navigation Links */}
-      <nav className="bg-card text-card-foreground rounded-xl border border-border p-2 shadow-sm space-y-1 text-sm font-medium">
-        <Link
-          href="/feed"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-            activeView !== 'saved'
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          <span>Feed Principal</span>
-        </Link>
-        <Link
-          href="/creator-studio/publications"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Building2 className="h-4 w-4" />
-          <span>Minhas Publicações</span>
-        </Link>
-        <Link
-          href="/feed?view=saved"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-            activeView === 'saved'
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Bookmark className="h-4 w-4" />
-          <span>Itens Salvos</span>
-        </Link>
-        <Link
-          href="/creators"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Users className="h-4 w-4" />
-          <span>Creators da Rede</span>
-        </Link>
-      </nav>
+      {/* Navigation & Communities (Single Surface Card) */}
+      <div className="bg-card text-card-foreground rounded-xl border border-border p-2 shadow-sm space-y-4">
+        <nav className="space-y-1 text-sm font-medium">
+          <Link
+            href="/feed"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeView !== 'saved'
+                ? 'bg-primary/10 text-primary font-semibold'
+                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span>Feed Principal</span>
+          </Link>
+          <Link
+            href="/creator-studio/publications"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Building2 className="h-4 w-4" />
+            <span>Minhas Publicações</span>
+          </Link>
+          <Link
+            href="/feed?view=saved"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeView === 'saved'
+                ? 'bg-primary/10 text-primary font-semibold'
+                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Bookmark className="h-4 w-4" />
+            <span>Itens Salvos</span>
+          </Link>
+          <Link
+            href="/creators"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Users className="h-4 w-4" />
+            <span>Creators da Rede</span>
+          </Link>
+        </nav>
+
+        {/* Divider */}
+        <div className="border-t border-border/60 mx-1" />
+
+        {/* Communities Section */}
+        <FeedGroupsNav />
+      </div>
     </aside>
   );
 }

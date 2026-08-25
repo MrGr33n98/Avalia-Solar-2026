@@ -96,6 +96,30 @@ RSpec.describe 'Groups API', type: :request do
       expect(ids.index(group_new.id)).to be < ids.index(group_old.id)
     end
 
+    context 'com view=mine' do
+      it 'exige autenticação (retorna 401 se deslogado)' do
+        get '/api/v1/groups', params: { view: 'mine' }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'retorna somente os grupos que o usuário autenticado é membro' do
+        public_group = group
+        my_private_group = create(:group, owner: owner, visibility: 'private_hidden')
+        other_group = create(:group, owner: outsider)
+
+        create(:group_membership, group: public_group, user: member, status: 'active')
+        create(:group_membership, group: my_private_group, user: member, status: 'active')
+        create(:group_membership, group: other_group, user: outsider, status: 'active')
+
+        get '/api/v1/groups', params: { view: 'mine' }, headers: auth_headers_for(member)
+
+        expect(response).to have_http_status(:ok)
+        ids = response.parsed_body.fetch('data').pluck('id')
+        expect(ids).to contain_exactly(public_group.id, my_private_group.id)
+        expect(ids).not_to include(other_group.id)
+      end
+    end
+
     it 'retorna 404 quando feature está desligada' do
       ENV['GROUPS_ENABLED'] = 'false'
 

@@ -2,17 +2,33 @@
 
 module Groups
   class DiscoveryQuery
-    VALID_VIEWS = %w[active featured new].freeze
+    VALID_VIEWS = %w[active featured new mine].freeze
 
-    def initialize(scope: Group.all, search: nil, category_id: nil, featured: nil, view: nil)
+    def initialize(scope: Group.all, search: nil, category_id: nil, featured: nil, view: nil, current_user: nil)
       @scope = scope
       @search = search.to_s.strip
       @category_id = category_id
       @featured = featured
       @view = view
+      @current_user = current_user
     end
 
     def call
+      if @view == 'mine'
+        return Group.none unless @current_user.present?
+
+        relation = @scope.joins(:group_memberships)
+                         .select('groups.*, group_memberships.joined_at')
+                         .where(group_memberships: { user_id: @current_user.id, status: 'active' })
+                         .where(status: 'active')
+                         .distinct
+
+        relation = relation.where(category_id: @category_id) if @category_id.present?
+        relation = apply_search(relation) if @search.present?
+
+        return relation.order('group_memberships.joined_at DESC')
+      end
+
       relation = @scope.where(status: 'active', visibility: 'public')
       relation = relation.where(category_id: @category_id) if @category_id.present?
       relation = relation.where(featured: boolean_featured) unless boolean_featured.nil?

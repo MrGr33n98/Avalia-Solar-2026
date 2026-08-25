@@ -9,12 +9,16 @@ module Api
       before_action :load_group, only: %i[show update]
 
       def index
+        if params[:view] == 'mine'
+          return if authenticate_api_user == false
+        end
         authorize Group
         groups = ::Groups::DiscoveryQuery.new(
           search: params[:search],
           category_id: params[:category],
           featured: params[:featured],
-          view: params[:view]
+          view: params[:view],
+          current_user: current_user
         ).call
         render json: { data: groups.map { |group| GroupCompactSerializer.new(group, current_user: current_user).as_json } }
       end

@@ -115,5 +115,5 @@ export interface GroupsQuery {
   search?: string;
   category?: number;
   featured?: boolean;
-  view?: 'active' | 'featured' | 'new';
+  view?: 'active' | 'featured' | 'new' | 'mine';
 }
