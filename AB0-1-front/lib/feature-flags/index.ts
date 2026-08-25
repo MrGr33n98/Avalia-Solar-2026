@@ -17,6 +17,7 @@ export const FEATURE_FLAGS = {
   SEARCH: 'feature_search_enabled',
   REVIEWS: 'feature_reviews_enabled',
   BLOG: 'feature_blog_enabled',
+  GROUPS: 'feature_groups_enabled',
 } as const;
 
 export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;
