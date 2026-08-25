@@ -76,6 +76,7 @@ docs/groups/*
 !docs/groups/ARCHITECTURE.md
 !docs/groups/GROUPS_FRONTEND_DISCOVERY_MAP.md
 !docs/groups/GROUPS_PHASE_4_DISCOVERY_MAP.md
+!docs/groups/GROUPS_PRODUCTION_FLAG_DELIVERY_AUDIT.md
 !docs/groups/PHASE_2_FRONTEND_CONTRACT.md
 !docs/adr/
 docs/adr/*
