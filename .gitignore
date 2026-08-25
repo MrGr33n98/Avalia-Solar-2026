@@ -74,6 +74,7 @@ docs/groups/*
 !docs/groups/FRONTEND_ARCHITECTURE.md
 !docs/groups/PWA.md
 !docs/groups/ARCHITECTURE.md
+!docs/groups/GROUPS_FRONTEND_DISCOVERY_MAP.md
 !docs/groups/PHASE_2_FRONTEND_CONTRACT.md
 !docs/adr/
 docs/adr/*
