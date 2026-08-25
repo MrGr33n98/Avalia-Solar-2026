@@ -17,8 +17,6 @@ module Api
       end
 
       def create
-        authorize Comment
-
         commentable = find_commentable
         unless commentable
           return render json: { error: { code: 'NOT_FOUND', message: 'Item não encontrado' } }, status: :not_found
@@ -28,8 +26,11 @@ module Api
           user: current_user,
           commentable: commentable,
           parent_id: params[:parent_id],
-          body: params[:body]
+          body: params[:body],
+          status: 'active'
         )
+
+        authorize comment
 
         if comment.save
           render json: { status: 'success', data: serialize_comment(comment) }, status: :created
@@ -55,6 +56,25 @@ module Api
         case type
         when 'ReviewerPublication' then ReviewerPublication.find_by(id: id)
         when 'Review' then Review.find_by(id: id)
+        when 'GroupPost'
+          post = GroupPost.find_by(id: id)
+          return nil unless post
+
+          group = post.group
+          return nil unless group.status == 'active'
+
+          if group.visibility == 'private_hidden' || group.visibility == 'private_visible'
+            membership = group.active_membership_for(current_user)
+            return nil unless membership.present?
+          end
+
+          if post.status != 'published'
+            membership = group.active_membership_for(current_user)
+            is_moderator = membership.present? && membership.role.in?(%w[moderator admin owner])
+            return nil unless is_moderator || current_user&.admin?
+          end
+
+          post
         else nil
         end
       end

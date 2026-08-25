@@ -17,16 +17,17 @@ const views = [
 export function GroupsDiscovery() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<(typeof views)[number]['value']>();
+  const [category, setCategory] = useState<number>();
   const deferredSearch = useDeferredValue(search);
   const groupsQuery = useQuery({
-    queryKey: ['groups', { search: deferredSearch, view }],
-    queryFn: () => getGroups({ search: deferredSearch || undefined, view }),
+    queryKey: ['groups', { search: deferredSearch, view, category }],
+    queryFn: () => getGroups({ search: deferredSearch || undefined, view, category }),
   });
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:py-10">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <GroupsSidebar />
+        <GroupsSidebar selectedCategory={category} onCategorySelect={setCategory} />
         <div className="min-w-0">
           <header className="mb-7">
             <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700"><Sparkles className="h-4 w-4" aria-hidden="true" />Comunidades Avalia Solar</p>
@@ -62,7 +63,7 @@ export function GroupsDiscovery() {
             ) : groupsQuery.data?.length ? (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{groupsQuery.data.map((group) => <GroupCard key={group.id} group={group} />)}</div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><h3 className="text-lg font-bold text-slate-900">Nenhum grupo encontrado</h3><p className="mt-2 text-sm text-slate-600">Tente outra busca ou explore todas as comunidades.</p><button type="button" onClick={() => { setSearch(''); setView(undefined); }} className="mt-5 min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Limpar filtros</button></div>
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><h3 className="text-lg font-bold text-slate-900">Nenhum grupo encontrado</h3><p className="mt-2 text-sm text-slate-600">Tente outra busca ou explore todas as comunidades.</p><button type="button" onClick={() => { setSearch(''); setView(undefined); setCategory(undefined); }} className="mt-5 min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Limpar filtros</button></div>
             )}
           </section>
         </div>

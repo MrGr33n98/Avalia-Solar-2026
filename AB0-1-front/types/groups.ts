@@ -109,6 +109,13 @@ export interface GroupPost {
     can_delete: boolean;
     can_moderate: boolean;
   };
+  stats?: {
+    comments_count: number;
+    reactions_count: number;
+  };
+  viewer?: {
+    reacted: boolean;
+  };
 }
 
 export interface GroupsQuery {
@@ -116,4 +123,28 @@ export interface GroupsQuery {
   category?: number;
   featured?: boolean;
   view?: 'active' | 'featured' | 'new' | 'mine';
+}
+
+export interface ContentReport {
+  id: number;
+  reportable_type: string;
+  reportable_id: number;
+  reporter_id: number;
+  group_id: number | null;
+  reason: string;
+  details: string | null;
+  status: 'open' | 'resolved' | 'dismissed' | string;
+  created_at: string;
+  updated_at: string;
+  reporter?: {
+    id: number;
+    name: string | null;
+    avatar_url: string | null;
+  };
+  reportable?: {
+    id: number;
+    title?: string | null;
+    body: string;
+    status: string;
+  };
 }

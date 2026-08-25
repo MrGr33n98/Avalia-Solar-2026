@@ -18,6 +18,10 @@ module Groups
       new(group: membership.group, user: membership.user).approve(membership: membership, approver: approver)
     end
 
+    def self.reject(membership:, rejecter:)
+      new(group: membership.group, user: membership.user).reject(membership: membership, rejecter: rejecter)
+    end
+
     def initialize(group:, user:)
       @group = group
       @user = user
@@ -47,6 +51,20 @@ module Groups
         membership.save!
         increment_member_count! if active
         publish_event(active ? 'group.joined' : 'group.membership_requested', membership)
+
+        unless active
+          begin
+            staff = @group.group_memberships.where(role: ['owner', 'moderator']).active.includes(:user).map(&:user)
+            GroupMembershipNotifier.with(
+              group_name: @group.name,
+              group_slug: @group.slug,
+              event: 'requested'
+            ).deliver(staff)
+          rescue => e
+            Rails.logger.error("Failed to deliver membership requested notification: #{e.message}")
+          end
+        end
+
         membership
       end
     rescue ActiveRecord::RecordNotUnique
@@ -78,6 +96,29 @@ module Groups
         membership.update!(status: 'active', joined_at: Time.current, approved_at: Time.current, approved_by: approver)
         increment_member_count!
         publish_event('group.membership_approved', membership)
+
+        begin
+          GroupMembershipNotifier.with(
+            group_name: @group.name,
+            group_slug: @group.slug,
+            event: 'approved'
+          ).deliver(membership.user)
+        rescue => e
+          Rails.logger.error("Failed to deliver membership approved notification: #{e.message}")
+        end
+      end
+      membership
+    end
+
+    def reject(membership:, rejecter:)
+      raise Forbidden, 'Comunidades indisponíveis' unless Groups::Feature.enabled?
+      raise Forbidden, 'Membership não pertence ao grupo' unless membership.group_id == @group.id
+      raise Forbidden, 'Usuário sem permissão para rejeitar participação' unless GroupPolicy.new(rejecter, @group).manage_members?
+      raise Forbidden, 'Solicitação não está pendente' unless membership.pending?
+
+      GroupMembership.transaction do
+        membership.update!(status: 'rejected', approved_at: nil, approved_by: nil)
+        publish_event('group.membership_rejected', membership)
       end
       membership
     end

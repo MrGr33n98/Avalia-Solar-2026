@@ -13,7 +13,7 @@ module Api
         def index
           posts = GroupPostPolicy::Scope.new(current_user, GroupPost).resolve
             .where(group: @group)
-            .includes(:user, :group_topic)
+            .includes(:user, :group_topic, :reactions)
           posts = filter_by_topic(posts)
           posts = params[:sort].to_s == 'oldest' ? posts.oldest : posts.recent
           posts = paginate(posts)

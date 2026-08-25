@@ -20,6 +20,7 @@ export const SITEMAP_SECTIONS = [
   'companies',
   'local-solar',
   'creators',
+  'groups',
 ] as const;
 
 export type SitemapSection = (typeof SITEMAP_SECTIONS)[number];
@@ -335,6 +336,30 @@ export async function getCreatorSitemapEntries(): Promise<MetadataRoute.Sitemap>
   return normalizeSitemapEntries(entries.flat());
 }
 
+export async function getGroupSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  const groups = await fetchRecords('groups?per_page=500');
+  const entries: MetadataRoute.Sitemap = [
+    { url: absoluteUrl('/groups'), priority: 0.8, changeFrequency: 'daily' as const }
+  ];
+
+  groups.forEach((group) => {
+    const slug = getString(group, 'slug');
+    if (!slug) return;
+
+    const visibility = getString(group, 'visibility');
+    const status = getString(group, 'status');
+
+    if (visibility === 'public' && status === 'active') {
+      entries.push({
+        url: absoluteUrl(`/groups/${slug}`),
+        priority: 0.7,
+        changeFrequency: 'daily' as const
+      });
+    }
+  });
+
+  return normalizeSitemapEntries(entries);
+}
 
 export async function getSitemapEntriesBySection(
   section: SitemapSection
@@ -356,6 +381,8 @@ export async function getSitemapEntriesBySection(
       return getLocalSolarSitemapEntries();
     case 'creators':
       return getCreatorSitemapEntries();
+    case 'groups':
+      return getGroupSitemapEntries();
   }
 }
 

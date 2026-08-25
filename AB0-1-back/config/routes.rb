@@ -57,11 +57,25 @@ Rails.application.routes.draw do
       # Social Core API routes
       get 'feed', to: 'feed#index'
       resources :groups, param: :slug, only: %i[index show create update], controller: 'groups' do
+        collection do
+          get :recommendations
+        end
         resource :join, only: %i[create destroy], controller: 'groups/memberships'
         resource :membership, only: :show, controller: 'groups/memberships'
-        resources :members, only: :index, controller: 'groups/members'
-        resources :topics, only: :index, controller: 'groups/topics'
-        resources :rules, only: :index, controller: 'groups/rules'
+        resources :members, only: %i[index update], controller: 'groups/members' do
+          member do
+            post :suspend
+            post :restore
+          end
+        end
+        resources :requests, only: :index, controller: 'groups/membership_requests' do
+          member do
+            post :approve
+            post :reject
+          end
+        end
+        resources :topics, only: %i[index create update destroy], controller: 'groups/topics'
+        resources :rules, only: %i[index create update destroy], controller: 'groups/rules'
         resources :posts, only: %i[index create show update destroy], controller: 'groups/posts' do
           member do
             post :hide
@@ -72,7 +86,11 @@ Rails.application.routes.draw do
             post :open_comments
           end
         end
+        member do
+          get :analytics
+        end
       end
+      resources :content_reports, only: %i[index create update]
       resources :social_follows, path: 'follows', only: %i[index create] do
         collection do
           delete '/', to: 'social_follows#destroy'

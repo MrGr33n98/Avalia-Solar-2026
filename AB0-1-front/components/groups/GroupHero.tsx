@@ -1,9 +1,11 @@
-import { BadgeCheck, Lock, Users } from 'lucide-react';
+import { BadgeCheck, Lock, Users, Settings } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import type { Group } from '@/types/groups';
 import { GroupMembershipButton } from './GroupMembershipButton';
 import { GroupHeroMedia } from './GroupHeroMedia';
+import { Button } from '@/components/ui/button';
 
 export function GroupHero({ group }: { group: Group }) {
   const hasAvatar = !!group.avatar_url;
@@ -34,8 +36,18 @@ export function GroupHero({ group }: { group: Group }) {
           </div>
 
           {/* Action buttons on desktop */}
-          <div className="hidden sm:block shrink-0 sm:w-48 mb-2">
-            <GroupMembershipButton group={group} />
+          <div className="hidden sm:flex sm:items-center gap-2 mb-2 shrink-0">
+            {group.permissions?.can_moderate && (
+              <Link href={`/groups/${group.slug}/manage`}>
+                <Button variant="outline" className="min-h-11 border-slate-200 text-slate-700 hover:bg-slate-50 gap-2 font-bold text-xs rounded-xl">
+                  <Settings className="h-4 w-4" />
+                  Gerenciar
+                </Button>
+              </Link>
+            )}
+            <div className="w-44">
+              <GroupMembershipButton group={group} />
+            </div>
           </div>
         </div>
 
@@ -71,7 +83,15 @@ export function GroupHero({ group }: { group: Group }) {
         </div>
 
         {/* Mobile Action Button */}
-        <div className="mt-5 w-full block sm:hidden">
+        <div className="mt-5 w-full flex flex-col gap-2 sm:hidden">
+          {group.permissions?.can_moderate && (
+            <Link href={`/groups/${group.slug}/manage`} className="w-full">
+              <Button variant="outline" className="min-h-11 w-full border-slate-200 text-slate-700 hover:bg-slate-50 gap-2 font-bold text-xs rounded-xl">
+                <Settings className="h-4 w-4" />
+                Gerenciar Comunidade
+              </Button>
+            </Link>
+          )}
           <GroupMembershipButton group={group} />
         </div>
       </div>

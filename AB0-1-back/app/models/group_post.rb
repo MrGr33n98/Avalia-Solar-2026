@@ -7,6 +7,9 @@ class GroupPost < ApplicationRecord
   belongs_to :user, inverse_of: :group_posts
   belongs_to :group_topic, optional: true, inverse_of: :group_posts
 
+  has_many :comments, as: :commentable, dependent: :destroy
+  has_many :reactions, as: :reactable, dependent: :destroy
+
   def self.ransackable_attributes(_auth_object = nil)
     %w[body created_at group_id group_topic_id id pinned status title updated_at user_id]
   end

@@ -12,4 +12,15 @@ class Comment < ApplicationRecord
 
   scope :active, -> { where(status: 'active') }
   scope :root_comments, -> { where(parent_id: nil) }
+
+  after_save :update_group_post_counter, if: -> { commentable_type == 'GroupPost' }
+
+  private
+
+  def update_group_post_counter
+    return unless commentable.is_a?(GroupPost)
+
+    active_count = commentable.comments.where(status: 'active').count
+    commentable.update_columns(comments_count: active_count)
+  end
 end

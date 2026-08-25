@@ -18,7 +18,14 @@ class GroupPostSerializer
       updated_at: @post.updated_at&.iso8601,
       author: author_payload,
       topic: topic_payload,
-      permissions: permissions_payload
+      permissions: permissions_payload,
+      stats: {
+        comments_count: @post.comments_count,
+        reactions_count: @post.reactions_count
+      },
+      viewer: {
+        reacted: @current_user ? @post.reactions.any? { |r| r.user_id == @current_user.id } : false
+      }
     }
   end
 

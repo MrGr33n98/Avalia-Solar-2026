@@ -93,3 +93,24 @@ export async function postComment(commentableType: string, commentableId: number
   const json = await res.json();
   return json.data;
 }
+
+export async function deleteComment(commentId: number): Promise<void> {
+  const res = await fetchWithAuth(`/api/v1/comments/${commentId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Falha ao excluir comentário');
+}
+
+export async function createReport(reportableType: string, reportableId: number, reason: string, details?: string): Promise<void> {
+  const res = await fetchWithAuth('/api/v1/content_reports', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      reportable_type: reportableType,
+      reportable_id: reportableId,
+      reason,
+      details,
+    }),
+  });
+  if (!res.ok) throw new Error('Falha ao enviar denúncia');
+}
