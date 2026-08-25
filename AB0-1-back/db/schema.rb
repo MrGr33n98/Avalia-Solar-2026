@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_24_200100) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_25_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2113,6 +2113,33 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_24_200100) do
     t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'active'::character varying::text, 'rejected'::character varying::text, 'left'::character varying::text, 'banned'::character varying::text])", name: "group_memberships_status_check"
   end
 
+  create_table "group_rules", force: :cascade do |t|
+    t.bigint "group_id", null: false
+    t.string "title", null: false
+    t.text "description", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id", "active", "position"], name: "index_group_rules_on_group_id_and_active_and_position"
+    t.index ["group_id"], name: "index_group_rules_on_group_id"
+  end
+
+  create_table "group_topics", force: :cascade do |t|
+    t.bigint "group_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "posts_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id", "active", "position"], name: "index_group_topics_on_group_id_and_active_and_position"
+    t.index ["group_id", "slug"], name: "index_group_topics_on_group_id_and_slug", unique: true
+    t.index ["group_id"], name: "index_group_topics_on_group_id"
+  end
+
   create_table "groups", force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
@@ -3717,6 +3744,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_24_200100) do
   add_foreign_key "group_memberships", "groups"
   add_foreign_key "group_memberships", "users"
   add_foreign_key "group_memberships", "users", column: "approved_by_id"
+  add_foreign_key "group_rules", "groups"
+  add_foreign_key "group_topics", "groups"
   add_foreign_key "groups", "categories"
   add_foreign_key "groups", "users", column: "owner_id"
   add_foreign_key "intent_score_histories", "intent_scores"

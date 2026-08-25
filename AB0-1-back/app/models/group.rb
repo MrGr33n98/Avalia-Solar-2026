@@ -10,6 +10,8 @@ class Group < ApplicationRecord
   belongs_to :category, optional: true
   has_many :group_memberships, dependent: :destroy
   has_many :members, through: :group_memberships, source: :user
+  has_many :group_topics, dependent: :destroy
+  has_many :group_rules, dependent: :destroy
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[created_at featured id name official owner_id slug status updated_at verified visibility]

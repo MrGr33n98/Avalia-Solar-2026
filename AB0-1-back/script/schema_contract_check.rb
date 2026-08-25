@@ -92,6 +92,13 @@ required_groups_checks = {
   group_memberships: %w[group_memberships_role_check group_memberships_status_check group_memberships_notifications_level_check]
 }.freeze
 
+required_phase_two_schema = {
+  group_topics: %i[group_id name slug description position active posts_count],
+  group_rules: %i[group_id title description position active]
+}.freeze
+
+required_phase_two_migrations = %w[20260825120000 20260825120100].freeze
+
 connection = ActiveRecord::Base.connection
 errors = []
 
@@ -179,12 +186,27 @@ required_groups_checks.each do |table, constraint_names|
   end
 end
 
+required_phase_two_schema.each do |table, columns|
+  unless connection.data_source_exists?(table)
+    errors << "tabela ausente: #{table}"
+    next
+  end
+
+  columns.each do |column|
+    errors << "coluna ausente: #{table}.#{column}" unless connection.column_exists?(table, column)
+  end
+end
+
 applied_migrations = connection.select_values('SELECT version FROM schema_migrations')
 required_migrations.each do |version|
   errors << "migration não aplicada: #{version}" unless applied_migrations.include?(version)
 end
 
 required_groups_migrations.each do |version|
+  errors << "migration não aplicada: #{version}" unless applied_migrations.include?(version)
+end
+
+required_phase_two_migrations.each do |version|
   errors << "migration não aplicada: #{version}" unless applied_migrations.include?(version)
 end
 
