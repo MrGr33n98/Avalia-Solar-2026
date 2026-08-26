@@ -29,7 +29,7 @@ type QuoteCTAProps = Omit<React.ComponentPropsWithoutRef<typeof Button>, 'childr
 const contextClasses: Record<QuoteCTAContext, string> = {
   default: 'min-h-10 px-4 text-sm',
   compact: 'min-h-9 px-3 text-xs',
-  card: 'min-h-10 min-w-0 px-3 text-sm',
+  card: 'min-h-9 min-w-0 px-3 text-[12px] rounded-[10px]',
   table: 'min-h-10 w-full px-3 text-xs sm:min-w-[168px] sm:w-auto',
   comparison: 'min-h-10 w-full px-3 text-xs',
   sticky: 'min-h-11 px-4 text-sm',
@@ -67,7 +67,10 @@ export function QuoteCTA({
       disabled={loading || disabled}
       onClick={handleRequest}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 font-semibold leading-tight text-white transition-colors hover:bg-blue-700',
+        'inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold leading-tight transition-colors',
+        context === 'card'
+          ? 'bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-50'
+          : 'bg-blue-600 text-white hover:bg-blue-700',
         'min-w-0 max-w-full',
         contextClasses[context],
         className

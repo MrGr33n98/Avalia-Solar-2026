@@ -60,7 +60,7 @@ export default function FeaturedCompanyCard({
   return (
     <article
       className={cn(
-        'relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300',
+        'relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 h-full',
         showFeaturedBadge && 'border-amber-200 bg-gradient-to-b from-amber-50/10 to-white'
       )}
     >
@@ -91,19 +91,13 @@ export default function FeaturedCompanyCard({
               className="border border-slate-200 shadow-sm bg-white p-1 rounded-xl"
             />
           </Link>
-          <div className="min-w-0 flex-1 pt-1">
+          <div className="min-w-0 flex-1 pt-1 pr-8">
             <CompanyIdentityLine
               name={company.name}
               href={href}
+              verified={isVerified}
               nameClassName="font-bold text-slate-900 leading-tight hover:text-blue-700 transition-colors text-sm sm:text-base"
-            >
-              {isVerified && (
-                <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
-                  <BadgeCheck className="w-3.5 h-3.5 fill-emerald-600 text-white shrink-0" />
-                  Verificada
-                </span>
-              )}
-            </CompanyIdentityLine>
+            />
             {location && (
               <span className="text-[11px] font-medium text-slate-500 block mt-1">{location}</span>
             )}
@@ -111,7 +105,7 @@ export default function FeaturedCompanyCard({
         </div>
 
         {/* Rating Row */}
-        <div className="flex items-center gap-1 mb-4">
+        <div className="flex items-center gap-1 mb-3">
           {hasRating ? (
             <>
               <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
@@ -138,7 +132,7 @@ export default function FeaturedCompanyCard({
         </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-1 mb-5">
+        <div className="flex flex-wrap gap-1 mb-4">
           {tags.map((tag) => (
             <span
               key={tag}
@@ -150,27 +144,27 @@ export default function FeaturedCompanyCard({
         </div>
 
         {/* Operations features with icons */}
-        <div className="space-y-2 border-t border-slate-100 pt-4 mb-5">
+        <div className="space-y-1.5 border-t border-slate-100 pt-3 mb-4">
           {slaLabel && (
             <div className="flex items-center gap-2 text-slate-700">
-              <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="text-xs font-semibold">Responde em até {slaLabel}</span>
+              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-[11px] font-semibold">Responde em até {slaLabel}</span>
             </div>
           )}
           <div className="flex items-center gap-2 text-slate-700">
-            <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="text-xs font-semibold">Orçamento gratuito</span>
+            <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-[11px] font-semibold">Orçamento gratuito</span>
           </div>
           {coverageLabel && (
             <div className="flex items-center gap-2 text-slate-700">
-              <Globe className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="text-xs font-semibold">{coverageLabel}</span>
+              <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-[11px] font-semibold">{coverageLabel}</span>
             </div>
           )}
         </div>
       </div>
 
-      <div>
+      <div className="mt-auto">
         {/* Primary CTA */}
         {canRequestQuote && (
           <QuoteCTA context="card" source="category-featured-card" className="mb-3" />

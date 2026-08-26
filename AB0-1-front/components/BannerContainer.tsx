@@ -54,7 +54,7 @@ function BannerImage({
       alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
       priority={priority}
       sizes={sizes}
-      quality={95}
+      quality={100}
       // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
       className="absolute inset-0"
     />
@@ -226,7 +226,7 @@ export function BannerContainer({
         case 'categories_right_rail':
         case 'compare_page_sidebar':
           // Sidebar fixa de 300px. Retina = 600px. Nunca maior que isso.
-          return '(max-width: 1279px) 0px, 300px';
+          return '(max-width: 1023px) 0px, 300px';
         case 'categories_filter_sidebar':
           return '(max-width: 1023px) 0px, 280px';
         case 'sidebar':
