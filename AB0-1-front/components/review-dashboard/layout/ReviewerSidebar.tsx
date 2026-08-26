@@ -35,7 +35,7 @@ export function ReviewerSidebar() {
       <aside
         className={cn(
           'hidden lg:flex flex-col border-r border-slate-200 bg-white transition-all duration-200 ease-in-out',
-          'sticky top-[72px] h-[calc(100vh-72px)] shrink-0 z-20'
+          'sticky top-[var(--app-navbar-height)] h-[calc(100dvh-var(--app-navbar-height))] shrink-0 z-20'
         )}
         style={{ width: collapsed ? layout.sidebarCollapsed : layout.sidebarExpanded }}
         aria-label="Navegação do painel"

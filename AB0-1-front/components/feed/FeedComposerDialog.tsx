@@ -94,6 +94,7 @@ export function FeedComposerDialog({ isOpen, onClose, onPublished }: FeedCompose
           comments_count: 0,
           viewer_reaction: null,
           saved: false,
+          viewer_following: false,
         },
       };
 

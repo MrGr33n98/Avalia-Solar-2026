@@ -17,7 +17,7 @@ export function ReviewerMobileNav() {
       <nav
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden',
-          'pb-[env(safe-area-inset-bottom)]'
+          'pb-[var(--safe-area-inset-bottom)]'
         )}
         aria-label="Navegação do painel"
       >
@@ -66,7 +66,7 @@ export function ReviewerMobileNav() {
       <div
         className={cn(
           'fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl transition-transform duration-300 lg:hidden',
-          'pb-[env(safe-area-inset-bottom)]',
+          'pb-[var(--safe-area-inset-bottom)]',
           drawerOpen ? 'translate-y-0' : 'translate-y-full'
         )}
       >
@@ -108,9 +108,6 @@ export function ReviewerMobileNav() {
           </ul>
         </nav>
       </div>
-
-      {/* Spacer para conteúdo não ficar atrás do bottom nav */}
-      <div className="h-[calc(4rem+env(safe-area-inset-bottom))] lg:hidden" aria-hidden="true" />
     </>
   );
 }

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Building2, ArrowUpRight, TrendingUp, Star, Loader2 } from 'lucide-react';
 import { publicCompaniesApi } from '@/lib/api-public';
 import { useFeedStore } from '@/store/feedStore';
+import { FollowedCommunitiesCard } from './FollowedCommunitiesCard';
 
 export function FeedRightRail() {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -126,6 +127,9 @@ export function FeedRightRail() {
           </div>
         )}
       </div>
+
+      {/* Followed Communities */}
+      <FollowedCommunitiesCard />
 
       {/* Micro Footer */}
       <div

@@ -1,3 +1,8 @@
+export interface FeedFollowable {
+  type: 'ReviewerProfile' | 'Company' | 'Category';
+  id: number;
+}
+
 export interface FeedActor {
   id: number;
   type: 'user' | 'company' | 'creator' | string;
@@ -8,6 +13,7 @@ export interface FeedActor {
   headline?: string | null;
   slug?: string | null;
   verified?: boolean;
+  followable?: FeedFollowable | null;
 }
 
 export interface FeedSubject {
@@ -26,6 +32,9 @@ export interface FeedSubject {
   rating?: number;
   headline?: string;
   comment?: string;
+  group?: { id: number; name?: string; slug?: string; visibility?: string };
+  topic?: { id: number; name: string; slug?: string } | null;
+  comments_enabled?: boolean;
   company?: {
     id: number;
     name: string;
@@ -51,11 +60,12 @@ export interface FeedEngagement {
   comments_count: number;
   viewer_reaction?: string | null;
   saved: boolean;
+  viewer_following: boolean;
 }
 
 export interface FeedItem {
   id: string;
-  type: 'reviewer_publication' | 'review' | string;
+  type: 'reviewer_publication' | 'review' | 'group_post' | string;
   verb: string;
   published_at: string;
   actor: FeedActor;

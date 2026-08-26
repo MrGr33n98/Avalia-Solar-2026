@@ -222,4 +222,30 @@ describe('Navbar', () => {
 
     expect(container.firstChild).toBeNull();
   });
+
+  it.each([
+    '/review-dashboard',
+    '/review-dashboard/profile',
+    '/review-dashboard/reviews',
+    '/review-dashboard/favorites',
+    '/review-dashboard/solutions',
+    '/review-dashboard/achievements',
+    '/review-dashboard/rewards',
+    '/review-dashboard/notifications',
+    '/review-dashboard/settings',
+    '/review-dashboard/help',
+  ])('renders global chrome inside %s', (pathname) => {
+    mockUsePathname.mockReturnValue(pathname);
+    render(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'Home Avalia Solar' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
+  });
+
+  it('keeps /f routes without global chrome', () => {
+    mockUsePathname.mockReturnValue('/f/convite');
+    const { container } = render(<Navbar />);
+
+    expect(container.firstChild).toBeNull();
+  });
 });

@@ -1,4 +1,4 @@
-export type ShareResourceType = 'publication' | 'creator' | 'review' | 'company' | 'tree';
+export type ShareResourceType = 'publication' | 'creator' | 'review' | 'company' | 'tree' | 'group_post';
 
 export type SharePlatform =
   | 'instagram'

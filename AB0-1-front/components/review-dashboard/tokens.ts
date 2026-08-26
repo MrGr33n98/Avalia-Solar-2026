@@ -84,13 +84,13 @@ export const typography = {
 } as const;
 
 export const layout = {
-  topbarHeight: '72px',
+  topbarHeight: 'var(--app-navbar-height)',
   sidebarExpanded: '232px',
   sidebarCollapsed: '72px',
   contentMaxWidth: '1280px',
   contentPadding: '32px',
   gridGap: '24px',
-  mobileBottomNavHeight: '64px',
+  mobileBottomNavHeight: 'var(--reviewer-mobile-nav-height)',
 } as const;
 
 export const breakpoints = {

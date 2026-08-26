@@ -181,11 +181,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <UtmProvider>
             <Providers>
               <Navbar />
-              <div className="hidden border-b border-slate-100 bg-white md:block dark:border-slate-800 dark:bg-slate-950" aria-label="Publicidade no topo">
-                <div className="mx-auto max-w-[1200px] px-4 py-1">
-                  <NavbarBannerSlot />
-                </div>
-              </div>
+              <NavbarBannerSlot />
               <AppContentFrame>{children}</AppContentFrame>
               <ConditionalFooter />
               <MobileBottomNav />

@@ -1,42 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { Star, Building2, UserPlus, UserCheck, CheckCircle2 } from 'lucide-react';
+import { Star, Building2, CheckCircle2 } from 'lucide-react';
 import { FeedItem } from '@/types/feed';
-import { toggleFollow } from '@/lib/api/feed';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { FollowButton } from './FollowButton';
+import { FeedCardActions } from './FeedCardActions';
+import { FeedItemMenu } from './FeedItemMenu';
 
 interface ReviewFeedCardProps {
   item: FeedItem;
 }
 
 export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
-  const { actor, subject } = item;
-  const [isFollowing, setIsFollowing] = useState(false);
-
-  const handleFollow = async () => {
-    if (!actor.id) return;
-    const nextFollow = !isFollowing;
-    setIsFollowing(nextFollow);
-
-    try {
-      await toggleFollow(
-        actor.type === 'user' ? 'ReviewerProfile' : 'Company',
-        actor.id,
-        isFollowing
-      );
-    } catch {
-      setIsFollowing(isFollowing);
-    }
-  };
+  const { actor, subject, engagement } = item;
 
   return (
     <article className="bg-card text-card-foreground rounded-xl border border-border p-4 shadow-sm space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          {actor.type === 'user' && actor.slug ? (
+          {actor.type !== 'company' && actor.slug ? (
             <Link href={`/creators/${actor.slug}`}>
               <UserAvatar
                 src={actor.avatar_url}
@@ -50,7 +35,7 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
           )}
           <div>
             <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
-              {actor.type === 'user' && actor.slug ? (
+              {actor.type !== 'company' && actor.slug ? (
                 <Link
                   href={`/creators/${actor.slug}`}
                   className="hover:underline hover:text-primary transition-colors"
@@ -68,28 +53,10 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
           </div>
         </div>
 
-        {actor.id && (
-          <button
-            onClick={handleFollow}
-            className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 transition-colors ${
-              isFollowing
-                ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                : 'bg-primary/10 text-primary hover:bg-primary/20'
-            }`}
-          >
-            {isFollowing ? (
-              <>
-                <UserCheck className="h-3 w-3" />
-                <span>Seguindo</span>
-              </>
-            ) : (
-              <>
-                <UserPlus className="h-3 w-3" />
-                <span>Seguir</span>
-              </>
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <FollowButton target={actor.followable} initialFollowing={engagement.viewer_following} />
+          <FeedItemMenu item={item} />
+        </div>
       </div>
 
       {/* Content */}
@@ -151,6 +118,8 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
           )}
         </Link>
       )}
+      
+      <FeedCardActions item={item} />
     </article>
   );
 }

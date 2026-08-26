@@ -20,9 +20,17 @@ module Feed
                           "(SELECT user_id FROM reviewer_profiles WHERE id IN (?))) OR " \
                           "(feed_items.actor_type = 'Company' AND feed_items.actor_id IN (?)))"
 
+        following_condition = actor_condition
+        following_args = [followed_creators, followed_companies]
+        if active_group_ids.any?
+          following_condition = "(#{actor_condition}) OR " \
+                                "(feed_items.subject_type = 'GroupPost' AND groups.id IN (?))"
+          following_args << active_group_ids
+        end
+
         scope = FeedItem.joins("LEFT OUTER JOIN group_posts ON feed_items.subject_type = 'GroupPost' AND feed_items.subject_id = group_posts.id")
                          .joins("LEFT OUTER JOIN groups ON group_posts.group_id = groups.id")
-                         .where(actor_condition, followed_creators, followed_companies)
+                         .where(following_condition, *following_args)
 
         if active_group_ids.any?
           scope.where(

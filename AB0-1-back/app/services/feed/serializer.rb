@@ -68,7 +68,7 @@ module Feed
         author: normalized_author,
         subject: serialize_subject(subject),
         entities: serialize_entities(subject),
-        engagement: serialize_engagement(subject)
+        engagement: serialize_engagement(subject, actor)
       }
     end
 
@@ -86,7 +86,8 @@ module Feed
           slug: profile&.public_slug,
           avatar_url: avatar_url,
           headline: profile&.public_headline || profile&.profession || profile&.bio,
-          verified: profile&.try(:verified?) || false
+          verified: profile&.try(:verified?) || false,
+          followable: profile ? { type: 'ReviewerProfile', id: profile.id } : nil
         }
       elsif actor.is_a?(Company)
         {
@@ -98,7 +99,8 @@ module Feed
           avatar_url: actor.logo_url,
           slug: actor.slug,
           headline: actor.description || actor.categories.first&.name,
-          verified: actor.verified?
+          verified: actor.verified?,
+          followable: { type: 'Company', id: actor.id }
         }
       else
         { id: actor.id, type: actor.class.name.underscore }
@@ -136,6 +138,15 @@ module Feed
             category_name: subject.company&.categories&.first&.name
           }
         }
+      elsif subject.is_a?(GroupPost)
+        GroupPostSerializer.new(subject, current_user: @current_user).as_json.merge(
+          group: {
+            id: subject.group_id,
+            name: subject.group&.name,
+            slug: subject.group&.slug,
+            visibility: subject.group&.visibility
+          }
+        )
       else
         { id: subject.id }
       end
@@ -175,8 +186,8 @@ module Feed
       end
     end
 
-    def serialize_engagement(subject)
-      return { reactions_count: 0, comments_count: 0, viewer_reaction: nil, saved: false } unless subject
+    def serialize_engagement(subject, actor)
+      return empty_engagement unless subject
 
       reactions_count = Reaction.where(reactable: subject).count
       comments_count = Comment.where(commentable: subject).active.count
@@ -195,8 +206,27 @@ module Feed
         reactions_count: reactions_count,
         comments_count: comments_count,
         viewer_reaction: viewer_reaction,
-        saved: saved
+        saved: saved,
+        viewer_following: viewer_following?(actor_followable(actor))
       }
+    end
+
+    def empty_engagement
+      { reactions_count: 0, comments_count: 0, viewer_reaction: nil, saved: false, viewer_following: false }
+    end
+
+    def actor_followable(actor)
+      return actor.reviewer_profile if actor.is_a?(User)
+      return actor if actor.is_a?(Company)
+
+      nil
+    end
+
+    def viewer_following?(followable)
+      return false unless @current_user && followable
+
+      @viewer_follow_keys ||= @current_user.social_follows.pluck(:followable_type, :followable_id).to_set
+      @viewer_follow_keys.include?([followable.class.base_class.name, followable.id])
     end
   end
 end

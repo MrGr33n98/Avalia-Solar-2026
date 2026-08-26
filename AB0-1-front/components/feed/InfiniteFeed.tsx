@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { getFeed } from '@/lib/api/feed';
 import { FeedItemRenderer } from './FeedItemRenderer';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { FeedCardSkeleton } from './FeedCardSkeleton';
 import { toast } from 'sonner';
 
 import { useFeedStore } from '@/store/feedStore';
@@ -106,18 +107,14 @@ export function InfiniteFeed({ view }: InfiniteFeedProps) {
   }, [hasMore, loading, loadingMore, fetchMore]);
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="text-sm font-medium">Carregando feed de conhecimento...</span>
-      </div>
-    );
+    return <FeedCardSkeleton />;
   }
 
   if (error) {
     return (
       <div className="bg-destructive/10 text-destructive border border-destructive/20 rounded-xl p-4 text-center text-sm font-medium">
-        {error}
+        <p>{error}</p>
+        <button type="button" onClick={() => void fetchInitial()} className="mx-auto mt-3 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-primary-foreground"><RefreshCw className="h-4 w-4" />Tentar novamente</button>
       </div>
     );
   }

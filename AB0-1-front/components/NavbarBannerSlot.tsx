@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import BannerByLocation from '@/components/BannerByLocation';
 
-export default function NavbarBannerSlot() {
+function DesktopNavbarBanner() {
   const [desktop, setDesktop] = useState(false);
 
   useEffect(() => {
@@ -17,4 +18,23 @@ export default function NavbarBannerSlot() {
   if (!desktop) return null;
 
   return <BannerByLocation location="navbar" limit={1} className="mx-auto" />;
+}
+
+export default function NavbarBannerSlot() {
+  const pathname = usePathname();
+  const isReviewerDashboard =
+    pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/');
+
+  if (isReviewerDashboard) return null;
+
+  return (
+    <div
+      className="hidden border-b border-slate-100 bg-white md:block dark:border-slate-800 dark:bg-slate-950"
+      aria-label="Publicidade no topo"
+    >
+      <div className="mx-auto max-w-[1200px] px-4 py-1">
+        <DesktopNavbarBanner />
+      </div>
+    </div>
+  );
 }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_25_130000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1657,6 +1657,24 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_130000) do
     t.index ["moderatable_type", "moderatable_id"], name: "index_content_moderation_decisions_on_moderatable"
   end
 
+  create_table "content_reports", force: :cascade do |t|
+    t.string "reportable_type", null: false
+    t.bigint "reportable_id", null: false
+    t.bigint "reporter_id", null: false
+    t.bigint "group_id"
+    t.string "reason", null: false
+    t.string "status", default: "open", null: false
+    t.bigint "resolved_by_id"
+    t.datetime "resolved_at"
+    t.text "details"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_id"], name: "index_content_reports_on_group_id"
+    t.index ["reportable_type", "reportable_id"], name: "index_content_reports_on_reportable"
+    t.index ["reporter_id"], name: "index_content_reports_on_reporter_id"
+    t.index ["resolved_by_id"], name: "index_content_reports_on_resolved_by_id"
+  end
+
   create_table "content_templates", force: :cascade do |t|
     t.string "vertical", limit: 20
     t.string "audience", limit: 20
@@ -2124,6 +2142,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_130000) do
     t.boolean "comments_enabled", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "comments_count", default: 0, null: false
+    t.integer "reactions_count", default: 0, null: false
     t.index ["group_id", "pinned", "created_at"], name: "index_group_posts_on_group_id_and_pinned_and_created_at"
     t.index ["group_id", "status", "created_at"], name: "index_group_posts_on_group_id_and_status_and_created_at"
     t.index ["group_id"], name: "index_group_posts_on_group_id"
@@ -3736,6 +3756,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_130000) do
   add_foreign_key "content_leads", "companies"
   add_foreign_key "content_moderation_decisions", "admin_users"
   add_foreign_key "content_moderation_decisions", "companies"
+  add_foreign_key "content_reports", "groups"
+  add_foreign_key "content_reports", "users", column: "reporter_id"
+  add_foreign_key "content_reports", "users", column: "resolved_by_id"
   add_foreign_key "conversation_events", "conversations"
   add_foreign_key "conversation_events", "users", column: "actor_id"
   add_foreign_key "conversation_reports", "conversations"

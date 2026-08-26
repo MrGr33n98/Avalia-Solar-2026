@@ -24,51 +24,18 @@ export async function getFeed(params?: { view?: string; cursor?: string; limit?:
 }
 
 export async function toggleReaction(reactableType: string, reactableId: number, active: boolean): Promise<void> {
-  if (active) {
-    await fetchWithAuth('/api/v1/reactions', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId }),
-    });
-  } else {
-    await fetchWithAuth('/api/v1/reactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId, reaction_type: 'useful' }),
-    });
-  }
+  const res = active ? await fetchWithAuth('/api/v1/reactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId }) }) : await fetchWithAuth('/api/v1/reactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reactable_type: reactableType, reactable_id: reactableId, reaction_type: 'useful' }) });
+  if (!res.ok) throw new Error('Falha ao atualizar reação');
 }
 
 export async function toggleSave(saveableType: string, saveableId: number, saved: boolean): Promise<void> {
-  if (saved) {
-    await fetchWithAuth('/api/v1/saved_items', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ saveable_type: saveableType, saveable_id: saveableId }),
-    });
-  } else {
-    await fetchWithAuth('/api/v1/saved_items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ saveable_type: saveableType, saveable_id: saveableId }),
-    });
-  }
+  const res = await fetchWithAuth('/api/v1/saved_items', { method: saved ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ saveable_type: saveableType, saveable_id: saveableId }) });
+  if (!res.ok) throw new Error('Falha ao atualizar item salvo');
 }
 
 export async function toggleFollow(followableType: string, followableId: number, following: boolean): Promise<void> {
-  if (following) {
-    await fetchWithAuth('/api/v1/follows', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followable_type: followableType, followable_id: followableId }),
-    });
-  } else {
-    await fetchWithAuth('/api/v1/follows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followable_type: followableType, followable_id: followableId }),
-    });
-  }
+  const res = await fetchWithAuth('/api/v1/follows', { method: following ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ followable_type: followableType, followable_id: followableId }) });
+  if (!res.ok) throw new Error('Falha ao atualizar follow');
 }
 
 export async function getComments(commentableType: string, commentableId: number): Promise<CommentItem[]> {
