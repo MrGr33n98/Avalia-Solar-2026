@@ -348,12 +348,30 @@ export async function getGroupSitemapEntries(): Promise<MetadataRoute.Sitemap> {
 
     const visibility = getString(group, 'visibility');
     const status = getString(group, 'status');
+    const updatedAt = getString(group, 'updated_at');
 
     if (visibility === 'public' && status === 'active') {
       entries.push({
         url: absoluteUrl(`/groups/${slug}`),
         priority: 0.7,
-        changeFrequency: 'daily' as const
+        changeFrequency: 'daily' as const,
+        lastModified: updatedAt ? new Date(updatedAt) : undefined,
+      });
+    }
+  });
+
+  const posts = await fetchRecords('sitemaps/group_posts');
+  posts.forEach((post) => {
+    const groupSlug = getString(post, 'group_slug');
+    const postId = getNumber(post, 'post_id');
+    const updatedAt = getString(post, 'updated_at');
+
+    if (groupSlug && postId) {
+      entries.push({
+        url: absoluteUrl(`/groups/${groupSlug}/posts/${postId}`),
+        priority: 0.6,
+        changeFrequency: 'weekly' as const,
+        lastModified: updatedAt ? new Date(updatedAt) : undefined,
       });
     }
   });

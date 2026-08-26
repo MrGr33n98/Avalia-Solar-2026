@@ -14,6 +14,7 @@ class Comment < ApplicationRecord
   scope :root_comments, -> { where(parent_id: nil) }
 
   after_save :update_group_post_counter, if: -> { commentable_type == 'GroupPost' }
+  after_destroy :update_group_post_counter, if: -> { commentable_type == 'GroupPost' }
 
   private
 

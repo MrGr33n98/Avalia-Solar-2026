@@ -122,6 +122,9 @@ export function getGroupPosts(slug: string, params: { topic?: number; sort?: 're
   const suffix = query.toString();
   return request<GroupPost[]>(`groups/${encodeURIComponent(slug)}/posts${suffix ? `?${suffix}` : ''}`, { headers });
 }
+export function getGroupPost(slug: string, postId: string | number, headers?: HeadersInit): Promise<GroupPost> {
+  return request<GroupPost>(`groups/${encodeURIComponent(slug)}/posts/${encodeURIComponent(postId)}`, { headers });
+}
 
 export function createGroupPost(slug: string, post: { title?: string; body: string; group_topic_id?: number }): Promise<GroupPost> {
   return request<GroupPost>(`groups/${encodeURIComponent(slug)}/posts`, { method: 'POST', body: JSON.stringify({ post }) });

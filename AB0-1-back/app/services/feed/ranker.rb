@@ -28,15 +28,15 @@ module Feed
         FROM (
           SELECT reactable_type AS subject_type, reactable_id AS subject_id, 'reaction' AS source
           FROM reactions
-          WHERE reactable_type IN ('ReviewerPublication', 'Review')
+          WHERE reactable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
           UNION ALL
           SELECT commentable_type, commentable_id, 'comment'
           FROM comments
-          WHERE status = 'active' AND commentable_type IN ('ReviewerPublication', 'Review')
+          WHERE status = 'active' AND commentable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
           UNION ALL
           SELECT saveable_type, saveable_id, 'save'
           FROM saved_items
-          WHERE saveable_type IN ('ReviewerPublication', 'Review')
+          WHERE saveable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
         ) interactions
         GROUP BY subject_type, subject_id
       SQL

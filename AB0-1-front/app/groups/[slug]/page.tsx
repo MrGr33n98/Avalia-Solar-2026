@@ -12,6 +12,9 @@ import { getGroup, getMembers, getRules, getTopics } from '@/lib/api/groups';
 import { getGroupsServerHeaders } from '@/lib/api/groups-server';
 import { isGroupsEnabled } from '@/lib/features/groups';
 
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
+import { SITE, absoluteUrl } from '@/lib/site';
+
 type GroupPageProps = {
   params: { slug: string };
 };
@@ -20,9 +23,56 @@ export async function generateMetadata({ params }: GroupPageProps): Promise<Meta
   if (!isGroupsEnabled()) return {};
   try {
     const group = await getGroup(params.slug, getGroupsServerHeaders());
-    return { title: `${group.name} | Comunidades Avalia Solar`, description: group.short_description || group.description || undefined };
+    const isPublic = group.visibility === 'public';
+    const isActive = group.status === 'active';
+    const isIndexable = isPublic && isActive;
+
+    const title = `${group.name} | Comunidades Avalia Solar`;
+    const description = group.short_description || group.description || 'Participe da discussão na comunidade de energia solar.';
+    const canonical = absoluteUrl(`/groups/${group.slug}`);
+
+    const ogImages = [];
+    if (group.hero_preview_url) {
+      ogImages.push({ url: group.hero_preview_url });
+    } else if (group.avatar_url) {
+      ogImages.push({ url: group.avatar_url });
+    } else {
+      ogImages.push({ url: absoluteUrl(SITE.ogImagePath) });
+    }
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical,
+      },
+      robots: {
+        index: isIndexable,
+        follow: isIndexable,
+      },
+      openGraph: {
+        type: 'website',
+        title,
+        description,
+        url: canonical,
+        siteName: SITE.name,
+        images: ogImages,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ogImages.map((img) => img.url),
+      },
+    };
   } catch {
-    return { title: 'Comunidade | Avalia Solar' };
+    return {
+      title: 'Comunidade | Avalia Solar',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
   }
 }
 
@@ -48,6 +98,13 @@ export default async function GroupDetailPage({ params }: GroupPageProps) {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:py-10">
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', item: '/' },
+          { name: 'Comunidades', item: '/groups' },
+          { name: group.name, item: `/groups/${group.slug}` }
+        ]}
+      />
       <div className="mx-auto max-w-[1320px]">
         <div className="mb-5 text-sm">
           <Link href="/groups" className="font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">

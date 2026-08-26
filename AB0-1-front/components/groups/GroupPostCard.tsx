@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -258,8 +259,19 @@ export function GroupPostCard({ post }: { post: GroupPost }) {
       </header>
 
       <div>
-        {post.title && <h3 id={`post-${post.id}-title`} className="text-base font-bold text-slate-950">{post.title}</h3>}
+        {post.title && (
+          <h3 id={`post-${post.id}-title`} className="text-base font-bold text-slate-950 hover:text-blue-700 transition-colors">
+            <Link href={`/groups/${slug}/posts/${post.id}`}>
+              {post.title}
+            </Link>
+          </h3>
+        )}
         <p className="mt-2.5 whitespace-pre-wrap text-sm leading-6 text-slate-700">{post.body}</p>
+        <div className="mt-2 text-xs">
+          <Link href={`/groups/${slug}/posts/${post.id}`} className="font-semibold text-blue-700 hover:text-blue-800 hover:underline">
+            Ver discussão
+          </Link>
+        </div>
       </div>
 
       {/* Engagement Stats summary */}

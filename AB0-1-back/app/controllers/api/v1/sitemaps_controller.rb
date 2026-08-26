@@ -14,7 +14,20 @@ module Api
           render json: { data: data }, status: :ok
         rescue StandardError => e
           Rails.logger.error("[SitemapsController] Failed to generate local rankings: #{e.message}")
-          render json: { data: [] }, status: :ok # Retornar vazio para não quebrar o next.js
+          render json: { data: [] }, status: :ok
+        end
+      end
+
+      def group_posts
+        begin
+          data = Rails.cache.fetch('sitemap_group_posts', expires_in: 1.hour) do
+            fetch_group_posts_data
+          end
+
+          render json: { data: data }, status: :ok
+        rescue StandardError => e
+          Rails.logger.error("[SitemapsController] Failed to generate group posts sitemap: #{e.message}")
+          render json: { data: [] }, status: :ok
         end
       end
 
@@ -45,6 +58,20 @@ module Api
             updated_at: updated_at
           }
         end.uniq { |r| "#{r[:category_slug]}-#{r[:state]}-#{r[:city_slug]}" }
+      end
+
+      def fetch_group_posts_data
+        ::GroupPost.joins(:group)
+                   .where(groups: { visibility: 'public', status: 'active' })
+                   .where(group_posts: { status: 'published' })
+                   .pluck('groups.slug', 'group_posts.id', 'group_posts.updated_at')
+                   .map do |group_slug, post_id, updated_at|
+                     {
+                       group_slug: group_slug,
+                       post_id: post_id,
+                       updated_at: updated_at
+                     }
+                   end
       end
     end
   end
