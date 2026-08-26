@@ -25,17 +25,26 @@ const getRemainingCooldown = (otpSentAt?: string) => {
   return Math.max(OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds, 0);
 };
 
+export interface DistributedCompany {
+  id: string | number;
+  name: string;
+  logo_url?: string;
+  city?: string;
+  state?: string;
+  rating_avg?: number | string;
+}
+
 export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) => {
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [status, setStatus] = useState<WizardStateStatus>('IDLE');
   const [schema, setSchema] = useState<WizardSchema | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [leadResult, setLeadResult] = useState<{ lead_id: number; otp_sent_at: string; email_hint?: string } | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [distributedCompanies, setDistributedCompanies] = useState<any[]>([]);
+  const [distributedCompanies, setDistributedCompanies] = useState<DistributedCompany[]>([]);
 
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID());
@@ -91,7 +100,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
           template_key: fetchedSchema.template_key,
           availability_reason: fetchedSchema.availability?.reason,
         });
-      } catch (error) {
+      } catch {
         setStatus('SCHEMA_ERROR');
       }
     };
@@ -124,7 +133,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     }
   }, [answers, currentStepIndex, status, categoryId, preferredCompanyId, leadResult]);
 
-  const setAnswer = useCallback((key: string, value: any) => {
+  const setAnswer = useCallback((key: string, value: unknown) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
     if (validationErrors[key]) {
       setValidationErrors(prev => {
@@ -179,7 +188,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     } else {
       setStatus('STEP_ACTIVE');
     }
-  }, [validateCurrentStep, schema, currentStepIndex]);
+  }, [validateCurrentStep, schema, currentStepIndex, categoryId, submitWizard]);
 
   const prevStep = useCallback(() => {
     if (currentStepIndex > 0) {
@@ -195,7 +204,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     schema,
   }), [answers, categoryId, preferredCompanyId, schema]);
 
-  const submitWizard = async () => {
+  const submitWizard = useCallback(async () => {
     setStatus('SUBMITTING');
     setServerError(null);
     try {
@@ -222,7 +231,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setServerError(normalized.message);
       setStatus('ERROR');
     }
-  };
+  }, [buildPayload, idempotencyKey, categoryId]);
 
   const handleVerifyOtp = async (code: string) => {
     if (!leadResult?.lead_id) return;
@@ -243,7 +252,7 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       });
 
       if (response.companies && response.companies.length > 0) {
-        response.companies.forEach((comp: any) => {
+        response.companies.forEach((comp: DistributedCompany) => {
           trackLeadDispatched(String(leadResult.lead_id), comp.id);
         });
       }

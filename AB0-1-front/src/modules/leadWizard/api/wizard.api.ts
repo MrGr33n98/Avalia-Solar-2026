@@ -20,13 +20,13 @@ export const wizardApi = {
 
   submitLead: async (payload: WizardPayload, idempotencyKey: string): Promise<{ lead_id: number; otp_sent_at: string; email_hint?: string }> => {
     try {
-      const response = await fetchApi<any>('/leads/wizard_create', {
+      const response = await fetchApi<{ lead_id: number; otp_sent_at: string; email_hint?: string }>('/leads/wizard_create', {
         method: 'POST',
         headers: { 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify(payload),
       });
       return response;
-    } catch (error: any) {
+    } catch (error) {
       console.error('[LeadWizard API] Submission failed', error);
       throw error;
     }
@@ -36,8 +36,8 @@ export const wizardApi = {
     await fetchApi(`/leads/${leadId}/resend_otp`, { method: 'POST' });
   },
 
-  verifyOtp: async (leadId: number, otpCode: string): Promise<{ companies?: any[] }> => {
-    const response = await fetchApi<any>(`/leads/${leadId}/verify_otp`, {
+  verifyOtp: async (leadId: number, otpCode: string): Promise<{ companies?: Record<string, unknown>[] }> => {
+    const response = await fetchApi<{ companies?: Record<string, unknown>[] }>(`/leads/${leadId}/verify_otp`, {
       method: 'POST',
       body: JSON.stringify({ otp_code: otpCode }),
     });

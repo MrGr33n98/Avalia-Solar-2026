@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 
 interface WizardStepProps {
   step: StepSchema;
-  answers: Record<string, any>;
+  answers: Record<string, unknown>;
   errors: Record<string, string>;
-  onAnswerChange: (key: string, value: any) => void;
+  onAnswerChange: (key: string, value: unknown) => void;
   onEnterPress: () => void;
 }
 

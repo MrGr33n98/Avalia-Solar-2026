@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLeadWizard } from '../hooks/useLeadWizard';
+import { useLeadWizard, DistributedCompany } from '../hooks/useLeadWizard';
 import { WizardStep } from './WizardStep';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -66,7 +66,7 @@ export const WizardRenderer: React.FC<WizardRendererProps> = ({ wizardState }) =
               Empresas que receberam seu pedido:
             </h3>
             <div className="space-y-3">
-              {distributedCompanies.map((c: any) => (
+              {distributedCompanies.map((c: DistributedCompany) => (
                 <div key={c.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 bg-white shadow-sm">
                   <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100 shrink-0">
                     {c.logo_url ? (
