@@ -78,19 +78,29 @@ class Api::V1::ReviewsController < Api::V1::BaseController
         Rails.logger.error("Failed to run moderation service for review #{@review.id}: #{e.message}")
       end
 
-      # ... Track event e Notificações ...
-      Analytics::PostHogService.capture(
-        'review_submitted',
-        {
-          review_id: @review.id,
-          company_id: @review.company_id,
-          category_id: @review.category_id,
-          rating: @review.rating.to_f,
-          project_type: @review.project_type
-        }.compact,
-        distinct_id: current_user.posthog_distinct_id
-      )
-      render json: serialize_review(@review.reload), status: :created
+      begin
+        # ... Track event e Notificações ...
+        Analytics::PostHogService.capture(
+          'review_submitted',
+          {
+            review_id: @review.id,
+            company_id: @review.company_id,
+            category_id: @review.category_id,
+            rating: @review.rating.to_f,
+            project_type: @review.project_type
+          }.compact,
+          distinct_id: current_user.posthog_distinct_id
+        )
+      rescue StandardError => e
+        Rails.logger.error("Failed to track PostHog event for review #{@review.id}: #{e.message}")
+      end
+
+      begin
+        render json: serialize_review(@review.reload), status: :created
+      rescue StandardError => e
+        Rails.logger.error("Failed to serialize review #{@review.id}: #{e.message}")
+        render json: { message: 'Avaliação enviada com sucesso, mas houve um erro ao processar a resposta.' }, status: :created
+      end
     else
       # Validação rails já capturou a regra [user_id OR email, company_id, category_id]
       render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity

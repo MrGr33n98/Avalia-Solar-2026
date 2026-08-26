@@ -42,10 +42,15 @@ type ReviewCreatePayload = Partial<Review> & {
 };
 
 const formatSubmitErrorMessage = (error: unknown) => {
-  const fallback = 'Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.';
-  const message = getApiErrorMessage(error, fallback)
+  const fallback = 'Não foi possível enviar sua avaliação. Seus dados foram mantidos. Tente novamente em alguns instantes.';
+  let message = getApiErrorMessage(error, fallback)
     .replace(/^\[\d{3}\]\s*/, '')
     .trim();
+    
+  if (message.toLowerCase().includes('internal server error')) {
+    message = fallback;
+  }
+  
   return message || fallback;
 };
 
@@ -366,9 +371,10 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                 <div
                   role="alert"
                   aria-live="assertive"
-                  className="border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+                  className="border border-red-200 bg-red-50 p-4 text-sm text-red-700 rounded-lg space-y-1"
                 >
-                  {submitError}
+                  <p className="font-bold">Não foi possível enviar sua avaliação</p>
+                  <p>{submitError}</p>
                 </div>
               )}
 
@@ -386,7 +392,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
                   aria-busy={isSubmitting}
                   className="h-11 rounded-lg bg-[#155EEF] px-10 font-bold shadow-none hover:bg-[#0D4ED8] focus-visible:ring-2 focus-visible:ring-[#2970FF] focus-visible:ring-offset-2 gap-2"
                 >
-                  {isSubmitting ? 'Enviando...' : 'Finalizar Avaliação'}
+                  {isSubmitting ? 'Enviando...' : (submitError ? 'Tentar novamente' : 'Finalizar Avaliação')}
                   <CheckCircle2 className="h-4 w-4" />
                 </Button>
               </div>

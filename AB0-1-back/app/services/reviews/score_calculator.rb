@@ -34,6 +34,8 @@ module Reviews
       weighted_sum = 0
 
       scores.each do |s|
+        next if s.not_applicable? || s.score.nil?
+
         weight = s.rating_criterion&.weight || 1.0
         weighted_sum += (s.score * weight)
         total_weight += weight
