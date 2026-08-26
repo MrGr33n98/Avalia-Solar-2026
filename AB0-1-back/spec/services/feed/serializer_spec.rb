@@ -45,4 +45,38 @@ RSpec.describe Feed::Serializer, type: :service do
       expect(result[:subject][:cover_image_url]).to be_nil
     end
   end
+
+  describe 'viewer_following engagement state' do
+    let(:viewer) { create(:user) }
+    let(:creator) { create(:user) }
+    let!(:creator_profile) { create(:reviewer_profile, user: creator) }
+    let(:pub_subject) { create(:reviewer_publication, user: creator) }
+    let(:feed_item) { FeedItem.create!(actor: creator, subject: pub_subject, verb: 'publish', published_at: Time.current) }
+
+    it 'returns true if the viewer is following the actor profile' do
+      SocialFollow.create!(
+        follower: viewer,
+        followable: creator_profile
+      )
+
+      serializer = described_class.new([feed_item], current_user: viewer)
+      result = serializer.serialize.first
+
+      expect(result[:engagement][:viewer_following]).to eq(true)
+    end
+
+    it 'returns false if the viewer is not following the actor profile' do
+      serializer = described_class.new([feed_item], current_user: viewer)
+      result = serializer.serialize.first
+
+      expect(result[:engagement][:viewer_following]).to eq(false)
+    end
+
+    it 'returns false for anonymous feed' do
+      serializer = described_class.new([feed_item], current_user: nil)
+      result = serializer.serialize.first
+
+      expect(result[:engagement][:viewer_following]).to eq(false)
+    end
+  end
 end
