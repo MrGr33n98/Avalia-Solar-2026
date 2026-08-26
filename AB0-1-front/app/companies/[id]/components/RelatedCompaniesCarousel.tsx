@@ -10,8 +10,7 @@ import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import CompanyCard from "@/components/CompanyCard";
-
+import RelatedCompanyCard from "./RelatedCompanyCard";
 interface RelatedCompaniesCarouselProps {
   company: Company;
   showAlternatives: boolean;
@@ -161,9 +160,9 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
 
       {/* Barra de Progresso Linear */}
       {relatedCompanies.length > 1 && (
-        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
+        <div className="w-full h-0.5 sm:h-1 bg-slate-100 rounded-full overflow-hidden mb-2 hidden sm:block">
           <div 
-            className="h-full bg-blue-500 transition-all duration-75 ease-linear"
+            className="h-full bg-blue-400 transition-all duration-75 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -173,15 +172,13 @@ export default function RelatedCompaniesCarousel({ company, showAlternatives }: 
       <div className="relative w-full pb-4">
         <div 
           ref={scrollContainerRef}
-          className="flex gap-4 w-full overflow-x-auto snap-x scroll-smooth px-1 pt-1 pb-2 [&::-webkit-scrollbar]:hidden"
+          className="flex gap-3 sm:gap-4 w-full overflow-x-auto snap-x snap-mandatory scroll-smooth px-1 pt-1 pb-2 scroll-pl-1 sm:scroll-pl-1 [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {relatedCompanies.map((comp) => (
-            <CompanyCard
+            <RelatedCompanyCard
               key={comp.id}
               company={comp}
-              variant="compact"
-              className="w-[280px] snap-start shrink-0"
             />
           ))}
         </div>
