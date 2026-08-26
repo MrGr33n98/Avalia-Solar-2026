@@ -580,11 +580,11 @@ module Api
       end
 
       def access_token_expires_at
-        15.minutes.from_now
+        1.hour.from_now
       end
 
       def refresh_token_expires_at
-        30.days.from_now
+        60.days.from_now
       end
 
       def extract_refresh_token

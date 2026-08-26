@@ -59,8 +59,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   end
 
   def issue_oauth_tokens(user, provider_name)
-    access_exp  = 15.minutes.from_now
-    refresh_exp = 30.days.from_now
+    access_exp  = 1.hour.from_now
+    refresh_exp = 60.days.from_now
 
     access_token  = jwt_encode({ user_id: user.id, typ: 'access' },  access_exp)
     refresh_token = jwt_encode({ user_id: user.id, typ: 'refresh' }, refresh_exp)

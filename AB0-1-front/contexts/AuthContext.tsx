@@ -12,6 +12,7 @@ import {
   invalidateAuthRefresh,
   setAuthSessionHint,
   reviewerProfileApi,
+  getErrorStatus,
 } from '@/lib/api';
 import { getApiOrigin } from '@/lib/api-config';
 import { identify, track, reset } from '@/lib/analytics/lazy';
@@ -160,11 +161,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return requestId === authRequestId.current ? userData || null : null;
     } catch (authError) {
       if (requestId === authRequestId.current) {
-        invalidateAnalyticsAvailability();
-        setUser(null);
-        setError(getApiErrorMessage(authError, 'Falha ao validar sessao.'));
-        clearAuthSessionHint();
-        clearRealtimeAuthToken();
+        const status = getErrorStatus(authError);
+        const isDefinitiveAuthFailure = status === 401 || status === 403;
+
+        if (isDefinitiveAuthFailure) {
+          invalidateAnalyticsAvailability();
+          setUser(null);
+          setError(getApiErrorMessage(authError, 'Falha ao validar sessão.'));
+          clearAuthSessionHint();
+          clearRealtimeAuthToken();
+        } else {
+          setError('Não foi possível conectar ao servidor de autenticação. Verifique sua conexão.');
+        }
       }
       return null;
     } finally {

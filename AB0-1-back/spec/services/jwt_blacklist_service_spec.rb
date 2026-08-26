@@ -3,7 +3,17 @@
 require 'rails_helper'
 
 RSpec.describe JwtBlacklistService, type: :service do
-  let(:user) { User.create!(email: 'test@example.com', password: 'password123', name: 'Test User') }
+  include ActiveSupport::Testing::TimeHelpers
+
+  let(:user) do
+    User.create!(
+      email: "test_#{SecureRandom.hex(4)}@example.com",
+      password: 'Password123!',
+      name: 'Test User',
+      city: 'São Paulo',
+      terms_accepted: true
+    )
+  end
   let(:payload) { { user_id: user.id, exp: 1.hour.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid } }
   let(:token) { JWT.encode(payload, Rails.application.secret_key_base) }
   let(:jti) { payload[:jti] }
@@ -118,7 +128,7 @@ RSpec.describe JwtBlacklistService, type: :service do
     it 'returns timestamp after revocation' do
       freeze_time = Time.current
 
-      Timecop.freeze(freeze_time) do
+      travel_to(freeze_time) do
         described_class.revoke_all_user_tokens(user.id)
       end
 
@@ -164,7 +174,7 @@ RSpec.describe JwtBlacklistService, type: :service do
       old_token = JWT.encode(payload.merge(iat: 1.hour.ago.to_i), Rails.application.secret_key_base)
 
       freeze_time = Time.current
-      Timecop.freeze(freeze_time) do
+      travel_to(freeze_time) do
         described_class.revoke_all_user_tokens(user.id)
       end
 

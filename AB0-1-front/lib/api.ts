@@ -1047,7 +1047,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-const getErrorStatus = (error: unknown): number | undefined => {
+export const getErrorStatus = (error: unknown): number | undefined => {
   const record = isRecord(error) ? error : undefined;
   const context = record && isRecord(record.context) ? record.context : undefined;
   const contextStatus = context?.status ?? record?.status;
@@ -1178,39 +1178,53 @@ const attemptRefresh = async (): Promise<boolean> => {
 
   const generationAtStart = refreshGeneration;
   refreshInFlight = (async () => {
-  try {
-    const url = buildApiUrl('/auth/refresh');
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: getApiRequestHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-    });
+    try {
+      const url = buildApiUrl('/auth/refresh');
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: getApiRequestHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+      });
 
-    if (!response.ok) {
-      const details = await response.json().catch(() => ({}));
-      if (details.code === 'REFRESH_TOKEN_REVOKED' || details.code === 'INVALID_REFRESH_TOKEN') {
-        console.warn('[API] Refresh token is invalid or revoked. User must re-authenticate.');
-      } else {
-        console.warn('[API] Refresh failed with status:', response.status, details);
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({}));
+        const isDefinitiveAuthFailure = [400, 401, 403].includes(response.status);
+
+        if (isDefinitiveAuthFailure) {
+          console.warn('[API] Refresh token is invalid or revoked. User must re-authenticate.', details);
+          return false;
+        }
+
+        // Transient server/infrastructure errors should throw to prevent logout redirection
+        throw new ApiError(`[API] Refresh failed with transient error: ${response.status}`, {
+          status: response.status,
+          code: details?.code,
+          url,
+          method: 'POST',
+          details
+        });
       }
-      return false;
+
+      if (typeof response.json === 'function') {
+        await response.json().catch(() => ({}));
+      }
+
+      if (generationAtStart !== refreshGeneration) return false;
+
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      // Network/outage errors (like TypeError: Failed to fetch) should be thrown as ApiError
+      throw new ApiError('Erro de conexão ao atualizar sessão. Verifique sua internet.', {
+        status: 0,
+        url: buildApiUrl('/auth/refresh'),
+        method: 'POST'
+      });
+    } finally {
+      refreshInFlight = null;
     }
-
-    // O backend retorna { token: string, user: User }
-    // Como estamos usando credentials: 'include', o browser atualizarÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ os cookies (jwt_token e refresh_token)
-    // automaticamente se o backend enviar os headers Set-Cookie correspondentes.
-    if (typeof response.json === 'function') {
-      await response.json().catch(() => ({}));
-    }
-
-    if (generationAtStart !== refreshGeneration) return false;
-
-    return true;
-  } catch {
-    return false;
-  } finally {
-    refreshInFlight = null;
-  }
   })();
 
   return refreshInFlight;

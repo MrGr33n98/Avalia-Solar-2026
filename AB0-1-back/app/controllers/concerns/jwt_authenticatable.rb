@@ -94,7 +94,7 @@ module JwtAuthenticatable
     cookies.signed[:jwt_token] = cookie_opts
   end
 
-  def set_refresh_cookie(token, expires: 30.days.from_now)
+  def set_refresh_cookie(token, expires: 60.days.from_now)
     cookie_opts = {
       value: token,
       httponly: true,
