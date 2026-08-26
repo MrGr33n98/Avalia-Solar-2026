@@ -3,7 +3,7 @@
 module Api
   module V1
     class ReactionsController < BaseController
-      before_action :authenticate_user!
+      before_action :authenticate_api_user
 
       def create
         reactable = find_reactable

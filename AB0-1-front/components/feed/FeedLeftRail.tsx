@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FeedGroupsNav } from './FeedGroupsNav';
+import { useQuery } from '@tanstack/react-query';
+import { fetchApiSafe } from '@/lib/api-client';
 
 interface FeedLeftRailProps {
   activeView?: string;
@@ -27,6 +29,15 @@ export function FeedLeftRail({ activeView = 'for_you' }: FeedLeftRailProps) {
     reviewerProfile?.profession ||
     (reviewerProfile?.public_slug ? `@${reviewerProfile.public_slug}` : null);
   const displaySubtitle = isCreator ? headline : user?.email || 'Membro Avalia Solar';
+
+  const { data: creatorData, isLoading } = useQuery({
+    queryKey: ['creator', reviewerProfile?.public_slug],
+    queryFn: () => fetchApiSafe<any>(`creators/${reviewerProfile?.public_slug}`),
+    enabled: isCreator && !!reviewerProfile?.public_slug,
+  });
+
+  const followersCount = creatorData?.stats?.followers_count;
+  const followingCount = creatorData?.stats?.following_count;
 
   return (
     <aside className="space-y-4">
@@ -47,11 +58,27 @@ export function FeedLeftRail({ activeView = 'for_you' }: FeedLeftRailProps) {
 
         <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-2 text-center text-xs">
           <div>
-            <span className="block font-semibold text-sm">—</span>
+            <span className="block font-semibold text-sm">
+              {isLoading && isCreator ? (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted" />
+              ) : followersCount !== undefined ? (
+                followersCount
+              ) : (
+                '—'
+              )}
+            </span>
             <span className="text-muted-foreground">Seguidores</span>
           </div>
           <div>
-            <span className="block font-semibold text-sm">—</span>
+            <span className="block font-semibold text-sm">
+              {isLoading && isCreator ? (
+                <span className="inline-block h-4 w-6 animate-pulse rounded bg-muted" />
+              ) : followingCount !== undefined ? (
+                followingCount
+              ) : (
+                '—'
+              )}
+            </span>
             <span className="text-muted-foreground">Seguindo</span>
           </div>
         </div>

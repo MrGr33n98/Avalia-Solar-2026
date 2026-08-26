@@ -38,7 +38,9 @@ module Creator
 
     def stats
       approved = @user.reviews.approved_only
-      { review_count: approved.count, green_score: Rails.cache.fetch("creator/green-score/#{@user.id}/v1", expires_in: 10.minutes) { @user.calculate_green_score }, achievement_count: achievements.length }
+      followers_count = SocialFollow.where(followable_type: 'ReviewerProfile', followable_id: @profile.id).count
+      following_count = SocialFollow.where(follower_id: @user.id).count
+      { review_count: approved.count, green_score: Rails.cache.fetch("creator/green-score/#{@user.id}/v1", expires_in: 10.minutes) { @user.calculate_green_score }, achievement_count: achievements.length, followers_count: followers_count, following_count: following_count }
     end
 
     def publications

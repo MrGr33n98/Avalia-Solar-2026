@@ -22,6 +22,8 @@ module Api
         authorize follow
 
         follow = create_follow!(followable)
+        Creator::PublicProfileService.invalidate(followable) if followable.is_a?(ReviewerProfile)
+        Creator::PublicProfileService.invalidate_for_user(current_user)
         render json: { status: 'success', data: follow }, status: :ok
       end
 
@@ -32,6 +34,8 @@ module Api
         follow = SocialFollow.new(follower: current_user, followable: followable)
         authorize follow
         SocialFollow.where(follower: current_user, followable: followable).destroy_all
+        Creator::PublicProfileService.invalidate(followable) if followable.is_a?(ReviewerProfile)
+        Creator::PublicProfileService.invalidate_for_user(current_user)
 
         render json: { status: 'success' }, status: :ok
       end
