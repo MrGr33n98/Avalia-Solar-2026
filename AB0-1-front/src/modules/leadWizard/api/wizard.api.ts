@@ -1,5 +1,5 @@
 import { fetchApi } from '@/lib/api';
-import { WizardSchema, WizardPayload } from '../types/wizard.types';
+import { WizardSchema, WizardPayload, DistributedCompany } from '../types/wizard.types';
 
 export const wizardApi = {
   resolveSchema: async (categoryId: number, preferredCompanyId?: number): Promise<WizardSchema> => {
@@ -36,8 +36,8 @@ export const wizardApi = {
     await fetchApi(`/leads/${leadId}/resend_otp`, { method: 'POST' });
   },
 
-  verifyOtp: async (leadId: number, otpCode: string): Promise<{ companies?: Record<string, unknown>[] }> => {
-    const response = await fetchApi<{ companies?: Record<string, unknown>[] }>(`/leads/${leadId}/verify_otp`, {
+  verifyOtp: async (leadId: number, otpCode: string): Promise<{ companies?: DistributedCompany[] }> => {
+    const response = await fetchApi<{ companies?: DistributedCompany[] }>(`/leads/${leadId}/verify_otp`, {
       method: 'POST',
       body: JSON.stringify({ otp_code: otpCode }),
     });

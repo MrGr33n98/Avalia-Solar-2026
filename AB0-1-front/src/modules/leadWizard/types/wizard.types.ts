@@ -111,3 +111,12 @@ export type WizardStateStatus =
   | 'OTP_VERIFICATION'
   | 'SUCCESS' 
   | 'ERROR';
+
+export interface DistributedCompany {
+  id: string | number;
+  name: string;
+  logo_url?: string;
+  city?: string;
+  state?: string;
+  rating_avg?: number | string;
+}

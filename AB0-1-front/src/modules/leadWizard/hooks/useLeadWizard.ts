@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WizardSchema, WizardSessionData, WizardStateStatus } from '../types/wizard.types';
+import { WizardSchema, WizardSessionData, WizardStateStatus, DistributedCompany } from '../types/wizard.types';
 import { wizardApi } from '../api/wizard.api';
 import { 
   trackWizardStart, 
@@ -25,14 +25,7 @@ const getRemainingCooldown = (otpSentAt?: string) => {
   return Math.max(OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds, 0);
 };
 
-export interface DistributedCompany {
-  id: string | number;
-  name: string;
-  logo_url?: string;
-  city?: string;
-  state?: string;
-  rating_avg?: number | string;
-}
+export type { DistributedCompany };
 
 export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) => {
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
@@ -166,30 +159,6 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
     return Object.keys(errors).length === 0;
   }, [schema, currentStepIndex, answers]);
 
-  const nextStep = useCallback(() => {
-    if (schema?.availability?.company_available === false) {
-      setStatus('STEP_ACTIVE');
-      return;
-    }
-
-    setStatus('VALIDATING');
-    if (validateCurrentStep()) {
-      track('wizard_step_completed', { 
-        step_index: currentStepIndex,
-        step_name: schema?.schema.steps[currentStepIndex]?.title,
-        category_id: categoryId
-      });
-      if (schema && currentStepIndex < schema.schema.steps.length - 1) {
-        setCurrentStepIndex(prev => prev + 1);
-        setStatus('STEP_ACTIVE');
-      } else {
-        submitWizard();
-      }
-    } else {
-      setStatus('STEP_ACTIVE');
-    }
-  }, [validateCurrentStep, schema, currentStepIndex, categoryId, submitWizard]);
-
   const prevStep = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
@@ -232,6 +201,30 @@ export const useLeadWizard = (categoryId: number, preferredCompanyId?: number) =
       setStatus('ERROR');
     }
   }, [buildPayload, idempotencyKey, categoryId]);
+
+  const nextStep = useCallback(() => {
+    if (schema?.availability?.company_available === false) {
+      setStatus('STEP_ACTIVE');
+      return;
+    }
+
+    setStatus('VALIDATING');
+    if (validateCurrentStep()) {
+      track('wizard_step_completed', { 
+        step_index: currentStepIndex,
+        step_name: schema?.schema.steps[currentStepIndex]?.title,
+        category_id: categoryId
+      });
+      if (schema && currentStepIndex < schema.schema.steps.length - 1) {
+        setCurrentStepIndex(prev => prev + 1);
+        setStatus('STEP_ACTIVE');
+      } else {
+        submitWizard();
+      }
+    } else {
+      setStatus('STEP_ACTIVE');
+    }
+  }, [validateCurrentStep, schema, currentStepIndex, categoryId, submitWizard]);
 
   const handleVerifyOtp = async (code: string) => {
     if (!leadResult?.lead_id) return;
