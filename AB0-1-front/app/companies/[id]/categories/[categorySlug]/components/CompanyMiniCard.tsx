@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { MapPin, Star, BadgeCheck } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import { buildCompanyPath } from '@/lib/slug';
 import type { CompanyMiniCardData } from '@/lib/api';
 
@@ -23,14 +24,12 @@ export function CompanyMiniCard({ company }: CompanyMiniCardProps) {
         className="h-12 w-12 shrink-0"
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <h3 className="truncate text-sm font-bold text-slate-950 group-hover:text-blue-700">
-            {company.name}
-          </h3>
-          {company.verified && (
-            <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
-          )}
-        </div>
+        <CompanyIdentityLine
+          name={company.name}
+          verified={company.verified}
+          nameClassName="text-sm font-bold text-slate-950 group-hover:text-blue-700"
+          badgeClassName="h-4 w-4 text-emerald-500 fill-emerald-50 text-emerald-500"
+        />
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-600">
           {company.rating_avg ? (
             <span className="flex items-center gap-1">

@@ -2,8 +2,9 @@
 
 import { Company } from '@/lib/api';
 import Link from 'next/link';
-import { BadgeCheck, Star, Clock, FileText, Globe } from 'lucide-react';
+import { Star, Clock, FileText, Globe, BadgeCheck } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import CompanyViewCounter from '@/app/companies/[id]/components/CompanyViewCounter';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
@@ -91,19 +92,18 @@ export default function FeaturedCompanyCard({
             />
           </Link>
           <div className="min-w-0 flex-1 pt-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Link href={href}>
-                <h3 className="font-bold text-slate-900 leading-tight hover:text-blue-700 transition-colors line-clamp-1 text-sm sm:text-base">
-                  {company.name}
-                </h3>
-              </Link>
+            <CompanyIdentityLine
+              name={company.name}
+              href={href}
+              nameClassName="font-bold text-slate-900 leading-tight hover:text-blue-700 transition-colors text-sm sm:text-base"
+            >
               {isVerified && (
-                <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
                   <BadgeCheck className="w-3.5 h-3.5 fill-emerald-600 text-white shrink-0" />
                   Verificada
                 </span>
               )}
-            </div>
+            </CompanyIdentityLine>
             {location && (
               <span className="text-[11px] font-medium text-slate-500 block mt-1">{location}</span>
             )}

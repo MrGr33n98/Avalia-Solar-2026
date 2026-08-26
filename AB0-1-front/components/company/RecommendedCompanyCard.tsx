@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { BadgeCheck, Briefcase, Clock, Star, Megaphone } from 'lucide-react';
+import { Briefcase, Clock, Star } from 'lucide-react';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import type { Company } from '@/lib/api';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
 import { buildCompanyPath } from '@/lib/slug';
@@ -91,25 +92,14 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
           />
         </Link>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Link href={primaryCtaUrl} className="min-w-0">
-              <h3 className="truncate text-base font-bold text-slate-950 transition group-hover:text-blue-700">
-                {company.name}
-              </h3>
-            </Link>
-            {company.verified && (
-              <BadgeCheck className="h-4.5 w-4.5 fill-blue-600 text-white shrink-0" aria-label="Perfil Verificado" />
-            )}
-            {isSponsored && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 border border-amber-200">
-                <Megaphone className="h-2.5 w-2.5" aria-hidden="true" />
-                Patrocinado
-              </span>
-            )}
-          </div>
-
-</div>
+        <CompanyIdentityLine
+          name={company.name}
+          href={primaryCtaUrl}
+          verified={Boolean(company.verified)}
+          sponsored={isSponsored}
+          className="flex-1 min-w-0"
+          nameClassName="text-base font-bold text-slate-950 transition group-hover:text-blue-700"
+        />
       </div>
 
       {/* 3 Metric Columns: Avaliação | Resposta Média | Projetos */}

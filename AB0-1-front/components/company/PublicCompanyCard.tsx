@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { BadgeCheck, Briefcase, Clock, MapPin, Star } from 'lucide-react';
+import { Briefcase, Clock, MapPin, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
+import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 
@@ -89,17 +90,12 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         </Link>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <Link href={href} className="min-w-0">
-              <h3 className="truncate text-base font-bold text-slate-950 transition group-hover:text-blue-700">
-                {rank ? `${rank}. ` : null}
-                {company.name}
-              </h3>
-            </Link>
-            {company.verified && (
-              <BadgeCheck className="h-4.5 w-4.5 fill-blue-600 text-white shrink-0" aria-hidden="true" />
-            )}
-          </div>
+          <CompanyIdentityLine
+            name={rank ? `${rank}. ${company.name}` : company.name}
+            href={href}
+            verified={company.verified ?? false}
+            nameClassName="text-base font-bold text-slate-950 transition group-hover:text-blue-700"
+          />
 
           {location ? (
             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-500">

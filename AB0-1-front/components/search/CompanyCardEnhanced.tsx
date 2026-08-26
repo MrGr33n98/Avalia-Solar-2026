@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { BadgeCheck, MapPin, Star } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import type { Company } from '@/lib/api';
@@ -48,12 +49,15 @@ export function CompanyCardEnhanced({
         <FavoriteButton favoritableType="Company" favoritableId={company.id} initialFavorited={favorite} source="search" onChange={onToggleFavorite} />
       </div>
 
-      <Link href={href} className="mt-3 hover:text-blue-700">
-        <h3 className="line-clamp-2 text-sm font-bold text-slate-950 inline-flex items-center gap-1">
-          {company.name}
-          {verified && <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />}
-        </h3>
-      </Link>
+      <div className="mt-3">
+        <CompanyIdentityLine
+          name={company.name}
+          href={href}
+          verified={verified}
+          nameClassName="text-sm font-bold text-slate-950 transition group-hover:text-blue-700"
+          badgeClassName="h-4 w-4"
+        />
+      </div>
       <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
         <MapPin className="h-3.5 w-3.5" />
         {[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}
