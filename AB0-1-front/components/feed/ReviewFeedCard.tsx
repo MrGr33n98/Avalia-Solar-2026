@@ -8,6 +8,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FollowButton } from './FollowButton';
 import { FeedCardActions } from './FeedCardActions';
 import { FeedItemMenu } from './FeedItemMenu';
+import { getActorProfileHref } from '@/lib/feed/getActorProfileHref';
 
 interface ReviewFeedCardProps {
   item: FeedItem;
@@ -15,14 +16,15 @@ interface ReviewFeedCardProps {
 
 export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
   const { actor, subject, engagement } = item;
+  const actorHref = getActorProfileHref(actor);
 
   return (
     <article className="bg-card text-card-foreground rounded-xl border border-border p-4 shadow-sm space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          {actor.type !== 'company' && actor.slug ? (
-            <Link href={`/creators/${actor.slug}`}>
+          {actorHref ? (
+            <Link href={actorHref}>
               <UserAvatar
                 src={actor.avatar_url}
                 name={actor.name}
@@ -35,9 +37,9 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
           )}
           <div>
             <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
-              {actor.type !== 'company' && actor.slug ? (
+              {actorHref ? (
                 <Link
-                  href={`/creators/${actor.slug}`}
+                  href={actorHref}
                   className="hover:underline hover:text-primary transition-colors"
                 >
                   {actor.name}
