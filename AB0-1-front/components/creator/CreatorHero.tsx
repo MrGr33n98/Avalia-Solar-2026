@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { CheckCircle2, Instagram, Linkedin } from 'lucide-react';
+import { CheckCircle2, Instagram, Linkedin, ArrowUpRight } from 'lucide-react';
 import { CreatorShareButton } from './CreatorShareButton';
 import { track } from '@/lib/analytics/lazy';
 
@@ -106,9 +106,16 @@ export function CreatorHero({ creator, creatorSlug, publicationCount, reviewCoun
             {creator.tree_enabled && creator.tree_url && (
               <a
                 href={creator.tree_url}
-                className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="group relative inline-flex min-h-[44px] items-center px-4 py-2 text-sm font-semibold text-slate-800 transition-colors sm:min-h-10"
               >
-                Meu Tree
+                <span className="flex items-center gap-1.5">
+                  Meu Tree
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
+                <span
+                  aria-hidden
+                  className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800 transition-transform duration-300 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none motion-reduce:group-hover:scale-x-100"
+                />
               </a>
             )}
             <CreatorShareButton creatorSlug={creatorSlug} />

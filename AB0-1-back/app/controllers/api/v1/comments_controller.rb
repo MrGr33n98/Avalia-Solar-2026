@@ -3,8 +3,7 @@
 module Api
   module V1
     class CommentsController < BaseController
-      skip_before_action :authenticate_user!, only: [:index], raise: false
-      before_action :authenticate_user!, only: %i[create update destroy]
+      before_action :authenticate_api_user, only: %i[create update destroy]
 
       def index
         commentable = find_commentable

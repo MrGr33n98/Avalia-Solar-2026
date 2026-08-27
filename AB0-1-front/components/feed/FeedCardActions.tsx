@@ -102,7 +102,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
     setSubmittingComment(true);
     try {
       const created = await postComment(getModelName(), subject.id, newCommentBody.trim());
-      setComments((prev) => [created, ...prev]);
+      setComments((prev) => [...prev, created]);
       setCommentsCount((prev) => prev + 1);
       setNewCommentBody('');
       toast.success('Comentário publicado com sucesso!');
@@ -193,21 +193,21 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
 
       {showComments && subject.comments_enabled !== false && (
         <div className="pt-3 border-t border-border/60 space-y-4">
-          <form onSubmit={handleSubmitComment} className="flex gap-2 items-start">
-            <div className="flex-1">
+          <form onSubmit={handleSubmitComment} className="flex flex-col sm:flex-row gap-2 items-start w-full">
+            <div className="w-full flex-1">
               <textarea
                 value={newCommentBody}
                 onChange={(e) => setNewCommentBody(e.target.value)}
                 placeholder="Escreva um comentário ou análise..."
                 disabled={submittingComment}
                 rows={2}
-                className="w-full text-xs p-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none placeholder:text-muted-foreground/75"
+                className="w-full min-h-[44px] text-xs p-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none placeholder:text-muted-foreground/75"
               />
             </div>
             <button
               type="submit"
               disabled={submittingComment || !newCommentBody.trim()}
-              className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/95 disabled:bg-muted disabled:text-muted-foreground rounded-lg transition-colors shadow-sm h-[40px] shrink-0"
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/95 disabled:bg-muted disabled:text-muted-foreground rounded-lg transition-colors shadow-sm h-[40px] w-full sm:w-auto shrink-0"
             >
               {submittingComment ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
