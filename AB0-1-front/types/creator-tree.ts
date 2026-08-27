@@ -17,8 +17,9 @@ export interface CreatorTreeAppearance {
     color?: string;
     textColor?: string;
   };
-  fontFamily?: 'sans' | 'serif' | 'mono' | 'outfit';
-  textColor?: string;
+  fontFamily?: 'sans' | 'serif' | 'mono';
+  fontColor?: string;
+  fontScale?: 'sm' | 'md' | 'lg';
 }
 
 export interface CreatorTreeSettings {

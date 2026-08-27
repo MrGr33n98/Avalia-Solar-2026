@@ -32,9 +32,21 @@ export function TreeBackground({ themeKey = 'solar', appearance, children }: Tre
     if (themeKey === 'glass') bgClass = 'bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-xl';
   }
 
+  const fontFamilyClass = 
+    appearance?.fontFamily === 'serif' ? 'font-serif' :
+    appearance?.fontFamily === 'mono' ? 'font-mono' : 'font-sans';
+    
+  const fontScaleClass = 
+    appearance?.fontScale === 'sm' ? 'text-sm' :
+    appearance?.fontScale === 'lg' ? 'text-lg' : 'text-base';
+    
+  if (appearance?.fontColor) {
+    style.color = appearance.fontColor;
+  }
+
   return (
     <div 
-      className={cn("min-h-screen w-full flex flex-col relative overflow-x-hidden", bgClass)}
+      className={cn("min-h-screen w-full flex flex-col relative overflow-x-hidden", bgClass, fontFamilyClass, fontScaleClass)}
       style={style}
     >
       {/* Optional overlay for video/image backgrounds */}

@@ -80,6 +80,15 @@ export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate 
     void saveSettings(themeKey, newAppearance);
   };
 
+  const handleTypographyChange = (updates: Partial<CreatorTreeAppearance>) => {
+    const newAppearance = {
+      ...appearance,
+      ...updates,
+    };
+    setAppearance(newAppearance);
+    void saveSettings(themeKey, newAppearance);
+  };
+
   return (
     <div className="space-y-8 p-1">
       {/* Themes */}
@@ -161,6 +170,93 @@ export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate 
               </button>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Typography */}
+      <section>
+        <h3 className="text-sm font-black uppercase tracking-wide text-slate-600 mb-3">Tipografia</h3>
+        
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-slate-500 mb-2">Fonte Principal</p>
+          <div className="flex gap-2">
+            {[
+              { id: 'sans', label: 'Moderna (Sans)', class: 'font-sans' },
+              { id: 'serif', label: 'Clássica (Serif)', class: 'font-serif' },
+              { id: 'mono', label: 'Tech (Mono)', class: 'font-mono' }
+            ].map((v) => (
+              <button
+                key={v.id}
+                onClick={() => handleTypographyChange({ fontFamily: v.id as any })}
+                className={cn(
+                  "flex-1 py-2 text-xs rounded-lg border",
+                  v.class,
+                  (appearance.fontFamily || 'sans') === v.id
+                    ? "bg-blue-50 border-blue-600 text-blue-700 font-bold"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-slate-500 mb-2">Tamanho do Texto</p>
+          <div className="flex gap-2">
+            {[
+              { id: 'sm', label: 'Pequeno' },
+              { id: 'md', label: 'Normal' },
+              { id: 'lg', label: 'Grande' }
+            ].map((v) => (
+              <button
+                key={v.id}
+                onClick={() => handleTypographyChange({ fontScale: v.id as any })}
+                className={cn(
+                  "flex-1 py-2 text-xs font-bold rounded-lg border",
+                  (appearance.fontScale || 'md') === v.id
+                    ? "bg-blue-50 border-blue-600 text-blue-700"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-slate-500 mb-2">Cor do Texto (Opcional)</p>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={appearance.fontColor || '#000000'}
+              onChange={(e) => handleTypographyChange({ fontColor: e.target.value })}
+              className="w-10 h-10 rounded-md border-0 p-0 cursor-pointer"
+              title="Escolha uma cor"
+            />
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Padrão do tema"
+                value={appearance.fontColor || ''}
+                onChange={(e) => handleTypographyChange({ fontColor: e.target.value })}
+                className="w-full text-sm rounded-lg border-slate-200"
+              />
+            </div>
+            {appearance.fontColor && (
+              <button
+                onClick={() => handleTypographyChange({ fontColor: undefined })}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+          <p className="mt-1.5 text-[10px] text-slate-400 leading-snug">
+            Deixe vazio para usar a cor padrão do tema (ótimo para modo escuro).
+          </p>
         </div>
       </section>
 
