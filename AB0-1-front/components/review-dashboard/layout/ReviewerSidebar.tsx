@@ -34,7 +34,7 @@ export function ReviewerSidebar() {
     <TooltipProvider delayDuration={200}>
       <aside
         className={cn(
-          'hidden lg:flex flex-col border-r border-slate-200 bg-white transition-all duration-200 ease-in-out',
+          'hidden lg:flex flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-sm transition-all duration-200 ease-in-out',
           'sticky top-[var(--app-navbar-height)] h-[calc(100dvh-var(--app-navbar-height))] shrink-0 z-20'
         )}
         style={{ width: collapsed ? layout.sidebarCollapsed : layout.sidebarExpanded }}
@@ -120,7 +120,7 @@ function SidebarItem({
       className={cn(
         'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
         active
-          ? 'bg-[#1e5eff]/10 text-[#1e5eff] font-bold'
+          ? 'bg-blue-50 text-blue-700 font-bold shadow-[inset_3px_0_0_#2563eb]'
           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
         collapsed && 'justify-center px-0'
       )}

@@ -1248,3 +1248,49 @@ html, body, #__next, main {
     scroll-behavior: auto !important;
   }
 }
+
+/* Review Dashboard · Prime SaaS surface system */
+@layer components {
+  .review-dashboard-enterprise {
+    --review-surface-border: rgb(226 232 240 / 0.82);
+    --review-surface-shadow: 0 12px 30px -24px rgb(15 23 42 / 0.32);
+  }
+
+  .review-dashboard-enterprise .rounded-xl {
+    border-radius: 0.875rem;
+  }
+
+  .review-dashboard-enterprise .rounded-2xl {
+    border-radius: 1.125rem;
+  }
+
+  .review-dashboard-enterprise .border-slate-200,
+  .review-dashboard-enterprise .border-gray-200 {
+    border-color: var(--review-surface-border);
+  }
+
+  .review-dashboard-enterprise main > section,
+  .review-dashboard-enterprise main > div > section {
+    min-width: 0;
+  }
+
+  .review-dashboard-enterprise .bg-white.rounded-xl,
+  .review-dashboard-enterprise .bg-white.rounded-2xl {
+    box-shadow: var(--review-surface-shadow);
+  }
+
+  .review-dashboard-enterprise button,
+  .review-dashboard-enterprise a {
+    transition-duration: 180ms;
+  }
+
+  @media (max-width: 767px) {
+    .review-dashboard-enterprise main {
+      gap: 1rem;
+    }
+
+    .review-dashboard-enterprise .rounded-xl {
+      border-radius: 0.75rem;
+    }
+  }
+}

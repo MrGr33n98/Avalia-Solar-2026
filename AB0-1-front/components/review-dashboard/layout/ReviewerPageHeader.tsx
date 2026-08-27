@@ -40,7 +40,7 @@ export function ReviewerPageHeader({
       {/* Title row */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold leading-9 text-slate-900">
+          <h1 className="text-[28px] font-black leading-9 tracking-[-0.03em] text-slate-950">
             {title}
           </h1>
           {description && (

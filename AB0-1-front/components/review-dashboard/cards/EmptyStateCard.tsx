@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 import { type LucideIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateCardProps {
   icon?: LucideIcon;
@@ -26,7 +27,7 @@ export function EmptyStateCard({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/50 px-8 py-12 text-center',
+        'flex flex-col items-center justify-center rounded-2xl border border-dashed border-blue-200 bg-gradient-to-b from-white to-blue-50/40 px-8 py-14 text-center shadow-[0_12px_30px_-26px_rgb(37_99_235_/_0.55)]',
         className
       )}
     >
@@ -39,14 +40,14 @@ export function EmptyStateCard({
         ctaHref ? (
           <Link
             href={ctaHref}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors"
+            className="mt-5"
           >
             {ctaLabel}
           </Link>
         ) : (
           <button
             onClick={onCtaClick}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-500 transition-colors"
+            className="mt-5"
           >
             {ctaLabel}
           </button>

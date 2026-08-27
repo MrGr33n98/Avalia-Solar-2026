@@ -44,7 +44,7 @@ export function MetricCard({
   const card = (
     <div
       className={cn(
-        'rounded-xl border border-slate-200 bg-white p-3.5 transition-all min-w-0 flex items-center gap-3.5 shadow-none hover:border-slate-350 min-h-[72px] md:h-[80px]',
+        'rounded-2xl border border-slate-200/80 bg-white p-4 transition-all min-w-0 flex items-center gap-3.5 shadow-[0_10px_30px_-24px_rgb(15_23_42_/_0.5)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_14px_32px_-22px_rgb(37_99_235_/_0.35)] min-h-[80px] md:h-[88px]',
         highlight && 'border-blue-200 bg-blue-50/20',
         className
       )}
@@ -55,7 +55,7 @@ export function MetricCard({
       {Icon && (
         <div
           className={cn(
-            'rounded-lg p-2.5 shrink-0 flex items-center justify-center w-9 h-9',
+            'rounded-xl p-2.5 shrink-0 flex items-center justify-center w-10 h-10 ring-1 ring-black/[0.03]',
             iconBgColor
           )}
         >

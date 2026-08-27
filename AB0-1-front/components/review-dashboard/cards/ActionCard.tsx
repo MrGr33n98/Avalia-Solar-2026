@@ -27,7 +27,7 @@ export function ActionCard({
 }: ActionCardProps) {
   const content = (
     <>
-      <div className={cn('rounded-xl p-3 shrink-0', iconBgColor)}>
+      <div className={cn('rounded-xl p-3 shrink-0 ring-1 ring-black/[0.03]', iconBgColor)}>
         <Icon className={cn('h-5 w-5', iconColor)} />
       </div>
       <div className="min-w-0">
@@ -38,7 +38,7 @@ export function ActionCard({
   );
 
   const sharedClasses = cn(
-    'flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all',
+    'flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all shadow-[0_10px_30px_-24px_rgb(15_23_42_/_0.5)]',
     'hover:border-blue-200 hover:shadow-sm hover:-translate-y-[1px] cursor-pointer',
     className
   );
