@@ -106,16 +106,13 @@ export function CreatorHero({ creator, creatorSlug, publicationCount, reviewCoun
             {creator.tree_enabled && creator.tree_url && (
               <a
                 href={creator.tree_url}
-                className="group relative inline-flex min-h-[44px] items-center px-4 py-2 text-sm font-semibold text-slate-800 transition-colors sm:min-h-10"
+                className="group relative inline-flex min-h-[44px] items-center justify-center overflow-hidden rounded-lg p-[1.5px] transition-transform hover:scale-[1.02] sm:min-h-10"
               >
-                <span className="flex items-center gap-1.5">
+                <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#e2e8f0_0%,#3b82f6_50%,#e2e8f0_100%)] group-hover:bg-[conic-gradient(from_90deg_at_50%_50%,#3b82f6_0%,#a855f7_50%,#3b82f6_100%)]" />
+                <span className="inline-flex h-full w-full items-center justify-center gap-1.5 rounded-[6.5px] bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors group-hover:bg-slate-50 group-hover:text-blue-700">
                   Meu Tree
                   <ArrowUpRight className="h-4 w-4" />
                 </span>
-                <span
-                  aria-hidden
-                  className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800 transition-transform duration-300 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none motion-reduce:group-hover:scale-x-100"
-                />
               </a>
             )}
             <CreatorShareButton creatorSlug={creatorSlug} />

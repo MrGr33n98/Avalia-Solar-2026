@@ -89,9 +89,12 @@ export function CreatorContactForm({
       {treeUrl && (
         <Link
           href={treeUrl}
-          className="mt-3 flex min-h-10 items-center justify-center rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="group relative mt-3 flex min-h-10 items-center justify-center overflow-hidden rounded-md p-[1.5px] transition-transform hover:scale-[1.02]"
         >
-          Meu Tree ↗
+          <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#e2e8f0_0%,#3b82f6_50%,#e2e8f0_100%)] group-hover:bg-[conic-gradient(from_90deg_at_50%_50%,#3b82f6_0%,#a855f7_50%,#3b82f6_100%)]" />
+          <span className="inline-flex h-full w-full items-center justify-center rounded-[4.5px] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors group-hover:bg-slate-50 group-hover:text-blue-700">
+            Meu Tree ↗
+          </span>
         </Link>
       )}
       <p className="mt-2 text-sm text-slate-600">Tire dúvidas ou fale sobre seu projeto.</p>
