@@ -53,8 +53,14 @@ module Api
 
         def settings_params
           params.require(:settings).permit(:theme_key).tap do |whitelisted|
-            whitelisted[:appearance] = params[:settings][:appearance] if params[:settings].key?(:appearance)
-            whitelisted[:config] = params[:settings][:config] if params[:settings].key?(:config)
+            if params[:settings].key?(:appearance)
+              val = params[:settings][:appearance]
+              whitelisted[:appearance] = val.respond_to?(:permit!) ? val.permit! : val
+            end
+            if params[:settings].key?(:config)
+              val = params[:settings][:config]
+              whitelisted[:config] = val.respond_to?(:permit!) ? val.permit! : val
+            end
           end
         end
 
