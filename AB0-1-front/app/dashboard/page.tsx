@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Users, 
@@ -38,6 +38,7 @@ const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboa
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, error: authError } = useAuth();
   const { activeCompany, companies, isLoading: companyLoading, selectCompany } = useCompanyContext();
   
@@ -85,6 +86,16 @@ export default function DashboardPage() {
       return;
     }
 
+    // O Studio possui uma rota própria; encaminha links antigos com tab=quote-form.
+    if (searchParams.get('tab') === 'quote-form') {
+      const companyId = activeCompany?.id ?? searchParams.get('company_id');
+      if (companyId) {
+        router.replace(`/dashboard/quote-form?company_id=${encodeURIComponent(String(companyId))}`);
+        setViewMode('redirecting');
+        return;
+      }
+    }
+
     // ✅ Identidade multi-contexto: role=review com CompanyMember ativo deve
     // permanecer no workspace empresarial — não ir para review-dashboard.
     // Só redireciona para review-dashboard se não tiver empresas associadas.
@@ -119,7 +130,7 @@ export default function DashboardPage() {
       }
       // review sem empresas já foi tratado acima (redirect para review-dashboard)
     }
-  }, [activeCompany, authLoading, companyLoading, companies, router, user, selectCompany]);
+  }, [activeCompany, authLoading, companyLoading, companies, router, searchParams, user, selectCompany]);
 
   if (authError) {
     return (
