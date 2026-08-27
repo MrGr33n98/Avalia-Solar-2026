@@ -141,6 +141,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         description: 'Atender leads em tempo real',
       },
       {
+        id: 'quote-form',
+        label: 'Formulário de Orçamento',
+        icon: FileText,
+        context: ['operational', 'admin'],
+        description: 'Personalizar formulário de orçamento',
+      },
+      {
         id: 'icp-config',
         label: 'Intenção de Compra',
         icon: Database,

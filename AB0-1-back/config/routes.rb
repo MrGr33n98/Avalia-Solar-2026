@@ -248,6 +248,12 @@ Rails.application.routes.draw do
         end
       end
 
+      get 'companies/:company_id/quote_form', to: 'company_quote_form#show'
+      patch 'companies/:company_id/quote_form', to: 'company_quote_form#update_draft'
+      post 'companies/:company_id/quote_form/draft', to: 'company_quote_form#create_draft'
+      patch 'companies/:company_id/quote_form/draft', to: 'company_quote_form#update_draft'
+      post 'companies/:company_id/quote_form/publish', to: 'company_quote_form#publish'
+
       get 'dashboard/stats', to: 'dashboard#stats'
       get 'dashboard/charts/:metric', to: 'dashboard#charts'
       get 'dashboard/activity', to: 'dashboard#activity'

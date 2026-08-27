@@ -159,10 +159,10 @@ export function FollowedCommunitiesCard() {
                 <img
                   src={imageUrl}
                   alt=""
-                  width={56}
-                  height={56}
+                  width={64}
+                  height={64}
                   loading="lazy"
-                  className="h-14 w-14 object-contain transition-transform duration-200 group-hover:scale-105"
+                  className="h-full w-full object-contain p-1 transition-transform duration-200 group-hover:scale-105"
                 />
               </div>
               <p className="mt-2 text-[11px] leading-tight font-semibold text-center text-foreground line-clamp-2">
