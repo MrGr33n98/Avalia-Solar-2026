@@ -6,18 +6,23 @@ module Api
   module V1
     class CreatorTreeController < BaseController
       def show
-        profile = ReviewerProfile.find_by!(public_slug: params[:slug], creator_enabled: true)
-        blocks = CreatorTreeBlock.where(reviewer_id: profile.id, active: true)
-           .includes(:company, :publication, :reviewer)
-               .order(:position, :id)
+        slug = params[:slug].to_s
+        payload = Rails.cache.fetch("creator/public-tree/#{slug}/v1", expires_in: 5.minutes) do
+          profile = ReviewerProfile.find_by!(public_slug: slug, creator_enabled: true)
+          blocks = CreatorTreeBlock.where(reviewer_id: profile.id, active: true)
+                                    .includes(:company, :publication, reviewer: :user)
+                                    .order(:position, :id)
 
-        render json: {
-          creator: Creator::IdentityProjection.resolve(profile),
-          blocks: blocks.select { |block| block.block_type == 'separator' || block_destination(block).present? }
-                       .map { |block| block_payload(block) },
-          appearance: profile.creator_tree_setting&.appearance,
-          theme_key: profile.creator_tree_setting&.theme_key || 'solar'
-        }
+          {
+            creator: Creator::IdentityProjection.resolve(profile),
+            blocks: blocks.select { |block| block.block_type == 'separator' || block_destination(block).present? }
+                         .map { |block| block_payload(block) },
+            appearance: profile.creator_tree_setting&.appearance,
+            theme_key: profile.creator_tree_setting&.theme_key || 'solar'
+          }
+        end
+
+        render json: payload
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Creator não encontrado' }, status: :not_found
       end
@@ -55,7 +60,7 @@ module Api
           subtitle: block.subtitle,
           url: block_destination(block),
           position: block.position,
-          metadata: block.metadata
+          metadata: public_metadata(block)
         }
       end
 
@@ -69,13 +74,28 @@ module Api
           owned_company = block.company && block.reviewer.user.active_member_companies.exists?(id: block.company.id)
           owned_company ? "/companies/#{block.company.slug || block.company.id}" : nil
         when 'publication'
-          owned_publication = block.publication && block.publication.user_id == block.reviewer.user_id
+          owned_publication = block.publication && block.publication.user_id == block.reviewer.user_id &&
+                              publication_publicly_available?(block.publication)
           owned_publication ? "/creators/#{block.reviewer.public_slug}/posts/#{block.publication.slug}" : nil
         when 'lead_form'
           "/creators/#{block.reviewer.public_slug}#contato"
         when 'separator'
           nil
         end
+      end
+
+      def publication_publicly_available?(publication)
+        return false unless publication.respond_to?(:published?)
+
+        publication.published? && (!publication.respond_to?(:published_at) || publication.published_at.present?)
+      end
+
+      def public_metadata(block)
+        metadata = block.metadata
+        return {} unless metadata.is_a?(Hash)
+
+        allowed_keys = %w[icon image imageUrl image_url label variant color featured openInNewTab open_in_new_tab]
+        metadata.stringify_keys.slice(*allowed_keys)
       end
 
       def valid_external_url(value)

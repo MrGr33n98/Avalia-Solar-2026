@@ -30,6 +30,8 @@ class CreatorTreeBlock < ApplicationRecord
 
   def invalidate_creator_profile_cache
     Creator::PublicProfileService.invalidate(reviewer)
+    slug = reviewer.public_slug
+    Rails.cache.delete("creator/public-tree/#{slug}/v1") if slug.present?
   end
 
   def safe_url

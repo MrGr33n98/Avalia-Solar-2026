@@ -279,11 +279,19 @@ export default function CreatorTreePage() {
           <TabsContent value="appearance">
             <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
               {settings && (
+                <>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {editor.presets.map((preset) => <button key={preset.key} type="button" onClick={() => editor.applyPreset(preset.key)} className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 hover:border-blue-400">{preset.label}</button>)}
+                    <button type="button" onClick={editor.undo} disabled={!editor.canUndo} className="rounded-lg border px-2 py-1 text-xs">↶ Undo</button>
+                    <button type="button" onClick={editor.redo} disabled={!editor.canRedo} className="rounded-lg border px-2 py-1 text-xs">↷ Redo</button>
+                    <button type="button" onClick={() => editor.resetAppearance()} className="rounded-lg border px-2 py-1 text-xs text-red-600">Resetar</button>
+                  </div>
                 <TreeAppearancePanel
                   initialTheme={editor.themeKey}
                   initialAppearance={editor.appearance}
                   onUpdate={handleUpdateSettings}
                 />
+                </>
               )}
               {!settings && !loading && (
                 <p className="text-slate-500 text-sm">Carregando configurações de aparência...</p>

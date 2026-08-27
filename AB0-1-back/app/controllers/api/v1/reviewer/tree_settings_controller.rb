@@ -4,6 +4,8 @@ module Api
   module V1
     module Reviewer
       class TreeSettingsController < BaseController
+        MAX_IMAGE_BYTES = 5.megabytes
+        ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp].freeze
         before_action :authenticate_api_user
         before_action :require_reviewer_role
 
@@ -31,17 +33,19 @@ module Api
         def upload_background_image
           settings = current_profile.creator_tree_setting || current_profile.build_creator_tree_setting
           
-          if params[:image].present?
+          if params[:image].blank?
+            render json: { error: "Nenhuma imagem enviada" }, status: :bad_request
+          elsif valid_image_upload?(params[:image])
+            previous_blob = settings.background_image.blob
             settings.background_image.attach(params[:image])
-            
+
             if settings.save
+              previous_blob&.purge_later
               image_url = url_for(settings.background_image)
               render json: { url: image_url }
             else
               render json: { error: 'Não foi possível salvar a imagem' }, status: :unprocessable_entity
             end
-          else
-            render json: { error: 'Nenhuma imagem enviada' }, status: :bad_request
           end
         end
 
@@ -52,16 +56,16 @@ module Api
         end
 
         def settings_params
-          params.require(:settings).permit(:theme_key).tap do |whitelisted|
-            if params[:settings].key?(:appearance)
-              val = params[:settings][:appearance]
-              whitelisted[:appearance] = val.respond_to?(:permit!) ? val.permit! : val
-            end
-            if params[:settings].key?(:config)
-              val = params[:settings][:config]
-              whitelisted[:config] = val.respond_to?(:permit!) ? val.permit! : val
-            end
+          params.require(:settings).permit(:theme_key, appearance: {}, config: {})
+        end
+
+        def valid_image_upload?(image)
+          unless ALLOWED_IMAGE_TYPES.include?(image.content_type) && image.size <= MAX_IMAGE_BYTES
+            render json: { error: "Imagem deve ser JPEG, PNG ou WebP com até 5MB" }, status: :unprocessable_entity
+            return false
           end
+
+          true
         end
 
         def require_reviewer_role

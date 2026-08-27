@@ -1,4 +1,5 @@
 export type CreatorTreeTheme = 'solar' | 'dark' | 'glass' | 'monochrome' | 'neo';
+export type CreatorTreePresetKey = 'solar' | 'executive' | 'midnight' | 'minimal' | 'ocean' | 'editorial' | 'tech' | 'glass';
 
 export interface CreatorTreeAppearance {
   background?: {
@@ -21,6 +22,13 @@ export interface CreatorTreeAppearance {
   fontColor?: string;
   textColor?: string;
   fontScale?: 'sm' | 'md' | 'lg';
+}
+
+export interface CreatorTreeAppearancePreset {
+  key: CreatorTreePresetKey;
+  label: string;
+  theme_key: string;
+  appearance: CreatorTreeAppearance;
 }
 
 export interface CreatorTreeSettings {
