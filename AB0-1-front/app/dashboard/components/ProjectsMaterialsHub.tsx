@@ -13,6 +13,7 @@ import { buildApiUrl } from '@/lib/api-config';
 type Asset = { id: number; kind: string; title?: string | null; alt_text?: string | null; caption?: string | null; external_url?: string | null; status: string; processing_status?: string | null; position?: number | null };
 type Project = { id: number; title: string; status: string; summary?: string | null; project_type?: string | null; city?: string; state?: string; capacity_value?: number | null; capacity_unit?: string | null; moderation_reason?: string | null; assets?: Asset[] };
 type Material = { id: number; title: string; status: string; description?: string | null; material_type: string; gate_mode: string; content_lead_form_id?: number | null; download_count: number; moderation_reason?: string | null; assets?: Asset[] };
+type MaterialsResponse = { materials: Material[]; auto_publish?: boolean };
 type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required: boolean; options?: string[] };
 type LeadForm = { id: number; name: string; status: string; version: number; fields: FormField[]; consent_text?: string | null; privacy_url?: string | null };
 type Analytics = { metrics: { material_views: number; download_clicks: number; gate_views: number; form_submissions: number; authorizations: number; delivered_downloads: number; unique_leads: number; delivery_rate: number }; assets: Array<{ id: number; title: string; authorizations: number; delivered_downloads: number; unique_leads: number }>; data_freshness?: { updated_at: string } };
@@ -72,7 +73,7 @@ export default function ProjectsMaterialsHub({
     try {
       const [projectResponse, materialResponse, formResponse, analyticsResponse, funnelResponse, timeseriesResponse, sourcesResponse, leadsResponse] = await Promise.all([
         fetchApi<{ projects: Project[] }>(`/company_admin/projects${query}`),
-        fetchApi<{ materials: Material[] }>(`/company_admin/materials${query}`),
+        fetchApi<MaterialsResponse>(`/company_admin/materials${query}`),
         fetchApi<{ forms: LeadForm[] }>(`/company_admin/content_lead_forms${query}`),
         fetchApi<Analytics>(`/company_admin/content_analytics/overview${query}`),
         fetchApi<Funnel>(`/company_admin/content_analytics/funnel${query}`),
