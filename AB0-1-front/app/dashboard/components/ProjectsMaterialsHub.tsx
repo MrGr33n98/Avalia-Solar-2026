@@ -39,6 +39,9 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [assetTarget, setAssetTarget] = useState<{ type: 'project' | 'material'; id: number } | null>(null);
+  const [materialPdf, setMaterialPdf] = useState<File | null>(null);
+  const [materialCover, setMaterialCover] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +68,72 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
     const body = type === 'project' ? { project: { title: data.get('title'), project_type: data.get('project_type'), city: data.get('city'), state: data.get('state') } } : { material: { title: data.get('title'), material_type: 'catalog', gate_mode: data.get('gate_mode'), content_lead_form_id: data.get('content_lead_form_id') || undefined } };
     try { await fetchApi(`/company_admin/${type}s${query}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); toast({ title: 'Rascunho salvo' }); setCreating(null); event.currentTarget.reset(); await load(); }
     catch { toast({ title: 'Não foi possível salvar', variant: 'destructive' }); }
+  };
+
+  const createMaterial = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    
+    if (!materialPdf) {
+      toast({ title: 'PDF obrigatório', description: 'Por favor, selecione um arquivo PDF.', variant: 'destructive' });
+      return;
+    }
+
+    setUploadProgress('Criando rascunho...');
+    try {
+      const body = {
+        material: {
+          title: data.get('title'),
+          description: data.get('description'),
+          material_type: 'catalog',
+          gate_mode: data.get('gate_mode'),
+          content_lead_form_id: data.get('content_lead_form_id') || undefined
+        }
+      };
+      
+      const response = await fetchApi<{ material: Material }>(`/company_admin/materials${query}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      
+      const matId = response.material.id;
+      
+      setUploadProgress('Enviando PDF...');
+      const pdfPayload = new FormData();
+      pdfPayload.append('attachable_type', 'material');
+      pdfPayload.append('attachable_id', String(matId));
+      pdfPayload.append('kind', 'document');
+      pdfPayload.append('file', materialPdf);
+      await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, {
+        method: 'POST',
+        body: pdfPayload
+      });
+
+      if (materialCover) {
+        setUploadProgress('Enviando capa...');
+        const coverPayload = new FormData();
+        coverPayload.append('attachable_type', 'material');
+        coverPayload.append('attachable_id', String(matId));
+        coverPayload.append('kind', 'image');
+        coverPayload.append('file', materialCover);
+        await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, {
+          method: 'POST',
+          body: coverPayload
+        });
+      }
+
+      toast({ title: 'Material criado com sucesso!' });
+      setCreating(null);
+      setMaterialPdf(null);
+      setMaterialCover(null);
+      event.currentTarget.reset();
+      await load();
+    } catch {
+      toast({ title: 'Não foi possível salvar o material', variant: 'destructive' });
+    } finally {
+      setUploadProgress('');
+    }
   };
 
   const saveForm = async (form: LeadForm | null, payload: Omit<LeadForm, 'id' | 'version' | 'status'> & { status?: string }) => {
@@ -114,7 +183,145 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
     <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:flex-row md:items-center"><div><h2 className="text-2xl font-black text-slate-950">Projetos e materiais</h2><p className="mt-1 text-sm text-slate-500">Cases, documentos e dados de intenção da sua empresa.</p></div><Button variant="outline" onClick={load} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />Atualizar</Button></div>
     <Tabs defaultValue={defaultTab} className="space-y-5"><TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-xl bg-slate-100 p-1"><TabsTrigger value="projects"><FolderKanban className="mr-2 h-4 w-4" />Projetos</TabsTrigger><TabsTrigger value="materials"><FileText className="mr-2 h-4 w-4" />Materiais</TabsTrigger><TabsTrigger value="forms"><ShieldCheck className="mr-2 h-4 w-4" />Formulários</TabsTrigger><TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Desempenho</TabsTrigger><TabsTrigger value="leads"><Users className="mr-2 h-4 w-4" />Leads</TabsTrigger></TabsList>
       <TabsContent value="projects" className="space-y-4"><div className="flex justify-end"><Button onClick={() => setCreating('project')}><Plus className="mr-2 h-4 w-4" />Novo projeto</Button></div>{creating === 'project' && <form onSubmit={event => create(event, 'project')} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2"><Field label="Título *" name="title" required /><Field label="Tipo de projeto" name="project_type" /><Field label="Cidade" name="city" /><Field label="UF" name="state" /><Actions onCancel={() => setCreating(null)} /></form>}{editingProject && <ProjectEditor project={editingProject} onCancel={() => setEditingProject(null)} onSave={payload => updateContent('project', editingProject.id, payload)} />}<List loading={loading} empty="Crie o primeiro projeto para montar sua vitrine pública." rows={projects}>{project => <><span className="font-semibold">{project.title}<ModerationNote note={project.moderation_reason} /></span><span>{[project.city, project.state].filter(Boolean).join(' - ') || 'Sem localização'}</span><Status value={project.status} /><div className="flex flex-wrap gap-2"><AssetUpload companyId={companyId} type="project" id={project.id} accept="image/png,image/jpeg,image/webp" kind="image" onDone={load} /><ExternalVideo companyId={companyId} projectId={project.id} onDone={load} /><Button size="sm" type="button" variant="outline" onClick={() => setAssetTarget({ type: 'project', id: project.id })}>Mídias ({project.assets?.length || 0})</Button><Button size="sm" type="button" variant="outline" onClick={() => setEditingProject(project)}><Pencil className="mr-1 h-3 w-3" />Editar</Button>{project.status === 'draft' && <Button size="sm" variant="outline" onClick={() => submit('project', project.id)}><Send className="mr-1 h-3 w-3" />Enviar</Button>}<Button size="sm" type="button" variant="ghost" onClick={() => archive('project', project.id)}>Arquivar</Button></div></>}</List>{assetTarget?.type === 'project' && assetOwner && <AssetManager title={assetOwner.title} assets={assetOwner.assets || []} onClose={() => setAssetTarget(null)} onSave={updateAsset} onArchive={archiveAsset} />}</TabsContent>
-      <TabsContent value="materials" className="space-y-4"><div className="flex justify-end"><Button onClick={() => setCreating('material')}><Plus className="mr-2 h-4 w-4" />Novo material</Button></div>{creating === 'material' && <form onSubmit={event => create(event, 'material')} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2"><Field label="Título *" name="title" required /><label className="space-y-1 text-sm font-medium"><span>Acesso</span><select name="gate_mode" className="h-10 w-full rounded-md border border-input bg-background px-3"><option value="none">Livre</option><option value="form">Formulário antes de baixar</option></select></label><label className="space-y-1 text-sm font-medium"><span>Formulário</span><select name="content_lead_form_id" className="h-10 w-full rounded-md border border-input bg-background px-3"><option value="">Selecione se usar gate</option>{activeForms.map(form => <option key={form.id} value={form.id}>{form.name}</option>)}</select></label><Actions onCancel={() => setCreating(null)} /></form>}{editingMaterial && <MaterialEditor material={editingMaterial} forms={forms} onCancel={() => setEditingMaterial(null)} onSave={payload => updateContent('material', editingMaterial.id, payload)} />}<List loading={loading} empty="Publique catálogos, apresentações e materiais técnicos." rows={materials}>{material => <><span className="font-semibold">{material.title}<ModerationNote note={material.moderation_reason} /></span><span>{material.gate_mode === 'none' ? 'Acesso livre' : 'Com formulário'}</span><Status value={material.status} /><div className="flex flex-wrap gap-2"><AssetUpload companyId={companyId} type="material" id={material.id} accept="application/pdf" kind="document" onDone={load} /><Button size="sm" type="button" variant="outline" onClick={() => setAssetTarget({ type: 'material', id: material.id })}>Arquivo ({material.assets?.length || 0})</Button><Button size="sm" type="button" variant="outline" onClick={() => setEditingMaterial(material)}><Pencil className="mr-1 h-3 w-3" />Editar</Button>{material.status === 'draft' && <Button size="sm" variant="outline" onClick={() => submit('material', material.id)}><Send className="mr-1 h-3 w-3" />Enviar</Button>}<Button size="sm" type="button" variant="ghost" onClick={() => archive('material', material.id)}>Arquivar</Button></div></>}</List>{assetTarget?.type === 'material' && assetOwner && <AssetManager title={assetOwner.title} assets={assetOwner.assets || []} onClose={() => setAssetTarget(null)} onSave={updateAsset} onArchive={archiveAsset} />}</TabsContent>
+      <TabsContent value="materials" className="space-y-4">
+        <div className="flex justify-end">
+          <Button onClick={() => {
+            setMaterialPdf(null);
+            setMaterialCover(null);
+            setCreating('material');
+          }}>
+            <Plus className="mr-2 h-4 w-4" />Novo material
+          </Button>
+        </div>
+
+        {creating === 'material' && (
+          <form onSubmit={createMaterial} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2">
+            <Field label="Título *" name="title" required />
+            <label className="space-y-1 text-sm font-medium">
+              <span>Acesso</span>
+              <select name="gate_mode" className="h-10 w-full rounded-md border border-input bg-background px-3">
+                <option value="none">Livre</option>
+                <option value="form">Formulário antes de baixar</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm font-medium">
+              <span>Formulário</span>
+              <select name="content_lead_form_id" className="h-10 w-full rounded-md border border-input bg-background px-3">
+                <option value="">Selecione se usar gate</option>
+                {activeForms.map(form => (
+                  <option key={form.id} value={form.id}>{form.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1 text-sm font-medium md:col-span-2">
+              <span>Descrição</span>
+              <textarea name="description" className="min-h-20 w-full rounded-md border border-input bg-background p-2 text-sm" />
+            </label>
+
+            <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+              <DropzoneField label="Arquivo PDF (máx. 25MB) *" accept="application/pdf" onChange={setMaterialPdf} file={materialPdf} />
+              <DropzoneField label="Imagem de Capa (opcional)" accept="image/png,image/jpeg,image/webp" onChange={setMaterialCover} file={materialCover} />
+            </div>
+
+            <div className="flex items-end gap-3 md:col-span-2 mt-2">
+              {uploadProgress ? (
+                <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                  <RefreshCw className="animate-spin h-4 w-4" />
+                  <span>{uploadProgress}</span>
+                </div>
+              ) : (
+                <>
+                  <Button type="submit">Salvar rascunho</Button>
+                  <Button type="button" variant="ghost" onClick={() => setCreating(null)}>Cancelar</Button>
+                </>
+              )}
+            </div>
+          </form>
+        )}
+
+        {editingMaterial && (
+          <MaterialEditor
+            material={editingMaterial}
+            forms={forms}
+            onCancel={() => setEditingMaterial(null)}
+            onSave={async (payload, pdf, cover) => {
+              try {
+                // 1. Update metadata
+                await fetchApi(`/company_admin/materials/${editingMaterial.id}${query}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ material: payload })
+                });
+                
+                // 2. Upload PDF if selected
+                if (pdf) {
+                  const pdfPayload = new FormData();
+                  pdfPayload.append('attachable_type', 'material');
+                  pdfPayload.append('attachable_id', String(editingMaterial.id));
+                  pdfPayload.append('kind', 'document');
+                  pdfPayload.append('file', pdf);
+                  await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, {
+                    method: 'POST',
+                    body: pdfPayload
+                  });
+                }
+
+                // 3. Upload Cover if selected
+                if (cover) {
+                  const coverPayload = new FormData();
+                  coverPayload.append('attachable_type', 'material');
+                  coverPayload.append('attachable_id', String(editingMaterial.id));
+                  coverPayload.append('kind', 'image');
+                  coverPayload.append('file', cover);
+                  await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, {
+                    method: 'POST',
+                    body: coverPayload
+                  });
+                }
+                
+                toast({ title: 'Material atualizado com sucesso!' });
+                setEditingMaterial(null);
+                await load();
+              } catch {
+                toast({ title: 'Erro ao atualizar material', variant: 'destructive' });
+              }
+            }}
+          />
+        )}
+
+        <List loading={loading} empty="Publique catálogos, apresentações e materiais técnicos." rows={materials}>
+          {material => (
+            <>
+              <span className="font-semibold">
+                {material.title}
+                <ModerationNote note={material.moderation_reason} />
+              </span>
+              <span>{material.gate_mode === 'none' ? 'Acesso livre' : 'Com formulário'}</span>
+              <Status value={material.status} />
+              <div className="flex flex-wrap gap-2">
+                <AssetUpload companyId={companyId} type="material" id={material.id} accept="application/pdf" kind="document" onDone={load} />
+                <Button size="sm" type="button" variant="outline" onClick={() => setAssetTarget({ type: 'material', id: material.id })}>
+                  Mídias ({material.assets?.length || 0})
+                </Button>
+                <Button size="sm" type="button" variant="outline" onClick={() => setEditingMaterial(material)}>
+                  <Pencil className="mr-1 h-3 w-3" />Editar
+                </Button>
+                {material.status === 'draft' && (
+                  <Button size="sm" variant="outline" onClick={() => submit('material', material.id)}>
+                    <Send className="mr-1 h-3 w-3" />Enviar
+                  </Button>
+                )}
+                <Button size="sm" type="button" variant="ghost" onClick={() => archive('material', material.id)}>
+                  Arquivar
+                </Button>
+              </div>
+            </>
+          )}
+        </List>
+        {assetTarget?.type === 'material' && assetOwner && (
+          <AssetManager title={assetOwner.title} assets={assetOwner.assets || []} onClose={() => setAssetTarget(null)} onSave={updateAsset} onArchive={archiveAsset} />
+        )}
+      </TabsContent>
       <TabsContent value="forms" className="space-y-4"><div className="flex justify-end"><Button onClick={() => { setEditingForm(null); setCreating('form'); }}><Plus className="mr-2 h-4 w-4" />Novo formulário</Button></div>{(creating === 'form' || editingForm) && <FormBuilder initial={editingForm} onCancel={() => { setCreating(null); setEditingForm(null); }} onSave={payload => saveForm(editingForm, payload)} />}<List loading={loading} empty="Crie formulários para seus materiais protegidos." rows={forms}>{form => <><span className="font-semibold">{form.name}<span className="ml-2 text-xs font-normal text-slate-500">{form.fields?.length || 0} campos</span></span><span>Versão {form.version}</span><Status value={form.status} /><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { setCreating(null); setEditingForm(form); }}><Pencil className="mr-1 h-3 w-3" />Editar</Button><Button size="sm" type="button" variant="ghost" onClick={() => toggleFormStatus(form)}>{form.status === 'active' ? 'Desativar' : 'Ativar'}</Button></div></>}</List></TabsContent>
       <TabsContent value="analytics"><AnalyticsPanel analytics={analytics} funnel={funnel} timeseries={timeseries} sources={sources} /></TabsContent>
       <TabsContent value="leads"><LeadsPanel leads={leads} companyId={companyId} /></TabsContent>
@@ -127,9 +334,78 @@ function ProjectEditor({ project, onCancel, onSave }: { project: Project; onCanc
   return <form onSubmit={submit} className="grid gap-3 rounded-xl border border-blue-200 bg-blue-50/30 p-4 md:grid-cols-2"><Field label="Título *" name="title" required value={project.title} /><Field label="Tipo de projeto" name="project_type" value={project.project_type || ''} /><Field label="Cidade" name="city" value={project.city || ''} /><Field label="UF" name="state" value={project.state || ''} /><Field label="Potência" name="capacity_value" type="number" value={project.capacity_value?.toString() || ''} /><Field label="Unidade" name="capacity_unit" value={project.capacity_unit || 'kWp'} /><label className="space-y-1 text-sm font-medium md:col-span-2"><span>Resumo</span><textarea name="summary" defaultValue={project.summary || ''} className="min-h-20 w-full rounded-md border border-input bg-white p-2 text-sm" /></label><Actions onCancel={onCancel} /></form>;
 }
 
-function MaterialEditor({ material, forms, onCancel, onSave }: { material: Material; forms: LeadForm[]; onCancel: () => void; onSave: (payload: Record<string, unknown>) => void }) {
-  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); onSave({ title: data.get('title'), description: data.get('description'), material_type: data.get('material_type'), gate_mode: data.get('gate_mode'), content_lead_form_id: data.get('content_lead_form_id') || null }); };
-  return <form onSubmit={submit} className="grid gap-3 rounded-xl border border-blue-200 bg-blue-50/30 p-4 md:grid-cols-2"><Field label="Título *" name="title" required value={material.title} /><Field label="Tipo de material" name="material_type" value={material.material_type} /><label className="space-y-1 text-sm font-medium"><span>Acesso</span><select name="gate_mode" defaultValue={material.gate_mode === 'request_access' ? 'form' : material.gate_mode} className="h-10 w-full rounded-md border border-input bg-white px-3"><option value="none">Livre</option><option value="form">Formulário antes de baixar</option></select></label><label className="space-y-1 text-sm font-medium"><span>Formulário</span><select name="content_lead_form_id" defaultValue={material.content_lead_form_id?.toString() || ''} className="h-10 w-full rounded-md border border-input bg-white px-3"><option value="">Selecione se usar gate</option>{forms.map(form => <option key={form.id} value={form.id} disabled={form.status !== 'active' && form.id !== material.content_lead_form_id}>{form.name}{form.status !== 'active' ? ' (inativo)' : ''}</option>)}</select></label><label className="space-y-1 text-sm font-medium md:col-span-2"><span>Descrição</span><textarea name="description" defaultValue={material.description || ''} className="min-h-20 w-full rounded-md border border-input bg-white p-2 text-sm" /></label><Actions onCancel={onCancel} /></form>;
+function MaterialEditor({
+  material,
+  forms,
+  onCancel,
+  onSave
+}: {
+  material: Material;
+  forms: LeadForm[];
+  onCancel: () => void;
+  onSave: (payload: Record<string, unknown>, pdf: File | null, cover: File | null) => Promise<void>;
+}) {
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    const data = new FormData(event.currentTarget);
+    const payload = {
+      title: data.get('title'),
+      description: data.get('description'),
+      material_type: data.get('material_type'),
+      gate_mode: data.get('gate_mode'),
+      content_lead_form_id: data.get('content_lead_form_id') || null
+    };
+    await onSave(payload, pdfFile, coverFile);
+    setSaving(false);
+  };
+
+  return (
+    <form onSubmit={submit} className="grid gap-3 rounded-xl border border-blue-200 bg-blue-50/30 p-4 md:grid-cols-2">
+      <Field label="Título *" name="title" required value={material.title} />
+      <Field label="Tipo de material" name="material_type" value={material.material_type} />
+      <label className="space-y-1 text-sm font-medium">
+        <span>Acesso</span>
+        <select name="gate_mode" defaultValue={material.gate_mode === 'request_access' ? 'form' : material.gate_mode} className="h-10 w-full rounded-md border border-input bg-white px-3">
+          <option value="none">Livre</option>
+          <option value="form">Formulário antes de baixar</option>
+        </select>
+      </label>
+      <label className="space-y-1 text-sm font-medium">
+        <span>Formulário</span>
+        <select name="content_lead_form_id" defaultValue={material.content_lead_form_id?.toString() || ''} className="h-10 w-full rounded-md border border-input bg-white px-3">
+          <option value="">Selecione se usar gate</option>
+          {forms.map(form => (
+            <option key={form.id} value={form.id} disabled={form.status !== 'active' && form.id !== material.content_lead_form_id}>
+              {form.name}{form.status !== 'active' ? ' (inativo)' : ''}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="space-y-1 text-sm font-medium md:col-span-2">
+        <span>Descrição</span>
+        <textarea name="description" defaultValue={material.description || ''} className="min-h-20 w-full rounded-md border border-input bg-white p-2 text-sm" />
+      </label>
+
+      <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+        <DropzoneField label="Substituir PDF (opcional)" accept="application/pdf" onChange={setPdfFile} file={pdfFile} />
+        <DropzoneField label="Substituir Capa (opcional)" accept="image/png,image/jpeg,image/webp" onChange={setCoverFile} file={coverFile} />
+      </div>
+
+      <div className="flex items-end gap-2 md:col-span-2">
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Salvando...' : 'Salvar alterações'}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
+          Cancelar
+        </Button>
+      </div>
+    </form>
+  );
 }
 
 function AssetManager({ title, assets, onClose, onSave, onArchive }: { title: string; assets: Asset[]; onClose: () => void; onSave: (id: number, payload: Record<string, unknown>) => Promise<void>; onArchive: (id: number) => Promise<void> }) {
@@ -161,3 +437,82 @@ function ModerationNote({ note }: { note?: string | null }) { return note ? <spa
 function List<T extends { id: number }>({ loading, empty, rows, children }: { loading: boolean; empty: string; rows: T[]; children: (row: T) => ReactNode }) { if (loading) return <div className="h-32 animate-pulse rounded-xl bg-slate-100" />; if (!rows.length) return <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">{empty}</div>; return <div className="divide-y overflow-hidden rounded-xl border border-slate-200 bg-white">{rows.map(row => <div key={row.id} className="grid items-center gap-3 p-4 text-sm md:grid-cols-4">{children(row)}</div>)}</div>; }
 function AssetUpload({ companyId, type, id, accept, kind, onDone }: { companyId: string; type: 'project' | 'material'; id: number; accept: string; kind: 'image' | 'document'; onDone: () => Promise<void> }) { const [sending, setSending] = useState(false); const upload = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const payload = new FormData(); payload.append('attachable_type', type); payload.append('attachable_id', String(id)); payload.append('kind', kind); payload.append('file', file); setSending(true); try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', body: payload }); toast({ title: 'Arquivo enviado para moderação' }); await onDone(); } catch { toast({ title: 'Falha no envio do arquivo', variant: 'destructive' }); } finally { setSending(false); event.target.value = ''; } }; return <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-input px-2 text-xs font-medium hover:bg-slate-50"><Upload className="mr-1 h-3 w-3" />{sending ? 'Enviando…' : 'Enviar'}<input className="sr-only" type="file" accept={accept} disabled={sending} onChange={upload} /></label>; }
 function ExternalVideo({ companyId, projectId, onDone }: { companyId: string; projectId: number; onDone: () => Promise<void> }) { const [open, setOpen] = useState(false); const [url, setUrl] = useState(''); const save = async () => { if (!url) return; try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachable_type: 'project', attachable_id: projectId, kind: 'video', provider: 'youtube', external_url: url }) }); toast({ title: 'Vídeo enviado para moderação' }); setUrl(''); setOpen(false); await onDone(); } catch { toast({ title: 'Link de vídeo inválido', variant: 'destructive' }); } }; return <>{open ? <span className="flex gap-1"><Input aria-label="URL do vídeo" className="h-8 w-44 text-xs" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://youtube.com/..." /><Button size="sm" type="button" onClick={save}>Salvar</Button></span> : <Button size="sm" type="button" variant="outline" onClick={() => setOpen(true)}>Vídeo</Button>}</>; }
+
+function DropzoneField({
+  label,
+  accept,
+  onChange,
+  file
+}: {
+  label: string;
+  accept: string;
+  onChange: (file: File | null) => void;
+  file: File | null;
+}) {
+  const [dragActive, setDragActive] = useState(false);
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      onChange(e.dataTransfer.files[0]);
+    }
+  };
+  return (
+    <div className="space-y-1 text-sm font-medium">
+      <span>{label}</span>
+      <div
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors min-h-[100px] ${
+          dragActive ? 'border-blue-500 bg-blue-50/50' : file ? 'border-emerald-500 bg-emerald-50/10' : 'border-slate-300 hover:border-blue-400'
+        }`}
+        onClick={() => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = accept;
+          input.onchange = (e) => {
+            const selected = (e.target as HTMLInputElement).files?.[0];
+            if (selected) onChange(selected);
+          };
+          input.click();
+        }}
+      >
+        {file ? (
+          <div className="text-center space-y-1.5 w-full">
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate px-2">{file.name}</p>
+            <p className="text-[10px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            <button
+              type="button"
+              className="text-[10px] text-rose-500 underline font-bold"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(null);
+              }}
+            >
+              Remover arquivo
+            </button>
+          </div>
+        ) : (
+          <div className="text-center text-slate-500 space-y-1">
+            <Upload className="mx-auto h-5 w-5 text-slate-400" />
+            <p className="text-xs">Arraste ou clique para selecionar</p>
+            <p className="text-[10px] text-slate-400">Tipo: {accept}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

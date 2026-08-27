@@ -1,0 +1,9 @@
+Seu material chegou!
+
+Olá, <%= @lead.name.presence || 'Leitor' %>.
+
+Agradecemos seu interesse. Clique no link abaixo para iniciar o download do arquivo <%= @material.title %> disponibilizado por <%= @company.name %>:
+
+<%= @download_url %>
+
+* Este link temporário é válido por 15 minutos.

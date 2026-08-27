@@ -17,6 +17,7 @@ import { useFaqExpand } from "@/lib/analytics/hooks/useIntentTracking";
 
 import CompanyContactCard from "./CompanyContactCard";
 import ClaimProfileCard from "./ClaimProfileCard";
+import MaterialLeadMagnetCard from "./MaterialLeadMagnetCard";
 import PremiumSidebarAdSlot from "./PremiumSidebarAdSlot";
 import { DownloadGate, type Material } from "./MaterialsLibrary";
 
@@ -93,13 +94,28 @@ export default function SidebarPremium({
     }
   };
 
+  const featuredMaterial = materials.length > 0 ? materials[0] : null;
+
   return (
     <div className="space-y-6">
       {/* 1. Informações de Contato Protegidas */}
       <CompanyContactCard company={company} />
 
-      {/* 2. Card "Trabalha nesta empresa?" (Claim Profile Card) */}
-      <ClaimProfileCard company={company} />
+      {/* 2. Card "Trabalha nesta empresa?" (Claim Profile Card) ou Material Destacado */}
+      {featuredMaterial ? (
+        <MaterialLeadMagnetCard
+          material={featuredMaterial}
+          onDownload={() => {
+            if (featuredMaterial.gated) {
+              setSelectedMaterial(featuredMaterial);
+            } else {
+              requestDownload(featuredMaterial);
+            }
+          }}
+        />
+      ) : (
+        <ClaimProfileCard company={company} />
+      )}
 
       {/* 3. Trust/Safety Card (Selo de Confiança) */}
       <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">

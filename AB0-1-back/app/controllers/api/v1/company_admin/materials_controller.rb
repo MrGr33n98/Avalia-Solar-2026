@@ -65,7 +65,7 @@ module Api
         def serialize(material)
           material.as_json(only: %i[id title slug description material_type visibility gate_mode status published_at expires_at download_count version moderation_reason created_at updated_at]).merge(
             content_lead_form_id: material.content_lead_form_id,
-            assets: material.digital_assets.map { |asset| asset.as_json(only: %i[id kind title alt_text caption external_url status processing_status position]) }
+            assets: material.digital_assets.map { |asset| asset.as_json(only: %i[id kind title alt_text caption external_url status processing_status position]).merge(file_url: asset.file_url) }
           )
         end
       end

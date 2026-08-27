@@ -11,7 +11,7 @@ import { toast } from '@/hooks/use-toast';
 
 export type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required?: boolean; options?: string[] };
 export type LeadForm = { id: number; name: string; fields: FormField[]; consent_text?: string | null; privacy_url?: string | null; version: number };
-export type Material = { id: number; title: string; slug: string; description?: string; material_type: string; gate_mode: string; gated: boolean; file_available: boolean; lead_form?: LeadForm | null };
+export type Material = { id: number; title: string; slug: string; description?: string; material_type: string; gate_mode: string; gated: boolean; file_available: boolean; lead_form?: LeadForm | null; cover_url?: string | null };
 
 export default function MaterialsLibrary({ companyId }: { companyId: number | string }) {
   const [materials, setMaterials] = useState<Material[]>([]);

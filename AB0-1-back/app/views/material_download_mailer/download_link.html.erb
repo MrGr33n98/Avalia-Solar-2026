@@ -1,0 +1,17 @@
+<% content_for :preheader, "Seu download do material #{@material.title} está disponível." %>
+<p style="margin:0 0 8px;color:#1D4ED8;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Download Disponível</p>
+<h1 style="margin:0 0 18px;color:#0D1B2A;font-size:26px;">Seu material chegou!</h1>
+<p style="margin:0 0 14px;">Olá, <strong><%= @lead.name.presence || 'Leitor' %></strong>.</p>
+<p style="margin:0 0 22px;color:#667085;">
+  Agradecemos seu interesse. Clique no botão abaixo para iniciar o download do arquivo <strong><%= @material.title %></strong> disponibilizado por <strong><%= @company.name %></strong>.
+</p>
+<p style="margin:0 0 22px;color:#667085;font-size:12px;">
+  Este link temporário é válido por 15 minutos.
+</p>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td bgcolor="#1D4ED8">
+      <a href="<%= @download_url %>" style="display:inline-block;padding:13px 22px;color:#FFFFFF;text-decoration:none;font-weight:bold;border-radius:4px;">Baixar Material</a>
+    </td>
+  </tr>
+</table>

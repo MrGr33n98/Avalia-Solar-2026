@@ -48,7 +48,9 @@ module Api
       def create_download!(material, token)
         MaterialDownload.transaction do
           lead = material.gated? ? find_or_create_lead!(material) : nil
-          find_or_create_download!(material, lead, token)
+          download = find_or_create_download!(material, lead, token)
+          MaterialDownloadMailer.download_link(download, token).deliver_later if lead.present?
+          download
         end
       rescue ActiveRecord::RecordNotUnique
         key = request.headers['Idempotency-Key'].presence

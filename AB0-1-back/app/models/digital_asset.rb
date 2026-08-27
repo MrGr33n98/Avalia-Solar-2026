@@ -31,6 +31,26 @@ class DigitalAsset < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     %w[company attachable]
   end
+  def file_url
+    return nil unless file.attached?
+    begin
+      storage_options = Rails.application.config.active_storage.respond_to?(:default_url_options) ?
+        Rails.application.config.active_storage.default_url_options : nil
+      options = (storage_options.presence || Rails.application.routes.default_url_options).dup
+      if options[:host].blank?
+        fallback_origin = ENV['ACTIVE_STORAGE_HOST'].presence || ENV['APP_HOST'].presence ||
+                          (Rails.env.test? ? 'http://www.example.com' : 'https://api.avaliasolar.com.br')
+        fallback_uri = URI.parse(fallback_origin)
+        options[:host] = fallback_uri.host || fallback_origin
+        options[:protocol] ||= fallback_uri.scheme || 'https'
+      end
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(file, options)
+    rescue StandardError => e
+      Rails.logger.error("Error generating file URL for asset #{id}: #{e.message}")
+      nil
+    end
+  end
 
   private
 

@@ -41,9 +41,16 @@ module Api
           nil
         end
 
+        cover = begin
+          material.digital_assets.published.where(kind: 'image').first
+        rescue StandardError
+          nil
+        end
+
         material.as_json(only: %i[id title slug description material_type gate_mode published_at expires_at download_count]).merge(
           gated: material.gated?,
           file_available: document.present?,
+          cover_url: cover&.file_url,
           lead_form: public_form_payload(material.content_lead_form)
         )
       rescue StandardError
