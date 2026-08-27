@@ -19,7 +19,7 @@ class CompanyMaterial < ApplicationRecord
 
   scope :published, -> { where(status: 'published').where('published_at <= ?', Time.current).where('expires_at IS NULL OR expires_at > ?', Time.current) }
 
-  before_validation :generate_slug, if: -> { slug.blank? && title.present? }
+  before_validation :generate_unique_slug, if: -> { slug.blank? && title.present? }
 
   def gated?
     gate_mode != 'none'
@@ -35,8 +35,17 @@ class CompanyMaterial < ApplicationRecord
 
   private
 
-  def generate_slug
-    self.slug = title.to_s.parameterize
+  def generate_unique_slug
+    base_slug = title.to_s.parameterize.presence || 'material'
+    candidate = base_slug
+    suffix = 2
+
+    while self.class.where(company_id: company_id, slug: candidate).where.not(id: id).exists?
+      candidate = "#{base_slug}-#{suffix}"
+      suffix += 1
+    end
+
+    self.slug = candidate
   end
 
   def form_belongs_to_company

@@ -49,6 +49,7 @@ export default function ProjectsMaterialsHub({
   }, [onForbidden]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [autoPublishMaterials, setAutoPublishMaterials] = useState(false);
   const [forms, setForms] = useState<LeadForm[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [funnel, setFunnel] = useState<Funnel | null>(null);
@@ -79,7 +80,7 @@ export default function ProjectsMaterialsHub({
         fetchApi<Sources>(`/company_admin/content_analytics/sources${query}`),
         fetchApi<Leads>(`/company_admin/content_leads${query}`),
       ]);
-      setProjects(projectResponse.projects || []); setMaterials(materialResponse.materials || []); setForms(formResponse.forms || []);
+      setProjects(projectResponse.projects || []); setMaterials(materialResponse.materials || []); setAutoPublishMaterials(Boolean(materialResponse.auto_publish)); setForms(formResponse.forms || []);
       setAnalytics(analyticsResponse); setFunnel(funnelResponse); setTimeseries(timeseriesResponse); setSources(sourcesResponse); setLeads(leadsResponse);
     } catch { toast({ title: 'Não foi possível carregar seus conteúdos', variant: 'destructive' }); }
     finally { setLoading(false); }
@@ -188,6 +189,12 @@ export default function ProjectsMaterialsHub({
     try { await fetchApi(`/company_admin/${type}s/${id}/submit${query}`, { method: 'POST' }); toast({ title: 'Enviado para moderação' }); await load(); }
     catch (err) { handleActionError(err, 'Não foi possível enviar'); }
   };
+
+  const publishMaterial = async (id: number) => {
+    try { await fetchApi(`/company_admin/materials/${id}/publish${query}`, { method: 'POST' }); toast({ title: 'Material publicado' }); await load(); }
+    catch (err) { handleActionError(err, 'Não foi possível publicar'); }
+  };
+
 
   const updateContent = async (type: 'project' | 'material', id: number, payload: Record<string, unknown>) => {
     try { await fetchApi(`/company_admin/${type}s/${id}${query}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [type]: payload }) }); toast({ title: 'Alterações salvas', description: 'Conteúdo já publicado volta para moderação após uma edição.' }); setEditingProject(null); setEditingMaterial(null); await load(); }
@@ -348,7 +355,7 @@ export default function ProjectsMaterialsHub({
                   <Pencil className="mr-1 h-3 w-3" />Editar
                 </Button>
                 {material.status === 'draft' && (
-                  <Button size="sm" variant="outline" disabled={!material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')} onClick={() => submit('material', material.id)}>
+                  <Button size="sm" variant="outline" disabled={!material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')} onClick={() => autoPublishMaterials ? publishMaterial(material.id) : submit('material', material.id)}>
                     <Send className="mr-1 h-3 w-3" />Enviar para revisão
                   </Button>
                 )}

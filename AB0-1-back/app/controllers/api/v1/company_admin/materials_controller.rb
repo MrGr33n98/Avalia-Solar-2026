@@ -5,11 +5,11 @@ module Api
     module CompanyAdmin
       class MaterialsController < BaseController
         before_action -> { require_company_feature!('downloadable_materials') }
-        before_action :set_material, only: %i[show update destroy submit]
+        before_action :set_material, only: %i[show update destroy submit publish]
 
         def index
           authorize CompanyMaterial.new(company: @company), :index?
-          render json: { materials: policy_scope(@company.company_materials).order(updated_at: :desc).map { |material| serialize(material) } }
+          render json: { materials: policy_scope(@company.company_materials).order(updated_at: :desc).map { |material| serialize(material) }, auto_publish: auto_publish_materials? }
         end
 
         def show
@@ -45,7 +45,9 @@ module Api
           authorize @material, :submit?
           return render json: { error: 'Anexe um PDF antes de enviar para aprovação' }, status: :unprocessable_entity unless @material.digital_assets.document.exists?
 
-          @material.update!(status: 'pending', moderation_reason: nil)
+          return publish_material if auto_publish_materials?
+
+          @material.update!(status: 'pending', published_at: nil, moderation_reason: nil)
           render json: { material: serialize(@material) }
         end
 
@@ -61,6 +63,33 @@ module Api
             :content_lead_form_id, :expires_at
           )
         end
+
+        public
+        def publish
+          authorize @material, :submit?
+          return render json: { error: 'Publicação automática não habilitada para esta empresa' }, status: :forbidden unless auto_publish_materials?
+          return render json: { error: 'Anexe um PDF antes de publicar' }, status: :unprocessable_entity unless publishable_assets?
+
+          publish_material
+        end
+
+
+        def auto_publish_materials?
+          @company.respond_to?(:feature_enabled_from_plan?) && @company.feature_enabled_from_plan?('auto_publish_materials', include_defaults: false)
+        end
+
+        def publishable_assets?
+          @material.digital_assets.document.where.not(status: 'archived').exists?
+        end
+
+        def publish_material
+          CompanyMaterial.transaction do
+            @material.update!(status: 'published', published_at: Time.current, moderation_reason: nil)
+            @material.digital_assets.where.not(status: 'archived').update_all(status: 'published')
+          end
+          render json: { material: serialize(@material.reload) }
+        end
+
 
         def serialize(material)
           material.as_json(only: %i[id title slug description material_type visibility gate_mode status published_at expires_at download_count version moderation_reason created_at updated_at]).merge(
