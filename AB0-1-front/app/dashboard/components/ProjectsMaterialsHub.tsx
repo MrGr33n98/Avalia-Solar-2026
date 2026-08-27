@@ -79,6 +79,17 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
       return;
     }
 
+    const gateMode = data.get('gate_mode');
+    const contentLeadFormId = data.get('content_lead_form_id');
+    if (gateMode === 'form' && !contentLeadFormId) {
+      toast({
+        title: 'Selecione um formulário',
+        description: 'Para materiais com formulário antes de baixar, é necessário selecionar qual formulário exibir.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setUploadProgress('Criando rascunho...');
     try {
       const body = {
@@ -86,8 +97,8 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
           title: data.get('title'),
           description: data.get('description'),
           material_type: 'catalog',
-          gate_mode: data.get('gate_mode'),
-          content_lead_form_id: data.get('content_lead_form_id') || undefined
+          gate_mode: gateMode,
+          content_lead_form_id: contentLeadFormId || undefined
         }
       };
       
@@ -129,8 +140,9 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
       setMaterialCover(null);
       event.currentTarget.reset();
       await load();
-    } catch {
-      toast({ title: 'Não foi possível salvar o material', variant: 'destructive' });
+    } catch (err) {
+      const errMsg = err instanceof Error ? cleanErrorMessage(err.message) : 'Não foi possível salvar o material';
+      toast({ title: 'Erro ao salvar', description: errMsg, variant: 'destructive' });
     } finally {
       setUploadProgress('');
     }
@@ -282,8 +294,9 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
                 toast({ title: 'Material atualizado com sucesso!' });
                 setEditingMaterial(null);
                 await load();
-              } catch {
-                toast({ title: 'Erro ao atualizar material', variant: 'destructive' });
+              } catch (err) {
+                const errMsg = err instanceof Error ? cleanErrorMessage(err.message) : 'Erro ao atualizar material';
+                toast({ title: 'Erro ao atualizar', description: errMsg, variant: 'destructive' });
               }
             }}
           />
@@ -351,14 +364,26 @@ function MaterialEditor({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSaving(true);
     const data = new FormData(event.currentTarget);
+    const gate_mode = data.get('gate_mode');
+    const content_lead_form_id = data.get('content_lead_form_id');
+
+    if (gate_mode === 'form' && !content_lead_form_id) {
+      toast({
+        title: 'Selecione um formulário',
+        description: 'Para materiais com formulário antes de baixar, é necessário selecionar qual formulário exibir.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSaving(true);
     const payload = {
       title: data.get('title'),
       description: data.get('description'),
       material_type: data.get('material_type'),
-      gate_mode: data.get('gate_mode'),
-      content_lead_form_id: data.get('content_lead_form_id') || null
+      gate_mode,
+      content_lead_form_id: content_lead_form_id || null
     };
     await onSave(payload, pdfFile, coverFile);
     setSaving(false);
@@ -516,3 +541,15 @@ function DropzoneField({
   );
 }
 
+function cleanErrorMessage(message: string): string {
+  if (message.includes("Content lead form can't be blank")) {
+    return "O formulário de captura de leads é obrigatório para materiais restritos.";
+  }
+  if (message.includes("Title can't be blank")) {
+    return "O título não pode ficar em branco.";
+  }
+  if (message.includes("Slug can't be blank")) {
+    return "O slug da URL não pode ficar em branco.";
+  }
+  return message.replace(/^\[\d+\]\s*/, '');
+}
