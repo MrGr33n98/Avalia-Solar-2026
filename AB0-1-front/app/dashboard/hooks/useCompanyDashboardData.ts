@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApi, companiesApi, FeatureAccessEntry } from '@/lib/api';
@@ -70,6 +71,8 @@ export function useCompanyDashboardData(companyId: string) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [featureAccess, setFeatureAccess] = useState<Record<string, FeatureAccessEntry>>({});
+  const [featureAccessLoading, setFeatureAccessLoading] = useState(true);
+  const [featureAccessError, setFeatureAccessError] = useState(false);
   const [health, setHealth] = useState<any>(null);
   const [nextBestActions, setNextBestActions] = useState<any[]>([]);
 
@@ -136,11 +139,13 @@ export function useCompanyDashboardData(companyId: string) {
     }
   }, [companyId]);
 
-  const fetchFeatureAccess = useCallback(async () => {
+  const fetchFeatureAccess = useCallback(async (noCache = false) => {
+    setFeatureAccessLoading(true);
+    setFeatureAccessError(false);
     try {
       console.debug('[CompanyDashboardData] Fetching canonical feature access', { companyId });
 
-      const data = await companiesApi.getFeatureAccess(companyId);
+      const data = await companiesApi.getFeatureAccess(companyId, noCache);
       setFeatureAccess(data?.features || {});
     } catch (error) {
       console.error('[CompanyDashboardData] Error fetching feature access', {
@@ -149,6 +154,9 @@ export function useCompanyDashboardData(companyId: string) {
         error,
       });
       setFeatureAccess({});
+      setFeatureAccessError(true);
+    } finally {
+      setFeatureAccessLoading(false);
     }
   }, [companyId]);
 
@@ -182,11 +190,21 @@ export function useCompanyDashboardData(companyId: string) {
 
   const refreshData = useCallback(() => {
     fetchDashboardStats();
-    fetchFeatureAccess();
+    fetchFeatureAccess(true);
     fetchNotifications();
   }, [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]);
 
   useEffect(() => {
+    setCompany(null);
+    setCompanyError(null);
+    setStats(null);
+    setNotifications([]);
+    setFeatureAccess({});
+    setFeatureAccessLoading(true);
+    setFeatureAccessError(false);
+    setHealth(null);
+    setNextBestActions([]);
+
     const loadAll = async () => {
       setLoading(true);
       await Promise.all([fetchCompanyData(), fetchDashboardStats(), fetchFeatureAccess(), fetchNotifications()]);
@@ -212,6 +230,8 @@ export function useCompanyDashboardData(companyId: string) {
     companyError,
     stats,
     featureAccess,
+    featureAccessLoading,
+    featureAccessError,
     notifications,
     markNotificationAsRead,
     refreshData,

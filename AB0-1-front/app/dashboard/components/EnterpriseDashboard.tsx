@@ -202,8 +202,18 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { loading, company, companyError, stats, featureAccess, health, nextBestActions } =
-    useCompanyDashboardData(companyId);
+  const {
+    loading,
+    company,
+    companyError,
+    stats,
+    featureAccess,
+    featureAccessLoading,
+    featureAccessError,
+    health,
+    nextBestActions,
+    refreshData,
+  } = useCompanyDashboardData(companyId);
 
   const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
@@ -251,12 +261,15 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           title={copy.title}
           description={copy.description}
           featureId={tabId}
+          loading={featureAccessLoading}
+          error={featureAccessError}
+          onRetry={refreshData}
         >
           {children}
         </FeatureGuard>
       );
     },
-    [tabAccessEntries]
+    [tabAccessEntries, featureAccessLoading, featureAccessError, refreshData]
   );
 
   // Sync tab change with URL
@@ -599,14 +612,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-downloads',
-                  <ProjectsMaterialsHub companyId={companyId} />
+                  <ProjectsMaterialsHub companyId={companyId} onForbidden={refreshData} />
                 )}
               </TabsContent>
 
               <TabsContent value="materials" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'materials',
-                  <ProjectsMaterialsHub companyId={companyId} defaultTab="materials" />
+                  <ProjectsMaterialsHub companyId={companyId} defaultTab="materials" onForbidden={refreshData} />
                 )}
               </TabsContent>
 

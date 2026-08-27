@@ -2032,8 +2032,8 @@ export const companiesApi = {
       return null;
     }
   },
-  getFeatureAccess: (id: number | string): Promise<CompanyFeatureAccessResponse> =>
-    fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`),
+  getFeatureAccess: (id: number | string, noCache = false): Promise<CompanyFeatureAccessResponse> =>
+    fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`, { noCache }),
   getReviews: (id: number, params?: any) => {
     try {
       return fetchApi(`/companies/${id}/reviews`, { params });

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Lock, MapPin, Mail, Phone, Globe, MessageSquare, Clock, ShieldAlert } from 'lucide-react';
+import { Lock, MapPin, Mail, Phone, Globe, Clock, ShieldAlert } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import type { FeatureAccessEntry } from '@/lib/api';
@@ -15,6 +15,9 @@ interface FeatureGuardProps {
   children: ReactNode;
   className?: string;
   featureId?: string;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
 }
 
 function MockLeadsList() {
@@ -214,10 +217,50 @@ export default function FeatureGuard({
   description,
   children,
   className,
+  loading,
+  error,
+  onRetry,
   featureId,
 }: FeatureGuardProps) {
+  if (loading) {
+    return (
+      <div className="space-y-6 w-full animate-pulse p-6 bg-slate-50 dark:bg-slate-950/20 rounded-3xl border border-slate-200 dark:border-white/10">
+        <div className="h-8 w-64 rounded-xl bg-slate-200 dark:bg-white/10" />
+        <div className="h-4 w-[350px] rounded-lg bg-slate-200 dark:bg-white/10" />
+        <div className="grid gap-4 md:grid-cols-3 mt-6">
+          <div className="h-28 rounded-2xl bg-slate-200 dark:bg-white/10" />
+          <div className="h-28 rounded-2xl bg-slate-200 dark:bg-white/10" />
+          <div className="h-28 rounded-2xl bg-slate-200 dark:bg-white/10" />
+        </div>
+        <div className="h-56 rounded-3xl bg-slate-200 dark:bg-white/10 mt-4" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-950/20 rounded-3xl border border-slate-200 dark:border-white/10 text-center min-h-[300px]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 mb-4">
+          <ShieldAlert className="h-6 w-6" />
+        </div>
+        <h3 className="text-lg font-bold text-foreground mb-2">Erro ao carregar permissões</h3>
+        <p className="text-sm text-muted-foreground max-w-md mb-6 leading-relaxed">
+          Não foi possível verificar os recursos do seu plano. Se o problema continuar, atualize a página.
+        </p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="px-6 py-2.5 rounded-xl bg-brand-blue hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all"
+          >
+            Tentar novamente
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (isFeatureHiddenEntry(entry)) return null;
-  if (!entry || isFeatureEnabledEntry(entry)) return <>{children}</>;
+  if (entry && isFeatureEnabledEntry(entry)) return <>{children}</>;
 
   return (
     <div className={cn('relative w-full overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/20', className)}>

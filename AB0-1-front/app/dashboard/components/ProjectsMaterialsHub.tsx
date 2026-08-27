@@ -23,8 +23,29 @@ type Leads = { leads: Array<{ id: number; name?: string | null; email: string; p
 const Status = ({ value }: { value: string }) => <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${value === 'published' || value === 'active' ? 'bg-emerald-100 text-emerald-700' : value === 'pending' ? 'bg-amber-100 text-amber-700' : value === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>{value}</span>;
 const initialFields: FormField[] = [{ key: 'name', label: 'Nome', type: 'text', required: true }, { key: 'email', label: 'E-mail', type: 'email', required: true }];
 
-export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects' }: { companyId: string; defaultTab?: string }) {
+export default function ProjectsMaterialsHub({
+  companyId,
+  defaultTab = 'projects',
+  onForbidden,
+}: {
+  companyId: string;
+  defaultTab?: string;
+  onForbidden?: () => void;
+}) {
   const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : '';
+  
+  const handleActionError = useCallback((err: unknown, fallbackMsg: string) => {
+    const isForbidden = err instanceof Error && (
+      err.message.includes("[403]") || 
+      err.message.includes("FEATURE_NOT_AVAILABLE") ||
+      err.message.includes("unavailable for this company")
+    );
+    if (isForbidden) {
+      onForbidden?.();
+    }
+    const errMsg = err instanceof Error ? cleanErrorMessage(err.message) : fallbackMsg;
+    toast({ title: 'Erro', description: errMsg, variant: 'destructive' });
+  }, [onForbidden]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [forms, setForms] = useState<LeadForm[]>([]);
@@ -67,7 +88,7 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
     event.preventDefault(); const data = new FormData(event.currentTarget);
     const body = type === 'project' ? { project: { title: data.get('title'), project_type: data.get('project_type'), city: data.get('city'), state: data.get('state') } } : { material: { title: data.get('title'), material_type: 'catalog', gate_mode: data.get('gate_mode'), content_lead_form_id: data.get('content_lead_form_id') || undefined } };
     try { await fetchApi(`/company_admin/${type}s${query}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); toast({ title: 'Rascunho salvo' }); setCreating(null); event.currentTarget.reset(); await load(); }
-    catch { toast({ title: 'Não foi possível salvar', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível salvar'); }
   };
 
   const createMaterial = async (event: FormEvent<HTMLFormElement>) => {
@@ -141,8 +162,7 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
       event.currentTarget.reset();
       await load();
     } catch (err) {
-      const errMsg = err instanceof Error ? cleanErrorMessage(err.message) : 'Não foi possível salvar o material';
-      toast({ title: 'Erro ao salvar', description: errMsg, variant: 'destructive' });
+      handleActionError(err, 'Não foi possível salvar o material');
     } finally {
       setUploadProgress('');
     }
@@ -153,40 +173,40 @@ export default function ProjectsMaterialsHub({ companyId, defaultTab = 'projects
       const path = form ? `/company_admin/content_lead_forms/${form.id}${query}` : `/company_admin/content_lead_forms${query}`;
       await fetchApi(path, { method: form ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content_lead_form: payload }) });
       toast({ title: form ? 'Formulário atualizado' : 'Formulário criado' }); setCreating(null); setEditingForm(null); await load();
-    } catch { toast({ title: 'Não foi possível salvar o formulário', variant: 'destructive' }); }
+    } catch (err) { handleActionError(err, 'Não foi possível salvar o formulário'); }
   };
 
   const toggleFormStatus = async (form: LeadForm) => {
     const nextStatus = form.status === 'active' ? 'inactive' : 'active';
     try { await fetchApi(`/company_admin/content_lead_forms/${form.id}${query}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content_lead_form: { status: nextStatus } }) }); toast({ title: nextStatus === 'active' ? 'Formulário ativado' : 'Formulário desativado' }); await load(); }
-    catch { toast({ title: 'Não foi possível alterar o formulário', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível alterar o formulário'); }
   };
 
   const submit = async (type: 'project' | 'material', id: number) => {
     try { await fetchApi(`/company_admin/${type}s/${id}/submit${query}`, { method: 'POST' }); toast({ title: 'Enviado para moderação' }); await load(); }
-    catch { toast({ title: 'Não foi possível enviar', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível enviar'); }
   };
 
   const updateContent = async (type: 'project' | 'material', id: number, payload: Record<string, unknown>) => {
     try { await fetchApi(`/company_admin/${type}s/${id}${query}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [type]: payload }) }); toast({ title: 'Alterações salvas', description: 'Conteúdo já publicado volta para moderação após uma edição.' }); setEditingProject(null); setEditingMaterial(null); await load(); }
-    catch { toast({ title: 'Não foi possível salvar as alterações', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível salvar as alterações'); }
   };
 
   const archive = async (type: 'project' | 'material', id: number) => {
     if (!window.confirm('Arquivar este item? Ele deixará de aparecer publicamente.')) return;
     try { await fetchApi(`/company_admin/${type}s/${id}${query}`, { method: 'DELETE' }); toast({ title: 'Item arquivado' }); await load(); }
-    catch { toast({ title: 'Não foi possível arquivar', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível arquivar'); }
   };
 
   const updateAsset = async (id: number, payload: Record<string, unknown>) => {
     try { await fetchApi(`/company_admin/assets/${id}${query}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); toast({ title: 'Metadados da mídia salvos', description: 'Mídia publicada volta para moderação após edição.' }); await load(); }
-    catch { toast({ title: 'Não foi possível salvar a mídia', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível salvar a mídia'); }
   };
 
   const archiveAsset = async (id: number) => {
     if (!window.confirm('Remover esta mídia da vitrine? O arquivo permanece auditável como arquivado.')) return;
     try { await fetchApi(`/company_admin/assets/${id}${query}`, { method: 'DELETE' }); toast({ title: 'Mídia arquivada' }); await load(); }
-    catch { toast({ title: 'Não foi possível arquivar a mídia', variant: 'destructive' }); }
+    catch (err) { handleActionError(err, 'Não foi possível arquivar a mídia'); }
   };
 
   const activeForms = useMemo(() => forms.filter(form => form.status === 'active'), [forms]);
@@ -542,6 +562,14 @@ function DropzoneField({
 }
 
 function cleanErrorMessage(message: string): string {
+  if (
+    message.includes("FEATURE_NOT_AVAILABLE") ||
+    message.includes("[403]") ||
+    message.includes("Feature unavailable") ||
+    message.includes("unavailable for this company")
+  ) {
+    return "Este recurso não está disponível no plano atual desta empresa.";
+  }
   if (message.includes("Content lead form can't be blank")) {
     return "O formulário de captura de leads é obrigatório para materiais restritos.";
   }
