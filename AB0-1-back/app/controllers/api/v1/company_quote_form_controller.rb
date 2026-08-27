@@ -10,7 +10,7 @@ module Api
       def show
         published = versions.published.latest_first.first
         draft = versions.draft.latest_first.first
-        render json: { company: @company.as_json(only: %i[id name]), entitlement: { can_customize: @company.has_paid_plan?, can_publish: @company.has_paid_plan? }, permissions: { can_view: true, can_edit: policy(@company).update?, can_publish: policy(@company).update? && @company.has_paid_plan? }, published: published&.as_json(only: %i[id version_number published_at]), draft: draft && draft_payload(draft) }
+        render json: { company: { id: @company.id, name: @company.name, logo_url: @company.logo_url }, entitlement: { can_customize: @company.has_paid_plan?, can_publish: @company.has_paid_plan? }, permissions: { can_view: true, can_edit: policy(@company).update?, can_publish: policy(@company).update? && @company.has_paid_plan? }, published: published&.as_json(only: %i[id version_number published_at]), draft: draft && draft_payload(draft) }
       end
       def create_draft
         draft = LeadWizard::CompanyDraftBuilder.ensure_draft!(company: @company)

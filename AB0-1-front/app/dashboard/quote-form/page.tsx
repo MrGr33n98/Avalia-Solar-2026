@@ -49,9 +49,11 @@ export default function QuoteFormStudioPage() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [entitlement, setEntitlement] = useState<QuoteFormStudioResponse['entitlement']>();
+  const [companyData, setCompanyData] = useState<QuoteFormStudioResponse['company']>();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const companyId = activeCompany?.id ?? user?.company_id;
   const canEdit = entitlement?.can_customize !== false && entitlement?.can_publish !== false;
+  const logoToShow = editor.ui_config.logo_url || activeCompany?.logo_url || companyData?.logo_url;
 
   useEffect(() => {
     if (!companyId) return;
@@ -59,6 +61,7 @@ export default function QuoteFormStudioPage() {
       .studio(companyId)
       .then((data) => {
         setEntitlement(data.entitlement);
+        setCompanyData(data.company);
         if (data.draft) {
           setEditor({
             ...initial,
@@ -463,10 +466,10 @@ export default function QuoteFormStudioPage() {
                   <div className="space-y-5">
                     {/* Header preview */}
                     <div className="text-center space-y-3">
-                      {editor.ui_config.logo_url ? (
+                      {logoToShow ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={editor.ui_config.logo_url}
+                          src={logoToShow}
                           alt="Logo Preview"
                           className="mx-auto h-12 w-12 rounded-full object-cover border-2 shadow-sm"
                         />
