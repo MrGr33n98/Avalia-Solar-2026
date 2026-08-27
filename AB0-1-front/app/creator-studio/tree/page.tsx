@@ -245,6 +245,7 @@ export default function CreatorTreePage() {
         description="Reúna seus principais links e compartilhe uma única página com sua audiência."
         breadcrumbs={[{ label: 'Creator Studio', href: '/creator-studio' }, { label: 'Meu Tree' }]}
       />
+      <div className="mb-2 text-xs font-semibold text-slate-500">{editor.status === "saving" ? "Salvando..." : editor.status === "error" ? "Não foi possível salvar" : editor.status === "saved" ? "Salvo ✓" : ""}</div>
       <div className="-mt-2 mb-4 flex items-center gap-2 text-xs font-bold text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Ativo</div>
       <section className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.04)] sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
