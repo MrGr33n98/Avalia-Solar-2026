@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { BarChart3, FileText, FolderKanban, Pencil, Plus, RefreshCw, Send, ShieldCheck, Upload, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -216,7 +217,8 @@ export default function ProjectsMaterialsHub({
     <Tabs defaultValue={defaultTab} className="space-y-5"><TabsList className="h-auto w-full justify-start gap-2 overflow-x-auto rounded-xl bg-slate-100 p-1"><TabsTrigger value="projects"><FolderKanban className="mr-2 h-4 w-4" />Projetos</TabsTrigger><TabsTrigger value="materials"><FileText className="mr-2 h-4 w-4" />Materiais</TabsTrigger><TabsTrigger value="forms"><ShieldCheck className="mr-2 h-4 w-4" />Formulários</TabsTrigger><TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Desempenho</TabsTrigger><TabsTrigger value="leads"><Users className="mr-2 h-4 w-4" />Leads</TabsTrigger></TabsList>
       <TabsContent value="projects" className="space-y-4"><div className="flex justify-end"><Button onClick={() => setCreating('project')}><Plus className="mr-2 h-4 w-4" />Novo projeto</Button></div>{creating === 'project' && <form onSubmit={event => create(event, 'project')} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2"><Field label="Título *" name="title" required /><Field label="Tipo de projeto" name="project_type" /><Field label="Cidade" name="city" /><Field label="UF" name="state" /><Actions onCancel={() => setCreating(null)} /></form>}{editingProject && <ProjectEditor project={editingProject} onCancel={() => setEditingProject(null)} onSave={payload => updateContent('project', editingProject.id, payload)} />}<List loading={loading} empty="Crie o primeiro projeto para montar sua vitrine pública." rows={projects}>{project => <><span className="font-semibold">{project.title}<ModerationNote note={project.moderation_reason} /></span><span>{[project.city, project.state].filter(Boolean).join(' - ') || 'Sem localização'}</span><Status value={project.status} /><div className="flex flex-wrap gap-2"><AssetUpload companyId={companyId} type="project" id={project.id} accept="image/png,image/jpeg,image/webp" kind="image" onDone={load} /><ExternalVideo companyId={companyId} projectId={project.id} onDone={load} /><Button size="sm" type="button" variant="outline" onClick={() => setAssetTarget({ type: 'project', id: project.id })}>Mídias ({project.assets?.length || 0})</Button><Button size="sm" type="button" variant="outline" onClick={() => setEditingProject(project)}><Pencil className="mr-1 h-3 w-3" />Editar</Button>{project.status === 'draft' && <Button size="sm" variant="outline" onClick={() => submit('project', project.id)}><Send className="mr-1 h-3 w-3" />Enviar</Button>}<Button size="sm" type="button" variant="ghost" onClick={() => archive('project', project.id)}>Arquivar</Button></div></>}</List>{assetTarget?.type === 'project' && assetOwner && <AssetManager title={assetOwner.title} assets={assetOwner.assets || []} onClose={() => setAssetTarget(null)} onSave={updateAsset} onArchive={archiveAsset} />}</TabsContent>
       <TabsContent value="materials" className="space-y-4">
-        <div className="flex justify-end">
+        <div className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/60 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><FileText className="h-4 w-4" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Biblioteca premium</p><h2 className="text-xl font-black tracking-tight text-slate-950">Materiais da empresa</h2></div></div><p className="mt-2 text-sm text-slate-500">PDFs prontos para gerar demanda, com revisão segura e download rastreável.</p></div>
           <Button onClick={() => {
             setMaterialPdf(null);
             setMaterialCover(null);
@@ -225,6 +227,8 @@ export default function ProjectsMaterialsHub({
             <Plus className="mr-2 h-4 w-4" />Novo material
           </Button>
         </div>
+
+        <div className="grid gap-3 sm:grid-cols-3"><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Materiais</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Prontos para revisão</p><p className="mt-1 text-2xl font-black text-blue-600">{materials.filter(material => material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')).length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Downloads</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.reduce((total, material) => total + (material.download_count || 0), 0)}</p></CardContent></Card></div>
 
         {creating === 'material' && (
           <form onSubmit={createMaterial} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2">
@@ -340,7 +344,7 @@ export default function ProjectsMaterialsHub({
                   <Pencil className="mr-1 h-3 w-3" />Editar
                 </Button>
                 {material.status === 'draft' && (
-                  <Button size="sm" variant="outline" onClick={() => submit('material', material.id)}>
+                  <Button size="sm" variant="outline" disabled={!material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')} onClick={() => submit('material', material.id)}>
                     <Send className="mr-1 h-3 w-3" />Enviar
                   </Button>
                 )}

@@ -71,7 +71,8 @@ class DigitalAsset < ApplicationRecord
               end
     declared_type = file.blob.content_type
     detected_type = detected_content_type
-    errors.add(:file, 'tipo de arquivo não permitido') unless allowed.include?(declared_type) && allowed.include?(detected_type)
+    declared_is_generic = %w[application/octet-stream binary/octet-stream].include?(declared_type)
+    errors.add(:file, 'tipo de arquivo não permitido') unless allowed.include?(detected_type) && (allowed.include?(declared_type) || declared_is_generic)
     errors.add(:file, 'arquivo excede 25 MB') if file.blob.byte_size > 25.megabytes
   end
 
