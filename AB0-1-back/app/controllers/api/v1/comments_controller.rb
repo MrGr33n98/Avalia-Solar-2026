@@ -90,7 +90,8 @@ module Api
           created_at: comment.created_at.iso8601,
           user: {
             id: comment.user_id,
-            name: comment.user&.name
+            name: comment.user&.name,
+            avatar_url: comment.user&.avatar_url
           },
           replies: (comment.replies.loaded? ? comment.replies : comment.replies.active).map { |r| serialize_comment(r) }
         }

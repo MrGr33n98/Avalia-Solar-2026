@@ -92,6 +92,7 @@ export interface CommentItem {
   user: {
     id: number;
     name: string;
+    avatar_url?: string;
   };
   replies?: CommentItem[];
 }

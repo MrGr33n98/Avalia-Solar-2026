@@ -230,7 +230,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
             ) : (
               comments.map((comment) => (
                 <div key={comment.id} className="flex items-start gap-2.5 text-xs bg-muted/30 p-2.5 rounded-lg border border-border/40">
-                  <UserAvatar name={comment.user.name} size="sm" className="mt-0.5 shrink-0" />
+                  <UserAvatar src={comment.user.avatar_url} name={comment.user.name} size="sm" className="mt-0.5 shrink-0" />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-foreground text-xs">{comment.user.name}</span>
