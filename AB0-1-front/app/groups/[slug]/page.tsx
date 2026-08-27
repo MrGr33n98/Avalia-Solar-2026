@@ -114,7 +114,7 @@ export default async function GroupDetailPage({ params }: GroupPageProps) {
           <span className="text-slate-500 font-medium">{group.name}</span>
         </div>
 
-        <GroupHero group={group} />
+        <GroupHero group={group} members={members} />
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">

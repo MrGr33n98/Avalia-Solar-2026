@@ -2,12 +2,12 @@ import { BadgeCheck, Lock, Users, Settings } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import type { Group } from '@/types/groups';
+import type { Group, GroupMember } from '@/types/groups';
 import { GroupMembershipButton } from './GroupMembershipButton';
 import { GroupHeroMedia } from './GroupHeroMedia';
 import { Button } from '@/components/ui/button';
 
-export function GroupHero({ group }: { group: Group }) {
+export function GroupHero({ group, members = [] }: { group: Group; members?: GroupMember[] }) {
   const hasAvatar = !!group.avatar_url;
 
   return (
@@ -72,10 +72,31 @@ export function GroupHero({ group }: { group: Group }) {
             {group.name}
           </h1>
 
-          <p className="mt-2 text-slate-500 text-sm font-medium flex items-center gap-1.5">
-            <Users className="h-4 w-4 text-slate-400" aria-hidden="true" />
-            <span>{group.stats.members.toLocaleString('pt-BR')} membros</span>
-          </p>
+          <div className="mt-2 flex items-center gap-2">
+            {members && members.length > 0 && (
+              <div className="flex -space-x-1.5">
+                {members.slice(0, 10).map((member) => {
+                  const name = member.user?.name || 'User';
+                  const initials = name.charAt(0).toUpperCase();
+                  return (
+                    <div key={member.id} title={name} className="relative inline-block h-6 w-6 shrink-0 rounded-full ring-2 ring-white bg-slate-200 overflow-hidden">
+                      {member.user?.avatar_url ? (
+                        <Image src={member.user.avatar_url} alt={name} fill sizes="24px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 text-[10px] font-bold text-blue-700">
+                          {initials}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
+              {(!members || members.length === 0) && <Users className="h-4 w-4 text-slate-400" aria-hidden="true" />}
+              <span>{group.stats.members.toLocaleString('pt-BR')} membros</span>
+            </p>
+          </div>
 
           <p className="mt-4 text-base leading-relaxed text-slate-700 max-w-3xl">
             {group.short_description || group.description || 'Bem-vindo à comunidade oficial do Avalia Solar.'}
