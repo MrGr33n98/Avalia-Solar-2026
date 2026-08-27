@@ -17,24 +17,24 @@ function DesktopNavbarBanner() {
 
   if (!desktop) return null;
 
-  return <BannerByLocation location="navbar" limit={1} className="mx-auto" />;
+  return (
+    <BannerByLocation
+      location="navbar"
+      limit={1}
+      className="mx-auto"
+      showLoadingPlaceholder={false}
+    />
+  );
 }
 
 export default function NavbarBannerSlot() {
   const pathname = usePathname();
-  const isReviewerDashboard =
-    pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/');
+  const hiddenRoute =
+    pathname === '/' ||
+    pathname === '/review-dashboard' ||
+    pathname?.startsWith('/review-dashboard/');
 
-  if (isReviewerDashboard) return null;
+  if (hiddenRoute) return null;
 
-  return (
-    <div
-      className="hidden border-b border-slate-100 bg-white md:block dark:border-slate-800 dark:bg-slate-950"
-      aria-label="Publicidade no topo"
-    >
-      <div className="mx-auto max-w-[1200px] px-4 py-1">
-        <DesktopNavbarBanner />
-      </div>
-    </div>
-  );
+  return <DesktopNavbarBanner />;
 }

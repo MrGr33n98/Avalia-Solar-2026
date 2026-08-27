@@ -19,6 +19,7 @@ interface BannerByLocationProps {
   state?: string;
   city?: string;
   initialBanners?: Banner[];
+  showLoadingPlaceholder?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export function BannerByLocation({
   state,
   city,
   initialBanners,
+  showLoadingPlaceholder = true,
 }: BannerByLocationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +73,8 @@ export function BannerByLocation({
 
   // Se estamos carregando e não temos dados iniciais, mostra esqueleto
   if (isLoading && !banners) {
+    if (!showLoadingPlaceholder) return null;
+
     return (
       <div
         className={cn(
