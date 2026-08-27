@@ -73,6 +73,7 @@ export default function QuoteFormStudioPage() {
 
   const update = useCallback(
     (change: (current: Editor) => Editor) => {
+      if (!canEdit) return;
       setEditor((current) => {
         const next = change(current);
         setStatus('Alterações pendentes');
@@ -94,7 +95,7 @@ export default function QuoteFormStudioPage() {
         return next;
       });
     },
-    [companyId]
+    [companyId, canEdit]
   );
 
   const addField = () =>
@@ -224,12 +225,19 @@ export default function QuoteFormStudioPage() {
                   </div>
                 ) : tab === 'questions' ? (
                   <div className="space-y-4">
+                    {!canEdit && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-300 p-3 rounded-lg border border-amber-200/50 mb-2">
+                        <Lock className="h-3.5 w-3.5 shrink-0" />
+                        <span>Perguntas em modo de visualização. Faça upgrade para editar.</span>
+                      </div>
+                    )}
                     {editor.steps.map((step, index) => (
                       <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-950 shadow-sm" key={step.id}>
                         <div className="space-y-1">
                           <label className="text-xs font-bold uppercase text-muted-foreground">Nome do Passo</label>
                           <Input
                             value={step.title}
+                            disabled={!canEdit}
                             onChange={(e) =>
                               update((c) => ({
                                 ...c,
@@ -246,6 +254,7 @@ export default function QuoteFormStudioPage() {
                             <div className="flex gap-2 items-center" key={field.id}>
                               <Input
                                 value={field.label}
+                                disabled={!canEdit}
                                 onChange={(e) =>
                                   update((c) => ({
                                     ...c,
@@ -266,6 +275,7 @@ export default function QuoteFormStudioPage() {
                               <Button
                                 size="icon"
                                 variant="ghost"
+                                disabled={!canEdit}
                                 onClick={() =>
                                   update((c) => ({
                                     ...c,
@@ -282,7 +292,7 @@ export default function QuoteFormStudioPage() {
                           ))}
                         </div>
 
-                        <Button variant="outline" size="sm" onClick={addField} className="w-full mt-2 border-dashed">
+                        <Button variant="outline" size="sm" onClick={addField} disabled={!canEdit} className="w-full mt-2 border-dashed">
                           <Plus className="mr-1.5 h-4 w-4" />
                           Adicionar pergunta
                         </Button>
@@ -291,12 +301,19 @@ export default function QuoteFormStudioPage() {
                   </div>
                 ) : tab === 'appearance' ? (
                   <div className="space-y-5">
+                    {!canEdit && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-300 p-3 rounded-lg border border-amber-200/50 mb-2">
+                        <Lock className="h-3.5 w-3.5 shrink-0" />
+                        <span>Aparência em modo de visualização. Faça upgrade para editar.</span>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-foreground">Cor primária da marca</label>
                       <div className="flex gap-3 items-center">
                         <Input
                           type="color"
                           value={editor.ui_config.primary_color}
+                          disabled={!canEdit}
                           onChange={(e) =>
                             update((c) => ({ ...c, ui_config: { ...c.ui_config, primary_color: e.target.value } }))
                           }
@@ -305,6 +322,7 @@ export default function QuoteFormStudioPage() {
                         <Input
                           type="text"
                           value={editor.ui_config.primary_color}
+                          disabled={!canEdit}
                           onChange={(e) =>
                             update((c) => ({ ...c, ui_config: { ...c.ui_config, primary_color: e.target.value } }))
                           }
@@ -317,6 +335,7 @@ export default function QuoteFormStudioPage() {
                       <label className="block text-sm font-semibold">URL do logo da empresa</label>
                       <Input
                         value={editor.ui_config.logo_url}
+                        disabled={!canEdit}
                         onChange={(e) => update((c) => ({ ...c, ui_config: { ...c.ui_config, logo_url: e.target.value } }))}
                         placeholder="https://..."
                         className="text-sm"
@@ -327,6 +346,7 @@ export default function QuoteFormStudioPage() {
                       <label className="block text-sm font-semibold">Título de conclusão</label>
                       <Input
                         value={editor.thank_you_config.title}
+                        disabled={!canEdit}
                         onChange={(e) =>
                           update((c) => ({ ...c, thank_you_config: { ...c.thank_you_config, title: e.target.value } }))
                         }
@@ -339,12 +359,13 @@ export default function QuoteFormStudioPage() {
                         type="checkbox"
                         id="show-progress"
                         checked={editor.ui_config.show_progress_bar}
+                        disabled={!canEdit}
                         onChange={(e) =>
                           update((c) => ({ ...c, ui_config: { ...c.ui_config, show_progress_bar: e.target.checked } }))
                         }
-                        className="h-4.5 w-4.5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                        className="h-4.5 w-4.5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-50"
                       />
-                      <label htmlFor="show-progress" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                      <label htmlFor="show-progress" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-50">
                         Exibir barra de progresso do funil
                       </label>
                     </div>
@@ -430,7 +451,15 @@ export default function QuoteFormStudioPage() {
                   </div>
                 </div>
 
-                <div className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 rounded-2xl p-5 space-y-6 shadow-inner min-h-[360px] flex flex-col justify-between">
+                 <div className={cn(
+                  "w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 rounded-2xl p-5 space-y-6 shadow-inner min-h-[360px] flex flex-col justify-between relative overflow-hidden",
+                  !canEdit && "pt-8"
+                )}>
+                  {!canEdit && (
+                    <div className="absolute top-0 right-0 left-0 bg-amber-500/10 dark:bg-amber-500/20 border-b border-amber-500/20 py-1.5 text-center text-[9px] font-bold text-amber-700 dark:text-amber-400 select-none tracking-wider uppercase z-10">
+                      Demonstração
+                    </div>
+                  )}
                   <div className="space-y-5">
                     {/* Header preview */}
                     <div className="text-center space-y-3">
