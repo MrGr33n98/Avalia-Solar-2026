@@ -49,12 +49,18 @@ export function TreeBackgroundEditor({ appearance, onChange }: TreeBackgroundEdi
       return;
     }
 
+    const previousValue = bg?.value;
+    const localUrl = URL.createObjectURL(file);
+    handleValueChange({ type: 'image', value: localUrl });
     try {
       setUploading(true);
       const res = await reviewerTreeSettingsApi.uploadBackgroundImage(file);
       handleValueChange({ type: 'image', value: res.url });
+      URL.revokeObjectURL(localUrl);
       toast.success('Imagem carregada com sucesso!');
     } catch {
+      URL.revokeObjectURL(localUrl);
+      handleValueChange({ type: 'image', value: previousValue || '' });
       toast.error('Não foi possível carregar a imagem.');
     } finally {
       setUploading(false);

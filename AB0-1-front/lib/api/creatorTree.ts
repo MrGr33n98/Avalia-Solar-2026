@@ -107,10 +107,11 @@ export const publicCreatorTreeApi = {
 
 export const reviewerTreeSettingsApi = {
   get: () => fetchApi<any>('/reviewer/tree/settings'),
-  update: (settings: { theme_key: string; appearance: any, config?: any }) =>
+  update: (settings: { theme_key: string; appearance: any, config?: any }, signal?: AbortSignal) =>
     fetchApi<any>('/reviewer/tree/settings', {
       method: 'PATCH',
       body: JSON.stringify({ settings }),
+      signal,
     }),
   uploadBackgroundImage: async (file: File) => {
     const formData = new FormData();

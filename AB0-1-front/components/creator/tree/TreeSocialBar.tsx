@@ -26,7 +26,7 @@ const socialLinks: ReadonlyArray<readonly [
 
 export function TreeSocialBar({ creator, themeKey, appearance }: TreeSocialBarProps) {
   const isDark = themeKey === 'dark' || themeKey === 'neo';
-  const iconColorClass = appearance?.textColor || (isDark ? 'text-white' : 'text-slate-700');
+  const iconColorClass = appearance?.fontColor || appearance?.textColor || (isDark ? 'text-white' : 'text-slate-700');
   const bgClass = isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-200/50 hover:bg-slate-300/50';
 
   return (

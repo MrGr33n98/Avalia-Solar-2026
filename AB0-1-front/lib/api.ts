@@ -1530,6 +1530,7 @@ export async function fetchApi<T = any>(endpoint: string, options: any = {}): Pr
       retries: options.retries,
       timeout: options.timeout,
       skipAuthRefresh: options.skipAuthRefresh,
+      signal: options.signal,
     });
     return response.data;
   } catch (error: unknown) {

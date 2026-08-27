@@ -13,8 +13,8 @@ interface TreeHeaderProps {
 
 export function TreeHeader({ creator, themeKey, appearance }: TreeHeaderProps) {
   const isDark = themeKey === 'dark' || themeKey === 'neo';
-  const textColor = appearance?.textColor || (isDark ? 'text-white' : 'text-slate-900');
-  const bioColor = appearance?.textColor ? appearance.textColor : (isDark ? 'text-slate-300' : 'text-slate-600');
+  const textColor = appearance?.fontColor || appearance?.textColor || (isDark ? 'text-white' : 'text-slate-900');
+  const bioColor = appearance?.fontColor || appearance?.textColor || (isDark ? 'text-slate-300' : 'text-slate-600');
 
   return (
     <div className="flex flex-col items-center text-center mt-12 mb-8 px-4 w-full max-w-2xl mx-auto">

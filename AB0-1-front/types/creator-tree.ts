@@ -19,6 +19,7 @@ export interface CreatorTreeAppearance {
   };
   fontFamily?: 'sans' | 'serif' | 'mono';
   fontColor?: string;
+  textColor?: string;
   fontScale?: 'sm' | 'md' | 'lg';
 }
 

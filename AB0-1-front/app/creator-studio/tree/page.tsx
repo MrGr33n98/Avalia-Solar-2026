@@ -30,6 +30,7 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { useAuth } from '@/contexts/AuthContext';
 import { companiesApi, reviewerProfileApi, type Company } from '@/lib/api';
 import type { CreatorTreeTheme, CreatorTreeSettings } from '@/types/creator-tree';
+import { useTreeEditorState } from '@/hooks/creator-tree/useTreeEditorState';
 import { creatorTreeApi, type CreatorTreeBlock, creatorTreeUrl, reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { ReviewerPublication } from '@/types/reviewer-publication';
@@ -90,6 +91,7 @@ export default function CreatorTreePage() {
   const [activeTab, setActiveTab] = useState('links');
   const [settings, setSettings] = useState<any>(null);
   const [creatorProfile, setCreatorProfile] = useState<any>(null);
+  const editor = useTreeEditorState(settings);
 
   const publicUrl = slug ? creatorTreeUrl(slug) : '';
 
@@ -129,9 +131,10 @@ export default function CreatorTreePage() {
   }, []);
 
   const handleUpdateSettings = async (payload: Partial<CreatorTreeSettings>): Promise<CreatorTreeSettings> => {
-    const updated = await reviewerTreeSettingsApi.update(payload as any);
-    setSettings(updated);
-    return updated;
+    const next = { ...settings, ...payload, appearance: payload.appearance || settings?.appearance || {} } as CreatorTreeSettings;
+    setSettings(next);
+    editor.update(payload, payload.theme_key ? 200 : 500);
+    return next;
   };
 
   const copyUrl = async () => {
@@ -276,9 +279,9 @@ export default function CreatorTreePage() {
             <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
               {settings && (
                 <TreeAppearancePanel
-                  initialTheme={settings.theme_key}
-                  initialAppearance={settings.appearance}
-                  onUpdate={setSettings}
+                  initialTheme={editor.themeKey}
+                  initialAppearance={editor.appearance}
+                  onUpdate={handleUpdateSettings}
                 />
               )}
               {!settings && !loading && (
@@ -315,8 +318,8 @@ export default function CreatorTreePage() {
               url: b.url || null,
               metadata: b.metadata
             })),
-            appearance: settings?.appearance,
-            theme_key: settings?.theme_key || 'solar'
+            appearance: editor.appearance,
+            theme_key: editor.themeKey || 'solar'
           } : null}
         />
       </aside>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CreatorTreeTheme, CreatorTreeAppearance } from '@/types/creator-tree';
-import { reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
@@ -23,25 +22,9 @@ const THEMES: Array<{ key: CreatorTreeTheme; label: string; bgClass: string }> =
 export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate }: TreeAppearancePanelProps) {
   const [themeKey, setThemeKey] = useState<string>(initialTheme || 'solar');
   const [appearance, setAppearance] = useState<CreatorTreeAppearance>(initialAppearance || {});
-  const [saving, setSaving] = useState(false);
 
   const saveSettings = async (newThemeKey: string, newAppearance: CreatorTreeAppearance) => {
-    try {
-      setSaving(true);
-      await reviewerTreeSettingsApi.update({
-        theme_key: newThemeKey,
-        appearance: newAppearance,
-      });
-      onUpdate({ theme_key: newThemeKey, appearance: newAppearance });
-      toast.success('Aparência atualizada!');
-    } catch {
-      toast.error('Erro ao salvar aparência.');
-      // Revert state if failed
-      setThemeKey(initialTheme);
-      setAppearance(initialAppearance);
-    } finally {
-      setSaving(false);
-    }
+    onUpdate({ theme_key: newThemeKey, appearance: newAppearance });
   };
 
   const handleThemeChange = (key: string) => {
@@ -265,7 +248,6 @@ export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate 
         onChange={handleBackgroundChange} 
       />
       
-      {saving && <p className="text-xs text-blue-600 text-center animate-pulse">Salvando alterações...</p>}
     </div>
   );
 }
