@@ -64,6 +64,7 @@ export default function ProjectsMaterialsHub({
   const [materialPdf, setMaterialPdf] = useState<File | null>(null);
   const [materialCover, setMaterialCover] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [materialPreview, setMaterialPreview] = useState({ title: 'Seu material', description: 'Uma prévia de como o material aparecerá para seus visitantes.', coverUrl: null as string | null, gated: false });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -222,6 +223,7 @@ export default function ProjectsMaterialsHub({
           <Button onClick={() => {
             setMaterialPdf(null);
             setMaterialCover(null);
+            setMaterialPreview({ title: 'Seu material', description: 'Uma prévia de como o material aparecerá para seus visitantes.', coverUrl: null, gated: false });
             setCreating('material');
           }}>
             <Plus className="mr-2 h-4 w-4" />Novo material
@@ -231,7 +233,7 @@ export default function ProjectsMaterialsHub({
         <div className="grid gap-3 sm:grid-cols-3"><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Materiais</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Prontos para revisão</p><p className="mt-1 text-2xl font-black text-blue-600">{materials.filter(material => material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')).length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Downloads</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.reduce((total, material) => total + (material.download_count || 0), 0)}</p></CardContent></Card></div>
 
         {creating === 'material' && (
-          <form onSubmit={createMaterial} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-2">
+          <form onSubmit={createMaterial} onChange={event => { const data = new FormData(event.currentTarget); setMaterialPreview(current => ({ ...current, title: String(data.get('title') || 'Seu material'), description: String(data.get('description') || 'Uma prévia de como o material aparecerá para seus visitantes.'), gated: data.get('gate_mode') === 'form' })); }} className="grid gap-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:grid-cols-2">
             <Field label="Título *" name="title" required />
             <label className="space-y-1 text-sm font-medium">
               <span>Acesso</span>
@@ -256,8 +258,10 @@ export default function ProjectsMaterialsHub({
 
             <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
               <DropzoneField label="Arquivo PDF (máx. 25MB) *" accept="application/pdf" onChange={setMaterialPdf} file={materialPdf} />
-              <DropzoneField label="Imagem de Capa (opcional)" accept="image/png,image/jpeg,image/webp" onChange={setMaterialCover} file={materialCover} />
+              <DropzoneField label="Imagem de Capa (opcional)" accept="image/png,image/jpeg,image/webp" onChange={file => { setMaterialCover(file); setMaterialPreview(current => ({ ...current, coverUrl: file ? URL.createObjectURL(file) : null })); }} file={materialCover} />
             </div>
+
+            <MaterialPreview {...materialPreview} />
 
             <div className="flex items-end gap-3 md:col-span-2 mt-2">
               {uploadProgress ? (
@@ -364,6 +368,10 @@ export default function ProjectsMaterialsHub({
       <TabsContent value="leads"><LeadsPanel leads={leads} companyId={companyId} /></TabsContent>
     </Tabs>
   </div>;
+}
+
+function MaterialPreview({ title, description, coverUrl, gated }: { title: string; description: string; coverUrl: string | null; gated: boolean }) {
+  return <aside className="md:col-span-2 rounded-2xl border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10"><div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-300">Preview ao vivo</p><p className="mt-1 text-xs text-slate-400">Visão aproximada no perfil público da empresa</p></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-blue-200">{gated ? 'Com formulário' : 'Acesso livre'}</span></div><div className="max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0B1528] shadow-2xl"><div className="relative flex h-32 items-center justify-center overflow-hidden bg-slate-900">{coverUrl ? <img src={coverUrl} alt="Prévia da capa" className="absolute inset-0 h-full w-full object-cover opacity-75" /> : <FileText className="h-12 w-12 text-blue-400/70" />}<div className="absolute inset-0 bg-gradient-to-t from-[#0B1528] to-transparent" /></div><div className="space-y-3 p-4"><p className="text-[10px] font-black uppercase tracking-wider text-blue-300">Material destacado</p><h3 className="line-clamp-2 text-base font-extrabold leading-tight">{title || 'Seu material'}</h3><p className="line-clamp-2 text-xs leading-relaxed text-slate-300">{description || 'Descrição do material aparecerá aqui.'}</p><div className="rounded-xl bg-blue-600 px-4 py-2.5 text-center text-xs font-black">{gated ? 'Acessar grátis' : 'Baixar grátis'}</div></div></div></aside>;
 }
 
 function ProjectEditor({ project, onCancel, onSave }: { project: Project; onCancel: () => void; onSave: (payload: Record<string, unknown>) => void }) {
