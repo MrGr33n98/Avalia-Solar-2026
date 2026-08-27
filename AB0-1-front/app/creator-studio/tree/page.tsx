@@ -30,9 +30,12 @@ import { ReviewerPageHeader } from '@/components/review-dashboard/layout/Reviewe
 import { useAuth } from '@/contexts/AuthContext';
 import { companiesApi, reviewerProfileApi, type Company } from '@/lib/api';
 import { creatorTreeApi, type CreatorTreeBlock } from '@/lib/api/creatorTree';
-import { creatorTreeUrl } from '@/lib/api/creatorTree';
+import { creatorTreeUrl, reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { ReviewerPublication } from '@/types/reviewer-publication';
+import { TreeDevicePreview } from '@/components/creator/tree/TreeDevicePreview';
+import { TreeAppearancePanel } from '@/components/creator/tree/TreeAppearancePanel';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 function normalizeTreeUrl(value: string, type: string) {
   const trimmed = value.trim();
@@ -80,18 +83,43 @@ export default function CreatorTreePage() {
   const [copied, setCopied] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [form, setForm] = useState({ type: 'external_link', title: '', subtitle: '', url: '', active: true, companyId: '', publicationId: '', color: 'blue', icon: 'link' });
+  
+  const [activeTab, setActiveTab] = useState('links');
+  const [settings, setSettings] = useState<any>(null);
+  const [creatorProfile, setCreatorProfile] = useState<any>(null);
 
   const publicUrl = slug ? creatorTreeUrl(slug) : '';
 
   useEffect(() => {
-    void Promise.all([creatorTreeApi.list(), reviewerProfileApi.get(), companiesApi.mine(), reviewerPublicationsApi.list({ status: 'published' })])
-      .then(([items, profile, ownedCompanies, publicationResponse]) => {
+    void Promise.all([
+      creatorTreeApi.list(), 
+      reviewerProfileApi.get(), 
+      companiesApi.mine(), 
+      reviewerPublicationsApi.list({ status: 'published' }),
+      reviewerTreeSettingsApi.get().catch(() => ({ theme_key: 'solar', appearance: {} }))
+    ])
+      .then(([items, profile, ownedCompanies, publicationResponse, settingsResponse]) => {
         const treeResponse = Array.isArray(items) ? { blocks: items, profile: {} } : items;
         setBlocks(treeResponse?.blocks || []);
         setSlug(treeResponse?.profile?.public_slug || profile?.profile?.public_slug || null);
         setTreeViews(treeResponse?.profile?.tree_views_count || 0);
         setCompanies(Array.isArray(ownedCompanies) ? ownedCompanies : []);
         setPublications(publicationResponse?.items || []);
+        setSettings(settingsResponse);
+        setCreatorProfile({
+          name: (profile as any)?.user?.name || '',
+          headline: (profile as any)?.profile?.headline || '',
+          bio: (profile as any)?.profile?.bio || '',
+          slug: (profile as any)?.profile?.public_slug || '',
+          avatar_url: (profile as any)?.user?.avatar_url || '',
+          banner_url: (profile as any)?.profile?.public_banner_url || '',
+          city: (profile as any)?.profile?.city || '',
+          state: (profile as any)?.profile?.state || '',
+          linkedin_url: (profile as any)?.profile?.linkedin_url || '',
+          instagram_url: (profile as any)?.profile?.instagram_url || '',
+          youtube_url: (profile as any)?.profile?.youtube_url || '',
+          website_url: (profile as any)?.profile?.website_url || ''
+        });
       })
       .catch(() => toast.error('Não foi possível carregar seu Tree.'))
       .finally(() => setLoading(false));
@@ -219,25 +247,69 @@ export default function CreatorTreePage() {
         <div className="rounded-[16px] border border-slate-200 bg-white p-4"><Link2 className="h-4 w-4 text-blue-600" /><p className="mt-3 text-2xl font-black text-slate-950">{activeBlocks} <span className="text-sm font-normal text-slate-400">de 8</span></p><p className="text-xs font-medium text-slate-500">Links ativos</p><div className="mt-3 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 rounded-full bg-blue-600" style={{ width: `${Math.min(activeBlocks / 8 * 100, 100)}%` }} /></div></div>
         <div className="rounded-[16px] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4"><Crown className="h-4 w-4 text-amber-500" /><p className="mt-3 text-sm font-black text-slate-900">Creator Pro</p><p className="mt-1 text-xs leading-5 text-slate-500">Tenha mais links, análises avançadas e muito mais.</p><button type="button" className="mt-2 rounded-lg bg-blue-100 px-3 py-1.5 text-[11px] font-bold text-blue-700">Conhecer planos</button></div>
       </section>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_270px]">
-      <section className="space-y-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
-        <div className="flex items-center justify-between"><h2 className="text-sm font-black uppercase tracking-wide text-slate-600">Seus links</h2><div className="flex gap-2"><button type="button" className="hidden min-h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 sm:inline-flex"><SlidersHorizontal className="h-3.5 w-3.5" /> Ordenar</button><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div></div>
-        {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando links...</p> : blocks.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><Link2 className="mx-auto h-8 w-8 text-blue-600" /><h2 className="mt-3 font-bold text-slate-900">Seu Tree ainda está vazio</h2><p className="mt-1 text-sm text-slate-500">Adicione seu primeiro link para começar a montar sua página pública.</p><button type="button" onClick={() => openEditor()} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">+ Adicionar primeiro link</button></div> : blocks.map((block, index) => (
-          <article key={block.id} className="group flex flex-wrap items-center gap-3 border-b border-slate-100 px-1 py-3 last:border-0">
-            <GripVertical className="h-5 w-5 shrink-0 text-slate-300" />
-            {(() => { const Icon = blockIconByType[block.block_type || block.type || 'external_link'] || Link2; return <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" /></div>; })()}
-            <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">{block.active ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 truncate text-xs text-slate-500">{blockTypeLabels[block.block_type || block.type || 'external_link']} {block.url ? ` · ${block.url}` : ''}</p></div>
-            <div className="hidden min-w-14 text-center sm:block"><p className="font-bold text-slate-800">{block.clicks_count || 0}</p><p className="text-[10px] text-slate-400">Cliques</p></div>
-            <button type="button" onClick={() => void toggle(block)} className="grid h-8 w-12 place-items-center rounded-full bg-blue-600 p-1" aria-label={block.active ? 'Desativar bloco' : 'Ativar bloco'}><span className={`h-6 w-6 rounded-full bg-white transition-transform ${block.active ? 'translate-x-2' : '-translate-x-2'}`} /></button>
-            <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"><Pencil className="h-4 w-4" /></button>
-            <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
-            <div className="flex gap-1"><button type="button" onClick={() => void move(index, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↑</button><button type="button" onClick={() => void move(index, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↓</button></div>
-          </article>
-        ))}
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="bg-transparent">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4 bg-white border border-slate-200">
+            <TabsTrigger value="links">Links</TabsTrigger>
+            <TabsTrigger value="appearance">Aparência</TabsTrigger>
+            <TabsTrigger value="settings">Configurações</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="links" className="space-y-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
+            <div className="flex items-center justify-between"><h2 className="text-sm font-black uppercase tracking-wide text-slate-600">Seus links</h2><div className="flex gap-2"><button type="button" className="hidden min-h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 sm:inline-flex"><SlidersHorizontal className="h-3.5 w-3.5" /> Ordenar</button><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div></div>
+            {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando links...</p> : blocks.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><Link2 className="mx-auto h-8 w-8 text-blue-600" /><h2 className="mt-3 font-bold text-slate-900">Seu Tree ainda está vazio</h2><p className="mt-1 text-sm text-slate-500">Adicione seu primeiro link para começar a montar sua página pública.</p><button type="button" onClick={() => openEditor()} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">+ Adicionar primeiro link</button></div> : blocks.map((block, index) => (
+              <article key={block.id} className="group flex flex-wrap items-center gap-3 border-b border-slate-100 px-1 py-3 last:border-0">
+                <GripVertical className="h-5 w-5 shrink-0 text-slate-300" />
+                {(() => { const Icon = blockIconByType[block.block_type || block.type || 'external_link'] || Link2; return <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" /></div>; })()}
+                <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">{block.active ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 truncate text-xs text-slate-500">{blockTypeLabels[block.block_type || block.type || 'external_link']} {block.url ? ` · ${block.url}` : ''}</p></div>
+                <div className="hidden min-w-14 text-center sm:block"><p className="font-bold text-slate-800">{block.clicks_count || 0}</p><p className="text-[10px] text-slate-400">Cliques</p></div>
+                <button type="button" onClick={() => void toggle(block)} className="grid h-8 w-12 place-items-center rounded-full bg-blue-600 p-1" aria-label={block.active ? 'Desativar bloco' : 'Ativar bloco'}><span className={`h-6 w-6 rounded-full bg-white transition-transform ${block.active ? 'translate-x-2' : '-translate-x-2'}`} /></button>
+                <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"><Pencil className="h-4 w-4" /></button>
+                <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                <div className="flex gap-1"><button type="button" onClick={() => void move(index, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↑</button><button type="button" onClick={() => void move(index, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↓</button></div>
+              </article>
+            ))}
+          </TabsContent>
+          <TabsContent value="appearance">
+            <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
+              {settings && (
+                <TreeAppearancePanel
+                  initialTheme={settings.theme_key}
+                  initialAppearance={settings.appearance}
+                  onUpdate={setSettings}
+                />
+              )}
+              {!settings && !loading && (
+                <p className="text-slate-500 text-sm">Carregando configurações de aparência...</p>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="settings">
+            <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
+              <h2 className="text-sm font-black uppercase tracking-wide text-slate-600 mb-4">Configurações</h2>
+            </div>
+          </TabsContent>
+        </Tabs>
       </section>
-      <aside className="hidden space-y-4 lg:block">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-3 shadow-[0_8px_30px_rgba(30,94,255,0.03)]"><div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pré-visualização</p><button type="button" onClick={() => setPreviewOpen((value) => !value)} className="text-slate-400" aria-label="Alternar pré-visualização"><ExternalLink className="h-4 w-4" /></button></div><div className="overflow-hidden rounded-[14px] bg-gradient-to-b from-blue-700 to-slate-500 p-3 text-center text-white"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full border-2 border-white bg-slate-300 text-slate-700"><Globe className="h-5 w-5" /></div><p className="mt-2 text-xs font-black">Meu Tree</p><p className="text-[9px] text-blue-100">Avalia Solar creator</p><div className="mt-3 space-y-1.5">{previewOpen && previewBlocks.map((block) => <div key={block.id} className="rounded-lg bg-white/90 px-2 py-2 text-[9px] font-bold text-slate-800">{block.title}</div>)}{!previewBlocks.length && <p className="py-5 text-[10px] text-blue-100">Adicione seu primeiro link</p>}</div><p className="mt-4 text-[8px] text-blue-100">Powered by Avalia Solar</p></div></div>
-        <div className="rounded-[18px] border border-slate-200 bg-white p-4"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">QR Code</p><div className="mt-3 grid place-items-center rounded-xl bg-slate-50 p-4"><Image src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(publicUrl || profilePreviewUrl)}`} alt="QR Code do Meu Tree" width={150} height={150} unoptimized /></div><p className="mt-2 text-center text-xs text-slate-500">Compartilhe seu Tree com um scan.</p><button type="button" onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(publicUrl || profilePreviewUrl)}`, '_blank')} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 text-xs font-bold text-white"><Download className="h-4 w-4" /> Baixar QR Code</button></div>
+      <aside className="hidden lg:block h-[800px] sticky top-4">
+        <TreeDevicePreview 
+          publicUrl={publicUrl}
+          data={creatorProfile ? {
+            creator: creatorProfile,
+            blocks: blocks.map(b => ({
+              id: b.id,
+              type: b.block_type || b.type || 'external_link',
+              title: b.title,
+              subtitle: b.subtitle || null,
+              position: b.position,
+              url: b.url || null,
+              metadata: b.metadata
+            })),
+            appearance: settings?.appearance,
+            theme_key: settings?.theme_key || 'solar'
+          } : null}
+        />
       </aside>
       </div>
       <section className="mt-4 rounded-[18px] border border-slate-200 bg-white p-4"><div className="flex items-center gap-2"><Lightbulb className="h-4 w-4 text-amber-500" /><h2 className="text-sm font-black text-slate-800">Dicas para turbinar seu Tree</h2></div><div className="mt-3 grid gap-2 sm:grid-cols-4"><div className="rounded-xl bg-blue-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Adicione até 8 links</b>Organize seus principais destinos.</div><div className="rounded-xl bg-blue-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Use CTAs claros</b>Títulos objetivos convertem mais.</div><div className="rounded-xl bg-emerald-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Mantenha atualizado</b>Revise seus links periodicamente.</div><div className="rounded-xl bg-rose-50 p-3 text-xs text-slate-600"><b className="block text-slate-800">Compartilhe sempre</b>Divulgue em suas redes sociais.</div></div></section>

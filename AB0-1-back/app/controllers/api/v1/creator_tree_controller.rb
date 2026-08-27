@@ -14,7 +14,9 @@ module Api
         render json: {
           creator: Creator::IdentityProjection.resolve(profile),
           blocks: blocks.select { |block| block.block_type == 'separator' || block_destination(block).present? }
-                       .map { |block| block_payload(block) }
+                       .map { |block| block_payload(block) },
+          appearance: profile.creator_tree_setting&.appearance,
+          theme_key: profile.creator_tree_setting&.theme_key || 'solar'
         }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Creator não encontrado' }, status: :not_found

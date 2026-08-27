@@ -53,6 +53,8 @@ export type PublicCreatorTreeResponse = {
     website_url?: string | null;
   };
   blocks: PublicCreatorTreeBlock[];
+  appearance?: any; // Will use CreatorTreeAppearance from types
+  theme_key?: string;
 };
 
 export function creatorTreeUrl(slug: string, origin?: string): string {
@@ -101,4 +103,13 @@ export const publicCreatorTreeApi = {
     trackPublicEvent(`/creator_tree/${encodeURIComponent(slug)}/view`),
   trackClick: (slug: string, blockId: number) =>
     trackPublicEvent(`/creator_tree/${encodeURIComponent(slug)}/blocks/${blockId}/click`),
+};
+
+export const reviewerTreeSettingsApi = {
+  get: () => fetchApi<any>('/reviewer/tree/settings'),
+  update: (settings: { theme_key: string; appearance: any }) =>
+    fetchApi<any>('/reviewer/tree/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ settings }),
+    }),
 };
