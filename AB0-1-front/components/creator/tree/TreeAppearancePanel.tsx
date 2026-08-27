@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { CreatorTreeTheme, CreatorTreeAppearance } from '@/types/creator-tree';
 import { reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
 import { toast } from 'sonner';
-import { Check, Image as ImageIcon, PaintBucket } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Check } from 'lucide-react';
+import { TreeBackgroundEditor } from '@/components/creator/tree/TreeBackgroundEditor';
 
 interface TreeAppearancePanelProps {
   initialTheme: CreatorTreeTheme | string;
@@ -65,6 +66,15 @@ export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate 
     const newAppearance = {
       ...appearance,
       buttonStyle: { ...(appearance.buttonStyle || { variant: 'solid' }), rounding },
+    };
+    setAppearance(newAppearance);
+    void saveSettings(themeKey, newAppearance);
+  };
+
+  const handleBackgroundChange = (background: CreatorTreeAppearance['background']) => {
+    const newAppearance = {
+      ...appearance,
+      background,
     };
     setAppearance(newAppearance);
     void saveSettings(themeKey, newAppearance);
@@ -154,22 +164,10 @@ export function TreeAppearancePanel({ initialTheme, initialAppearance, onUpdate 
         </div>
       </section>
 
-      {/* Advanced Background (Placeholder) */}
-      <section className="opacity-50 pointer-events-none">
-        <h3 className="text-sm font-black uppercase tracking-wide text-slate-600 mb-3 flex items-center gap-2">
-          Fundo Personalizado <span className="text-[9px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Em Breve</span>
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="border border-slate-200 rounded-xl p-4 text-center flex flex-col items-center justify-center gap-2">
-            <PaintBucket className="w-6 h-6 text-slate-400" />
-            <span className="text-xs font-bold text-slate-500">Cor Sólida</span>
-          </div>
-          <div className="border border-slate-200 rounded-xl p-4 text-center flex flex-col items-center justify-center gap-2">
-            <ImageIcon className="w-6 h-6 text-slate-400" />
-            <span className="text-xs font-bold text-slate-500">Imagem</span>
-          </div>
-        </div>
-      </section>
+      <TreeBackgroundEditor 
+        appearance={appearance} 
+        onChange={handleBackgroundChange} 
+      />
       
       {saving && <p className="text-xs text-blue-600 text-center animate-pulse">Salvando alterações...</p>}
     </div>

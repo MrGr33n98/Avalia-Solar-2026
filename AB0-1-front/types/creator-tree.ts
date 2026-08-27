@@ -4,7 +4,11 @@ export interface CreatorTreeAppearance {
   background?: {
     type: 'color' | 'gradient' | 'image' | 'video';
     value: string; // hex, linear-gradient(...), or url(...)
+    fit?: 'cover' | 'contain';
+    position?: string;
+    overlayColor?: string;
     overlayOpacity?: number; // 0 to 100
+    blur?: number; // px
   };
   buttonStyle?: {
     variant: 'solid' | 'outline' | 'glass' | 'soft';
@@ -18,6 +22,7 @@ export interface CreatorTreeAppearance {
 }
 
 export interface CreatorTreeSettings {
-  theme_key: CreatorTreeTheme;
+  theme_key: string;
   appearance: CreatorTreeAppearance;
+  config?: Record<string, any>; // SEO, tracking, etc
 }

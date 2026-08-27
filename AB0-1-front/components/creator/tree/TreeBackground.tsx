@@ -14,11 +14,16 @@ export function TreeBackground({ themeKey = 'solar', appearance, children }: Tre
   let bgClass = 'bg-slate-50'; 
   const style: React.CSSProperties = {};
 
-  if (isCustom) {
+  if (isCustom || appearance?.background?.type === 'image') {
     if (appearance?.background?.type === 'color') {
       style.backgroundColor = appearance.background.value;
     } else if (appearance?.background?.type === 'gradient') {
       style.backgroundImage = appearance.background.value;
+    } else if (appearance?.background?.type === 'image') {
+      style.backgroundImage = `url(${appearance.background.value})`;
+      style.backgroundSize = appearance.background.fit || 'cover';
+      style.backgroundPosition = appearance.background.position || 'center';
+      style.backgroundRepeat = 'no-repeat';
     }
   } else {
     if (themeKey === 'dark') bgClass = 'bg-slate-950';
@@ -33,11 +38,13 @@ export function TreeBackground({ themeKey = 'solar', appearance, children }: Tre
       style={style}
     >
       {/* Optional overlay for video/image backgrounds */}
-      {appearance?.background?.overlayOpacity && (
+      {appearance?.background?.overlayOpacity && appearance.background.overlayOpacity > 0 && (
         <div 
           className="absolute inset-0 z-0 pointer-events-none" 
           style={{ 
-            backgroundColor: `rgba(0,0,0,${(appearance.background.overlayOpacity / 100).toFixed(2)})` 
+            backgroundColor: appearance.background.overlayColor || '#000000',
+            opacity: appearance.background.overlayOpacity / 100,
+            backdropFilter: appearance.background.blur ? `blur(${appearance.background.blur}px)` : undefined,
           }} 
         />
       )}

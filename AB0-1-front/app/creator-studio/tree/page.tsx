@@ -29,12 +29,15 @@ import { toast } from 'sonner';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { companiesApi, reviewerProfileApi, type Company } from '@/lib/api';
-import { creatorTreeApi, type CreatorTreeBlock } from '@/lib/api/creatorTree';
-import { creatorTreeUrl, reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
+import type { CreatorTreeTheme, CreatorTreeSettings } from '@/types/creator-tree';
+import { creatorTreeApi, type CreatorTreeBlock, creatorTreeUrl, reviewerTreeSettingsApi } from '@/lib/api/creatorTree';
 import { reviewerPublicationsApi } from '@/lib/api/reviewerPublications';
 import type { ReviewerPublication } from '@/types/reviewer-publication';
 import { TreeDevicePreview } from '@/components/creator/tree/TreeDevicePreview';
 import { TreeAppearancePanel } from '@/components/creator/tree/TreeAppearancePanel';
+import { TreeBlocksPanel } from '@/components/creator/tree/TreeBlocksPanel';
+import { TreeAnalyticsPanel } from '@/components/creator/tree/TreeAnalyticsPanel';
+import { TreeSettingsPanel } from '@/components/creator/tree/TreeSettingsPanel';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 function normalizeTreeUrl(value: string, type: string) {
@@ -124,6 +127,12 @@ export default function CreatorTreePage() {
       .catch(() => toast.error('Não foi possível carregar seu Tree.'))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleUpdateSettings = async (payload: Partial<CreatorTreeSettings>): Promise<CreatorTreeSettings> => {
+    const updated = await reviewerTreeSettingsApi.update(payload as any);
+    setSettings(updated);
+    return updated;
+  };
 
   const copyUrl = async () => {
     if (!publicUrl) return;
@@ -241,12 +250,7 @@ export default function CreatorTreePage() {
         </div>
         <div className="mt-4 flex gap-2"><button type="button" onClick={() => void copyUrl()} disabled={!publicUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Check className={`h-4 w-4 ${copied ? 'text-emerald-600' : 'text-slate-400'}`} /> {copied ? 'Copiado' : 'Copiar link'}</button><button type="button" onClick={() => publicUrl && navigator.share?.({ title: 'Meu Tree', url: publicUrl })} disabled={!publicUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Share2 className="h-4 w-4" /> Compartilhar</button></div>
       </section>
-      <section className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><Eye className="h-4 w-4 text-blue-600" /><p className="mt-3 text-2xl font-black text-slate-950">{treeViews}</p><p className="text-xs font-medium text-slate-500">Visualizações <span className="text-emerald-600">↑ 18%</span></p><p className="mt-1 text-[10px] text-slate-400">Últimos 30 dias</p></div>
-        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><MousePointerClick className="h-4 w-4 text-emerald-600" /><p className="mt-3 text-2xl font-black text-slate-950">{totalClicks}</p><p className="text-xs font-medium text-slate-500">Cliques <span className="text-slate-400">0%</span></p><p className="mt-1 text-[10px] text-slate-400">Últimos 30 dias</p></div>
-        <div className="rounded-[16px] border border-slate-200 bg-white p-4"><Link2 className="h-4 w-4 text-blue-600" /><p className="mt-3 text-2xl font-black text-slate-950">{activeBlocks} <span className="text-sm font-normal text-slate-400">de 8</span></p><p className="text-xs font-medium text-slate-500">Links ativos</p><div className="mt-3 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 rounded-full bg-blue-600" style={{ width: `${Math.min(activeBlocks / 8 * 100, 100)}%` }} /></div></div>
-        <div className="rounded-[16px] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4"><Crown className="h-4 w-4 text-amber-500" /><p className="mt-3 text-sm font-black text-slate-900">Creator Pro</p><p className="mt-1 text-xs leading-5 text-slate-500">Tenha mais links, análises avançadas e muito mais.</p><button type="button" className="mt-2 rounded-lg bg-blue-100 px-3 py-1.5 text-[11px] font-bold text-blue-700">Conhecer planos</button></div>
-      </section>
+      <TreeAnalyticsPanel blocks={blocks} treeViews={treeViews} />
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section className="bg-transparent">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -257,19 +261,16 @@ export default function CreatorTreePage() {
           </TabsList>
           
           <TabsContent value="links" className="space-y-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
-            <div className="flex items-center justify-between"><h2 className="text-sm font-black uppercase tracking-wide text-slate-600">Seus links</h2><div className="flex gap-2"><button type="button" className="hidden min-h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 sm:inline-flex"><SlidersHorizontal className="h-3.5 w-3.5" /> Ordenar</button><button type="button" onClick={() => openEditor()} className="text-sm font-bold text-blue-600">+ Adicionar</button></div></div>
-            {loading ? <p className="py-10 text-center text-sm text-slate-500">Carregando links...</p> : blocks.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center"><Link2 className="mx-auto h-8 w-8 text-blue-600" /><h2 className="mt-3 font-bold text-slate-900">Seu Tree ainda está vazio</h2><p className="mt-1 text-sm text-slate-500">Adicione seu primeiro link para começar a montar sua página pública.</p><button type="button" onClick={() => openEditor()} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white">+ Adicionar primeiro link</button></div> : blocks.map((block, index) => (
-              <article key={block.id} className="group flex flex-wrap items-center gap-3 border-b border-slate-100 px-1 py-3 last:border-0">
-                <GripVertical className="h-5 w-5 shrink-0 text-slate-300" />
-                {(() => { const Icon = blockIconByType[block.block_type || block.type || 'external_link'] || Link2; return <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" /></div>; })()}
-                <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="truncate font-bold text-slate-900">{block.title}</h2><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">{block.active ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 truncate text-xs text-slate-500">{blockTypeLabels[block.block_type || block.type || 'external_link']} {block.url ? ` · ${block.url}` : ''}</p></div>
-                <div className="hidden min-w-14 text-center sm:block"><p className="font-bold text-slate-800">{block.clicks_count || 0}</p><p className="text-[10px] text-slate-400">Cliques</p></div>
-                <button type="button" onClick={() => void toggle(block)} className="grid h-8 w-12 place-items-center rounded-full bg-blue-600 p-1" aria-label={block.active ? 'Desativar bloco' : 'Ativar bloco'}><span className={`h-6 w-6 rounded-full bg-white transition-transform ${block.active ? 'translate-x-2' : '-translate-x-2'}`} /></button>
-                <button type="button" aria-label="Editar bloco" onClick={() => openEditor(block)} className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"><Pencil className="h-4 w-4" /></button>
-                <button type="button" aria-label="Remover bloco" onClick={() => void remove(block.id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
-                <div className="flex gap-1"><button type="button" onClick={() => void move(index, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↑</button><button type="button" onClick={() => void move(index, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-xs text-slate-400 hover:bg-slate-100">↓</button></div>
-              </article>
-            ))}
+            <TreeBlocksPanel
+              blocks={blocks}
+              loading={loading}
+              onMove={move}
+              onRemove={remove}
+              onToggle={toggle}
+              onOpenEditor={openEditor}
+              blockTypeLabels={blockTypeLabels}
+              blockIconByType={blockIconByType as any}
+            />
           </TabsContent>
           <TabsContent value="appearance">
             <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
@@ -287,7 +288,15 @@ export default function CreatorTreePage() {
           </TabsContent>
           <TabsContent value="settings">
             <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(30,94,255,0.03)]">
-              <h2 className="text-sm font-black uppercase tracking-wide text-slate-600 mb-4">Configurações</h2>
+              {settings && (
+                <TreeSettingsPanel 
+                  settings={settings}
+                  onUpdate={handleUpdateSettings}
+                />
+              )}
+              {!settings && !loading && (
+                <p className="text-slate-500 text-sm">Carregando configurações...</p>
+              )}
             </div>
           </TabsContent>
         </Tabs>

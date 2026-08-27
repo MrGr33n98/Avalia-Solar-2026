@@ -325,7 +325,9 @@ Rails.application.routes.draw do
         resources :tree_blocks, path: 'tree/blocks', controller: 'tree_blocks', only: %i[index create update destroy] do
           collection { patch :reorder, path: 'reorder' }
         end
-        resource :tree_settings, path: 'tree/settings', controller: 'tree_settings', only: %i[show update]
+        resource :tree_settings, path: 'tree/settings', controller: 'tree_settings', only: %i[show update] do
+          post :background_image, action: :upload_background_image
+        end
         resources :creator_leads, only: %i[index update], controller: 'creator_leads'
         get 'analytics', to: 'dashboard#analytics'
         resources :publications, only: %i[index show create update destroy]
