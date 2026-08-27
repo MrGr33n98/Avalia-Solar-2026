@@ -36,7 +36,7 @@ const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboa
   ssr: true
 });
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, error: authError } = useAuth();
@@ -300,6 +300,15 @@ export default function DashboardPage() {
 }
 
 // ✅ Shared loading skeleton for lazy-loaded components
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoadingState />}>
+      <DashboardPageContent />
+    </Suspense>
+  );
+}
+
 function DashboardLoadingState() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[hsl(var(--clay-bg))] p-4">

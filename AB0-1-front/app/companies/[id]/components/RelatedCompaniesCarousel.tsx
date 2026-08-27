@@ -11,47 +11,23 @@ import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import RelatedCompanyCard from "./RelatedCompanyCard";
+
 interface RelatedCompaniesCarouselProps {
   company: Company;
   showAlternatives: boolean;
+  relatedCompanies: Company[];
+  loading: boolean;
 }
 
-export default function RelatedCompaniesCarousel({ company, showAlternatives }: RelatedCompaniesCarouselProps) {
-  // P0.11: Defesa em profundidade - nunca mostrar concorrentes para empresas com plano pago
-  const paidPlan = hasPaidPlan(company);
-  const shouldShowAlternatives = showAlternatives && !paidPlan;
-
-  const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function RelatedCompaniesCarousel({
+  company,
+  showAlternatives,
+  relatedCompanies,
+  loading,
+}: RelatedCompaniesCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    if (!shouldShowAlternatives) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchRelated = async () => {
-      try {
-        const response = await companiesApiSafe.getAllPaginated({
-          category_id: company.category_info?.id || company.category_id,
-          per_page: 6,
-          status: 'active'
-        });
-        
-        let filtered = (response.data || []).filter(c => c.id !== company.id).slice(0, 5);
-        setRelatedCompanies(filtered);
-      } catch (error) {
-        console.error("Erro ao buscar empresas relacionadas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRelated();
-  }, [company.id, company.category_id, company.category_info?.id, shouldShowAlternatives]);
 
   // Autoplay Effect
   useEffect(() => {
