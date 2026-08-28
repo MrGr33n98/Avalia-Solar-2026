@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_27_013500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -617,7 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -1090,7 +1090,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -1107,7 +1107,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1571,7 +1571,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -1802,6 +1802,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["reviewer_id", "active"], name: "index_creator_tree_blocks_on_reviewer_id_and_active"
     t.index ["reviewer_id", "position"], name: "index_creator_tree_blocks_on_reviewer_id_and_position"
     t.index ["reviewer_id"], name: "index_creator_tree_blocks_on_reviewer_id"
+  end
+
+  create_table "creator_tree_settings", force: :cascade do |t|
+    t.bigint "reviewer_id", null: false
+    t.string "theme_key", default: "solar", null: false
+    t.jsonb "appearance", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "config", default: {}, null: false
+    t.index ["reviewer_id"], name: "index_creator_tree_settings_on_reviewer_id", unique: true
   end
 
   create_table "daily_growth_snapshots", force: :cascade do |t|
@@ -2085,7 +2095,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2126,9 +2136,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["group_id", "user_id"], name: "index_group_memberships_on_group_id_and_user_id", unique: true
     t.index ["group_id"], name: "index_group_memberships_on_group_id"
     t.index ["user_id"], name: "index_group_memberships_on_user_id"
-    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying, 'highlights'::character varying, 'mentions'::character varying, 'off'::character varying]::text[])", name: "group_memberships_notifications_level_check"
-    t.check_constraint "role::text = ANY (ARRAY['member'::character varying, 'moderator'::character varying, 'admin'::character varying, 'owner'::character varying]::text[])", name: "group_memberships_role_check"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'active'::character varying, 'rejected'::character varying, 'left'::character varying, 'banned'::character varying]::text[])", name: "group_memberships_status_check"
+    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying::text, 'highlights'::character varying::text, 'mentions'::character varying::text, 'off'::character varying::text])", name: "group_memberships_notifications_level_check"
+    t.check_constraint "role::text = ANY (ARRAY['member'::character varying::text, 'moderator'::character varying::text, 'admin'::character varying::text, 'owner'::character varying::text])", name: "group_memberships_role_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'active'::character varying::text, 'rejected'::character varying::text, 'left'::character varying::text, 'banned'::character varying::text])", name: "group_memberships_status_check"
   end
 
   create_table "group_posts", force: :cascade do |t|
@@ -2150,7 +2160,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["group_topic_id", "status"], name: "index_group_posts_on_group_topic_id_and_status"
     t.index ["group_topic_id"], name: "index_group_posts_on_group_topic_id"
     t.index ["user_id"], name: "index_group_posts_on_user_id"
-    t.check_constraint "status::text = ANY (ARRAY['published'::character varying, 'hidden'::character varying, 'removed'::character varying]::text[])", name: "group_posts_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['published'::character varying::text, 'hidden'::character varying::text, 'removed'::character varying::text])", name: "group_posts_status_check"
   end
 
   create_table "group_rules", force: :cascade do |t|
@@ -2205,10 +2215,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["status", "visibility"], name: "index_groups_on_status_and_visibility"
     t.index ["status"], name: "index_groups_on_status"
     t.index ["visibility"], name: "index_groups_on_visibility"
-    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying, 'approval'::character varying, 'invite_only'::character varying]::text[])", name: "groups_membership_mode_check"
-    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying, 'moderated'::character varying, 'admins_only'::character varying]::text[])", name: "groups_posting_mode_check"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'suspended'::character varying]::text[])", name: "groups_status_check"
-    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'private_visible'::character varying, 'private_hidden'::character varying]::text[])", name: "groups_visibility_check"
+    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying::text, 'approval'::character varying::text, 'invite_only'::character varying::text])", name: "groups_membership_mode_check"
+    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying::text, 'moderated'::character varying::text, 'admins_only'::character varying::text])", name: "groups_posting_mode_check"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'suspended'::character varying::text])", name: "groups_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying::text, 'private_visible'::character varying::text, 'private_hidden'::character varying::text])", name: "groups_visibility_check"
   end
 
   create_table "growth_insights", force: :cascade do |t|
@@ -2705,7 +2715,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
+    t.bigserial "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1
@@ -3003,7 +3013,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
   end
 
   create_table "publication_entities", force: :cascade do |t|
@@ -3771,6 +3781,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_25_212429) do
   add_foreign_key "creator_tree_blocks", "companies"
   add_foreign_key "creator_tree_blocks", "reviewer_profiles", column: "reviewer_id"
   add_foreign_key "creator_tree_blocks", "reviewer_publications", column: "publication_id"
+  add_foreign_key "creator_tree_settings", "reviewer_profiles", column: "reviewer_id"
   add_foreign_key "digital_assets", "companies"
   add_foreign_key "direct_messages", "conversations"
   add_foreign_key "favorites", "users"

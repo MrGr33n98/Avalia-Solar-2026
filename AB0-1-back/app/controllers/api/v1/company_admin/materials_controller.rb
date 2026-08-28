@@ -5,7 +5,7 @@ module Api
     module CompanyAdmin
       class MaterialsController < BaseController
         before_action -> { require_company_feature!('downloadable_materials') }
-        before_action :set_material, only: %i[show update destroy submit publish]
+        before_action :set_material, only: %i[show update destroy submit publish restore]
 
         def index
           authorize CompanyMaterial.new(company: @company), :index?
@@ -41,11 +41,19 @@ module Api
           head :no_content
         end
 
+        def restore
+          authorize @material, :restore?
+          return render json: { error: "Somente materiais arquivados podem ser restaurados" }, status: :unprocessable_entity unless @material.status == "archived"
+
+          @material.update!(status: "draft", published_at: nil, moderation_reason: nil)
+          render json: { material: serialize(@material) }
+        end
+
         def submit
           authorize @material, :submit?
-          return render json: { error: 'Anexe um PDF antes de enviar para aprovação' }, status: :unprocessable_entity unless @material.digital_assets.document.exists?
+          return render json: { error: 'Anexe um PDF antes de enviar para aprovação' }, status: :unprocessable_entity unless @material.digital_assets.document.where.not(status: 'archived').exists?
 
-          return publish_material if auto_publish_materials?
+          return publish_material if auto_publish_materials? && publishable_assets_ready?
 
           @material.update!(status: 'pending', published_at: nil, moderation_reason: nil)
           render json: { material: serialize(@material) }
@@ -94,7 +102,7 @@ module Api
         def serialize(material)
           material.as_json(only: %i[id title slug description material_type visibility gate_mode status published_at expires_at download_count version moderation_reason created_at updated_at]).merge(
             content_lead_form_id: material.content_lead_form_id,
-            assets: material.digital_assets.map { |asset| asset.as_json(only: %i[id kind title alt_text caption external_url status processing_status position]).merge(file_url: asset.file_url) }
+            assets: material.digital_assets.map { |asset| asset.as_json(only: %i[id kind title alt_text caption external_url status processing_status position]).merge(file_url: asset.file_url, file_size: asset.file.attached? ? asset.file.blob.byte_size : nil, file_name: asset.file.attached? ? asset.file.filename.to_s : nil) }
           )
         end
       end

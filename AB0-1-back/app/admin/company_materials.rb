@@ -31,10 +31,14 @@ ActiveAdmin.register CompanyMaterial do
   end
 
   member_action :approve, method: :put do
-    unless resource.digital_assets.document.where(status: 'published', processing_status: 'ready').exists?
+    pdf_assets = resource.digital_assets.document.where.not(status: 'archived')
+    unless pdf_assets.where(processing_status: 'ready').exists?
       redirect_to resource_path, alert: 'Aprove ao menos um PDF antes de publicar o material.' and return
     end
-    resource.update!(status: 'published', published_at: Time.current, moderation_reason: nil)
+    CompanyMaterial.transaction do
+      resource.update!(status: 'published', published_at: Time.current, moderation_reason: nil)
+      pdf_assets.where(processing_status: 'ready').update_all(status: 'published')
+    end
     ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'approved')
     redirect_to resource_path, notice: 'Material publicado.'
   end

@@ -1,7 +1,9 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
-import { BarChart3, FileText, FolderKanban, Pencil, Plus, RefreshCw, Send, ShieldCheck, Upload, Users } from 'lucide-react';
+import { BarChart3, FileText, FolderKanban, MoreHorizontal, Pencil, Plus, RefreshCw, Send, ShieldCheck, Upload, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,10 +12,10 @@ import { toast } from '@/hooks/use-toast';
 import { fetchApi } from '@/lib/api';
 import { buildApiUrl } from '@/lib/api-config';
 
-type Asset = { id: number; kind: string; title?: string | null; alt_text?: string | null; caption?: string | null; external_url?: string | null; status: string; processing_status?: string | null; position?: number | null };
+type Asset = { id: number; kind: string; title?: string | null; alt_text?: string | null; caption?: string | null; external_url?: string | null; status: string; processing_status?: string | null; position?: number | null; file_url?: string | null; file_size?: number | null; file_name?: string | null };
 type Project = { id: number; title: string; status: string; summary?: string | null; project_type?: string | null; city?: string; state?: string; capacity_value?: number | null; capacity_unit?: string | null; moderation_reason?: string | null; assets?: Asset[] };
-type Material = { id: number; title: string; status: string; description?: string | null; material_type: string; gate_mode: string; content_lead_form_id?: number | null; download_count: number; moderation_reason?: string | null; assets?: Asset[] };
-type MaterialsResponse = { materials: Material[]; auto_publish?: boolean };
+type Material = { id: number; title: string; status: string; description?: string | null; material_type: string; gate_mode: string; content_lead_form_id?: number | null; download_count: number; updated_at?: string; published_at?: string | null; moderation_reason?: string | null; assets?: Asset[] };
+type MaterialsResponse = { materials: Material[]; auto_publish: boolean };
 type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required: boolean; options?: string[] };
 type LeadForm = { id: number; name: string; status: string; version: number; fields: FormField[]; consent_text?: string | null; privacy_url?: string | null };
 type Analytics = { metrics: { material_views: number; download_clicks: number; gate_views: number; form_submissions: number; authorizations: number; delivered_downloads: number; unique_leads: number; delivery_rate: number }; assets: Array<{ id: number; title: string; authorizations: number; delivered_downloads: number; unique_leads: number }>; data_freshness?: { updated_at: string } };
@@ -63,6 +65,9 @@ export default function ProjectsMaterialsHub({
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [assetTarget, setAssetTarget] = useState<{ type: 'project' | 'material'; id: number } | null>(null);
+  const [materialFilter, setMaterialFilter] = useState<'all' | 'active' | 'archived'>('active');
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [openMaterialMenu, setOpenMaterialMenu] = useState<number | null>(null);
   const [materialPdf, setMaterialPdf] = useState<File | null>(null);
   const [materialCover, setMaterialCover] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -208,6 +213,11 @@ export default function ProjectsMaterialsHub({
     catch (err) { handleActionError(err, 'Não foi possível arquivar'); }
   };
 
+  const restore = async (id: number) => {
+    try { await fetchApi("/company_admin/materials/" + id + "/restore" + query, { method: "POST" }); toast({ title: "Material restaurado" }); await load(); }
+    catch (err) { handleActionError(err, "Não foi possível restaurar"); }
+  };
+
   const updateAsset = async (id: number, payload: Record<string, unknown>) => {
     try { await fetchApi(`/company_admin/assets/${id}${query}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); toast({ title: 'Metadados da mídia salvos', description: 'Mídia publicada volta para moderação após edição.' }); await load(); }
     catch (err) { handleActionError(err, 'Não foi possível salvar a mídia'); }
@@ -220,6 +230,8 @@ export default function ProjectsMaterialsHub({
   };
 
   const activeForms = useMemo(() => forms.filter(form => form.status === 'active'), [forms]);
+  const filteredMaterials = useMemo(() => materials.filter(material => materialFilter === 'all' || (materialFilter === 'archived' ? material.status === 'archived' : material.status !== 'archived')), [materials, materialFilter]);
+  const selectedMaterial = filteredMaterials.find(material => material.id === selectedMaterialId) || filteredMaterials[0] || null;
   const assetOwner = assetTarget ? (assetTarget.type === 'project' ? projects.find(project => project.id === assetTarget.id) : materials.find(material => material.id === assetTarget.id)) : null;
   return <div className="mx-auto max-w-6xl space-y-6 pb-16">
     <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:flex-row md:items-center"><div><h2 className="text-2xl font-black text-slate-950">Projetos e materiais</h2><p className="mt-1 text-sm text-slate-500">Cases, documentos e dados de intenção da sua empresa.</p></div><Button variant="outline" onClick={load} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />Atualizar</Button></div>
@@ -238,7 +250,7 @@ export default function ProjectsMaterialsHub({
           </Button>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3"><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Materiais</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Prontos para revisão</p><p className="mt-1 text-2xl font-black text-blue-600">{materials.filter(material => material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived')).length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Downloads</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.reduce((total, material) => total + (material.download_count || 0), 0)}</p></CardContent></Card></div>
+        <div className="grid gap-3 sm:grid-cols-3"><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Materiais publicados</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.filter(material => material.status === 'published').length}</p><p className="text-xs text-slate-500">Materiais ativos</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Prontos para revisão</p><p className="mt-1 text-2xl font-black text-blue-600">{materials.filter(material => material.status === 'draft' && material.assets?.some(asset => asset.kind === 'document' && asset.status !== 'archived' && asset.processing_status !== 'failed')).length}</p></CardContent></Card><Card className="border-blue-100 bg-white/80 shadow-sm"><CardContent className="p-4"><p className="text-xs font-semibold text-slate-500">Downloads</p><p className="mt-1 text-2xl font-black text-slate-950">{materials.reduce((total, material) => total + (material.download_count || 0), 0)}</p></CardContent></Card></div>
 
         {creating === 'material' && (
           <form onSubmit={createMaterial} onChange={event => { const data = new FormData(event.currentTarget); setMaterialPreview(current => ({ ...current, title: String(data.get('title') || 'Seu material'), description: String(data.get('description') || 'Uma prévia de como o material aparecerá para seus visitantes.'), gated: data.get('gate_mode') === 'form' })); }} className="grid gap-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:grid-cols-2">
@@ -269,7 +281,7 @@ export default function ProjectsMaterialsHub({
               <DropzoneField label="Imagem de Capa (opcional)" accept="image/png,image/jpeg,image/webp" onChange={file => { setMaterialCover(file); setMaterialPreview(current => ({ ...current, coverUrl: file ? URL.createObjectURL(file) : null })); }} file={materialCover} />
             </div>
 
-            <MaterialPreview {...materialPreview} />
+            <MaterialPreview companyId={companyId} {...materialPreview} />
 
             <div className="flex items-end gap-3 md:col-span-2 mt-2">
               {uploadProgress ? (
@@ -338,19 +350,16 @@ export default function ProjectsMaterialsHub({
           />
         )}
 
-        <List loading={loading} empty="Publique catálogos, apresentações e materiais técnicos." rows={materials}>
+        <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-white p-3"><div><p className="text-sm font-bold text-slate-900">Biblioteca de materiais</p><p className="text-xs text-slate-500">Gerencie PDFs, capas e revisão.</p></div><select aria-label="Filtrar materiais" value={materialFilter} onChange={event => setMaterialFilter(event.target.value as "all" | "active" | "archived")} className="h-9 rounded-md border border-input bg-white px-3 text-sm"><option value="active">Ativos</option><option value="all">Todos</option><option value="archived">Arquivados</option></select></div><List loading={loading} empty="Publique catálogos, apresentações e materiais técnicos." rows={filteredMaterials}>
           {material => (
             <>
-              <span className="font-semibold">
-                {material.title}
-                <ModerationNote note={material.moderation_reason} />
-              </span>
+              <button type="button" className="text-left font-semibold hover:text-blue-700" onClick={() => setSelectedMaterialId(material.id)}>{material.title}<ModerationNote note={material.moderation_reason} /><span className="mt-1 block text-xs font-normal text-slate-500">{materialStatusLabel(material.status)} · {material.download_count || 0} downloads · {material.assets?.find(asset => asset.kind === "document" && asset.status !== "archived")?.file_size ? ((material.assets.find(asset => asset.kind === "document" && asset.status !== "archived")?.file_size || 0) / 1024 / 1024).toFixed(1) + " MB" : "PDF não enviado"} · {material.updated_at ? new Date(material.updated_at).toLocaleDateString("pt-BR") : "Sem data"}</span></button>
               <span>{material.gate_mode === 'none' ? 'Acesso livre' : 'Com formulário'}</span>
               <Status value={material.status} />
               <div className="flex flex-wrap gap-2">
-                <AssetUpload companyId={companyId} type="material" id={material.id} accept="application/pdf" kind="document" onDone={load} />
+                <AssetUpload companyId={companyId} type="material" id={material.id} accept="application/pdf" kind="document" onDone={load} /><AssetUpload companyId={companyId} type="material" id={material.id} accept="image/png,image/jpeg,image/webp" kind="image" onDone={load} />
                 <Button size="sm" type="button" variant="outline" onClick={() => setAssetTarget({ type: 'material', id: material.id })}>
-                  Mídias ({material.assets?.length || 0})
+                  Mídias ({material.assets?.filter(asset => asset.status !== 'archived').length || 0})
                 </Button>
                 <Button size="sm" type="button" variant="outline" onClick={() => setEditingMaterial(material)}>
                   <Pencil className="mr-1 h-3 w-3" />Editar
@@ -360,14 +369,12 @@ export default function ProjectsMaterialsHub({
                     <Send className="mr-1 h-3 w-3" />Enviar para revisão
                   </Button>
                 )}
-                <Button size="sm" type="button" variant="ghost" onClick={() => archive('material', material.id)}>
-                  Arquivar
-                </Button>
+                <div className="relative"><Button size="sm" type="button" variant="outline" aria-label="Ações do material" onClick={() => setOpenMaterialMenu(openMaterialMenu === material.id ? null : material.id)}><MoreHorizontal className="h-4 w-4" /></Button>{openMaterialMenu === material.id && <div className="absolute right-0 z-10 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-xl"><button type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { setSelectedMaterialId(material.id); setOpenMaterialMenu(null); }}>Ver preview</button><button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" onClick={() => { setOpenMaterialMenu(null); if (material.status === 'archived') { void restore(material.id); } else { void archive('material', material.id); } }}>{material.status === 'archived' ? 'Restaurar' : 'Arquivar'}</button></div>}</div>
               </div>
             </>
           )}
         </List>
-        {assetTarget?.type === 'material' && assetOwner && (
+        <div className="hidden xl:block"><MaterialPreview companyId={companyId} title={selectedMaterial?.title || "Selecione um material"} description={selectedMaterial?.description || "Preview do material publicado para sua empresa."} coverUrl={selectedMaterial?.assets?.find(asset => asset.kind === "image" && asset.status !== "archived")?.file_url || null} gated={selectedMaterial?.gate_mode !== "none"} /></div>{assetTarget?.type === 'material' && assetOwner && (
           <AssetManager title={assetOwner.title} assets={assetOwner.assets || []} onClose={() => setAssetTarget(null)} onSave={updateAsset} onArchive={archiveAsset} />
         )}
       </TabsContent>
@@ -378,8 +385,8 @@ export default function ProjectsMaterialsHub({
   </div>;
 }
 
-function MaterialPreview({ title, description, coverUrl, gated }: { title: string; description: string; coverUrl: string | null; gated: boolean }) {
-  return <aside className="md:col-span-2 rounded-2xl border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10"><div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-300">Preview ao vivo</p><p className="mt-1 text-xs text-slate-400">Visão aproximada no perfil público da empresa</p></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-blue-200">{gated ? 'Com formulário' : 'Acesso livre'}</span></div><div className="max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0B1528] shadow-2xl"><div className="relative flex h-32 items-center justify-center overflow-hidden bg-slate-900">{coverUrl ? <img src={coverUrl} alt="Prévia da capa" className="absolute inset-0 h-full w-full object-cover opacity-75" /> : <FileText className="h-12 w-12 text-blue-400/70" />}<div className="absolute inset-0 bg-gradient-to-t from-[#0B1528] to-transparent" /></div><div className="space-y-3 p-4"><p className="text-[10px] font-black uppercase tracking-wider text-blue-300">Material destacado</p><h3 className="line-clamp-2 text-base font-extrabold leading-tight">{title || 'Seu material'}</h3><p className="line-clamp-2 text-xs leading-relaxed text-slate-300">{description || 'Descrição do material aparecerá aqui.'}</p><div className="rounded-xl bg-blue-600 px-4 py-2.5 text-center text-xs font-black">{gated ? 'Acessar grátis' : 'Baixar grátis'}</div></div></div></aside>;
+function MaterialPreview({ companyId, title, description, coverUrl, gated }: { companyId: string; title: string; description: string; coverUrl: string | null; gated: boolean }) {
+  return <aside className="md:col-span-2 rounded-2xl border border-blue-100 bg-slate-950 p-4 text-white shadow-lg shadow-blue-950/10"><div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-300">Preview da página pública</p><p className="mt-1 text-xs text-slate-400">A experiência que o visitante verá ao baixar</p></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-blue-200">{gated ? 'Com formulário' : 'Acesso livre'}</span></div><div className="max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0B1528] shadow-2xl"><div className="relative flex h-32 items-center justify-center overflow-hidden bg-slate-900">{coverUrl ? <Image src={coverUrl} alt="Prévia da capa" fill sizes="(max-width: 640px) 100vw, 384px" className="object-cover opacity-75" /> : <FileText className="h-12 w-12 text-blue-400/70" />}<div className="absolute inset-0 bg-gradient-to-t from-[#0B1528] to-transparent" /></div><div className="space-y-3 p-4"><p className="text-[10px] font-black uppercase tracking-wider text-blue-300">Material premium</p><h3 className="line-clamp-2 text-base font-extrabold leading-tight">{title || 'Seu material'}</h3><p className="line-clamp-2 text-xs leading-relaxed text-slate-300">{description || 'Descrição do material aparecerá aqui.'}</p><div className="rounded-xl bg-blue-600 px-4 py-2.5 text-center text-xs font-black">{gated ? 'Baixar material' : 'Baixar material'}</div></div><Link href={`/companies/${companyId}`} target="_blank" className="mt-3 block text-center text-xs font-semibold text-blue-300 underline">Abrir perfil público</Link></div></aside>;
 }
 
 function ProjectEditor({ project, onCancel, onSave }: { project: Project; onCancel: () => void; onSave: (payload: Record<string, unknown>) => void }) {
@@ -500,7 +507,7 @@ function Field({ label, name, required = false, type = 'text', value, onChange }
 function Actions({ onCancel }: { onCancel: () => void }) { return <div className="flex items-end gap-2"><Button type="submit">Salvar rascunho</Button><Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button></div>; }
 function ModerationNote({ note }: { note?: string | null }) { return note ? <span className="mt-1 block text-xs font-normal text-rose-600">Motivo da moderação: {note}</span> : null; }
 function List<T extends { id: number }>({ loading, empty, rows, children }: { loading: boolean; empty: string; rows: T[]; children: (row: T) => ReactNode }) { if (loading) return <div className="h-32 animate-pulse rounded-xl bg-slate-100" />; if (!rows.length) return <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">{empty}</div>; return <div className="divide-y overflow-hidden rounded-xl border border-slate-200 bg-white">{rows.map(row => <div key={row.id} className="grid items-center gap-3 p-4 text-sm md:grid-cols-4">{children(row)}</div>)}</div>; }
-function AssetUpload({ companyId, type, id, accept, kind, onDone }: { companyId: string; type: 'project' | 'material'; id: number; accept: string; kind: 'image' | 'document'; onDone: () => Promise<void> }) { const [sending, setSending] = useState(false); const upload = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const payload = new FormData(); payload.append('attachable_type', type); payload.append('attachable_id', String(id)); payload.append('kind', kind); payload.append('file', file); setSending(true); try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', body: payload }); toast({ title: 'Arquivo enviado para moderação' }); await onDone(); } catch { toast({ title: 'Falha no envio do arquivo', variant: 'destructive' }); } finally { setSending(false); event.target.value = ''; } }; return <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-input px-2 text-xs font-medium hover:bg-slate-50"><Upload className="mr-1 h-3 w-3" />{sending ? 'Enviando…' : kind === 'document' ? 'Adicionar PDF' : 'Adicionar mídia'}<input className="sr-only" type="file" accept={accept} disabled={sending} onChange={upload} /></label>; }
+function AssetUpload({ companyId, type, id, accept, kind, onDone }: { companyId: string; type: 'project' | 'material'; id: number; accept: string; kind: 'image' | 'document'; onDone: () => Promise<void> }) { const [sending, setSending] = useState(false); const upload = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (kind === "document" && file.type !== "application/pdf") { toast({ title: "PDF inválido", description: "Envie um arquivo PDF.", variant: "destructive" }); event.target.value = ""; return; } if (kind === "document" && file.size > 25 * 1024 * 1024) { toast({ title: "PDF muito grande", description: "O arquivo deve ter no máximo 25 MB.", variant: "destructive" }); event.target.value = ""; return; } if (kind === "image" && !["image/png", "image/jpeg", "image/webp"].includes(file.type)) { toast({ title: "Capa inválida", description: "Use PNG, JPG ou WebP.", variant: "destructive" }); event.target.value = ""; return; } const payload = new FormData(); payload.append('attachable_type', type); payload.append('attachable_id', String(id)); payload.append('kind', kind); payload.append('file', file); setSending(true); try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', body: payload }); toast({ title: 'Arquivo enviado para moderação' }); await onDone(); } catch (err) { const message = err instanceof Error ? cleanErrorMessage(err.message) : 'Falha no envio do arquivo'; toast({ title: 'Falha no envio do arquivo', description: message, variant: 'destructive' }); } finally { setSending(false); event.target.value = ''; } }; return <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-input px-2 text-xs font-medium hover:bg-slate-50"><Upload className="mr-1 h-3 w-3" />{sending ? 'Enviando…' : kind === 'document' ? 'Adicionar PDF' : 'Alterar capa'}<input className="sr-only" type="file" accept={accept} disabled={sending} onChange={upload} /></label>; }
 function ExternalVideo({ companyId, projectId, onDone }: { companyId: string; projectId: number; onDone: () => Promise<void> }) { const [open, setOpen] = useState(false); const [url, setUrl] = useState(''); const save = async () => { if (!url) return; try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachable_type: 'project', attachable_id: projectId, kind: 'video', provider: 'youtube', external_url: url }) }); toast({ title: 'Vídeo enviado para moderação' }); setUrl(''); setOpen(false); await onDone(); } catch { toast({ title: 'Link de vídeo inválido', variant: 'destructive' }); } }; return <>{open ? <span className="flex gap-1"><Input aria-label="URL do vídeo" className="h-8 w-44 text-xs" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://youtube.com/..." /><Button size="sm" type="button" onClick={save}>Salvar</Button></span> : <Button size="sm" type="button" variant="outline" onClick={() => setOpen(true)}>Vídeo</Button>}</>; }
 
 function DropzoneField({

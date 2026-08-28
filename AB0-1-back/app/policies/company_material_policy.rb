@@ -7,6 +7,7 @@ class CompanyMaterialPolicy < ApplicationPolicy
   def update? = index?
   def destroy? = index?
   def submit? = update?
+  def restore? = update?
 
   class Scope < Scope
     def resolve

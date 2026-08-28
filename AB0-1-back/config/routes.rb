@@ -589,7 +589,7 @@ Rails.application.routes.draw do
           member { post :submit }
         end
         resources :materials, only: %i[index show create update destroy] do
-          member { post :submit; post :publish }
+          member { post :submit; post :publish; post :restore }
         end
         resources :content_lead_forms, only: %i[index show create update destroy]
         resources :assets, only: %i[create update destroy]
