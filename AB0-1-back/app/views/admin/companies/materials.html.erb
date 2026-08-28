@@ -21,7 +21,13 @@
           <td><%= material.gate_mode %></td>
           <td><%= status_tag(status_labels.fetch(material.status, material.status)) %></td>
           <td><%= l(material.updated_at, format: :short) %></td>
-          <td><%= material.digital_assets.size %> mídias<br><% pdfs.each do |pdf| %><%= link_to(pdf.title.presence || "PDF 
+          <td>
+            <%= material.digital_assets.size %> mídias<br>
+            <% material.digital_assets.each do |pdf| %>
+              <%= link_to(pdf.title.presence || "PDF " + pdf.id.to_s, admin_digital_asset_path(pdf)) %>: <%= pdf.status %> / <%= pdf.processing_status %><br>
+            <% end %>
+            <%= "PDF ainda não está pronto para publicação." if material.status == "pending" && pdfs.none? { |pdf| pdf.processing_status == "ready" } %>
+          </td>
           <td><%= material.download_count %></td>
           <td><%= material.moderation_reason.presence || '-' %></td>
           <td>
