@@ -1,0 +1,51 @@
+<% status_labels = { 'pending' => 'Em análise', 'published' => 'Publicado', 'draft' => 'Rascunho', 'rejected' => 'Rejeitado', 'archived' => 'Arquivado' } %>
+<h2>Empresa 360 &gt; <%= resource.name %> &gt; Materiais</h2>
+<p><%= link_to 'Voltar para Empresa 360', admin_company_path(resource) %></p>
+<p>Filtros: <%= link_to 'Todos', materials_admin_company_path(resource) %> | <%= link_to 'Em análise', materials_admin_company_path(resource, status: 'pending') %> | <%= link_to 'Publicados', materials_admin_company_path(resource, status: 'published') %> | <%= link_to 'Rascunhos', materials_admin_company_path(resource, status: 'draft') %> | <%= link_to 'Rejeitados', materials_admin_company_path(resource, status: 'rejected') %></p>
+<% counts = @company_materials.group_by(&:status).transform_values(&:count) %>
+<div class="panel">
+  <h3>Indicadores</h3>
+  <p>Total: <%= @company_materials.size %> | Rascunhos: <%= counts.fetch('draft', 0) %> | Em análise: <%= counts.fetch('pending', 0) %> | Publicados: <%= counts.fetch('published', 0) %> | Rejeitados: <%= counts.fetch('rejected', 0) %> | Downloads: <%= @company_materials.sum(&:download_count) %></p>
+</div>
+<div class="panel">
+  <h3>Materiais</h3>
+  <table class="index_table">
+    <thead><tr><th>Título</th><th>Tipo</th><th>Gate</th><th>Status</th><th>Data</th><th>Mídias/PDF</th><th>Downloads</th><th>Moderação</th><th>Ações</th></tr></thead>
+    <tbody>
+      <% @company_materials.each do |material| %>
+        <% pdfs = material.digital_assets.select { |asset| asset.kind == 'document' } %>
+        <% return_to = materials_admin_company_path(resource) %>
+        <tr>
+          <td><%= material.title %></td>
+          <td><%= material.material_type %></td>
+          <td><%= material.gate_mode %></td>
+          <td><%= status_tag(status_labels.fetch(material.status, material.status)) %></td>
+          <td><%= l(material.updated_at, format: :short) %></td>
+          <td><%= material.digital_assets.size %> mídias<br><% pdfs.each do |pdf| %><%= link_to(pdf.title.presence || "PDF 
+          <td><%= material.download_count %></td>
+          <td><%= material.moderation_reason.presence || '-' %></td>
+          <td>
+            <%= link_to 'Ver', admin_company_material_path(material) %> |
+            <%= link_to 'Editar', edit_admin_company_material_path(material) %>
+            <% if material.status == 'pending' %>
+              <%= form_tag approve_admin_company_material_path(material), method: :put, style: 'display:inline' do %>
+                <%= hidden_field_tag :return_to, return_to %>
+                <%= submit_tag 'Aprovar e publicar', data: { confirm: 'Publicar material?' } %>
+              <% end %>
+              <%= form_tag reject_admin_company_material_path(material), method: :put do %>
+                <%= hidden_field_tag :return_to, return_to %>
+                <%= text_field_tag :reason, nil, required: true, placeholder: 'Motivo da rejeição' %>
+                <%= submit_tag 'Rejeitar' %>
+              <% end %>
+              <%= form_tag request_changes_admin_company_material_path(material), method: :put do %>
+                <%= hidden_field_tag :return_to, return_to %>
+                <%= text_field_tag :reason, nil, required: true, placeholder: 'Ajuste solicitado' %>
+                <%= submit_tag 'Solicitar ajustes' %>
+              <% end %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -58,6 +58,12 @@ ActiveAdmin.register Company do
     end
   end
 
+  member_action :materials, method: :get do
+    @company_materials = resource.company_materials.includes(:content_lead_form, :digital_assets, :content_moderation_decisions).order(updated_at: :desc)
+    @company_materials = @company_materials.where(status: params[:status]) if CompanyMaterial::STATUSES.include?(params[:status])
+    render 'admin/companies/materials'
+  end
+
   action_item :geocodificar, only: :show do
     link_to '📍 Geocodificar', geocodificar_admin_company_path(resource), method: :put,
                                                                          data: { confirm: 'Enfileirar geocodificação para esta empresa?' }
@@ -792,7 +798,7 @@ ActiveAdmin.register Company do
         ['Produtos', admin_company_products_path(q: { company_id_eq: resource.id })],
         ['Projetos', admin_company_projects_path(q: { company_id_eq: resource.id })],
         ['Serviços', admin_company_services_path(q: { company_id_eq: resource.id })],
-        ['Materiais', admin_company_materials_path(q: { company_id_eq: resource.id })],
+        ['Materiais', materials_admin_company_path(resource)],
         ['FAQs', admin_company_faqs_path(q: { company_id_eq: resource.id })],
         ['Financiamento', admin_company_financing_profiles_path(q: { company_id_eq: resource.id })],
         ['Membros', admin_company_members_path(q: { company_id_eq: resource.id })],

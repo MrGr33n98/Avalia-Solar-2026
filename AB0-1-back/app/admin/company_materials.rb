@@ -48,8 +48,8 @@ ActiveAdmin.register CompanyMaterial do
                ] },
                include_blank: false,
                hint: "Para publicar um material em análise, utilize a ação 'Aprovar e publicar'."
-      f.input :published_at, as: :datetime_picker, input_html: { style: 'width: 240px; max-width: 100%;' }
-      f.input :expires_at, as: :datetime_picker, input_html: { style: 'width: 240px; max-width: 100%;' }
+      f.input :published_at, as: :string, input_html: { type: 'datetime-local', disabled: true, style: 'width: 320px; max-width: 100%;' }
+      f.input :expires_at, as: :string, input_html: { type: 'datetime-local', style: 'width: 320px; max-width: 100%;' }
     end
     f.actions
   end
@@ -66,38 +66,50 @@ ActiveAdmin.register CompanyMaterial do
     end
   end
 
+  controller do
+    private
+
+    def redirect_to_material_destination(options = {})
+      destination = params[:return_to].to_s
+      destination = resource_path unless destination.start_with?('/admin/companies/')
+      redirect_to destination, **options
+    end
+  end
+
   member_action :approve, method: :put do
-    pdf_assets = resource.digital_assets.document.where.not(status: 'archived')
-    unless pdf_assets.where(processing_status: 'ready').exists?
-      redirect_to resource_path, alert: 'Aprove ao menos um PDF antes de publicar o material.' and return
-    end
-    CompanyMaterial.transaction do
-      resource.update!(status: 'published', published_at: Time.current, moderation_reason: nil)
-      pdf_assets.where(processing_status: 'ready').update_all(status: 'published')
-    end
-    ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'approved')
-    redirect_to resource_path, notice: 'Material publicado.'
+    begin
+    CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).approve!
+    redirect_to_material_destination(notice: 'Material publicado.')
+  rescue StandardError => e
+    redirect_to_material_destination(alert: e.message)
+  end
   end
 
   member_action :reject, method: :put do
     reason = params[:reason].to_s.strip
-    return redirect_to(resource_path, alert: 'Informe o motivo da rejeição.') if reason.blank?
+    return redirect_to_material_destination(alert: 'Informe o motivo da rejeição.') if reason.blank?
 
-    resource.update!(status: 'rejected', published_at: nil, moderation_reason: reason)
-    ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'rejected', reason: reason)
-    redirect_to resource_path, alert: 'Material rejeitado.'
+    begin
+    CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).reject!(reason: reason)
+    redirect_to_material_destination(alert: 'Material rejeitado.')
+  rescue ArgumentError => e
+    redirect_to_material_destination(alert: e.message)
+  end
   end
 
   member_action :request_changes, method: :put do
     reason = params[:reason].to_s.strip
-    return redirect_to(resource_path, alert: 'Informe o ajuste solicitado.') if reason.blank?
+    return redirect_to_material_destination(alert: 'Informe o ajuste solicitado.') if reason.blank?
 
-    resource.update!(status: 'draft', moderation_reason: reason)
-    ContentModerationDecision.create!(company: resource.company, moderatable: resource, admin_user: current_admin_user, decision: 'changes_requested', reason: reason)
-    redirect_to resource_path, notice: 'Ajustes solicitados à empresa.'
+    begin
+    CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).request_changes!(reason: reason)
+    redirect_to_material_destination(notice: 'Ajustes solicitados à empresa.')
+  rescue ArgumentError => e
+    redirect_to_material_destination(alert: e.message)
+  end
   end
 
-  action_item :approve, only: :show, if: proc { resource.status == 'pending' } do
+  action_item :approve, only: %i[show edit], if: proc { resource.status == 'pending' } do
     link_to 'Aprovar e publicar', approve_admin_company_material_path(resource), method: :put
   end
 
