@@ -11,7 +11,10 @@ module Api
           authorize attachable, :update?
           asset = attachable.digital_assets.new(asset_params.except(:file))
           asset.company = @company
-          asset.file.attach(asset_params[:file]) if asset_params[:file].present?
+          if asset_params[:file].present?
+            asset.file.attach(asset_params[:file])
+            asset.processing_status = 'ready'
+          end
           return render json: { errors: asset.errors.full_messages }, status: :unprocessable_entity unless asset.save
 
           render json: { asset: serialize(asset) }, status: :created

@@ -209,9 +209,9 @@ export default function ProjectsMaterialsHub({
   };
 
   const archive = async (type: 'project' | 'material', id: number) => {
-    if (!window.confirm('Arquivar este item? Ele deixará de aparecer publicamente.')) return;
-    try { await fetchApi(`/company_admin/${type}s/${id}${query}`, { method: 'DELETE' }); toast({ title: 'Item arquivado' }); await load(); }
-    catch (err) { handleActionError(err, 'Não foi possível arquivar'); }
+    if (!window.confirm(type === 'material' ? 'Excluir este material? Ele deixará de aparecer publicamente.' : 'Arquivar este item? Ele deixará de aparecer publicamente.')) return;
+    try { await fetchApi(`/company_admin/${type}s/${id}${query}`, { method: 'DELETE' }); toast({ title: type === 'material' ? 'Material excluído' : 'Item arquivado' }); await load(); }
+    catch (err) { handleActionError(err, type === 'material' ? 'Não foi possível excluir o material' : 'Não foi possível arquivar'); }
   };
 
   const restore = async (id: number) => {
@@ -370,7 +370,7 @@ export default function ProjectsMaterialsHub({
                     <Send className="mr-1 h-3 w-3" />Enviar para revisão
                   </Button>
                 )}
-                <div className="relative"><Button size="sm" type="button" variant="outline" aria-label="Ações do material" onClick={() => setOpenMaterialMenu(openMaterialMenu === material.id ? null : material.id)}><MoreHorizontal className="h-4 w-4" /></Button>{openMaterialMenu === material.id && <div className="absolute right-0 z-10 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-xl"><button type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { setSelectedMaterialId(material.id); setOpenMaterialMenu(null); }}>Ver preview</button><button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" onClick={() => { setOpenMaterialMenu(null); if (material.status === 'archived') { void restore(material.id); } else { void archive('material', material.id); } }}>{material.status === 'archived' ? 'Restaurar' : 'Arquivar'}</button></div>}</div>
+                <div className="relative"><Button size="sm" type="button" variant="outline" aria-label="Ações do material" onClick={() => setOpenMaterialMenu(openMaterialMenu === material.id ? null : material.id)}><MoreHorizontal className="h-4 w-4" /></Button>{openMaterialMenu === material.id && <div className="absolute right-0 z-10 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-xl"><button type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { setSelectedMaterialId(material.id); setOpenMaterialMenu(null); }}>Ver preview</button><button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" onClick={() => { setOpenMaterialMenu(null); if (material.status === 'archived') { void restore(material.id); } else { void archive('material', material.id); } }}>{material.status === 'archived' ? 'Restaurar' : 'Excluir material'}</button></div>}</div>
               </div>
             </>
           )}
