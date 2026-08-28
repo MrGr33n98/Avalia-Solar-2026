@@ -111,6 +111,22 @@ ActiveAdmin.register CompanyMaterial do
     link_to 'Voltar para Empresa 360', materials_admin_company_path(resource.company)
   end
 
+  sidebar "Arquivos do material", only: :show do
+    div class: "panel_contents" do
+      if resource.digital_assets.any?
+        resource.digital_assets.each do |asset|
+          para do
+            label = asset.title.presence || asset.file.filename.to_s
+            asset.file.attached? ? link_to(label, url_for(asset.file), target: "_blank", rel: "noreferrer") : label
+          end
+          para "Tipo: #{asset.kind} | Moderação: #{asset.status} | Processamento: #{asset.processing_status}"
+        end
+      else
+        para "Nenhum arquivo associado a este material."
+      end
+    end
+  end
+
   sidebar 'Decisão de moderação', only: :show, if: proc { resource.status.in?(%w[pending published]) } do
     div class: 'panel_contents' do
       para 'Informe um motivo antes de rejeitar ou solicitar ajustes. A decisão ficará no histórico da empresa.'
