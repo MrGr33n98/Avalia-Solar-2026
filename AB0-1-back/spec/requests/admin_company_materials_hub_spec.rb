@@ -43,3 +43,19 @@ RSpec.describe 'Admin CompanyMaterial form', type: :request do
     expect(response.body).not_to include('<option value="published"')
   end
 end
+
+RSpec.describe 'Admin CompanyMaterial moderation guard', type: :request do
+  include Devise::Test::IntegrationHelpers
+
+  let!(:admin_user) { create(:admin_user) }
+  let!(:material) { create(:company_material, status: 'pending') }
+
+  before { sign_in admin_user }
+
+  it 'bloqueia publicação por edição manual' do
+    patch admin_company_material_path(material), params: { company_material: { status: 'published' } }
+
+    expect(response).to redirect_to(admin_company_material_path(material))
+    expect(material.reload.status).to eq('pending')
+  end
+end
