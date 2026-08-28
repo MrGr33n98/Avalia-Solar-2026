@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { fetchApi } from '@/lib/api';
 import { buildApiUrl } from '@/lib/api-config';
+import { materialStatusLabel } from '@/lib/materials';
 
 type Asset = { id: number; kind: string; title?: string | null; alt_text?: string | null; caption?: string | null; external_url?: string | null; status: string; processing_status?: string | null; position?: number | null; file_url?: string | null; file_size?: number | null; file_name?: string | null };
 type Project = { id: number; title: string; status: string; summary?: string | null; project_type?: string | null; city?: string; state?: string; capacity_value?: number | null; capacity_unit?: string | null; moderation_reason?: string | null; assets?: Asset[] };
@@ -24,7 +25,7 @@ type Timeseries = { data: Array<{ date: string; authorizations: number; delivere
 type Sources = { sources: Array<{ source: string; medium: string; campaign: string; authorizations: number; delivered_downloads: number }> };
 type Leads = { leads: Array<{ id: number; name?: string | null; email: string; phone?: string | null; company_name?: string | null; download_count: number; last_seen_at?: string | null }>; pagination: { page: number; total: number; total_pages: number } };
 
-const Status = ({ value }: { value: string }) => <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${value === 'published' || value === 'active' ? 'bg-emerald-100 text-emerald-700' : value === 'pending' ? 'bg-amber-100 text-amber-700' : value === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>{value}</span>;
+const Status = ({ value }: { value: string }) => <span className={value === 'published' || value === 'active' ? 'rounded-full px-2 py-1 text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700' : value === 'pending' ? 'rounded-full px-2 py-1 text-[10px] font-bold uppercase bg-amber-100 text-amber-700' : value === 'rejected' ? 'rounded-full px-2 py-1 text-[10px] font-bold uppercase bg-rose-100 text-rose-700' : 'rounded-full px-2 py-1 text-[10px] font-bold uppercase bg-slate-100 text-slate-600'}>{value === 'active' ? 'Ativo' : value === 'inactive' ? 'Inativo' : materialStatusLabel(value)}</span>;
 const initialFields: FormField[] = [{ key: 'name', label: 'Nome', type: 'text', required: true }, { key: 'email', label: 'E-mail', type: 'email', required: true }];
 
 export default function ProjectsMaterialsHub({

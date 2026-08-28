@@ -12,7 +12,7 @@ describe('regras de materiais', () => {
     expect(formatMaterialFileSize(null)).toBe('PDF não enviado');
   });
   it('traduz estados conhecidos', () => {
-    expect(materialStatusLabel('pending')).toBe('Aguardando revisão');
+    expect(materialStatusLabel('pending')).toBe('Em análise');
     expect(materialStatusLabel('unknown')).toBe('unknown');
   });
 });

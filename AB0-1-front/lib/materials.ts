@@ -13,5 +13,5 @@ export function formatMaterialFileSize(bytes?: number | null) {
 }
 
 export function materialStatusLabel(status: string) {
-  return ({ published: 'Publicado', pending: 'Aguardando revisão', rejected: 'Rejeitado', archived: 'Arquivado', draft: 'Rascunho' } as Record<string, string>)[status] || status;
+  return ({ published: 'Publicado', pending: 'Em análise', rejected: 'Rejeitado', archived: 'Arquivado', draft: 'Rascunho' } as Record<string, string>)[status] || status;
 }
