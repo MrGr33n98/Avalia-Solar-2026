@@ -46,6 +46,9 @@ module SaasLeads
       website_click
       form_start
       product_view
+      downloaded_material
+      material_download_authorized
+      material_download_delivered
     ]).freeze
 
     # Events that clearly indicate administrative or vendor activity

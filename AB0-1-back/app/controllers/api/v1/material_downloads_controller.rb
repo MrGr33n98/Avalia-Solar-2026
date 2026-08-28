@@ -80,8 +80,16 @@ module Api
       def create_download!(material, token)
         download = nil
         ::MaterialDownload.transaction do
-          lead = material.gated? ? find_or_create_lead!(material) : nil
-          download = find_or_create_download!(material, lead, token)
+          content_lead = material.gated? ? find_or_create_content_lead!(material) : nil
+          download = find_or_create_download!(material, content_lead, token)
+        end
+
+        if content_lead.present?
+          begin
+            SaasLeads::MaterialDownloadConversionService.call(content_lead: content_lead, material_download: download, material: material)
+          rescue StandardError => e
+            Rails.logger.error("[SaasLeads::MaterialDownloadConversion] content_lead_id=#{content_lead.id} material_download_id=#{download.id} error=#{e.class}")
+          end
         end
 
         if download&.content_lead.present?
@@ -100,12 +108,12 @@ module Api
         material.company.material_downloads.find_by!(idempotency_key: key, company_material_id: material.id)
       end
 
-      def find_or_create_lead!(material)
+      def find_or_create_content_lead!(material)
         email = lead_params[:email].to_s.strip.downcase
         raise ActionController::ParameterMissing, :email if email.blank?
 
-        lead = material.company.content_leads.find_or_initialize_by(email_digest: ::ContentLead.digest_for(email))
-        lead.assign_attributes(
+        content_lead = material.company.content_leads.find_or_initialize_by(email_digest: ::ContentLead.digest_for(email))
+        content_lead.assign_attributes(
           email: email,
           name: lead_params[:name],
           phone: lead_params[:phone],
@@ -114,11 +122,11 @@ module Api
           consents: { form_version: material.content_lead_form.version, accepted_at: Time.current.iso8601, marketing: ActiveModel::Type::Boolean.new.cast(lead_params[:marketing_consent]) },
           last_seen_at: Time.current
         )
-        lead.save!
-        lead
+        content_lead.save!
+        content_lead
       end
 
-      def find_or_create_download!(material, lead, token)
+      def find_or_create_download!(material, content_lead, token)
         key = request.headers['Idempotency-Key'].presence
         existing = material.company.material_downloads.find_by(idempotency_key: key) if key
         if existing
@@ -130,7 +138,7 @@ module Api
         ::MaterialDownload.create!(
           company: material.company,
           company_material: material,
-          content_lead: lead,
+          content_lead: content_lead,
           content_lead_form: material.content_lead_form,
           anonymous_id: cookies[:anonymous_id],
           authorization_token_digest: Digest::SHA256.hexdigest(token),

@@ -97,6 +97,10 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
     column('Produto', sortable: false) { |lead| saas_metrics_for(lead)&.product_label || '-' }
     column :name
     column :email
+    column('Origem') { |lead| material_downloads_for(lead).any? ? 'MATERIAL DOWNLOAD' : lead.source }
+    column('Ação') { |lead| material_downloads_for(lead).any? ? 'Baixou material' : '-' }
+    column('Empresa de interesse') { |lead| material_downloads_for(lead).last&.company&.name || lead.company&.name || '-' }
+    column('Material') { |lead| material_downloads_for(lead).last&.company_material&.title || '-' }
     column :phone
     column('Cargo', sortable: false) { |lead| saas_metrics_for(lead)&.job_title || '-' }
     column('Porte da empresa', sortable: false) { |lead| saas_metrics_for(lead)&.company_size_band || '-' }
@@ -158,6 +162,28 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
       row :category
       row :created_at
       row :updated_at
+    end
+
+    panel 'Origem e intenção' do
+      download = material_downloads_for(resource).last
+      attributes_table_for resource do
+        row('Origem') { download ? 'Material Download' : resource.source }
+        row('Ação') { download ? 'Baixou material' : '-' }
+        row('Empresa de interesse') { download&.company&.name || '-' }
+        row('Material') { download&.company_material&.title || '-' }
+        row('Classificação') { download ? 'BUYER INTENT' : '-' }
+      end
+    end
+
+    panel 'Materiais baixados' do
+      table_for material_downloads_for(resource).sort_by(&:created_at).reverse do
+        column('Data') { |download| l(download.created_at, format: :short) }
+        column('Empresa') { |download| download.company.name }
+        column('Material') { |download| download.company_material.title }
+        column('Status', &:delivery_status)
+        column('Download ID', &:id)
+        column('Entregue em', &:delivered_at)
+      end
     end
 
     panel 'Distribuicoes' do
@@ -247,6 +273,12 @@ ActiveAdmin.register Lead, as: 'SaaS Lead' do
     def scoped_collection
       super.includes(:category, :company, :lead_distributions)
     end
+
+    def material_downloads_for(lead)
+      return [] if lead.email.blank?
+      MaterialDownload.joins(:content_lead).includes(:company, :company_material).where(content_leads: { email: lead.email }).to_a
+    end
+    helper_method :material_downloads_for
 
     def saas_metrics_for(lead)
       @saas_metrics ||= {}
