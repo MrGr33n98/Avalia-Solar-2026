@@ -43,7 +43,10 @@ class Api::V1::BannersController < Api::V1::BaseController
 
   # Gera chave de cache determinística baseada nos parâmetros
   def generate_cache_key
-    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city, :audience_key, :frequency_cap_seconds, :rotation_window_seconds, fallback_positions: [])
+    # audience_key é desconsiderado na geração da chave de cache para maximizar hit rate,
+    # já que as regras de exibição e targeting de banners são baseadas em posição/localização/categoria/etc.
+    # e a frequência por usuário (frequency capping) está desativada no momento.
+    params_hash = params.permit(:position, :category_id, :slot_key, :company_id, :limit, :state, :city, :frequency_cap_seconds, :rotation_window_seconds, fallback_positions: [])
                         .to_h
                         .sort
                         .to_h

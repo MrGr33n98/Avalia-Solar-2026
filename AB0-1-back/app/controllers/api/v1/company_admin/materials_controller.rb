@@ -90,6 +90,11 @@ module Api
           @material.digital_assets.document.where.not(status: 'archived').exists?
         end
 
+        def publishable_assets_ready?
+          assets = @material.digital_assets.document.where.not(status: 'archived')
+          assets.exists? && assets.all? { |a| a.processing_status == 'ready' }
+        end
+
         def publish_material
           CompanyMaterial.transaction do
             @material.update!(status: 'published', published_at: Time.current, moderation_reason: nil)
