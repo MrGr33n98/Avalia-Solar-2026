@@ -7,6 +7,7 @@ module Api
       rescue_from StandardError, with: :handle_error
 
       def index
+        expires_now
         return render json: { materials: [] } if @company.nil?
         return render json: { materials: [] } unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('downloadable_materials')
 
@@ -15,6 +16,7 @@ module Api
       end
 
       def show
+        expires_now
         return render json: { error: 'Not found' }, status: :not_found if @company.nil?
         return render json: { error: 'Not found' }, status: :not_found unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('downloadable_materials')
 

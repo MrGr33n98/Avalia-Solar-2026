@@ -45,7 +45,7 @@ export default function SidebarPremium({
 
   useEffect(() => {
     let active = true;
-    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`)
+    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`, { cache: 'no-store' })
       .then((response) => active && setMaterials(response.materials || []))
       .catch(() => active && setMaterials([]));
     return () => {
