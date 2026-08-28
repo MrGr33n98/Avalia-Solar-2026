@@ -37,7 +37,7 @@ module Api
 
         render json: {
           download_id: download.id,
-          delivery_url: "/api/v1/material_downloads/#{download.id}/file?token=#{token}",
+          authorization_token: token,
           expires_at: download.expires_at
         }, status: :created
       rescue ActionController::ParameterMissing => e
@@ -144,10 +144,16 @@ module Api
         )
       end
 
+      def download_token
+        request.headers["X-Material-Download-Token"].presence || request.authorization&.delete_prefix("Bearer ")
+      end
+
       def valid_token?(download)
+        token = download_token.to_s
+        return false if token.blank?
         return false if download.expires_at <= Time.current || download.delivery_status.in?(%w[revoked expired])
 
-        ActiveSupport::SecurityUtils.secure_compare(download.authorization_token_digest, Digest::SHA256.hexdigest(params[:token].to_s))
+        ActiveSupport::SecurityUtils.secure_compare(download.authorization_token_digest, Digest::SHA256.hexdigest(token))
       end
 
       def authorization_token

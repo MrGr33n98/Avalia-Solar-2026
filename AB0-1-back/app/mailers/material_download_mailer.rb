@@ -6,7 +6,7 @@ class MaterialDownloadMailer < ApplicationMailer
     @material = download.company_material
     @company = download.company
     @lead = download.content_lead
-    @download_url = frontend_url("/api/v1/material_downloads/#{@download.id}/file?token=#{token}")
+    @download_url = frontend_url("/material-downloads/#{@download.id}#token=#{token}")
 
     mail(
       to: @lead.email,

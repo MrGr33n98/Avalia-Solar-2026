@@ -43,7 +43,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
         expect(response).to have_http_status(:created)
         body = JSON.parse(response.body)
         expect(body).to have_key('download_id')
-        expect(body).to have_key('delivery_url')
+        expect(body).to have_key('authorization_token')
         expect(body).to have_key('expires_at')
 
         download = MaterialDownload.find(body['download_id'])
@@ -186,7 +186,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
       it 'redireciona para o arquivo e atualiza status e download_count' do
         expect(material.download_count).to eq(0)
 
-        get "/api/v1/material_downloads/#{download.id}/file", params: { token: token }
+        get "/api/v1/material_downloads/#{download.id}/file", headers: { "HTTP_X_MATERIAL_DOWNLOAD_TOKEN" => token }
 
         expect(response).to have_http_status(:redirect)
         expect(response.location).to include('catalogo.pdf')
@@ -201,7 +201,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
         download.update!(delivery_status: 'delivered', delivered_at: 5.minutes.ago)
         material.update!(download_count: 5)
 
-        get "/api/v1/material_downloads/#{download.id}/file", params: { token: token }
+        get "/api/v1/material_downloads/#{download.id}/file", headers: { "HTTP_X_MATERIAL_DOWNLOAD_TOKEN" => token }
 
         expect(response).to have_http_status(:redirect)
         expect(material.reload.download_count).to eq(5)
@@ -215,7 +215,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
       end
 
       it 'retorna 403 para token incorreto' do
-        get "/api/v1/material_downloads/#{download.id}/file", params: { token: 'token-errado' }
+        get "/api/v1/material_downloads/#{download.id}/file", headers: { "HTTP_X_MATERIAL_DOWNLOAD_TOKEN" => 'token-errado' }
 
         expect(response).to have_http_status(:forbidden)
       end
@@ -223,7 +223,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
       it 'retorna 403 para download expirado' do
         download.update!(expires_at: 1.minute.ago)
 
-        get "/api/v1/material_downloads/#{download.id}/file", params: { token: token }
+        get "/api/v1/material_downloads/#{download.id}/file", headers: { "HTTP_X_MATERIAL_DOWNLOAD_TOKEN" => token }
 
         expect(response).to have_http_status(:forbidden)
       end
@@ -237,7 +237,7 @@ RSpec.describe 'MaterialDownloads API', type: :request do
       end
 
       it 'retorna 404' do
-        get "/api/v1/material_downloads/#{download.id}/file", params: { token: token }
+        get "/api/v1/material_downloads/#{download.id}/file", headers: { "HTTP_X_MATERIAL_DOWNLOAD_TOKEN" => token }
 
         expect(response).to have_http_status(:not_found)
       end
