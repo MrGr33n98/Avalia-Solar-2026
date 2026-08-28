@@ -268,7 +268,7 @@ export default function CompanySidebar({
       {featuredMaterial && (
         <>
           <MaterialLeadMagnetCard material={featuredMaterial} onDownload={() => featuredMaterial.gated ? setSelectedMaterial(featuredMaterial) : void requestDownload(featuredMaterial)} />
-          <DownloadGate material={selectedMaterial} onClose={() => if (response.delivery !== 'email') setSelectedMaterial(null)} onSubmit={requestDownload} onViewed={async () => undefined} />
+          <DownloadGate material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onSubmit={requestDownload} onViewed={async () => undefined} />
         </>
       )}
 
