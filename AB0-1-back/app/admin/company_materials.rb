@@ -77,40 +77,38 @@ ActiveAdmin.register CompanyMaterial do
   end
 
   member_action :approve, method: :put do
-    begin
     CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).approve!
     redirect_to_material_destination(notice: 'Material publicado.')
   rescue StandardError => e
     redirect_to_material_destination(alert: e.message)
-  end
   end
 
   member_action :reject, method: :put do
     reason = params[:reason].to_s.strip
     return redirect_to_material_destination(alert: 'Informe o motivo da rejeição.') if reason.blank?
 
-    begin
     CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).reject!(reason: reason)
     redirect_to_material_destination(alert: 'Material rejeitado.')
   rescue ArgumentError => e
     redirect_to_material_destination(alert: e.message)
-  end
   end
 
   member_action :request_changes, method: :put do
     reason = params[:reason].to_s.strip
     return redirect_to_material_destination(alert: 'Informe o ajuste solicitado.') if reason.blank?
 
-    begin
     CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).request_changes!(reason: reason)
     redirect_to_material_destination(notice: 'Ajustes solicitados à empresa.')
   rescue ArgumentError => e
     redirect_to_material_destination(alert: e.message)
   end
-  end
 
   action_item :approve, only: %i[show edit], if: proc { resource.status == 'pending' } do
     link_to 'Aprovar e publicar', approve_admin_company_material_path(resource), method: :put
+  end
+
+  action_item :company_360, only: %i[show edit] do
+    link_to 'Voltar para Empresa 360', materials_admin_company_path(resource.company)
   end
 
   sidebar 'Decisão de moderação', only: :show, if: proc { resource.status.in?(%w[pending published]) } do

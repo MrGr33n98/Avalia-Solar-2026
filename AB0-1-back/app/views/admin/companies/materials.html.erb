@@ -1,5 +1,6 @@
 <% status_labels = { 'pending' => 'Em análise', 'published' => 'Publicado', 'draft' => 'Rascunho', 'rejected' => 'Rejeitado', 'archived' => 'Arquivado' } %>
 <h2>Empresa 360 &gt; <%= resource.name %> &gt; Materiais</h2>
+<p>Empresa: <%= resource.name %> | Status: <span class="status_tag status_<%= resource.status %>"><%= resource.status %></span> | Plano: <%= resource.plan&.name || 'Não informado' %></p>
 <p><%= link_to 'Voltar para Empresa 360', admin_company_path(resource) %></p>
 <p>Filtros: <%= link_to 'Todos', materials_admin_company_path(resource) %> | <%= link_to 'Em análise', materials_admin_company_path(resource, status: 'pending') %> | <%= link_to 'Publicados', materials_admin_company_path(resource, status: 'published') %> | <%= link_to 'Rascunhos', materials_admin_company_path(resource, status: 'draft') %> | <%= link_to 'Rejeitados', materials_admin_company_path(resource, status: 'rejected') %></p>
 <% counts = @company_materials.group_by(&:status).transform_values(&:count) %>
