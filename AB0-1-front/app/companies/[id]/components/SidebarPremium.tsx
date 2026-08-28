@@ -85,7 +85,7 @@ export default function SidebarPremium({
     await track('material_download_clicked', material);
     try {
       const campaign = new URLSearchParams(window.location.search);
-      const response = await fetchApi<{ download_id: string; authorization_token: string }>(`/material_downloads`, {
+      const response = await fetchApi<{ download_id: string; authorization_token: string; delivery?: string }>(`/material_downloads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
         body: JSON.stringify({
@@ -97,8 +97,8 @@ export default function SidebarPremium({
           ...values,
         }),
       });
-      const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } }); if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`); const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url);
-      setSelectedMaterial(null);
+      if (response.delivery !== 'email') { const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } }); if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`); const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url); }
+      if (response.delivery !== 'email') setSelectedMaterial(null);
     } catch (error) {
       toast({
         title: 'Não foi possível preparar o download',

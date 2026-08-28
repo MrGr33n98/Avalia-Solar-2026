@@ -46,11 +46,11 @@ export default function MaterialsLibrary({ companyId }: { companyId: number | st
     await track('material_download_clicked', material);
     try {
       const campaign = new URLSearchParams(window.location.search);
-      const response = await fetchApi<{ download_id: string; authorization_token: string }>(`/material_downloads`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ company_id: companyId, material_slug: material.slug, utm_source: campaign.get('utm_source') || undefined, utm_medium: campaign.get('utm_medium') || undefined, utm_campaign: campaign.get('utm_campaign') || undefined, ...values }) });
+      const response = await fetchApi<{ download_id: string; authorization_token: string; delivery?: string }>(`/material_downloads`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ company_id: companyId, material_slug: material.slug, utm_source: campaign.get('utm_source') || undefined, utm_medium: campaign.get('utm_medium') || undefined, utm_campaign: campaign.get('utm_campaign') || undefined, ...values }) });
       const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } });
       if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`);
       const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url);
-      setSelected(null);
+      if (response.delivery !== 'email') setSelected(null);
     } catch (error) { toast({ title: 'Não foi possível preparar o download', description: 'Tente novamente em alguns instantes.', variant: 'destructive' }); throw error; }
   };
 

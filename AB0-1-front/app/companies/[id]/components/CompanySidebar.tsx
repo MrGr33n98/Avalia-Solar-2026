@@ -43,12 +43,12 @@ export default function CompanySidebar({
 
   const featuredMaterial = materials[0];
   const requestDownload = async (material: Material, values: Record<string, string | Record<string, string>> = {}) => {
-    const response = await fetchApi<{ download_id: string; authorization_token: string }>('/material_downloads', {
+    const response = await fetchApi<{ download_id: string; authorization_token: string; delivery?: string }>('/material_downloads', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}` },
       body: JSON.stringify({ company_id: company.id, material_slug: material.slug, ...values }),
     });
-    const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } }); if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`); const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url);
-    setSelectedMaterial(null);
+    if (response.delivery !== 'email') { const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } }); if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`); const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url); }
+    if (response.delivery !== 'email') setSelectedMaterial(null);
   };
   const intentCompanyId = String(company.id);
   const visibleFaqs = company.faqs?.slice(0, 5) ?? [];
@@ -268,7 +268,7 @@ export default function CompanySidebar({
       {featuredMaterial && (
         <>
           <MaterialLeadMagnetCard material={featuredMaterial} onDownload={() => featuredMaterial.gated ? setSelectedMaterial(featuredMaterial) : void requestDownload(featuredMaterial)} />
-          <DownloadGate material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onSubmit={requestDownload} onViewed={async () => undefined} />
+          <DownloadGate material={selectedMaterial} onClose={() => if (response.delivery !== 'email') setSelectedMaterial(null)} onSubmit={requestDownload} onViewed={async () => undefined} />
         </>
       )}
 
