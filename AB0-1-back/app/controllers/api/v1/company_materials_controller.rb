@@ -31,7 +31,7 @@ module Api
 
       def set_company
         raw_id = params[:company_id]
-        @company = Company.find_by(id: raw_id) || Company.find_by(slug: raw_id)
+        @company = ::Company.find_by(id: raw_id) || ::Company.find_by(slug: raw_id)
       end
 
       def serialize(material)
