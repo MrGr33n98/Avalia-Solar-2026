@@ -34,17 +34,17 @@ export default function CompanySidebar({
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
   useEffect(() => {
-    let active = true;
-    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`)
-      .then((response) => active && setMaterials(response.materials || []))
-      .catch(() => active && setMaterials([]));
-    return () => { active = false; };
+    const controller = new AbortController();
+    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`, { signal: controller.signal })
+      .then((response) => setMaterials(response.materials || []))
+      .catch((error) => { if (error?.name !== 'AbortError') setMaterials([]); });
+    return () => controller.abort();
   }, [company.id]);
 
   const featuredMaterial = materials[0];
   const requestDownload = async (material: Material, values: Record<string, string | Record<string, string>> = {}) => {
     const response = await fetchApi<{ delivery_url: string }>('/material_downloads', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}` },
       body: JSON.stringify({ company_id: company.id, material_slug: material.slug, ...values }),
     });
     window.location.assign(response.delivery_url);
@@ -91,7 +91,7 @@ export default function CompanySidebar({
   };
 
   return (
-    <div className="space-y-6 sticky top-24">
+    <div className="space-y-6 lg:sticky lg:top-24">
       {/* Claim Profile Card - Always visible */}
       <ClaimCompanyCard company={company} />
 

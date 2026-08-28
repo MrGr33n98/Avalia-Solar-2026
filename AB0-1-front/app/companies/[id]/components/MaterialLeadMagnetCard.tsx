@@ -17,7 +17,7 @@ export default function MaterialLeadMagnetCard({
   onDownload,
 }: MaterialLeadMagnetCardProps) {
   return (
-    <Card className="overflow-hidden border border-blue-900/30 bg-[#0B1528] text-white shadow-lg rounded-none">
+    <Card className="overflow-hidden border border-blue-900/30 bg-[#0B1528] text-white shadow-lg rounded-2xl">
       {material.cover_url ? (
         <div className="relative w-full h-40 bg-slate-950">
           <Image
@@ -49,7 +49,7 @@ export default function MaterialLeadMagnetCard({
 
         <Button
           onClick={onDownload}
-          className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-none shadow-md transition-all duration-200"
+          className="w-full min-h-11 h-auto py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl shadow-md transition-all duration-200"
         >
           {material.gated ? (
             <>
