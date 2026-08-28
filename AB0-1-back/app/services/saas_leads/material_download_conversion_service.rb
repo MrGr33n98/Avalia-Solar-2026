@@ -20,8 +20,7 @@ module SaasLeads
       created = lead.new_record?
       lead.name ||= @content_lead.name
       lead.phone ||= @content_lead.phone
-      lead.company ||= @content_lead.company_name
-      lead.company_id ||= @material.company_id
+      lead[:company] ||= @content_lead.company_name if lead.has_attribute?(:company)
       lead.source = SOURCE if lead.source.blank? || lead.source == "portal"
       lead.utm_source ||= @material_download.utm_source if @material_download.respond_to?(:utm_source)
       lead.utm_medium ||= @material_download.utm_medium if @material_download.respond_to?(:utm_medium)
