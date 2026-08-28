@@ -45,9 +45,11 @@ module Api
           expires_at: download.expires_at
         }, status: :created
       rescue ActionController::ParameterMissing => e
-        render json: { error: e.message }, status: :bad_request
+        render json: { error: e.message }, status: :unprocessable_entity
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
       rescue StandardError => e
-        Rails.logger.error("[MaterialDownloadsController#create] stage=authorization request_id=#{request.request_id} company_id=#{params[:company_id]} material_slug=#{params[:material_slug]} error=#{e.class}: #{e.message} backtrace=#{e.backtrace&.first(8)&.join(' | ')}")
+        Rails.logger.error(event: "material_download_failed", stage: "authorization", request_id: request.request_id, company_id: params[:company_id].presence, material_slug: params[:material_slug].presence, error_class: e.class.name, error_message: e.message, backtrace: e.backtrace&.first(8))
         render json: { error: 'Erro interno ao processar autorização de download' }, status: :internal_server_error
       end
 

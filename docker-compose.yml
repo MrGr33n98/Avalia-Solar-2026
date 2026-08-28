@@ -59,6 +59,7 @@ services:
         condition: service_healthy
     environment:
       RAILS_ENV: production
+      DATABASE_URL: postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@ab0-postgres:5432/$${POSTGRES_DB}
       GIT_SHA: ${GIT_SHA:-unknown}
       RAILS_LOG_TO_STDOUT: "true"
       DOCKER: "true"
