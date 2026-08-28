@@ -36,6 +36,10 @@ module Api
           return render json: { errors: asset.errors.full_messages }, status: :unprocessable_entity unless asset.update(asset_update_params)
 
           asset.update!(status: 'pending') if was_published
+          # Se o material pai estava publicado e o asset foi despublicado, despublicar o material
+          if was_published && asset.attachable.is_a?(CompanyMaterial) && asset.attachable.status == 'published'
+            asset.attachable.unpublish!(target_status: 'pending')
+          end
           render json: { asset: serialize(asset) }
         end
 

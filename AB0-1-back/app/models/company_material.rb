@@ -16,10 +16,58 @@ class CompanyMaterial < ApplicationRecord
   validates :gate_mode, inclusion: { in: GATE_MODES }
   validates :content_lead_form, presence: true, unless: -> { gate_mode == 'none' }
   validate :form_belongs_to_company
+  validate :published_requires_published_at
 
   scope :published, -> { where(status: 'published').where('published_at <= ?', Time.current).where('expires_at IS NULL OR expires_at > ?', Time.current) }
 
   before_validation :generate_unique_slug, if: -> { slug.blank? && title.present? }
+  before_save :normalize_publication_state
+
+  # ---------------------------------------------------------------
+  # Publicação centralizada — único ponto de entrada para publicar
+  # ---------------------------------------------------------------
+  def publish!
+    raise 'Material não possui PDF pronto para publicação' unless publishable?
+
+    transaction do
+      update!(
+        status: 'published',
+        published_at: Time.current,
+        moderation_reason: nil
+      )
+
+      digital_assets
+        .where.not(status: 'archived')
+        .where(processing_status: 'ready')
+        .update_all(status: 'published')
+
+      Rails.logger.info("[CompanyMaterial#publish!] material_id=#{id} company_id=#{company_id} status=published slug=#{slug}")
+    end
+  end
+
+  # ---------------------------------------------------------------
+  # Despublicação centralizada — reverte material e assets
+  # ---------------------------------------------------------------
+  def unpublish!(target_status: 'draft', reason: nil)
+    transaction do
+      update!(
+        status: target_status,
+        published_at: nil,
+        moderation_reason: reason
+      )
+
+      digital_assets
+        .where(status: 'published')
+        .update_all(status: 'pending')
+
+      Rails.logger.info("[CompanyMaterial#unpublish!] material_id=#{id} company_id=#{company_id} target_status=#{target_status} reason=#{reason}")
+    end
+  end
+
+  # Verifica se existe pelo menos um DigitalAsset document pronto
+  def publishable?
+    digital_assets.document.where.not(status: 'archived').where(processing_status: 'ready').exists?
+  end
 
   def gated?
     gate_mode != 'none'
@@ -34,6 +82,17 @@ class CompanyMaterial < ApplicationRecord
   end
 
   private
+
+  # Impede estado inconsistente: published_at só existe quando status=published
+  def normalize_publication_state
+    self.published_at = nil unless status == 'published'
+  end
+
+  def published_requires_published_at
+    return unless status == 'published' && published_at.blank?
+
+    errors.add(:published_at, 'deve estar presente quando o material está publicado')
+  end
 
   def generate_unique_slug
     base_slug = title.to_s.parameterize.presence || 'material'

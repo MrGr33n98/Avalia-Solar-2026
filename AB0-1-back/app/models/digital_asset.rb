@@ -106,12 +106,25 @@ class DigitalAsset < ApplicationRecord
     change = attachment_changes[file.name.to_s]
     if change.present?
       attachable = change.attachable
-      if attachable.respond_to?(:path)
+      if attachable.is_a?(Hash)
+        io = attachable[:io] || attachable['io']
+        if io.respond_to?(:path)
+          return Marcel::MimeType.for(Pathname.new(io.path), name: file.blob.filename.to_s)
+        elsif io.respond_to?(:read)
+          io.rewind if io.respond_to?(:rewind)
+          mime = Marcel::MimeType.for(io, name: file.blob.filename.to_s)
+          io.rewind if io.respond_to?(:rewind)
+          return mime
+        end
+      elsif attachable.respond_to?(:path)
         return Marcel::MimeType.for(Pathname.new(attachable.path), name: file.blob.filename.to_s)
       elsif attachable.respond_to?(:tempfile) && attachable.tempfile.respond_to?(:path)
         return Marcel::MimeType.for(Pathname.new(attachable.tempfile.path), name: file.blob.filename.to_s)
       elsif attachable.respond_to?(:read)
-        return Marcel::MimeType.for(attachable, name: file.blob.filename.to_s)
+        attachable.rewind if attachable.respond_to?(:rewind)
+        mime = Marcel::MimeType.for(attachable, name: file.blob.filename.to_s)
+        attachable.rewind if attachable.respond_to?(:rewind)
+        return mime
       end
     end
 

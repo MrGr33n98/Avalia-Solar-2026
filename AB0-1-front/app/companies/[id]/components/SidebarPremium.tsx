@@ -40,14 +40,28 @@ export default function SidebarPremium({
   const visibleFaqs = company.faqs?.slice(0, 3) ?? [];
 
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [materialsError, setMaterialsError] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
   useEffect(() => {
     let active = true;
+    setMaterialsLoading(true);
+    setMaterialsError(false);
     fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`, { cache: 'no-store' })
-      .then((response) => active && setMaterials(response.materials || []))
-      .catch(() => active && setMaterials([]));
+      .then((response) => {
+        if (active) setMaterials(response.materials || []);
+      })
+      .catch((err) => {
+        if (active) {
+          console.error('[SidebarPremium] Erro ao carregar materiais:', err);
+          setMaterialsError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setMaterialsLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -102,7 +116,13 @@ export default function SidebarPremium({
       <CompanyContactCard company={company} />
 
       {/* 2. Card "Trabalha nesta empresa?" (Claim Profile Card) ou Material Destacado */}
-      {featuredMaterial ? (
+      {materialsLoading ? (
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 animate-pulse">
+          <div className="h-4 bg-slate-100 rounded w-2/3" />
+          <div className="h-10 bg-slate-100 rounded" />
+          <div className="h-8 bg-slate-100 rounded w-1/2" />
+        </div>
+      ) : featuredMaterial ? (
         <MaterialLeadMagnetCard
           material={featuredMaterial}
           onDownload={() => {

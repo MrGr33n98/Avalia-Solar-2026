@@ -20,7 +20,16 @@ export default function MaterialsLibrary({ companyId }: { companyId: number | st
 
   useEffect(() => {
     let active = true;
-    fetchApi<{ materials: Material[] }>(`/companies/${companyId}/materials`).then((response) => active && setMaterials(response.materials || [])).catch(() => active && setMaterials([])).finally(() => active && setLoading(false));
+    fetchApi<{ materials: Material[] }>(`/companies/${companyId}/materials`)
+      .then((response) => {
+        if (active) setMaterials(response.materials || []);
+      })
+      .catch((err) => {
+        if (active) console.error('[MaterialsLibrary] Erro ao carregar materiais:', err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => { active = false; };
   }, [companyId]);
 

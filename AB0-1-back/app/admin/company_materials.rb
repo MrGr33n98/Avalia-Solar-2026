@@ -7,9 +7,11 @@ ActiveAdmin.register CompanyMaterial do
                 :gate_mode, :status, :expires_at
 
   scope :all
+  scope('Rascunhos') { |scope| scope.where(status: 'draft') }
   scope('Pendentes') { |scope| scope.where(status: 'pending') }
   scope('Publicados') { |scope| scope.where(status: 'published') }
   scope('Rejeitados') { |scope| scope.where(status: 'rejected') }
+  scope('Arquivados') { |scope| scope.where(status: 'archived') }
 
   filter :company
   filter :status
@@ -24,10 +26,37 @@ ActiveAdmin.register CompanyMaterial do
     column :title
     column :material_type
     column :gate_mode
-    column :status
+    column(:status) do |m|
+      status_map = { 'draft' => 'Rascunho', 'pending' => 'Em análise', 'published' => 'Publicado', 'rejected' => 'Rejeitado', 'archived' => 'Arquivado' }
+      status_tag(status_map[m.status] || m.status, class: m.status == 'published' ? 'ok' : (m.status == 'rejected' ? 'error' : 'warning'))
+    end
+    column :published_at
     column :download_count
     column :updated_at
     actions
+  end
+
+  show do
+    attributes_table do
+      row :id
+      row :company
+      row :title
+      row :slug
+      row :description
+      row :material_type
+      row :gate_mode
+      row(:status) do |m|
+        status_map = { 'draft' => 'Rascunho', 'pending' => 'Em análise', 'published' => 'Publicado', 'rejected' => 'Rejeitado', 'archived' => 'Arquivado' }
+        status_tag(status_map[m.status] || m.status, class: m.status == 'published' ? 'ok' : (m.status == 'rejected' ? 'error' : 'warning'))
+      end
+      row :published_at
+      row :expires_at
+      row :download_count
+      row :moderation_reason
+      row :content_lead_form
+      row :created_at
+      row :updated_at
+    end
   end
 
   form do |f|
@@ -76,6 +105,7 @@ ActiveAdmin.register CompanyMaterial do
     end
   end
 
+  # Aprovar e publicar — usa ModerationService que delega para model.publish!
   member_action :approve, method: :put do
     CompanyMaterials::ModerationService.new(material: resource, admin_user: current_admin_user).approve!
     redirect_to_material_destination(notice: 'Material publicado.')
@@ -103,8 +133,36 @@ ActiveAdmin.register CompanyMaterial do
     redirect_to_material_destination(alert: e.message)
   end
 
+  # Enviar para análise (draft -> pending)
+  member_action :submit_for_review, method: :put do
+    unless resource.publishable?
+      redirect_to_material_destination(alert: 'Anexe um PDF pronto antes de enviar para análise.')
+      return
+    end
+    resource.update!(status: 'pending', moderation_reason: nil)
+    redirect_to_material_destination(notice: 'Material enviado para análise.')
+  rescue StandardError => e
+    redirect_to_material_destination(alert: e.message)
+  end
+
+  # Arquivar
+  member_action :archive, method: :put do
+    resource.update!(status: 'archived')
+    redirect_to_material_destination(notice: 'Material arquivado.')
+  rescue StandardError => e
+    redirect_to_material_destination(alert: e.message)
+  end
+
   action_item :approve, only: %i[show edit], if: proc { resource.status == 'pending' } do
     link_to 'Aprovar e publicar', approve_admin_company_material_path(resource), method: :put
+  end
+
+  action_item :submit_for_review, only: %i[show edit], if: proc { resource.status == 'draft' } do
+    link_to 'Enviar para análise', submit_for_review_admin_company_material_path(resource), method: :put
+  end
+
+  action_item :archive_material, only: %i[show edit], if: proc { resource.status.in?(%w[draft pending rejected]) } do
+    link_to 'Arquivar', archive_admin_company_material_path(resource), method: :put, data: { confirm: 'Tem certeza?' }
   end
 
   action_item :company_360, only: %i[show edit] do
@@ -114,17 +172,21 @@ ActiveAdmin.register CompanyMaterial do
   sidebar "Arquivos do material", only: :show do
     div class: "panel_contents" do
       pdfs = resource.digital_assets.document.where.not(status: "archived")
-      para "PDFs: #{pdfs.count}"
-      if pdfs.any? && !pdfs.where(processing_status: "ready").exists?
-        para "Este material possui #{pdfs.count} PDF(s), porém nenhum terminou o processamento."
+      ready_count = pdfs.where(processing_status: "ready").count
+      para "PDFs totais: #{pdfs.count} | Prontos: #{ready_count}"
+      para "Publicável: #{resource.publishable? ? 'Sim' : 'Não'}"
+
+      if pdfs.any? && ready_count.zero?
+        para "⚠️ Nenhum PDF terminou o processamento.", style: "color: #b91c1c;"
       end
+
       if resource.digital_assets.any?
         resource.digital_assets.each do |asset|
           para do
-            label = asset.title.presence || asset.file.filename.to_s
-            asset.file.attached? ? link_to(label, url_for(asset.file), target: "_blank", rel: "noreferrer") : label
+            label = asset.title.presence || (asset.file.attached? ? asset.file.filename.to_s : "Sem arquivo")
+            asset.file.attached? ? link_to(label, url_for(asset.file), target: "_blank", rel: "noreferrer") : span(label)
           end
-          para "Tipo: #{asset.kind} | Moderação: #{asset.status} | Processamento: #{asset.processing_status}"
+          para "Tipo: #{asset.kind} | Status: #{asset.status} | Processamento: #{asset.processing_status} | Anexado: #{asset.file.attached? ? 'Sim' : 'Não'}"
         end
       else
         para "Nenhum arquivo associado a este material."
@@ -150,3 +212,4 @@ ActiveAdmin.register CompanyMaterial do
     end
   end
 end
+
