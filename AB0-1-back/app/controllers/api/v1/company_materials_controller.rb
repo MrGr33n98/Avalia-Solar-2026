@@ -9,6 +9,7 @@ module Api
       def index
         expires_now
         return render json: { materials: [] } if @company.nil?
+        Rails.logger.info("[CompanyMaterialsController#index] company_id=#{@company.id} published_count=#{@company.company_materials.published.count}")
         return render json: { materials: [] } unless @company.respond_to?(:feature_enabled?) && @company.feature_enabled?('downloadable_materials')
 
         materials = @company.company_materials.published.order(published_at: :desc).limit(60)
@@ -27,8 +28,12 @@ module Api
       private
 
       def handle_error(exception)
-        Rails.logger.warn("[CompanyMaterialsController] Error: #{exception.class} - #{exception.message}")
-        render json: { materials: [] }
+        Rails.logger.error("[CompanyMaterialsController] company_id=#{@company&.id} error=#{exception.class} message=#{exception.message} backtrace=#{exception.backtrace&.first(10)&.join(' | ')}")
+        if Rails.env.development? || Rails.env.test?
+          render json: { error: exception.class.name, message: exception.message }, status: :internal_server_error
+        else
+          render json: { materials: [] }
+        end
       end
 
       def set_company
