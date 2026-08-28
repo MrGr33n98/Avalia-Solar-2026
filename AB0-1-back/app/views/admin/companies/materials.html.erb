@@ -19,7 +19,7 @@
           <td><%= material.title %></td>
           <td><%= material.material_type %></td>
           <td><%= material.gate_mode %></td>
-          <td><%= status_tag(status_labels.fetch(material.status, material.status)) %></td>
+          <td><span class="status_tag status_<%= material.status %>"><%= status_labels.fetch(material.status, material.status) %></span></td>
           <td><%= l(material.updated_at, format: :short) %></td>
           <td>
             <%= material.digital_assets.size %> mídias<br>

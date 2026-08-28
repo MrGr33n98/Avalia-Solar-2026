@@ -6,6 +6,9 @@ class CompanyMaterialPolicy < ApplicationPolicy
   def create? = index?
   def update? = index?
   def destroy? = index?
+  def approve? = admin?
+  def reject? = admin?
+  def request_changes? = admin?
   def submit? = update?
   def restore? = update?
 

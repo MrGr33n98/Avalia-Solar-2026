@@ -49,6 +49,10 @@ class CompanyPolicy < ApplicationPolicy
     admin?
   end
 
+  def materials?
+    admin?
+  end
+
   def view_dashboard?
     admin? || company_member?
   end

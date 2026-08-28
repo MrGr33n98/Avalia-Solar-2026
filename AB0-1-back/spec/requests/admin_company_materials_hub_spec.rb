@@ -3,7 +3,12 @@ require 'rails_helper'
 RSpec.describe 'Admin Company 360 materials', type: :request do
   include Devise::Test::IntegrationHelpers
 
-  let!(:admin_user) { create(:admin_user) }
+  let!(:admin_user) do
+    AdminUser.find_or_create_by!(email: 'admin@example.com') do |admin|
+      admin.password = 'password123'
+      admin.password_confirmation = 'password123'
+    end
+  end
   let!(:company) { create(:company) }
   let!(:other_company) { create(:company) }
   let!(:material) { create(:company_material, company: company, status: 'pending') }
@@ -29,7 +34,12 @@ end
 RSpec.describe 'Admin CompanyMaterial form', type: :request do
   include Devise::Test::IntegrationHelpers
 
-  let!(:admin_user) { create(:admin_user) }
+  let!(:admin_user) do
+    AdminUser.find_or_create_by!(email: 'admin@example.com') do |admin|
+      admin.password = 'password123'
+      admin.password_confirmation = 'password123'
+    end
+  end
   let!(:material) { create(:company_material, status: 'pending') }
 
   before { sign_in admin_user }
@@ -47,7 +57,12 @@ end
 RSpec.describe 'Admin CompanyMaterial moderation guard', type: :request do
   include Devise::Test::IntegrationHelpers
 
-  let!(:admin_user) { create(:admin_user) }
+  let!(:admin_user) do
+    AdminUser.find_or_create_by!(email: 'admin@example.com') do |admin|
+      admin.password = 'password123'
+      admin.password_confirmation = 'password123'
+    end
+  end
   let!(:material) { create(:company_material, status: 'pending') }
 
   before { sign_in admin_user }
