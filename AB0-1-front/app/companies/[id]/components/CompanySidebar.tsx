@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { Phone, Globe, MapPin, ExternalLink, Mail, Clock, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Company } from '@/lib/api';
+import { Company, fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import SponsoredBanner from './SponsoredBanner';
 import ClaimCompanyCard from './ClaimCompanyCard';
@@ -12,6 +14,8 @@ import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { useCopyIntent, useFaqExpand, useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { openSignupGate } from '@/lib/signup-gate';
+import MaterialLeadMagnetCard from './MaterialLeadMagnetCard';
+import { DownloadGate, Material } from './MaterialsLibrary';
 
 
 interface CompanySidebarProps {
@@ -26,6 +30,26 @@ export default function CompanySidebar({
   showCompetitorBanners = true,
 }: CompanySidebarProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchApi<{ materials: Material[] }>(`/companies/${company.id}/materials`)
+      .then((response) => active && setMaterials(response.materials || []))
+      .catch(() => active && setMaterials([]));
+    return () => { active = false; };
+  }, [company.id]);
+
+  const featuredMaterial = materials[0];
+  const requestDownload = async (material: Material, values: Record<string, string | Record<string, string>> = {}) => {
+    const response = await fetchApi<{ delivery_url: string }>('/material_downloads', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+      body: JSON.stringify({ company_id: company.id, material_slug: material.slug, ...values }),
+    });
+    window.location.assign(response.delivery_url);
+    setSelectedMaterial(null);
+  };
   const intentCompanyId = String(company.id);
   const visibleFaqs = company.faqs?.slice(0, 5) ?? [];
   const currentReturnTo = typeof window !== 'undefined'
@@ -241,6 +265,13 @@ export default function CompanySidebar({
         </CardContent>
       </Card>
       
+      {featuredMaterial && (
+        <>
+          <MaterialLeadMagnetCard material={featuredMaterial} onDownload={() => featuredMaterial.gated ? setSelectedMaterial(featuredMaterial) : void requestDownload(featuredMaterial)} />
+          <DownloadGate material={selectedMaterial} onClose={() => setSelectedMaterial(null)} onSubmit={requestDownload} onViewed={async () => undefined} />
+        </>
+      )}
+
       {/* Working Hours Card (Optional) */}
       {company.business_hours && (
         <Card className="overflow-hidden border-none shadow-lg bg-card/80 backdrop-blur-sm">

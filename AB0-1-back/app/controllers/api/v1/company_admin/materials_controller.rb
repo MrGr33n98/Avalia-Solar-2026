@@ -51,7 +51,11 @@ module Api
 
         def submit
           authorize @material, :submit?
-          return render json: { error: 'Anexe um PDF antes de enviar para aprovação' }, status: :unprocessable_entity unless @material.digital_assets.document.where.not(status: 'archived').exists?
+          documents = @material.digital_assets.document.where.not(status: 'archived')
+          return render json: { error: 'Anexe um PDF antes de enviar para aprovação' }, status: :unprocessable_entity unless documents.exists?
+          unless documents.where(processing_status: 'ready').exists?
+            return render json: { error: 'O PDF ainda está sendo processado. Aguarde a conclusão antes de enviar para revisão.' }, status: :unprocessable_entity
+          end
 
           return publish_material if auto_publish_materials? && publishable_assets_ready?
 

@@ -113,6 +113,11 @@ ActiveAdmin.register CompanyMaterial do
 
   sidebar "Arquivos do material", only: :show do
     div class: "panel_contents" do
+      pdfs = resource.digital_assets.document.where.not(status: "archived")
+      para "PDFs: #{pdfs.count}"
+      if pdfs.any? && !pdfs.where(processing_status: "ready").exists?
+        para "Este material possui #{pdfs.count} PDF(s), porém nenhum terminou o processamento."
+      end
       if resource.digital_assets.any?
         resource.digital_assets.each do |asset|
           para do
