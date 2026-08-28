@@ -30,6 +30,42 @@ ActiveAdmin.register CompanyMaterial do
     actions
   end
 
+  form do |f|
+    f.inputs do
+      f.input :company
+      f.input :content_lead_form
+      f.input :title
+      f.input :slug
+      f.input :description
+      f.input :material_type
+      f.input :visibility
+      f.input :gate_mode
+      f.input :status,
+               as: :select,
+               collection: CompanyMaterial::STATUSES.reject { |status| status == 'published' }.map { |status| [
+                 { 'draft' => 'Rascunho', 'pending' => 'Em análise', 'rejected' => 'Rejeitado', 'archived' => 'Arquivado' }[status],
+                 status
+               ] },
+               include_blank: false,
+               hint: "Para publicar um material em análise, utilize a ação 'Aprovar e publicar'."
+      f.input :published_at, as: :datetime_picker, input_html: { style: 'width: 240px; max-width: 100%;' }
+      f.input :expires_at, as: :datetime_picker, input_html: { style: 'width: 240px; max-width: 100%;' }
+    end
+    f.actions
+  end
+
+  controller do
+    def update
+      requested_status = params.dig(:company_material, :status)
+      if requested_status == 'published' && resource.status != 'published'
+        redirect_to resource_path, alert: "Para publicar, utilize a ação 'Aprovar e publicar'."
+        return
+      end
+
+      super
+    end
+  end
+
   member_action :approve, method: :put do
     pdf_assets = resource.digital_assets.document.where.not(status: 'archived')
     unless pdf_assets.where(processing_status: 'ready').exists?
