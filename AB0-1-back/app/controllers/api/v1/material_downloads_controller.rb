@@ -36,6 +36,10 @@ module Api
         Rails.logger.info("[MaterialDownloadsController#create] company_id=#{company.id} material_id=#{material.id} download_id=#{download.id} status=authorized utm_source=#{params[:utm_source]}")
 
         render json: {
+          success: true,
+          message: material.gated? ? 'Material enviado para o seu e-mail.' : 'Material autorizado para download.',
+          delivery: material.gated? ? 'email' : 'browser',
+          material_download_id: download.id,
           download_id: download.id,
           authorization_token: token,
           expires_at: download.expires_at
@@ -43,7 +47,7 @@ module Api
       rescue ActionController::ParameterMissing => e
         render json: { error: e.message }, status: :bad_request
       rescue StandardError => e
-        Rails.logger.error("[MaterialDownloadsController#create] error=#{e.class} message=#{e.message} backtrace=#{e.backtrace&.first(5)&.join(' | ')}")
+        Rails.logger.error("[MaterialDownloadsController#create] stage=authorization request_id=#{request.request_id} company_id=#{params[:company_id]} material_slug=#{params[:material_slug]} error=#{e.class}: #{e.message} backtrace=#{e.backtrace&.first(8)&.join(' | ')}")
         render json: { error: 'Erro interno ao processar autorização de download' }, status: :internal_server_error
       end
 
@@ -88,7 +92,7 @@ module Api
           begin
             SaasLeads::MaterialDownloadConversionService.call(content_lead: content_lead, material_download: download, material: material)
           rescue StandardError => e
-            Rails.logger.error("[SaasLeads::MaterialDownloadConversion] content_lead_id=#{content_lead.id} material_download_id=#{download.id} error=#{e.class}")
+            Rails.logger.error("[SaasLeads::MaterialDownloadConversion] stage=lead_sync request_id=#{request.request_id} content_lead_id=#{content_lead.id} material_download_id=#{download.id} material_id=#{material.id} company_id=#{material.company_id} error=#{e.class}: #{e.message} backtrace=#{e.backtrace&.first(3)&.join(' | ')}")
           end
         end
 
@@ -115,9 +119,9 @@ module Api
         content_lead = material.company.content_leads.find_or_initialize_by(email_digest: ::ContentLead.digest_for(email))
         content_lead.assign_attributes(
           email: email,
-          name: lead_params[:name],
-          phone: lead_params[:phone],
-          company_name: lead_params[:company_name],
+          name: lead_params[:name].presence || content_lead.name,
+          phone: lead_params[:phone].presence || content_lead.phone,
+          company_name: lead_params[:company_name].presence || content_lead.company_name,
           attributes_data: lead_params[:attributes_data] || {},
           consents: { form_version: material.content_lead_form.version, accepted_at: Time.current.iso8601, marketing: ActiveModel::Type::Boolean.new.cast(lead_params[:marketing_consent]) },
           last_seen_at: Time.current

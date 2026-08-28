@@ -99,12 +99,13 @@ export default function SidebarPremium({
       });
       const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } }); if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`); const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url);
       setSelectedMaterial(null);
-    } catch {
+    } catch (error) {
       toast({
         title: 'Não foi possível preparar o download',
         description: 'Tente novamente em alguns instantes.',
         variant: 'destructive',
       });
+      throw error;
     }
   };
 
