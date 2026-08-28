@@ -103,15 +103,16 @@ class DigitalAsset < ApplicationRecord
   end
 
   def detected_content_type
-    if file.respond_to?(:change) && file.change.present?
-      attachable = file.change.attachable
-      filename = file.blob.filename.to_s
-
-      return Marcel::MimeType.for(Pathname.new(attachable.path), name: filename) if attachable.respond_to?(:path)
-      if attachable.respond_to?(:tempfile) && attachable.tempfile.respond_to?(:path)
-        return Marcel::MimeType.for(Pathname.new(attachable.tempfile.path), name: filename)
+    change = attachment_changes[file.name.to_s]
+    if change.present?
+      attachable = change.attachable
+      if attachable.respond_to?(:path)
+        return Marcel::MimeType.for(Pathname.new(attachable.path), name: file.blob.filename.to_s)
+      elsif attachable.respond_to?(:tempfile) && attachable.tempfile.respond_to?(:path)
+        return Marcel::MimeType.for(Pathname.new(attachable.tempfile.path), name: file.blob.filename.to_s)
+      elsif attachable.respond_to?(:read)
+        return Marcel::MimeType.for(attachable, name: file.blob.filename.to_s)
       end
-      return Marcel::MimeType.for(attachable, name: filename) if attachable.respond_to?(:read)
     end
 
     file.blob.open do |tempfile|

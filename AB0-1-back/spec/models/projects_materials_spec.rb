@@ -49,7 +49,9 @@ RSpec.describe 'Projects and materials domain', type: :model do
     end
 
     it 'does not allow an asset to point to another company resource' do
+      project = create(:company_project)
       asset = build(:digital_asset)
+      asset.attachable = project
       asset.company = create(:company)
 
       expect(asset).not_to be_valid
