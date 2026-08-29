@@ -10,9 +10,10 @@ async function fetchWithAuth(urlPath: string, options: RequestInit = {}): Promis
   return fetch(fullUrl, { ...options, headers });
 }
 
-export async function getFeed(params?: { view?: string; cursor?: string; limit?: number }): Promise<FeedResponse> {
+export async function getFeed(params?: { view?: string; type?: string; cursor?: string; limit?: number }): Promise<FeedResponse> {
   const query = new URLSearchParams();
   if (params?.view) query.append('view', params.view);
+  if (params?.type) query.append('type', params.type);
   if (params?.cursor) query.append('cursor', params.cursor);
   if (params?.limit) query.append('limit', params.limit.toString());
 
@@ -20,6 +21,21 @@ export async function getFeed(params?: { view?: string; cursor?: string; limit?:
   if (!res.ok) {
     throw new Error('Falha ao carregar feed');
   }
+  return res.json();
+}
+
+export async function votePoll(pollId: number, pollOptionId: number): Promise<{
+  poll_id: number;
+  viewer_option_id: number | null;
+  total_votes: number;
+  options: { id: number; text: string; votes_count: number; percentage: number }[];
+}> {
+  const res = await fetchWithAuth(`/api/v1/polls/${pollId}/vote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ poll_option_id: pollOptionId }),
+  });
+  if (!res.ok) throw new Error('Falha ao registrar voto');
   return res.json();
 }
 

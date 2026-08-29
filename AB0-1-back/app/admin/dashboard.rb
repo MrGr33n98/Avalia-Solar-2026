@@ -113,6 +113,26 @@ ActiveAdmin.register_page 'Dashboard' do
     # ----------------------------------------------------
     h2 'Plataforma Geral', style: 'margin-top: 40px; border-bottom: 2px solid #ccc; padding-bottom: 5px;'
 
+    panel 'Meaningful Feed Session (últimos 30 dias)' do
+      meaningful = Feed::MeaningfulSession.call
+      div style: 'display: flex; gap: 28px; padding: 16px; align-items: baseline;' do
+        div do
+          h1 number_with_delimiter(meaningful[:meaningful_sessions], delimiter: '.'), style: 'font-size: 2.2em; margin: 0;'
+          span 'Sessões significativas'
+        end
+        div do
+          h2 number_with_delimiter(meaningful[:signal_events], delimiter: '.'), style: 'margin: 0;'
+          span 'Sinais significativos'
+        end
+      end
+      div style: 'padding: 0 16px 16px;' do
+        span meaningful[:signals].sort_by { |name, count| -count }.map { |name, count| "#{name}: #{count}" }.join(' · '), style: 'color: #666;'
+      end
+      div style: 'padding: 0 16px 16px; color: #666;' do
+        span meaningful[:cohorts].map { |(device, view), count| "#{device}/#{view}: #{count}" }.join(' · ')
+      end
+    end
+
     columns do
       column do
         panel 'Total de Empresas' do

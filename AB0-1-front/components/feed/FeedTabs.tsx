@@ -5,19 +5,20 @@ import React from 'react';
 interface FeedTabsProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  activeType: string;
+  onTypeChange: (type: string) => void;
 }
 
-export function FeedTabs({ activeView, onViewChange }: FeedTabsProps) {
+export function FeedTabs({ activeView, onViewChange, activeType, onTypeChange }: FeedTabsProps) {
   const tabs = [
     { id: 'for_you', label: 'Para Você' },
     { id: 'following', label: 'Seguindo' },
-    { id: 'creators', label: 'Creators' },
-    { id: 'companies', label: 'Empresas' },
     { id: 'recent', label: 'Recentes' },
   ];
 
   return (
-    <div className="border-b border-border flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+    <div className="space-y-2 border-b border-border pb-2">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -31,6 +32,14 @@ export function FeedTabs({ activeView, onViewChange }: FeedTabsProps) {
           {tab.label}
         </button>
       ))}
+      </div>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar" aria-label="Tipo de conteúdo">
+        {[['', 'Tudo'], ['ReviewerPublication', 'Publicações'], ['Review', 'Avaliações'], ['GroupPost', 'Comunidades']].map(([id, label]) => (
+          <button key={id || 'all'} type="button" onClick={() => onTypeChange(id)} className={`rounded-full px-3 py-1 text-xs font-semibold ${activeType === id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

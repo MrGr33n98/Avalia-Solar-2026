@@ -2,10 +2,14 @@
 
 module Feed
   class Serializer
-    def initialize(feed_items, current_user: nil)
+    def initialize(feed_items, current_user: nil, view: nil)
       @feed_items = Array(feed_items)
       @current_user = current_user
+      @view = view.presence || 'for_you'
       preload_associations
+      subjects = @feed_items.map(&:subject).compact
+      @engagement = EngagementLoader.new(subjects: subjects, current_user: @current_user).call
+      @publication_entities = publication_entities(subjects)
     end
 
     def serialize
@@ -45,12 +49,14 @@ module Feed
             records: publications,
             associations: [
               { cover_image_attachment: :blob },
-              :reviewer_publication_events,
               :reviewer_publication_comments,
               :reviewer_publication_likes
             ]
           ).call
         end
+
+        polls = @feed_items.map(&:subject).compact.select { |s| s.is_a?(Poll) }
+        ActiveRecord::Associations::Preloader.new(records: polls, associations: %i[poll_options poll_votes]).call if polls.any?
       end
     end
 
@@ -64,11 +70,14 @@ module Feed
         type: item.subject_type.underscore,
         verb: item.verb,
         published_at: item.published_at.iso8601,
+        visibility: item.visibility,
+        ranking_metadata: ranking_metadata(item),
         actor: normalized_author,
         author: normalized_author,
         subject: serialize_subject(subject),
         entities: serialize_entities(subject),
-        engagement: serialize_engagement(subject, actor)
+        engagement: serialize_engagement(subject, actor),
+        recommendation_reason: recommendation_reason(subject)
       }
     end
 
@@ -120,8 +129,8 @@ module Feed
           cover_image_url: attachment_url(subject.cover_image),
           publication_type: subject.publication_type,
           category: subject.category,
-          views_count: publication_events(subject).count { |event| event.event_name == 'publication_view' },
-          shares_count: publication_events(subject).count { |event| event.event_name == 'publication_share' }
+          views_count: subject.views_count.to_i,
+          shares_count: subject.shares_count.to_i
         }
       elsif subject.is_a?(Review)
         {
@@ -147,6 +156,15 @@ module Feed
             visibility: subject.group&.visibility
           }
         )
+      elsif subject.is_a?(NewsItem)
+        { id: subject.id, title: subject.title, excerpt: subject.summary, source_name: subject.source_name,
+          source_url: subject.source_url, category: subject.category, reading_time_minutes: subject.reading_time_minutes,
+          published_at: subject.published_at.iso8601 }
+      elsif subject.is_a?(Poll)
+        viewer_vote = @current_user && subject.poll_votes.find { |vote| vote.user_id == @current_user.id }
+        { id: subject.id, title: subject.question, poll_ends_at: subject.ends_at&.iso8601,
+          viewer_vote_id: viewer_vote&.poll_option_id,
+          options: subject.poll_options.map { |option| { id: option.id, label: option.label, votes_count: option.votes_count.to_i, selected: viewer_vote&.poll_option_id == option.id } } }
       else
         { id: subject.id }
       end
@@ -155,7 +173,7 @@ module Feed
     def serialize_entities(subject)
       return [] unless subject.is_a?(ReviewerPublication)
 
-      PublicationEntity.where(publication_id: subject.id).includes(:entity).map do |pe|
+      @publication_entities.fetch(subject.id, []).map do |pe|
         ent = pe.entity
         {
           relation_type: pe.relation_type,
@@ -178,29 +196,20 @@ module Feed
       )
     end
 
-    def publication_events(subject)
-      if subject.association(:reviewer_publication_events).loaded?
-        subject.reviewer_publication_events
-      else
-        ReviewerPublicationEvent.where(reviewer_publication_id: subject.id)
-      end
+    def publication_entities(subjects)
+      ids = subjects.grep(ReviewerPublication).map(&:id)
+      return {} if ids.empty?
+
+      PublicationEntity.where(publication_id: ids).includes(:entity).group_by(&:publication_id)
     end
 
     def serialize_engagement(subject, actor)
       return empty_engagement unless subject
-
-      reactions_count = Reaction.where(reactable: subject).count
-      comments_count = Comment.where(commentable: subject).active.count
-
-      viewer_reaction = if @current_user
-                          Reaction.find_by(user: @current_user, reactable: subject)&.reaction_type
-                        end
-
-      saved = if @current_user
-                SavedItem.exists?(user: @current_user, saveable: subject)
-              else
-                false
-              end
+      key = @engagement.key(subject)
+      reactions_count = @engagement.reactions_counts[key]
+      comments_count = @engagement.comments_counts[key]
+      viewer_reaction = @engagement.viewer_reactions[key]
+      saved = @engagement.saved_items[key] == true
 
       {
         reactions_count: reactions_count,
@@ -209,6 +218,21 @@ module Feed
         saved: saved,
         viewer_following: viewer_following?(actor_followable(actor))
       }
+    end
+
+    def recommendation_reason(subject)
+      return { code: 'following', label: 'De alguém que você segue' } if @view == 'following'
+      return { code: 'recent', label: 'Publicado recentemente' } if @view == 'recent'
+
+      key = @engagement.key(subject)
+      score = @engagement.reactions_counts[key].to_i + (@engagement.comments_counts[key].to_i * 3)
+      score.positive? ? { code: 'engagement', label: 'Em alta na comunidade' } : { code: 'personalized', label: 'Selecionado para você' }
+    end
+
+    def ranking_metadata(item)
+      return { mode: 'recent' } unless item.respond_to?(:engagement_score) && item.engagement_score
+
+      { mode: @view, score: item.engagement_score.to_f.round(4) }
     end
 
     def empty_engagement

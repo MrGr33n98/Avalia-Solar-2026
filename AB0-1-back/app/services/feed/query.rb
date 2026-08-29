@@ -4,20 +4,23 @@ module Feed
   class Query
     DEFAULT_LIMIT = 20
 
-    def initialize(user: nil, view: 'for_you', cursor: nil, limit: DEFAULT_LIMIT)
+    def initialize(user: nil, view: 'for_you', content_type: nil, cursor: nil, limit: DEFAULT_LIMIT)
       @user = user
       @view = view
+      @content_type = content_type
       @cursor_data = Feed::Cursor.decode(cursor)
       @limit = [limit.to_i, 50].min
       @limit = DEFAULT_LIMIT if @limit <= 0
     end
 
     def call
-      candidates = CandidateBuilder.new(user: @user, view: @view).call
+      candidates = CandidateBuilder.new(user: @user, view: @view, content_type: @content_type).call
 
       ranked_candidates = Feed::Ranker.new(candidates, view: @view).call
       ranked_candidates = apply_cursor(ranked_candidates)
-      items = ranked_candidates.includes(:actor, :subject).limit(@limit + 1).to_a
+      window = @view == 'for_you' ? (@limit * 3) + 1 : @limit + 1
+      items = ranked_candidates.includes(:actor, :subject).limit(window).to_a
+      items = Feed::Diversifier.call(items) if @view == 'for_you'
       has_more = items.size > @limit
       items = items.first(@limit)
 
@@ -44,7 +47,7 @@ module Feed
       return scope unless @cursor_data
 
       if @view == 'for_you' && @cursor_data[:score]
-        score = @cursor_data[:score].to_i
+        score = @cursor_data[:score].to_f
 
         cursor_condition = <<~SQL.squish
           COALESCE(engagement.engagement_score, 0) < ?

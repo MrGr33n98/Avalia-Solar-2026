@@ -83,6 +83,9 @@ module Analytics
       persist_platform_event!
       event = persist_analytics_event!
 
+      Feed::InterestGraph.record(user: @user, event_type: @event_type, metadata: @metadata,
+                                 occurred_at: @occurred_at) if event.present?
+
       # Forward to PostHog for Product Analytics (Sprint 3)
       forward_to_posthog if ENV['POSTHOG_API_KEY'].present?
 

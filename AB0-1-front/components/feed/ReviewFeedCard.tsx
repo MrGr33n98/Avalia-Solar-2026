@@ -2,13 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Star, Building2, CheckCircle2 } from 'lucide-react';
+import { Star, Building2 } from 'lucide-react';
 import { FeedItem } from '@/types/feed';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FollowButton } from './FollowButton';
 import { FeedCardActions } from './FeedCardActions';
 import { FeedItemMenu } from './FeedItemMenu';
-import { getActorProfileHref } from '@/lib/feed/getActorProfileHref';
+import { FeedCardFrame } from './FeedCardFrame';
+import { AuthorIdentity } from './AuthorIdentity';
 
 interface ReviewFeedCardProps {
   item: FeedItem;
@@ -16,44 +16,12 @@ interface ReviewFeedCardProps {
 
 export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
   const { actor, subject, engagement } = item;
-  const actorHref = getActorProfileHref(actor);
 
   return (
-    <article className="bg-card text-card-foreground rounded-xl border border-border p-4 shadow-sm space-y-3">
+    <FeedCardFrame reason={item.recommendation_reason?.label} itemId={item.id} itemType={item.type}>
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {actorHref ? (
-            <Link href={actorHref}>
-              <UserAvatar
-                src={actor.avatar_url}
-                name={actor.name}
-                size="md"
-                className="cursor-pointer hover:opacity-90 transition-opacity"
-              />
-            </Link>
-          ) : (
-            <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
-          )}
-          <div>
-            <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
-              {actorHref ? (
-                <Link
-                  href={actorHref}
-                  className="hover:underline hover:text-primary transition-colors"
-                >
-                  {actor.name}
-                </Link>
-              ) : (
-                <span>{actor.name}</span>
-              )}
-              {actor.verified && (
-                <CheckCircle2 className="h-4 w-4 text-primary fill-primary/10 flex-shrink-0" />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">{actor.headline || 'Membro'}</p>
-          </div>
-        </div>
+        <AuthorIdentity actor={actor} />
 
         <div className="flex items-center gap-2">
           <FollowButton target={actor.followable} initialFollowing={engagement.viewer_following} />
@@ -122,6 +90,6 @@ export function ReviewFeedCard({ item }: ReviewFeedCardProps) {
       )}
       
       <FeedCardActions item={item} />
-    </article>
+    </FeedCardFrame>
   );
 }

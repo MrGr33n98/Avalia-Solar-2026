@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ShareModal } from '@/components/share/ShareModal';
+import { track } from '@/lib/analytics/lazy';
 
 interface FeedCardActionsProps {
   item: FeedItem;
@@ -53,6 +54,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
     const nextUseful = !isUseful;
     setIsUseful(nextUseful);
     setUsefulCount((prev) => (nextUseful ? prev + 1 : Math.max(0, prev - 1)));
+    track(nextUseful ? 'feed_reaction_added' : 'feed_reaction_removed', { item_id: item.id, item_type: item.type });
 
     try {
       await toggleReaction(getModelName(), subject.id, isUseful);
@@ -68,6 +70,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
   const handleSave = async () => {
     const nextSave = !isSaved;
     setIsSaved(nextSave);
+    track(nextSave ? 'feed_item_saved' : 'feed_item_unsaved', { item_id: item.id, item_type: item.type });
 
     try {
       await toggleSave(getModelName(), subject.id, isSaved);
@@ -83,6 +86,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
   const toggleComments = async () => {
     const nextShow = !showComments;
     setShowComments(nextShow);
+    if (nextShow) track('feed_comments_opened', { item_id: item.id, item_type: item.type });
     if (nextShow && comments.length === 0) {
       setCommentsLoading(true);
       try {
@@ -105,6 +109,7 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
       setComments((prev) => [...prev, created]);
       setCommentsCount((prev) => prev + 1);
       setNewCommentBody('');
+      track('feed_comment_created', { item_id: item.id, item_type: item.type });
       toast.success('Comentário publicado com sucesso!');
     } catch {
       toast.error('Erro ao publicar comentário');
@@ -168,7 +173,10 @@ export function FeedCardActions({ item }: FeedCardActionsProps) {
           <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
         </button>
         <button
-          onClick={() => setShareOpen(true)}
+          onClick={() => {
+            setShareOpen(true);
+            track('feed_share_opened', { item_id: item.id, item_type: item.type });
+          }}
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
         >
           <Share2 className="h-4 w-4" />

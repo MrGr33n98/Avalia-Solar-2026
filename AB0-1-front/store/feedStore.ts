@@ -1,9 +1,13 @@
 import { create } from 'zustand';
-import type { FeedItem } from '@/types/feed';
+import type { FeedItem, TrendingTopic } from '@/types/feed';
 
 interface FeedState {
-  trendingTopics: string[];
-  setTrendingTopics: (topics: string[]) => void;
+  suggestedCreators: { id: number; name: string; slug?: string; avatar_url?: string | null }[];
+  suggestedCompanies: { id: number; name: string; slug?: string; logo_url?: string | null; rating?: number | string }[];
+  suggestedGroups: { id: number; name: string; slug?: string }[];
+  setSuggestions: (creators: FeedState['suggestedCreators'], companies: FeedState['suggestedCompanies'], groups: FeedState['suggestedGroups']) => void;
+  trendingTopics: TrendingTopic[];
+  setTrendingTopics: (topics: TrendingTopic[]) => void;
   items: FeedItem[];
   setItems: (items: FeedItem[]) => void;
   prependPublication: (pub: FeedItem) => void;
@@ -13,12 +17,11 @@ interface FeedState {
 }
 
 export const useFeedStore = create<FeedState>((set) => ({
-  trendingTopics: [
-    '#InversoresHibridos',
-    '#MercadoLivreEnergia',
-    '#BateriasLithium',
-    '#RegulacaoANEEL',
-  ],
+  suggestedCreators: [],
+  suggestedCompanies: [],
+  suggestedGroups: [],
+  setSuggestions: (suggestedCreators, suggestedCompanies, suggestedGroups) => set({ suggestedCreators, suggestedCompanies, suggestedGroups }),
+  trendingTopics: [],
   setTrendingTopics: (topics) => set({ trendingTopics: topics }),
   items: [],
   setItems: (items) => set({ items }),

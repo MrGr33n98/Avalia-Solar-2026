@@ -1,17 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FeedLeftRail } from './FeedLeftRail';
 import { FeedRightRail } from './FeedRightRail';
 import { FeedComposer } from './FeedComposer';
 import { FeedTabs } from './FeedTabs';
-import { InfiniteFeed } from './InfiniteFeed';
+import { InfiniteFeedQuery as InfiniteFeed } from './InfiniteFeedQuery';
 import { FeedComposerDialog } from './FeedComposerDialog';
 import { useFeedStore } from '@/store/feedStore';
 import Link from 'next/link';
+import { track } from '@/lib/analytics/lazy';
 
-export function FeedShell() {
-  const [activeView, setActiveView] = useState('for_you');
+export function FeedShell({ initialFeed, initialView, initialType }: { initialFeed?: import('@/types/feed').FeedResponse | null; initialView?: string; initialType?: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeView = searchParams.get('view') || initialView || 'for_you';
+  const activeType = searchParams.get('type') || initialType || '';
+  useEffect(() => {
+    track('feed_view', { view: activeView, type: activeType || undefined });
+  }, [activeView, activeType]);
   const isComposerOpen = useFeedStore((state) => state.isComposerOpen);
   const closeComposer = useFeedStore((state) => state.closeComposer);
   const [published, setPublished] = useState<{
@@ -21,35 +29,16 @@ export function FeedShell() {
     url: string;
   } | null>(null);
 
-  // Sync with query param safely on mount and handle state updates
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const viewParam = params.get('view');
-      if (viewParam) {
-        setActiveView(viewParam);
-      }
-    }
-
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const viewParam = params.get('view') || 'for_you';
-      setActiveView(viewParam);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
   const handleViewChange = (view: string) => {
-    setActiveView(view);
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      params.set('view', view);
-      window.history.pushState(null, '', `?${params.toString()}`);
-    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', view);
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+  const handleTypeChange = (type: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (type) params.set('type', type);
+    else params.delete('type');
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   return (
@@ -62,8 +51,8 @@ export function FeedShell() {
       {/* Center Feed Column */}
       <main className="space-y-4">
         <FeedComposer />
-        <FeedTabs activeView={activeView} onViewChange={handleViewChange} />
-        <InfiniteFeed view={activeView} />
+        <FeedTabs activeView={activeView} onViewChange={handleViewChange} activeType={activeType} onTypeChange={handleTypeChange} />
+        <InfiniteFeed view={activeView} type={activeType || undefined} initialFeed={initialFeed} />
       </main>
 
       {/* Right Rail (Desktop only) */}

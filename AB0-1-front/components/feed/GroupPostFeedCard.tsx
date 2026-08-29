@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { MessageSquare, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import type { FeedItem } from '@/types/feed';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { FollowButton } from './FollowButton';
 import { FeedCardActions } from './FeedCardActions';
 import { FeedItemMenu } from './FeedItemMenu';
+import { FeedCardFrame } from './FeedCardFrame';
+import { AuthorIdentity } from './AuthorIdentity';
 import { getActorProfileHref } from '@/lib/feed/getActorProfileHref';
 
 export function GroupPostFeedCard({ item }: { item: FeedItem }) {
@@ -14,16 +15,10 @@ export function GroupPostFeedCard({ item }: { item: FeedItem }) {
   const actorHref = getActorProfileHref(actor);
 
   return (
-    <article className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+    <FeedCardFrame reason={item.recommendation_reason?.label} itemId={item.id} itemType={item.type}>
       <header className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          {actorHref ? (
-            <Link href={actorHref}>
-              <UserAvatar src={actor.avatar_url} name={actor.name} size="md" className="cursor-pointer hover:opacity-90 transition-opacity" />
-            </Link>
-          ) : (
-            <UserAvatar src={actor.avatar_url} name={actor.name} size="md" />
-          )}
+          <AuthorIdentity actor={actor} />
           <div>
             {actorHref ? (
               <Link href={actorHref} className="text-sm font-semibold hover:underline hover:text-primary transition-colors">
@@ -51,6 +46,6 @@ export function GroupPostFeedCard({ item }: { item: FeedItem }) {
       </div>
       
       <FeedCardActions item={item} />
-    </article>
+    </FeedCardFrame>
   );
 }

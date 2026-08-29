@@ -9,6 +9,7 @@ class Reaction < ApplicationRecord
 
   after_save :update_group_post_counter, if: -> { reactable_type == 'GroupPost' }
   after_destroy :update_group_post_counter, if: -> { reactable_type == 'GroupPost' }
+  after_commit :reconcile_feed_stats
 
   private
 
@@ -17,5 +18,9 @@ class Reaction < ApplicationRecord
 
     active_count = reactable.reactions.count
     reactable.update_columns(reactions_count: active_count)
+  end
+
+  def reconcile_feed_stats
+    Feed::StatsReconciler.call(reactable) if reactable
   end
 end

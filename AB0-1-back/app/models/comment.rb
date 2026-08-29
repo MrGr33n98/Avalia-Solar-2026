@@ -15,6 +15,7 @@ class Comment < ApplicationRecord
 
   after_save :update_group_post_counter, if: -> { commentable_type == 'GroupPost' }
   after_destroy :update_group_post_counter, if: -> { commentable_type == 'GroupPost' }
+  after_commit :reconcile_feed_stats
 
   private
 
@@ -23,5 +24,9 @@ class Comment < ApplicationRecord
 
     active_count = commentable.comments.where(status: 'active').count
     commentable.update_columns(comments_count: active_count)
+  end
+
+  def reconcile_feed_stats
+    Feed::StatsReconciler.call(commentable) if commentable
   end
 end

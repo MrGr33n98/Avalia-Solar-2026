@@ -14,32 +14,12 @@ module Feed
       return @scope.recent unless @view == 'for_you'
 
       @scope
-        .joins("LEFT JOIN (#{engagement_counts_sql}) engagement ON engagement.subject_type = feed_items.subject_type AND engagement.subject_id = feed_items.subject_id")
-        .select('feed_items.*', "COALESCE(engagement.engagement_score, 0) AS engagement_score")
-        .order(Arel.sql('COALESCE(engagement.engagement_score, 0) DESC'), published_at: :desc, id: :desc)
+        .joins('LEFT JOIN feed_item_stats engagement ON engagement.subject_type = feed_items.subject_type AND engagement.subject_id = feed_items.subject_id')
+        .select('feed_items.*', "COALESCE(engagement.engagement_score, 0) * EXP(-GREATEST(EXTRACT(EPOCH FROM (NOW() - feed_items.published_at)) / 86400, 0) / 30) AS engagement_score")
+        .order(Arel.sql('engagement_score DESC'), published_at: :desc, id: :desc)
     end
 
     private
 
-    def engagement_counts_sql
-      <<~SQL.squish
-        SELECT subject_type, subject_id,
-          COUNT(*) AS engagement_score
-        FROM (
-          SELECT reactable_type AS subject_type, reactable_id AS subject_id, 'reaction' AS source
-          FROM reactions
-          WHERE reactable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
-          UNION ALL
-          SELECT commentable_type, commentable_id, 'comment'
-          FROM comments
-          WHERE status = 'active' AND commentable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
-          UNION ALL
-          SELECT saveable_type, saveable_id, 'save'
-          FROM saved_items
-          WHERE saveable_type IN ('ReviewerPublication', 'Review', 'GroupPost')
-        ) interactions
-        GROUP BY subject_type, subject_id
-      SQL
-    end
   end
 end

@@ -6,10 +6,11 @@ module Social
 
     def perform(subject_type, subject_id, verb: 'published')
       subject_class = subject_type.safe_constantize
-      return unless [ReviewerPublication, Review, GroupPost].include?(subject_class)
+      return unless [ReviewerPublication, Review, GroupPost, NewsItem, Poll].include?(subject_class)
 
       subject = subject_class.find_by(id: subject_id)
       return unless subject
+      return if [NewsItem, Poll].include?(subject_class) && subject.status != 'published'
 
       # For GroupPost, only create feed item if published
       if subject.is_a?(GroupPost) && !subject.published?
@@ -17,9 +18,7 @@ module Social
         return
       end
 
-      actor = if subject.is_a?(ReviewerPublication) || subject.is_a?(Review) || subject.is_a?(GroupPost)
-                subject.user
-              end
+      actor = subject.respond_to?(:actor) ? subject.actor : subject.user
 
       return unless actor
 

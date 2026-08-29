@@ -107,6 +107,9 @@ Rails.application.routes.draw do
           delete '/', to: 'saved_items#destroy'
         end
       end
+      resources :polls, only: [] do
+        member { post :vote }
+      end
 
       # Growth analytics — PostHog webhook
       post 'posthog_webhook', to: 'posthog_webhooks#create'

@@ -28,6 +28,10 @@ RSpec.describe 'Api::V1::Feed', type: :request do
       expect(json).to have_key('meta')
       expect(json['meta']).to have_key('next_cursor')
       expect(json['meta']).to have_key('has_more')
+      expect(json['meta']['trending_topics']).to be_an(Array)
+      expect(json['meta']['suggested_creators']).to be_an(Array)
+      expect(json['meta']['suggested_companies']).to be_an(Array)
+      expect(json['meta']['suggested_groups']).to be_an(Array)
     end
 
     it 'returns http success for authenticated user without follows' do
@@ -36,6 +40,15 @@ RSpec.describe 'Api::V1::Feed', type: :request do
 
       json = JSON.parse(response.body)
       expect(json['data']).to be_an(Array)
+    end
+
+    it 'filters by content type and returns recommendation reason' do
+      get '/api/v1/feed?view=recent&type=ReviewerPublication&limit=15', headers: auth_headers(user)
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['data']).to all(include('recommendation_reason'))
+      expect(json['data']).to all(include('type' => 'reviewer_publication'))
     end
 
     it 'returns http success for authenticated user with follows' do

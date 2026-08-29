@@ -1,17 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Building2, ArrowUpRight, TrendingUp, Star, Loader2 } from 'lucide-react';
 import { publicCompaniesApi } from '@/lib/api-public';
 import { useFeedStore } from '@/store/feedStore';
 import { FollowedCommunitiesCard } from './FollowedCommunitiesCard';
+import { track } from '@/lib/analytics/lazy';
+import { FollowButton } from './FollowButton';
 
 export function FeedRightRail() {
-  const [companies, setCompanies] = useState<any[]>([]);
+  type FeaturedCompany = { id: number; slug?: string; name: string; logo_url?: string; category_name?: string; categories?: { name: string }[]; rating_avg?: number | string };
+  const [companies, setCompanies] = useState<FeaturedCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const trendingTopics = useFeedStore((state) => state.trendingTopics);
+  const suggestedCreators = useFeedStore((state) => state.suggestedCreators);
+  const suggestedCompanies = useFeedStore((state) => state.suggestedCompanies);
+  const suggestedGroups = useFeedStore((state) => state.suggestedGroups);
 
   useEffect(() => {
     let active = true;
@@ -19,7 +25,7 @@ export function FeedRightRail() {
       .getFeatured()
       .then((res) => {
         if (active) {
-          setCompanies(res || []);
+          setCompanies((res || []).map((company) => ({ ...company, logo_url: company.logo_url || undefined })));
         }
       })
       .catch((err) => {
@@ -63,9 +69,12 @@ export function FeedRightRail() {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="h-9 w-9 rounded bg-white flex items-center justify-center border border-border flex-shrink-0 overflow-hidden">
                     {company.logo_url ? (
-                      <img
+                      <Image
                         src={company.logo_url}
                         alt={company.name}
+                        width={36}
+                        height={36}
+                        sizes="36px"
                         className="h-full w-full object-contain"
                       />
                     ) : (
@@ -105,6 +114,28 @@ export function FeedRightRail() {
       </div>
 
       {/* Trending Topics */}
+      {(suggestedCreators.length > 0 || suggestedCompanies.length > 0 || suggestedGroups.length > 0) && (
+        <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <p className="text-sm font-semibold">Sugestões para você</p>
+          {suggestedCreators.slice(0, 3).map((creator) => (
+            <div key={`creator-${creator.id}`} className="flex items-center justify-between gap-2">
+              <Link href={`/creators/${creator.slug || creator.id}`} onClick={() => track('feed_creator_suggestion_clicked', { creator_id: creator.id })} className="truncate text-xs font-medium text-primary hover:underline">{creator.name}</Link>
+              <FollowButton target={{ type: 'ReviewerProfile', id: creator.id }} />
+            </div>
+          ))}
+          {suggestedCompanies.slice(0, 3).map((company) => (
+            <Link key={`company-${company.id}`} href={`/companies/${company.slug || company.id}`} onClick={() => track('feed_company_suggestion_clicked', { company_id: company.id })} className="block text-xs font-medium text-primary hover:underline">
+              {company.name}
+            </Link>
+          ))}
+          {suggestedGroups.slice(0, 3).map((group) => (
+            <Link key={`group-${group.id}`} href={`/groups/${group.slug || group.id}`} onClick={() => track('feed_group_suggestion_clicked', { group_id: group.id })} className="block text-xs font-medium text-primary hover:underline">
+              {group.name}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="bg-card text-card-foreground rounded-xl border border-border p-4 shadow-sm space-y-3">
         <div className="flex items-center gap-2 font-semibold text-sm">
           <TrendingUp className="h-4 w-4 text-amber-500" />
@@ -116,12 +147,12 @@ export function FeedRightRail() {
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5 text-xs">
-            {trendingTopics.map((topic, i) => (
+            {trendingTopics.map((topic) => (
               <span
-                key={i}
+                key={topic.slug}
                 className="px-2.5 py-1 rounded-full bg-muted font-medium text-slate-600 border border-slate-200/50"
               >
-                {topic}
+                {topic.label}
               </span>
             ))}
           </div>

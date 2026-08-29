@@ -33,7 +33,8 @@ module Social
 
     def dispatch(event)
       case event.event_type
-      when 'publication.published', 'review.approved', 'group_post_created', 'group_post_restored'
+      when 'publication.published', 'review.approved', 'group_post_created', 'group_post_restored',
+           'news_item.published', 'poll.published'
         Social::CreateFeedItemJob.perform_now(event.aggregate_type, event.aggregate_id)
       when 'group_post_hidden'
         FeedItem.where(subject_type: event.aggregate_type, subject_id: event.aggregate_id).destroy_all

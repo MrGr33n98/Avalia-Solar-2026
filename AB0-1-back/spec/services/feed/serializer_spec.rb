@@ -44,6 +44,15 @@ RSpec.describe Feed::Serializer, type: :service do
       expect(result[:subject]).to have_key(:cover_image_url)
       expect(result[:subject][:cover_image_url]).to be_nil
     end
+
+    it 'uses persisted publication counters' do
+      pub.update!(views_count: 7, shares_count: 3)
+      ReviewerPublicationEvent.create!(reviewer_publication: pub, event_name: 'publication_view')
+
+      result = described_class.new([feed_item_pub], current_user: user).serialize.first
+
+      expect(result[:subject].slice(:views_count, :shares_count)).to eq(views_count: 7, shares_count: 3)
+    end
   end
 
   describe 'viewer_following engagement state' do

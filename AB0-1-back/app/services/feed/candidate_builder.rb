@@ -2,13 +2,14 @@
 
 module Feed
   class CandidateBuilder
-    def initialize(user:, view: 'for_you')
+    def initialize(user:, view: 'for_you', content_type: nil)
       @user = user
       @view = view
+      @content_type = content_type.presence_in(%w[ReviewerPublication Review GroupPost NewsItem Poll])
     end
 
     def call
-      case @view
+      scope = case @view
       when 'following'
         return FeedItem.none unless @user
 
@@ -56,19 +57,19 @@ module Feed
           active_group_ids = GroupMembership.where(user: @user, status: 'active').pluck(:group_id)
           if active_group_ids.any?
             scope.where(
-              "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+              "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
               "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND (groups.visibility = 'public' OR groups.id IN (?)))",
               active_group_ids
             )
           else
             scope.where(
-              "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+              "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
               "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND groups.visibility = 'public')"
             )
           end
         else
           scope.where(
-            "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+            "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
             "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND groups.visibility = 'public')"
           )
         end
@@ -80,23 +81,24 @@ module Feed
           active_group_ids = GroupMembership.where(user: @user, status: 'active').pluck(:group_id)
           if active_group_ids.any?
             scope.where(
-              "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+              "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
               "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND (groups.visibility = 'public' OR groups.id IN (?)))",
               active_group_ids
             )
           else
             scope.where(
-              "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+              "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
               "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND groups.visibility = 'public')"
             )
           end
         else
           scope.where(
-            "(feed_items.subject_type IN ('ReviewerPublication', 'Review') AND feed_items.visibility = 'public') OR " \
+            "(feed_items.subject_type IN ('ReviewerPublication', 'Review', 'NewsItem', 'Poll') AND feed_items.visibility = 'public') OR " \
             "(feed_items.subject_type = 'GroupPost' AND groups.status = 'active' AND groups.visibility = 'public')"
           )
         end
       end
+      @content_type ? scope.where(subject_type: @content_type) : scope
     end
   end
 end
