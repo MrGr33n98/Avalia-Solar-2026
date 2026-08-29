@@ -85,6 +85,7 @@ module Api
 
       def create_download!(material, token)
         download = nil
+        content_lead = nil
         ::MaterialDownload.transaction do
           content_lead = material.gated? ? find_or_create_content_lead!(material) : nil
           download = find_or_create_download!(material, content_lead, token)
