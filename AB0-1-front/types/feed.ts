@@ -84,7 +84,7 @@ export interface FeedEngagement {
 
 export interface FeedItem {
   id: string;
-  type: 'reviewer_publication' | 'review' | 'group_post' | string;
+  type: 'reviewer_publication' | 'review' | 'group_post' | 'news' | 'news_item' | 'poll' | string;
   verb: string;
   published_at: string;
   visibility?: string;

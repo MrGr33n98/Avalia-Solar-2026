@@ -67,7 +67,7 @@ module Feed
 
       {
         id: "feed_#{item.id}",
-        type: item.subject_type.underscore,
+        type: feed_item_type(item.subject),
         verb: item.verb,
         published_at: item.published_at.iso8601,
         visibility: item.visibility,
@@ -112,8 +112,15 @@ module Feed
           followable: { type: 'Company', id: actor.id }
         }
       else
-        { id: actor.id, type: actor.class.name.underscore }
+        name = actor.try(:display_name) || actor.try(:name) || 'Avalia Solar'
+        { id: actor.id, type: actor.class.name.underscore, name: name, display_name: name, slug: nil }
       end
+    end
+
+    def feed_item_type(subject)
+      return 'news' if subject.is_a?(NewsItem)
+
+      subject.class.name.underscore
     end
 
     def serialize_subject(subject)
@@ -162,7 +169,8 @@ module Feed
           published_at: subject.published_at.iso8601 }
       elsif subject.is_a?(Poll)
         viewer_vote = @current_user && subject.poll_votes.find { |vote| vote.user_id == @current_user.id }
-        { id: subject.id, title: subject.question, poll_ends_at: subject.ends_at&.iso8601,
+        { id: subject.id, title: subject.question, status: subject.status, total_votes: subject.total_votes.to_i,
+          poll_ends_at: subject.ends_at&.iso8601,
           viewer_vote_id: viewer_vote&.poll_option_id,
           options: subject.poll_options.map { |option| { id: option.id, label: option.label, votes_count: option.votes_count.to_i, selected: viewer_vote&.poll_option_id == option.id } } }
       else

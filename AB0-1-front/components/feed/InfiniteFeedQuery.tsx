@@ -11,7 +11,7 @@ import { useFeedStore } from '@/store/feedStore';
 import { track } from '@/lib/analytics/lazy';
 
 export function InfiniteFeedQuery({ view, type, initialFeed }: { view: string; type?: string; initialFeed?: import('@/types/feed').FeedResponse | null }) {
-  const optimisticItems = useFeedStore((state) => state.items.filter((item) => item.id.startsWith('feed_optimistic_')));
+  const feedItems = useFeedStore((state) => state.items);
   const setTrendingTopics = useFeedStore((state) => state.setTrendingTopics);
   const setSuggestions = useFeedStore((state) => state.setSuggestions);
   const suggestedCreators = useFeedStore((state) => state.suggestedCreators);
@@ -45,6 +45,7 @@ export function InfiniteFeedQuery({ view, type, initialFeed }: { view: string; t
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const optimisticItems = useMemo(() => feedItems.filter((item) => item.id.startsWith('feed_optimistic_')), [feedItems]);
   const items = useMemo(() => {
     const all = query.data?.pages.flatMap((page) => page.data || []) || [];
     const seen = new Set<string>();
