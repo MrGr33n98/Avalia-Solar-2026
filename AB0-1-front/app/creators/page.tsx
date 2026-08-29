@@ -15,13 +15,21 @@ type CreatorCard = {
 };
 
 async function getCreators(): Promise<CreatorCard[]> {
-  const response = await fetch(buildApiUrl('creators'), {
-    headers: getApiRequestHeaders(),
-    next: { revalidate: 300 },
-  });
-  if (!response.ok) throw new Error(`Creators API failed with status ${response.status}`);
-  const payload = (await response.json()) as CreatorCard[] | { data?: CreatorCard[] };
-  return Array.isArray(payload) ? payload : Array.isArray(payload.data) ? payload.data : [];
+  try {
+    const response = await fetch(buildApiUrl('creators'), {
+      headers: getApiRequestHeaders(),
+      next: { revalidate: 300 },
+    });
+    if (!response.ok) {
+      console.error(`[Creators] API returned ${response.status}; rendering empty state`);
+      return [];
+    }
+    const payload = (await response.json()) as CreatorCard[] | { data?: CreatorCard[] };
+    return Array.isArray(payload) ? payload : Array.isArray(payload.data) ? payload.data : [];
+  } catch (error) {
+    console.error('[Creators] Failed to fetch creators', error);
+    return [];
+  }
 }
 
 export const metadata: Metadata = {
