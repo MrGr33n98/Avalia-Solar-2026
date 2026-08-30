@@ -120,7 +120,7 @@ module Api
 
         def set_company
           company_id = params[:company_id].presence || cookies.signed[:active_company_id]
-          @company = Company.find(company_id)
+          @company = ::Company.find(company_id)
           return if current_user.admin? || current_user.active_membership_for?(@company.id)
 
           render_error_response(
