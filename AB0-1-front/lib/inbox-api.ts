@@ -4,6 +4,23 @@ export type InboxMode = 'bot_only' | 'human_manual' | 'hybrid';
 export type InboxStatus = 'active' | 'waiting_agent' | 'in_progress' | 'archived';
 export type InboxMessageRole = 'user' | 'assistant' | 'agent' | 'system';
 
+export function sortInboxMessages(messages: InboxMessage[]): InboxMessage[] {
+  return [...messages].sort((a, b) => {
+    const time = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return time || a.id - b.id;
+  });
+}
+
+export function mergeInboxMessages(current: InboxMessage[], incoming: InboxMessage[]): InboxMessage[] {
+  const merged = new Map<string, InboxMessage>();
+  [...current, ...incoming].forEach((message) => {
+    const key = message.id > 0 ? `id:${message.id}` : `client:${message.client_message_id || message.id}`;
+    const existing = merged.get(key);
+    merged.set(key, existing ? { ...existing, ...message } : message);
+  });
+  return sortInboxMessages(Array.from(merged.values()));
+}
+
 export interface InboxActivity {
   id: number;
   type: string;

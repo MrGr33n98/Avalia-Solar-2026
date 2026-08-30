@@ -14,7 +14,7 @@ class ChatMessage < ApplicationRecord
   scope :user_messages, -> { where(role: 'user') }
   scope :assistant_messages, -> { where(role: 'assistant') }
   scope :agent_messages, -> { where(role: 'agent') }
-  scope :chronological, -> { order(created_at: :asc) }
+  scope :chronological, -> { order(created_at: :asc, id: :asc) }
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[

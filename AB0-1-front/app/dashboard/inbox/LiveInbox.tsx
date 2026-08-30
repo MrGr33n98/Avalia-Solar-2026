@@ -33,6 +33,7 @@ import {
   type InboxActivity,
   type InboxSession,
   type InboxStatus,
+  mergeInboxMessages,
 } from '@/lib/inbox-api';
 
 export type InboxMessage = ApiInboxMessage & {
@@ -406,7 +407,7 @@ export default function LiveInbox() {
     setMessagesError(null);
     try {
       const response = await inboxApi.messages(companyId, selectedId);
-      setMessages(response.messages);
+      setMessages(mergeInboxMessages([], response.messages));
       setMessageCursor(response.next_cursor || null);
       const activityResponse = await inboxApi.activities(companyId, selectedId);
       setActivities(activityResponse.activities);
@@ -453,7 +454,7 @@ export default function LiveInbox() {
         return next.sort((a, b) => new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime());
       });
       if (event.session.id === selectedId) {
-        setMessages((current) => current.some((message) => message.id === event.message.id) ? current : [...current, event.message]);
+        setMessages((current) => mergeInboxMessages(current, [event.message]));
         if (companyId) void inboxApi.markRead(companyId, selectedId);
       }
       if (event.message.role === 'user' && soundEnabled && (document.hidden || !document.hasFocus())) {
@@ -523,15 +524,11 @@ export default function LiveInbox() {
       status: 'sending'
     };
     
-    setMessages((current) => [...current, optimisticMessage]);
+    setMessages((current) => mergeInboxMessages(current, [optimisticMessage]));
     
     try {
       const message = await inboxApi.send(companyId, selectedId, content, clientMsgId);
-      setMessages((current) => current.map((item) => 
-        (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 
-          ? { ...message, status: 'sent' } 
-          : item
-      ));
+      setMessages((current) => mergeInboxMessages(current.filter((item) => item.client_message_id !== clientMsgId && item.id !== optimisticMessage.id), [{ ...message, status: 'sent' }]));
     } catch {
       setMessages((current) => current.map((item) => 
         (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 
@@ -777,7 +774,7 @@ export default function LiveInbox() {
                       </div>
                     </div>
                   )}
-                  {messageCursor && <button type="button" className="mx-auto block rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600" onClick={async () => { if (!companyId || !selectedId) return; const response = await inboxApi.messages(companyId, selectedId, messageCursor); setMessages((current) => [...response.messages, ...current]); setMessageCursor(response.next_cursor || null); }}>Carregar mensagens anteriores</button>}
+                  {messageCursor && <button type="button" className="mx-auto block rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600" onClick={async () => { if (!companyId || !selectedId) return; const response = await inboxApi.messages(companyId, selectedId, messageCursor); setMessages((current) => mergeInboxMessages(current, response.messages)); setMessageCursor(response.next_cursor || null); }}>Carregar mensagens anteriores</button>}
                   {messages.map((message) => <MessageBubble key={message.id} message={message} />)}
                   {customerTyping && <p className="text-xs text-slate-600">Cliente digitando…</p>}
                   <div ref={threadEndRef} />
