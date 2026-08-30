@@ -388,7 +388,7 @@ export default function LiveInbox() {
       setCounts(response.counts);
       setSessionCursor(response.next_cursor || null);
       setSelectedId((current) => current && response.sessions.some((item) => item.id === current) ? current : response.sessions[0]?.id || null);
-    } catch {
+    } catch (error) {
       console.error('[Inbox] Falha ao carregar conversas', error);
       setSessionsError('Não foi possível carregar as conversas.');
     } finally {
@@ -411,7 +411,7 @@ export default function LiveInbox() {
       const activityResponse = await inboxApi.activities(companyId, selectedId);
       setActivities(activityResponse.activities);
       await inboxApi.markRead(companyId, selectedId);
-    } catch {
+    } catch (error) {
       console.error('[Inbox] Falha ao carregar conversa', error);
       setMessagesError('Não foi possível carregar esta conversa.');
     }
@@ -572,7 +572,7 @@ export default function LiveInbox() {
       const clientMsgId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       const message = await inboxApi.send(companyId, selectedId, `Arquivo anexado: ${file.name}`, clientMsgId, [id]);
       setMessages((current) => [...current, { ...message, status: 'sent' }]);
-    } catch {
+    } catch (error) {
       console.error('Falha no upload', error);
       alert('Falha ao enviar arquivo.');
     } finally {
