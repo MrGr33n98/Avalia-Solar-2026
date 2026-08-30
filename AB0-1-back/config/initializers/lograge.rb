@@ -11,7 +11,9 @@ Rails.application.configure do
     {
       time: Time.current.iso8601,
       params: event.payload[:params].to_h.except('controller', 'action', 'format'),
-      request_id: event.payload[:request_id],
+      request_id: event.payload[:request_id].presence ||
+        event.payload[:headers].to_h['HTTP_X_REQUEST_ID'].presence ||
+        event.payload[:request]&.request_id,
       exception: event.payload[:exception]&.first,
       exception_message: event.payload[:exception]&.last,
       user_id: event.payload[:user_id], # Requires controller instrumentation

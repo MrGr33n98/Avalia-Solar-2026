@@ -6,6 +6,7 @@ export type ApiErrorOptions = {
   details?: any;
   isNetworkError?: boolean;
   isTimeout?: boolean;
+  requestId?: string;
 };
 
 export class ApiError extends Error {
@@ -16,6 +17,7 @@ export class ApiError extends Error {
   details?: any;
   isNetworkError?: boolean;
   isTimeout?: boolean;
+  requestId?: string;
 
   constructor(message: string, options: ApiErrorOptions = {}) {
     super(message);
@@ -27,6 +29,7 @@ export class ApiError extends Error {
     this.details = options.details;
     this.isNetworkError = options.isNetworkError;
     this.isTimeout = options.isTimeout;
+    this.requestId = options.requestId;
   }
 }
 

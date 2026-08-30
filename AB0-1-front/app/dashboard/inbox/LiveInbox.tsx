@@ -361,6 +361,8 @@ export default function LiveInbox() {
   const [messageCursor, setMessageCursor] = useState<string | null>(null);
   const [sessionCursor, setSessionCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -379,12 +381,16 @@ export default function LiveInbox() {
   const loadSessions = useCallback(async () => {
     if (!companyId) return;
     setLoading(true);
+    setSessionsError(null);
     try {
       const response = await inboxApi.sessions(companyId, filter, query, sessionCursor || undefined);
       setSessions(response.sessions);
       setCounts(response.counts);
       setSessionCursor(response.next_cursor || null);
       setSelectedId((current) => current && response.sessions.some((item) => item.id === current) ? current : response.sessions[0]?.id || null);
+    } catch {
+      console.error('[Inbox] Falha ao carregar conversas', error);
+      setSessionsError('Não foi possível carregar as conversas.');
     } finally {
       setLoading(false);
     }
@@ -397,12 +403,18 @@ export default function LiveInbox() {
       setMessageCursor(null);
       return;
     }
-    const response = await inboxApi.messages(companyId, selectedId);
-    setMessages(response.messages);
-    setMessageCursor(response.next_cursor || null);
-    const activityResponse = await inboxApi.activities(companyId, selectedId);
-    setActivities(activityResponse.activities);
-    void inboxApi.markRead(companyId, selectedId);
+    setMessagesError(null);
+    try {
+      const response = await inboxApi.messages(companyId, selectedId);
+      setMessages(response.messages);
+      setMessageCursor(response.next_cursor || null);
+      const activityResponse = await inboxApi.activities(companyId, selectedId);
+      setActivities(activityResponse.activities);
+      await inboxApi.markRead(companyId, selectedId);
+    } catch {
+      console.error('[Inbox] Falha ao carregar conversa', error);
+      setMessagesError('Não foi possível carregar esta conversa.');
+    }
   }, [companyId, selectedId]);
 
   useRealtimeConnection(() => {
@@ -520,7 +532,7 @@ export default function LiveInbox() {
           ? { ...message, status: 'sent' } 
           : item
       ));
-    } catch (error) {
+    } catch {
       setMessages((current) => current.map((item) => 
         (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 
           ? { ...item, status: 'failed' } 
@@ -560,7 +572,7 @@ export default function LiveInbox() {
       const clientMsgId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       const message = await inboxApi.send(companyId, selectedId, `Arquivo anexado: ${file.name}`, clientMsgId, [id]);
       setMessages((current) => [...current, { ...message, status: 'sent' }]);
-    } catch (error) {
+    } catch {
       console.error('Falha no upload', error);
       alert('Falha ao enviar arquivo.');
     } finally {
@@ -678,7 +690,7 @@ export default function LiveInbox() {
               </div>
             </div>
             <div className="h-[calc(100%-116px)] overflow-y-auto">
-              {loading ? <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div> : sessions.length ? sessions.map((session) => (
+              {loading ? <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div> : sessionsError ? <div className="p-8 text-center text-sm text-red-700"><p>{sessionsError}</p><button type="button" className="mt-3 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white" onClick={() => void loadSessions()}>Tentar novamente</button></div> : sessions.length ? sessions.map((session) => (
                 <ConversationCard key={session.id} session={{...session, is_online: session.lead?.id ? onlineStatuses[session.lead.id] : false} as any} active={session.id === selectedId} onClick={() => setSelectedId(session.id)} />
               )) : <div className="p-8 text-center text-sm text-slate-600"><MessageCircleMore className="mx-auto mb-3 h-8 w-8 text-slate-400" /><p>Nenhuma conversa neste filtro.</p></div>}
             </div>
@@ -747,6 +759,7 @@ export default function LiveInbox() {
                   </div>
                 </header>
                 <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-28 sm:pb-4" aria-live="polite">
+                  {messagesError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{messagesError} <button type="button" className="ml-2 font-semibold underline" onClick={() => void loadMessages()}>Tentar novamente</button></div>}
                   <div className="flex justify-center my-2">
                     <span className="bg-slate-200/80 text-slate-600 text-[11px] font-semibold px-3 py-1 rounded-full">
                       Hoje

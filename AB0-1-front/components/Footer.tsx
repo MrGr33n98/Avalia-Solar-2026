@@ -35,7 +35,10 @@ type FooterLink = {
 
 export default function Footer({ compact: _compact = false }: FooterProps) {
   return (
-    <footer className="border-t border-white/10 bg-[#020617] text-white max-w-full overflow-x-hidden" aria-label="Rodapé">
+    <footer
+      className="border-t border-white/10 bg-[#020617] text-white max-w-full overflow-x-hidden"
+      aria-label="Rodapé"
+    >
       <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid gap-0 min-w-0 lg:grid-cols-[1.35fr_repeat(5,minmax(0,1fr))] lg:gap-8">
           <FooterBrand />
@@ -81,13 +84,22 @@ export default function Footer({ compact: _compact = false }: FooterProps) {
         <div className="mt-8 flex flex-col gap-5 border-t border-slate-800 pt-7 text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between">
           <span>© 2026 Avalia Solar. Todos os direitos reservados.</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link href="/about" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
+            <Link
+              href="/about"
+              className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]"
+            >
               Sobre a Avalia Solar
             </Link>
-            <Link href="/metodologia" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
+            <Link
+              href="/metodologia"
+              className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]"
+            >
               Metodologia
             </Link>
-            <Link href="/contact" className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]">
+            <Link
+              href="/contact"
+              className="text-slate-100 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]"
+            >
               Contato
             </Link>
           </div>
@@ -215,6 +227,7 @@ function FooterLinks({
         <li key={link.href}>
           <Link
             href={link.href}
+            prefetch={false}
             className={`${mobile ? 'min-h-11 py-2' : 'py-1.5'} flex items-center text-sm leading-5 text-slate-200 transition-colors hover:text-[#F5B800] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
           >
             {link.label}
@@ -225,6 +238,7 @@ function FooterLinks({
         <li className="pt-2">
           <Link
             href={cta.href}
+            prefetch={false}
             className={`${mobile ? 'min-h-11' : ''} inline-flex items-center gap-1.5 text-sm font-bold text-[#F5B800] transition-colors hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B800]`}
           >
             {cta.label}

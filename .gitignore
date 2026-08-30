@@ -58,7 +58,13 @@ AB0-1-front/public/**/*.zip
 # Ignorar documentações de desenvolvimento
 docs/
 !docs/
+docs/security-audit/
+!docs/
+!docs/security-audit/
+!docs/security-audit/*
 docs/*
+!docs/security-audit/
+!docs/security-audit/*
 !docs/observability/
 docs/observability/*
 !docs/observability/new-relic-setup.md

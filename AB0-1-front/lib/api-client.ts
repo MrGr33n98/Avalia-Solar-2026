@@ -331,11 +331,12 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
             url,
             method,
             details: responseBody,
+            requestId: response.headers.get('x-request-id') || undefined,
           });
 
           const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(method);
           const retryableStatus =
-            response.status === 401 || response.status === 404 || response.status >= 500;
+            response.status === 404 || response.status >= 500;
           const shouldRetry = isIdempotent && retryableStatus && attempt < maxRetries - 1;
           if (shouldRetry) {
             const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);
@@ -378,7 +379,7 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
         const shouldRetryStatus =
           isIdempotent &&
           attempt < maxRetries - 1 &&
-          (status === 401 || status === 404 || (typeof status === 'number' && status >= 500));
+          (status === 404 || (typeof status === 'number' && status >= 500));
 
         if (shouldRetryNetwork || shouldRetryStatus) {
           const delay = 300 * Math.pow(2, attempt) + Math.floor(Math.random() * 150);

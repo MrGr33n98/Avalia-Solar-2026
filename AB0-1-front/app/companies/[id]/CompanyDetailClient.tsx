@@ -216,7 +216,7 @@ export default function CompanyDetailClient({
   }, [company]);
 
   const timeRange = 30;
-  const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS);
+  const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
   const companyId = Number(currentCompany?.id || company?.id);
 
   // Track profile view on mount

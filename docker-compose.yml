@@ -85,8 +85,8 @@ services:
       GA4_API_SECRET: ${GA4_API_SECRET}
       G4_ANALYTICS_ENABLED: ${G4_ANALYTICS_ENABLED:-true}
       G4_ANALYTICS_STRICT_MODE: ${G4_ANALYTICS_STRICT_MODE:-true}
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     networks:
       - ab0-network
     volumes:
@@ -164,8 +164,8 @@ services:
       NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-true}
       NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY}
       NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - ab0-network
     healthcheck:

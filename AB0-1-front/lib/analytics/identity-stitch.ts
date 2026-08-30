@@ -5,6 +5,7 @@ import { opaqueUserId } from './sanitize';
 import { buildApiUrl } from '@/lib/api-config';
 
 const ANONYMOUS_ID_STORAGE_KEYS = ['ajs_anonymous_id', 'as_anonymous_id'] as const;
+const IDENTITY_STITCHED_KEY = 'avalia.identity_stitched';
 
 export interface IdentityStitchPayload {
   user_id: string | number;
@@ -23,12 +24,18 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
   try {
     const userId = opaqueUserId(payload.user_id);
     const anonymousId = payload.anonymous_id || getAnonymousId();
+    const stitchKey = userId + ':' + anonymousId;
+    if (
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem(IDENTITY_STITCHED_KEY + ':' + stitchKey)
+    )
+      return null;
     const identifyTraits = Object.fromEntries(
       Object.entries({
         role: payload.role,
         company_id: payload.company_id != null ? String(payload.company_id) : undefined,
         session_id: payload.session_id != null ? String(payload.session_id) : undefined,
-        tracked_at: payload.tracked_at
+        tracked_at: payload.tracked_at,
       }).filter(([, value]) => value !== undefined && value !== '')
     );
 
@@ -48,9 +55,9 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
       body: JSON.stringify({
         user_id: userId,
         anonymous_id: anonymousId,
-        ...identifyTraits
+        ...identifyTraits,
       }),
-      keepalive: true
+      keepalive: true,
     });
 
     if (!response.ok) {
@@ -59,9 +66,11 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
     }
 
     const data = await response.json();
-    
+    if (typeof window !== 'undefined')
+      sessionStorage.setItem(IDENTITY_STITCHED_KEY + ':' + stitchKey, '1');
+
     console.log('[IdentityStitch] ✓ Success:', data);
-    
+
     return data;
   } catch (error) {
     console.error('[IdentityStitch] Error:', error);
@@ -87,7 +96,7 @@ export const trackSession = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
@@ -96,12 +105,11 @@ export const trackSession = async (params: {
     }
 
     const data = await response.json();
-    
-    // Store anonymous_id in localStorage for persistence
     if (data.anonymous_id) {
+      // Store anonymous_id in localStorage for persistence
       persistAnonymousId(data.anonymous_id);
     }
-    
+
     return data;
   } catch (error) {
     console.error('[TrackSession] Error:', error);
@@ -115,27 +123,27 @@ export const trackSession = async (params: {
  */
 export const getAnonymousId = (): string => {
   if (typeof window === 'undefined') return '';
-  
-  const existingAnonymousId = ANONYMOUS_ID_STORAGE_KEYS
-    .map((key) => localStorage.getItem(key))
-    .find((value): value is string => Boolean(value));
-  
+
+  const existingAnonymousId = ANONYMOUS_ID_STORAGE_KEYS.map((key) =>
+    localStorage.getItem(key)
+  ).find((value): value is string => Boolean(value));
+
   if (existingAnonymousId) {
     return existingAnonymousId;
   }
 
   const anonymousId = `anon-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   persistAnonymousId(anonymousId);
-  
+
   return anonymousId;
 };
 
 /**
  * Hook to call after user authentication
  * Usage:
- * 
+ *
  * const { user } = useAuth();
- * 
+ *
  * useEffect(() => {
  *   if (user) {
  *     handleUserIdentified(user);
@@ -150,19 +158,19 @@ export const handleUserIdentified = async (user: {
   tracked_at?: string;
 }) => {
   const anonymousId = getAnonymousId();
-  
+
   if (!anonymousId) {
     console.warn('[IdentityStitch] No anonymous_id found');
     return;
   }
-  
+
   await stitchIdentity({
     user_id: user.id,
     anonymous_id: anonymousId,
     role: user.role,
     company_id: user.company_id,
     session_id: user.session_id,
-    tracked_at: user.tracked_at
+    tracked_at: user.tracked_at,
   });
 };
 
