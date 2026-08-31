@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
+ActiveRecord::Schema[7.0].define(version: 2026_08_29_142000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1987,6 +1987,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "feed_item_stats", force: :cascade do |t|
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.bigint "reactions_count", default: 0, null: false
+    t.bigint "comments_count", default: 0, null: false
+    t.bigint "saves_count", default: 0, null: false
+    t.bigint "shares_count", default: 0, null: false
+    t.bigint "views_count", default: 0, null: false
+    t.decimal "engagement_score", precision: 12, scale: 4, default: "0.0", null: false
+    t.datetime "last_engagement_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["engagement_score"], name: "index_feed_item_stats_on_engagement_score"
+    t.index ["subject_type", "subject_id"], name: "index_feed_item_stats_on_subject_type_and_subject_id", unique: true
+  end
+
   create_table "feed_items", force: :cascade do |t|
     t.string "actor_type", null: false
     t.bigint "actor_id", null: false
@@ -2559,6 +2575,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
     t.index ["used_in_content", "relevance_score"], name: "index_news_articles_on_used_in_content_and_relevance_score", where: "(used_in_content = false)"
   end
 
+  create_table "news_items", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "summary", null: false
+    t.string "source_name", null: false
+    t.string "source_url"
+    t.string "category"
+    t.integer "reading_time_minutes", default: 3, null: false
+    t.datetime "published_at", null: false
+    t.boolean "published", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "actor_type"
+    t.bigint "actor_id"
+    t.string "status", default: "draft", null: false
+    t.index ["actor_type", "actor_id"], name: "index_news_items_on_actor"
+    t.index ["published", "published_at"], name: "index_news_items_on_published_and_published_at"
+    t.index ["status"], name: "index_news_items_on_status"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[])", name: "news_items_status_valid"
+  end
+
   create_table "newsletters", force: :cascade do |t|
     t.integer "issue_number"
     t.string "subject", limit: 300
@@ -2910,6 +2946,39 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
     t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
+  end
+
+  create_table "poll_options", force: :cascade do |t|
+    t.bigint "poll_id", null: false
+    t.string "label", null: false
+    t.integer "votes_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["poll_id"], name: "index_poll_options_on_poll_id"
+  end
+
+  create_table "poll_votes", force: :cascade do |t|
+    t.bigint "poll_id", null: false
+    t.bigint "poll_option_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["poll_id", "user_id"], name: "index_poll_votes_on_poll_id_and_user_id", unique: true
+    t.index ["poll_id"], name: "index_poll_votes_on_poll_id"
+    t.index ["poll_option_id"], name: "index_poll_votes_on_poll_option_id"
+    t.index ["user_id"], name: "index_poll_votes_on_user_id"
+  end
+
+  create_table "polls", force: :cascade do |t|
+    t.string "question", null: false
+    t.datetime "ends_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "actor_type"
+    t.bigint "actor_id"
+    t.string "status", default: "draft", null: false
+    t.index ["actor_type", "actor_id"], name: "index_polls_on_actor"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'closed'::character varying]::text[])", name: "polls_status_valid"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -3340,6 +3409,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
     t.string "moderation_status", default: "approved", null: false
     t.bigint "views_count", default: 0, null: false
     t.integer "likes_count", default: 0, null: false
+    t.bigint "shares_count", default: 0, null: false
     t.index ["status", "published_at"], name: "index_reviewer_publications_on_status_and_published_at"
     t.index ["user_id", "published_at"], name: "idx_reviewer_publications_user_published", where: "((status)::text = 'published'::text)"
     t.index ["user_id", "slug"], name: "index_reviewer_publications_on_user_id_and_slug", unique: true
@@ -3603,6 +3673,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
     t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 
+  create_table "user_interests", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.decimal "score", precision: 12, scale: 4, default: "0.0", null: false
+    t.datetime "last_interaction_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_type", "entity_id"], name: "index_user_interests_on_entity_type_and_entity_id"
+    t.index ["user_id", "entity_type", "entity_id"], name: "index_user_interests_on_user_id_and_entity_type_and_entity_id", unique: true
+    t.index ["user_id"], name: "index_user_interests_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -3830,6 +3913,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
   add_foreign_key "pending_changes", "companies"
   add_foreign_key "pending_changes", "users"
+  add_foreign_key "poll_options", "polls"
+  add_foreign_key "poll_votes", "poll_options"
+  add_foreign_key "poll_votes", "polls"
+  add_foreign_key "poll_votes", "users"
   add_foreign_key "posts", "users"
   add_foreign_key "pricings", "products"
   add_foreign_key "product_accesses", "products"
@@ -3891,5 +3978,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_08_28_160000) do
   add_foreign_key "subscription_plans", "products"
   add_foreign_key "transactions", "companies"
   add_foreign_key "transactions", "users"
+  add_foreign_key "user_interests", "users"
   add_foreign_key "users", "companies"
 end

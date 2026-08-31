@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { MapPin, Award } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
+import { track } from '@/lib/analytics/lazy';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -12,12 +13,14 @@ import { Button } from '@/components/ui/button';
 interface ProfileSummaryProps {
   levelName?: string | null;
   profileCompletion?: number | null;
+  missingFields?: string[];
   className?: string;
 }
 
 export function ProfileSummary({
   levelName = null,
   profileCompletion = null,
+  missingFields = [],
   className,
 }: ProfileSummaryProps) {
   const { user } = useAuth();
@@ -40,6 +43,8 @@ export function ProfileSummary({
     : '';
 
   const hasCompletion = profileCompletion !== null && profileCompletion !== undefined;
+  const isComplete = hasCompletion && profileCompletion >= 100;
+  const firstMissingField = missingFields[0];
 
   return (
     <Card
@@ -116,9 +121,11 @@ export function ProfileSummary({
           className="h-2 w-full bg-slate-100"
         />
         <p className="mt-1.5 text-xs text-slate-400">
-          {hasCompletion
-            ? 'Complete seu perfil para fortalecer sua presença na comunidade.'
-            : 'Completude do perfil indisponível agora.'}
+          {!hasCompletion
+            ? 'Completude do perfil indisponível agora.'
+            : isComplete
+              ? 'Perfil completo ✓'
+              : `Falta ${missingFields.length || 1} informação${missingFields.length === 1 ? '' : 'ões'} para concluir`}
         </p>
         {hasCompletion && (
           <Button
@@ -126,7 +133,16 @@ export function ProfileSummary({
             variant="link"
             className="mt-1 h-auto p-0 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:no-underline"
           >
-            <a href="/review-dashboard/profile">Completar agora →</a>
+            <a
+              href="/review-dashboard/profile"
+              onClick={() => track('review_dashboard_profile_clicked', {})}
+            >
+              {isComplete
+                ? 'Ver perfil público →'
+                : firstMissingField
+                  ? `Adicione ${firstMissingField} →`
+                  : 'Completar agora →'}
+            </a>
           </Button>
         )}
       </div>

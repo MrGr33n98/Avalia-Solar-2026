@@ -3,7 +3,6 @@
 module ReviewDashboard
   class SummaryService
     ACTIVE_SECTIONS = %i[kpis gamification impact recommendations recent_activities charts profile].freeze
-    UNAVAILABLE_SECTIONS = %i[sustainable_journey].freeze
 
     def initialize(user:, clock: -> { Time.current }, request_id: nil)
       @user = user
@@ -28,9 +27,8 @@ module ReviewDashboard
           chart_data ? { activity_30d: chart_data } : nil
         end,
         profile: measure('profile') { profile },
-        sustainable_journey: nil
       }
-      stale_sections = (ACTIVE_SECTIONS + UNAVAILABLE_SECTIONS).filter_map do |name|
+      stale_sections = ACTIVE_SECTIONS.filter_map do |name|
         name.to_s if sections[name].nil?
       end
 
@@ -75,11 +73,19 @@ module ReviewDashboard
     def kpis
       user_leads = Lead.where(email: @user.email)
       counts = user_leads.group(:wizard_status).count
+      reviews = @user.reviews.group(:status).count
       {
         quotes_total: counts.values.sum,
         quotes_open: counts.values_at('draft', 'pending_otp', 'verified').compact.sum,
         quotes_replied: counts.fetch('proposal_sent', 0),
-        reviews_published: approved_reviews.count
+        reviews: {
+          total: reviews.values.sum,
+          published: reviews.fetch("approved", 0),
+          pending: reviews.values_at("pending", "in_analysis").compact.sum,
+          rejected: reviews.fetch("rejected", 0)
+        },
+        # Compatibilidade com consumidores legados.
+        reviews_published: reviews.fetch("approved", 0)
       }
     end
 
@@ -122,14 +128,15 @@ module ReviewDashboard
     end
 
     def recent_activities
-      approved_reviews.where.not(reply: nil).where(reply_deleted_at: nil)
-                     .includes(:company).order(replied_at: :desc).limit(2).filter_map do |review|
-        next if review.replied_at.blank?
-
+      ReviewDashboard::ActivityService.new(user: @user).recent_events(limit: 10).map do |event|
         {
-          icon: 'MessageCircle',
-          title: "#{review.company&.name || 'Empresa'} respondeu sua avaliação",
-          time: relative_day(review.replied_at)
+          id: event[:id] || event[:review_id] || event[:notification_id],
+          type: event[:type],
+          title: event[:title],
+          subtitle: event[:company_id] ? 'Contribuição na comunidade' : nil,
+          occurred_at: event[:created_at]&.iso8601,
+          review_id: event[:review_id],
+          company_id: event[:company_id]
         }
       end
     end

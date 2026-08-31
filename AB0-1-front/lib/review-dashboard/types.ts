@@ -18,6 +18,12 @@ export interface ReviewDashboardMeta {
 export interface ReviewDashboardSummaryDto {
   meta?: ReviewDashboardMeta;
   kpis?: {
+    reviews?: {
+      total?: number | null;
+      published?: number | null;
+      pending?: number | null;
+      rejected?: number | null;
+    };
     estimated_savings?: number | null;
     quotes_total?: number | null;
     quotes_open?: number | null;
@@ -52,8 +58,11 @@ export interface ReviewDashboardSummaryDto {
     impacted_people?: number | null;
   };
   recent_activities?: Array<{
-    icon?: string;
+    id?: string | number;
+    type?: string;
     title?: string;
+    subtitle?: string | null;
+    occurred_at?: string | null;
     time?: string;
   }> | null;
   recommendations?: Array<{
@@ -248,13 +257,20 @@ export function buildPrimeDashboardViewModel({
     : null;
   const activity = summary?.recent_activities
     ? summary.recent_activities
-        .filter((item): item is { icon?: string; title: string; time?: string } =>
-          Boolean(item.title)
+        .filter(
+          (
+            item
+          ): item is { icon?: string; title: string; time?: string; occurred_at?: string | null } =>
+            Boolean(item.title)
         )
         .map((item) => ({
           icon: item.icon || 'Activity',
           title: item.title,
-          time: item.time || 'recentemente',
+          time:
+            item.time ||
+            (item.occurred_at
+              ? new Date(item.occurred_at).toLocaleDateString('pt-BR')
+              : 'recentemente'),
         }))
     : null;
 

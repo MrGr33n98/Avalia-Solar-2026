@@ -10,6 +10,10 @@ RSpec.describe 'Review dashboard summary API', type: :request do
     get '/api/v1/review_dashboard/summary', headers: headers
     expect(response).to have_http_status(:ok)
     expect(JSON.parse(response.body)).to include('kpis', 'gamification', 'profile')
+    payload = JSON.parse(response.body)
+    expect(payload.dig('kpis', 'reviews')).to include('total', 'published', 'pending', 'rejected')
+    expect(payload.dig('kpis', 'reviews', 'total')).to be >= payload.dig('kpis', 'reviews', 'published')
+    expect(payload.dig('kpis', 'reviews', 'total')).to be >= payload.dig('kpis', 'reviews', 'pending')
   end
 
   it 'keeps summary available when Green Score is unavailable' do

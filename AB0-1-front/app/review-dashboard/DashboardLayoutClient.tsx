@@ -38,6 +38,12 @@ export interface ReviewDashboardSummary {
     duration_ms?: number;
   };
   kpis?: {
+    reviews?: {
+      total?: number | null;
+      published?: number | null;
+      pending?: number | null;
+      rejected?: number | null;
+    };
     estimated_savings?: number;
     quotes_total: number | null;
     quotes_open: number | null;
@@ -197,7 +203,11 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setReviewsLoading(true);
         setReviewsError(null);
         try {
-          const response = await reviewsApi.listMine({ per_page: 100 });
+          if (pathname === '/review-dashboard') {
+            setReviews([]);
+            return;
+          }
+          const response = await reviewsApi.listMine({ per_page: 20 });
           setReviews(
             response.sort(
               (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -229,6 +239,10 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
       const loadLeads = async () => {
         setLeadsLoading(true);
         try {
+          if (pathname === '/review-dashboard') {
+            setLeads([]);
+            return;
+          }
           const response = await leadsApi.mine();
           setLeads(
             normalizeApiList(response as ApiListResponse<Lead>).sort(
@@ -263,7 +277,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           setRefreshing(false);
         });
     },
-    [user, router]
+    [user, router, pathname]
   );
 
   useEffect(() => {

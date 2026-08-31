@@ -36,7 +36,13 @@ async function mockReviewerApis(
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        kpis: { quotes_total: 12, quotes_open: 5, quotes_replied: 7, reviews_published: 3 },
+        kpis: {
+          quotes_total: 12,
+          quotes_open: 5,
+          quotes_replied: 7,
+          reviews: { total: 101, published: 3, pending: 2, rejected: 0 },
+          reviews_published: 3,
+        },
         gamification: { green_score: null, regional_ranking: null, achievements: [] },
         profile: { completion_percent: 75 },
         ...summary,
@@ -77,11 +83,14 @@ test.describe('Review Dashboard — contrato atual', () => {
   test('home exibe dados reais e null não vira score fictício', async ({ page }) => {
     await mockReviewerApis(page);
     const summaryRequest = page.waitForRequest('**/api/v1/review_dashboard/summary');
-    const leadsRequest = page.waitForRequest('**/api/v1/leads/mine');
+    const reviewsRequest = page
+      .waitForRequest('**/api/v1/reviews/mine', { timeout: 1000 })
+      .catch(() => null);
     await page.goto('/review-dashboard');
     await summaryRequest;
-    await leadsRequest;
+    expect(await reviewsRequest).toBeNull();
     await expect(page.getByText('Meu painel')).toBeVisible();
+    await expect(page.getByText('101').first()).toBeVisible();
     await expect(page.getByText('Indisponível').first()).toBeVisible();
     await expect(page.getByText('Ótima empresa!')).toBeVisible();
   });

@@ -2,6 +2,11 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Review Dashboard domínio', () => {
   test.beforeEach(async ({ page }) => {
+    await page
+      .context()
+      .addCookies([
+        { name: 'jwt_token', value: 'test-token', domain: 'localhost', path: '/', httpOnly: true },
+      ]);
     await page.route('**/api/v1/auth/me', (route) =>
       route.fulfill({
         status: 200,
@@ -37,7 +42,13 @@ test.describe('Review Dashboard domínio', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          kpis: { quotes_total: 2, quotes_open: 1, quotes_replied: 1, reviews_published: 1 },
+          kpis: {
+            quotes_total: 2,
+            quotes_open: 1,
+            quotes_replied: 1,
+            reviews: { total: 1, published: 1, pending: 0, rejected: 0 },
+            reviews_published: 1,
+          },
           gamification: { green_score: null, regional_ranking: null, achievements: [] },
           impact: { helpful_votes: 0, impacted_people: 0 },
           profile: { completion_percent: 50 },
@@ -62,7 +73,7 @@ test.describe('Review Dashboard domínio', () => {
 
   test('home não mostra Green Score fictício', async ({ page }) => {
     await page.goto('/review-dashboard');
-    await expect(page.getByText('Indisponível').first()).toBeVisible();
+    await expect(page.getByLabel('Green Score: —')).toBeVisible();
   });
 
   test('solutions persiste via API', async ({ page }) => {
