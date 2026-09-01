@@ -528,7 +528,7 @@ export default function LiveInbox() {
     
     try {
       const message = await inboxApi.send(companyId, selectedId, content, clientMsgId);
-      setMessages((current) => mergeInboxMessages(current.filter((item) => item.client_message_id !== clientMsgId && item.id !== optimisticMessage.id), [{ ...message, status: 'sent' }]));
+      setMessages((current) => mergeInboxMessages(current.filter((item) => item.client_message_id !== clientMsgId && item.id !== optimisticMessage.id), [message]).map((item) => item.id === message.id ? { ...item, status: 'sent' as const } : item));
     } catch {
       setMessages((current) => current.map((item) => 
         (item.client_message_id === clientMsgId || item.id === optimisticMessage.id) 

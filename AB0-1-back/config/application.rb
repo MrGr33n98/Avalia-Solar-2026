@@ -85,6 +85,7 @@ module RailsBlogDemo
     # Note: app/* dirs (services, etc.) are added automatically by Rails 7 — no explicit registration needed
     config.autoload_paths << Rails.root.join('lib')
     config.eager_load_paths << Rails.root.join('lib')
+    Rails.autoloaders.main.ignore(Rails.root.join('app/admin'))
 
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack

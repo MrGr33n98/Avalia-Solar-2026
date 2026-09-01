@@ -60,7 +60,7 @@ class User < ApplicationRecord
   validate :corporate_email_for_company, on: :create
   validate :adult_birthdate
   validate :validate_attachments
-  validates :terms_accepted, acceptance: { accept: true }
+  validates :terms_accepted, inclusion: { in: [true], message: 'must be accepted' }
 
   # Consent attribute getters/setters
   def public_name_consent?

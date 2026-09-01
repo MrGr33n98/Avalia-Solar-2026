@@ -487,6 +487,9 @@ end
 require_relative 'seeds/knowledge_base'
 Seeds::KnowledgeBase.run!
 
+require_relative 'seeds/sales'
+Seeds::Sales.run!
+
 require_relative 'seeds/groups'
 Seeds::Groups.run!
 

@@ -48,6 +48,28 @@ Rails.application.routes.draw do
         post 'tools/:tool_name', to: 'tools#create'
       end
 
+      scope :sales do
+        get 'opportunities', to: 'sales#index'
+        get 'summary', to: 'sales#summary'
+        post 'companies/:company_id/account', to: 'sales/account_links#create'
+        resources :accounts, only: %i[index create], controller: 'sales/accounts'
+        resources :opportunities, only: %i[create update], controller: 'sales/opportunities'
+        resources :accounts, only: [] do
+          resources :contacts, only: %i[index create], controller: 'sales/contacts'
+          resources :tasks, only: %i[index create], controller: 'sales/tasks'
+        end
+        resources :tasks, only: :update, controller: 'sales/tasks'
+        resources :accounts, only: [] do
+          resources :activities, only: %i[index create], controller: 'sales/activities'
+        end
+        resources :opportunities, only: [] do
+          resource :qualification, only: %i[show], controller: 'sales/qualifications'
+          put :qualification, to: 'sales/qualifications#upsert'
+          post :won, to: 'sales/closures#won'
+          post :lost, to: 'sales/closures#lost'
+        end
+      end
+
       resources :push_subscriptions, only: [:create] do
         collection do
           delete :destroy

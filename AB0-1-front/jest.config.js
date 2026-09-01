@@ -5,6 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
+  modulePathIgnorePatterns: ['<rootDir>/.next/standalone/'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   // Rodar todos os testes padrão do Jest (sem filtro unit-only)

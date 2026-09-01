@@ -10,6 +10,7 @@ import {
   BarChart3, 
   Settings,
   Users,
+  BriefcaseBusiness,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -38,6 +39,7 @@ const menuItems = [
     label: "Clientes", 
     href: "/dashboard/clients" 
   },
+  { icon: BriefcaseBusiness, label: "CRM / Vendas", href: "/dashboard/sales" },
   { 
     icon: BarChart3, 
     label: "Relatórios", 
