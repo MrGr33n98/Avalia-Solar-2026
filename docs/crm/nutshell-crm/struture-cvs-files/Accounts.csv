@@ -1,0 +1,6 @@
+﻿id,name,legacy_id,phone_phones,home_phones,mobile_phones,work_phones,fax_phones,other_phones,email,url,industry,accountType,contacts,contact,territory,owner,tags,address_1,address_2,address_3,city,state,postalCode,country
+1-accounts,Nutshell,,,,,,,,support@nutshell.com,'@nutshell,,"Standard Account",1-contacts,"Quincy Herrold",,,,"206 E Huron St",,,"Ann Arbor",MI,48103,US
+2-accounts,"Skyline Technologies [Sample]",,,,,,,,,,Aerospace,Customer,2-contacts,"Jamie Lee [Sample]",,,,"450 Golden Gate Ave",,,"San Francisco",CA,94102,US
+3-accounts,"EcoTech Solutions [Sample]",,,,,,,,,,Environmental,"Standard Account",3-contacts,"Morgan Taylor [Sample]",,,,"219 S Dearborn St",,,Chicago,IL,60604,US
+4-accounts,"Aquora Purifiers [Sample]",,,,,,,,,,"Healthcare Providers","Standard Account",4-contacts,"Casey Yost [Sample]",,,,"515 Rusk Ave",,,Houston,TX,77002,US
+5-accounts,"NextCourt Techs [Sample]",,,,,,,,,,"Computer Services","Standard Account",5-contacts,"Aaron Fletcher [Sample]",,,,"99 Exchange Blvd",,,Rochester,NY,14614,US

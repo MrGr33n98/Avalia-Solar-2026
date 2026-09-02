@@ -1,0 +1,6 @@
+﻿id,name,legacy_id,phone_phones,home_phones,mobile_phones,work_phones,fax_phones,other_phones,email,url,accounts,territory,owner,tags,address_1,address_2,address_3,city,state,postalCode,country,job_title
+1-contacts,"Quincy Herrold",,,,,,,,,,1-accounts,,,,"206 E Huron St",,,"Ann Arbor",MI,48103,US,"Nutshell - VP of Customer Support"
+2-contacts,"Jamie Lee [Sample]",,"'+1 2125551212",,,,,,jlee@example.com,,2-accounts,,,,,,,,,,,"Skyline Technologies [Sample] - CEO"
+3-contacts,"Morgan Taylor [Sample]",,"'+1 4155551212",,,,,,mtaylor@example.com,,3-accounts,,,,,,,,,,,"EcoTech Solutions [Sample] - Sales Leader"
+4-contacts,"Casey Yost [Sample]",,"'+1 7345551212",,,,,,cyost@example.com,,4-accounts,,,,,,,,,,,"Aquora Purifiers [Sample] - Senior VP of Marketing"
+5-contacts,"Aaron Fletcher [Sample]",,"'+1 5175551212",,,,,,afletcher@example.com,,5-accounts,,,,,,,,,,,"NextCourt Techs [Sample] - COO"

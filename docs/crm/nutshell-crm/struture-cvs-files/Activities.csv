@@ -1,0 +1,7 @@
+﻿id,name,type,status,start_time,end_time,is_all_day,is_flagged,is_timed,description,participants,leads,creator,created_time,note,follow_up_activity_id
+1-activities,"Signed up for a trial","Phone Call",Logged,"2026-09-02 14:39:16","2026-09-02 14:54:16",false,false,true,,"Quincy Herrold",,,"2026-09-02 14:54:16","By signing up for a Nutshell trial you're ready to start tracking sales and stay on top of communication with your customers. It's simple to schedule activities like this one, and then mark them as logged when you've finished the meeting or phone call.
+
+You can also sync the activities that you schedule with your Google or Microsoft Exchange calendar.
+
+- https://support.nutshell.com/en/articles/8428897-how-do-i-sync-your-gmail-with-nutshell
+- https://support.nutshell.com/en/articles/8428901-sync-your-office-365-calendar",

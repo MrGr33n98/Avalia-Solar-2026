@@ -1,0 +1,8 @@
+﻿id,type,subject_id,name,creator,note,created_time,subject_legacy_id,associated_entity_id,associated_legacy_id
+1-notes,Contacts,1-contacts,"Quincy Herrold",,"Quincy leads Customer Support at Nutshell. When you need help with your account, reach out to our team — and try '@ mentioning' your fellow Nutshell users, @[Users:1] - writing notes and roping in your colleagues helps everyone stay on the same page.","2026-09-02 14:54:16",,,
+2-notes,Activities,1-activities,"Signed up for a trial",,"By signing up for a Nutshell trial you're ready to start tracking sales and stay on top of communication with your customers. It's simple to schedule activities like this one, and then mark them as logged when you've finished the meeting or phone call.
+
+You can also sync the activities that you schedule with your Google or Microsoft Exchange calendar.
+
+- https://support.nutshell.com/en/articles/8428897-how-do-i-sync-your-gmail-with-nutshell
+- https://support.nutshell.com/en/articles/8428901-sync-your-office-365-calendar","2026-09-02 14:54:16",,1-contacts,

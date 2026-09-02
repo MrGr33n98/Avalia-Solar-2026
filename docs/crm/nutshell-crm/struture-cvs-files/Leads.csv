@@ -1,0 +1,5 @@
+﻿id,lead_number,name,description,status,confidence,outcome,milestone,percent_complete,creator,owner,date_created,expected_closed_date,date_closed,last_contacted,last_modified,market,value,accounts,contacts,products,competitors,sources,tags
+1000-leads,1000,"Skyline Technologies [Sample]",,Won,100%,Won,Close,0,Felipe,Felipe,"2026-01-02 14:54:15","2026-09-04 14:54:15",,,"2026-09-02 14:54:15",U.S.,"$55,000",2-accounts,2-contacts,,,,
+1001-leads,1001,"EcoTech Solutions [Sample]",,Open,20%,,Qualify,0,Felipe,Felipe,"2026-08-02 14:54:15","2026-09-08 14:54:15",,,"2026-09-02 14:54:15",U.S.,$900,3-accounts,3-contacts,,,,
+1002-leads,1002,"Aquora Purifiers [Sample]",,Open,50%,,Pitch,0,Felipe,Felipe,"2026-04-02 14:54:15","2026-09-12 14:54:15",,,"2026-09-02 14:54:15",U.S.,"$31,000",4-accounts,4-contacts,,,,
+1003-leads,1003,"NextCourt Techs [Sample]",,Open,50%,,Pitch,0,Felipe,Felipe,"2026-06-02 14:54:15","2026-09-14 14:54:15",,,"2026-09-02 14:54:16",U.S.,"$1,500",5-accounts,5-contacts,,,,

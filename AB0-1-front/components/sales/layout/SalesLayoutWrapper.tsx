@@ -1,0 +1,41 @@
+'use client';
+
+import { ReactNode, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import CRMSidebar from '@/components/sales/layout/CRMSidebar';
+import SettingsSubSidebar from '@/components/sales/layout/SettingsSubSidebar';
+import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
+import CallLoggerModal from '@/components/sales/CallLoggerModal';
+
+interface SalesLayoutWrapperProps {
+  children: ReactNode;
+}
+
+export default function SalesLayoutWrapper({ children }: SalesLayoutWrapperProps) {
+  const pathname = usePathname();
+  const isSettings = pathname.startsWith('/dashboard/sales/settings');
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [addModalType, setAddModalType] = useState<string | null>(null);
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-sky-100 selection:text-sky-900">
+      {/* Primary Navy Sidebar */}
+      <CRMSidebar
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenAddModal={(type) => setAddModalType(type)}
+      />
+
+      {/* Secondary Settings Sub-Sidebar (Appears on /settings/*) */}
+      {isSettings && <SettingsSubSidebar />}
+
+      {/* Main Clean Viewport */}
+      <main className="flex-1 min-w-0 flex flex-col overflow-y-auto">
+        <div className="p-6 lg:p-8 max-w-[1600px] w-full mx-auto">{children}</div>
+      </main>
+
+      {/* Global Modals & Palette */}
+      <CRMCommandPalette />
+    </div>
+  );
+}

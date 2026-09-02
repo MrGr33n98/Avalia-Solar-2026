@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
 import Company360View from '@/components/sales/Company360View';
 import { buildWhatsAppUrl } from '@/lib/phone';
@@ -87,7 +87,7 @@ export default function ProspectingQueue() {
   const activeProspect = quickModeIndex !== null ? prospects[quickModeIndex] : null;
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
@@ -256,6 +256,6 @@ export default function ProspectingQueue() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

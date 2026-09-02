@@ -46,7 +46,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
 import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
@@ -485,7 +485,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   };
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <CRMCommandPalette />
       <div className="mx-auto w-full max-w-[1700px] space-y-6">
         {/* Executive Header */}
@@ -969,6 +969,6 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
           </aside>
         </div>
       )}
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

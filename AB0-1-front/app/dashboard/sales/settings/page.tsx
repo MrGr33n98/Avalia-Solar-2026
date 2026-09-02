@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import OrganizationSettingLayout from '@/components/sales/settings/OrganizationSettingLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type Taxonomy = { id: number; kind: string; name: string; slug: string };
 
@@ -23,31 +24,43 @@ export default function SalesSettingsPage() {
   }, []);
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
-      <main className="mx-auto w-full max-w-6xl space-y-6 p-6">
-        <header>
-          <p className="text-xs font-bold uppercase tracking-wider text-blue-800">Avalia Solar CRM</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Configurações comerciais</h1>
-          <p className="mt-1 text-sm text-slate-600">Taxonomias canônicas carregadas da API Sales.</p>
-        </header>
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-bold text-slate-900">Taxonomias</h2>
-          {state === 'loading' && <p className="mt-4 text-sm text-slate-500">Carregando…</p>}
-          {state === 'error' && <p className="mt-4 text-sm text-red-700">Não foi possível carregar configurações.</p>}
-          {state === 'ready' && items.length === 0 && <p className="mt-4 text-sm text-slate-500">Nenhuma taxonomia cadastrada.</p>}
+    <SalesLayoutWrapper>
+      <OrganizationSettingLayout
+        title="General Setup & Taxonomies"
+        subtitle="Manage baseline organizational categories and taxonomy definitions for Avalia Solar CRM"
+        helpTitle="What are taxonomies?"
+        helpDescription="Taxonomies group companies, leads, and products into canonical categories like Company Types, Industries, Markets, and Tags across the CRM."
+        extraHelpCards={[
+          {
+            title: 'API Integration',
+            content: 'Taxonomies created here are served directly via /api/v1/sales/taxonomies and can be managed programmatically.',
+          },
+        ]}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <span className="text-xs font-semibold text-slate-700">Canonical Taxonomies ({items.length})</span>
+          </div>
+
+          {state === 'loading' && <p className="py-8 text-center text-xs text-slate-500">Loading taxonomies...</p>}
+          {state === 'error' && <p className="py-8 text-center text-xs text-red-600">Failed to load taxonomies.</p>}
+          {state === 'ready' && items.length === 0 && (
+            <p className="py-8 text-center text-xs text-slate-500">No custom taxonomies registered yet.</p>
+          )}
+
           {state === 'ready' && items.length > 0 && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {items.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-[10px] font-bold uppercase text-slate-500">{item.kind}</p>
-                  <p className="mt-1 font-semibold text-slate-900">{item.name}</p>
-                  <p className="text-xs text-slate-500">{item.slug}</p>
+                <div key={item.id} className="rounded-md border border-slate-100 p-3 bg-slate-50/50">
+                  <p className="text-[10px] font-bold uppercase text-slate-400">{item.kind}</p>
+                  <p className="mt-0.5 font-medium text-xs text-slate-800">{item.name}</p>
+                  <p className="text-[11px] text-slate-400 font-mono">{item.slug}</p>
                 </div>
               ))}
             </div>
           )}
-        </section>
-      </main>
-    </DashboardLayout>
+        </div>
+      </OrganizationSettingLayout>
+    </SalesLayoutWrapper>
   );
 }

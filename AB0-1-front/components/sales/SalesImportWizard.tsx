@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type ParsedLead = {
   company: string;
@@ -270,7 +270,7 @@ export default function SalesImportWizard() {
   };
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <div className="mx-auto w-full max-w-5xl space-y-6">
         {/* Header */}
         <header className="flex flex-col gap-2 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
@@ -658,6 +658,6 @@ export default function SalesImportWizard() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

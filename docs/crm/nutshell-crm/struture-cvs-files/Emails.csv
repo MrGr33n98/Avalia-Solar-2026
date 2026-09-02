@@ -1,0 +1,7 @@
+﻿id,subject,headers,body,sent_time,created_time,zendesk_ticket_id,lead_ids,contact_ids,account_ids,user_ids,first_contact_legacy_id
+1-emails,"Welcome to Nutshell!",,"I'd like to say hello, and introduce you to your company's feed! You see real-time information about what's happening across your Nutshell account, including the email you send and receive.
+
+Add email to Nutshell by BCC'ing the message to bcc@nutshell.com, tagging messages in your Google Apps account, or sending an email directly from Nutshell!
+
+- https://support.nutshell.com/en/articles/8428953-how-to-bcc-your-emails-into-nutshell
+- https://support.nutshell.com/en/articles/8428951-how-to-send-an-email-from-nutshell",,"2026-09-02 14:54:16",,,,,1-users,

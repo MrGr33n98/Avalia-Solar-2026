@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type Kpi = {
   pipeline_value_cents: number;
@@ -172,7 +172,7 @@ export default function SalesAnalyticsReport() {
   }));
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
@@ -455,6 +455,6 @@ export default function SalesAnalyticsReport() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }
