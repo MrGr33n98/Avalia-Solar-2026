@@ -193,6 +193,11 @@ export async function middleware(request: NextRequest) {
         applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/pipeline', request.url)))
       );
     }
+    if (pathname === '/today' || pathname === '/dashboard/today') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/today', request.url)))
+      );
+    }
   }
 
   if (pathname === LEGACY_COMPANIES_PATH) {

@@ -11,6 +11,7 @@ import {
   Settings,
   Users,
   BriefcaseBusiness,
+  Calendar,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -60,6 +61,7 @@ export default function DashboardSidebar() {
   const activeMenuItems = isSalesContext
     ? [
         { icon: LayoutDashboard, label: "Command Center", href: "/dashboard/sales" },
+        { icon: Calendar, label: "Fila Diária (Today)", href: "/dashboard/sales/today" },
         { icon: BriefcaseBusiness, label: "Pipeline (Kanban)", href: "/dashboard/sales/pipeline" },
         { icon: Users, label: "Contas & Prospects", href: "/dashboard/sales/accounts" },
         { icon: FileText, label: "Importar Leads (.CSV)", href: "/dashboard/sales/import" },
