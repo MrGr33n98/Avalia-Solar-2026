@@ -4,16 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  LayoutDashboard, 
-  Shield, 
-  FileText, 
   BarChart3, 
-  Settings,
-  Users,
-  BriefcaseBusiness,
+  BriefcaseBusiness, 
+  Building2,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText, 
+  LayoutDashboard, 
+  Settings,
+  Shield, 
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,8 @@ export default function DashboardSidebar() {
         { icon: LayoutDashboard, label: "Command Center", href: "/dashboard/sales" },
         { icon: Calendar, label: "Fila Diária (Today)", href: "/dashboard/sales/today" },
         { icon: BriefcaseBusiness, label: "Pipeline (Kanban)", href: "/dashboard/sales/pipeline" },
-        { icon: Users, label: "Contas & Prospects", href: "/dashboard/sales/accounts" },
+        { icon: Building2, label: "Contas & Prospects", href: "/dashboard/sales/accounts" },
+        { icon: Users, label: "Pessoas & Decisores", href: "/dashboard/sales/people" },
         { icon: FileText, label: "Importar Leads (.CSV)", href: "/dashboard/sales/import" },
         { icon: BarChart3, label: "Analytics & Reports", href: "/dashboard/sales/reports" },
         { icon: Settings, label: "Tarefas & Follow-ups", href: "/dashboard/sales/tasks" },
