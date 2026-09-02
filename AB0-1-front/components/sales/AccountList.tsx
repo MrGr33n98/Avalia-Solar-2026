@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
+  AlertCircle,
   Building2,
   ChevronRight,
   Database,
@@ -11,6 +12,7 @@ import {
   Mail,
   MessageSquare,
   Plus,
+  RotateCw,
   Search,
   Users,
 } from 'lucide-react';
@@ -34,33 +36,37 @@ type Account = {
   status?: string | null;
 };
 
-const MOCK_ACCOUNTS: Account[] = [
-  { id: 1, name: 'WEG Equipamentos Elétricos S/A', domain: 'weg.net', city: 'Jaraguá do Sul', state: 'SC', phone: '(47) 3276-4000', email: 'vendas@weg.net', status: 'prospect' },
-  { id: 2, name: 'Solar Tech Indústria & Comércio', domain: 'solartech.com.br', city: 'Campinas', state: 'SP', phone: '(11) 98877-6655', email: 'carlos@solartech.com.br', status: 'qualified' },
-  { id: 3, name: 'Hospital São Lucas', domain: 'hospitalsaolucas.com.br', city: 'Niterói', state: 'RJ', phone: '(21) 97654-3210', email: 'roberto@hospitalsaolucas.com.br', status: 'proposal' },
-  { id: 4, name: 'Mercado Real LTDA', domain: 'mercadoreal.com.br', city: 'Belo Horizonte', state: 'MG', phone: '(31) 99123-4567', email: 'fernanda@mercadoreal.com.br', status: 'prospect' },
-  { id: 5, name: 'Engenharia Sol Nascente', domain: 'solnascente.com.br', city: 'Cuiabá', state: 'MT', phone: '(65) 99988-7766', email: 'ricardo@solnascente.com.br', status: 'negotiation' },
-];
-
 export default function AccountList() {
-  const [accounts, setAccounts] = useState<Account[]>(MOCK_ACCOUNTS);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchAccounts = useCallback(() => {
+    setLoading(true);
+    setError(null);
     fetch(`/api/v1/sales/accounts?q=${encodeURIComponent(query)}`, { credentials: 'include' })
       .then((response) => {
-        if (!response.ok) throw new Error('accounts');
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            throw new Error('Acesso não autorizado ao CRM de Vendas.');
+          }
+          throw new Error('Não foi possível carregar as contas do CRM.');
+        }
         return response.json();
       })
       .then((data) => {
-        if (data?.accounts && data.accounts.length > 0) {
-          setAccounts(data.accounts);
-        }
+        setAccounts(data.accounts ?? []);
       })
-      .catch(() => undefined)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Erro ao conectar à API do CRM.');
+      })
       .finally(() => setLoading(false));
   }, [query]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   return (
     <DashboardLayout className="bg-slate-50/70">
@@ -116,6 +122,19 @@ export default function AccountList() {
           <CardContent className="p-4">
             {loading ? (
               <p className="py-8 text-center text-sm text-slate-500">Carregando diretório de contas...</p>
+            ) : error ? (
+              <div className="py-8 text-center space-y-3">
+                <AlertCircle className="mx-auto h-8 w-8 text-red-600" />
+                <p className="text-sm font-semibold text-slate-900">{error}</p>
+                <Button
+                  onClick={fetchAccounts}
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50 font-semibold"
+                >
+                  <RotateCw className="mr-1.5 h-3.5 w-3.5 text-slate-600" /> Tentar Novamente
+                </Button>
+              </div>
             ) : accounts.length === 0 ? (
               <div className="py-12 text-center">
                 <Building2 className="mx-auto h-10 w-10 text-slate-400" />
@@ -149,9 +168,11 @@ export default function AccountList() {
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Company360View
+                              accountId={account.id}
                               companyName={account.name}
-                              city={account.city || 'São Paulo'}
-                              state={account.state || 'SP'}
+                              city={account.city || '—'}
+                              state={account.state || '—'}
+                              domain={account.domain || undefined}
                             />
                             <Link href={`/dashboard/sales/accounts/${account.id}`}>
                               <Button variant="outline" size="sm" className="border-slate-300 text-blue-900 font-semibold hover:bg-blue-50">

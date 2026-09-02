@@ -52,7 +52,7 @@ Rails.application.routes.draw do
         get 'opportunities', to: 'sales#index'
         get 'summary', to: 'sales#summary'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
-        resources :accounts, only: %i[index create], controller: 'sales/accounts'
+        resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
         resources :opportunities, only: %i[create update], controller: 'sales/opportunities'
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'
