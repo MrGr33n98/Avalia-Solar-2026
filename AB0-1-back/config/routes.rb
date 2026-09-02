@@ -51,7 +51,8 @@ Rails.application.routes.draw do
       scope :sales do
         get 'today', to: 'sales/today#index'
         get 'search', to: 'sales/search#index'
-        get 'opportunities', to: 'sales#index'
+        get 'analytics', to: 'sales/analytics#index'
+        get 'opportunities', to: 'sales/opportunities#index'
         get 'summary', to: 'sales#summary'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
         resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views'
@@ -61,14 +62,14 @@ Rails.application.routes.draw do
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
-        resources :opportunities, only: %i[create update], controller: 'sales/opportunities' do
+        resources :opportunities, only: %i[index create update], controller: 'sales/opportunities' do
           resources :contacts, only: %i[index create update destroy], controller: 'sales/opportunity_contacts'
         end
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'
           resources :tasks, only: %i[index create], controller: 'sales/tasks'
         end
-        resources :tasks, only: :update, controller: 'sales/tasks'
+        resources :tasks, only: %i[index create update], controller: 'sales/tasks'
         resources :accounts, only: [] do
           resources :activities, only: %i[index create], controller: 'sales/activities'
         end

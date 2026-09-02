@@ -16,10 +16,10 @@ type OutreachTemplate = {
 };
 
 export default function SalesOutreachTemplates({
-  contactName = 'Carlos Mendes',
-  companyName = 'Solar Tech Indústria',
-  city = 'Cuiabá',
-  phone = '(11) 98877-6655',
+  contactName = '[Nome do Contato]',
+  companyName = '[Nome da Empresa]',
+  city = '[Cidade]',
+  phone = '',
   repName = 'Consultor Avalia Solar',
 }: {
   contactName?: string;

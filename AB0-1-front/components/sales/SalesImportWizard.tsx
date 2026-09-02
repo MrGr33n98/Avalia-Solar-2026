@@ -199,6 +199,11 @@ export default function SalesImportWizard() {
     let errors = 0;
 
     for (const lead of parsedRows) {
+      if (!lead.company || !lead.company.trim()) {
+        errors++;
+        continue;
+      }
+
       try {
         // Create account
         const accRes = await fetch('/api/v1/sales/accounts', {
@@ -207,9 +212,9 @@ export default function SalesImportWizard() {
           credentials: 'include',
           body: JSON.stringify({
             account: {
-              name: lead.company,
-              city: lead.city,
-              state: lead.state,
+              name: lead.company.trim(),
+              city: lead.city || null,
+              state: lead.state || null,
             },
           }),
         });
@@ -223,7 +228,7 @@ export default function SalesImportWizard() {
         // Create opportunity
         const rawValue = (lead.value || '').replace(/[^0-9,.]/g, '').replace(',', '.');
         const numValue = parseFloat(rawValue);
-        const valueCents = isNaN(numValue) ? 0 : Math.round(numValue * 100);
+        const valueCents = isNaN(numValue) || numValue < 0 ? 0 : Math.round(numValue * 100);
 
         const oppRes = await fetch('/api/v1/sales/opportunities', {
           method: 'POST',
@@ -231,10 +236,10 @@ export default function SalesImportWizard() {
           credentials: 'include',
           body: JSON.stringify({
             opportunity: {
-              account_id: accountId,
-              name: `${lead.company} - Oportunidade Solar`,
+              sales_account_id: accountId,
+              name: `${lead.company.trim()} - Oportunidade Solar`,
               stage_key: lead.stageKey || 'prospect',
-              value_cents: valueCents > 0 ? valueCents : 2500000,
+              value_cents: valueCents,
               probability: lead.stageKey === 'won' ? 100 : lead.stageKey === 'proposal' ? 70 : 30,
             },
           }),
@@ -245,7 +250,8 @@ export default function SalesImportWizard() {
         } else {
           errors++;
         }
-      } catch {
+      } catch (err) {
+        console.error('[CRM Import] Row processing error', err);
         errors++;
       }
     }

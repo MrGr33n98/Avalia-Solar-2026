@@ -141,9 +141,11 @@ export default function ProspectingQueue() {
                   <p className="font-bold text-blue-950 flex items-center gap-1 text-xs">
                     <Zap className="h-3.5 w-3.5 text-blue-700" /> Próxima Melhor Ação:
                   </p>
-                  <p className="text-slate-700 text-[11px]">
-                    {activeProspect.next_best_action?.title || 'Realizar ligação de contato inicial'}
-                  </p>
+                   {activeProspect.next_best_action?.title ? (
+                     <p className="text-slate-700 text-[11px]">{activeProspect.next_best_action.title}</p>
+                   ) : (
+                     <p className="text-[11px] italic text-slate-400">Defina a próxima ação no perfil da conta.</p>
+                   )}
                 </div>
               </div>
 
@@ -224,12 +226,20 @@ export default function ProspectingQueue() {
                         <td className="p-3 font-bold text-slate-900">{prospect.name}</td>
                         <td className="p-3 text-slate-600">{prospect.city || '—'} / {prospect.state || '—'}</td>
                         <td className="p-3 font-bold text-blue-900">
-                          <Badge className="border-0 bg-blue-900 text-white font-bold text-[10px]">
-                            Fit {prospect.fit_score?.score ?? 80}/100
-                          </Badge>
+                          {prospect.fit_score?.score != null ? (
+                            <Badge className="border-0 bg-blue-900 text-white font-bold text-[10px]">
+                              Fit {prospect.fit_score.score}/100
+                            </Badge>
+                          ) : (
+                            <span className="text-[11px] italic text-slate-400">Não calculado</span>
+                          )}
                         </td>
                         <td className="p-3 text-slate-600">
-                          <span className="font-semibold text-slate-800">{prospect.data_quality?.score ?? 75}%</span>
+                          {prospect.data_quality?.score != null ? (
+                            <span className="font-semibold text-slate-800">{prospect.data_quality.score}%</span>
+                          ) : (
+                            <span className="italic text-slate-400">—</span>
+                          )}
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end gap-2">

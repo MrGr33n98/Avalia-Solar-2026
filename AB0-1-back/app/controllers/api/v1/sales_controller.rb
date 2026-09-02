@@ -5,7 +5,7 @@ module Api
       before_action :require_internal_sales
 
       def index
-        opportunities = ::Sales::Opportunity.includes(:account, :stage, :owner).open.order(created_at: :desc)
+        opportunities = ::Sales::Opportunity.includes(:account, :stage, :owner, :primary_contact).open.order(created_at: :desc)
         render json: { opportunities: opportunities.map { |opportunity| opportunity_json(opportunity) } }
       end
 
@@ -26,11 +26,20 @@ module Api
       end
 
       def opportunity_json(opportunity)
-        { id: opportunity.id, name: opportunity.name, value_cents: opportunity.value_cents,
-          probability: opportunity.probability, status: opportunity.status,
-          account: { id: opportunity.account.id, name: opportunity.account.name },
-          stage: { id: opportunity.stage.id, key: opportunity.stage.key, name: opportunity.stage.name },
-          owner_id: opportunity.owner_id, next_activity_at: opportunity.next_activity_at }
+        contact = opportunity.primary_contact
+        {
+          id: opportunity.id,
+          name: opportunity.name,
+          value_cents: opportunity.value_cents,
+          probability: opportunity.probability,
+          status: opportunity.status,
+          stage_key: opportunity.stage&.key,
+          account: opportunity.account ? { id: opportunity.account.id, name: opportunity.account.name } : nil,
+          stage: opportunity.stage ? { id: opportunity.stage.id, key: opportunity.stage.key, name: opportunity.stage.name } : nil,
+          contact_name: contact ? [contact.first_name, contact.last_name].compact.join(' ') : nil,
+          owner_id: opportunity.owner_id,
+          next_activity_at: opportunity.next_activity_at
+        }
       end
     end
   end
