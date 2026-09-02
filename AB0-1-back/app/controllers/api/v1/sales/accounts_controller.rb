@@ -82,6 +82,9 @@ module Api
             tasks: account.tasks.map do |t|
               { id: t.id, title: t.title, due_at: t.due_at, completed_at: t.completed_at, priority: t.priority }
             end,
+            fit_score: ::Sales::FitScoreCalculator.calculate(account),
+            data_quality: ::Sales::DataQualityCalculator.calculate(account),
+            next_best_action: ::Sales::NextBestActionResolver.resolve(account),
             marketplace: company ? {
               id: company.id,
               name: company.name,

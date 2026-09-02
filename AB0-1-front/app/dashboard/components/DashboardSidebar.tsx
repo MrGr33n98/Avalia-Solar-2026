@@ -14,6 +14,7 @@ import {
   LayoutDashboard, 
   Settings,
   Shield, 
+  Target,
   Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ export default function DashboardSidebar() {
     ? [
         { icon: LayoutDashboard, label: "Command Center", href: "/dashboard/sales" },
         { icon: Calendar, label: "Fila Diária (Today)", href: "/dashboard/sales/today" },
+        { icon: Target, label: "Fila de Prospecção", href: "/dashboard/sales/prospects" },
         { icon: BriefcaseBusiness, label: "Pipeline (Kanban)", href: "/dashboard/sales/pipeline" },
         { icon: Building2, label: "Contas & Prospects", href: "/dashboard/sales/accounts" },
         { icon: Users, label: "Pessoas & Decisores", href: "/dashboard/sales/people" },

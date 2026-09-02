@@ -49,6 +49,7 @@ Rails.application.routes.draw do
       end
 
       scope :sales do
+        get 'today', to: 'sales/today#index'
         get 'opportunities', to: 'sales#index'
         get 'summary', to: 'sales#summary'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
