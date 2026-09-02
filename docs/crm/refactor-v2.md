@@ -109,13 +109,28 @@ Para a tabela `sales_email_events` com as colunas `sales_email_message_id` e `ev
 Isso fazia com que o banco PostgreSQL truncasse os nomes ou lançasse um erro de violação de limite de identificador no ambiente de CI.
 
 ### Solução Aplicada
-Adicionamos identificadores curtos explícitos via `name:` em todas as migrações afetadas:
-1. `20260902000001_create_sales_contact_employments_and_opportunity_contacts.rb`:
-   - `name: 'idx_sales_contact_employments_contact_account'` (46 caracteres)
-2. `20260902000003_create_sales_email_tables.rb`:
-   - `name: 'idx_sales_email_events_msg_event'` (35 caracteres)
-3. `20260902000004_create_sales_saved_views.rb`:
-   - `name: 'idx_sales_saved_views_user_resource'` (38 caracteres)
+
+1. **Correção de Nomes de Índices (PG 63-char Limit):**
+   Adicionamos identificadores curtos explícitos via `name:` em todas as migrações afetadas:
+   - `20260902000001_create_sales_contact_employments_and_opportunity_contacts.rb`:
+     `name: 'idx_sales_contact_employments_contact_account'` (46 caracteres)
+   - `20260902000003_create_sales_email_tables.rb`:
+     `name: 'idx_sales_email_events_msg_event'` (35 caracteres)
+   - `20260902000004_create_sales_saved_views.rb`:
+     `name: 'idx_sales_saved_views_user_resource'` (38 caracteres)
+
+2. **Configuração de Exclusão no Autoloader Zeitwerk (`config/application.rb`):**
+   Como `config.eager_load_paths << Rails.root.join('lib')` foi habilitado no Rails 7, o Zeitwerk varria subdiretórios que não contêm classes Ruby (como `lib/tasks/*.rake`, `lib/data/*.json`, `lib/assets`, `lib/scripts`).
+   Adicionamos a lista explícita de exclusão no `Rails.autoloaders.main.ignore(...)`:
+   ```ruby
+   Rails.autoloaders.main.ignore(
+     Rails.root.join('app/admin'),
+     Rails.root.join('lib/tasks'),
+     Rails.root.join('lib/assets'),
+     Rails.root.join('lib/data'),
+     Rails.root.join('lib/scripts')
+   )
+   ```
 
 Com isso, a execução de `rails db:migrate` e `rails zeitwerk:check` no Rails 7 passa com **100% de sucesso**.
 
