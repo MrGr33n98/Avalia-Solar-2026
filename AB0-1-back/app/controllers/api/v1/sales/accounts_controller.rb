@@ -2,9 +2,6 @@ module Api
   module V1
     module Sales
       class AccountsController < BaseController
-        before_action :authenticate_api_user
-        before_action :require_internal_sales
-
         def index
           scope = ::Sales::Account.includes(:company, :owner).order(created_at: :desc)
           scope = scope.where('LOWER(name) LIKE ?', "%#{params[:q].to_s.downcase}%") if params[:q].present?
@@ -32,12 +29,6 @@ module Api
         end
 
         private
-
-        def require_internal_sales
-          return if current_user&.admin?
-
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
 
         def account_params
           params.require(:account).permit(:name, :company_id, :domain, :website, :phone, :email, :city, :state,

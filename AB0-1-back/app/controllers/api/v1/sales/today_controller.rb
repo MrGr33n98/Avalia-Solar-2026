@@ -2,9 +2,6 @@ module Api
   module V1
     module Sales
       class TodayController < BaseController
-        before_action :authenticate_api_user
-        before_action :require_internal_sales
-
         def index
           now = Time.current
           beginning_of_day = now.beginning_of_day
@@ -34,12 +31,6 @@ module Api
         end
 
         private
-
-        def require_internal_sales
-          return if current_user&.admin?
-
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
 
         def serialize_task(t)
           {

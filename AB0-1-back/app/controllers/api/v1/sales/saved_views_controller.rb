@@ -1,10 +1,9 @@
+# frozen_string_literal: true
+
 module Api
   module V1
     module Sales
       class SavedViewsController < BaseController
-        before_action :authenticate_api_user
-        before_action :require_internal_sales
-
         def index
           views = ::Sales::SavedView.for_user(current_user.id).order(created_at: :asc)
           render json: { saved_views: views }
@@ -36,12 +35,6 @@ module Api
         end
 
         private
-
-        def require_internal_sales
-          return if current_user&.admin?
-
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
 
         def view_params
           params.require(:saved_view).permit(:name, :resource_type, :is_shared, :is_default, filters: {}, sort: {}, columns: [])

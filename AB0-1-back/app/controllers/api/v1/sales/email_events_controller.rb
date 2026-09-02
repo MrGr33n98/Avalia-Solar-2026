@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 module Api
   module V1
     module Sales
       class EmailEventsController < BaseController
         skip_before_action :authenticate_api_user, only: [:create]
+        skip_before_action :require_internal_sales, only: [:create]
 
         def create
           provider_msg_id = params[:provider_message_id] || params.dig(:mail, :messageId)
