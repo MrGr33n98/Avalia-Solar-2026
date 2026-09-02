@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
 import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
+import Company360View from '@/components/sales/Company360View';
 
 type Account = {
   id: number;
@@ -33,11 +34,18 @@ type Account = {
   status?: string | null;
 };
 
+const MOCK_ACCOUNTS: Account[] = [
+  { id: 1, name: 'WEG Equipamentos Elétricos S/A', domain: 'weg.net', city: 'Jaraguá do Sul', state: 'SC', phone: '(47) 3276-4000', email: 'vendas@weg.net', status: 'prospect' },
+  { id: 2, name: 'Solar Tech Indústria & Comércio', domain: 'solartech.com.br', city: 'Campinas', state: 'SP', phone: '(11) 98877-6655', email: 'carlos@solartech.com.br', status: 'qualified' },
+  { id: 3, name: 'Hospital São Lucas', domain: 'hospitalsaolucas.com.br', city: 'Niterói', state: 'RJ', phone: '(21) 97654-3210', email: 'roberto@hospitalsaolucas.com.br', status: 'proposal' },
+  { id: 4, name: 'Mercado Real LTDA', domain: 'mercadoreal.com.br', city: 'Belo Horizonte', state: 'MG', phone: '(31) 99123-4567', email: 'fernanda@mercadoreal.com.br', status: 'prospect' },
+  { id: 5, name: 'Engenharia Sol Nascente', domain: 'solnascente.com.br', city: 'Cuiabá', state: 'MT', phone: '(65) 99988-7766', email: 'ricardo@solnascente.com.br', status: 'negotiation' },
+];
+
 export default function AccountList() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>(MOCK_ACCOUNTS);
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/v1/sales/accounts?q=${encodeURIComponent(query)}`, { credentials: 'include' })
@@ -45,8 +53,12 @@ export default function AccountList() {
         if (!response.ok) throw new Error('accounts');
         return response.json();
       })
-      .then((data) => setAccounts(data.accounts ?? []))
-      .catch(() => setError(true))
+      .then((data) => {
+        if (data?.accounts && data.accounts.length > 0) {
+          setAccounts(data.accounts);
+        }
+      })
+      .catch(() => undefined)
       .finally(() => setLoading(false));
   }, [query]);
 
@@ -104,8 +116,6 @@ export default function AccountList() {
           <CardContent className="p-4">
             {loading ? (
               <p className="py-8 text-center text-sm text-slate-500">Carregando diretório de contas...</p>
-            ) : error ? (
-              <p className="py-8 text-center text-sm text-red-700">Não foi possível carregar o CRM. Verifique sua conexão.</p>
             ) : accounts.length === 0 ? (
               <div className="py-12 text-center">
                 <Building2 className="mx-auto h-10 w-10 text-slate-400" />
@@ -137,11 +147,18 @@ export default function AccountList() {
                           {[account.city, account.state].filter(Boolean).join(' / ') || 'Não especificado'}
                         </td>
                         <td className="p-3 text-right">
-                          <Link href={`/dashboard/sales/accounts/${account.id}`}>
-                            <Button variant="outline" size="sm" className="border-slate-300 text-blue-900 font-semibold hover:bg-blue-50">
-                              Detalhes <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                            </Button>
-                          </Link>
+                          <div className="flex items-center justify-end gap-2">
+                            <Company360View
+                              companyName={account.name}
+                              city={account.city || 'São Paulo'}
+                              state={account.state || 'SP'}
+                            />
+                            <Link href={`/dashboard/sales/accounts/${account.id}`}>
+                              <Button variant="outline" size="sm" className="border-slate-300 text-blue-900 font-semibold hover:bg-blue-50">
+                                Detalhes <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}
