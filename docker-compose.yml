@@ -87,6 +87,8 @@ services:
       G4_ANALYTICS_STRICT_MODE: ${G4_ANALYTICS_STRICT_MODE:-true}
     expose:
       - "3001"
+    ports:
+      - "127.0.0.1:3001:3001"
     networks:
       - ab0-network
     volumes:
@@ -166,6 +168,8 @@ services:
       NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST}
     expose:
       - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     networks:
       - ab0-network
     healthcheck:
