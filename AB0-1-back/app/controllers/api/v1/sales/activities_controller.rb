@@ -16,10 +16,7 @@ module Api
           render json: { activity: activity }, status: :created
         end
         private
-        def require_internal_sales
-          return if current_user&.admin?
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
+
         def activity_params
           params.require(:activity).permit(:sales_opportunity_id, :sales_contact_id, :activity_type, :direction, :subject, :body)
         end

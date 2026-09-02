@@ -25,10 +25,7 @@ module Api
           @opportunity = ::Sales::Opportunity.find(params[:opportunity_id])
         end
 
-        def require_internal_sales
-          return if current_user&.admin?
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
+
 
         def publish_event(event_type)
           DomainEvent.create!(event_type:, aggregate_type: @opportunity.class.name, aggregate_id: @opportunity.id, occurred_at: Time.current, payload: { opportunity_id: @opportunity.id, actor_id: current_user.id })

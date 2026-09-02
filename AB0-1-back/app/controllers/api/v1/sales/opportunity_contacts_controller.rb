@@ -36,11 +36,7 @@ module Api
 
         private
 
-        def require_internal_sales
-          return if current_user&.admin?
 
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
 
         def opportunity_contact_params
           params.require(:opportunity_contact).permit(

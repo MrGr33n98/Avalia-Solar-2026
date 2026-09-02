@@ -85,11 +85,7 @@ module Api
           @opportunity = ::Sales::Opportunity.includes(:account, :stage, :primary_contact, :pipeline).find(params[:id])
         end
 
-        def require_internal_sales
-          return if current_user&.admin?
 
-          render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
-        end
 
         def resolve_pipeline
           if params.dig(:opportunity, :sales_pipeline_id).present?
