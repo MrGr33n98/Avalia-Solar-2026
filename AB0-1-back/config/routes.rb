@@ -53,6 +53,8 @@ Rails.application.routes.draw do
         get 'opportunities', to: 'sales#index'
         get 'summary', to: 'sales#summary'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
+        resources :emails, only: %i[index create show], controller: 'sales/emails'
+        post 'email_events/provider', to: 'sales/email_events#create'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
