@@ -228,7 +228,7 @@ export default function SalesAnalyticsReport() {
           <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="analytics-unauthorized">
             <XCircle className="h-10 w-10 text-amber-500" />
             <p className="font-semibold text-slate-900">Sessão expirada ou sem permissão</p>
-            <a href="/auth/sign_in">
+            <a href="/login">
               <Button className="bg-blue-900 font-bold hover:bg-blue-950">Fazer Login</Button>
             </a>
           </div>

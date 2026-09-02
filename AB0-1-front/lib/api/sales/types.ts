@@ -3,7 +3,24 @@ export interface ApiErrorResponse {
     code: string;
     message: string;
     fields?: Record<string, string[]>;
+    request_id?: string;
   };
+}
+
+export interface ApiStage {
+  id: number;
+  name: string;
+  key: string;
+  position: number;
+  probability?: number | null;
+}
+
+export interface ApiPipeline {
+  id: number;
+  name: string;
+  key: string;
+  active: boolean;
+  stages: ApiStage[];
 }
 
 export interface ApiAccount {
@@ -25,9 +42,10 @@ export interface ApiContact {
   id: number;
   first_name: string;
   last_name?: string | null;
+  name?: string;
   email?: string | null;
   phone?: string | null;
-  role?: string | null;
+  job_title?: string | null;
   sales_account_id?: number | null;
   account_name?: string | null;
   created_at?: string;
@@ -43,6 +61,7 @@ export interface ApiOpportunity {
   stage_key?: string | null;
   sales_account_id?: number | null;
   sales_pipeline_id?: number | null;
+  primary_contact_id?: number | null;
   account?: { id: number; name: string } | null;
   stage?: { id: number; key: string; name: string } | null;
   contact_name?: string | null;

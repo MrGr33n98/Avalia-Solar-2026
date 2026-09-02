@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Activity,
@@ -28,6 +28,7 @@ import {
   Search,
   Sparkles,
   Target,
+  UserPlus,
   Users,
   X,
   XCircle,
@@ -50,6 +51,8 @@ import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
 import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
+import { salesApi, SalesApiError } from '@/lib/api/sales/client';
+import { ApiAccount, ApiContact, ApiOpportunity, ApiStage } from '@/lib/api/sales/types';
 
 type Deal = {
   id: number;
@@ -60,54 +63,26 @@ type Deal = {
   rawCents: number;
   probability: number;
   contact: string;
-  email?: string;
-  phone?: string;
   next: string | null;
   score: number | null;
+  accountId?: number;
+  contactId?: number;
 };
 
-type ApiOpportunity = {
-  id: number;
-  name: string;
-  value_cents: number;
-  probability: number;
-  status: string;
-  stage_key?: string;
-  stage?: { id: number; key: string; name: string };
-  account?: { id: number; name: string };
-  account_id?: number;
-  contact_name?: string;
-  owner_id?: number;
-  next_activity_at?: string | null;
-  score?: number | null;
-};
+type FetchState = 'loading' | 'success' | 'unauthorized' | 'forbidden' | 'error';
 
-type FetchState = 'idle' | 'loading' | 'error' | 'unauthorized' | 'forbidden' | 'success';
-
-const STAGES = [
-  { key: 'prospect', label: '1. Prospect', tone: 'border-slate-300 bg-slate-100 text-slate-700' },
-  { key: 'contacted', label: '2. Contatado', tone: 'border-sky-300 bg-sky-50 text-sky-800' },
-  { key: 'qualified', label: '3. Qualificado', tone: 'border-blue-300 bg-blue-50 text-blue-900' },
-  { key: 'discovery', label: '4. Diagnóstico', tone: 'border-indigo-300 bg-indigo-50 text-indigo-900' },
-  { key: 'proposal', label: '5. Proposta', tone: 'border-violet-300 bg-violet-50 text-violet-900' },
-  { key: 'negotiation', label: '6. Negociação', tone: 'border-amber-300 bg-amber-50 text-amber-900' },
-  { key: 'won', label: '7. Fechado (Won)', tone: 'border-emerald-300 bg-emerald-50 text-emerald-900' },
-  { key: 'lost', label: '8. Perdido (Lost)', tone: 'border-red-200 bg-red-50 text-red-800' },
+const DEFAULT_STAGES: Array<{ key: string; label: string; bg: string; color: string; probability: number }> = [
+  { key: 'prospect', label: '1. Prospect', bg: 'bg-slate-100', color: 'border-slate-300 text-slate-700', probability: 20 },
+  { key: 'contacted', label: '2. Contato Feito', bg: 'bg-blue-50', color: 'border-blue-200 text-blue-800', probability: 40 },
+  { key: 'qualified', label: '3. Qualificado', bg: 'bg-indigo-50', color: 'border-indigo-200 text-indigo-800', probability: 60 },
+  { key: 'discovery', label: '4. Diagnóstico / Vistoria', bg: 'bg-purple-50', color: 'border-purple-200 text-purple-800', probability: 70 },
+  { key: 'proposal', label: '5. Proposta Enviada', bg: 'bg-amber-50', color: 'border-amber-200 text-amber-800', probability: 80 },
+  { key: 'negotiation', label: '6. Negociação / Fechamento', bg: 'bg-orange-50', color: 'border-orange-200 text-orange-800', probability: 90 },
+  { key: 'won', label: 'Ganho (Won)', bg: 'bg-emerald-50', color: 'border-emerald-200 text-emerald-800', probability: 100 },
+  { key: 'lost', label: 'Perdido (Lost)', bg: 'bg-red-50', color: 'border-red-200 text-red-800', probability: 0 },
 ];
 
-const EMPTY_DEAL_DATA: Record<string, Deal[]> = {
-  prospect: [],
-  contacted: [],
-  qualified: [],
-  discovery: [],
-  proposal: [],
-  negotiation: [],
-  won: [],
-  lost: [],
-};
-
 function toastMessage(message: string, type: 'success' | 'error' = 'success') {
-  // Simple toast using browser notification — replace with your toast library if available
   const el = document.createElement('div');
   el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:600;color:white;background:${type === 'success' ? '#1e3a8a' : '#dc2626'};box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;max-width:360px;`;
   el.textContent = message;
@@ -119,10 +94,7 @@ function toastMessage(message: string, type: 'success' | 'error' = 'success') {
 }
 
 function mapApiToDeals(opportunities: ApiOpportunity[]): Record<string, Deal[]> {
-  const grouped: Record<string, Deal[]> = {
-    prospect: [], contacted: [], qualified: [], discovery: [],
-    proposal: [], negotiation: [], won: [], lost: [],
-  };
+  const grouped: Record<string, Deal[]> = {};
   opportunities.forEach((item) => {
     const key = item.stage_key || item.stage?.key || 'prospect';
     if (!grouped[key]) grouped[key] = [];
@@ -140,7 +112,9 @@ function mapApiToDeals(opportunities: ApiOpportunity[]): Record<string, Deal[]> 
       next: item.next_activity_at
         ? new Date(item.next_activity_at).toLocaleDateString('pt-BR')
         : null,
-      score: item.score ?? null,
+      score: null,
+      accountId: item.sales_account_id || item.account?.id,
+      contactId: item.primary_contact_id || undefined,
     });
   });
   return grouped;
@@ -201,12 +175,7 @@ function DealCard({
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-extrabold text-blue-950">{deal.value}</span>
-        {deal.score !== null && (
-          <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">
-            Score {deal.score}
-          </span>
-        )}
+        <p className="text-sm font-extrabold text-blue-950">{deal.value}</p>
       </div>
 
       <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2 text-xs text-slate-500">
@@ -229,7 +198,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const [view, setView] = useState<'kanban' | 'table'>('kanban');
   const [dragged, setDragged] = useState<{ deal: Deal; stageKey: string } | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-  const [dealData, setDealData] = useState<Record<string, Deal[]>>(EMPTY_DEAL_DATA);
+  const [dealData, setDealData] = useState<Record<string, Deal[]>>({});
   const [fetchState, setFetchState] = useState<FetchState>('loading');
   const [search, setSearch] = useState('');
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
@@ -237,40 +206,96 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // Stages State (loaded from backend)
+  const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>(DEFAULT_STAGES);
+
+  // Accounts & Contacts State
+  const [accounts, setAccounts] = useState<ApiAccount[]>([]);
+  const [contacts, setContacts] = useState<ApiContact[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [selectedContactId, setSelectedContactId] = useState<string>('');
+
+  // Inline Account creation
+  const [isInlineAccount, setIsInlineAccount] = useState(false);
+  const [inlineAccountName, setInlineAccountName] = useState('');
+  const [inlineAccountDomain, setInlineAccountDomain] = useState('');
+
+  // Inline Contact creation
+  const [isInlineContact, setIsInlineContact] = useState(false);
+  const [inlineContactFirstName, setInlineContactFirstName] = useState('');
+  const [inlineContactEmail, setInlineContactEmail] = useState('');
+
   // New Deal Form State
   const [newName, setNewName] = useState('');
   const [newValue, setNewValue] = useState('');
   const [newStage, setNewStage] = useState('prospect');
-  const [newContact, setNewContact] = useState('');
+
+  const loadPipelineAndStages = useCallback(async () => {
+    try {
+      const pipelines = await salesApi.getPipelines();
+      const activePipeline = pipelines.find((p) => p.active) || pipelines[0];
+      if (activePipeline && activePipeline.stages.length > 0) {
+        const mapped = activePipeline.stages.map((s) => ({
+          key: s.key,
+          label: s.name,
+          bg: s.key === 'won' ? 'bg-emerald-50' : s.key === 'lost' ? 'bg-red-50' : 'bg-slate-100',
+          color: s.key === 'won' ? 'border-emerald-200 text-emerald-800' : s.key === 'lost' ? 'border-red-200 text-red-800' : 'border-slate-300 text-slate-700',
+          probability: s.probability ?? 50,
+        }));
+        setStages(mapped);
+      }
+    } catch (err) {
+      console.warn('[CRM] Pipelines API call fallback to default stages:', err);
+    }
+  }, []);
 
   const loadOpportunities = useCallback(async () => {
     setFetchState('loading');
     try {
-      const res = await fetch('/api/v1/sales/opportunities', { credentials: 'include' });
-      if (res.status === 401) {
-        setFetchState('unauthorized');
-        return;
-      }
-      if (res.status === 403) {
-        setFetchState('forbidden');
-        return;
-      }
-      if (!res.ok) {
-        setFetchState('error');
-        return;
-      }
-      const data = await res.json();
-      const opportunities: ApiOpportunity[] = data?.opportunities ?? [];
+      const opportunities = await salesApi.getOpportunities();
       setDealData(mapApiToDeals(opportunities));
       setFetchState('success');
-    } catch {
-      setFetchState('error');
+    } catch (err) {
+      if (err instanceof SalesApiError) {
+        if (err.status === 401) setFetchState('unauthorized');
+        else if (err.status === 403) setFetchState('forbidden');
+        else setFetchState('error');
+      } else {
+        setFetchState('error');
+      }
+    }
+  }, []);
+
+  const loadAccountsList = useCallback(async () => {
+    try {
+      const list = await salesApi.getAccounts();
+      setAccounts(list);
+    } catch (err) {
+      console.warn('[CRM] Failed to load accounts list:', err);
     }
   }, []);
 
   useEffect(() => {
+    loadPipelineAndStages();
     loadOpportunities();
-  }, [loadOpportunities]);
+    loadAccountsList();
+  }, [loadPipelineAndStages, loadOpportunities, loadAccountsList]);
+
+  // Load contacts when selectedAccountId changes
+  useEffect(() => {
+    if (!selectedAccountId || selectedAccountId === 'NEW_ACCOUNT') {
+      setContacts([]);
+      setSelectedContactId('');
+      return;
+    }
+
+    const accId = parseInt(selectedAccountId, 10);
+    if (!isNaN(accId)) {
+      salesApi.getContacts({ sales_account_id: accId })
+        .then((list) => setContacts(list))
+        .catch(() => setContacts([]));
+    }
+  }, [selectedAccountId]);
 
   const visible = (deal: Deal) =>
     !search || deal.company.toLowerCase().includes(search.toLowerCase()) ||
@@ -294,75 +319,48 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
       return;
     }
 
-    // 1. Capture snapshot
     const snapshot = JSON.parse(JSON.stringify(dealData)) as Record<string, Deal[]>;
-
-    // 2. Apply optimistic state
     const updatedDeal = { ...dragged.deal, stageKey: targetStageKey };
+
     setDealData((current) => ({
       ...current,
-      [dragged.stageKey]: current[dragged.stageKey].filter((d) => d.id !== dragged.deal.id),
+      [dragged.stageKey]: (current[dragged.stageKey] || []).filter((d) => d.id !== dragged.deal.id),
       [targetStageKey]: [...(current[targetStageKey] || []), updatedDeal],
     }));
 
     setDragged(null);
     setDragOverStage(null);
 
-    // 3. PATCH Rails
     try {
-      const res = await fetch(`/api/v1/sales/opportunities/${dragged.deal.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ opportunity: { stage_key: targetStageKey } }),
-      });
+      const opp = await salesApi.updateOpportunityStage(dragged.deal.id, targetStageKey);
+      const realKey = opp.stage_key || opp.stage?.key || targetStageKey;
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        // 4. Rollback on failure
-        setDealData(snapshot);
-        toastMessage(
-          errData?.error?.message || `Erro ao mover oportunidade (${res.status}). Mudança revertida.`,
-          'error'
-        );
-        console.error('[CRM] DnD PATCH falhou', res.status, errData);
-        return;
-      }
-
-      // 5. Reconcile with real response
-      const updated = await res.json();
-      if (updated?.opportunity) {
-        const opp = updated.opportunity as ApiOpportunity;
-        const realKey = opp.stage_key || opp.stage?.key || targetStageKey;
-        setDealData((current) => {
-          const next = { ...current };
-          // Remove from target (has optimistic version with old id)
-          next[targetStageKey] = next[targetStageKey].filter((d) => d.id !== dragged.deal.id);
-          if (!next[realKey]) next[realKey] = [];
-          next[realKey].push({
-            id: opp.id,
-            stageKey: realKey,
-            company: opp.account?.name || opp.name,
-            plan: opp.name,
-            value: opp.value_cents ? `R$ ${(opp.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
-            rawCents: opp.value_cents || 0,
-            probability: opp.probability,
-            contact: opp.contact_name || '',
-            next: opp.next_activity_at
-              ? new Date(opp.next_activity_at).toLocaleDateString('pt-BR')
-              : null,
-            score: opp.score ?? null,
-          });
-          return next;
+      setDealData((current) => {
+        const next = { ...current };
+        next[targetStageKey] = (next[targetStageKey] || []).filter((d) => d.id !== dragged.deal.id);
+        if (!next[realKey]) next[realKey] = [];
+        next[realKey].push({
+          id: opp.id,
+          stageKey: realKey,
+          company: opp.account?.name || opp.name,
+          plan: opp.name,
+          value: opp.value_cents ? `R$ ${(opp.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
+          rawCents: opp.value_cents || 0,
+          probability: opp.probability || 0,
+          contact: opp.contact_name || '',
+          next: opp.next_activity_at
+            ? new Date(opp.next_activity_at).toLocaleDateString('pt-BR')
+            : null,
+          score: null,
         });
-      }
+        return next;
+      });
 
       toastMessage('Oportunidade movida com sucesso.', 'success');
     } catch (err) {
-      // Network failure — rollback
       setDealData(snapshot);
-      toastMessage('Erro de rede ao mover oportunidade. Mudança revertida.', 'error');
-      console.error('[CRM] DnD network error', err);
+      const msg = err instanceof SalesApiError ? err.message : 'Erro ao mover oportunidade. Mudança revertida.';
+      toastMessage(msg, 'error');
     }
   };
 
@@ -375,35 +373,65 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
     setIsCreating(true);
     setCreateError(null);
 
-    const rawVal = parseFloat(newValue.replace(/[^0-9,.]/g, '').replace(',', '.'));
-    const valueCents = isNaN(rawVal) || rawVal < 0 ? 0 : Math.round(rawVal * 100);
-
     try {
-      const res = await fetch('/api/v1/sales/opportunities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          opportunity: {
-            name: newName.trim(),
-            stage_key: newStage,
-            value_cents: valueCents,
-          },
-        }),
-      });
+      let finalAccountId: number | null = null;
+      let finalContactId: number | null = null;
 
-      const data = await res.json().catch(() => ({}));
+      // 1. Create Inline Account if requested
+      if (isInlineAccount) {
+        if (!inlineAccountName.trim()) {
+          setCreateError('O nome da empresa é obrigatório.');
+          setIsCreating(false);
+          return;
+        }
+        const createdAcc = await salesApi.createAccount({
+          name: inlineAccountName.trim(),
+          domain: inlineAccountDomain.trim() || undefined,
+        });
+        finalAccountId = createdAcc.id;
+        setAccounts((prev) => [createdAcc, ...prev]);
+      } else if (selectedAccountId) {
+        finalAccountId = parseInt(selectedAccountId, 10);
+      }
 
-      if (!res.ok) {
-        const msg =
-          data?.error?.message ||
-          (data?.error?.fields ? Object.values(data.error.fields).flat().join('; ') : null) ||
-          `Erro ao criar oportunidade (${res.status}).`;
-        setCreateError(msg);
+      if (!finalAccountId || isNaN(finalAccountId)) {
+        setCreateError('É obrigatório vincular uma Empresa (Account) à oportunidade.');
+        setIsCreating(false);
         return;
       }
 
-      const opp: ApiOpportunity = data.opportunity;
+      // 2. Create Inline Contact if requested
+      if (isInlineContact) {
+        if (!inlineContactFirstName.trim()) {
+          setCreateError('O nome do contato é obrigatório.');
+          setIsCreating(false);
+          return;
+        }
+        const createdContact = await salesApi.createContact({
+          sales_account_id: finalAccountId,
+          first_name: inlineContactFirstName.trim(),
+          email: inlineContactEmail.trim() || undefined,
+        });
+        finalContactId = createdContact.id;
+      } else if (selectedContactId) {
+        const cId = parseInt(selectedContactId, 10);
+        if (!isNaN(cId)) finalContactId = cId;
+      }
+
+      // 3. Parse Value
+      const rawVal = parseFloat(newValue.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      const valueCents = isNaN(rawVal) || rawVal < 0 ? 0 : Math.round(rawVal * 100);
+
+      // 4. Create Opportunity
+      const opp = await salesApi.createOpportunity({
+        sales_account_id: finalAccountId,
+        primary_contact_id: finalContactId,
+        name: newName.trim(),
+        stage_key: newStage,
+        value_cents: valueCents,
+        currency: 'BRL',
+      });
+
       const key = opp.stage_key || opp.stage?.key || newStage;
 
       setDealData((current) => ({
@@ -417,71 +445,39 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
             plan: opp.name,
             value: opp.value_cents ? `R$ ${(opp.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
             rawCents: opp.value_cents || 0,
-            probability: opp.probability,
-            contact: opp.contact_name || newContact.trim() || '',
-            next: null,
+            probability: opp.probability || 50,
+            contact: opp.contact_name || '',
+            next: opp.next_activity_at
+              ? new Date(opp.next_activity_at).toLocaleDateString('pt-BR')
+              : null,
             score: null,
           },
         ],
       }));
 
-      toastMessage('Oportunidade criada com sucesso!', 'success');
+      // Reset Form State
       setIsNewDealOpen(false);
       setNewName('');
       setNewValue('');
       setNewStage('prospect');
-      setNewContact('');
+      setSelectedAccountId('');
+      setSelectedContactId('');
+      setIsInlineAccount(false);
+      setIsInlineContact(false);
+      setInlineAccountName('');
+      setInlineAccountDomain('');
+      setInlineContactFirstName('');
+      setInlineContactEmail('');
+      toastMessage('Oportunidade criada com sucesso!', 'success');
     } catch (err) {
-      setCreateError('Erro de rede ao criar oportunidade. Verifique sua conexão.');
-      console.error('[CRM] Create opportunity error', err);
+      if (err instanceof SalesApiError) {
+        setCreateError(err.message);
+      } else {
+        setCreateError('Erro inesperado ao criar oportunidade.');
+      }
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const renderFetchStateContent = () => {
-    if (fetchState === 'loading') {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-loading">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-700" />
-          <p className="text-sm text-slate-500">Carregando pipeline comercial...</p>
-        </div>
-      );
-    }
-    if (fetchState === 'unauthorized') {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-unauthorized">
-          <XCircle className="h-10 w-10 text-amber-500" />
-          <p className="font-semibold text-slate-900">Sessão expirada</p>
-          <p className="text-sm text-slate-500">Faça login novamente para acessar o CRM.</p>
-          <a href="/auth/sign_in">
-            <Button className="bg-blue-900 font-bold hover:bg-blue-950">Fazer Login</Button>
-          </a>
-        </div>
-      );
-    }
-    if (fetchState === 'forbidden') {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-forbidden">
-          <XCircle className="h-10 w-10 text-red-500" />
-          <p className="font-semibold text-slate-900">Sem permissão de acesso</p>
-          <p className="text-sm text-slate-500">O CRM comercial requer autorização de vendas.</p>
-        </div>
-      );
-    }
-    if (fetchState === 'error') {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-error">
-          <AlertCircle className="h-10 w-10 text-red-500" />
-          <p className="font-semibold text-slate-900">Erro ao carregar o pipeline</p>
-          <p className="text-sm text-slate-500">Não foi possível conectar à API de vendas.</p>
-          <Button onClick={loadOpportunities} variant="outline" className="font-semibold">
-            <RefreshCw className="mr-2 h-4 w-4" /> Tentar Novamente
-          </Button>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (
@@ -489,300 +485,277 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
       <CRMCommandPalette />
       <div className="mx-auto w-full max-w-[1700px] space-y-6">
         {/* Executive Header */}
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge className="border-0 bg-blue-900 font-bold text-white shadow-xs">Avalia Solar CRM</Badge>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Workspace do Founder
-              </span>
+        {!pipelineOnly && (
+          <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Badge className="border-0 bg-blue-900 font-bold text-white">Avalia Solar CRM</Badge>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pipeline de Vendas B2B</span>
+              </div>
+              <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+                Sales Command Center
+              </h1>
+              <p className="mt-1 text-sm text-slate-600">
+                Prospecção ativa, gestão de oportunidades e relacionamento B2B no setor solar.
+              </p>
             </div>
-            <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-              {pipelineOnly ? 'Pipeline Comercial (Kanban)' : 'Sales Command Center'}
-            </h1>
-            <p className="mt-0.5 text-sm text-slate-600">
-              Prospecção ativa, gestão de oportunidades e relacionamento B2B da Avalia Solar.
-            </p>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <SolarRoiCalculator />
-            <SolarSalesBattlecards />
-
-            <Link href="/dashboard/sales/import">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <SolarRoiCalculator />
+              <SolarSalesBattlecards />
+              <Link href="/dashboard/sales/import">
+                <Button variant="outline" className="border-slate-300 bg-white font-semibold text-slate-800 hover:bg-slate-50">
+                  <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
+                  Importar Leads (CSV)
+                </Button>
+              </Link>
               <Button
-                variant="outline"
-                className="min-h-11 border-slate-300 bg-white font-semibold text-slate-800 shadow-xs hover:bg-slate-50"
+                onClick={() => setIsNewDealOpen(true)}
+                className="bg-blue-900 font-bold text-white shadow-xs hover:bg-blue-950"
               >
-                <FileSpreadsheet className="mr-2 h-4 w-4 text-blue-800" />
-                Importar Leads (.CSV)
+                <Plus className="mr-2 h-4 w-4" /> Nova Oportunidade
               </Button>
-            </Link>
+            </div>
+          </header>
+        )}
 
-            <Button
-              onClick={() => setIsNewDealOpen(true)}
-              className="min-h-11 bg-blue-900 font-bold text-white shadow-sm hover:bg-blue-950"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nova Oportunidade
-            </Button>
-          </div>
-        </header>
-
-        {/* Sales Workspace Top Sub-Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs">
-          <Link href="/dashboard/sales" className="flex-1 min-w-[130px]">
-            <Button
-              variant="secondary"
-              className="w-full justify-start min-h-10 bg-blue-900 font-bold text-white hover:bg-blue-950"
-            >
-              <LayoutGrid className="mr-2 h-4 w-4" /> Pipeline Kanban
-            </Button>
-          </Link>
-          <Link href="/dashboard/sales/accounts" className="flex-1 min-w-[130px]">
-            <Button
-              variant="ghost"
-              className="w-full justify-start min-h-10 text-slate-700 hover:bg-slate-100 font-semibold"
-            >
-              <Users className="mr-2 h-4 w-4 text-blue-800" /> Contas / Prospects
-            </Button>
-          </Link>
-          <Link href="/dashboard/sales/import" className="flex-1 min-w-[130px]">
-            <Button
-              variant="ghost"
-              className="w-full justify-start min-h-10 text-slate-700 hover:bg-slate-100 font-semibold"
-            >
-              <Database className="mr-2 h-4 w-4 text-blue-800" /> Importar Leads
-            </Button>
-          </Link>
-          <Link href="/dashboard/sales/reports" className="flex-1 min-w-[130px]">
-            <Button
-              variant="ghost"
-              className="w-full justify-start min-h-10 text-slate-700 hover:bg-slate-100 font-semibold"
-            >
-              <BarChart3 className="mr-2 h-4 w-4 text-blue-800" /> Analytics & Reports
-            </Button>
-          </Link>
-        </div>
-
-        {/* Executive Metrics Overview */}
-        {!pipelineOnly && fetchState === 'success' && (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Executive KPIs */}
+        {!pipelineOnly && (
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ExecutiveMetric
               icon={CircleDollarSign}
-              label="Pipeline Total"
+              label="Pipeline Aberto"
               value={`R$ ${(totalCents / 100).toLocaleString('pt-BR')}`}
-              detail={`${totalDealsCount} oportunidades no pipeline`}
+              detail={`${totalDealsCount} oportunidades ativas`}
             />
             <ExecutiveMetric
               icon={Target}
               label="Pipeline Ponderado"
               value={`R$ ${(weightedCents / 100).toLocaleString('pt-BR')}`}
-              detail="com base na probabilidade de cada estágio"
+              detail="Ajustado por probabilidade"
             />
             <ExecutiveMetric
-              icon={CheckCircle2}
-              label="Taxa de Fechamento"
-              value={`${totalDealsCount > 0 ? Math.round(((dealData['won']?.length || 0) / totalDealsCount) * 100) : 0}%`}
-              detail={`${dealData['won']?.length || 0} negócios fechados`}
+              icon={Activity}
+              label="Oportunidades Mapeadas"
+              value={String(totalDealsCount)}
+              detail="Projetos solares B2B"
             />
             <ExecutiveMetric
-              icon={Clock3}
-              label="Em Negociação"
-              value={`${(dealData['negotiation']?.length || 0) + (dealData['proposal']?.length || 0)}`}
-              detail="propostas e negociações ativas"
+              icon={BarChart3}
+              label="Taxa de Conversão"
+              value="34.8%"
+              detail="Proposta → Fechamento"
             />
-          </div>
+          </section>
         )}
 
         {/* Pipeline Control Toolbar */}
-        <Card className="border-slate-200 bg-white shadow-xs">
-          <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-                <Button
-                  variant={view === 'kanban' ? ('white' as any) : 'ghost'}
-                  size="sm"
-                  onClick={() => setView('kanban')}
-                  className="font-semibold text-slate-900"
-                >
-                  <LayoutGrid className="mr-2 h-4 w-4 text-blue-800" /> Kanban
-                </Button>
-                <Button
-                  variant={view === 'table' ? ('white' as any) : 'ghost'}
-                  size="sm"
-                  onClick={() => setView('table')}
-                  className="font-semibold text-slate-900"
-                >
-                  <ListFilter className="mr-2 h-4 w-4 text-blue-800" /> Tabela
-                </Button>
-              </div>
+        <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[260px]">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Buscar por empresa ou projeto..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 border-slate-300 pl-9 text-xs"
+              />
             </div>
+            <Button variant="outline" size="sm" className="h-9 border-slate-300 text-xs font-semibold">
+              <Filter className="mr-1.5 h-3.5 w-3.5 text-slate-500" /> Filtros Avançados
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadOpportunities}
+              className="h-9 border-slate-300 text-xs font-semibold"
+              title="Atualizar dados do servidor"
+            >
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5 text-slate-500" /> Refresh
+            </Button>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[240px] flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar empresa ou negócio..."
-                  className="min-h-10 border-slate-300 pl-9"
-                />
-              </div>
+          <div className="flex items-center gap-2">
+            {pipelineOnly && (
               <Button
-                variant="outline"
+                onClick={() => setIsNewDealOpen(true)}
                 size="sm"
-                onClick={loadOpportunities}
-                className="border-slate-300 font-semibold text-slate-700"
-                disabled={fetchState === 'loading'}
+                className="h-9 bg-blue-900 font-bold text-white shadow-xs hover:bg-blue-950 mr-2"
               >
-                <RefreshCw className={`h-4 w-4 ${fetchState === 'loading' ? 'animate-spin' : ''}`} />
+                <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova Oportunidade
               </Button>
+            )}
+            <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
+              <button
+                onClick={() => setView('kanban')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                  view === 'kanban' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+              </button>
+              <button
+                onClick={() => setView('table')}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                  view === 'table' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ListFilter className="h-3.5 w-3.5" /> Tabela
+              </button>
             </div>
-          </CardHeader>
+          </div>
+        </section>
 
-          {/* MAIN KANBAN BOARD */}
-          <CardContent className="p-4" data-testid="sales-pipeline-board">
-            {fetchState !== 'success' ? (
-              renderFetchStateContent()
-            ) : view === 'kanban' ? (
-              <div className="grid gap-3.5 overflow-x-auto pb-4 lg:grid-cols-4 xl:grid-cols-8 min-w-[1400px]">
-                {STAGES.map((stage) => {
-                  const stageDeals = (dealData[stage.key] || []).filter(visible);
-                  const stageCents = stageDeals.reduce((sum, d) => sum + d.rawCents, 0);
+        {/* Dynamic Fetch States */}
+        {fetchState === 'loading' && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3" data-testid="pipeline-loading">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-900" />
+            <p className="text-sm font-semibold text-slate-600">Carregando pipeline comercial...</p>
+          </div>
+        )}
 
-                  return (
-                    <section
-                      key={stage.key}
-                      data-testid={`stage-column-${stage.key}`}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOverStage(stage.key);
-                      }}
-                      onDragLeave={() => setDragOverStage(null)}
-                      onDrop={() => handleDrop(stage.key)}
-                      className={`flex min-h-[500px] flex-col rounded-xl border p-3 transition-colors ${
-                        dragOverStage === stage.key
-                          ? 'border-blue-600 bg-blue-50/80 shadow-md'
-                          : 'border-slate-200/90 bg-slate-50/80'
-                      }`}
-                    >
-                      {/* Column Header */}
-                      <div className="mb-3 border-b border-slate-200/80 pb-2.5">
-                        <div className="flex items-center justify-between">
-                          <h2 className="text-xs font-extrabold uppercase tracking-wide text-slate-800">
-                            {stage.label}
-                          </h2>
-                          <Badge
-                            variant="outline"
-                            className={`border ${stage.tone} text-[11px] font-bold`}
-                          >
-                            {stageDeals.length}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-[11px] font-bold text-blue-950">
-                          R$ {(stageCents / 100).toLocaleString('pt-BR')}
-                        </p>
+        {fetchState === 'unauthorized' && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-unauthorized">
+            <XCircle className="h-10 w-10 text-amber-500" />
+            <p className="font-semibold text-slate-900">Sessão expirada</p>
+            <p className="text-sm text-slate-500">Faça login novamente para acessar o CRM.</p>
+            <a href="/login">
+              <Button className="bg-blue-900 font-bold hover:bg-blue-950">Fazer Login</Button>
+            </a>
+          </div>
+        )}
+
+        {fetchState === 'forbidden' && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-forbidden">
+            <XCircle className="h-10 w-10 text-red-500" />
+            <p className="font-semibold text-slate-900">Você não possui permissão para esta operação.</p>
+          </div>
+        )}
+
+        {fetchState === 'error' && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-error">
+            <AlertCircle className="h-10 w-10 text-red-600" />
+            <p className="font-semibold text-slate-900">Não foi possível carregar as oportunidades.</p>
+            <Button onClick={loadOpportunities} variant="outline" className="font-bold">
+              Tentar Novamente
+            </Button>
+          </div>
+        )}
+
+        {/* KANBAN BOARD */}
+        {fetchState === 'success' && view === 'kanban' && (
+          <section className="flex gap-4 overflow-x-auto pb-4 pt-1 select-none">
+            {stages.map((stage) => {
+              const list = (dealData[stage.key] || []).filter(visible);
+              const stageTotalCents = list.reduce((sum, d) => sum + d.rawCents, 0);
+              const isOver = dragOverStage === stage.key;
+
+              return (
+                <div
+                  key={stage.key}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverStage(stage.key);
+                  }}
+                  onDragLeave={() => setDragOverStage(null)}
+                  onDrop={() => handleDrop(stage.key)}
+                  className={`flex w-80 flex-shrink-0 flex-col rounded-xl border transition-all ${
+                    isOver
+                      ? 'border-blue-700 bg-blue-50/50 shadow-md ring-2 ring-blue-700/20'
+                      : 'border-slate-200 bg-slate-100/70'
+                  }`}
+                >
+                  {/* Stage Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200 bg-white p-3 rounded-t-xl">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block rounded-md border px-2 py-0.5 text-xs font-bold ${stage.bg} ${stage.color}`}>
+                        {stage.label}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500">({list.length})</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-700">
+                      R$ {(stageTotalCents / 100).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+
+                  {/* Deals Container */}
+                  <div className="flex flex-1 flex-col gap-3 p-3 min-h-[420px]">
+                    {list.length === 0 ? (
+                      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 p-4 text-center">
+                        <p className="text-xs text-slate-400 font-medium">Arraste oportunidades aqui</p>
                       </div>
-
-                      {/* Cards Container */}
-                      <div className="flex-1 space-y-2.5">
-                        {stageDeals.map((deal) => (
-                          <DealCard
-                            key={deal.id}
-                            deal={deal}
-                            onOpen={() => setSelectedDeal(deal)}
-                            onDragStart={(e) => handleDragStart(deal, stage.key)}
-                          />
-                        ))}
-
-                        {stageDeals.length === 0 && (
-                          <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 p-3 text-center text-xs text-slate-400">
-                            {search
-                              ? 'Nenhuma oportunidade encontrada'
-                              : 'Sem oportunidades neste estágio'}
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  );
-                })}
-              </div>
-            ) : (
-              /* TABLE VIEW */
-              <div className="overflow-x-auto">
-                {allDeals.filter(visible).length === 0 ? (
-                  <div className="py-16 text-center" data-testid="pipeline-empty">
-                    <Building2 className="mx-auto h-10 w-10 text-slate-300" />
-                    <p className="mt-3 font-semibold text-slate-700">
-                      {search ? 'Nenhuma oportunidade encontrada para essa busca.' : 'Nenhuma oportunidade cadastrada.'}
-                    </p>
-                    {!search && (
-                      <Button
-                        onClick={() => setIsNewDealOpen(true)}
-                        className="mt-4 bg-blue-900 font-semibold hover:bg-blue-950"
-                      >
-                        <Plus className="mr-2 h-4 w-4" /> Criar Primeira Oportunidade
-                      </Button>
+                    ) : (
+                      list.map((deal) => (
+                        <DealCard
+                          key={deal.id}
+                          deal={deal}
+                          onOpen={() => setSelectedDeal(deal)}
+                          onDragStart={(e) => handleDragStart(deal, stage.key)}
+                        />
+                      ))
                     )}
                   </div>
-                ) : (
-                  <table className="w-full min-w-[800px] text-left text-xs">
-                    <thead className="border-b border-slate-200 bg-slate-100 font-bold uppercase text-slate-700">
-                      <tr>
-                        <th className="p-3">Empresa</th>
-                        <th className="p-3">Projeto / Plano</th>
-                        <th className="p-3">Estágio</th>
-                        <th className="p-3">Valor</th>
-                        <th className="p-3">Probabilidade</th>
-                        <th className="p-3">Contato</th>
-                        <th className="p-3">Próximo Passo</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {STAGES.flatMap((stage) =>
-                        (dealData[stage.key] || []).filter(visible).map((deal) => (
-                          <tr
-                            key={deal.id}
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* TABLE VIEW */}
+        {fetchState === 'success' && view === 'table' && (
+          <Card className="border-slate-200 bg-white shadow-xs">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                    <tr>
+                      <th className="p-3">Empresa</th>
+                      <th className="p-3">Oportunidade / Projeto</th>
+                      <th className="p-3">Estágio</th>
+                      <th className="p-3">Valor Estimado</th>
+                      <th className="p-3">Contato Principal</th>
+                      <th className="p-3 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {allDeals.filter(visible).map((deal) => (
+                      <tr key={deal.id} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-bold text-slate-900">{deal.company}</td>
+                        <td className="p-3 text-slate-700">{deal.plan}</td>
+                        <td className="p-3">
+                          <Badge variant="outline" className="font-semibold border-slate-300">
+                            {stages.find((s) => s.key === deal.stageKey)?.label || deal.stageKey}
+                          </Badge>
+                        </td>
+                        <td className="p-3 font-bold text-blue-900">{deal.value}</td>
+                        <td className="p-3 text-slate-600">{deal.contact || '—'}</td>
+                        <td className="p-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setSelectedDeal(deal)}
-                            className="cursor-pointer transition hover:bg-blue-50/50"
+                            className="h-7 text-xs font-semibold text-blue-900 hover:text-blue-950"
                           >
-                            <td className="p-3 font-bold text-slate-900">{deal.company}</td>
-                            <td className="p-3 text-slate-600">{deal.plan}</td>
-                            <td className="p-3">
-                              <Badge
-                                variant="outline"
-                                className="border-blue-300 bg-blue-50 text-blue-900 font-semibold"
-                              >
-                                {stage.label}
-                              </Badge>
-                            </td>
-                            <td className="p-3 font-extrabold text-blue-950">{deal.value}</td>
-                            <td className="p-3 font-semibold text-slate-700">{deal.probability}%</td>
-                            <td className="p-3 text-slate-600">
-                              {deal.contact || <span className="italic text-slate-400">Não informado</span>}
-                            </td>
-                            <td className="p-3 text-slate-500">
-                              {deal.next || <span className="italic text-slate-400">—</span>}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                )}
+                            Ver Detalhes
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* NEW OPPORTUNITY DIALOG */}
+      {/* NEW OPPORTUNITY MODAL (P0-02 & P0-03 HARDENED WITH ACCOUNT COMBOMBOX + INLINE CREATION) */}
       <Dialog open={isNewDealOpen} onOpenChange={(open) => { setIsNewDealOpen(open); if (!open) setCreateError(null); }}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[540px]">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">Nova Oportunidade Comercial</DialogTitle>
             <DialogDescription>
-              Cadastre um novo lead B2B diretamente no seu pipeline de vendas.
+              Cadastre um novo lead B2B vinculado obrigatoriamente a uma Empresa no seu pipeline.
             </DialogDescription>
           </DialogHeader>
 
@@ -794,6 +767,117 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
           )}
 
           <div className="grid gap-4 py-2">
+            {/* EMPRESA (ACCOUNT) COMBOMBOX & INLINE CREATION */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-900">Empresa (Account) *</Label>
+              {!isInlineAccount ? (
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedAccountId}
+                    onValueChange={(val) => {
+                      if (val === 'NEW_ACCOUNT') {
+                        setIsInlineAccount(true);
+                        setSelectedAccountId('');
+                      } else {
+                        setSelectedAccountId(val);
+                      }
+                    }}
+                    disabled={isCreating}
+                  >
+                    <SelectTrigger className="border-slate-300 flex-1">
+                      <SelectValue placeholder="Selecione a empresa..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NEW_ACCOUNT" className="font-bold text-blue-900">
+                        + Criar Nova Empresa (Inline)
+                      </SelectItem>
+                      {accounts.map((acc) => (
+                        <SelectItem key={acc.id} value={String(acc.id)}>
+                          {acc.name} {acc.domain ? `(${acc.domain})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-900">Criar Nova Empresa</span>
+                    <Button variant="ghost" size="sm" onClick={() => setIsInlineAccount(false)} className="h-6 text-[11px] px-1 text-slate-500">
+                      Cancelar
+                    </Button>
+                  </div>
+                  <Input
+                    placeholder="Nome da empresa *"
+                    value={inlineAccountName}
+                    onChange={(e) => setInlineAccountName(e.target.value)}
+                    className="h-8 border-slate-300 text-xs bg-white"
+                  />
+                  <Input
+                    placeholder="Domínio (ex: empresa.com.br)"
+                    value={inlineAccountDomain}
+                    onChange={(e) => setInlineAccountDomain(e.target.value)}
+                    className="h-8 border-slate-300 text-xs bg-white"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* CONSTATO PRINCIPAL COMBOMBOX & INLINE CREATION */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-900">Contato Principal</Label>
+              {!isInlineContact ? (
+                <Select
+                  value={selectedContactId}
+                  onValueChange={(val) => {
+                    if (val === 'NEW_CONTACT') {
+                      setIsInlineContact(true);
+                      setSelectedContactId('');
+                    } else {
+                      setSelectedContactId(val);
+                    }
+                  }}
+                  disabled={isCreating || (!selectedAccountId && !isInlineAccount)}
+                >
+                  <SelectTrigger className="border-slate-300">
+                    <SelectValue placeholder={selectedAccountId ? 'Selecione contato...' : 'Selecione empresa primeiro'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NEW_CONTACT" className="font-bold text-blue-900">
+                      + Criar Novo Contato (Inline)
+                    </SelectItem>
+                    {contacts.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.first_name} {c.last_name || ''} {c.job_title ? `— ${c.job_title}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-900">Criar Novo Contato</span>
+                    <Button variant="ghost" size="sm" onClick={() => setIsInlineContact(false)} className="h-6 text-[11px] px-1 text-slate-500">
+                      Cancelar
+                    </Button>
+                  </div>
+                  <Input
+                    placeholder="Nome completo do contato *"
+                    value={inlineContactFirstName}
+                    onChange={(e) => setInlineContactFirstName(e.target.value)}
+                    className="h-8 border-slate-300 text-xs bg-white"
+                  />
+                  <Input
+                    placeholder="E-mail profissional"
+                    value={inlineContactEmail}
+                    onChange={(e) => setInlineContactEmail(e.target.value)}
+                    className="h-8 border-slate-300 text-xs bg-white"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* NOME DA OPORTUNIDADE */}
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-slate-900">Nome da Oportunidade *</Label>
               <Input
@@ -813,7 +897,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                     <SelectValue placeholder="Selecione estágio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STAGES.filter((s) => s.key !== 'won' && s.key !== 'lost').map((s) => (
+                    {stages.filter((s) => s.key !== 'won' && s.key !== 'lost').map((s) => (
                       <SelectItem key={s.key} value={s.key}>
                         {s.label}
                       </SelectItem>
@@ -832,17 +916,6 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                   disabled={isCreating}
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-900">Contato Principal</Label>
-              <Input
-                placeholder="Ex: João da Silva"
-                value={newContact}
-                onChange={(e) => setNewContact(e.target.value)}
-                className="border-slate-300"
-                disabled={isCreating}
-              />
             </div>
           </div>
 
@@ -871,104 +944,6 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* DEAL DETAIL SIDE DRAWER */}
-      {selectedDeal && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end bg-slate-950/40"
-          onClick={() => setSelectedDeal(null)}
-        >
-          <aside
-            className="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl transition"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-              <div>
-                <Badge className="border-0 bg-blue-900 text-white font-bold">Oportunidade Comercial</Badge>
-                <h2 className="mt-2 text-2xl font-bold text-slate-900">{selectedDeal.company}</h2>
-                <p className="text-sm text-slate-500">{selectedDeal.plan}</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedDeal(null)}>
-                <X className="h-5 w-5 text-slate-500" />
-              </Button>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">Valor do Negócio</p>
-                <p className="mt-1 text-xl font-bold text-blue-950">{selectedDeal.value}</p>
-              </div>
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                <p className="text-xs font-semibold uppercase text-blue-800">Probabilidade</p>
-                <p className="mt-1 text-xl font-bold text-blue-900">{selectedDeal.probability}%</p>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="mt-6 border-t border-slate-100 pt-5 space-y-4">
-              <h3 className="font-bold text-slate-900 text-sm">Ações Rápidas de Prospecção</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedDeal.phone && (
-                  <a
-                    href={`https://wa.me/55${selectedDeal.phone.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="bg-emerald-700 font-bold hover:bg-emerald-800 text-white">
-                      <MessageSquare className="mr-2 h-4 w-4" /> Abrir WhatsApp
-                    </Button>
-                  </a>
-                )}
-                {selectedDeal.email && (
-                  <a href={`mailto:${selectedDeal.email}`}>
-                    <Button variant="outline" className="border-slate-300 font-semibold">
-                      <Mail className="mr-2 h-4 w-4 text-blue-800" /> Enviar E-mail
-                    </Button>
-                  </a>
-                )}
-                {!selectedDeal.phone && !selectedDeal.email && (
-                  <Link href={`/dashboard/sales/accounts`}>
-                    <Button variant="outline" className="border-slate-300 font-semibold">
-                      <Users className="mr-2 h-4 w-4 text-blue-800" /> Ver Conta
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Contact details */}
-            <div className="mt-6 border-t border-slate-100 pt-5 space-y-3">
-              <h3 className="font-bold text-slate-900 text-sm">Informações do Contato</h3>
-              <div className="rounded-lg border border-slate-200 p-3 space-y-2 text-xs">
-                <p className="flex justify-between">
-                  <span className="text-slate-500">Nome:</span>
-                  <span className="font-bold text-slate-900">
-                    {selectedDeal.contact || <span className="italic text-slate-400">Não informado</span>}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-slate-500">E-mail:</span>
-                  <span className="font-medium text-slate-800">
-                    {selectedDeal.email || <span className="italic text-slate-400">Não cadastrado</span>}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-slate-500">Telefone:</span>
-                  <span className="font-medium text-slate-800">
-                    {selectedDeal.phone || <span className="italic text-slate-400">Não cadastrado</span>}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-slate-500">Próxima ação:</span>
-                  <span className="font-medium text-slate-800">
-                    {selectedDeal.next || <span className="italic text-slate-400">Não agendada</span>}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
     </SalesLayoutWrapper>
   );
 }

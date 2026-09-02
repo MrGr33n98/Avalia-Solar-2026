@@ -449,7 +449,7 @@ export default function SalesTasksPage() {
               <div className="flex flex-col items-center justify-center py-16 gap-3" data-testid="tasks-unauthorized">
                 <XCircle className="h-9 w-9 text-amber-500" />
                 <p className="font-semibold text-slate-900">Sessão expirada ou sem permissão</p>
-                <a href="/auth/sign_in">
+                <a href="/login">
                   <Button className="bg-blue-900 font-bold hover:bg-blue-950">Fazer Login</Button>
                 </a>
               </div>

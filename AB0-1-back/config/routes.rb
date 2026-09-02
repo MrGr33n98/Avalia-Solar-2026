@@ -81,6 +81,7 @@ Rails.application.routes.draw do
         resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views'
         resources :emails, only: %i[index create show], controller: 'sales/emails'
         post 'email_events/provider', to: 'sales/email_events#create'
+        resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'

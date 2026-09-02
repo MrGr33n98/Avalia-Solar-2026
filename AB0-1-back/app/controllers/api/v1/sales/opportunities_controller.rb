@@ -46,7 +46,8 @@ module Api
             error: {
               code: 'VALIDATION_ERROR',
               message: e.message,
-              fields: e.record.errors.messages
+              fields: e.record.errors.messages,
+              request_id: request.request_id
             }
           }, status: :unprocessable_entity
         end
