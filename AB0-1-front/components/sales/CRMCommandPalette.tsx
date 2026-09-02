@@ -36,7 +36,13 @@ export default function CRMCommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const router = useRouter();
+
+  let router: ReturnType<typeof useRouter> | null = null;
+  try {
+    router = useRouter();
+  } catch {
+    router = null;
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -140,7 +146,11 @@ export default function CRMCommandPalette() {
     if (item.action) {
       item.action();
     } else if (item.href) {
-      router.push(item.href);
+      if (router) {
+        router.push(item.href);
+      } else if (typeof window !== 'undefined') {
+        window.location.href = item.href;
+      }
     }
   };
 

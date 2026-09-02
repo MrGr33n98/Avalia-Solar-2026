@@ -37,6 +37,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
+import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
+import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
 
 type Deal = {
   id?: number;
@@ -311,6 +314,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
 
   return (
     <DashboardLayout className="bg-slate-50/70">
+      <CRMCommandPalette />
       <div className="mx-auto w-full max-w-[1700px] space-y-6">
         {/* Executive Header */}
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
@@ -328,6 +332,9 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <SolarRoiCalculator />
+            <SolarSalesBattlecards />
+
             <Link href="/dashboard/sales/import">
               <Button variant="outline" className="min-h-11 border-slate-300 bg-white font-semibold text-slate-800 shadow-xs hover:bg-slate-50">
                 <FileSpreadsheet className="mr-2 h-4 w-4 text-blue-800" />

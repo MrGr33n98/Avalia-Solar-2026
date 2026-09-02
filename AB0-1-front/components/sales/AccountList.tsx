@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
+import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
 
 type Account = {
   id: number;
@@ -65,6 +67,9 @@ export default function AccountList() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <SolarRoiCalculator />
+            <SolarSalesBattlecards />
+
             <Link href="/dashboard/sales/import">
               <Button variant="outline" className="min-h-11 border-slate-300 bg-white font-semibold shadow-xs hover:bg-slate-50">
                 <FileSpreadsheet className="mr-2 h-4 w-4 text-blue-800" />
