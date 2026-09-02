@@ -55,6 +55,18 @@ const menuItems = [
 export default function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const isSalesContext = pathname.startsWith('/dashboard/sales');
+
+  const activeMenuItems = isSalesContext
+    ? [
+        { icon: LayoutDashboard, label: "Command Center", href: "/dashboard/sales" },
+        { icon: BriefcaseBusiness, label: "Pipeline (Kanban)", href: "/dashboard/sales/pipeline" },
+        { icon: Users, label: "Contas & Prospects", href: "/dashboard/sales/accounts" },
+        { icon: FileText, label: "Importar Leads (.CSV)", href: "/dashboard/sales/import" },
+        { icon: BarChart3, label: "Analytics & Reports", href: "/dashboard/sales/reports" },
+        { icon: Settings, label: "Tarefas & Follow-ups", href: "/dashboard/sales/tasks" },
+      ]
+    : menuItems;
 
   return (
     <aside 
@@ -84,7 +96,7 @@ export default function DashboardSidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-2">
-          {menuItems.map((item) => {
+          {activeMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             

@@ -163,6 +163,38 @@ export async function middleware(request: NextRequest) {
     return response;
   };
 
+  // Handle CRM subdomain routing (crm.avaliasolar.com.br)
+  const host = request.headers.get('host') || '';
+  const isCrmSubdomain = host.includes('crm.avaliasolar.com.br');
+
+  if (isCrmSubdomain) {
+    if (pathname === '/' || pathname === '/dashboard') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales', request.url)))
+      );
+    }
+    if (pathname === '/dashboard/companies' || pathname === '/dashboard/clients') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/accounts', request.url)))
+      );
+    }
+    if (pathname === '/dashboard/reports') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/reports', request.url)))
+      );
+    }
+    if (pathname === '/dashboard/import') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/import', request.url)))
+      );
+    }
+    if (pathname === '/dashboard/proposals') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/pipeline', request.url)))
+      );
+    }
+  }
+
   if (pathname === LEGACY_COMPANIES_PATH) {
     const categoryIds = normalizeCategoryIds(request.nextUrl.searchParams.get('category_ids'));
 
