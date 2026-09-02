@@ -373,8 +373,8 @@ class User < ApplicationRecord
   def corporate_email_for_company
     return unless company_user? && email.present?
 
-    domain = email.to_s.downcase.split('@', 2).last
-    errors.add(:email, 'deve ser corporativo para contas de empresa') if PUBLIC_EMAIL_DOMAINS.include?(domain)
+    domain = email.to_s.downcase.split("@", 2).last
+    errors.add(:email, "deve ser corporativo para contas de empresa") if PUBLIC_EMAIL_DOMAINS.include?(domain)
   end
 
   def adult_birthdate

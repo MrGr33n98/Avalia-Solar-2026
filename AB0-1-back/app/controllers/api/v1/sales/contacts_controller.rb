@@ -28,10 +28,16 @@ module Api
         end
 
         def create
-          contact = ::Sales::Contact.new(contact_params)
-          contact.sales_account_id ||= params[:account_id] || params[:sales_account_id]
+          account_id = params[:account_id] || params[:sales_account_id] || contact_params[:sales_account_id]
+          contact = if contact_params[:email].present? && account_id.present?
+                      ::Sales::Contact.where(sales_account_id: account_id).find_or_initialize_by(email: contact_params[:email].downcase.strip)
+                    else
+                      ::Sales::Contact.new
+                    end
+          contact.assign_attributes(contact_params)
+          contact.sales_account_id ||= account_id
           contact.save!
-          render json: { contact: serialize_detailed(contact) }, status: :created
+          render json: { contact: serialize_detailed(contact) }, status: contact.previously_new_record? ? :created : :ok
         end
 
         def update

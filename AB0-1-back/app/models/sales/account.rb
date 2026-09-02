@@ -9,6 +9,7 @@ module Sales
     has_many :opportunities, class_name: 'Sales::Opportunity', foreign_key: :sales_account_id, dependent: :destroy
     has_many :activities, class_name: 'Sales::Activity', foreign_key: :sales_account_id, dependent: :destroy
     has_many :tasks, class_name: 'Sales::Task', foreign_key: :sales_account_id, dependent: :destroy
+    has_many :solar_projects, class_name: 'Sales::SolarProject', foreign_key: :account_id, dependent: :destroy
 
     has_many :contact_employments, class_name: 'Sales::ContactEmployment', foreign_key: :sales_account_id, dependent: :destroy
     has_many :employed_contacts, through: :contact_employments, source: :contact

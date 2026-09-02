@@ -54,7 +54,30 @@ Rails.application.routes.draw do
         get 'analytics', to: 'sales/analytics#index'
         get 'opportunities', to: 'sales/opportunities#index'
         get 'summary', to: 'sales#summary'
+        get 'attribution', to: 'sales/attribution#index'
+        get 'forecast', to: 'sales/forecast#index'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
+        resources :taxonomies, only: %i[index create update destroy], controller: 'sales/taxonomies'
+        resources :custom_field_definitions, controller: 'sales/custom_field_definitions'
+        resources :notes, controller: 'sales/notes'
+        resources :api_keys, only: %i[index create destroy], controller: 'sales/api_keys'
+        resources :integrations, controller: 'sales/integrations'
+        resources :webhooks, controller: 'sales/webhooks'
+        resources :products, controller: 'sales/products'
+        resources :quotes, controller: 'sales/quotes' do
+          resources :items, controller: 'sales/quote_items'
+          get :document, to: 'sales/quote_documents#show'
+        end
+        resources :site_surveys, controller: 'sales/site_surveys'
+        resources :forms, controller: 'sales/forms'
+        resources :tracking_sessions, controller: 'sales/tracking_sessions'
+        resources :tracking_events, controller: 'sales/tracking_events'
+        post 'tracking_identity', to: 'sales/tracking_identity#create'
+        get 'rbac/roles', to: 'sales/rbac#roles'
+        get 'rbac/permissions', to: 'sales/rbac#permissions'
+        resources :user_roles, only: %i[index create destroy], controller: 'sales/user_roles'
+        resources :consents, only: %i[index create], controller: 'sales/consents'
+        post 'consent_revocations', to: 'sales/consent_revocations#create'
         resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views'
         resources :emails, only: %i[index create show], controller: 'sales/emails'
         post 'email_events/provider', to: 'sales/email_events#create'
@@ -68,11 +91,9 @@ Rails.application.routes.draw do
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'
           resources :tasks, only: %i[index create], controller: 'sales/tasks'
-        end
-        resources :tasks, only: %i[index create update], controller: 'sales/tasks'
-        resources :accounts, only: [] do
           resources :activities, only: %i[index create], controller: 'sales/activities'
         end
+        resources :tasks, only: %i[index create update], controller: 'sales/tasks'
         resources :opportunities, only: [] do
           resource :qualification, only: %i[show], controller: 'sales/qualifications'
           put :qualification, to: 'sales/qualifications#upsert'

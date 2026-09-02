@@ -5,18 +5,11 @@ import {
   Activity,
   AlertCircle,
   Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
   Eye,
-  FileText,
-  Flame,
   Globe,
-  Mail,
   MapPin,
   MessageSquare,
   Phone,
-  Plus,
   RotateCw,
   ShieldCheck,
   Sparkles,
@@ -30,10 +23,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SalesOutreachTemplates from '@/components/sales/SalesOutreachTemplates';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
+import NotesPanel from '@/components/sales/NotesPanel';
+import SiteSurveyForm from '@/components/sales/SiteSurveyForm';
 
 type DetailedAccount = {
   id: number;
@@ -98,6 +92,7 @@ export default function Company360View({
   state = '—',
   segment = 'Integrador / Instalador',
   domain,
+  solarProjectId,
 }: {
   accountId?: number;
   companyName?: string;
@@ -105,6 +100,7 @@ export default function Company360View({
   state?: string;
   segment?: string;
   domain?: string;
+  solarProjectId?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -190,6 +186,9 @@ export default function Company360View({
             </div>
           </div>
         </DialogHeader>
+
+        {accountId && <NotesPanel accountId={accountId} />}
+        {solarProjectId && <SiteSurveyForm projectId={solarProjectId} />}
 
         {loading ? (
           <div className="py-16 text-center space-y-3">

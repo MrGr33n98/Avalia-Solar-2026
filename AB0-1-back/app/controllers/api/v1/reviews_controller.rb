@@ -56,18 +56,31 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def create
     # Persiste o e-mail no metadata para facilitar auditoria futura e buscas rápidas
-    permitted_review_params = review_params
+    permitted_review_params = review_params.to_h
+    editorial_metadata = permitted_review_params.delete(:content_metadata) || permitted_review_params.delete('content_metadata') || {}
+    permitted_review_params[:metadata] = editorial_metadata.merge(permitted_review_params[:metadata] || {})
+    permitted_review_params[:pros] ||= editorial_metadata[:pros] || editorial_metadata['pros']
+    permitted_review_params[:cons] ||= editorial_metadata[:cons] || editorial_metadata['cons']
+    permitted_review_params[:buyer_tip] ||= editorial_metadata[:buyer_tip] || editorial_metadata['buyer_tip']
+    permitted_review_params[:pros] ||= []
+    permitted_review_params[:cons] ||= []
     review_media_ids = permitted_review_params.delete(:review_media_ids).to_a.map(&:to_i).uniq
     metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
 
     Review.transaction do
       @review = Review.new(permitted_review_params.merge(
                              user_id: current_user.id,
-                             is_legacy: false,
+                             is_legacy: permitted_review_params[:category_id].blank?,
                              capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
                              metadata: metadata_with_email
                            ))
+      @review.rating = params[:review][:rating].to_i if editorial_metadata.present?
+      @review.is_legacy = false if editorial_metadata.present?
       @review.save!
+      if editorial_metadata.present?
+        @review.rating = params[:review][:rating].to_i
+        @review.update_column(:rating, Reviews::ScoreCalculator.new(@review).calculate)
+      end
       attach_review_media!(review_media_ids)
     end
 
@@ -274,7 +287,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     params.require(:review).permit(
       :rating, :comment, :company_id, :category_id, :headline, :buyer_tip,
       :project_type, :installation_status, :estimated_power, :capture_flow_source,
-      { pros: [] }, { cons: [] }, { project_context: {} }, { metadata: {} },
+      { pros: [] }, { cons: [] }, { content_metadata: {} }, { project_context: {} }, { metadata: {} },
       review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy],
       review_media_ids: []
     )

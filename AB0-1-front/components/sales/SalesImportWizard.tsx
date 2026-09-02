@@ -10,7 +10,6 @@ import {
   FileSpreadsheet,
   FileText,
   Link as LinkIcon,
-  Plus,
   RefreshCw,
   Sparkles,
   Upload,
@@ -37,18 +36,9 @@ type ParsedLead = {
   kwh?: string;
 };
 
-const DEFAULT_STAGES = [
-  { key: 'prospect', label: 'Prospect (Novo Lead)' },
-  { key: 'contacted', label: 'Contatado' },
-  { key: 'qualified', label: 'Qualificado' },
-  { key: 'discovery', label: 'Diagnóstico Solar' },
-  { key: 'proposal', label: 'Proposta Enviada' },
-  { key: 'negotiation', label: 'Em Negociação' },
-];
 
 export default function SalesImportWizard() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [importMode, setImportMode] = useState<'file' | 'sheets' | 'manual'>('file');
   const [rawText, setRawText] = useState('');
   const [sheetsUrl, setSheetsUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -197,8 +187,16 @@ export default function SalesImportWizard() {
 
     let success = 0;
     let errors = 0;
+    const seenKeys = new Set<string>();
+    const rowsToImport = parsedRows.filter((lead) => {
+      const key = (lead.email || lead.company).trim().toLowerCase();
+      if (!key || seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
+    errors += parsedRows.length - rowsToImport.length;
 
-    for (const lead of parsedRows) {
+    for (const lead of rowsToImport) {
       if (!lead.company || !lead.company.trim()) {
         errors++;
         continue;
@@ -220,9 +218,19 @@ export default function SalesImportWizard() {
         });
 
         let accountId: number | null = null;
-        if (accRes.ok) {
-          const accData = await accRes.json();
-          accountId = accData.account?.id || null;
+        if (!accRes.ok) throw new Error('Não foi possível criar ou localizar a conta.');
+        const accData = await accRes.json();
+        accountId = accData.account?.id || null;
+        if (!accountId) throw new Error('A API não retornou a conta importada.');
+
+        // Persist contact when supplied, linked to the idempotent account.
+        if (accountId && (lead.contact || lead.email || lead.phone)) {
+          const contactName = (lead.contact || 'Contato').trim().split(/s+/);
+          const contactRes = await fetch('/api/v1/sales/contacts', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ contact: { sales_account_id: accountId, first_name: contactName.shift() || 'Contato', last_name: contactName.join(' '), email: lead.email || null, phone: lead.phone || null } }),
+          });
+          if (!contactRes.ok) throw new Error('Não foi possível importar o contato.');
         }
 
         // Create opportunity
@@ -342,7 +350,7 @@ export default function SalesImportWizard() {
               <CardDescription>Suportamos arquivos locais, links públicos do Google Sheets ou texto formatado.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <Tabs defaultValue="file" onValueChange={(val) => setImportMode(val as any)} className="w-full">
+              <Tabs defaultValue="file" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 border border-slate-200 bg-slate-100/80 p-1">
                   <TabsTrigger value="file" className="text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-950">
                     <FileSpreadsheet className="mr-2 h-4 w-4" /> Arquivo Local (.CSV / .XLSX)

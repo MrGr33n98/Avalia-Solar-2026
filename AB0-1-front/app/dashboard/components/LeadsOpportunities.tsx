@@ -100,7 +100,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
   const marketMetrics = [
     {
       title: "Total na Categoria",
-      value: marketData?.stats.total_market_leads || 0,
+      value: marketData?.stats?.total_market_leads || 0,
       icon: Target,
       change: "",
       changeType: "neutral" as const,
@@ -109,7 +109,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
     },
     {
       title: "Market Share",
-      value: `${marketData?.stats.market_share_percent}%`,
+      value: `${marketData?.stats?.market_share_percent}%`,
       icon: TrendingUp,
       change: "",
       changeType: "neutral" as const,
@@ -118,7 +118,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
     },
     {
       title: "Oportunidades Perdidas",
-      value: marketData?.stats.opportunities_count || 0,
+      value: marketData?.stats?.opportunities_count || 0,
       icon: ArrowUpRight,
       change: "",
       changeType: "neutral" as const,

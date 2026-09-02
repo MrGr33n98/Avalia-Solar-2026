@@ -74,6 +74,14 @@ review_source_trace_retention_job:
 #   description: 'Generate monthly reports'
 #   enabled: false
 
+# Expira propostas comerciais vencidas
+sales_expire_quotes_job:
+  cron: "*/15 * * * *"
+  class: Sales::ExpireQuotesJob
+  queue: default
+  description: "Expira propostas comerciais vencidas"
+  enabled: true
+
 # Cron format:
 # * * * * *
 # | | | | |

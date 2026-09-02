@@ -41,7 +41,7 @@ FactoryBot.define do
 
   factory :user do
     name { Faker::Name.name }
-    email { Faker::Internet.email }
+    email { "user#{SecureRandom.hex(4)}@avaliasolar.test" }
     password { 'Password123' } # Meets complexity: Upper, lower, number, 8+
     association :company
     status { :active }

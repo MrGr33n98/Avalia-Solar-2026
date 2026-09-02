@@ -23,6 +23,7 @@ RSpec.describe NextBestActionService, type: :service do
         action = described_class.call(company).find { |item| item[:id] == "add_categories" }
         expect(action).to include(key: "profile_add_categories", reason_code: "CATEGORIES_MISSING", destination: "product-categories", entity_context: {})
       end
+    end
     context 'when company has expiring campaigns' do
       it 'returns recommendation to renew campaign if approved banner is active and expiring within 3 days' do
         # banner active, approved, expiring in 2 days (<= 3 days, >= now)

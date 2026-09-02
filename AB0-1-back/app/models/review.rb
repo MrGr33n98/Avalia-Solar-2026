@@ -68,7 +68,7 @@ class Review < ApplicationRecord
   # Validations
   validates :rating, presence: true, inclusion: { in: 1..5 }
   validates :comment, length: { maximum: 500 }
-  validates :category_id, presence: true, unless: :is_legacy?
+  validates :category_id, presence: true, unless: -> { is_legacy? || headline.present? || pros.present? || cons.present? || buyer_tip.present? }
   validates :headline, length: { maximum: 120 }, allow_blank: true
   validates :capture_flow_source, presence: true
   validates :nps_score, inclusion: { in: 0..10 }, allow_nil: true

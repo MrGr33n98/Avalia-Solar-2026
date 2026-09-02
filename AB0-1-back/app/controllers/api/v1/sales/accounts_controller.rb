@@ -9,16 +9,17 @@ module Api
         end
 
         def create
-          account = ::Sales::Account.new(account_params.merge(owner: current_user))
+          account = ::Sales::Account.where(owner: current_user).find_or_initialize_by(name: account_params[:name])
+          account.assign_attributes(account_params.merge(owner: current_user))
           account.save!
           DomainEvent.create!(event_type: 'sales.account.created', aggregate_type: account.class.name,
                               aggregate_id: account.id, occurred_at: Time.current,
                               payload: { account_id: account.id, actor_id: current_user.id })
-          render json: { account: serialize(account) }, status: :created
+          render json: { account: serialize(account) }, status: account.previously_new_record? ? :created : :ok
         end
 
         def show
-          account = ::Sales::Account.includes(:company, :owner, :contacts, :opportunities, :activities, :tasks).find(params[:id])
+          account = ::Sales::Account.includes(:company, :owner, :contacts, :opportunities, :activities, :tasks, :solar_projects).find(params[:id])
           render json: { account: serialize_detailed(account) }
         end
 
@@ -56,6 +57,7 @@ module Api
             city: account.city,
             state: account.state,
             segment: account.segment || 'Integrador / Instalador',
+            solar_project_id: account.solar_projects.order(created_at: :desc).first&.id,
             company_size: account.company_size,
             source: account.source,
             created_at: account.created_at,
