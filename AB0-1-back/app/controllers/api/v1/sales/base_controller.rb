@@ -10,7 +10,7 @@ module Api
         private
 
         def require_internal_sales
-          return if current_user&.admin?
+          return if current_user&.admin? || current_user&.company_user? || current_user&.company_id.present?
 
           render_error_response(
             message: 'CRM interno requer autorização de vendas.',
