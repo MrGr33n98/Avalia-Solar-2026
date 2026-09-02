@@ -148,6 +148,7 @@ Rails.application.configure do
     www.avaliasolar.com.br
     api.avaliasolar.com.br
     app.avaliasolar.com.br
+    crm.avaliasolar.com.br
     ab0-1.com
     www.ab0-1.com
     64.225.59.107
