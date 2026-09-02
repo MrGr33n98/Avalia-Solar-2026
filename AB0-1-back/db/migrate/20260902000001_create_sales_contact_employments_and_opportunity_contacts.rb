@@ -19,7 +19,8 @@ class CreateSalesContactEmploymentsAndOpportunityContacts < ActiveRecord::Migrat
       t.timestamps
     end
 
-    add_index :sales_contact_employments, %i[sales_contact_id sales_account_id]
+    add_index :sales_contact_employments, %i[sales_contact_id sales_account_id],
+              name: 'idx_sales_contact_employments_contact_account'
     add_index :sales_contact_employments, :is_current
     add_index :sales_contact_employments, :is_primary
 

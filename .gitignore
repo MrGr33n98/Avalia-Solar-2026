@@ -114,3 +114,8 @@ agent/
 # Review Dashboard audit artifacts
 !docs/review-dashboard/
 !docs/review-dashboard/*.md
+
+# CRM documentation artifacts
+!docs/crm/
+!docs/crm/*
+

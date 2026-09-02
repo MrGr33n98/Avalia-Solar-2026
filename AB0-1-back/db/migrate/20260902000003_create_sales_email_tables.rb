@@ -44,7 +44,7 @@ class CreateSalesEmailTables < ActiveRecord::Migration[7.0]
     end
 
     add_index :sales_email_events, :provider_event_id, unique: true, where: 'provider_event_id IS NOT NULL'
-    add_index :sales_email_events, %i[sales_email_message_id event_type]
+    add_index :sales_email_events, %i[sales_email_message_id event_type], name: 'idx_sales_email_events_msg_event'
 
     create_table :sales_message_templates do |t|
       t.string :name, null: false

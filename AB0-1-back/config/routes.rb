@@ -50,9 +50,11 @@ Rails.application.routes.draw do
 
       scope :sales do
         get 'today', to: 'sales/today#index'
+        get 'search', to: 'sales/search#index'
         get 'opportunities', to: 'sales#index'
         get 'summary', to: 'sales#summary'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
+        resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views'
         resources :emails, only: %i[index create show], controller: 'sales/emails'
         post 'email_events/provider', to: 'sales/email_events#create'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
