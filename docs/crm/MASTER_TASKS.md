@@ -47,7 +47,21 @@
 - [x] Executive Sales Analytics & Reports (`SalesAnalyticsReport`)
 - [x] Prospecting Inbox / Daily Work Queue (`/dashboard/sales/today`)
 - [x] Stale Deal & No-Next-Action Detection
-- [x] Solar-Specific Lead Score Display
+## 4. Sprint 2 — People Graph, Contact 360 & Buying Committee (Completed)
+- [x] `Sales::ContactEmployment` model & `sales_contact_employments` table (Migration `20260902000001`)
+- [x] `Sales::OpportunityContact` model & `sales_opportunity_contacts` table for Buying Committee
+- [x] Contact 360° API (`GET/PATCH /api/v1/sales/contacts/:id`)
+- [x] Contact Employments API (`/api/v1/sales/contacts/:contact_id/employments`)
+- [x] Opportunity Contacts API & Committee Coverage Score (`/api/v1/sales/opportunities/:opportunity_id/contacts`)
+- [x] Central Phone & WhatsApp Normalization Helper (`lib/phone.ts`)
+- [x] Contact 360° Profile Component (`Contact360View.tsx`)
+- [x] People Graph Directory Page (`/dashboard/sales/people` & `PeopleList.tsx`)
+- [x] Buying Committee Coverage Component (`BuyingCommitteeMap.tsx`)
+- [x] CallLoggerModal Integration with Contact 360°
+- [x] Sidebar Link (`Pessoas & Decisores`) in `DashboardSidebar.tsx`
+- [x] Typecheck & Jest Tests (0 errors, 100% green)
+- [x] Git Commit `69cf39e0` pushed to `origin/main`
+
 - [x] Command Palette (`Cmd+K` / `CRMCommandPalette`)
 - [x] B2B Solar Outreach Templates (`SalesOutreachTemplates`)
 
