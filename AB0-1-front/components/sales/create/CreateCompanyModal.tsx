@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import { Building2, Image as ImageIcon, Plus, RotateCw, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
+import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface CreateCompanyModalProps {
@@ -39,7 +39,7 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim()) return setError('Company name is required');
+    if (!companyName.trim()) return setError('Nome da empresa é obrigatório');
     setLoading(true);
     setError(null);
     try {
@@ -50,7 +50,7 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         email: companyEmail,
       });
 
-      setSuccessMsg('Company added successfully!');
+      setSuccessMsg('Empresa cadastrada com sucesso!');
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);
@@ -65,7 +65,7 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         onSuccess?.();
       }, 800);
     } catch (err: any) {
-      setError(err.message || 'Error creating company');
+      setError(err.message || 'Erro ao criar empresa');
     } finally {
       setLoading(false);
     }
@@ -76,128 +76,128 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
       open={open}
       onClose={onClose}
       title="Add a company"
+      description="Cadastrar nova empresa B2B ou organização cliente no CRM."
       size="md"
-      heroIcon={<Building2 className="w-8 h-8 text-blue-600" />}
+      heroIcon={<Building2 className="w-8 h-8 text-indigo-700" />}
       showCustomizeFields={true}
       footer={
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+            className="h-10 text-xs font-semibold text-slate-600 hover:text-slate-900"
           >
             Cancel
-          </button>
+          </Button>
           <Button
             type="submit"
             form="create-company-form"
             disabled={loading}
-            className="h-9 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-2xs"
+            className="h-10 px-5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm"
           >
-            {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null} Add company
+            {loading ? <RotateCw className="w-4 h-4 animate-spin mr-2" /> : null} Add company
           </Button>
         </>
       }
     >
-      <form id="create-company-form" onSubmit={handleSubmit} className="space-y-4 font-sans">
-        {error && <p className="text-xs font-semibold text-red-600 bg-red-50 p-2.5 rounded-md">{error}</p>}
-        {successMsg && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-md">{successMsg}</p>}
+      <form id="create-company-form" onSubmit={handleSubmit} className="space-y-5 font-sans">
+        {error && <p className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">{error}</p>}
+        {successMsg && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200">{successMsg}</p>}
 
         {/* Company Name */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Company name</Label>
+        <CRMFormField label="Company name" required>
           <Input
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
+            placeholder="Ex: Usinas & Engenharia Solar S/A"
+            className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
             required
           />
-        </div>
+        </CRMFormField>
 
         {/* Description */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Description</Label>
+        <CRMFormField label="Description">
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="text-xs border-slate-200 focus:border-indigo-500 rounded-md resize-none"
+            placeholder="Detalhes sobre atuação da empresa, segmento solar e perfil corporativo..."
+            className="text-xs border-slate-300 focus:border-indigo-600 rounded-lg p-3 resize-none"
             rows={2}
           />
-        </div>
+        </CRMFormField>
 
-        {/* Email */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Email</Label>
-          <Input
-            type="email"
-            value={companyEmail}
-            onChange={(e) => setCompanyEmail(e.target.value)}
-            placeholder="email@example.com"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-          />
-        </div>
+        {/* 2-Column Row: Email & Phone */}
+        <CRMFormRow cols={2}>
+          <CRMFormField label="Email">
+            <Input
+              type="email"
+              value={companyEmail}
+              onChange={(e) => setCompanyEmail(e.target.value)}
+              placeholder="contato@empresa.com.br"
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
+            />
+          </CRMFormField>
 
-        {/* Phone Number */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Phone number</Label>
-          <Input
-            value={companyPhone}
-            onChange={(e) => setCompanyPhone(e.target.value)}
-            placeholder="(11) 3000-0000"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-          />
-        </div>
+          <CRMFormField label="Phone number">
+            <Input
+              value={companyPhone}
+              onChange={(e) => setCompanyPhone(e.target.value)}
+              placeholder="(11) 3000-0000"
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
+            />
+          </CRMFormField>
+        </CRMFormRow>
 
         {/* Address */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Address</Label>
+        <CRMFormField label="Address">
           <Textarea
             value={companyAddress}
             onChange={(e) => setCompanyAddress(e.target.value)}
-            className="text-xs border-slate-200 focus:border-indigo-500 rounded-md resize-none"
+            placeholder="Av. Paulista, 1000 — São Paulo, SP"
+            className="text-xs border-slate-300 focus:border-indigo-600 rounded-lg p-3 resize-none"
             rows={2}
           />
-        </div>
+        </CRMFormField>
 
-        {/* Person (Select or create a person) */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Person</Label>
-          <div className="relative">
-            <UserPlus className="w-3.5 h-3.5 text-blue-600 absolute left-3 top-3 pointer-events-none" />
+        {/* 2-Column Row: Primary Person & Website URL */}
+        <CRMFormRow cols={2}>
+          <CRMFormField label="Person (Contato Principal)">
+            <div className="relative">
+              <UserPlus className="w-4 h-4 text-indigo-600 absolute left-3.5 top-3 pointer-events-none" />
+              <Input
+                value={personName}
+                onChange={(e) => setPersonName(e.target.value)}
+                placeholder="Selecione ou crie um contato..."
+                className="h-10 pl-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg"
+              />
+            </div>
+          </CRMFormField>
+
+          <CRMFormField label="URL / Website">
             <Input
-              value={personName}
-              onChange={(e) => setPersonName(e.target.value)}
-              placeholder="Select or create a person"
-              className="h-9 pl-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
+              value={companyUrl}
+              onChange={(e) => setCompanyUrl(e.target.value)}
+              placeholder="https://empresa.com.br"
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
             />
-          </div>
-        </div>
-
-        {/* URL */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">URL</Label>
-          <Input
-            value={companyUrl}
-            onChange={(e) => setCompanyUrl(e.target.value)}
-            placeholder="https://"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-          />
-        </div>
+          </CRMFormField>
+        </CRMFormRow>
 
         {/* Logo Upload Trigger */}
-        <div className="pt-1">
+        <CRMFormField label="Logo da Empresa">
           <input type="file" ref={fileInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
           <Button
             type="button"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            className="h-8 text-xs border-dashed border-slate-300 text-slate-600 hover:border-slate-400 font-medium w-full flex items-center justify-center gap-1.5"
+            className="h-10 text-xs border-dashed border-slate-300 text-slate-700 hover:border-indigo-400 font-semibold w-full flex items-center justify-center gap-2 rounded-lg bg-slate-50/50"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-            {logoFileName ? `Logo selected: ${logoFileName}` : 'Upload company logo'}
+            <ImageIcon className="w-4 h-4 text-indigo-600" />
+            {logoFileName ? `Logo selecionado: ${logoFileName}` : 'Upload company logo'}
           </Button>
-        </div>
+        </CRMFormField>
       </form>
     </CRMModal>
   );

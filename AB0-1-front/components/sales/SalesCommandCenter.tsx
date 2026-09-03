@@ -51,6 +51,8 @@ import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
 import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
+import CRMModal from '@/components/sales/ui/CRMModal';
+import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
 import { salesApi, SalesApiError } from '@/lib/api/sales/client';
 import { ApiAccount, ApiContact, ApiOpportunity, ApiStage } from '@/lib/api/sales/types';
 
@@ -768,58 +770,86 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
         )}
       </div>
 
-      {/* NEW OPPORTUNITY MODAL (P0-02 & P0-03 HARDENED WITH ACCOUNT COMBOMBOX + INLINE CREATION) */}
-      <Dialog open={isNewDealOpen} onOpenChange={(open) => { setIsNewDealOpen(open); if (!open) setCreateError(null); }}>
-        <DialogContent className="sm:max-w-[540px]">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900">Nova Oportunidade Comercial</DialogTitle>
-            <DialogDescription>
-              Cadastre um novo lead B2B vinculado obrigatoriamente a uma Empresa no seu pipeline.
-            </DialogDescription>
-          </DialogHeader>
-
+      {/* NEW OPPORTUNITY MODAL (DESIGN SYSTEM CRMMODAL SIZE LG 880PX) */}
+      <CRMModal
+        open={isNewDealOpen}
+        onClose={() => {
+          setIsNewDealOpen(false);
+          setCreateError(null);
+        }}
+        title="Nova Oportunidade Comercial"
+        description="Cadastre um novo lead B2B vinculado obrigatoriamente a uma Empresa no seu pipeline."
+        size="lg"
+        heroIcon={<Target className="w-8 h-8 text-blue-900" />}
+        showCustomizeFields={true}
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsNewDealOpen(false)}
+              disabled={isCreating}
+              className="h-10 text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateNewOpportunity}
+              disabled={isCreating}
+              className="h-10 px-5 text-xs font-bold bg-blue-900 hover:bg-blue-950 text-white rounded-lg shadow-sm"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                </>
+              ) : (
+                'Salvar Oportunidade'
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5 font-sans">
           {createError && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-800">
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" />
               <span>{createError}</span>
             </div>
           )}
 
-          <div className="grid gap-4 py-2">
+          {/* 2-Column Row: Empresa (Account) + Contato Principal */}
+          <CRMFormRow cols={2}>
             {/* EMPRESA (ACCOUNT) COMBOMBOX & INLINE CREATION */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-900">Empresa (Account) *</Label>
+            <CRMFormField label="Empresa (Account)" required>
               {!isInlineAccount ? (
-                <div className="flex gap-2">
-                  <Select
-                    value={selectedAccountId}
-                    onValueChange={(val) => {
-                      if (val === 'NEW_ACCOUNT') {
-                        setIsInlineAccount(true);
-                        setSelectedAccountId('');
-                      } else {
-                        setSelectedAccountId(val);
-                      }
-                    }}
-                    disabled={isCreating}
-                  >
-                    <SelectTrigger className="border-slate-300 flex-1">
-                      <SelectValue placeholder="Selecione a empresa..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NEW_ACCOUNT" className="font-bold text-blue-900">
-                        + Criar Nova Empresa (Inline)
+                <Select
+                  value={selectedAccountId}
+                  onValueChange={(val) => {
+                    if (val === 'NEW_ACCOUNT') {
+                      setIsInlineAccount(true);
+                      setSelectedAccountId('');
+                    } else {
+                      setSelectedAccountId(val);
+                    }
+                  }}
+                  disabled={isCreating}
+                >
+                  <SelectTrigger className="h-10 border-slate-300 text-xs rounded-lg px-3.5">
+                    <SelectValue placeholder="Selecione a empresa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NEW_ACCOUNT" className="font-bold text-blue-900">
+                      + Criar Nova Empresa (Inline)
+                    </SelectItem>
+                    {accounts.map((acc) => (
+                      <SelectItem key={acc.id} value={String(acc.id)}>
+                        {acc.name} {acc.domain ? `(${acc.domain})` : ''}
                       </SelectItem>
-                      {accounts.map((acc) => (
-                        <SelectItem key={acc.id} value={String(acc.id)}>
-                          {acc.name} {acc.domain ? `(${acc.domain})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    ))}
+                  </SelectContent>
+                </Select>
               ) : (
-                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 space-y-2">
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-blue-900">Criar Nova Empresa</span>
                     <Button variant="ghost" size="sm" onClick={() => setIsInlineAccount(false)} className="h-6 text-[11px] px-1 text-slate-500">
@@ -830,21 +860,20 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                     placeholder="Nome da empresa *"
                     value={inlineAccountName}
                     onChange={(e) => setInlineAccountName(e.target.value)}
-                    className="h-8 border-slate-300 text-xs bg-white"
+                    className="h-9 border-slate-300 text-xs bg-white rounded-md"
                   />
                   <Input
                     placeholder="Domínio (ex: empresa.com.br)"
                     value={inlineAccountDomain}
                     onChange={(e) => setInlineAccountDomain(e.target.value)}
-                    className="h-8 border-slate-300 text-xs bg-white"
+                    className="h-9 border-slate-300 text-xs bg-white rounded-md"
                   />
                 </div>
               )}
-            </div>
+            </CRMFormField>
 
-            {/* CONSTATO PRINCIPAL COMBOMBOX & INLINE CREATION */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-900">Contato Principal</Label>
+            {/* CONTATO PRINCIPAL COMBOMBOX & INLINE CREATION */}
+            <CRMFormField label="Contato Principal">
               {!isInlineContact ? (
                 <Select
                   value={selectedContactId}
@@ -858,7 +887,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                   }}
                   disabled={isCreating || (!selectedAccountId && !isInlineAccount)}
                 >
-                  <SelectTrigger className="border-slate-300">
+                  <SelectTrigger className="h-10 border-slate-300 text-xs rounded-lg px-3.5">
                     <SelectValue placeholder={selectedAccountId ? 'Selecione contato...' : 'Selecione empresa primeiro'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -873,7 +902,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 space-y-2">
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-indigo-900">Criar Novo Contato</span>
                     <Button variant="ghost" size="sm" onClick={() => setIsInlineContact(false)} className="h-6 text-[11px] px-1 text-slate-500">
@@ -884,85 +913,59 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                     placeholder="Nome completo do contato *"
                     value={inlineContactFirstName}
                     onChange={(e) => setInlineContactFirstName(e.target.value)}
-                    className="h-8 border-slate-300 text-xs bg-white"
+                    className="h-9 border-slate-300 text-xs bg-white rounded-md"
                   />
                   <Input
                     placeholder="E-mail profissional"
                     value={inlineContactEmail}
                     onChange={(e) => setInlineContactEmail(e.target.value)}
-                    className="h-8 border-slate-300 text-xs bg-white"
+                    className="h-9 border-slate-300 text-xs bg-white rounded-md"
                   />
                 </div>
               )}
-            </div>
+            </CRMFormField>
+          </CRMFormRow>
 
-            {/* NOME DA OPORTUNIDADE */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-900">Nome da Oportunidade *</Label>
+          {/* NOME DA OPORTUNIDADE */}
+          <CRMFormField label="Nome da Oportunidade" required>
+            <Input
+              placeholder="Ex: Projeto Rooftop Solar 100kWp — Usina Indústria"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
+              disabled={isCreating}
+            />
+          </CRMFormField>
+
+          {/* 2-Column Row: Estágio Inicial + Valor Estimado */}
+          <CRMFormRow cols={2}>
+            <CRMFormField label="Estágio Inicial">
+              <Select value={newStage} onValueChange={setNewStage} disabled={isCreating}>
+                <SelectTrigger className="h-10 border-slate-300 text-xs rounded-lg px-3.5">
+                  <SelectValue placeholder="Selecione estágio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stages.filter((s) => s.key !== 'won' && s.key !== 'lost').map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CRMFormField>
+
+            <CRMFormField label="Valor Estimado (R$)">
               <Input
-                placeholder="Ex: Projeto Rooftop Solar 100kWp"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="border-slate-300"
+                placeholder="Ex: 150000"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
                 disabled={isCreating}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-900">Estágio Inicial</Label>
-                <Select value={newStage} onValueChange={setNewStage} disabled={isCreating}>
-                  <SelectTrigger className="border-slate-300">
-                    <SelectValue placeholder="Selecione estágio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stages.filter((s) => s.key !== 'won' && s.key !== 'lost').map((s) => (
-                      <SelectItem key={s.key} value={s.key}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-900">Valor Estimado (R$)</Label>
-                <Input
-                  placeholder="Ex: 150000"
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                  className="border-slate-300"
-                  disabled={isCreating}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsNewDealOpen(false)}
-              className="border-slate-300"
-              disabled={isCreating}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleCreateNewOpportunity}
-              className="bg-blue-900 font-bold hover:bg-blue-950"
-              disabled={isCreating}
-            >
-              {isCreating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                </>
-              ) : (
-                'Salvar Oportunidade'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CRMFormField>
+          </CRMFormRow>
+        </div>
+      </CRMModal>
     </SalesLayoutWrapper>
   );
 }

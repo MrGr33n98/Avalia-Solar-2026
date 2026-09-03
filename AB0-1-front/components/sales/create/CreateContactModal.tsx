@@ -1,12 +1,12 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Building2, Camera, Plus, RotateCw, User } from 'lucide-react';
+import { Building2, Camera, RotateCw, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
+import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface CreateContactModalProps {
@@ -41,7 +41,7 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!personName.trim()) return setError('Person name is required');
+    if (!personName.trim()) return setError('Nome do contato é obrigatório');
     setLoading(true);
     setError(null);
     try {
@@ -54,7 +54,7 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
         decision_role: decisionRole,
       });
 
-      setSuccessMsg('Person added successfully!');
+      setSuccessMsg('Pessoa cadastrada com sucesso!');
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);
@@ -69,7 +69,7 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
         onSuccess?.();
       }, 800);
     } catch (err: any) {
-      setError(err.message || 'Error adding person');
+      setError(err.message || 'Erro ao adicionar contato');
     } finally {
       setLoading(false);
     }
@@ -80,143 +80,142 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
       open={open}
       onClose={onClose}
       title="Add a person"
+      description="Cadastrar novo decisor ou contato comercial no CRM."
       size="md"
       heroIcon={<User className="w-8 h-8 text-sky-600" />}
       showCustomizeFields={true}
       footer={
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+            className="h-10 text-xs font-semibold text-slate-600 hover:text-slate-900"
           >
             Cancel
-          </button>
+          </Button>
           <Button
             type="submit"
             form="create-person-form"
             disabled={loading}
-            className="h-9 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-2xs"
+            className="h-10 px-5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm"
           >
-            {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null} Add person
+            {loading ? <RotateCw className="w-4 h-4 animate-spin mr-2" /> : null} Add person
           </Button>
         </>
       }
     >
-      <form id="create-person-form" onSubmit={handleSubmit} className="space-y-4 font-sans">
-        {error && <p className="text-xs font-semibold text-red-600 bg-red-50 p-2.5 rounded-md">{error}</p>}
-        {successMsg && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-md">{successMsg}</p>}
+      <form id="create-person-form" onSubmit={handleSubmit} className="space-y-5 font-sans">
+        {error && <p className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">{error}</p>}
+        {successMsg && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200">{successMsg}</p>}
 
         {/* Person Name */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Person name</Label>
+        <CRMFormField label="Person name" required>
           <Input
             value={personName}
             onChange={(e) => setPersonName(e.target.value)}
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
+            placeholder="Ex: Carlos Silva"
+            className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
             required
           />
-        </div>
+        </CRMFormField>
 
-        {/* Email */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Email</Label>
-          <Input
-            type="email"
-            value={personEmail}
-            onChange={(e) => setPersonEmail(e.target.value)}
-            placeholder="email@example.com"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-          />
-        </div>
+        {/* 2-Column Row: Email & Phone */}
+        <CRMFormRow cols={2}>
+          <CRMFormField label="Email">
+            <Input
+              type="email"
+              value={personEmail}
+              onChange={(e) => setPersonEmail(e.target.value)}
+              placeholder="carlos@empresa.com.br"
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
+            />
+          </CRMFormField>
+
+          <CRMFormField label="Phone number">
+            <Input
+              value={personPhone}
+              onChange={(e) => setPersonPhone(e.target.value)}
+              placeholder="(11) 99999-0000"
+              className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
+            />
+          </CRMFormField>
+        </CRMFormRow>
 
         {/* Description */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Description</Label>
+        <CRMFormField label="Description">
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="text-xs border-slate-200 focus:border-indigo-500 rounded-md resize-none"
+            placeholder="Observações sobre o papel no comitê de compra solar..."
+            className="text-xs border-slate-300 focus:border-indigo-600 rounded-lg p-3 resize-none"
             rows={2}
           />
-        </div>
+        </CRMFormField>
 
-        {/* Company (Select or create a company) */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Company</Label>
-          <div className="relative">
-            <Building2 className="w-3.5 h-3.5 text-indigo-600 absolute left-3 top-3 pointer-events-none" />
-            <Input
-              value={companyInputName}
-              onChange={(e) => setCompanyInputName(e.target.value)}
-              placeholder="Select or create a company"
-              className="h-9 pl-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-            />
-          </div>
-        </div>
+        {/* 2-Column Row: Company & Decision Role */}
+        <CRMFormRow cols={2}>
+          <CRMFormField label="Company">
+            <div className="relative">
+              <Building2 className="w-4 h-4 text-indigo-600 absolute left-3.5 top-3 pointer-events-none" />
+              <Input
+                value={companyInputName}
+                onChange={(e) => setCompanyInputName(e.target.value)}
+                placeholder="Selecione a empresa..."
+                className="h-10 pl-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg"
+              />
+            </div>
+          </CRMFormField>
 
-        {/* Phone Number */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Phone number</Label>
-          <Input
-            value={personPhone}
-            onChange={(e) => setPersonPhone(e.target.value)}
-            placeholder="(11) 99999-0000"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
-          />
-        </div>
+          <CRMFormField label="Decision role">
+            <select
+              value={decisionRole}
+              onChange={(e) => setDecisionRole(e.target.value)}
+              className="w-full h-10 text-xs rounded-lg border border-slate-300 bg-white px-3.5 text-slate-700 focus:border-indigo-600 focus:outline-hidden"
+            >
+              <option value="decision_maker">Decision Maker</option>
+              <option value="economic_buyer">Economic Buyer</option>
+              <option value="champion">Champion</option>
+              <option value="technical_buyer">Technical Buyer</option>
+            </select>
+          </CRMFormField>
+        </CRMFormRow>
 
         {/* Address */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Address</Label>
+        <CRMFormField label="Address">
           <Textarea
             value={personAddress}
             onChange={(e) => setPersonAddress(e.target.value)}
-            className="text-xs border-slate-200 focus:border-indigo-500 rounded-md resize-none"
+            placeholder="Endereço corporativo / Cidade"
+            className="text-xs border-slate-300 focus:border-indigo-600 rounded-lg p-3 resize-none"
             rows={2}
           />
-        </div>
+        </CRMFormField>
 
         {/* URL */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">URL</Label>
+        <CRMFormField label="URL / LinkedIn">
           <Input
             value={personUrl}
             onChange={(e) => setPersonUrl(e.target.value)}
-            placeholder="https://"
-            className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
+            placeholder="https://linkedin.com/in/perfil"
+            className="h-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg px-3.5"
           />
-        </div>
+        </CRMFormField>
 
-        {/* Decision Role */}
-        <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Decision role</Label>
-          <select
-            value={decisionRole}
-            onChange={(e) => setDecisionRole(e.target.value)}
-            className="w-full h-9 text-xs rounded-md border border-slate-200 bg-white px-3 text-slate-700 focus:border-indigo-500"
-          >
-            <option value="decision_maker">Decision Maker</option>
-            <option value="economic_buyer">Economic Buyer</option>
-            <option value="champion">Champion</option>
-            <option value="technical_buyer">Technical Buyer</option>
-          </select>
-        </div>
-
-        {/* Lead Photo Upload Trigger */}
-        <div className="pt-1">
+        {/* Photo Upload Trigger */}
+        <CRMFormField label="Foto do Contato">
           <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
           <Button
             type="button"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            className="h-8 text-xs border-dashed border-slate-300 text-slate-600 hover:border-slate-400 font-medium w-full flex items-center justify-center gap-1.5"
+            className="h-10 text-xs border-dashed border-slate-300 text-slate-700 hover:border-indigo-400 font-semibold w-full flex items-center justify-center gap-2 rounded-lg bg-slate-50/50"
           >
-            <Camera className="w-3.5 h-3.5 text-slate-400" />
-            {photoFileName ? `Photo selected: ${photoFileName}` : 'Upload lead / person photo'}
+            <Camera className="w-4 h-4 text-sky-600" />
+            {photoFileName ? `Foto selecionada: ${photoFileName}` : 'Upload lead / person photo'}
           </Button>
-        </div>
+        </CRMFormField>
       </form>
     </CRMModal>
   );
