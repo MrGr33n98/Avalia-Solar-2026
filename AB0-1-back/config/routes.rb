@@ -86,6 +86,10 @@ Rails.application.routes.draw do
           delete :remove, on: :member
         end
         resources :emails, only: %i[index create show], controller: 'sales/emails'
+        resources :email_templates, only: %i[index create update destroy], controller: 'sales/email_templates' do
+          post :preview, on: :member
+        end
+        resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
         post 'email_events/provider', to: 'sales/email_events#create'
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'

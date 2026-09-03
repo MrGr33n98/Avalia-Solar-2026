@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, FileText, Loader2, Mail, Paperclip, Send, Sparkles, X } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, Paperclip, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
-import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
+import { CRMFormField } from '@/components/sales/ui/CRMForm';
 import { salesApi } from '@/lib/api/sales/client';
 import { toast } from 'sonner';
 
@@ -36,11 +36,14 @@ export default function EmailComposerModal({
 
   const [toEmail, setToEmail] = useState(defaultToEmail);
   const [ccEmail, setCcEmail] = useState('');
+  const [bccEmail, setBccEmail] = useState('');
+  const [showBcc, setShowBcc] = useState(false);
   const [subject, setSubject] = useState(defaultSubject);
   const [bodyText, setBodyText] = useState('');
   const [showCc, setShowCc] = useState(false);
   const [trackOpens, setTrackOpens] = useState(true);
   const [trackClicks, setTrackClicks] = useState(true);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   const handleInsertVariable = (variable: string) => {
     setBodyText((prev) => `${prev} {{${variable}}}`);
@@ -50,7 +53,8 @@ export default function EmailComposerModal({
     e.preventDefault();
     if (!toEmail.trim()) return setError('E-mail do destinatário é obrigatório.');
     if (!subject.trim()) return setError('Assunto da mensagem é obrigatório.');
-    if (!bodyText.trim()) return setError('Corpo do e-mail não pode ficar em branco (Política Fail-Closed).');
+    if (!bodyText.trim())
+      return setError('Corpo do e-mail não pode ficar em branco (Política Fail-Closed).');
 
     setLoading(true);
     setError(null);
@@ -64,9 +68,20 @@ export default function EmailComposerModal({
         sales_contact_id: defaultContactId,
         sales_account_id: defaultAccountId,
         sales_opportunity_id: defaultOpportunityId,
+        cc: ccEmail
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean),
+        bcc: bccEmail
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean),
+        open_tracking_enabled: trackOpens,
+        click_tracking_enabled: trackClicks,
+        attachments,
       });
 
-      toast.success('E-mail enviado com sucesso!');
+      toast.success('E-mail enfileirado. Aguardando confirmação do provedor.');
       setTimeout(() => {
         onClose();
         setLoading(false);
@@ -128,7 +143,12 @@ export default function EmailComposerModal({
               disabled={loading}
               className="h-11 px-6 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl shadow-md flex items-center gap-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviar Mensagem
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}{' '}
+              Enviar Mensagem
             </Button>
           </div>
         </div>
@@ -176,8 +196,47 @@ export default function EmailComposerModal({
                 onChange={(e) => setCcEmail(e.target.value)}
                 className="h-11 text-xs border-slate-300 rounded-xl px-4"
               />
+              {!showBcc && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowBcc(true)}
+                  className="mt-1 h-7 text-[11px]"
+                >
+                  + Bcc
+                </Button>
+              )}
             </CRMFormField>
           )}
+
+          {showBcc && (
+            <CRMFormField label="Bcc (Cópia oculta)">
+              <Input
+                type="email"
+                placeholder="oculta@empresa.com.br"
+                value={bccEmail}
+                onChange={(e) => setBccEmail(e.target.value)}
+                className="h-11 text-xs border-slate-300 rounded-xl px-4"
+              />
+            </CRMFormField>
+          )}
+
+          <CRMFormField label="Anexos">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-xs text-slate-600 hover:bg-slate-50">
+              <Paperclip className="h-4 w-4" />
+              <span>
+                {attachments.length
+                  ? `${attachments.length} arquivo(s) selecionado(s)`
+                  : 'Adicionar arquivos (máx. 10MB cada)'}
+              </span>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => setAttachments(Array.from(e.target.files ?? []).slice(0, 10))}
+              />
+            </label>
+          </CRMFormField>
 
           {/* Subject */}
           <CRMFormField label="Assunto" required>

@@ -6,36 +6,80 @@ module Api
         before_action :require_internal_sales
 
         def index
-          emails = ::Sales::EmailMessage.includes(:account, :contact)
-                                        .order(created_at: :desc)
-                                        .limit(50)
+          per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
+          page = [params.fetch(:page, 1).to_i, 1].max
+          scope = scoped_emails.includes(:account, :contact).order(created_at: :desc)
+          total = scope.count
+          emails = scope.offset((page - 1) * per_page).limit(per_page)
 
           render json: {
-            emails: emails.map { |e| serialize_email(e) }
+            emails: emails.map { |e| serialize_email(e) },
+            meta: { page: page, per_page: per_page, total: total, total_pages: (total.to_f / per_page).ceil }
           }
         end
 
         def show
-          email = ::Sales::EmailMessage.find(params[:id])
+          email = scoped_emails.find(params[:id])
           render json: { email: serialize_email(email, detailed: true) }
         end
 
         def create
-          account = ::Sales::Account.find(email_params[:sales_account_id])
-          contact = ::Sales::Contact.find(email_params[:sales_contact_id])
+          account = scoped_accounts.find(email_params[:sales_account_id])
+          contact = account.contacts.find(email_params[:sales_contact_id])
+
+          email = nil
+          ::Sales::EmailMessage.transaction do
+            thread = find_or_create_thread(account, contact)
+            thread.update!(last_message_at: Time.current, message_count: thread.message_count + 1)
 
           email = ::Sales::EmailMessage.create!(
+            company_id: account.company_id,
+            sales_email_thread_id: thread.id,
             sales_account_id: account.id,
             sales_contact_id: contact.id,
             sales_opportunity_id: email_params[:sales_opportunity_id],
+            message_id: email_params[:message_id].presence || "<#{SecureRandom.uuid}@avaliasolar.com.br>",
+            in_reply_to: email_params[:in_reply_to],
+            references_header: email_params[:references_header],
             sender_user_id: current_user.id,
             from_email: current_user.email || 'comercial@avaliasolar.com.br',
             to_email: contact.email || email_params[:to_email],
             subject: email_params[:subject],
+            body_json: parsed_body_json,
             body_text: email_params[:body_text] || email_params[:body],
             body_html: email_params[:body_html],
+            open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
+            click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
             status: 'queued'
           )
+
+
+            participants = {
+            'from' => [email.from_email],
+            'to' => [email.to_email],
+            'cc' => email_params[:cc],
+            'bcc' => email_params[:bcc]
+          }
+            participants.each do |kind, addresses|
+            Array(addresses).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).each do |address|
+              email.participants.create!(company_id: email.company_id, email: address, participant_type: kind)
+              end
+            end
+
+            Array(email_params[:attachments]).first(10).each do |uploaded_file|
+              next unless uploaded_file.respond_to?(:content_type) && uploaded_file.respond_to?(:size)
+
+              attachment = email.attachments.create!(
+                company_id: email.company_id,
+                file_name: uploaded_file.original_filename.to_s,
+                content_type: uploaded_file.content_type.to_s,
+                file_size: uploaded_file.size,
+                inline: false
+              )
+              attachment.file.attach(uploaded_file)
+              attachment.save!
+            end
+          end
 
           # Launch background delivery job
           ::Sales::SendEmailJob.perform_later(email.id)
@@ -48,12 +92,35 @@ module Api
 
         private
 
+        def parsed_body_json
+          value = email_params[:body_json]
+          return value || {} unless value.is_a?(String)
 
+          JSON.parse(value)
+        rescue JSON::ParserError
+          raise ActionController::BadRequest, 'body_json inválido.'
+        end
+
+        def find_or_create_thread(account, contact)
+          parent_ids = [email_params[:in_reply_to], email_params[:references_header]].compact_blank.flat_map { |value| value.to_s.split(/\s+/) }
+          existing = ::Sales::EmailThread.joins(:messages).where(sales_account_id: account.id, company_id: account.company_id, sales_email_messages: { message_id: parent_ids }).first if parent_ids.any?
+          existing || ::Sales::EmailThread.create!(company_id: account.company_id, sales_account_id: account.id, sales_contact_id: contact.id, subject_normalized: email_params[:subject].to_s.downcase.strip, first_message_at: Time.current, last_message_at: Time.current, message_count: 0)
+        end
+
+        def scoped_accounts
+          return ::Sales::Account.all if current_user.admin?
+          ::Sales::Account.where(company_id: current_user.company_id)
+        end
+
+        def scoped_emails
+          return ::Sales::EmailMessage.all if current_user.admin?
+          ::Sales::EmailMessage.joins(:account).where(sales_accounts: { company_id: current_user.company_id })
+        end
 
         def email_params
           params.require(:email).permit(
             :sales_account_id, :sales_contact_id, :sales_opportunity_id,
-            :to_email, :subject, :body, :body_text, :body_html
+            :to_email, :subject, :body, :body_text, :body_html, :open_tracking_enabled, :click_tracking_enabled, :message_id, :in_reply_to, :references_header, cc: [], bcc: [], attachments: [], body_json: {}
           )
         end
 

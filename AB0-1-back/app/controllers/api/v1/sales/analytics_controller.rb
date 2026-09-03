@@ -90,13 +90,24 @@ module Api
             },
             funnel: funnel,
             win_loss: win_loss,
-            revenue_by_month: revenue_by_month
+            revenue_by_month: revenue_by_month,
+            email_metrics: email_metrics(date_range)
           }
         end
 
         private
 
 
+
+        def email_metrics(date_range)
+          events = ::Sales::EmailEvent.all
+          events = events.where(company_id: current_user.company_id) unless current_user.admin?
+          events = events.where(occurred_at: date_range) if date_range
+
+          %w[sent delivered open click replied bounce complaint].to_h do |event_type|
+            [event_type, events.where(event_type: event_type).count]
+          end
+        end
 
         def parse_period(period)
           now = Time.current

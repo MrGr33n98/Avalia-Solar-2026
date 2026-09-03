@@ -16,7 +16,13 @@ export class SalesApiError extends Error {
   fields?: Record<string, string[]>;
   requestId?: string;
 
-  constructor(status: number, message: string, code = 'API_ERROR', fields?: Record<string, string[]>, requestId?: string) {
+  constructor(
+    status: number,
+    message: string,
+    code = 'API_ERROR',
+    fields?: Record<string, string[]>,
+    requestId?: string
+  ) {
     super(message);
     this.name = 'SalesApiError';
     this.status = status;
@@ -66,10 +72,13 @@ async function request<T>(url: string, options: RequestInit = {}, isRetry = fals
   const response = await fetch(url, {
     credentials: 'include',
     ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
+    headers:
+      options.body instanceof FormData
+        ? { Accept: 'application/json', ...options.headers }
+        : {
+            ...defaultHeaders,
+            ...options.headers,
+          },
   });
 
   if (response.status === 204) {
@@ -127,14 +136,21 @@ export const salesApi = {
     return res.pipelines ?? [];
   },
 
-  async getSavedViews(resourceType: ApiSavedView['resource_type'] = 'opportunity'): Promise<ApiSavedView[]> {
-    const res = await request<{ saved_views: ApiSavedView[] }>(`/api/v1/sales/saved_views?resource_type=${resourceType}`);
+  async getSavedViews(
+    resourceType: ApiSavedView['resource_type'] = 'opportunity'
+  ): Promise<ApiSavedView[]> {
+    const res = await request<{ saved_views: ApiSavedView[] }>(
+      `/api/v1/sales/saved_views?resource_type=${resourceType}`
+    );
     return res.saved_views ?? [];
   },
 
-  async createSavedView(payload: Pick<ApiSavedView, 'name' | 'resource_type' | 'filters' | 'sort' | 'columns'>): Promise<ApiSavedView> {
+  async createSavedView(
+    payload: Pick<ApiSavedView, 'name' | 'resource_type' | 'filters' | 'sort' | 'columns'>
+  ): Promise<ApiSavedView> {
     const res = await request<{ saved_view: ApiSavedView }>('/api/v1/sales/saved_views', {
-      method: 'POST', body: JSON.stringify({ saved_view: payload }),
+      method: 'POST',
+      body: JSON.stringify({ saved_view: payload }),
     });
     return res.saved_view;
   },
@@ -144,7 +160,10 @@ export const salesApi = {
   },
 
   async pinSavedView(id: number, pinned: boolean): Promise<ApiSavedView> {
-    const res = await request<{ saved_view: ApiSavedView }>(`/api/v1/sales/saved_views/${id}/pin`, { method: 'POST', body: JSON.stringify({ pinned }) });
+    const res = await request<{ saved_view: ApiSavedView }>(`/api/v1/sales/saved_views/${id}/pin`, {
+      method: 'POST',
+      body: JSON.stringify({ pinned }),
+    });
     return res.saved_view;
   },
 
@@ -153,8 +172,13 @@ export const salesApi = {
     return res.tags ?? [];
   },
 
-  async createTag(payload: Pick<ApiTag, 'name' | 'color' | 'entity_type'> & { description?: string }): Promise<ApiTag> {
-    const res = await request<{ tag: ApiTag }>('/api/v1/sales/tags', { method: 'POST', body: JSON.stringify({ tag: payload }) });
+  async createTag(
+    payload: Pick<ApiTag, 'name' | 'color' | 'entity_type'> & { description?: string }
+  ): Promise<ApiTag> {
+    const res = await request<{ tag: ApiTag }>('/api/v1/sales/tags', {
+      method: 'POST',
+      body: JSON.stringify({ tag: payload }),
+    });
     return res.tag;
   },
 
@@ -162,26 +186,54 @@ export const salesApi = {
     await request(`/api/v1/sales/tags/${id}`, { method: 'DELETE' });
   },
 
-  async applyTag(id: number, taggableType: 'Opportunity' | 'Account' | 'Contact', recordId: number): Promise<void> {
-    await request(`/api/v1/sales/tags/${id}/apply`, { method: 'POST', body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }) });
+  async applyTag(
+    id: number,
+    taggableType: 'Opportunity' | 'Account' | 'Contact',
+    recordId: number
+  ): Promise<void> {
+    await request(`/api/v1/sales/tags/${id}/apply`, {
+      method: 'POST',
+      body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }),
+    });
   },
 
-  async removeTag(id: number, taggableType: 'Opportunity' | 'Account' | 'Contact', recordId: number): Promise<void> {
-    await request(`/api/v1/sales/tags/${id}/remove`, { method: 'DELETE', body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }) });
+  async removeTag(
+    id: number,
+    taggableType: 'Opportunity' | 'Account' | 'Contact',
+    recordId: number
+  ): Promise<void> {
+    await request(`/api/v1/sales/tags/${id}/remove`, {
+      method: 'DELETE',
+      body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }),
+    });
   },
 
   // Opportunities
   async getOpportunities(params?: {
-    q?: string; status?: string; account_id?: number; pipeline_id?: number; stage_id?: number | number[]; stage_key?: string;
-    owner_id?: number | 'unassigned'; value_min?: number; value_max?: number;
-    close_from?: string; close_to?: string; sort?: string; direction?: 'asc' | 'desc';
-    page?: number; per_page?: number;
+    q?: string;
+    status?: string;
+    account_id?: number;
+    pipeline_id?: number;
+    stage_id?: number | number[];
+    stage_key?: string;
+    owner_id?: number | 'unassigned';
+    value_min?: number;
+    value_max?: number;
+    close_from?: string;
+    close_to?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+    page?: number;
+    per_page?: number;
   }): Promise<ApiOpportunity[]> {
     const qs = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
+      if (value !== undefined && value !== null && value !== '')
+        qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
     });
-    const res = await request<{ opportunities: ApiOpportunity[] }>(`/api/v1/sales/opportunities?${qs.toString()}`);
+    const res = await request<{ opportunities: ApiOpportunity[] }>(
+      `/api/v1/sales/opportunities?${qs.toString()}`
+    );
     return res.opportunities ?? [];
   },
 
@@ -212,15 +264,25 @@ export const salesApi = {
     return res.opportunity;
   },
 
-  async bulkUpdateOpportunities(ids: number[], action: 'status' | 'owner' | 'stage' | 'tag' | 'remove_tag', value: string | number): Promise<void> {
-    await request('/api/v1/sales/opportunities/bulk', { method: 'POST', body: JSON.stringify({ ids, action, value }) });
+  async bulkUpdateOpportunities(
+    ids: number[],
+    action: 'status' | 'owner' | 'stage' | 'tag' | 'remove_tag',
+    value: string | number
+  ): Promise<void> {
+    await request('/api/v1/sales/opportunities/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ ids, action, value }),
+    });
   },
 
   async updateOpportunityStage(id: number, stageKey: string): Promise<ApiOpportunity> {
-    const res = await request<{ opportunity: ApiOpportunity }>(`/api/v1/sales/opportunities/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ opportunity: { stage_key: stageKey } }),
-    });
+    const res = await request<{ opportunity: ApiOpportunity }>(
+      `/api/v1/sales/opportunities/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ opportunity: { stage_key: stageKey } }),
+      }
+    );
     return res.opportunity;
   },
 
@@ -296,7 +358,9 @@ export const salesApi = {
   },
 
   // Accounts
-  async getAccounts(params?: string | { q?: string; options?: boolean; limit?: number }): Promise<ApiAccount[]> {
+  async getAccounts(
+    params?: string | { q?: string; options?: boolean; limit?: number }
+  ): Promise<ApiAccount[]> {
     const qs = new URLSearchParams();
     if (typeof params === 'string') {
       if (params) qs.set('q', params);
@@ -305,7 +369,9 @@ export const salesApi = {
       if (params.options) qs.set('options', 'true');
       if (params.limit) qs.set('limit', String(params.limit));
     }
-    const res = await request<{ accounts: ApiAccount[] }>(`/api/v1/sales/accounts?${qs.toString()}`);
+    const res = await request<{ accounts: ApiAccount[] }>(
+      `/api/v1/sales/accounts?${qs.toString()}`
+    );
     return res.accounts ?? [];
   },
 
@@ -318,13 +384,20 @@ export const salesApi = {
   },
 
   // Contacts
-  async getContacts(params?: { q?: string; sales_account_id?: number | string; options?: boolean; limit?: number }): Promise<ApiContact[]> {
+  async getContacts(params?: {
+    q?: string;
+    sales_account_id?: number | string;
+    options?: boolean;
+    limit?: number;
+  }): Promise<ApiContact[]> {
     const qs = new URLSearchParams();
     if (params?.q) qs.set('q', params.q);
     if (params?.sales_account_id) qs.set('sales_account_id', String(params.sales_account_id));
     if (params?.options) qs.set('options', 'true');
     if (params?.limit) qs.set('limit', String(params.limit));
-    const res = await request<{ contacts: ApiContact[] }>(`/api/v1/sales/contacts?${qs.toString()}`);
+    const res = await request<{ contacts: ApiContact[] }>(
+      `/api/v1/sales/contacts?${qs.toString()}`
+    );
     return res.contacts ?? [];
   },
 
@@ -351,6 +424,34 @@ export const salesApi = {
     return res;
   },
 
+  async getEmailTemplates(): Promise<any[]> {
+    const res = await request<{ templates: any[] }>('/api/v1/sales/email_templates');
+    return res.templates ?? [];
+  },
+
+  async createEmailTemplate(payload: {
+    name: string;
+    subject_template: string;
+    body_html?: string;
+    body_json?: Record<string, unknown>;
+    category?: string;
+    private?: boolean;
+  }): Promise<any> {
+    const res = await request<{ template: any }>('/api/v1/sales/email_templates', {
+      method: 'POST',
+      body: JSON.stringify({ template: payload }),
+    });
+    return res.template;
+  },
+
+  async previewEmailTemplate(id: number, context: Record<string, unknown> = {}): Promise<any> {
+    const res = await request<{ preview: any }>(`/api/v1/sales/email_templates/${id}/preview`, {
+      method: 'POST',
+      body: JSON.stringify({ context }),
+    });
+    return res.preview;
+  },
+
   async sendEmail(payload: {
     to_email: string;
     subject: string;
@@ -360,10 +461,23 @@ export const salesApi = {
     sales_contact_id?: number;
     sales_account_id?: number;
     sales_opportunity_id?: number;
-  }): Promise<{ message: any }> {
-    const res = await request<{ message: any }>('/api/v1/sales/emails', {
+    cc?: string[];
+    bcc?: string[];
+    open_tracking_enabled?: boolean;
+    click_tracking_enabled?: boolean;
+    attachments?: File[];
+  }): Promise<{ message: string; email: any }> {
+    const { attachments, ...fields } = payload;
+    const body = new FormData();
+    Object.entries(fields).forEach(([key, value]) => {
+      if (Array.isArray(value)) value.forEach((item) => body.append(`email[${key}][]`, item));
+      else if (value !== undefined && value !== null)
+        body.append(`email[${key}]`, key === 'body_json' ? JSON.stringify(value) : String(value));
+    });
+    attachments?.forEach((file) => body.append('email[attachments][]', file));
+    const res = await request<{ message: string; email: any }>('/api/v1/sales/emails', {
       method: 'POST',
-      body: JSON.stringify({ email_message: payload }),
+      body: attachments?.length ? body : JSON.stringify({ email: fields }),
     });
     return res;
   },

@@ -9,8 +9,8 @@ module Sales
       # 1. Render through Fail-Closed Renderer
       rendered = ::Sales::Messaging::Renderer.render(
         body_json: email.body_json,
-        raw_html: email.body_html,
-        raw_text: email.body_text,
+        raw_html: body_with_signature(email),
+        raw_text: text_with_signature(email),
         subject: email.subject,
         to_email: email.to_email,
         context: {
@@ -57,6 +57,25 @@ module Sales
         email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => result.error_message))
         email.register_event!(event_type: 'failed', occurred_at: Time.current, payload: { error: result.error_message })
       end
+    private
+
+    def signature_for(email)
+      scope = ::Sales::EmailSignature.where(user_id: email.sender_user_id, company_id: email.company_id)
+      scope = scope.where(sales_email_account_id: email.sales_email_account_id) if email.sales_email_account_id.present?
+      scope.find_by(is_default: true) || scope.where(sales_email_account_id: nil).find_by(is_default: true)
+    end
+
+    def body_with_signature(email)
+      signature = signature_for(email)
+      [email.body_html, signature&.body_html].compact.join('<br><br>')
+    end
+
+    def text_with_signature(email)
+      signature = signature_for(email)
+      signature_text = signature && ActionView::Base.full_sanitizer.sanitize(signature.body_html)
+      [email.body_text, signature_text].compact.join("\n\n")
+    end
+
     rescue ::Sales::Messaging::Renderer::EmailRenderError => e
       Rails.logger.error("[SendEmailJob] Fail-Closed Renderer bloqueou o envio: #{e.message}")
       email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.message))

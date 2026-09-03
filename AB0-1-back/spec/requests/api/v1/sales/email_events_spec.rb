@@ -5,14 +5,14 @@ require 'rails_helper'
 RSpec.describe 'Sales Email Events Webhook API', type: :request do
   describe 'POST /api/v1/sales/email_events/provider' do
     context 'when anonymous (SES webhook ingestion)' do
-      it 'does not return 401 Unauthorized' do
+      it 'rejects requests without SNS authenticity proof' do
         post '/api/v1/sales/email_events/provider', params: { provider_message_id: 'unknown-id', event_type: 'delivered' }
-        expect(response.status).not_to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
 
-      it 'returns 404 when email message is not found' do
-        post '/api/v1/sales/email_events/provider', params: { provider_message_id: 'non-existent-msg-id', event_type: 'delivered' }
-        expect(response).to have_http_status(:not_found)
+      it 'rejects malformed payloads as bad request' do
+        post '/api/v1/sales/email_events/provider', params: '{invalid-json', headers: { 'CONTENT_TYPE' => 'application/json' }
+        expect(response).to have_http_status(:bad_request)
       end
     end
   end

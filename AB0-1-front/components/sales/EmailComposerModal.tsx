@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { Mail, Send, Sparkles, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +70,10 @@ export default function EmailComposerModal({
 }: EmailComposerModalProps) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState('');
+  const [cc, setCc] = useState('');
+  const [bcc, setBcc] = useState('');
+  const [openTracking, setOpenTracking] = useState(true);
+  const [clickTracking, setClickTracking] = useState(true);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,8 +83,12 @@ export default function EmailComposerModal({
     const tmpl = TEMPLATES.find((t) => t.id === templateId);
     if (!tmpl) return;
 
-    let sub = tmpl.subject.replace(/{{company_name}}/g, companyName).replace(/{{contact_name}}/g, contactName);
-    let bdy = tmpl.body.replace(/{{company_name}}/g, companyName).replace(/{{contact_name}}/g, contactName);
+    let sub = tmpl.subject
+      .replace(/{{company_name}}/g, companyName)
+      .replace(/{{contact_name}}/g, contactName);
+    let bdy = tmpl.body
+      .replace(/{{company_name}}/g, companyName)
+      .replace(/{{contact_name}}/g, contactName);
 
     setSubject(sub);
     setBody(bdy);
@@ -101,6 +115,16 @@ export default function EmailComposerModal({
             sales_contact_id: contactId,
             sales_opportunity_id: opportunityId,
             to_email: contactEmail,
+            cc: cc
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean),
+            bcc: bcc
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean),
+            open_tracking_enabled: openTracking,
+            click_tracking_enabled: clickTracking,
             subject: subject,
             body_text: body,
           },
@@ -112,7 +136,7 @@ export default function EmailComposerModal({
         throw new Error(errData.message || 'Falha ao enviar e-mail comercial.');
       }
 
-      setSuccessMsg('E-mail enfileirado para envio com sucesso!');
+      setSuccessMsg('E-mail enfileirado. O status será atualizado após confirmação do provedor.');
       setTimeout(() => {
         setOpen(false);
         setSuccessMsg(null);
@@ -130,7 +154,11 @@ export default function EmailComposerModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="min-h-9 border-blue-300 text-blue-900 font-bold hover:bg-blue-50">
+        <Button
+          size="sm"
+          variant="outline"
+          className="min-h-9 border-blue-300 text-blue-900 font-bold hover:bg-blue-50"
+        >
           <Mail className="mr-1.5 h-3.5 w-3.5" /> Enviar E-mail
         </Button>
       </DialogTrigger>
@@ -145,7 +173,9 @@ export default function EmailComposerModal({
         <div className="space-y-4 pt-3 text-xs">
           {/* Template Selector */}
           <div className="space-y-1.5">
-            <label className="font-semibold text-slate-700">Modelos de E-mail (Outreach Templates):</label>
+            <label className="font-semibold text-slate-700">
+              Modelos de E-mail (Outreach Templates):
+            </label>
             <div className="flex flex-wrap gap-2">
               {TEMPLATES.map((tmpl) => (
                 <Button
@@ -165,11 +195,40 @@ export default function EmailComposerModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-semibold text-slate-700">Para:</label>
-              <Input value={`${contactName} <${contactEmail || 'sem-email@empresa.com'}>`} disabled className="bg-slate-100 font-medium text-slate-700 mt-1" />
+              <Input
+                value={`${contactName} <${contactEmail || 'sem-email@empresa.com'}>`}
+                disabled
+                className="bg-slate-100 font-medium text-slate-700 mt-1"
+              />
             </div>
             <div>
               <label className="font-semibold text-slate-700">Empresa / Lead:</label>
-              <Input value={companyName} disabled className="bg-slate-100 font-medium text-slate-700 mt-1" />
+              <Input
+                value={companyName}
+                disabled
+                className="bg-slate-100 font-medium text-slate-700 mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-semibold text-slate-700">CC (separado por vírgula):</label>
+              <Input
+                value={cc}
+                onChange={(e) => setCc(e.target.value)}
+                placeholder="copia@empresa.com"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-700">BCC (separado por vírgula):</label>
+              <Input
+                value={bcc}
+                onChange={(e) => setBcc(e.target.value)}
+                placeholder="copia-oculta@empresa.com"
+                className="mt-1"
+              />
             </div>
           </div>
 
@@ -192,6 +251,25 @@ export default function EmailComposerModal({
               placeholder="Escreva sua mensagem comercial..."
               className="mt-1 font-mono text-slate-800 border-slate-300 text-xs leading-relaxed"
             />
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-slate-700">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={openTracking}
+                onChange={(e) => setOpenTracking(e.target.checked)}
+              />{' '}
+              Rastrear abertura
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={clickTracking}
+                onChange={(e) => setClickTracking(e.target.checked)}
+              />{' '}
+              Rastrear cliques
+            </label>
           </div>
 
           {error && (

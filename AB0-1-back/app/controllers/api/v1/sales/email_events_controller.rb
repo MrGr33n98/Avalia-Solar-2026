@@ -8,6 +8,7 @@ module Api
         skip_before_action :require_internal_sales, only: [:create]
 
         before_action :verify_provider_authenticity, only: [:create]
+        rescue_from ActionDispatch::Http::Parameters::ParseError, with: :render_malformed_request
 
         def create
           provider_msg_id = params[:provider_message_id] || params.dig(:mail, :messageId) || params.dig(:mail, :headers, :messageId)
@@ -38,14 +39,18 @@ module Api
 
         private
 
-        def verify_provider_authenticity
-          secret = ENV['SALES_EMAIL_WEBHOOK_SECRET']
-          return true if secret.blank? # Skip in dev if secret not configured
+        def render_malformed_request
+          render json: { error: 'Malformed webhook payload' }, status: :bad_request
+        end
 
-          token = request.headers['X-Webhook-Token'] || params[:token] || request.headers['HTTP_X_AMZ_SNS_MESSAGE_TYPE']
-          unless token.present? && (token == secret || request.headers['HTTP_X_AMZ_SNS_MESSAGE_TYPE'].present?)
-            render json: { error: 'Unauthorized webhook request' }, status: :unauthorized
-          end
+        def verify_provider_authenticity
+          secret = ENV['SALES_EMAIL_WEBHOOK_SECRET'].presence
+          return true if secret.blank? && Rails.env.development?
+
+          token = request.headers['X-Webhook-Token'] || params[:token]
+          authorized = secret.present? && token.present? && token.to_s.bytesize == secret.bytesize &&
+                       ActiveSupport::SecurityUtils.secure_compare(token.to_s, secret)
+          render json: { error: 'Unauthorized webhook request' }, status: :unauthorized unless authorized
         end
       end
     end

@@ -4,7 +4,7 @@
 
 ### 1. Existing Models
 - `Sales::EmailMessage` (`app/models/sales/email_message.rb`): Represents individual outbound/inbound email records.
-- `Sales::EmailEvent` (`app/models/sales/email_event.rb`): Stores lifecycle events (sent, delivered, opened, clicked, bounced).
+- `Sales::EmailEvent` (`app/models/sales/email_event.rb`): Stores lifecycle events (queued, sent, delivered, open, click, replied, bounce, complaint, reject, delivery_delay, failed), com escopo tenant.
 
 ### 2. Existing Controllers
 - `Api::V1::Sales::EmailsController` (`app/controllers/api/v1/sales/emails_controller.rb`): Handles list, show, create, and send actions.
@@ -12,7 +12,7 @@
 
 ### 3. Existing Jobs & Background Infrastructure
 - `Sales::SendEmailJob` (`app/jobs/sales/send_email_job.rb`): Sidekiq background job orchestrating email dispatch.
-- **SES Simulation Audit**: Previously, `SendEmailJob` contained a simulated SES call when AWS credentials were empty or in development environment.
+- **SES Provider**: Envio fail-closed via AWS SES V2; credenciais ausentes, erro AWS ou resposta sem `message_id` marcam falha e nunca geram ID sintético.
 
 ### 4. Infrastructure & Storage
 - Sidekiq 7 + Redis 7 for queue management.

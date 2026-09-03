@@ -43,4 +43,44 @@ RSpec.describe Sales::Messaging::Renderer do
       }.to raise_error(Sales::Messaging::Renderer::EmailRenderError, /Corpo HTML gerado está vazio/)
     end
   end
+
+  it 'renderiza nós TipTap de conteúdo suportados com segurança' do
+    body = {
+      'type' => 'doc',
+      'content' => [
+        { 'type' => 'section', 'content' => [{ 'type' => 'paragraph', 'content' => [{ 'type' => 'text', 'text' => 'Olá' }] }] },
+        { 'type' => 'button', 'attrs' => { 'href' => 'https://example.com', 'label' => 'Abrir' } },
+        { 'type' => 'image', 'attrs' => { 'src' => 'javascript:alert(1)', 'alt' => 'x' } },
+        { 'type' => 'variableTag', 'attrs' => { 'value' => '{{company.name}}' } }
+      ]
+    }
+    result = described_class.render(body_json: body, subject: 'Oi {{company.name}}', to_email: 'destino@example.com',
+                                    context: { company: instance_double('Company', name: 'Avalia Solar') })
+    expect(result[:body_html]).to include('Olá', 'Abrir', 'Avalia Solar')
+    expect(result[:body_html]).not_to include('javascript:')
+  end
+
+  it 'remove vetores HTML inseguros e preserva texto literal' do
+    result = described_class.render(
+      raw_html: '<p onclick="alert(1)">Oi</p><script>alert(1)</script><iframe src="https://evil.test"></iframe><img onerror="alert(1)" src="data:text/html,x">',
+      raw_text: 'texto <script>alert(1)</script>',
+      subject: 'Assunto',
+      to_email: 'destino@example.com'
+    )
+
+    expect(result[:body_html]).to include('<p>Oi</p>')
+    expect(result[:body_html]).not_to include('onclick', 'onerror', '<script', '<iframe', 'data:')
+    expect(result[:body_html]).not_to include('alert(1)')
+  end
+
+  it 'aceita somente protocolos seguros em links' do
+    result = described_class.render(
+      raw_html: '<a href="javascript:alert(1)">js</a><a href="data:text/html,x">data</a><a href="https://example.com">ok</a>',
+      subject: 'Assunto',
+      to_email: 'destino@example.com'
+    )
+
+    expect(result[:body_html]).to include('https://example.com')
+    expect(result[:body_html]).not_to match(/javascript:|data:/i)
+  end
 end

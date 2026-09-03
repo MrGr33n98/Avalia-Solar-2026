@@ -5,10 +5,7 @@ module Sales
     module Providers
       class Microsoft < Base
         def send_message(email_message, options = {})
-          Result.new(
-            success?: true,
-            provider_message_id: "msgraph-#{SecureRandom.hex(10)}"
-          )
+          Result.new(success?: false, error_code: 'MICROSOFT_NOT_IMPLEMENTED', error_message: 'Microsoft provider ainda não implementado.')
         end
       end
     end

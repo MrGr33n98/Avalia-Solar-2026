@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
   BarChart3,
-  Calendar,
   CheckCircle2,
   CircleDollarSign,
   Clock,
@@ -31,7 +30,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type Kpi = {
@@ -67,18 +72,28 @@ type RevenueByMonth = {
   pipeline_cents?: number;
 };
 
+type EmailMetrics = Record<
+  'sent' | 'delivered' | 'open' | 'click' | 'replied' | 'bounce' | 'complaint',
+  number
+>;
+
 type AnalyticsData = {
   kpis: Kpi;
   funnel: FunnelItem[];
   win_loss: WinLossItem[];
   revenue_by_month: RevenueByMonth[];
   loss_reasons?: WinLossItem[];
+  email_metrics?: EmailMetrics;
 };
 
 const WIN_LOSS_COLORS = ['#10B981', '#EF4444', '#F59E0B', '#6B7280', '#3B82F6', '#8B5CF6'];
 
 function fmtBRL(cents: number): string {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 });
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+  });
 }
 
 function KpiCard({
@@ -95,7 +110,9 @@ function KpiCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={`border shadow-xs ${highlight ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-white'}`}>
+    <Card
+      className={`border shadow-xs ${highlight ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-white'}`}
+    >
       <CardContent className="flex items-start gap-3.5 p-4">
         <div className={`rounded-lg p-2.5 text-white ${highlight ? 'bg-blue-700' : 'bg-blue-900'}`}>
           <Icon className="h-5 w-5" />
@@ -130,7 +147,9 @@ export default function SalesAnalyticsReport() {
     setError(null);
     setUnauthorized(false);
     try {
-      const res = await fetch(`/api/v1/sales/analytics?period=${period}`, { credentials: 'include' });
+      const res = await fetch(`/api/v1/sales/analytics?period=${period}`, {
+        credentials: 'include',
+      });
 
       if (res.status === 401 || res.status === 403) {
         setUnauthorized(true);
@@ -178,7 +197,9 @@ export default function SalesAnalyticsReport() {
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Badge className="border-0 bg-blue-900 font-semibold text-white">Avalia Solar CRM</Badge>
+              <Badge className="border-0 bg-blue-900 font-semibold text-white">
+                Avalia Solar CRM
+              </Badge>
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Executive Intelligence
               </span>
@@ -218,14 +239,20 @@ export default function SalesAnalyticsReport() {
 
         {/* State Handling */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="analytics-loading">
+          <div
+            className="flex flex-col items-center justify-center py-20 gap-4"
+            data-testid="analytics-loading"
+          >
             <Loader2 className="h-8 w-8 animate-spin text-blue-700" />
             <p className="text-sm text-slate-500">Carregando dados do pipeline...</p>
           </div>
         )}
 
         {!loading && unauthorized && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="analytics-unauthorized">
+          <div
+            className="flex flex-col items-center justify-center py-20 gap-4"
+            data-testid="analytics-unauthorized"
+          >
             <XCircle className="h-10 w-10 text-amber-500" />
             <p className="font-semibold text-slate-900">Sessão expirada ou sem permissão</p>
             <a href="/login">
@@ -235,7 +262,10 @@ export default function SalesAnalyticsReport() {
         )}
 
         {!loading && error && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="analytics-error">
+          <div
+            className="flex flex-col items-center justify-center py-20 gap-4"
+            data-testid="analytics-error"
+          >
             <AlertCircle className="h-10 w-10 text-red-500" />
             <p className="font-semibold text-slate-900">{error}</p>
             <Button onClick={fetchAnalytics} variant="outline" className="font-semibold">
@@ -248,7 +278,10 @@ export default function SalesAnalyticsReport() {
           <>
             {/* KPI Grid */}
             {kpis && (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="analytics-kpis">
+              <div
+                className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                data-testid="analytics-kpis"
+              >
                 <KpiCard
                   icon={CircleDollarSign}
                   label="Pipeline Total"
@@ -288,7 +321,11 @@ export default function SalesAnalyticsReport() {
                 <KpiCard
                   icon={Clock}
                   label="Ciclo Médio de Venda"
-                  value={kpis.average_sales_cycle_days > 0 ? `${kpis.average_sales_cycle_days} dias` : '—'}
+                  value={
+                    kpis.average_sales_cycle_days > 0
+                      ? `${kpis.average_sales_cycle_days} dias`
+                      : '—'
+                  }
                   detail="da criação ao fechamento"
                 />
                 <KpiCard
@@ -300,10 +337,45 @@ export default function SalesAnalyticsReport() {
               </div>
             )}
 
+            {data.email_metrics && (
+              <Card className="border-slate-200 bg-white shadow-xs" data-testid="email-analytics">
+                <CardHeader className="border-b border-slate-100 p-5">
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Desempenho de e-mail
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-500">
+                    Eventos registrados no período selecionado
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 lg:grid-cols-7">
+                  {(
+                    [
+                      ['Enviados', 'sent'],
+                      ['Entregues', 'delivered'],
+                      ['Aberturas', 'open'],
+                      ['Cliques', 'click'],
+                      ['Respostas', 'replied'],
+                      ['Bounces', 'bounce'],
+                      ['Reclamações', 'complaint'],
+                    ] as const
+                  ).map(([label, key]) => (
+                    <div key={key} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <p className="text-[11px] font-semibold text-slate-500">{label}</p>
+                      <p className="mt-1 text-xl font-bold text-slate-900">
+                        {data.email_metrics?.[key] ?? 0}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Revenue by Month Chart */}
             <Card className="border-slate-200 bg-white shadow-xs">
               <CardHeader className="border-b border-slate-100 p-5">
-                <CardTitle className="text-base font-bold text-slate-900">Previsão Ponderada do Pipeline</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Previsão Ponderada do Pipeline
+                </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
                   Receita realizada (Won) vs. pipeline ponderado por período
                 </CardDescription>
@@ -313,7 +385,10 @@ export default function SalesAnalyticsReport() {
                   <EmptyChart message="Sem dados de receita para o período selecionado." />
                 ) : (
                   <ResponsiveContainer width="100%" height={260}>
-                    <AreaChart data={revenueByMonth} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <AreaChart
+                      data={revenueByMonth}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
                       <defs>
                         <linearGradient id="colorReal" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.25} />
@@ -324,7 +399,11 @@ export default function SalesAnalyticsReport() {
                           <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 11, fill: '#6B7280' }}
+                        tickLine={false}
+                      />
                       <YAxis
                         tick={{ fontSize: 11, fill: '#6B7280' }}
                         tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
@@ -359,7 +438,9 @@ export default function SalesAnalyticsReport() {
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="border-slate-200 bg-white shadow-xs">
                 <CardHeader className="border-b border-slate-100 p-5">
-                  <CardTitle className="text-base font-bold text-slate-900">Funil de Vendas</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Funil de Vendas
+                  </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     Oportunidades por estágio do pipeline
                   </CardDescription>
@@ -385,7 +466,9 @@ export default function SalesAnalyticsReport() {
                         />
                         <Tooltip
                           formatter={(val: number, name: string) =>
-                            name === 'count' ? [`${val} negócios`, 'Quantidade'] : [fmtBRL(val * 100), 'Valor']
+                            name === 'count'
+                              ? [`${val} negócios`, 'Quantidade']
+                              : [fmtBRL(val * 100), 'Valor']
                           }
                         />
                         <Bar dataKey="count" fill="#1E3A8A" radius={[0, 4, 4, 0]} maxBarSize={22} />
@@ -397,7 +480,9 @@ export default function SalesAnalyticsReport() {
 
               <Card className="border-slate-200 bg-white shadow-xs">
                 <CardHeader className="border-b border-slate-100 p-5">
-                  <CardTitle className="text-base font-bold text-slate-900">Motivos de Perda</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Motivos de Perda
+                  </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     Distribuição de negócios Won vs. categorias de Lost
                   </CardDescription>
@@ -446,9 +531,14 @@ export default function SalesAnalyticsReport() {
         )}
 
         {!loading && !error && !unauthorized && data === null && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="analytics-empty">
+          <div
+            className="flex flex-col items-center justify-center py-20 gap-4"
+            data-testid="analytics-empty"
+          >
             <BarChart3 className="h-10 w-10 text-slate-300" />
-            <p className="font-semibold text-slate-700">Nenhum dado disponível para o período selecionado.</p>
+            <p className="font-semibold text-slate-700">
+              Nenhum dado disponível para o período selecionado.
+            </p>
             <p className="text-xs text-slate-500">
               Crie oportunidades no pipeline para que os dados apareçam aqui.
             </p>

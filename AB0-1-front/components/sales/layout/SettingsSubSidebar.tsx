@@ -5,13 +5,12 @@ import { usePathname } from 'next/navigation';
 import {
   Activity,
   Building2,
-  ChevronRight,
   Database,
   Globe,
   Key,
   Layers,
   MapPin,
-  Shield,
+  Mail,
   Sliders,
   Tag,
   Users,
@@ -51,10 +50,37 @@ export default function SettingsSubSidebar() {
               </span>
             </Link>
             <Link
+              href="/dashboard/sales/settings/email"
+              className={cn(
+                'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
+                isCurrent('/dashboard/sales/settings/email') &&
+                  'bg-slate-800 text-white font-medium'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <span>Email & signatures</span>
+              </span>
+            </Link>
+            <Link
+              href="/dashboard/sales/settings/email/templates"
+              className={cn(
+                'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
+                isCurrent('/dashboard/sales/settings/email/templates') &&
+                  'bg-slate-800 text-white font-medium'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <span>Email templates</span>
+              </span>
+            </Link>
+            <Link
               href="/dashboard/sales/settings/access"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/access') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/access') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -75,7 +101,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/custom-fields"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/custom-fields') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/custom-fields') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -87,7 +114,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/api-keys"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/api-keys') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/api-keys') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -99,7 +127,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/integrations"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/integrations') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/integrations') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -120,7 +149,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/activity-types"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/activity-types') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/activity-types') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -132,7 +162,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/company-types"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/company-types') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/company-types') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -144,7 +175,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/industries"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/industries') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/industries') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -156,7 +188,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/markets"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/markets') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/markets') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
@@ -180,7 +213,8 @@ export default function SettingsSubSidebar() {
               href="/dashboard/sales/settings/territories"
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
-                isCurrent('/dashboard/sales/settings/territories') && 'bg-slate-800 text-white font-medium'
+                isCurrent('/dashboard/sales/settings/territories') &&
+                  'bg-slate-800 text-white font-medium'
               )}
             >
               <span className="flex items-center gap-2">
