@@ -57,62 +57,6 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
         </Link>
       </div>
 
-      {/* Action Header: Search & + Add new */}
-      <div className="p-3 space-y-2 border-b border-slate-800/60">
-        <button
-          onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-400 bg-slate-900/80 hover:bg-slate-800/90 rounded-md border border-slate-750 transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-slate-400" />
-            <span>Search or press Ctrl+K...</span>
-          </span>
-        </button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-medium text-xs justify-between"
-            >
-              <span className="flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-emerald-400" />
-                <span>Add new</span>
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-52 bg-slate-900 text-slate-100 border-slate-800">
-            <DropdownMenuLabel className="text-xs text-slate-400">Criar Novo Registro</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-slate-800" />
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('company')} className="cursor-pointer hover:bg-slate-800">
-              <Building2 className="w-4 h-4 mr-2 text-blue-400" /> Empresa (Company)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('contact')} className="cursor-pointer hover:bg-slate-800">
-              <Users className="w-4 h-4 mr-2 text-emerald-400" /> Pessoa (Contact)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('opportunity')} className="cursor-pointer hover:bg-slate-800">
-              <Target className="w-4 h-4 mr-2 text-amber-400" /> Oportunidade / Lead
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('quote')} className="cursor-pointer hover:bg-slate-800">
-              <FileText className="w-4 h-4 mr-2 text-indigo-400" /> Proposta Solar / Quote
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('task')} className="cursor-pointer hover:bg-slate-800">
-              <CalendarClock className="w-4 h-4 mr-2 text-sky-400" /> Tarefa / Compromisso
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('activity')} className="cursor-pointer hover:bg-slate-800">
-              <Phone className="w-4 h-4 mr-2 text-rose-400" /> Atividade / Chamada
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('email')} className="cursor-pointer hover:bg-slate-800">
-              <Mail className="w-4 h-4 mr-2 text-purple-400" /> Enviar E-mail
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpenAddModal?.('import')} className="cursor-pointer hover:bg-slate-800">
-              <FileSpreadsheet className="w-4 h-4 mr-2 text-teal-400" /> Importar Leads (CSV)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
       {/* Main Navigation Links */}
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 text-xs">
         <Link
