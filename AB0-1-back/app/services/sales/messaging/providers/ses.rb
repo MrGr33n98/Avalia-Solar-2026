@@ -38,10 +38,14 @@ module Sales
               )
 
               participants = email_message.participants.group_by(&:participant_type)
+              to_addresses = participants['to'].present? ? participants['to'].map(&:email) : [email_message.to_email].compact_blank
+              cc_addresses = participants['cc'].present? ? participants['cc'].map(&:email) : []
+              bcc_addresses = participants['bcc'].present? ? participants['bcc'].map(&:email) : []
+
               destination = {
-                to_addresses: participants.fetch('to', [email_message.to_email]).map(&:email),
-                cc_addresses: participants.fetch('cc', []).map(&:email),
-                bcc_addresses: participants.fetch('bcc', []).map(&:email)
+                to_addresses: to_addresses,
+                cc_addresses: cc_addresses,
+                bcc_addresses: bcc_addresses
               }.reject { |_type, addresses| addresses.blank? }
               request = {
                 from_email_address: email_message.from_email,
@@ -52,8 +56,7 @@ module Sales
                     body: {
                       html: { data: html_with_tracking, charset: 'UTF-8' },
                       text: { data: email_message.body_text || '', charset: 'UTF-8' }
-                    },
-                    headers: [{ name: 'Message-ID', value: email_message.message_id }]
+                    }
                   }
                 }
               }
