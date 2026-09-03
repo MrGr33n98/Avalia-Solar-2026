@@ -3,6 +3,13 @@ module Api
     module Sales
       class AccountsController < BaseController
         def index
+          if params[:options].present? || params[:limit].present?
+            limit = [ (params[:limit] || 20).to_i, 50 ].min
+            accounts = ::Sales::AccountOptionsQuery.call(query: params[:q], limit: limit)
+            render json: { accounts: accounts.map { |a| { id: a.id, name: a.name, domain: a.domain } } }
+            return
+          end
+
           scope = ::Sales::Account.includes(:company, :owner, :contacts, :opportunities).order(created_at: :desc)
           if params[:q].present?
             q = "%#{params[:q].to_s.downcase}%"

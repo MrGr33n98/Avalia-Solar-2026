@@ -108,65 +108,25 @@ module Api
         end
 
         def create
-          ActiveRecord::Base.transaction do
-            account_id = opportunity_create_params[:sales_account_id]
-            if account_id.blank? && (params[:account].present? || params.dig(:opportunity, :account).present?)
-              acc_data = params[:account] || params.dig(:opportunity, :account)
-              if acc_data.is_a?(Hash) && acc_data[:name].present?
-                new_account = ::Sales::Account.create!(
-                  name: acc_data[:name],
-                  domain: acc_data[:domain],
-                  user: current_user
-                )
-                account_id = new_account.id
-              end
-            end
+          result = ::Sales::Opportunities::Create.call(
+            actor: current_user,
+            attributes: opportunity_create_params.merge(stage_key: params.dig(:opportunity, :stage_key)),
+            inline_account: params[:account] || params.dig(:opportunity, :account),
+            inline_contact: params[:contact] || params.dig(:opportunity, :contact)
+          )
 
-            contact_id = opportunity_create_params[:primary_contact_id]
-            if contact_id.blank? && (params[:contact].present? || params.dig(:opportunity, :contact).present?) && account_id.present?
-              ct_data = params[:contact] || params.dig(:opportunity, :contact)
-              if ct_data.is_a?(Hash) && ct_data[:first_name].present?
-                new_contact = ::Sales::Contact.create!(
-                  sales_account_id: account_id,
-                  first_name: ct_data[:first_name],
-                  email: ct_data[:email],
-                  user: current_user
-                )
-                contact_id = new_contact.id
-              end
-            end
-
-            pipeline = resolve_pipeline
-            stage = resolve_stage(pipeline)
-
-            opportunity = ::Sales::Opportunity.new(
-              opportunity_create_params.merge(
-                sales_account_id: account_id,
-                primary_contact_id: contact_id,
-                owner: current_user,
-                sales_pipeline: pipeline,
-                sales_stage: stage,
-                stage_entered_at: Time.current,
-                status: opportunity_create_params[:status].presence || 'open'
-              )
-            )
-
-            opportunity.probability = stage.probability unless opportunity.probability_overridden?
-            opportunity.save!
-            opportunity.stage_histories.create!(to_stage: stage, actor: current_user, entered_at: Time.current)
-            render json: { opportunity: opportunity_json(opportunity) }, status: :created
+          if result.success?
+            render json: { opportunity: opportunity_json(result.opportunity) }, status: :created
+          else
+            render json: {
+              error: {
+                code: result.code,
+                message: result.message,
+                fields: result.fields,
+                request_id: request.request_id
+              }
+            }, status: :unprocessable_entity
           end
-        rescue ActiveRecord::RecordNotFound => e
-          render_error_response(message: e.message, status: :unprocessable_entity, code: 'STAGE_NOT_FOUND')
-        rescue ActiveRecord::RecordInvalid => e
-          render json: {
-            error: {
-              code: 'VALIDATION_ERROR',
-              message: e.message,
-              fields: e.record.errors.messages,
-              request_id: request.request_id
-            }
-          }, status: :unprocessable_entity
         end
 
         def update

@@ -6,6 +6,25 @@ module Api
         before_action :require_internal_sales
 
         def index
+          if params[:options].present? || params[:sales_account_id].present? || params[:account_id].present?
+            acc_id = params[:sales_account_id] || params[:account_id]
+            limit = [ (params[:limit] || 20).to_i, 50 ].min
+            contacts = ::Sales::ContactOptionsQuery.call(account_id: acc_id, query: params[:q], limit: limit)
+            render json: {
+              contacts: contacts.map do |c|
+                {
+                  id: c.id,
+                  first_name: c.first_name,
+                  last_name: c.last_name,
+                  name: [c.first_name, c.last_name].compact.join(' '),
+                  email: c.email,
+                  job_title: c.job_title
+                }
+              end
+            }
+            return
+          end
+
           query_scope = ::Sales::ContactsQuery.new(params).call
           total_count = query_scope.count
           page = [params[:page].to_i, 1].max

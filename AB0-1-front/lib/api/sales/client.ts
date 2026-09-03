@@ -241,9 +241,15 @@ export const salesApi = {
   },
 
   // Accounts
-  async getAccounts(query?: string): Promise<ApiAccount[]> {
+  async getAccounts(params?: string | { q?: string; options?: boolean; limit?: number }): Promise<ApiAccount[]> {
     const qs = new URLSearchParams();
-    if (query) qs.set('q', query);
+    if (typeof params === 'string') {
+      if (params) qs.set('q', params);
+    } else if (params) {
+      if (params.q) qs.set('q', params.q);
+      if (params.options) qs.set('options', 'true');
+      if (params.limit) qs.set('limit', String(params.limit));
+    }
     const res = await request<{ accounts: ApiAccount[] }>(`/api/v1/sales/accounts?${qs.toString()}`);
     return res.accounts ?? [];
   },
@@ -257,10 +263,12 @@ export const salesApi = {
   },
 
   // Contacts
-  async getContacts(params?: { q?: string; sales_account_id?: number }): Promise<ApiContact[]> {
+  async getContacts(params?: { q?: string; sales_account_id?: number | string; options?: boolean; limit?: number }): Promise<ApiContact[]> {
     const qs = new URLSearchParams();
     if (params?.q) qs.set('q', params.q);
     if (params?.sales_account_id) qs.set('sales_account_id', String(params.sales_account_id));
+    if (params?.options) qs.set('options', 'true');
+    if (params?.limit) qs.set('limit', String(params.limit));
     const res = await request<{ contacts: ApiContact[] }>(`/api/v1/sales/contacts?${qs.toString()}`);
     return res.contacts ?? [];
   },
