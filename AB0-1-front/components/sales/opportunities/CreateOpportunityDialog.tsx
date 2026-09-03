@@ -20,7 +20,8 @@ interface CreateOpportunityDialogProps {
 
 export default function CreateOpportunityDialog({ open, onOpenChange, onSuccess }: CreateOpportunityDialogProps) {
   const { data: pipelines } = useSalesPipelines();
-  const stages = pipelines?.[0]?.stages || [];
+  const pipeline = pipelines?.[0];
+  const stages = pipeline?.stages || [];
 
   const createMutation = useCreateOpportunityMutation();
 
@@ -69,6 +70,7 @@ export default function CreateOpportunityDialog({ open, onOpenChange, onSuccess 
       currency: 'BRL',
       status: 'open',
     };
+    if (pipeline?.id) payload.sales_pipeline_id = pipeline.id;
 
     if (selectedAccountId) payload.sales_account_id = Number(selectedAccountId);
     if (selectedContactId) payload.primary_contact_id = Number(selectedContactId);

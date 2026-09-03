@@ -41,8 +41,8 @@ module Sales
               sales_account_id: account_id,
               primary_contact_id: contact_id,
               owner: @actor,
-              sales_pipeline: pipeline,
-              sales_stage: stage,
+              pipeline: pipeline,
+              stage: stage,
               stage_entered_at: Time.current,
               status: clean_attrs[:status].presence || 'open'
             )
@@ -63,6 +63,8 @@ module Sales
         Result.new(success?: false, code: 'CONTACT_ACCOUNT_MISMATCH', message: e.message)
       rescue PipelineNotConfiguredError => e
         Result.new(success?: false, code: 'CRM_PIPELINE_NOT_CONFIGURED', message: e.message)
+      rescue StagePipelineMismatchError => e
+        Result.new(success?: false, code: 'STAGE_PIPELINE_MISMATCH', message: e.message)
       rescue ActiveRecord::RecordInvalid => e
         Result.new(
           success?: false,
@@ -88,6 +90,7 @@ module Sales
 
       class CustomerAccountMismatchError < StandardError; end
       class PipelineNotConfiguredError < StandardError; end
+      class StagePipelineMismatchError < StandardError; end
 
       def resolve_account
         return @attributes[:sales_account_id] if @attributes[:sales_account_id].present?
@@ -149,8 +152,12 @@ module Sales
         stage = if stage_key.present?
                   pipeline.stages.find_by(key: stage_key) || pipeline.stages.find_by(name: stage_key)
                 elsif stage_id.present?
-                  pipeline.stages.find_by(id: stage_id) || ::Sales::Stage.find_by(id: stage_id)
+                  pipeline.stages.find_by(id: stage_id)
                 end
+
+        if stage.nil? && stage_id.present? && ::Sales::Stage.exists?(id: stage_id)
+          raise StagePipelineMismatchError, "O estágio ##{stage_id} não pertence ao pipeline ##{pipeline.id}."
+        end
 
         stage ||= pipeline.stages.order(:position).first
 

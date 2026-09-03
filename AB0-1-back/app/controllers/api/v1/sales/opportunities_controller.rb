@@ -216,6 +216,7 @@ module Api
         def opportunity_create_params
           params.require(:opportunity).permit(
             :sales_account_id, :primary_contact_id,
+            :sales_pipeline_id, :sales_stage_id, :stage_key,
             :name, :value_cents, :currency, :probability, :probability_overridden,
             :priority, :source, :expected_close_date, :next_activity_at, :status
           )
