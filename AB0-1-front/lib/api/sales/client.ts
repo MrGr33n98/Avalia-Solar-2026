@@ -105,7 +105,7 @@ async function request<T>(url: string, options: RequestInit = {}, isRetry = fals
 
   if (!response.ok) {
     const errorBody: ApiErrorResponse = data;
-    let message = errorBody?.error?.message;
+    let message = typeof data?.error === 'string' ? data.error : errorBody?.error?.message;
 
     if (!message && errorBody?.error?.fields) {
       message = Object.values(errorBody.error.fields).flat().join('; ');
@@ -119,7 +119,7 @@ async function request<T>(url: string, options: RequestInit = {}, isRetry = fals
       message = message || `Erro na requisição (${response.status}).`;
     }
 
-    const code = errorBody?.error?.code || `HTTP_${response.status}`;
+    const code = (typeof data?.error === 'object' ? data?.error?.code : data?.code) || `HTTP_${response.status}`;
     const fields = errorBody?.error?.fields;
     const requestId = errorBody?.error?.request_id;
 

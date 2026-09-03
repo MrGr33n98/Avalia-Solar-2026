@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   module V1
     module Sales
@@ -24,45 +26,82 @@ module Api
         end
 
         def create
-          account = scoped_accounts.find(email_params[:sales_account_id])
-          contact = account.contacts.find(email_params[:sales_contact_id])
+          account = nil
+          contact = nil
+
+          if email_params[:sales_account_id].present?
+            account = scoped_accounts.find_by(id: email_params[:sales_account_id])
+            unless account
+              return render json: { error: 'Conta não encontrada', code: 'ACCOUNT_NOT_FOUND' }, status: :not_found
+            end
+          end
+
+          if email_params[:sales_contact_id].present?
+            contact = if account
+                        account.contacts.find_by(id: email_params[:sales_contact_id])
+                      else
+                        scoped_contacts.find_by(id: email_params[:sales_contact_id])
+                      end
+            unless contact
+              return render json: { error: 'Contato não encontrado', code: 'CONTACT_NOT_FOUND' }, status: :not_found
+            end
+          end
+
+          to_email = contact&.email.presence || email_params[:to_email].to_s.strip.downcase
+
+          if to_email.blank?
+            return render json: { error: 'Destinatário é obrigatório', code: 'EMAIL_RECIPIENT_REQUIRED' }, status: :unprocessable_entity
+          end
+
+          unless URI::MailTo::EMAIL_REGEXP.match?(to_email)
+            return render json: { error: 'Endereço de e-mail inválido', code: 'INVALID_EMAIL_ADDRESS' }, status: :unprocessable_entity
+          end
+
+          company_id = account&.company_id || current_user.company_id || 1
 
           email = nil
           ::Sales::EmailMessage.transaction do
-            thread = find_or_create_thread(account, contact)
+            thread = find_or_create_thread(
+              company_id: company_id,
+              account: account,
+              contact: contact,
+              to_email: to_email,
+              subject: email_params[:subject],
+              in_reply_to: email_params[:in_reply_to],
+              references_header: email_params[:references_header]
+            )
             thread.update!(last_message_at: Time.current, message_count: thread.message_count + 1)
 
-          email = ::Sales::EmailMessage.create!(
-            company_id: account.company_id,
-            sales_email_thread_id: thread.id,
-            sales_account_id: account.id,
-            sales_contact_id: contact.id,
-            sales_opportunity_id: email_params[:sales_opportunity_id],
-            message_id: email_params[:message_id].presence || "<#{SecureRandom.uuid}@avaliasolar.com.br>",
-            in_reply_to: email_params[:in_reply_to],
-            references_header: email_params[:references_header],
-            sender_user_id: current_user.id,
-            from_email: current_user.email || 'comercial@avaliasolar.com.br',
-            to_email: contact.email || email_params[:to_email],
-            subject: email_params[:subject],
-            body_json: parsed_body_json,
-            body_text: email_params[:body_text] || email_params[:body],
-            body_html: email_params[:body_html],
-            open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
-            click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
-            status: 'queued'
-          )
-
+            email = ::Sales::EmailMessage.create!(
+              company_id: company_id,
+              sales_email_thread_id: thread.id,
+              sales_account_id: account&.id,
+              sales_contact_id: contact&.id,
+              sales_opportunity_id: email_params[:sales_opportunity_id],
+              message_id: email_params[:message_id].presence || "<#{SecureRandom.uuid}@avaliasolar.com.br>",
+              in_reply_to: email_params[:in_reply_to],
+              references_header: email_params[:references_header],
+              sender_user_id: current_user.id,
+              from_email: current_user.email || 'comercial@avaliasolar.com.br',
+              to_email: to_email,
+              subject: email_params[:subject],
+              body_json: parsed_body_json,
+              body_text: email_params[:body_text] || email_params[:body],
+              body_html: email_params[:body_html],
+              open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
+              click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
+              status: 'queued'
+            )
 
             participants = {
-            'from' => [email.from_email],
-            'to' => [email.to_email],
-            'cc' => email_params[:cc],
-            'bcc' => email_params[:bcc]
-          }
+              'from' => [email.from_email],
+              'to' => [email.to_email],
+              'cc' => email_params[:cc],
+              'bcc' => email_params[:bcc]
+            }
             participants.each do |kind, addresses|
-            Array(addresses).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).each do |address|
-              email.participants.create!(company_id: email.company_id, email: address, participant_type: kind)
+              Array(addresses).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).each do |address|
+                email.participants.create!(company_id: email.company_id, email: address, participant_type: kind)
               end
             end
 
@@ -101,10 +140,31 @@ module Api
           raise ActionController::BadRequest, 'body_json inválido.'
         end
 
-        def find_or_create_thread(account, contact)
-          parent_ids = [email_params[:in_reply_to], email_params[:references_header]].compact_blank.flat_map { |value| value.to_s.split(/\s+/) }
-          existing = ::Sales::EmailThread.joins(:messages).where(sales_account_id: account.id, company_id: account.company_id, sales_email_messages: { message_id: parent_ids }).first if parent_ids.any?
-          existing || ::Sales::EmailThread.create!(company_id: account.company_id, sales_account_id: account.id, sales_contact_id: contact.id, subject_normalized: email_params[:subject].to_s.downcase.strip, first_message_at: Time.current, last_message_at: Time.current, message_count: 0)
+        def find_or_create_thread(company_id:, account:, contact:, to_email:, subject:, in_reply_to:, references_header:)
+          parent_ids = [in_reply_to, references_header].compact_blank.flat_map { |value| value.to_s.split(/\s+/) }
+          if parent_ids.any?
+            existing = ::Sales::EmailThread.joins(:messages)
+                                           .where(company_id: company_id, sales_email_messages: { message_id: parent_ids })
+                                           .first
+            return existing if existing
+          end
+
+          subject_norm = subject.to_s.downcase.strip
+          existing = if contact.present?
+                       ::Sales::EmailThread.where(company_id: company_id, sales_contact_id: contact.id, subject_normalized: subject_norm).first
+                     else
+                       ::Sales::EmailThread.where(company_id: company_id, sales_contact_id: nil, subject_normalized: subject_norm).first
+                     end
+
+          existing || ::Sales::EmailThread.create!(
+            company_id: company_id,
+            sales_account_id: account&.id,
+            sales_contact_id: contact&.id,
+            subject_normalized: subject_norm,
+            first_message_at: Time.current,
+            last_message_at: Time.current,
+            message_count: 0
+          )
         end
 
         def scoped_accounts
@@ -112,9 +172,14 @@ module Api
           ::Sales::Account.where(company_id: current_user.company_id)
         end
 
+        def scoped_contacts
+          return ::Sales::Contact.all if current_user.admin?
+          ::Sales::Contact.where(company_id: current_user.company_id)
+        end
+
         def scoped_emails
           return ::Sales::EmailMessage.all if current_user.admin?
-          ::Sales::EmailMessage.joins(:account).where(sales_accounts: { company_id: current_user.company_id })
+          ::Sales::EmailMessage.where(company_id: current_user.company_id)
         end
 
         def email_params

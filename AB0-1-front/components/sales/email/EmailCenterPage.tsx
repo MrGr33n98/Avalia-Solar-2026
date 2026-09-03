@@ -55,9 +55,15 @@ export default function EmailCenterPage() {
     try {
       const response = await fetch(`/api/v1/sales/emails?page=${page}&per_page=25`, {
         credentials: 'include',
-        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
       });
-      if (!response.ok) throw new Error('Não foi possível carregar os e-mails reais.');
+      if (response.status !== 304 && !response.ok) {
+        throw new Error('Não foi possível carregar os e-mails reais.');
+      }
       const data = await response.json();
       const list: EmailMessage[] = data.emails ?? [];
       setMessages(list);
@@ -71,7 +77,6 @@ export default function EmailCenterPage() {
       setError(err instanceof Error ? err.message : 'Erro ao carregar e-mails.');
       setMessages([]);
       setSelectedMessage(null);
-    } finally {
     }
   }, [page]);
 
