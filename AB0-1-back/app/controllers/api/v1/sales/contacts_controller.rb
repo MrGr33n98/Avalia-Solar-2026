@@ -10,6 +10,7 @@ module Api
 
           account_id = params[:account_id] || params[:sales_account_id]
           scope = scope.where(sales_account_id: account_id) if account_id.present?
+          scope = scope.where(decision_role: params[:decision_role]) if params[:decision_role].present?
 
           if params[:q].present?
             q = "%#{params[:q].to_s.downcase}%"
@@ -19,12 +20,74 @@ module Api
             )
           end
 
-          render json: { contacts: scope.limit(100).map { |c| serialize(c) } }
+          total_count = scope.count
+          page = [params[:page].to_i, 1].max
+          per_page = params[:per_page].present? ? [params[:per_page].to_i, 100].min : 50
+
+          contacts = scope.offset((page - 1) * per_page).limit(per_page)
+
+          render json: {
+            contacts: contacts.map { |c| serialize(c) },
+            meta: {
+              page: page,
+              per_page: per_page,
+              total: total_count,
+              pages: (total_count.to_f / per_page).ceil
+            }
+          }
         end
 
         def show
           contact = ::Sales::Contact.includes(:account, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
           render json: { contact: serialize_detailed(contact) }
+        end
+
+        def timeline
+          contact = ::Sales::Contact.find(params[:id])
+          events = []
+
+          contact.activities.order(occurred_at: :desc).each do |act|
+            events << {
+              id: "act-#{act.id}",
+              type: act.activity_type == 'call' ? 'call' : 'activity',
+              title: act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial',
+              description: act.description || act.body,
+              occurred_at: act.occurred_at || act.created_at
+            }
+          end
+
+          contact.tasks.each do |t|
+            events << {
+              id: "task-#{t.id}",
+              type: 'task',
+              title: "Tarefa: #{t.title}",
+              description: "Status: #{t.status || 'Pendente'}",
+              occurred_at: t.created_at
+            }
+          end
+
+          contact.opportunity_contacts.includes(:opportunity).each do |oc|
+            if oc.opportunity
+              events << {
+                id: "opp-#{oc.id}",
+                type: 'stage_changed',
+                title: "Vínculo a Oportunidade #{oc.opportunity.name}",
+                description: "Papel no Comitê: #{oc.role || 'Membro'}",
+                occurred_at: oc.created_at
+              }
+            end
+          end
+
+          events << {
+            id: "contact-created-#{contact.id}",
+            type: 'website',
+            title: 'Contato Cadastrado no CRM',
+            description: "Contato #{contact.first_name} #{contact.last_name} registrado.",
+            occurred_at: contact.created_at
+          }
+
+          events.sort_by! { |e| e[:occurred_at] || Time.current }.reverse!
+          render json: { timeline: events }
         end
 
         def create
@@ -48,8 +111,6 @@ module Api
 
         private
 
-
-
         def contact_params
           params.require(:contact).permit(
             :first_name, :last_name, :email, :phone, :whatsapp, :job_title, :linkedin_url,
@@ -69,9 +130,10 @@ module Api
             whatsapp: contact.whatsapp,
             job_title: contact.job_title,
             linkedin_url: contact.linkedin_url,
-            decision_role: contact.decision_role,
+            decision_role: contact.decision_role || 'decision_maker',
             is_primary: contact.is_primary,
-            account_name: contact.account&.name
+            account_name: contact.account&.name,
+            last_contact_at: contact.updated_at
           }
         end
 

@@ -84,6 +84,7 @@ Rails.application.routes.draw do
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
+          get :timeline, on: :member
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
         resources :opportunities, only: %i[index create show update], controller: 'sales/opportunities' do
