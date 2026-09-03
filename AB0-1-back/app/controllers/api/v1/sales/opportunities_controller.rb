@@ -110,24 +110,30 @@ module Api
         def create
           ActiveRecord::Base.transaction do
             account_id = opportunity_create_params[:sales_account_id]
-            if account_id.blank? && params[:account].present?
-              new_account = ::Sales::Account.create!(
-                name: params[:account][:name],
-                domain: params[:account][:domain],
-                user: current_user
-              )
-              account_id = new_account.id
+            if account_id.blank? && (params[:account].present? || params.dig(:opportunity, :account).present?)
+              acc_data = params[:account] || params.dig(:opportunity, :account)
+              if acc_data.is_a?(Hash) && acc_data[:name].present?
+                new_account = ::Sales::Account.create!(
+                  name: acc_data[:name],
+                  domain: acc_data[:domain],
+                  user: current_user
+                )
+                account_id = new_account.id
+              end
             end
 
             contact_id = opportunity_create_params[:primary_contact_id]
-            if contact_id.blank? && params[:contact].present? && account_id.present?
-              new_contact = ::Sales::Contact.create!(
-                sales_account_id: account_id,
-                first_name: params[:contact][:first_name],
-                email: params[:contact][:email],
-                user: current_user
-              )
-              contact_id = new_contact.id
+            if contact_id.blank? && (params[:contact].present? || params.dig(:opportunity, :contact).present?) && account_id.present?
+              ct_data = params[:contact] || params.dig(:opportunity, :contact)
+              if ct_data.is_a?(Hash) && ct_data[:first_name].present?
+                new_contact = ::Sales::Contact.create!(
+                  sales_account_id: account_id,
+                  first_name: ct_data[:first_name],
+                  email: ct_data[:email],
+                  user: current_user
+                )
+                contact_id = new_contact.id
+              end
             end
 
             pipeline = resolve_pipeline
@@ -140,7 +146,8 @@ module Api
                 owner: current_user,
                 sales_pipeline: pipeline,
                 sales_stage: stage,
-                stage_entered_at: Time.current
+                stage_entered_at: Time.current,
+                status: opportunity_create_params[:status].presence || 'open'
               )
             )
 
@@ -166,10 +173,12 @@ module Api
           ActiveRecord::Base.transaction do
             if params.dig(:opportunity, :stage_key).present? || params.dig(:opportunity, :sales_stage_id).present?
               stage = if params.dig(:opportunity, :stage_key).present?
-                        @opportunity.pipeline.stages.find_by!(key: params[:opportunity][:stage_key])
+                        @opportunity.pipeline.stages.find_by(key: params[:opportunity][:stage_key]) ||
+                          @opportunity.pipeline.stages.find_by(name: params[:opportunity][:stage_key])
                       else
-                        ::Sales::Stage.find(params[:opportunity][:sales_stage_id])
+                        ::Sales::Stage.find_by(id: params[:opportunity][:sales_stage_id])
                       end
+              stage ||= @opportunity.pipeline.stages.order(:position).first
               ::Sales::Opportunities::ChangeStage.call(opportunity: @opportunity, stage:, actor: current_user)
             else
               @opportunity.update!(opportunity_update_params)
@@ -196,29 +205,59 @@ module Api
           @opportunity = ::Sales::Opportunity.includes(:account, :stage, :primary_contact, :pipeline).find(params[:id])
         end
 
-
-
         def resolve_pipeline
-          if params.dig(:opportunity, :sales_pipeline_id).present?
-            ::Sales::Pipeline.find(params[:opportunity][:sales_pipeline_id])
-          else
-            ::Sales::Pipeline.find_by!(active: true)
+          pipeline = if params.dig(:opportunity, :sales_pipeline_id).present?
+                       ::Sales::Pipeline.find_by(id: params[:opportunity][:sales_pipeline_id])
+                     end
+          pipeline ||= ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
+
+          if pipeline.nil?
+            pipeline = ::Sales::Pipeline.create!(name: 'Avalia Solar B2B Sales', key: 'b2b_sales', active: true)
           end
+
+          ensure_default_stages!(pipeline) if pipeline.stages.empty?
+          pipeline
         end
 
         def resolve_stage(pipeline)
-          key = params.dig(:opportunity, :stage_key) || 'prospect'
-          stage = pipeline.stages.find_by(key:)
-          raise ActiveRecord::RecordNotFound, "Estágio '#{key}' não encontrado no pipeline '#{pipeline.name}'" if stage.nil?
+          stage_key = params.dig(:opportunity, :stage_key).presence
+          stage_id = params.dig(:opportunity, :sales_stage_id).presence || params.dig(:opportunity, :stage_id).presence
+
+          stage = if stage_key.present?
+                    pipeline.stages.find_by(key: stage_key) || pipeline.stages.find_by(name: stage_key)
+                  elsif stage_id.present?
+                    pipeline.stages.find_by(id: stage_id) || ::Sales::Stage.find_by(id: stage_id)
+                  end
+
+          stage ||= pipeline.stages.order(:position).first
+          stage ||= ::Sales::Stage.order(:position).first
+
+          raise ActiveRecord::RecordNotFound, "Nenhum estágio encontrado para o pipeline '#{pipeline.name}'" if stage.nil?
 
           stage
+        end
+
+        def ensure_default_stages!(pipeline)
+          default_stages = [
+            %w[prospect Prospect 10], %w[contacted Contacted 20], %w[qualified Qualified 35],
+            %w[discovery Discovery 50], %w[proposal Proposal 70], %w[negotiation Negotiation 85],
+            ['won', 'Closed Won', '100', 'won'], ['lost', 'Closed Lost', '0', 'lost']
+          ]
+          default_stages.each_with_index do |(key, name, probability, terminal), position|
+            pipeline.stages.find_or_create_by!(key:) do |stage|
+              stage.name = name
+              stage.position = position
+              stage.probability = probability.to_i
+              stage.terminal_type = terminal
+            end
+          end
         end
 
         def opportunity_create_params
           params.require(:opportunity).permit(
             :sales_account_id, :primary_contact_id,
             :name, :value_cents, :currency, :probability, :probability_overridden,
-            :priority, :source, :expected_close_date, :next_activity_at
+            :priority, :source, :expected_close_date, :next_activity_at, :status
           )
         end
 

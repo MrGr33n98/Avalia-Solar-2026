@@ -205,6 +205,17 @@ function DealCard({
   );
 }
 
+const DEFAULT_STAGES = [
+  stageVisualTone('prospect', 'Prospect', 10),
+  stageVisualTone('contacted', 'Contacted', 20),
+  stageVisualTone('qualified', 'Qualified', 35),
+  stageVisualTone('discovery', 'Discovery', 50),
+  stageVisualTone('proposal', 'Proposal', 70),
+  stageVisualTone('negotiation', 'Negotiation', 85),
+  stageVisualTone('won', 'Closed Won', 100),
+  stageVisualTone('lost', 'Closed Lost', 0),
+];
+
 export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineOnly?: boolean }) {
   const [view, setView] = useState<'kanban' | 'table'>('kanban');
   const [dragged, setDragged] = useState<{ deal: Deal; stageKey: string } | null>(null);
@@ -217,8 +228,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // Stages State (loaded 100% from PostgreSQL backend API)
-  const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>([]);
+  // Stages State (initialized with DEFAULT_STAGES so Kanban board is never empty)
+  const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>(DEFAULT_STAGES);
 
   // Accounts & Contacts State
   const [accounts, setAccounts] = useState<ApiAccount[]>([]);
@@ -248,9 +259,12 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
       if (activePipeline && activePipeline.stages.length > 0) {
         const mapped = activePipeline.stages.map((s) => stageVisualTone(s.key, s.name, s.probability ?? 50));
         setStages(mapped);
+      } else {
+        setStages(DEFAULT_STAGES);
       }
     } catch (err) {
       console.error('[CRM] Erro ao carregar estágios do pipeline:', err);
+      setStages(DEFAULT_STAGES);
     }
   }, []);
 
