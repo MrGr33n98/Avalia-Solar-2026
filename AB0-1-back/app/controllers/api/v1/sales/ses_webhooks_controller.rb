@@ -17,13 +17,16 @@ module Api
           end
 
           payload = envelope['Message'].is_a?(String) ? JSON.parse(envelope['Message']) : envelope['Message'].to_h
-          event_type = payload['eventType'] || payload['notificationType'] || 'delivered'
+          raw_event_type = payload['eventType'] || payload['notificationType']
           message_id = payload.dig('mail', 'messageId')
-          email = ::Sales::EmailMessage.find_by(provider_message_id: message_id) if message_id.present?
+          normalized_type = normalized_event(raw_event_type)
 
-          if email
-            provider_event_id = "ses-#{message_id}-#{event_type.to_s.downcase}"
-            email.register_event!(event_type: normalized_event(event_type), provider_event_id: provider_event_id, payload: payload)
+          if normalized_type.present? && message_id.present?
+            email = ::Sales::EmailMessage.find_by(provider_message_id: message_id)
+            if email
+              provider_event_id = "ses-#{message_id}-#{normalized_type}"
+              email.register_event!(event_type: normalized_type, provider_event_id: provider_event_id, payload: payload)
+            end
           end
 
           render json: { status: 'success' }, status: :ok
@@ -40,6 +43,21 @@ module Api
 
         private
 
+        EVENT_TYPE_MAPPING = {
+          'send' => nil,
+          'delivery' => 'delivered',
+          'delivered' => 'delivered',
+          'deliverydelay' => 'delivery_delay',
+          'delivery_delay' => 'delivery_delay',
+          'bounce' => 'bounce',
+          'bounced' => 'bounce',
+          'complaint' => 'complaint',
+          'reject' => 'reject',
+          'rejected' => 'reject',
+          'open' => 'open',
+          'click' => 'click'
+        }.freeze
+
         def log_failure(envelope, reason, status:)
           Rails.logger.warn(
             "[SesWebhooksController] SNS webhook falhou [#{status}]: " \
@@ -51,11 +69,17 @@ module Api
         end
 
         def normalized_event(event_type)
-          value = event_type.to_s.downcase
-          return 'delivered' if value == 'delivery'
-          return value if ::Sales::EmailEvent::EVENT_TYPES.include?(value)
+          return nil if event_type.blank?
 
-          'delivery_delay'
+          key = event_type.to_s.downcase.gsub(/[^a-z_]/, '')
+          return EVENT_TYPE_MAPPING[key] if EVENT_TYPE_MAPPING.key?(key)
+
+          if ::Sales::EmailEvent::EVENT_TYPES.include?(key)
+            key
+          else
+            Rails.logger.info("[SesWebhooksController] Evento SES desconhecido/ignorado: #{event_type}")
+            nil
+          end
         end
 
         def confirm_subscription!(subscribe_url)
