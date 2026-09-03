@@ -75,9 +75,9 @@ services:
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # As chaves de SPACES virão do .env via env_file
       # Fallbacks para o SDK da AWS (Active Storage)
-      AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
-      AWS_REGION: ${SPACES_REGION:-nyc3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-${SPACES_ACCESS_KEY_ID}}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-${SPACES_SECRET_ACCESS_KEY}}
+      AWS_REGION: ${AWS_REGION:-us-east-2}
       AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
       AWS_SNS_TOPIC_ARN: ${AWS_SNS_TOPIC_ARN:-arn:aws:sns:us-east-2:431636668039:avalia-solar-ses-events}
@@ -133,9 +133,9 @@ services:
       SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-5}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # Fallbacks para o worker também processar imagens
-      AWS_ACCESS_KEY_ID: ${SPACES_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${SPACES_SECRET_ACCESS_KEY}
-      AWS_REGION: ${SPACES_REGION:-nyc3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-${SPACES_ACCESS_KEY_ID}}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-${SPACES_SECRET_ACCESS_KEY}}
+      AWS_REGION: ${AWS_REGION:-us-east-2}
       AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
       AWS_SNS_TOPIC_ARN: ${AWS_SNS_TOPIC_ARN:-arn:aws:sns:us-east-2:431636668039:avalia-solar-ses-events}
