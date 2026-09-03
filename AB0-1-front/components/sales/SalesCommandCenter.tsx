@@ -71,16 +71,27 @@ type Deal = {
 
 type FetchState = 'loading' | 'success' | 'unauthorized' | 'forbidden' | 'error';
 
-const DEFAULT_STAGES: Array<{ key: string; label: string; bg: string; color: string; probability: number }> = [
-  { key: 'prospect', label: '1. Prospect', bg: 'bg-slate-100', color: 'border-slate-300 text-slate-700', probability: 20 },
-  { key: 'contacted', label: '2. Contato Feito', bg: 'bg-blue-50', color: 'border-blue-200 text-blue-800', probability: 40 },
-  { key: 'qualified', label: '3. Qualificado', bg: 'bg-indigo-50', color: 'border-indigo-200 text-indigo-800', probability: 60 },
-  { key: 'discovery', label: '4. Diagnóstico / Vistoria', bg: 'bg-purple-50', color: 'border-purple-200 text-purple-800', probability: 70 },
-  { key: 'proposal', label: '5. Proposta Enviada', bg: 'bg-amber-50', color: 'border-amber-200 text-amber-800', probability: 80 },
-  { key: 'negotiation', label: '6. Negociação / Fechamento', bg: 'bg-orange-50', color: 'border-orange-200 text-orange-800', probability: 90 },
-  { key: 'won', label: 'Ganho (Won)', bg: 'bg-emerald-50', color: 'border-emerald-200 text-emerald-800', probability: 100 },
-  { key: 'lost', label: 'Perdido (Lost)', bg: 'bg-red-50', color: 'border-red-200 text-red-800', probability: 0 },
-];
+function stageVisualTone(key: string, name?: string, probability: number = 50) {
+  const tones: Record<string, { bg: string; color: string }> = {
+    prospect: { bg: 'bg-slate-100', color: 'border-slate-300 text-slate-700' },
+    contacted: { bg: 'bg-blue-50', color: 'border-blue-200 text-blue-800' },
+    qualified: { bg: 'bg-indigo-50', color: 'border-indigo-200 text-indigo-800' },
+    discovery: { bg: 'bg-purple-50', color: 'border-purple-200 text-purple-800' },
+    proposal: { bg: 'bg-amber-50', color: 'border-amber-200 text-amber-800' },
+    negotiation: { bg: 'bg-orange-50', color: 'border-orange-200 text-orange-800' },
+    won: { bg: 'bg-emerald-50', color: 'border-emerald-200 text-emerald-800' },
+    lost: { bg: 'bg-red-50', color: 'border-red-200 text-red-800' },
+  };
+  const defaultTone = { bg: 'bg-slate-50', color: 'border-slate-200 text-slate-700' };
+  const tone = tones[key] || defaultTone;
+  return {
+    key,
+    label: name || key.toUpperCase(),
+    bg: tone.bg,
+    color: tone.color,
+    probability,
+  };
+}
 
 function toastMessage(message: string, type: 'success' | 'error' = 'success') {
   const el = document.createElement('div');
@@ -206,8 +217,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // Stages State (loaded from backend)
-  const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>(DEFAULT_STAGES);
+  // Stages State (loaded 100% from PostgreSQL backend API)
+  const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>([]);
 
   // Accounts & Contacts State
   const [accounts, setAccounts] = useState<ApiAccount[]>([]);
@@ -235,17 +246,11 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
       const pipelines = await salesApi.getPipelines();
       const activePipeline = pipelines.find((p) => p.active) || pipelines[0];
       if (activePipeline && activePipeline.stages.length > 0) {
-        const mapped = activePipeline.stages.map((s) => ({
-          key: s.key,
-          label: s.name,
-          bg: s.key === 'won' ? 'bg-emerald-50' : s.key === 'lost' ? 'bg-red-50' : 'bg-slate-100',
-          color: s.key === 'won' ? 'border-emerald-200 text-emerald-800' : s.key === 'lost' ? 'border-red-200 text-red-800' : 'border-slate-300 text-slate-700',
-          probability: s.probability ?? 50,
-        }));
+        const mapped = activePipeline.stages.map((s) => stageVisualTone(s.key, s.name, s.probability ?? 50));
         setStages(mapped);
       }
     } catch (err) {
-      console.warn('[CRM] Pipelines API call fallback to default stages:', err);
+      console.error('[CRM] Erro ao carregar estágios do pipeline:', err);
     }
   }, []);
 

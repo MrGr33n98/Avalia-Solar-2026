@@ -32,9 +32,27 @@ type CommandItem = {
   action?: () => void;
 };
 
-export default function CRMCommandPalette() {
-  const [open, setOpen] = useState(false);
+interface CRMCommandPaletteProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }: CRMCommandPaletteProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+
+  const handleSetOpen = (value: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof value === 'function' ? value(isOpen) : value;
+    if (onOpenChange) {
+      onOpenChange(nextVal);
+    } else {
+      setInternalOpen(nextVal);
+    }
+  };
+
   const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ id: number; type: string; title: string; subtitle: string; account_id?: number }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   let router: ReturnType<typeof useRouter> | null = null;
@@ -48,16 +66,35 @@ export default function CRMCommandPalette() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        handleSetOpen((prev) => !prev);
       }
       if (e.key === 'Escape') {
-        setOpen(false);
+        handleSetOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/v1/sales/search?q=${encodeURIComponent(query)}`, { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : { results: [] }))
+        .then((data) => {
+          setSearchResults(data.results || []);
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setIsSearching(false));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const commands: CommandItem[] = [
     {
@@ -141,7 +178,7 @@ export default function CRMCommandPalette() {
   );
 
   const handleSelect = (item: CommandItem) => {
-    setOpen(false);
+    handleSetOpen(false);
     setQuery('');
     if (item.action) {
       item.action();
@@ -169,7 +206,7 @@ export default function CRMCommandPalette() {
     }
   };
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-4 pt-20 backdrop-blur-xs animate-in fade-in duration-150">

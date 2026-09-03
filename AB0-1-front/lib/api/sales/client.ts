@@ -228,7 +228,7 @@ export const salesApi = {
   },
 
   async createContact(payload: {
-    sales_account_id: number;
+    sales_account_id?: number | null;
     first_name: string;
     last_name?: string;
     email?: string;

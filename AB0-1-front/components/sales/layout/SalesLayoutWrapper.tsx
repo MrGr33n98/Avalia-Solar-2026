@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import CRMSidebar from '@/components/sales/layout/CRMSidebar';
 import SettingsSubSidebar from '@/components/sales/layout/SettingsSubSidebar';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
-import CallLoggerModal from '@/components/sales/CallLoggerModal';
+import CRMGlobalCreateHost from '@/components/sales/create/CRMGlobalCreateHost';
 
 interface SalesLayoutWrapperProps {
   children: ReactNode;
@@ -35,7 +35,8 @@ export default function SalesLayoutWrapper({ children }: SalesLayoutWrapperProps
       </main>
 
       {/* Global Modals & Palette */}
-      <CRMCommandPalette />
+      <CRMGlobalCreateHost modalType={addModalType} onClose={() => setAddModalType(null)} />
+      <CRMCommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

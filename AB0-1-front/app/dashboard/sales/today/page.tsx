@@ -265,6 +265,33 @@ export default function SalesTodayWorkQueuePage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Empty State */}
+            {overdue.length === 0 && noNextAction.length === 0 && stale.length === 0 && today.length === 0 && (
+              <div className="py-16 text-center space-y-4 rounded-xl border border-dashed border-slate-300 bg-white p-8">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Você está em dia.</h3>
+                  <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
+                    Nenhuma tarefa atrasada, oportunidade estagnada ou follow-up pendente para execução diária.
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center gap-3">
+                  <Link href="/dashboard/sales/prospects">
+                    <Button className="bg-blue-900 text-white font-bold hover:bg-blue-950 text-xs">
+                      Ir para Fila de Prospecção
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/sales/pipeline">
+                    <Button variant="outline" className="text-xs font-semibold">
+                      Ver Pipeline Kanban
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
