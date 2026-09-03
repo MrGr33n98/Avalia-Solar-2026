@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
-require 'aws-sdk-sesv2' rescue nil
+begin
+  require 'aws-sdk-sesv2'
+rescue LoadError
+  # Optional dependency fallback
+end
 
 module Sales
   module Messaging
