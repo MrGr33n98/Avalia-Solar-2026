@@ -74,6 +74,9 @@ gem 'rqrcode', '~> 2.2'
 # Active Storage S3 support (DigitalOcean Spaces)
 gem 'aws-sdk-s3', '~> 1.0', require: false
 
+# Amazon SES v2 email delivery
+gem 'aws-sdk-sesv2', '~> 1'
+
 # Analytics
 gem 'mixpanel-ruby', '~> 2.3'
 
