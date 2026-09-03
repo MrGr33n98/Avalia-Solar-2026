@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
+import { resolveSurfaceFromHost, getSurfaceInfo } from '@/lib/host-context';
+
 interface LoginTabProps {
   onCreateAccount?: () => void;
 }
@@ -41,6 +43,16 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
+  const [surfaceInfo, setSurfaceInfo] = useState(() =>
+    getSurfaceInfo(resolveSurfaceFromHost(typeof window !== 'undefined' ? window.location.host : ''))
+  );
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSurfaceInfo(getSurfaceInfo(resolveSurfaceFromHost(window.location.host)));
+    }
+  }, []);
+
   // Check for error codes in URL
   useEffect(() => {
     const errorCode = searchParams.get('error');
@@ -65,7 +77,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
     setResendMessage(null);
     try {
       const authenticatedUser = await login(email, password);
-      const destination = await getPostLoginDestination(authenticatedUser, safeReturnTo);
+      const destination = await getPostLoginDestination(authenticatedUser, safeReturnTo, surfaceInfo.surface);
       router.push(destination);
     } catch (error: unknown) {
       const err = error as LoginError;
@@ -119,7 +131,10 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
     <div className="h-full overflow-y-auto px-5 pb-8 pt-5 custom-scrollbar sm:px-10 md:px-12 md:pt-7">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-950">Entrar</h2>
+          <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-100 mb-2">
+            {surfaceInfo.displayName}
+          </span>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950">{surfaceInfo.loginTitle}</h2>
           <p className="mt-1 text-sm text-slate-600">Use seu e-mail ou uma conta social.</p>
         </div>
         <div className="mb-6 space-y-2.5">

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveSurfaceFromHost } from '@/lib/host-context';
 import {
   HOME_HERO_EXPERIMENT_COOKIE,
   HOME_HERO_EXPERIMENT_TTL_DAYS,
@@ -163,14 +164,23 @@ export async function middleware(request: NextRequest) {
     return response;
   };
 
-  // Handle CRM subdomain routing (crm.avaliasolar.com.br)
+  // Resolve Product Surface (CRM vs Company App vs Public Platform)
   const host = request.headers.get('host') || '';
-  const isCrmSubdomain = host.includes('crm.avaliasolar.com.br');
+  const surface = resolveSurfaceFromHost(host);
 
-  if (isCrmSubdomain) {
-    if (pathname === '/' || pathname === '/dashboard') {
+  // 1. CRM Surface Routing (crm.avaliasolar.com.br)
+  if (surface === 'crm') {
+    if (!token && (pathname === '/' || pathname.startsWith('/dashboard'))) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
       return maybeAttachHomeHeroExperimentCookie(
-        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales', request.url)))
+        applyNoStoreHeaders(NextResponse.redirect(loginUrl))
+      );
+    }
+
+    if (pathname === '/' || pathname === '/dashboard' || pathname === '/dashboard/sales') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/leads', request.url)))
       );
     }
     if (pathname === '/dashboard/companies' || pathname === '/dashboard/clients') {
@@ -196,6 +206,30 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/today' || pathname === '/dashboard/today') {
       return maybeAttachHomeHeroExperimentCookie(
         applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/today', request.url)))
+      );
+    }
+  }
+
+  // 2. Company Application Surface Routing (app.avaliasolar.com.br)
+  if (surface === 'company_app') {
+    if (!token && (pathname === '/' || pathname.startsWith('/dashboard'))) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(loginUrl))
+      );
+    }
+
+    if (pathname === '/') {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard', request.url)))
+      );
+    }
+
+    // Company App must NEVER redirect to CRM /dashboard/sales
+    if (pathname.startsWith('/dashboard/sales')) {
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard', request.url)))
       );
     }
   }

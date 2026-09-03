@@ -21,6 +21,7 @@ import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { logError } from '@/lib/error-handler';
 import { resolveCompanyId, resolvePostAuthDestination } from '@/lib/auth/post-auth-destination';
+import { resolveSurfaceFromHost, ProductSurface } from '@/lib/host-context';
 import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
 import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
@@ -31,7 +32,7 @@ interface AuthContextType {
   error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
-  getPostLoginDestination: (user: User, returnTo?: string | null) => Promise<string>;
+  getPostLoginDestination: (user: User, returnTo?: string | null, surface?: ProductSurface) => Promise<string>;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
@@ -186,10 +187,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void checkAuth();
   }, [checkAuth]);
 
-  const getPostLoginDestination = async (nextUser: User, returnTo?: string | null) => {
+  const getPostLoginDestination = async (nextUser: User, returnTo?: string | null, surface?: ProductSurface) => {
+    const currentSurface = surface || resolveSurfaceFromHost(typeof window !== 'undefined' ? window.location.host : '');
+
     // Para role=company E role=review, primeiro verificar memberships empresariais.
-    // Isso suporta identidade multi-contexto: review + CompanyMember ativo deve ir
-    // para o workspace empresarial (não review-dashboard).
     if (nextUser.role === 'company' || nextUser.role === 'review') {
       let activeMemberships: Array<{ company_id: number }> = [];
       try {
@@ -220,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser((prev) => (prev ? { ...prev, company_id: companyId } : prev));
         return resolvePostAuthDestination({
           user: nextUser,
+          surface: currentSurface,
           returnTo,
           activeCompanyId: companyId,
           activeMembershipsCount: activeMemberships.length,
@@ -230,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (nextUser.role === 'company') {
         return resolvePostAuthDestination({
           user: nextUser,
+          surface: currentSurface,
           returnTo,
           activeMembershipsCount: 0,
         });
@@ -243,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = profileResponse?.profile;
         return resolvePostAuthDestination({
           user: nextUser,
+          surface: currentSurface,
           returnTo,
           activeMembershipsCount: 0,
           creatorEnabled: profile?.creator_enabled,
@@ -257,6 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return resolvePostAuthDestination({
       user: nextUser,
+      surface: currentSurface,
       returnTo,
     });
   };
