@@ -1,0 +1,250 @@
+'use client';
+
+import { useState } from 'react';
+import { AlertCircle, FileText, Loader2, Mail, Paperclip, Send, Sparkles, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import CRMModal from '@/components/sales/ui/CRMModal';
+import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
+import { salesApi } from '@/lib/api/sales/client';
+import { toast } from 'sonner';
+
+interface EmailComposerModalProps {
+  open: boolean;
+  onClose: () => void;
+  defaultToEmail?: string;
+  defaultContactId?: number;
+  defaultAccountId?: number;
+  defaultOpportunityId?: number;
+  defaultSubject?: string;
+  onSuccess?: () => void;
+}
+
+export default function EmailComposerModal({
+  open,
+  onClose,
+  defaultToEmail = '',
+  defaultContactId,
+  defaultAccountId,
+  defaultOpportunityId,
+  defaultSubject = '',
+  onSuccess,
+}: EmailComposerModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [toEmail, setToEmail] = useState(defaultToEmail);
+  const [ccEmail, setCcEmail] = useState('');
+  const [subject, setSubject] = useState(defaultSubject);
+  const [bodyText, setBodyText] = useState('');
+  const [showCc, setShowCc] = useState(false);
+  const [trackOpens, setTrackOpens] = useState(true);
+  const [trackClicks, setTrackClicks] = useState(true);
+
+  const handleInsertVariable = (variable: string) => {
+    setBodyText((prev) => `${prev} {{${variable}}}`);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!toEmail.trim()) return setError('E-mail do destinatário é obrigatório.');
+    if (!subject.trim()) return setError('Assunto da mensagem é obrigatório.');
+    if (!bodyText.trim()) return setError('Corpo do e-mail não pode ficar em branco (Política Fail-Closed).');
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await salesApi.sendEmail({
+        to_email: toEmail,
+        subject: subject,
+        body_text: bodyText,
+        body_html: `<p>${bodyText.replace(/\n/g, '<br/>')}</p>`,
+        sales_contact_id: defaultContactId,
+        sales_account_id: defaultAccountId,
+        sales_opportunity_id: defaultOpportunityId,
+      });
+
+      toast.success('E-mail enviado com sucesso!');
+      setTimeout(() => {
+        onClose();
+        setLoading(false);
+        setBodyText('');
+        setSubject('');
+        onSuccess?.();
+      }, 500);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao enviar e-mail comercial.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <CRMModal
+      open={open}
+      onClose={onClose}
+      title="Novo E-mail Comercial"
+      description="Enviar mensagem estruturada rastreável via plataforma de mensageria CRM."
+      size="lg"
+      heroIcon={<Mail className="w-8 h-8 text-indigo-700" />}
+      showCustomizeFields={false}
+      footer={
+        <div className="w-full flex items-center justify-between font-sans">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={trackOpens}
+                onChange={(e) => setTrackOpens(e.target.checked)}
+                className="rounded border-slate-300 text-indigo-600"
+              />
+              Track Abertura
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={trackClicks}
+                onChange={(e) => setTrackClicks(e.target.checked)}
+                className="rounded border-slate-300 text-indigo-600"
+              />
+              Track Cliques
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={loading}
+              className="h-11 px-5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              form="create-email-form"
+              disabled={loading}
+              className="h-11 px-6 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl shadow-md flex items-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviar Mensagem
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <form id="create-email-form" onSubmit={handleSubmit} className="space-y-5 font-sans">
+        {error && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Recipients */}
+        <div className="space-y-4">
+          <CRMFormField label="Para (Destinatário)" required>
+            <div className="flex items-center gap-2">
+              <Input
+                type="email"
+                placeholder="destinatario@cliente.com.br"
+                value={toEmail}
+                onChange={(e) => setToEmail(e.target.value)}
+                className="h-11 text-xs border-slate-300 rounded-xl px-4 flex-1"
+                required
+              />
+              {!showCc && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCc(true)}
+                  className="h-11 text-xs font-semibold text-slate-600 border-slate-200 rounded-xl px-3"
+                >
+                  + Cc
+                </Button>
+              )}
+            </div>
+          </CRMFormField>
+
+          {showCc && (
+            <CRMFormField label="Cc (Cópia)">
+              <Input
+                type="email"
+                placeholder="copia@empresa.com.br"
+                value={ccEmail}
+                onChange={(e) => setCcEmail(e.target.value)}
+                className="h-11 text-xs border-slate-300 rounded-xl px-4"
+              />
+            </CRMFormField>
+          )}
+
+          {/* Subject */}
+          <CRMFormField label="Assunto" required>
+            <Input
+              placeholder="Ex: Proposta Comercial de Usina Solar 100kWp"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="h-11 text-xs border-slate-300 rounded-xl px-4 font-semibold text-slate-900"
+              required
+            />
+          </CRMFormField>
+
+          {/* Variable Helper Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Variáveis Dinâmicas:
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInsertVariable('person.first_name')}
+              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+            >
+              Primeiro Nome
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInsertVariable('company.name')}
+              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+            >
+              Nome Empresa
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInsertVariable('lead.value')}
+              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+            >
+              Valor Proposta
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInsertVariable('owner.name')}
+              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+            >
+              Vendedor
+            </Button>
+          </div>
+
+          {/* Body Editor */}
+          <CRMFormField label="Corpo da Mensagem" required>
+            <Textarea
+              placeholder="Escreva sua mensagem comercial aqui..."
+              value={bodyText}
+              onChange={(e) => setBodyText(e.target.value)}
+              className="text-xs border-slate-300 rounded-xl p-4 min-h-[180px] resize-y font-sans leading-relaxed focus:border-indigo-600"
+              required
+            />
+          </CRMFormField>
+        </div>
+      </form>
+    </CRMModal>
+  );
+}

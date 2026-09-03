@@ -346,7 +346,25 @@ export const salesApi = {
   },
 
   // Analytics
-  async getAnalytics(period = 'this_month'): Promise<ApiAnalytics> {
-    return request<ApiAnalytics>(`/api/v1/sales/analytics?period=${period}`);
+  async getAnalytics(period = '30d'): Promise<ApiAnalytics> {
+    const res = await request<ApiAnalytics>(`/api/v1/sales/analytics?period=${period}`);
+    return res;
+  },
+
+  async sendEmail(payload: {
+    to_email: string;
+    subject: string;
+    body_text?: string;
+    body_html?: string;
+    body_json?: Record<string, unknown>;
+    sales_contact_id?: number;
+    sales_account_id?: number;
+    sales_opportunity_id?: number;
+  }): Promise<{ message: any }> {
+    const res = await request<{ message: any }>('/api/v1/sales/emails', {
+      method: 'POST',
+      body: JSON.stringify({ email_message: payload }),
+    });
+    return res;
   },
 };

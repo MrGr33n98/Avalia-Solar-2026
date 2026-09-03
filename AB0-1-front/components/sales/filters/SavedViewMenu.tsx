@@ -6,7 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { salesApi } from '@/lib/api/sales/client';
 import { ApiSavedView } from '@/lib/api/sales/types';
 
-interface Props { filters: Record<string, unknown>; search: string; viewMode: 'kanban' | 'table'; onApply: (filters: Record<string, unknown>, search: string) => void; }
+interface Props {
+  filters: any;
+  search: string;
+  viewMode: 'kanban' | 'table';
+  onApply: (filters: any, search: string) => void;
+}
 export default function SavedViewMenu({ filters, search, viewMode, onApply }: Props) {
   const [views, setViews] = useState<ApiSavedView[]>([]);
   const [open, setOpen] = useState(false);

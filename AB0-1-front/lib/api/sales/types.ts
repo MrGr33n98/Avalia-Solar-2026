@@ -60,6 +60,7 @@ export interface ApiSavedView {
   sort: Record<string, unknown>;
   columns: string[];
   is_default?: boolean;
+  is_pinned?: boolean;
   is_shared?: boolean;
   created_at?: string;
 }

@@ -810,5 +810,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # Tracking de Engajamento de E-mail (Abertura Pixel + Clique Link)
+  get '/t/email/open/:token.gif', to: 't/email_tracking#open'
+  get '/t/email/click/:token', to: 't/email_tracking#click'
+  post '/api/v1/sales/ses_webhooks', to: 'api/v1/sales/ses_webhooks#create'
+
   root 'api_root#show'
 end

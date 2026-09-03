@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateCompanyModal from '@/components/sales/create/CreateCompanyModal';
+import { Button } from '@/components/ui/button';
 import CompaniesColumnsDialog, { CompanyColumnConfig } from './CompaniesColumnsDialog';
 import CompaniesDuplicateManager from './CompaniesDuplicateManager';
 import CompaniesTable, { CompanyListItem } from './CompaniesTable';
