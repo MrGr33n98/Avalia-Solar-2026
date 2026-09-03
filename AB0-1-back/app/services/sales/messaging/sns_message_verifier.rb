@@ -6,7 +6,7 @@ require 'uri'
 module Sales
   module Messaging
     class SnsMessageVerifier
-      ALLOWED_CERT_HOST = /\A sns\.[a-z0-9-]+\.amazonaws\.com\.?\z/i
+      ALLOWED_CERT_HOST = /\Asns\.[a-z0-9-]+\.amazonaws\.com\.?\z/i
       REQUIRED_FIELDS = %w[Type MessageId Timestamp TopicArn SignatureVersion Signature SigningCertURL].freeze
 
       def self.verify!(payload)
@@ -42,7 +42,7 @@ module Sales
       end
 
       def canonical_string
-        keys = @payload['Type'] == 'Notification' ? %w[Message MessageId Subject Timestamp TopicArn Type] : %w[Message Token SubscribeURL Timestamp TopicArn Type]
+        keys = @payload['Type'] == 'Notification' ? %w[Message MessageId Subject Timestamp TopicArn Type] : %w[Message MessageId SubscribeURL Timestamp Token TopicArn Type]
         keys.filter_map { |key| @payload[key].present? ? "#{key}\n#{@payload[key]}\n" : nil }.join
       end
     end

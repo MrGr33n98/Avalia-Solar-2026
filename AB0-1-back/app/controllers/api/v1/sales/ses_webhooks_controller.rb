@@ -28,16 +28,27 @@ module Api
 
           render json: { status: 'success' }, status: :ok
         rescue SecurityError => e
-          Rails.logger.warn("[SesWebhooksController] SNS rejeitado: #{e.message}")
+          log_failure(envelope, e.message, status: 401)
           render json: { error: 'Unauthorized webhook request' }, status: :unauthorized
-        rescue JSON::ParserError
+        rescue JSON::ParserError => e
+          log_failure(nil, "Malformed JSON: #{e.message}", status: 400)
           render json: { error: 'Malformed webhook payload' }, status: :bad_request
         rescue StandardError => e
-          Rails.logger.error("[SesWebhooksController] Erro no processamento de webhook: #{e.message}")
+          log_failure(envelope, "Internal error: #{e.message}", status: 500)
           render json: { error: 'Webhook processing failed' }, status: :internal_server_error
         end
 
         private
+
+        def log_failure(envelope, reason, status:)
+          Rails.logger.warn(
+            "[SesWebhooksController] SNS webhook falhou [#{status}]: " \
+            "request_id=#{request.request_id} " \
+            "type=#{envelope&.[]('Type')} " \
+            "topic_arn=#{envelope&.[]('TopicArn')} " \
+            "reason=#{reason}"
+          )
+        end
 
         def normalized_event(event_type)
           value = event_type.to_s.downcase

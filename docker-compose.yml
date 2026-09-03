@@ -80,6 +80,8 @@ services:
       AWS_REGION: ${SPACES_REGION:-nyc3}
       AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      AWS_SNS_TOPIC_ARN: ${AWS_SNS_TOPIC_ARN:-arn:aws:sns:us-east-2:431636668039:avalia-solar-ses-events}
+      AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-avalia-solar-crm}
       # Analytics
       GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID}
       GA4_API_SECRET: ${GA4_API_SECRET}
@@ -136,6 +138,8 @@ services:
       AWS_REGION: ${SPACES_REGION:-nyc3}
       AWS_BUCKET: ${SPACES_BUCKET:-avalia-solar-assets}
       AWS_ENDPOINT: ${SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      AWS_SNS_TOPIC_ARN: ${AWS_SNS_TOPIC_ARN:-arn:aws:sns:us-east-2:431636668039:avalia-solar-ses-events}
+      AWS_SES_CONFIGURATION_SET: ${AWS_SES_CONFIGURATION_SET:-avalia-solar-crm}
     networks:
       - ab0-network
     volumes:
